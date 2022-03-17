@@ -22,21 +22,17 @@ This repository contains utilities for consolidating, annotating and filtering s
 * Raw directory
 
 ## <a name="denovo">De novo SV discovery</a>
-The main scripts to run this analysis are:
-* `runDeNovoSVs.wdl`: this workflow reformats SNP array and gCNV data from the UKBB and calls GenomeStrip IRS for <i>in-silico</i> CNV validation.    
+The main scripts to run this analysis is `runDeNovoSVs.wdl`.    
 
 ### Execution
-
 ```
 > git clone https://github.com/talkowski-lab/variant-interpretation.git
 > cd variant-interpretation/wdl
 > zip dependencies.zip *
-
 > cromshell submit runDeNovoSVs.wdl /path/to/denovo-svs.json /path/to/config.json dependencies.zip
 ```
 
 ## <a name="contact">Contact and credits</a>
-
 Copyright (c) 2022 Talkowski Lab and The Broad Institute of M.I.T. and Harvard  
 Contact: [Alba Sanchis-Juan](mailto:asanchis-juan@mgh.harvard.edu)
 
