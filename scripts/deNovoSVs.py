@@ -170,7 +170,8 @@ def main():
     bed_child['paternal_rdcn'] = bed_child.apply(lambda r: getRdCnParent(r, ped, vcf, 'paternal_id'), axis=1)
     bed_child['maternal_rdcn'] = bed_child.apply(lambda r: getRdCnParent(r, ped, vcf, 'maternal_id'), axis=1)
 
-    bed_child = bed_child[(bed_child['RD_CN'] != bed_child['maternal_rdcn']) & (bed_child['RD_CN'] != bed_child['paternal_rdcn'])]
+    bed_child = bed_child[(bed_child['RD_CN'] != bed_child['maternal_rdcn']) &
+                          (bed_child['RD_CN'] != bed_child['paternal_rdcn'])]
 
     # 2. Check if call in parents with bedtools coverage (332)
     cols_keep = ['family_chrom', 'start', 'end', 'name', 'svtype', 'sample']
