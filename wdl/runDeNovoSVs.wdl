@@ -3,16 +3,21 @@ version 1.0
 workflow deNovoSV {
 
     input {
-        File bed_input
+        String bed_dir
         File ped_input
-        File vcf_input
+        String vcf_dir
         File disorder_input
         Array[String] contigs
-        File raw_input
+        String raw_dir
         String variant_interpretation_docker
     }
 
     scatter (contig in contigs) {
+
+        File bed_input = "~{bed_dir}/phase2.annotated.~{contig}.bed.gz"
+        File vcf_input = "~{vcf_dir}/phase2.annotated.~{contig}.noheader.vcf.gz"
+        File raw_input = "~{raw_dir}/~{contig}_all_batches_m01_ref_sort.bed.gz"
+
         call getDeNovo{
             input:
                 bed_input=bed_input,
@@ -43,7 +48,7 @@ task getDeNovo{
     }
 
     command <<<
-            python denovo.py \
+            python /src/variant-interpretation/scripts/deNovoSVs.py \
                 --bed ~{bed_input} \
                 --ped ~{ped_input} \
                 --vcf ~{vcf_input} \
