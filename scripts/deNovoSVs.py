@@ -178,12 +178,12 @@ def main():
     bed_child_large = bed_child[(bed_child['is_large_cnv'] == True)]
     bed_child_large['family_chrom'] = bed_child_large.apply(lambda r: addFamily(r, ped), axis=1)
     bed_child_large = bed_child_large[cols_keep].to_string(header=False, index=False)
-    bed_child_large = pybedtools.BedTool(bed_child_large, from_string=True)
+    bed_child_large = pybedtools.BedTool(bed_child_large, from_string=True).sort()
 
     bed_parents_large = bed_parents[(bed_parents['is_large_cnv'] == True)]
     bed_parents_large['family_chrom'] = bed_parents_large.apply(lambda r: addFamily(r, ped), axis=1)
     bed_parents_large = bed_parents_large[cols_keep].to_string(header=False, index=False)
-    bed_parents_large = pybedtools.BedTool(bed_parents_large, from_string=True)
+    bed_parents_large = pybedtools.BedTool(bed_parents_large, from_string=True).sort()
 
     bed_overlap = bed_child_large.coverage(bed_parents_large).to_dataframe(disable_auto_names=True, header=None)
     names_overlap = bed_overlap[(bed_overlap[9] >= 0.5)][3].to_list()
