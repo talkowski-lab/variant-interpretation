@@ -60,7 +60,7 @@ task getDeNovo{
     >>>
 
     runtime {
-        memory: "24 GiB"
+        memory: "64 GiB"
         disks: "local-disk 32 HDD"
         cpu: 1
         preemptible: 3
