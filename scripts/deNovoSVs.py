@@ -40,8 +40,22 @@ def getFamilyCount(row, ped):
 def variantInfo(row, field, vcf):
     row_name = row['name']
     samp = row['sample']
-    samp_info = vcf[(vcf['ID'] == row_name)][samp].str.split(':').tolist()[0][field]
-    return(samp_info)
+
+    filt_pos = vcf[(vcf['ID'] == row_name)]['FORMAT'].str.split(':').tolist()
+
+    if len(filt_pos) > 0:
+        if field in filt_pos[0]:
+            idx = filt_pos[0].index(field)
+            if samp in vcf.columns:
+                samp_info = vcf[(vcf['ID'] == row_name)][samp].str.split(':').tolist()
+                samp_info_field = samp_info[0][idx] if len(samp_info[0][idx]) > 1 else 'NA'
+            else:
+                samp_info_field = 'NA'
+        else:
+            samp_info_field = 'NA'
+    else:
+        samp_info_field = 'NA'
+    return(samp_info_field)
 
 def addFamily(row, ped):
     sample = row['sample']
@@ -148,20 +162,24 @@ def main():
 
     # Get counts within family and remove if SV in parents
     verbosePrint('Keep variants in children only', verbose)
-    bed_child['num_parents_family'] = bed_child.apply(lambda r: getFamilyCount(r, ped), axis=1)
-    bed_child = bed_child[ (bed_child['num_parents_family'] == 0) &
-                           (bed_child['num_children'] >= 1) &
-                           ((bed_child['AF_parents'] <= 0.01) |
-                            (bed_child['num_parents'] <= 3) |
-                            (bed_child['in_gd'] == True)) ]
+    # bed_child['num_parents_family'] = bed_child.apply(lambda r: getFamilyCount(r, ped), axis=1)
+    # bed_child = bed_child[ (bed_child['num_parents_family'] == 0) &
+    #                        (bed_child['num_children'] >= 1) &
+    #                        ((bed_child['AF_parents'] <= 0.01) |
+    #                         (bed_child['num_parents'] <= 3) |
+    #                         (bed_child['in_gd'] == True)) ]
 
     # Extract info from the VCF file - no PE_GT, PE_GQ, SR_GT, SR_GQ
     verbosePrint('Appending FILTER information', verbose)
-    bed_child['GT']    = bed_child.apply(lambda r: variantInfo(r, 0, vcf), axis=1)
-    bed_child['EV']    = bed_child.apply(lambda r: variantInfo(r, 1, vcf), axis=1)
-    bed_child['GQ']    = bed_child.apply(lambda r: variantInfo(r, 2, vcf), axis=1)
-    bed_child['RD_CN'] = bed_child.apply(lambda r: variantInfo(r, 3, vcf), axis=1)
-    bed_child['RD_GQ'] = bed_child.apply(lambda r: variantInfo(r, 4, vcf), axis=1)
+    bed_child['GT']    = bed_child.apply(lambda r: variantInfo(r, 'GT', vcf), axis=1)
+    # print(bed_child['GT'])
+    # exit()
+    # # bed_child.to_csv(path_or_buf="GT_len.bed", mode='a', index=False, sep='\t', header=True)
+    # # exit()
+    bed_child['EV']    = bed_child.apply(lambda r: variantInfo(r, 'EV', vcf), axis=1)
+    bed_child['GQ']    = bed_child.apply(lambda r: variantInfo(r, 'GQ', vcf), axis=1)
+    bed_child['RD_CN'] = bed_child.apply(lambda r: variantInfo(r, 'RD_CN', vcf), axis=1)
+    bed_child['RD_GQ'] = bed_child.apply(lambda r: variantInfo(r, 'RD_GQ', vcf), axis=1)
 
     # LARGE CNV: Check for false negative in parents: check depth in parents, independently of the calls
     verbosePrint('Large CNVs check', verbose)
@@ -174,6 +192,7 @@ def main():
                           (bed_child['RD_CN'] != bed_child['paternal_rdcn'])]
 
     # 2. Check if call in parents with bedtools coverage (332)
+    verbosePrint('CNV present in parents check', verbose)
     cols_keep = ['family_chrom', 'start', 'end', 'name', 'svtype', 'sample']
     bed_child_large = bed_child[(bed_child['is_large_cnv'] == True)]
     bed_child_large['family_chrom'] = bed_child_large.apply(lambda r: addFamily(r, ped), axis=1)
