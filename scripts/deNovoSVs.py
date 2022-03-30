@@ -43,18 +43,17 @@ def variantInfo(row, field, vcf):
 
     filt_pos = vcf[(vcf['ID'] == row_name)]['FORMAT'].str.split(':').tolist()
 
-    if len(filt_pos) > 0:
-        if field in filt_pos[0]:
-            idx = filt_pos[0].index(field)
-            if samp in vcf.columns:
-                samp_info = vcf[(vcf['ID'] == row_name)][samp].str.split(':').tolist()
-                samp_info_field = samp_info[0][idx] if len(samp_info[0][idx]) > 1 else 'NA'
-            else:
-                samp_info_field = 'NA'
+    if field in filt_pos[0]:
+        idx = filt_pos[0].index(field)
+        if samp in vcf.columns:
+            samp_info = vcf[(vcf['ID'] == row_name)][samp].str.split(':').tolist()
+            samp_info_field = samp_info[0][idx]
+    #         samp_info_field = samp_info[0][idx] if len(samp_info[0][idx]) > 1 else 'NA'
         else:
             samp_info_field = 'NA'
     else:
         samp_info_field = 'NA'
+
     return(samp_info_field)
 
 def addFamily(row, ped):
@@ -112,7 +111,8 @@ def main():
 
     # Get parents and children ids
     verbosePrint('Getting parents/children/affected/unaffected IDs', verbose)
-    families = ped[(ped['family_size'] >= 3) &
+    # families = ped[(ped['family_size'] >= 3) &
+    families = ped[(ped['family_size'] == 3) &
                    (ped['paternal_id'] != "0") &
                    (ped['maternal_id'] != "0")]['family_id'].values
     trios = ped[(ped['family_id'].isin(families))]
@@ -132,8 +132,8 @@ def main():
 
     # Flag if small or large CNV based on 5Kb cutoff
     verbosePrint('Flagging calls depending on size', verbose)
-    bed['is_large_cnv'] = (bed['SVLEN'] >= 5000) & ((bed['svtype'] == 'DEL') | (bed['svtype'] == 'DUP'))
-    bed['is_small_cnv'] = (bed['SVLEN'] < 5000) & ((bed['svtype'] == 'DEL') | (bed['svtype'] == 'DUP'))
+    bed['is_large_cnv'] = (bed['SVLEN'] >= 1000) & ((bed['svtype'] == 'DEL') | (bed['svtype'] == 'DUP'))
+    bed['is_small_cnv'] = (bed['SVLEN'] < 1000) & ((bed['svtype'] == 'DEL') | (bed['svtype'] == 'DUP'))
     bed['is_depth_only'] = (bed['EVIDENCE'] == "RD")
 
     # Split into one row per sample
@@ -169,8 +169,7 @@ def main():
     bed_child = bed_child[ (bed_child['num_parents_family'] == 0) &
                            (bed_child['num_children'] >= 1) &
                            ((bed_child['AF_parents'] <= 0.01) |
-                            (bed_child['num_parents'] <= 3) |
-                            (bed_child['in_gd'] == True)) ]
+                            (bed_child['num_parents'] <= 5)) ]
 
     # Extract info from the VCF file - no PE_GT, PE_GQ, SR_GT, SR_GQ
     verbosePrint('Appending FILTER information', verbose)
