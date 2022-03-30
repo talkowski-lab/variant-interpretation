@@ -151,31 +151,30 @@ def main():
 
     # Filter out by frequency - AF gnomad < 0.01 OR inGD
     verbosePrint('Filtering by frequency', verbose)
-    bed_child["gnomad_v2.1_sv_AF"] = pd.to_numeric(bed_child["gnomad_v2.1_sv_AF"])
+    # gnomad_col_name = "gnomad_v2.1_sv_AF"
+    gnomad_col_name = "gnomAD_V2_AF"
+    bed_child[gnomad_col_name] = pd.to_numeric(bed_child[gnomad_col_name])
     bed_child["AF"] = pd.to_numeric(bed_child["AF"])
 
-    bed_child = bed_child[((bed_child['gnomad_v2.1_sv_AF'] <= 0.01) |
-                           (bed_child['gnomad_v2.1_sv_AF'].isnull())) |
+    bed_child = bed_child[((bed_child[gnomad_col_name] <= 0.01) |
+                           (bed_child[gnomad_col_name].isnull())) |
                           (bed_child['in_gd'] == True)]
+
     # bed_child = bed_child[ ((bed_child['AF'] < 0.01) | (bed_child['AF'].isnull())) |
     #                        ((bed_child['in_gd'] == True) & ((bed_child['AF'] < 0.03) | (bed_child['AF'].isnull()) )) ]
 
     # Get counts within family and remove if SV in parents
     verbosePrint('Keep variants in children only', verbose)
-    # bed_child['num_parents_family'] = bed_child.apply(lambda r: getFamilyCount(r, ped), axis=1)
-    # bed_child = bed_child[ (bed_child['num_parents_family'] == 0) &
-    #                        (bed_child['num_children'] >= 1) &
-    #                        ((bed_child['AF_parents'] <= 0.01) |
-    #                         (bed_child['num_parents'] <= 3) |
-    #                         (bed_child['in_gd'] == True)) ]
+    bed_child['num_parents_family'] = bed_child.apply(lambda r: getFamilyCount(r, ped), axis=1)
+    bed_child = bed_child[ (bed_child['num_parents_family'] == 0) &
+                           (bed_child['num_children'] >= 1) &
+                           ((bed_child['AF_parents'] <= 0.01) |
+                            (bed_child['num_parents'] <= 3) |
+                            (bed_child['in_gd'] == True)) ]
 
     # Extract info from the VCF file - no PE_GT, PE_GQ, SR_GT, SR_GQ
     verbosePrint('Appending FILTER information', verbose)
     bed_child['GT']    = bed_child.apply(lambda r: variantInfo(r, 'GT', vcf), axis=1)
-    # print(bed_child['GT'])
-    # exit()
-    # # bed_child.to_csv(path_or_buf="GT_len.bed", mode='a', index=False, sep='\t', header=True)
-    # # exit()
     bed_child['EV']    = bed_child.apply(lambda r: variantInfo(r, 'EV', vcf), axis=1)
     bed_child['GQ']    = bed_child.apply(lambda r: variantInfo(r, 'GQ', vcf), axis=1)
     bed_child['RD_CN'] = bed_child.apply(lambda r: variantInfo(r, 'RD_CN', vcf), axis=1)
@@ -211,8 +210,8 @@ def main():
     bed_child['overlap_parent'] = (bed_child['name'].isin(names_overlap))
 
     # Small calls:
-    verbosePrint('Small CNVs check', verbose)
     # If RD,SR and <1Kb, treat RD,SR as SR
+    verbosePrint('Small CNVs check', verbose)
     bed_child['EVIDENCE_FIX'] = bed_child['EVIDENCE']
     bed_child[(bed_child['SVLEN'] <= 1000) & \
                     (bed_child['EVIDENCE'] == "RD,SR") & \
@@ -249,6 +248,7 @@ def main():
     #####################
     ## REMOVE OUTLIERS ##
     #####################
+    verbosePrint('Removing outliers', verbose)
     #1.5*IQR + 3Q
     sample_counts = bed_filt['sample'].value_counts()
     q3, q1 = np.percentile(sample_counts.tolist(), [75, 25])
@@ -262,6 +262,7 @@ def main():
     ###################
     #Keep all CPT and CTX - they are rare and the type is different than in the raw files
     #Check only DEL,DUP and INS for raw evidence
+    verbosePrint('Checking raw files', verbose)
 
     #Reformat raw files
     raw_bed_ref = raw_bed.to_string(header=False, index=False)
@@ -274,25 +275,35 @@ def main():
     ##INSERTIONS: dist < 100bp (& INS ratio > 0.1 & INS ratio < 10 ?) (dis is START-start and INS ratio is SVLEN/svlen)
     bed_filt_ins = bed_filt[bed_filt['SVTYPE'] == 'INS']
 
-    bed_filt_ins_ref = bed_filt_ins[cols_keep2].to_string(header=False, index=False)
-    bed_filt_ins_ref = pybedtools.BedTool(bed_filt_ins_ref, from_string=True).sort()
-    bed_filt_ins_overlap = bed_filt_ins_ref.closest(raw_bed_ref).to_dataframe(disable_auto_names=True, header=None)
-    bed_filt_ins_overlap['is_close'] = abs(bed_filt_ins_overlap[7] - bed_filt_ins_overlap[1]) < 100
-    ins_names_overlap = bed_filt_ins_overlap[(bed_filt_ins_overlap['is_close'] == True)][3].to_list()
+    if (len(bed_filt_ins.index) > 0):
+        bed_filt_ins_ref = bed_filt_ins[cols_keep2].to_string(header=False, index=False)
+
+        bed_filt_ins_ref = pybedtools.BedTool(bed_filt_ins_ref, from_string=True).sort()
+        # bed_filt_ins_ref = pybedtools.BedTool(bed_filt_ins_ref, from_string=True)
+        bed_filt_ins_overlap = bed_filt_ins_ref.closest(raw_bed_ref).to_dataframe(disable_auto_names=True, header=None)
+        bed_filt_ins_overlap['is_close'] = abs(bed_filt_ins_overlap[7] - bed_filt_ins_overlap[1]) < 100
+        ins_names_overlap = bed_filt_ins_overlap[(bed_filt_ins_overlap['is_close'] == True)][3].to_list()
+    else:
+        ins_names_overlap = ['']
 
     ##CNVS: Reciprocal overlap >0.5%
     bed_filt_cnv = bed_filt[bed_filt['SVTYPE'].isin(['DEL', 'DUP'])]
 
-    bed_filt_cnv_ref = bed_filt_cnv[cols_keep2].to_string(header=False, index=False)
-    bed_filt_cnv_ref = pybedtools.BedTool(bed_filt_cnv_ref, from_string=True).sort()
-    bed_filt_cnv_overlap = bed_filt_cnv_ref.intersect(raw_bed_ref,
-                                                      wo=True,
-                                                      f='0.5',
-                                                      r=True ##Too strict?
-                                                      ).to_dataframe(disable_auto_names=True, header=None)
-    cnv_names_overlap = bed_filt_cnv_overlap[3].to_list()
+    if (len(bed_filt_cnv.index) > 0):
+        bed_filt_cnv_ref = bed_filt_cnv[cols_keep2].to_string(header=False, index=False)
+        bed_filt_cnv_ref = pybedtools.BedTool(bed_filt_cnv_ref, from_string=True).sort()
+        bed_filt_cnv_overlap = bed_filt_cnv_ref.intersect(raw_bed_ref,
+                                                          wo=True
+                                                          # f='0.2'
+                                                          # r=True ##Too strict?
+                                                          ).to_dataframe(disable_auto_names=True, header=None)
+        cnv_names_overlap = bed_filt_cnv_overlap[3].to_list()
+    else:
+        cnv_names_overlap = ['']
 
     ##Filtering out INS and CNV with no raw evidence
+    verbosePrint('Filtering out variants with no raw evidence', verbose)
+
     bed_final = bed_filt[ (~bed_filt['SVTYPE'].isin(['DEL', 'DUP', 'INS'])) |
                           (bed_filt['name'].isin(ins_names_overlap + cnv_names_overlap)) ]
     bed_final = bed_final.drop_duplicates()  # write unique values
