@@ -168,8 +168,8 @@ def main():
     bed_child['num_parents_family'] = bed_child.apply(lambda r: getFamilyCount(r, ped), axis=1)
     bed_child = bed_child[ (bed_child['num_parents_family'] == 0) &
                            (bed_child['num_children'] >= 1) &
-                           ((bed_child['AF_parents'] <= 0.01) |
-                            (bed_child['num_parents'] <= 5)) ]
+                           (bed_child['AF_parents'] <= 0.01) &
+                           (bed_child['num_parents'] <= 5) ]
 
     # Extract info from the VCF file - no PE_GT, PE_GQ, SR_GT, SR_GQ
     verbosePrint('Appending FILTER information', verbose)
