@@ -151,8 +151,8 @@ def main():
 
     # Filter out by frequency - AF gnomad < 0.01 OR inGD
     verbosePrint('Filtering by frequency', verbose)
-    # gnomad_col_name = "gnomad_v2.1_sv_AF"
-    gnomad_col_name = "gnomAD_V2_AF"
+    gnomad_col_name = "gnomad_v2.1_sv_AF"
+    # gnomad_col_name = "gnomAD_V2_AF"
     bed_child[gnomad_col_name] = pd.to_numeric(bed_child[gnomad_col_name])
     bed_child["AF"] = pd.to_numeric(bed_child["AF"])
 
