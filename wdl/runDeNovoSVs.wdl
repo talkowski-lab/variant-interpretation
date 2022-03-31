@@ -27,7 +27,7 @@ workflow deNovoSV {
                 disorder_input=disorder_input,
                 chromosome=contig,
                 raw_input=raw_input,
-                python_config=python_config
+                python_config=python_config,
                 variant_interpretation_docker=variant_interpretation_docker
         }
     }
