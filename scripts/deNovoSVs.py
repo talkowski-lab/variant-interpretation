@@ -7,6 +7,7 @@ Description: SV de novo filtering script
 
 # Import libraries
 import argparse
+import yaml
 import math
 import numpy as np
 import pandas as pd
@@ -87,6 +88,7 @@ def main():
     parser.add_argument('--out', dest='out', help='Output file')
     parser.add_argument('--raw', dest='raw', help='Directory with raw SV calls - output from m01')
     parser.add_argument('--outliers', dest='outliers', help='Output file with SV calls in outlier samples')
+    parser.add_argument('--config', dest='config', help='Config file')
     parser.add_argument('--verbose', dest='verbose', help='Verbosity')
     args = parser.parse_args()
 
@@ -98,6 +100,16 @@ def main():
     raw_file = args.raw
     outlier_samples = args.outliers
     verbose = args.verbose
+    config_file = args.config
+
+    with open(config_file, "r") as f:
+        config = yaml.load(f, Loader=yaml.FullLoader)
+
+    large_cnv_size = int(config['large_cnv_size'])
+    gnomad_col = config['gnomad_col']
+    gnomad_AF = float(config['gnomad_AF'])
+    parents_AF = float(config['parents_AF'])
+    parents_SC = int(config['parents_SC'])
 
     # Read files
     verbosePrint('Reading Input Files', verbose)
@@ -132,8 +144,8 @@ def main():
 
     # Flag if small or large CNV based on 5Kb cutoff
     verbosePrint('Flagging calls depending on size', verbose)
-    bed['is_large_cnv'] = (bed['SVLEN'] >= 1000) & ((bed['svtype'] == 'DEL') | (bed['svtype'] == 'DUP'))
-    bed['is_small_cnv'] = (bed['SVLEN'] < 1000) & ((bed['svtype'] == 'DEL') | (bed['svtype'] == 'DUP'))
+    bed['is_large_cnv'] = (bed['SVLEN'] >= large_cnv_size) & ((bed['svtype'] == 'DEL') | (bed['svtype'] == 'DUP'))
+    bed['is_small_cnv'] = (bed['SVLEN'] < large_cnv_size) & ((bed['svtype'] == 'DEL') | (bed['svtype'] == 'DUP'))
     bed['is_depth_only'] = (bed['EVIDENCE'] == "RD")
 
     # Split into one row per sample
@@ -151,13 +163,11 @@ def main():
 
     # Filter out by frequency - AF gnomad < 0.01 OR inGD
     verbosePrint('Filtering by frequency', verbose)
-    gnomad_col_name = "gnomad_v2.1_sv_AF"
-    # gnomad_col_name = "gnomAD_V2_AF"
-    bed_child[gnomad_col_name] = pd.to_numeric(bed_child[gnomad_col_name])
+    bed_child[gnomad_col] = pd.to_numeric(bed_child[gnomad_col])
     bed_child["AF"] = pd.to_numeric(bed_child["AF"])
 
-    bed_child = bed_child[((bed_child[gnomad_col_name] <= 0.01) |
-                           (bed_child[gnomad_col_name].isnull())) |
+    bed_child = bed_child[((bed_child[gnomad_col] <= gnomad_AF) |
+                           (bed_child[gnomad_col].isnull())) |
                           (bed_child['in_gd'] == True)]
 
     # bed_child = bed_child[ ((bed_child['AF'] < 0.01) | (bed_child['AF'].isnull())) |
@@ -168,8 +178,8 @@ def main():
     bed_child['num_parents_family'] = bed_child.apply(lambda r: getFamilyCount(r, ped), axis=1)
     bed_child = bed_child[ (bed_child['num_parents_family'] == 0) &
                            (bed_child['num_children'] >= 1) &
-                           (bed_child['AF_parents'] <= 0.01) &
-                           (bed_child['num_parents'] <= 5) ]
+                           (bed_child['AF_parents'] <= parents_AF) &
+                           (bed_child['num_parents'] <= parents_SC) ]
 
     # Extract info from the VCF file - no PE_GT, PE_GQ, SR_GT, SR_GQ
     verbosePrint('Appending FILTER information', verbose)
@@ -212,7 +222,7 @@ def main():
     # If RD,SR and <1Kb, treat RD,SR as SR
     verbosePrint('Small CNVs check', verbose)
     bed_child['EVIDENCE_FIX'] = bed_child['EVIDENCE']
-    bed_child[(bed_child['SVLEN'] <= 1000) & \
+    bed_child[(bed_child['SVLEN'] <= large_cnv_size) & \
                     (bed_child['EVIDENCE'] == "RD,SR") & \
                     ((bed_child['svtype'] == 'DEL') | (bed_child['svtype'] == 'DUP'))]['EVIDENCE_FIX'] = "SR"
 
