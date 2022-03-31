@@ -138,7 +138,7 @@ def main():
     bed['AF_parents'] = bed.apply(lambda r: getParentsFrequency(r, parents), axis=1)
 
     # Remove mCNVs, BNDs and SVs in sex chromosomes
-    verbosePrint('Remove BND,CNV and chrY calls', verbose)
+    verbosePrint('Remove BND and mCNV', verbose)
     bed = bed[(~bed['svtype'].isin(['BND', 'CNV']))]
     # bed = bed[(~bed['svtype'].isin(['BND', 'CNV']) & (~bed['chrom'].isin(["chrY", "chrX"])))]
 
