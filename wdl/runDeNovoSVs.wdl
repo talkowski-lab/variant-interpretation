@@ -9,6 +9,7 @@ workflow deNovoSV {
         File disorder_input
         Array[String] contigs
         String raw_dir
+        File python_config
         String variant_interpretation_docker
     }
 
@@ -26,6 +27,7 @@ workflow deNovoSV {
                 disorder_input=disorder_input,
                 chromosome=contig,
                 raw_input=raw_input,
+                python_config=python_config
                 variant_interpretation_docker=variant_interpretation_docker
         }
     }
@@ -39,6 +41,7 @@ task getDeNovo{
         File disorder_input
         String chromosome
         File raw_input
+        File python_config
         String variant_interpretation_docker
     }
 
@@ -55,6 +58,7 @@ task getDeNovo{
                 --disorder ~{disorder_input} \
                 --out ~{chromosome}.denovo.bed \
                 --raw ~{raw_input} \
+                --config ~{python_config} \
                 --verbose True \
                 --outliers ~{chromosome}.denovo.outliers.bed
     >>>
