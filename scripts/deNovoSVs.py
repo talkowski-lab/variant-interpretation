@@ -189,9 +189,12 @@ def main():
     bed_child['RD_CN'] = bed_child.apply(lambda r: variantInfo(r, 'RD_CN', vcf), axis=1)
     bed_child['RD_GQ'] = bed_child.apply(lambda r: variantInfo(r, 'RD_GQ', vcf), axis=1)
 
+    # Remove WHAM only and GT = 1
+    verbosePrint('Remove wham only and GT=1 calls', verbose)
+    bed_child = bed_child[~((bed_child['ALGORITHMS'] == "wham") & (bed_child['GQ'] == '1'))]
+
     # LARGE CNV: Check for false negative in parents: check depth in parents, independently of the calls
     verbosePrint('Large CNVs check', verbose)
-
     # 1. Add parental RD_CN field and strip out if same as in proband
     bed_child['paternal_rdcn'] = bed_child.apply(lambda r: getRdCnParent(r, ped, vcf, 'paternal_id'), axis=1)
     bed_child['maternal_rdcn'] = bed_child.apply(lambda r: getRdCnParent(r, ped, vcf, 'maternal_id'), axis=1)
