@@ -306,7 +306,7 @@ def main():
         bed_filt_cnv_ref = pybedtools.BedTool(bed_filt_cnv_ref, from_string=True).sort()
         bed_filt_cnv_overlap = bed_filt_cnv_ref.intersect(raw_bed_ref,
                                                           wo=True
-                                                          # f='0.2'
+                                                          f='0.5'
                                                           # r=True ##Too strict?
                                                           ).to_dataframe(disable_auto_names=True, header=None)
         cnv_names_overlap = bed_filt_cnv_overlap[3].to_list()
