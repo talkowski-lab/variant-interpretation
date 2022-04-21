@@ -110,6 +110,7 @@ def main():
     gnomad_AF = float(config['gnomad_AF'])
     parents_AF = float(config['parents_AF'])
     parents_SC = int(config['parents_SC'])
+    raw_overlap = float(config['raw_overlap'])
 
     # Read files
     verbosePrint('Reading Input Files', verbose)
@@ -306,8 +307,8 @@ def main():
         bed_filt_cnv_ref = pybedtools.BedTool(bed_filt_cnv_ref, from_string=True).sort()
         bed_filt_cnv_overlap = bed_filt_cnv_ref.intersect(raw_bed_ref,
                                                           wo=True,
-                                                          f='0.5'
-                                                          # r=True ##Too strict?
+                                                          f=raw_overlap,
+                                                          r=True
                                                           ).to_dataframe(disable_auto_names=True, header=None)
         cnv_names_overlap = bed_filt_cnv_overlap[3].to_list()
     else:
