@@ -49,7 +49,6 @@ def variantInfo(row, field, vcf):
         if samp in vcf.columns:
             samp_info = vcf[(vcf['ID'] == row_name)][samp].str.split(':').tolist()
             samp_info_field = samp_info[0][idx]
-    #         samp_info_field = samp_info[0][idx] if len(samp_info[0][idx]) > 1 else 'NA'
         else:
             samp_info_field = 'NA'
     else:
@@ -64,17 +63,21 @@ def addFamily(row, ped):
     if fam.size != 0:
         return ('_'.join([fam[0], chr]))
 
-def getRdCnParent(row, ped, vcf, parent):
+def getInfoParent(row, ped, vcf, parent, field):
     row_name = row['name']
     sample = row['sample']
-    info = []
     parent_id = ped[(ped['subject_id'] == sample)][parent].values
-    if parent_id[0] != "0":
-        parent_rdcn = vcf[(vcf['ID'] == row_name)][parent_id[0]].str.split(':').tolist()[0][2]
-        info.append(parent_rdcn)
+
+    filt_pos = vcf[(vcf['ID'] == row_name)]['FORMAT'].str.split(':').tolist()
+
+    if (field in filt_pos[0]):
+        idx = filt_pos[0].index(field)
+        parent_info = vcf[(vcf['ID'] == row_name)][parent_id[0]].str.split(':').tolist()
+        parent_info_field = parent_info[0][idx]
     else:
-        info.append('NA')
-    return (':'.join(info))
+        return('NA')
+
+    return(parent_info_field)
 
 def main():
     """
@@ -189,6 +192,10 @@ def main():
     bed_child['GQ']    = bed_child.apply(lambda r: variantInfo(r, 'GQ', vcf), axis=1)
     bed_child['RD_CN'] = bed_child.apply(lambda r: variantInfo(r, 'RD_CN', vcf), axis=1)
     bed_child['RD_GQ'] = bed_child.apply(lambda r: variantInfo(r, 'RD_GQ', vcf), axis=1)
+    bed_child['PE_GQ'] = bed_child.apply(lambda r: variantInfo(r, 'PE_GQ', vcf), axis=1)
+    bed_child['PE_GT'] = bed_child.apply(lambda r: variantInfo(r, 'PE_GT', vcf), axis=1)
+    bed_child['SR_GQ'] = bed_child.apply(lambda r: variantInfo(r, 'SR_GQ', vcf), axis=1)
+    bed_child['SR_GT'] = bed_child.apply(lambda r: variantInfo(r, 'SR_GT', vcf), axis=1)
 
     # Remove WHAM only and GT = 1
     verbosePrint('Remove wham only and GT=1 calls', verbose)
@@ -197,8 +204,10 @@ def main():
     # LARGE CNV: Check for false negative in parents: check depth in parents, independently of the calls
     verbosePrint('Large CNVs check', verbose)
     # 1. Add parental RD_CN field and strip out if same as in proband
-    bed_child['paternal_rdcn'] = bed_child.apply(lambda r: getRdCnParent(r, ped, vcf, 'paternal_id'), axis=1)
-    bed_child['maternal_rdcn'] = bed_child.apply(lambda r: getRdCnParent(r, ped, vcf, 'maternal_id'), axis=1)
+    bed_child['paternal_rdcn'] = bed_child.apply(lambda r: getInfoParent(r, ped, vcf, 'paternal_id', 'RD_CN'), axis=1)
+    bed_child['maternal_rdcn'] = bed_child.apply(lambda r: getInfoParent(r, ped, vcf, 'maternal_id', 'RD_CN'), axis=1)
+    bed_child['paternal_srgq'] = bed_child.apply(lambda r: getInfoParent(r, ped, vcf, 'paternal_id', 'SR_GQ'), axis=1)
+    bed_child['maternal_srgq'] = bed_child.apply(lambda r: getInfoParent(r, ped, vcf, 'maternal_id', 'SR_GQ'), axis=1)
 
     bed_child = bed_child[(bed_child['RD_CN'] != bed_child['maternal_rdcn']) &
                           (bed_child['RD_CN'] != bed_child['paternal_rdcn'])]
