@@ -64,12 +64,12 @@ task getDeNovo{
     >>>
 
     runtime {
-        memory: "48 GiB"
-        disks: "local-disk 32 HDD"
+        memory: "12 GiB"
+        disks: "local-disk 4 HDD"
         cpu: 1
         preemptible: 3
         maxRetries: 1
         docker: variant_interpretation_docker
-        bootDiskSizeGb: 16
+        bootDiskSizeGb: 8
     }
 }
