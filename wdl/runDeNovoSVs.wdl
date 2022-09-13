@@ -11,6 +11,8 @@ workflow deNovoSV {
         String raw_dir
         File python_config
         String variant_interpretation_docker
+        RuntimeAttr? runtime_attr_override
+
     }
 
     scatter (contig in contigs) {
@@ -28,7 +30,8 @@ workflow deNovoSV {
                 chromosome=contig,
                 raw_input=raw_input,
                 python_config=python_config,
-                variant_interpretation_docker=variant_interpretation_docker
+                variant_interpretation_docker=variant_interpretation_docker,
+                runtime_attr_override = runtime_attr_override
         }
     }
 }
@@ -44,6 +47,16 @@ task getDeNovo{
         File python_config
         String variant_interpretation_docker
     }
+
+    RuntimeAttr default_attr = object {
+        cpu: 1,
+        mem_gb: 12,
+        disk_gb: 4,
+        boot_disk_gb: 8,
+        preemptible: 3,
+        max_retries: 1
+    }
+    RuntimeAttr runtime_attr = select_first([runtime_attr_override, default_attr])
 
     output{
         File denovo_output = "~{chromosome}.denovo.bed"
@@ -64,12 +77,12 @@ task getDeNovo{
     >>>
 
     runtime {
-        memory: "12 GiB"
-        disks: "local-disk 4 HDD"
-        cpu: 1
-        preemptible: 3
-        maxRetries: 1
+        cpu: select_first([runtime_attr.cpu, default_attr.cpu])
+        memory: select_first([runtime_attr.mem_gb, default_attr.mem_gb]) + " GiB"
+        disks: "local-disk " + select_first([runtime_attr.disk_gb, default_attr.disk_gb]) + " HDD"
+        bootDiskSizeGb: select_first([runtime_attr.boot_disk_gb, default_attr.boot_disk_gb])
+        preemptible: select_first([runtime_attr.preemptible, default_attr.preemptible])
+        maxRetries: select_first([runtime_attr.max_retries, default_attr.max_retries])
         docker: variant_interpretation_docker
-        bootDiskSizeGb: 8
     }
 }
