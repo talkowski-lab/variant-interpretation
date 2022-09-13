@@ -1,5 +1,7 @@
 version 1.0
     
+import "Structs.wdl"
+
 workflow deNovoSV {
 
     input {
@@ -46,6 +48,7 @@ task getDeNovo{
         File raw_input
         File python_config
         String variant_interpretation_docker
+        runtime_attr_override = runtime_attr_override
     }
 
     RuntimeAttr default_attr = object {
