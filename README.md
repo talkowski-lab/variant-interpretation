@@ -14,7 +14,7 @@ This repository contains utilities for consolidating, annotating and filtering s
 * [cromshell](https://github.com/broadinstitute/cromshell) for interacting with a dedicated Cromwell server.
  
 ## <a name="denovo">De novo SV discovery</a>
-Filters <i>de novo</i> SV obtained from [GATK-SV](https://github.com/broadinstitute/gatk-sv) to improve specificity. The filtering is based on a combination of site-specific and sample-specific metrics:
+Filters <i>de novo</i> SV obtained from [GATK-SV](https://github.com/broadinstitute/gatk-sv) to improve specificity of <i>de novo</i> SV calls. The filtering is based on a combination of site-specific and sample-specific metrics:
 * Frequency filter
   * gnomAD AF <= 0.01 OR in genomic disorder (GD)
   * Other parents in the cohort: AF <= 0.01 OR AC <= 3 
@@ -30,7 +30,7 @@ Filters <i>de novo</i> SV obtained from [GATK-SV](https://github.com/broadinstit
 * VCF file: annotated with [GATK-SV AnnotateVcf](https://github.com/broadinstitute/gatk-sv#annotatevcf-in-development).
 * BED file: obtained from the main VCF GATK-SV file and converted with `svtk vcf2bed --i all --include-filters vcf bed`. 
 * PED file: with columns `family_id, subject_id, paternal_id, maternal_id, sex, affected, family_size`.
-* Disorder calls: list of SV names that overlap with genomic disorder regions.
+* Disorder calls: list of SV names that overlap with genomic disorder regions. Example: `bedtools intersect -wa -wb -f 0.5 -a GD_segments_hg38.sort.bed -b input.bed.gz | cut -f10 > gd.calls.txt`
 * Directory with raw calls from [GATK-SV GatherBatchEvidence](https://github.com/broadinstitute/gatk-sv#gatherbatchevidence) module with the following columns: `chrom, start, end, svtype, sample`
   * The `chrom` column corresponds to a string formed by `chrom_svtype_sample` so the overlap can be performed at a sample and SV type level.
 
