@@ -19,8 +19,8 @@ workflow deNovoSV {
 
     scatter (contig in contigs) {
 
-        File bed_input = "~{bed_dir}/phase2.annotated.~{contig}.bed.gz"
-        File vcf_input = "~{vcf_dir}/phase2.annotated.~{contig}.noheader.vcf.gz"
+        File bed_input = "~{bed_dir}/*~{contig}.bed.gz"
+        File vcf_input = "~{vcf_dir}/*~{contig}.noheader.vcf.gz"
         File raw_input = "~{raw_dir}/~{contig}_all_batches_m01_ref_sort.bed.gz"
 
         call getDeNovo{
@@ -48,7 +48,7 @@ task getDeNovo{
         File raw_input
         File python_config
         String variant_interpretation_docker
-        runtime_attr_override = runtime_attr_override
+        RuntimeAttr? runtime_attr_override
     }
 
     RuntimeAttr default_attr = object {
