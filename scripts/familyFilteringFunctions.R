@@ -9,18 +9,10 @@ library("optparse")
 library("plyr")
 library("data.table")
 library("future.apply")
-# library("bedr")
 library("dplyr")
 library("tidyr")
 
 `%ni%` <- Negate(`%in%`)
-
-eo_path <- '/data/talkowski/an436/resources/gnomad/constrained_gnomad_oe_3.5.genes.list'
-prec_path <- '/data/talkowski/an436/resources/gnomad/gnomad.v2.1.1.pRec.0.9.txt'
-pli_path <- '/data/talkowski/an436/resources/gnomad/gnomad.v2.1.1.pLI.0.9.txt'
-# gdroi_path <- '/data/talkowski/an436/projects/CMG/batch1/data/GD_segments_hg38.sort.merge.bed'
-hpodb_path <- '/data/talkowski/an436/resources/hpo/latest/phenotype_to_genes.txt'
-omim_path <- '/data/talkowski/an436/resources/omim/20201201/genemap2.ref.txt'
 
 #############
 ##Functions##

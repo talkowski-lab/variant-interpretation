@@ -1,31 +1,12 @@
 #!/usr/bin/env Rscript
 
-
-####################
-##Source Functions##
-####################
-
-source('~/scripts/cmg/familyFilteringFunctions.R')
-
 #####################
 ##Define parameters##
 #####################
 
 option_list = list(
-  make_option(c("-i", "--input"), type="character", default=NULL,
-              help="Variants file", metavar="character"),
-  make_option(c("-g", "--gt"), type="character", default=NULL,
-              help="Variants with genotypes file", metavar="character"),
-  make_option(c("-l", "--genelist"), type="character", default=NULL,
-              help="Genelist", metavar="character"),
-  make_option(c("-f", "--family"), type="character", default=NULL,
-              help="Family id", metavar="character"),
-  make_option(c("-d", "--genodis"), type="character", default=NULL,
-              help="Family id", metavar="character"),
-  make_option(c("-m", "--manifest"), type="character", default=NULL,
-              help="Manifest file", metavar="character"),
-  make_option(c("-o", "--output"), type="character", default="out.filt.txt",
-              help="Output file name [default= %default]", metavar="character"),
+  make_option(c("-c", "--config_file"), type="character", default=NULL,
+              help="Config file", metavar="character"),
   make_option(c("-v", "--verbose"), action="store_true", default=TRUE,
         help="Verbosity [default]")
 )
@@ -33,25 +14,17 @@ option_list = list(
 opt_parser = OptionParser(option_list=option_list);
 opt = parse_args(opt_parser)
 
-if (is.null(opt$input)){
+if (is.null(config_file)){
   print_help(opt_parser)
-  stop("At least one argument must be supplied (variants file).n", call.=FALSE)
+  stop("The config file must be supplied.n", call.=FALSE)
 }
 
-#####################
-##Parsing arguments##
-#####################
+#################
+##Source config##
+#################
 
-variants_path <- opt$input
-variants_gt_path <- opt$gt
-fam <- opt$family
-manifest_path <- opt$manifest
-out_path <- opt$output
-genelist_path <- opt$genelist
-gd_path <- opt$genodis
-
+source(config_file)
 verbose(paste0("Family ID: ", fam))
-
 
 ###################################
 ##Read files and define variables##
