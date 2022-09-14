@@ -14,7 +14,7 @@ This repository contains utilities for consolidating, annotating and filtering s
 * [cromshell](https://github.com/broadinstitute/cromshell) for interacting with a dedicated Cromwell server.
  
 ## <a name="denovo">De novo SV discovery</a>
-Filters <i>de novo</i> SV obtained from [GATK-SV](https://github.com/broadinstitute/gatk-sv) to improve specificity.  The filtering is based on a combination of site-specific and sample-specific metrics:
+Filters <i>de novo</i> SV obtained from [GATK-SV](https://github.com/broadinstitute/gatk-sv) to improve specificity. The filtering is based on a combination of site-specific and sample-specific metrics:
 * Frequency filter
   * gnomAD AF <= 0.01 OR in genomic disorder (GD)
   * Other parents in the cohort: AF <= 0.01 OR AC <= 3 
