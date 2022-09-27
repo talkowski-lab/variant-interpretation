@@ -48,6 +48,7 @@ out_file <- opt$out_file
 #################
 
 source(rconfig)
+source(opt$rfunctions)
 verbose(paste0("Family ID: ", fam))
 
 ###################################
