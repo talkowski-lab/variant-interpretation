@@ -7,6 +7,18 @@
 option_list = list(
   make_option(c("-c", "--config_file"), type="character", default=NULL,
               help="Config file", metavar="character"),
+  make_option(c("-i", "--input_file"), type="character", default=NULL,
+              help="Main VCF file", metavar="character"),
+  make_option(c("-g", "--input_gt"), type="character", default=NULL,
+              help="Family filtered VCF with genotypes", metavar="character"),
+  make_option(c("-f", "--fam"), type="character", default=NULL,
+              help="Family ID", metavar="character"),
+  make_option(c("-m", "--manifest"), type="character", default=NULL,
+              help="Manifest/Pedigree file", metavar="character"),
+  make_option(c("-d", "--gd_path"), type="character", default=NULL,
+              help="SVs overlapping genomic disorder regions", metavar="character"),
+  make_option(c("-o", "--out_file"), type="character", default=NULL,
+              help="Path to output file", metavar="character"),
   make_option(c("-v", "--verbose"), action="store_true", default=TRUE,
         help="Verbosity [default]")
 )
@@ -14,10 +26,18 @@ option_list = list(
 opt_parser = OptionParser(option_list=option_list);
 opt = parse_args(opt_parser)
 
+config_file <- opt$config_file
 if (is.null(config_file)){
   print_help(opt_parser)
   stop("The config file must be supplied.n", call.=FALSE)
 }
+
+variants_path <- opt$input_file
+variants_gt_path <- opt$input_gt
+fam <- opt$fam
+manifest_path <- opt$manifest
+gd_path <- opt$gd_path
+out_file <- opt$out_file
 
 #################
 ##Source config##
@@ -46,7 +66,7 @@ pli <- fread(pli_path, header = F)
 prec <- fread(prec_path, header = F)
 eo <- fread(eo_path, header = F)
 genelist <- fread(genelist_path, header = F)
-omim <- fread(omim_path)
+omim <- fread(mim_path)
 
 verbose("Reading manifest and variants")
 manifest <- fread(manifest_path, stringsAsFactors = F, header = T)
