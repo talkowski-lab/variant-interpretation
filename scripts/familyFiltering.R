@@ -30,25 +30,25 @@ opt_parser = OptionParser(option_list=option_list);
 opt = parse_args(opt_parser)
 
 rconfig <- opt$rconfig
-
-if (is.null(rconfig)){
-  print_help(opt_parser)
-  stop("The config file must be supplied.n", call.=FALSE)
-}
-
 variants_path <- opt$input_file
 variants_gt_path <- opt$input_gt
 fam <- opt$fam
 manifest_path <- opt$manifest
 gd_path <- opt$gd_path
 out_file <- opt$out_file
+rfunctions <- opt$rfunctions
+
+if (is.null(rconfig)){
+  print_help(opt_parser)
+  stop("The config file must be supplied.n", call.=FALSE)
+}
 
 #################
 ##Source config##
 #################
 
 source(rconfig)
-source(opt$rfunctions)
+source(rfunctions)
 verbose(paste0("Family ID: ", fam))
 
 ###################################
