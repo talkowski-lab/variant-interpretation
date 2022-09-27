@@ -3,6 +3,7 @@
 #####################
 ##Define parameters##
 #####################
+library("optparse")
 
 option_list = list(
   make_option(c("-c", "--config_file"), type="character", default=NULL,
