@@ -82,7 +82,9 @@ if( nrow(subset(fam_info, affected == 2)) == 0 ){
 }
 vars <- fread(variants_path, header = T, stringsAsFactors = F)
 names(vars)[1] <- "chrom"
-vars_gt <- fread(variants_gt_path, header = T, stringsAsFactors = F, skip = 161)
+
+vars_gt_command <- paste0("zcat ", variants_gt_path, " | grep -v ^##")
+vars_gt <- fread(vars_gt_command, header = T, stringsAsFactors = F)
 fam_info <- subset(fam_info, subject_id %in% names(vars_gt))
 fam_samples <- fam_info$subject_id
 fam_struct <- unique(fam_info$family_structure)
