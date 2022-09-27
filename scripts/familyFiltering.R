@@ -6,7 +6,7 @@
 library("optparse")
 
 option_list = list(
-  make_option(c("-c", "--config_file"), type="character", default=NULL,
+  make_option(c("-c", "--rconfig"), type="character", default=NULL,
               help="Config file", metavar="character"),
   make_option(c("-i", "--input_file"), type="character", default=NULL,
               help="Main VCF file", metavar="character"),
@@ -20,6 +20,8 @@ option_list = list(
               help="SVs overlapping genomic disorder regions", metavar="character"),
   make_option(c("-o", "--out_file"), type="character", default=NULL,
               help="Path to output file", metavar="character"),
+  make_option(c("-u", "--rfunctions"), type="character", default=NULL,
+              help="Path to r functions file", metavar="character"),
   make_option(c("-v", "--verbose"), action="store_true", default=TRUE,
         help="Verbosity [default]")
 )
@@ -27,8 +29,9 @@ option_list = list(
 opt_parser = OptionParser(option_list=option_list);
 opt = parse_args(opt_parser)
 
-config_file <- opt$config_file
-if (is.null(config_file)){
+rconfig <- opt$rconfig
+
+if (is.null(rconfig)){
   print_help(opt_parser)
   stop("The config file must be supplied.n", call.=FALSE)
 }
@@ -44,7 +47,7 @@ out_file <- opt$out_file
 ##Source config##
 #################
 
-source(config_file)
+source(rconfig)
 verbose(paste0("Family ID: ", fam))
 
 ###################################
