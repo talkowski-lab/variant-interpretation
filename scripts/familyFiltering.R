@@ -118,7 +118,7 @@ vars_aff$IN_GD <- vars_aff$name %in% gdroi$V10
 #Remove common SVs
 vars_aff_rare <- subset(vars_aff, 
                           IN_GD |
-                          (AF <= 0.03 & (gnomad_v2.1_sv_AF <= 0.01 | is.na(gnomad_v2.1_sv_AF)))
+                          (AF <= 0.03 & (gnomAD_V2_AF <= 0.01 | is.na(gnomAD_V2_AF)))
                         )
 
 ############
@@ -228,7 +228,7 @@ vars_aff_rare_gt$FILT_ABSENT_UNAFF <- FALSE
 vars_aff_rare_gt[vars_aff_rare_gt$SC_ALL_UNAFF <= 5 &
 # vars_aff_rare_gt[vars_aff_rare_gt$SC_ALL_UNAFF == 0 & 
 			vars_aff_rare_gt$AC <=10 &
-			(is.na(vars_aff_rare_gt$gnomad_v2.1_sv_AF) | gnomad_v2.1_sv_AF <= 1e-3)
+			(is.na(vars_aff_rare_gt$gnomAD_V2_AF) | gnomAD_V2_AF <= 1e-3)
 			# (vars_aff_rare_gt$GENELIST_MATCH | vars_aff_rare_gt$HPO_MATCH | vars_aff_rare_gt$eo_ANY ) &
       ,]$FILT_ABSENT_UNAFF <- TRUE
 
