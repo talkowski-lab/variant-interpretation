@@ -326,4 +326,4 @@ vars_out <- subset(vars_aff_rare_gt, IN_GD | FILT_ABSENT_UNAFF | FILT_MULT_HIT |
 vars_out$FAMILY <- fam
 
 #Write output
-write.table(vars_out, out_path, sep = '\t', quote = F, row.names = F)
+write.table(vars_out, out_file, sep = '\t', quote = F, row.names = F)
