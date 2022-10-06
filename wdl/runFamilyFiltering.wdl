@@ -119,7 +119,7 @@ task getGenomicDisorders{
     }
 
     command <<<
-        bedtools intersect -wa -wb -f 0.5 -a ~{vcf_file} -b ~{genomic_disorder_input} | cut -f 3 |sort -u> gd.names.txt
+        bedtools intersect -wa -wb -f 0.5 -a ~{bed_file} -b ~{genomic_disorder_input} | cut -f 3 |sort -u> gd.names.txt
     >>>
 
     runtime {
