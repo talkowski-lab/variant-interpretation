@@ -33,23 +33,25 @@ workflow familyFiltering {
 
     scatter (family in families) {
         call subsetFamilyVCF{
-            family=family,
-            vcf_file=vcf_file,
-            ped_file=ped_file,
-            genomic_disorder_input=genomic_disorder_input,
-            variant_interpretation_docker=variant_interpretation_docker,
-            runtime_attr_override = runtime_attr_override
+            input:
+                family=family,
+                vcf_file=vcf_file,
+                ped_file=ped_file,
+                genomic_disorder_input=genomic_disorder_input,
+                variant_interpretation_docker=variant_interpretation_docker,
+                runtime_attr_override = runtime_attr_override
         }
 
         call SVfamilyFiltering{
-            family=family,
-            family_vcf=subsetFamilyVCF.vcf_family,
-            bed_file=vcfToBed.bed_output,
-            ped_file=ped_file,
-            genomic_disorder_names=getGenomicDisorders.gd_output,
-            rconfig=rconfig,
-            variant_interpretation_docker=variant_interpretation_docker,
-            runtime_attr_override = runtime_attr_override
+            input:
+                family=family,
+                family_vcf=subsetFamilyVCF.vcf_family,
+                bed_file=vcfToBed.bed_output,
+                ped_file=ped_file,
+                genomic_disorder_names=getGenomicDisorders.gd_output,
+                rconfig=rconfig,
+                variant_interpretation_docker=variant_interpretation_docker,
+                runtime_attr_override = runtime_attr_override
         }
     }
 }
