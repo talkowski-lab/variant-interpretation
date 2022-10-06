@@ -16,7 +16,7 @@ workflow familyFiltering {
         RuntimeAttr? runtime_attr_override
     }
 
-    call vcf2bed{
+    call vcfToBed{
         input:
             vcf_file=vcf_file,
             cohort_prefix = cohort_prefix,
