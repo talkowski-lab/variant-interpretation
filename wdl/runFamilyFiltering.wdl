@@ -11,7 +11,7 @@ workflow familyFiltering {
         String cohort_prefix
         Array[String] families
         File rconfig
-        File rfunctions
+        File rconfig
         String variant_interpretation_docker
         RuntimeAttr? runtime_attr_override
     }
@@ -48,7 +48,6 @@ workflow familyFiltering {
             ped_file=ped_file,
             genomic_disorder_names=getGenomicDisorders.gd_output,
             rconfig=rconfig,
-            rfunctions=rfunctions
             variant_interpretation_docker=variant_interpretation_docker,
             runtime_attr_override = runtime_attr_override
         }
@@ -182,7 +181,6 @@ task SVfamilyFiltering{
         File ped_file
         File genomic_disorder_names
         File rconfig
-        File rfunctions
         String variant_interpretation_docker
         RuntimeAttr? runtime_attr_override
     }
@@ -210,7 +208,7 @@ task SVfamilyFiltering{
             -m ~{ped_file} \
             -d ~{genomic_disorder_names} \
             -c ~{rconfig} \
-            -u ~{rfunctions} \
+            -u /src/variant-interpretation/scripts/familyFilteringFunctions.R \
             -v
     >>>
 
