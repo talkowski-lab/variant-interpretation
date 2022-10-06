@@ -1,5 +1,5 @@
 #!/usr/bin/env Rscript
-
+#Author: Alba Sanchis-Juan
 
 ##################
 ##Load libraries##

@@ -1,4 +1,5 @@
 #!/usr/bin/env Rscript
+#Author: Alba Sanchis-Juan
 
 #####################
 ##Define parameters##
