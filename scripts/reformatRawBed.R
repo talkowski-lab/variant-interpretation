@@ -16,16 +16,19 @@ out_bed <- args[2]
 #Read input bed
 bed <- fread(input_bed)
 
+#adding back column names
+colnames(bed) <- c("CHROM", "start", "end", "name", "svtype", "samples") 
+
 #Split into one sample per row
 bed %>%
-  subset(select = c(`#chrom`, start, end, SVTYPE, samples)) %>%
+  subset(select = c(CHROM, start, end, svtype, samples)) %>%
   separate_rows(samples, sep = ",", convert = T) -> bed_split
 
 #Reformat chromosome column
-bed_split$CHROM <- paste0(bed_split$`#chrom`, "_", bed_split$SVTYPE, "_", bed_split$samples)
+bed_split$CHROM <- paste0(bed_split$CHROM, "_", bed_split$svtype, "_", bed_split$samples)
 
 #Select specific samples
-bed_subset <- subset(bed_split, select = c(CHROM, start, end, SVTYPE, samples))
+bed_subset <- subset(bed_split, select = c(CHROM, start, end, svtype, samples))
 
 #Write output file
-write.table(bed_split, out_file, sep = "\t", quote = F, row.names = F, col.names = F)
+write.table(bed_subset, out_bed, sep = "\t", quote = F, row.names = F, col.names = F)

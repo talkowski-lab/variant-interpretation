@@ -63,7 +63,7 @@ def addFamily(row, ped):
     if fam.size != 0:
         return ('_'.join([fam[0], chr]))
 
-def getInfoParent(row, ped, vcf, parent, field):
+def getInfoParent(row, ped, vcf, parent, field):    
     row_name = row['name']
     sample = row['sample']
     parent_id = ped[(ped['subject_id'] == sample)][parent].values
@@ -105,6 +105,8 @@ def main():
     verbose = args.verbose
     config_file = args.config
 
+
+
     with open(config_file, "r") as f:
         config = yaml.load(f, Loader=yaml.FullLoader)
 
@@ -113,17 +115,23 @@ def main():
     gnomad_AF = float(config['gnomad_AF'])
     parents_AF = float(config['parents_AF'])
     parents_SC = int(config['parents_SC'])
-    raw_overlap = float(config['raw_overlap'])
+    large_raw_overlap = float(config['large_raw_overlap'])
+    small_raw_overlap = float(config['small_raw_overlap'])
+    cohort_AF = float(config['cohort_AF'])
 
     # Read files
     verbosePrint('Reading Input Files', verbose)
     bed = pd.read_csv(bed_file, sep='\t').replace(np.nan, '', regex=True)
     bed = bed[(bed['samples'] != "")]
     bed.rename(columns={'#chrom': 'chrom'}, inplace=True)
+    #vcf = pd.read_csv(vcf_file, sep='\t', comment='#', names=('#CHROM', 'POS', 'ID', 'REF', 'ALT', 'QUAL', 'FILTER', 'INFO', 'FORMAT'))
     vcf = pd.read_csv(vcf_file, sep='\t')
     ped = pd.read_csv(ped_file, sep='\t')
     disorder = pd.read_csv(disorder_file, sep='\t', header=None)
     raw_bed = pd.read_csv(raw_file, sep='\t', header=None).replace(np.nan, '', regex=True)
+
+
+
 
     # Get parents and children ids
     verbosePrint('Getting parents/children/affected/unaffected IDs', verbose)
@@ -146,6 +154,7 @@ def main():
     bed = bed[(~bed['svtype'].isin(['BND', 'CNV']))]
     # bed = bed[(~bed['svtype'].isin(['BND', 'CNV']) & (~bed['chrom'].isin(["chrY", "chrX"])))]
 
+    
     # Flag if small or large CNV based on 5Kb cutoff
     verbosePrint('Flagging calls depending on size', verbose)
     bed['is_large_cnv'] = (bed['SVLEN'] >= large_cnv_size) & ((bed['svtype'] == 'DEL') | (bed['svtype'] == 'DUP'))
@@ -156,10 +165,12 @@ def main():
     verbosePrint('Split into one row per sample', verbose)
     bed_split = bed.assign(sample=bed.samples.str.split(",")).explode('sample')
 
+
     # Sepparate variants in children and parents
     verbosePrint('Sepparate variants in children and parents', verbose)
     bed_child = bed_split[bed_split['sample'].str.contains("|".join(children))]
     bed_parents = bed_split[bed_split['sample'].str.contains("|".join(parents))]
+
 
     # Flag variants in genomic disorder (GD) regions
     verbosePrint('Flagging variants in GD', verbose)
@@ -170,9 +181,14 @@ def main():
     bed_child[gnomad_col] = pd.to_numeric(bed_child[gnomad_col])
     bed_child["AF"] = pd.to_numeric(bed_child["AF"])
 
-    bed_child = bed_child[((bed_child[gnomad_col] <= gnomad_AF) |
-                           (bed_child[gnomad_col].isnull())) |
-                          (bed_child['in_gd'] == True)]
+    bed_child = bed_child[( ((bed_child[gnomad_col] <= gnomad_AF) & (bed_child['AF'] <= cohort_AF)) |
+                           ((bed_child[gnomad_col].isnull() )  & (bed_child['AF'] <= cohort_AF)) |
+                          (bed_child['in_gd'] == True) )]  
+
+
+    
+
+
 
     # bed_child = bed_child[ ((bed_child['AF'] < 0.01) | (bed_child['AF'].isnull())) |
     #                        ((bed_child['in_gd'] == True) & ((bed_child['AF'] < 0.03) | (bed_child['AF'].isnull()) )) ]
@@ -184,6 +200,10 @@ def main():
                            (bed_child['num_children'] >= 1) &
                            (bed_child['AF_parents'] <= parents_AF) &
                            (bed_child['num_parents'] <= parents_SC) ]
+
+
+
+    #print(bed_child['svtype'].value_counts()['INS']) #JUMPED DOWN TO 14
 
     # Extract info from the VCF file - no PE_GT, PE_GQ, SR_GT, SR_GQ
     verbosePrint('Appending FILTER information', verbose)
@@ -197,9 +217,14 @@ def main():
     bed_child['SR_GQ'] = bed_child.apply(lambda r: variantInfo(r, 'SR_GQ', vcf), axis=1)
     bed_child['SR_GT'] = bed_child.apply(lambda r: variantInfo(r, 'SR_GT', vcf), axis=1)
 
+
     # Remove WHAM only and GT = 1
     verbosePrint('Remove wham only and GT=1 calls', verbose)
     bed_child = bed_child[~((bed_child['ALGORITHMS'] == "wham") & (bed_child['GQ'] == '1'))]
+
+    #print(bed_child.loc[bed_child['name'].str.contains('INS_chr16_366')][['name','RD_CN', 'SR_GQ']])
+
+
 
     # LARGE CNV: Check for false negative in parents: check depth in parents, independently of the calls
     verbosePrint('Large CNVs check', verbose)
@@ -209,8 +234,8 @@ def main():
     bed_child['paternal_srgq'] = bed_child.apply(lambda r: getInfoParent(r, ped, vcf, 'paternal_id', 'SR_GQ'), axis=1)
     bed_child['maternal_srgq'] = bed_child.apply(lambda r: getInfoParent(r, ped, vcf, 'maternal_id', 'SR_GQ'), axis=1)
 
-    bed_child = bed_child[(bed_child['RD_CN'] != bed_child['maternal_rdcn']) &
-                          (bed_child['RD_CN'] != bed_child['paternal_rdcn'])]
+    bed_child = bed_child.loc[(bed_child['is_large_cnv'] == False) | ((bed_child['RD_CN'] != bed_child['maternal_rdcn']) & (bed_child['RD_CN'] != bed_child['paternal_rdcn']))]
+    
 
     # 2. Check if call in parents with bedtools coverage (332)
     verbosePrint('CNV present in parents check', verbose)
@@ -231,6 +256,8 @@ def main():
     ##Add if overlap to bed child table
     bed_child['overlap_parent'] = (bed_child['name'].isin(names_overlap))
 
+
+
     # Small calls:
     # If RD,SR and <1Kb, treat RD,SR as SR
     verbosePrint('Small CNVs check', verbose)
@@ -241,6 +268,7 @@ def main():
 
     ##Add if variant contains RD evidence
     bed_child['contains_RD'] = bed_child.EVIDENCE_FIX.str.contains('RD')
+
 
     ###############
     ## FILTERING ##
@@ -267,18 +295,24 @@ def main():
     #Subset table
     bed_filt = bed_child[(bed_child['name'].isin(keep_names))]
 
+    
+
     #####################
     ## REMOVE OUTLIERS ##
     #####################
     verbosePrint('Removing outliers', verbose)
     #1.5*IQR + 3Q
     sample_counts = bed_filt['sample'].value_counts()
+    #print(sample_counts)
     q3, q1 = np.percentile(sample_counts.tolist(), [75, 25])
     iqr = q3 - q1
-    count_threshold = int(math.ceil((1.5*iqr + q3)*3)) #multiplying by 3 since threshold seemed too strict
+    count_threshold = int(math.ceil((1.5*iqr + q3)*3))
+    #print(count_threshold) #multiplying by 3 since threshold seemed too strict
+    #exit()
     sample_counts2 = sample_counts.rename_axis('sample').reset_index(name='count')
     samples_keep = sample_counts2[(sample_counts2['count'] <= count_threshold)]['sample'].tolist()
 
+    #print(samples_keep)
     ###################
     ##RAW FILES CHECK##
     ###################
@@ -290,12 +324,18 @@ def main():
     raw_bed_ref = raw_bed.to_string(header=False, index=False)
     raw_bed_ref = pybedtools.BedTool(raw_bed_ref, from_string=True)
 
+    #print(raw_bed_ref)
+    #exit()
+
     #Reformat de novo filt calls
     bed_filt['chrom_type_sample'] = bed_filt['chrom'] + "_" + bed_filt['SVTYPE'] + "_" + bed_filt['sample']
+
+
     cols_keep2 = ['chrom_type_sample', 'start', 'end', 'name', 'svtype', 'sample']
 
     ##INSERTIONS: dist < 100bp (& INS ratio > 0.1 & INS ratio < 10 ?) (dis is START-start and INS ratio is SVLEN/svlen)
     bed_filt_ins = bed_filt[bed_filt['SVTYPE'] == 'INS']
+
 
     if (len(bed_filt_ins.index) > 0):
         bed_filt_ins_ref = bed_filt_ins[cols_keep2].to_string(header=False, index=False)
@@ -304,34 +344,92 @@ def main():
         # bed_filt_ins_ref = pybedtools.BedTool(bed_filt_ins_ref, from_string=True)
         bed_filt_ins_overlap = bed_filt_ins_ref.closest(raw_bed_ref).to_dataframe(disable_auto_names=True, header=None)
         bed_filt_ins_overlap['is_close'] = abs(bed_filt_ins_overlap[7] - bed_filt_ins_overlap[1]) < 100
+        
+
+        #print(bed_filt_ins_overlap)
+        #print(bed_filt_ins_overlap.loc[bed_filt_ins_overlap.iloc[:, 3].str.contains('DEL_chr16_4510')])
+        #print(bed_filt_ins_overlap[['is_close']])
+        #print(bed_filt_ins_overlap.iloc[36])
+        #exit()
+
         ins_names_overlap = bed_filt_ins_overlap[(bed_filt_ins_overlap['is_close'] == True)][3].to_list()
     else:
         ins_names_overlap = ['']
 
-    ##CNVS: Reciprocal overlap >0.5%
-    bed_filt_cnv = bed_filt[bed_filt['SVTYPE'].isin(['DEL', 'DUP'])]
+   
 
-    if (len(bed_filt_cnv.index) > 0):
-        bed_filt_cnv_ref = bed_filt_cnv[cols_keep2].to_string(header=False, index=False)
+    ## Large CNVS: Reciprocal overlap >0.4%
+    large_bed_filt_cnv = bed_filt[bed_filt['SVTYPE'].isin(['DEL', 'DUP']) & bed_filt['is_large_cnv'] == True]
+
+
+
+    if (len(large_bed_filt_cnv.index) > 0):
+        bed_filt_cnv_ref = large_bed_filt_cnv[cols_keep2].to_string(header=False, index=False)
         bed_filt_cnv_ref = pybedtools.BedTool(bed_filt_cnv_ref, from_string=True).sort()
-        bed_filt_cnv_overlap = bed_filt_cnv_ref.intersect(raw_bed_ref,
+        large_bed_filt_cnv_overlap = bed_filt_cnv_ref.intersect(raw_bed_ref,
                                                           wo=True,
-                                                          f=raw_overlap,
+                                                          f=large_raw_overlap,
                                                           r=True
                                                           ).to_dataframe(disable_auto_names=True, header=None)
-        cnv_names_overlap = bed_filt_cnv_overlap[3].to_list()
+        large_cnv_names_overlap = large_bed_filt_cnv_overlap[3].to_list()
+        #if 'phase2_DEL_chr19_484' in cnv_names_overlap:
+            #print('exists')
     else:
-        cnv_names_overlap = ['']
+        large_cnv_names_overlap = ['']
+
+    
+
+
+    ## Small CNVs - Reciprocal overlap >0.8%
+
+    small_bed_filt_cnv = bed_filt[bed_filt['SVTYPE'].isin(['DEL', 'DUP']) & bed_filt['is_large_cnv'] == False]
+
+
+
+    if (len(small_bed_filt_cnv.index) > 0):
+        bed_filt_cnv_ref = small_bed_filt_cnv[cols_keep2].to_string(header=False, index=False)
+        bed_filt_cnv_ref = pybedtools.BedTool(bed_filt_cnv_ref, from_string=True).sort()
+        small_bed_filt_cnv_overlap = bed_filt_cnv_ref.intersect(raw_bed_ref,
+                                                          wo=True,
+                                                          f=small_raw_overlap,
+                                                          r=True
+                                                          ).to_dataframe(disable_auto_names=True, header=None)
+        small_cnv_names_overlap = small_bed_filt_cnv_overlap[3].to_list()
+        #if 'phase2_DEL_chr19_484' in cnv_names_overlap:
+            #print('exists')
+    else:
+        small_cnv_names_overlap = ['']
+
+
+
+    #print(cnv_names_overlap)
+
+    #print(bed_filt[~bed_filt['SVTYPE'].isin(['DEL', 'DUP', 'INS'])])
+    #exit()
+    
 
     ##Filtering out INS and CNV with no raw evidence
     verbosePrint('Filtering out variants with no raw evidence', verbose)
 
+    #bed_test = bed_filt[ (bed_filt['SVTYPE'].isin(['DEL', 'DUP', 'INS'])) |
+                          #(bed_filt['name'].isin(ins_names_overlap + cnv_names_overlap)) ]
     bed_final = bed_filt[ (~bed_filt['SVTYPE'].isin(['DEL', 'DUP', 'INS'])) |
-                          (bed_filt['name'].isin(ins_names_overlap + cnv_names_overlap)) ]
-    bed_final = bed_final.drop_duplicates()  # write unique values
+                          (bed_filt['name'].isin(ins_names_overlap + large_cnv_names_overlap + small_cnv_names_overlap)) ]
+
+
+
+    #bed_final = bed_final.astype('str')
+    bed_final = bed_final.drop_duplicates(subset=['name'])  # write unique values
+
 
     ##Keep samples and outliers in sepparate files
     output = bed_final[(bed_final['sample'].isin(samples_keep))]
+
+    #output = output[((output["AF"] <= 0.001) | (output['in_gd'] == True))]
+
+
+
+    #output = bed_test[(bed_test['sample'].isin(samples_keep))]
     output_outliers = bed_final[(~bed_final['sample'].isin(samples_keep))]
 
     # TO DO
