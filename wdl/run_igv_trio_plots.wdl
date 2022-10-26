@@ -24,6 +24,7 @@ workflow IGV_all_samples {
         String prefix
         String sv_base_mini_docker
         String igv_docker
+        String variant_interpretation_docker
         RuntimeAttr? runtime_attr_override
     }
 
@@ -57,6 +58,7 @@ workflow IGV_all_samples {
                     runtime_attr_override = runtime_attr_override
             }
 
+
         call igv.IGV_trio as IGV_trio {
             input:
                 varfile=generate_per_sample_bed.per_sample_varfile,
@@ -69,9 +71,9 @@ workflow IGV_all_samples {
                 pb_cram=pb_cram_list[i],
                 fa_cram=fa_cram_list[i],
                 mo_cram=mo_cram_list[i],
-                pb_crai=x_createPbCrais.crai_file[i],
-                fa_crai=x_createMoCrais.crai_file[i],
-                mo_crai=x_createFaCrais.crai_file[i],
+                pb_crai=x_createPbCrais.crai_file,
+                fa_crai=x_createMoCrais.crai_file,
+                mo_crai=x_createFaCrais.crai_file,
                 igv_docker = igv_docker
                 }
         }
@@ -97,11 +99,11 @@ task generate_per_sample_bed{
         RuntimeAttr? runtime_attr_override
     }
     RuntimeAttr default_attr=object {
-        cpu_cores: 1,
+        cpu: 1,
         mem_gb: 1,
         disk_gb: 10,
         boot_disk_gb: 10,
-        preemptible_tries: 1,
+        preemptible: 1,
         max_retries: 1
     }
 
@@ -117,12 +119,12 @@ task generate_per_sample_bed{
 
     RuntimeAttr runtime_attr = select_first([runtime_attr_override, default_attr])
     runtime {
-        cpu: select_first([runtime_attr.cpu_cores, default_attr.cpu_cores])
+        cpu: select_first([runtime_attr.cpu, default_attr.cpu])
         memory: select_first([runtime_attr.mem_gb, default_attr.mem_gb]) + " GiB"
         disks: "local-disk " + select_first([runtime_attr.disk_gb, default_attr.disk_gb]) + " HDD"
         bootDiskSizeGb: select_first([runtime_attr.boot_disk_gb, default_attr.boot_disk_gb])
         docker: sv_base_mini_docker
-        preemptible: select_first([runtime_attr.preemptible_tries, default_attr.preemptible_tries])
+        preemptible: select_first([runtime_attr.preemptible, default_attr.preemptible])
         maxRetries: select_first([runtime_attr.max_retries, default_attr.max_retries])
   }
 
@@ -136,11 +138,11 @@ task integrate_igv_plots{
         RuntimeAttr? runtime_attr_override
     }
     RuntimeAttr default_attr=object {
-        cpu_cores: 1,
+        cpu: 1,
         mem_gb: 1,
         disk_gb: 10,
         boot_disk_gb: 10,
-        preemptible_tries: 1,
+        preemptible: 1,
         max_retries: 1
     }
 
@@ -160,12 +162,12 @@ task integrate_igv_plots{
     RuntimeAttr runtime_attr = select_first([runtime_attr_override, default_attr])
 
     runtime {
-        cpu: select_first([runtime_attr.cpu_cores, default_attr.cpu_cores])
+        cpu: select_first([runtime_attr.cpu, default_attr.cpu])
         memory: select_first([runtime_attr.mem_gb, default_attr.mem_gb]) + " GiB"
         disks: "local-disk " + select_first([runtime_attr.disk_gb, default_attr.disk_gb]) + " HDD"
         bootDiskSizeGb: select_first([runtime_attr.boot_disk_gb, default_attr.boot_disk_gb])
         docker: sv_base_mini_docker
-        preemptible: select_first([runtime_attr.preemptible_tries, default_attr.preemptible_tries])
+        preemptible: select_first([runtime_attr.preemptible, default_attr.preemptible])
         maxRetries: select_first([runtime_attr.max_retries, default_attr.max_retries])
     }
 }
@@ -178,11 +180,11 @@ task x_createPbCrais{
     }
 
     RuntimeAttr default_attr = object {
-        cpu_cores: 1,
+        cpu: 1,
         mem_gb: 12,
         disk_gb: 4,
         boot_disk_gb: 8,
-        preemptible_tries: 3,
+        preemptible: 3,
         max_retries: 1
     }
     
@@ -200,11 +202,11 @@ task x_createPbCrais{
     }
 
     runtime {
-        cpu: select_first([runtime_attr.cpu_cores, default_attr.cpu_cores])
+        cpu: select_first([runtime_attr.cpu, default_attr.cpu])
         memory: select_first([runtime_attr.mem_gb, default_attr.mem_gb]) + " GiB"
         disks: "local-disk " + select_first([runtime_attr.disk_gb, default_attr.disk_gb]) + " HDD"
         bootDiskSizeGb: select_first([runtime_attr.boot_disk_gb, default_attr.boot_disk_gb])
-        preemptible: select_first([runtime_attr.preemptible_tries, default_attr.preemptible_tries])
+        preemptible: select_first([runtime_attr.preemptible, default_attr.preemptible])
         maxRetries: select_first([runtime_attr.max_retries, default_attr.max_retries])
         docker: variant_interpretation_docker
     }
@@ -218,11 +220,11 @@ task x_createMoCrais{
     }
 
     RuntimeAttr default_attr = object {
-        cpu_cores: 1,
+        cpu: 1,
         mem_gb: 12,
         disk_gb: 4,
         boot_disk_gb: 8,
-        preemptible_tries: 3,
+        preemptible: 3,
         max_retries: 1
     }
     
@@ -240,11 +242,11 @@ task x_createMoCrais{
     }
 
     runtime {
-        cpu: select_first([runtime_attr.cpu_cores, default_attr.cpu_cores])
+        cpu: select_first([runtime_attr.cpu, default_attr.cpu])
         memory: select_first([runtime_attr.mem_gb, default_attr.mem_gb]) + " GiB"
         disks: "local-disk " + select_first([runtime_attr.disk_gb, default_attr.disk_gb]) + " HDD"
         bootDiskSizeGb: select_first([runtime_attr.boot_disk_gb, default_attr.boot_disk_gb])
-        preemptible: select_first([runtime_attr.preemptible_tries, default_attr.preemptible_tries])
+        preemptible: select_first([runtime_attr.preemptible, default_attr.preemptible])
         maxRetries: select_first([runtime_attr.max_retries, default_attr.max_retries])
         docker: variant_interpretation_docker
     }
@@ -258,11 +260,11 @@ task x_createFaCrais{
     }
 
     RuntimeAttr default_attr = object {
-        cpu_cores: 1,
+        cpu: 1,
         mem_gb: 12,
         disk_gb: 4,
         boot_disk_gb: 8,
-        preemptible_tries: 3,
+        preemptible: 3,
         max_retries: 1
     }
     
@@ -280,11 +282,11 @@ task x_createFaCrais{
     }
 
     runtime {
-        cpu: select_first([runtime_attr.cpu_cores, default_attr.cpu_cores])
+        cpu: select_first([runtime_attr.cpu, default_attr.cpu])
         memory: select_first([runtime_attr.mem_gb, default_attr.mem_gb]) + " GiB"
         disks: "local-disk " + select_first([runtime_attr.disk_gb, default_attr.disk_gb]) + " HDD"
         bootDiskSizeGb: select_first([runtime_attr.boot_disk_gb, default_attr.boot_disk_gb])
-        preemptible: select_first([runtime_attr.preemptible_tries, default_attr.preemptible_tries])
+        preemptible: select_first([runtime_attr.preemptible, default_attr.preemptible])
         maxRetries: select_first([runtime_attr.max_retries, default_attr.max_retries])
         docker: variant_interpretation_docker
     }
