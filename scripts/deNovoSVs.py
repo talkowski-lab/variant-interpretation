@@ -334,6 +334,8 @@ def main():
     cols_keep2 = ['chrom_type_sample', 'start', 'end', 'name', 'svtype', 'sample']
 
     ##INSERTIONS: dist < 100bp (& INS ratio > 0.1 & INS ratio < 10 ?) (dis is START-start and INS ratio is SVLEN/svlen)
+    verbosePrint('Checking insertions in raw files', verbose)
+
     bed_filt_ins = bed_filt[bed_filt['SVTYPE'] == 'INS']
 
 
@@ -359,6 +361,7 @@ def main():
    
 
     ## Large CNVS: Reciprocal overlap >0.4%
+    verbosePrint('Checking large cnvs in raw files', verbose)
     large_bed_filt_cnv = bed_filt[bed_filt['SVTYPE'].isin(['DEL', 'DUP']) & bed_filt['is_large_cnv'] == True]
 
 
@@ -381,6 +384,7 @@ def main():
 
 
     ## Small CNVs - Reciprocal overlap >0.8%
+    verbosePrint('Checking small cnvs in raw files', verbose)
 
     small_bed_filt_cnv = bed_filt[bed_filt['SVTYPE'].isin(['DEL', 'DUP']) & bed_filt['is_large_cnv'] == False]
 
