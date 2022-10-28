@@ -164,12 +164,16 @@ def main():
     # Split into one row per sample
     verbosePrint('Split into one row per sample', verbose)
     bed_split = bed.assign(sample=bed.samples.str.split(",")).explode('sample')
+   
 
 
     # Sepparate variants in children and parents
     verbosePrint('Sepparate variants in children and parents', verbose)
     bed_child = bed_split[bed_split['sample'].str.contains("|".join(children))]
     bed_parents = bed_split[bed_split['sample'].str.contains("|".join(parents))]
+
+
+    print("Size of bed_child:",str(len(bed_child)))
 
 
     # Flag variants in genomic disorder (GD) regions
@@ -188,6 +192,7 @@ def main():
 
     
 
+    print("Size of bed_child after filtering by frequency:",str(len(bed_child)))
 
 
     # bed_child = bed_child[ ((bed_child['AF'] < 0.01) | (bed_child['AF'].isnull())) |
@@ -200,6 +205,8 @@ def main():
                            (bed_child['num_children'] >= 1) &
                            (bed_child['AF_parents'] <= parents_AF) &
                            (bed_child['num_parents'] <= parents_SC) ]
+
+    print("Size of bed_child after keeping variants in children only:",str(len(bed_child)))
 
 
 
@@ -222,6 +229,8 @@ def main():
     verbosePrint('Remove wham only and GT=1 calls', verbose)
     bed_child = bed_child[~((bed_child['ALGORITHMS'] == "wham") & (bed_child['GQ'] == '1'))]
 
+    print("Size of bed_child after removing wham only and GT=1 calls:",str(len(bed_child)))
+
     #print(bed_child.loc[bed_child['name'].str.contains('INS_chr16_366')][['name','RD_CN', 'SR_GQ']])
 
 
@@ -236,6 +245,7 @@ def main():
 
     bed_child = bed_child.loc[(bed_child['is_large_cnv'] == False) | ((bed_child['RD_CN'] != bed_child['maternal_rdcn']) & (bed_child['RD_CN'] != bed_child['paternal_rdcn']))]
     
+    print("Size of bed_child after removing if RD_CN field is same as parent:",str(len(bed_child)))
 
     # 2. Check if call in parents with bedtools coverage (332)
     verbosePrint('CNV present in parents check', verbose)
@@ -276,16 +286,25 @@ def main():
     verbosePrint('Filtering out calls', verbose)
     # Keep if in GD region
     keep_gd = bed_child[(bed_child['in_gd'] == True)]['name'].to_list()
+    print(len(keep_gd))
     # Filter out if large CNVs don't have RD support and parents overlap
     keep_large = bed_child[ (bed_child['is_large_cnv'] == True) &
                             (bed_child['contains_RD'] == True) &
                             (bed_child['overlap_parent'] == False) ]['name'].to_list()
+    print("large_cnvs")
+    print(len(keep_large))
     # Filter out if small cnvs that are SR-only don't have BOTHSIDES_SUPPORT
     keep_small = bed_child[(bed_child['is_small_cnv'] == True) &
                            ( (bed_child['EVIDENCE_FIX'] != 'SR') |
                            ( (bed_child['EVIDENCE_FIX'] == 'SR') &
                              (bed_child.FILTER.str.contains('BOTHSIDES_SUPPORT'))))
                           ]['name'].to_list()
+    print("small_cnvs before filtering:")
+    print(bed_child[(bed_child['is_small_cnv'] == True)]["FILTER"])
+    print(bed_child[(bed_child['is_small_cnv'] == True)])
+    print("small cnvs after filtering")
+    print(keep_small)
+
     # Keep any other SV type
     keep_other_sv = bed_child[~bed_child['SVTYPE'].isin(['DEL', 'DUP'])]['name'].to_list()
 
@@ -294,6 +313,12 @@ def main():
 
     #Subset table
     bed_filt = bed_child[(bed_child['name'].isin(keep_names))]
+
+    print("Size of bed_filt after removing large CNVs that dont have RD support and parents overlap and small cnvs that are SR only and dont have support on both sides:",str(len(bed_filt)))
+    
+
+    bed_filt.to_csv(path_or_buf="bed_filt.bed", mode='a', index=False, sep='\t', header=True)
+    
 
     
 
@@ -365,21 +390,28 @@ def main():
     large_bed_filt_cnv = bed_filt[bed_filt['SVTYPE'].isin(['DEL', 'DUP']) & bed_filt['is_large_cnv'] == True]
 
 
+    if (len(keep_large) != 0):
+        if (len(large_bed_filt_cnv.index) > 0):
+            bed_filt_cnv_ref = large_bed_filt_cnv[cols_keep2].to_string(header=False, index=False)
+            bed_filt_cnv_ref = pybedtools.BedTool(bed_filt_cnv_ref, from_string=True).sort()
+            large_bed_filt_cnv_overlap = bed_filt_cnv_ref.intersect(raw_bed_ref,
+                                                            wo=True,
+                                                            f=large_raw_overlap,
+                                                            r=True
+                                                            ).to_dataframe(disable_auto_names=True, header=None)
+            large_cnv_names_overlap = large_bed_filt_cnv_overlap[3].to_list()
 
-    if (len(large_bed_filt_cnv.index) > 0):
-        bed_filt_cnv_ref = large_bed_filt_cnv[cols_keep2].to_string(header=False, index=False)
-        bed_filt_cnv_ref = pybedtools.BedTool(bed_filt_cnv_ref, from_string=True).sort()
-        large_bed_filt_cnv_overlap = bed_filt_cnv_ref.intersect(raw_bed_ref,
-                                                          wo=True,
-                                                          f=large_raw_overlap,
-                                                          r=True
-                                                          ).to_dataframe(disable_auto_names=True, header=None)
-        large_cnv_names_overlap = large_bed_filt_cnv_overlap[3].to_list()
+            print(large_cnv_names_overlap)
+       
         #if 'phase2_DEL_chr19_484' in cnv_names_overlap:
             #print('exists')
+        else:
+            large_cnv_names_overlap = ['']
     else:
         large_cnv_names_overlap = ['']
 
+   # print(large_cnv_names_overlap)
+    
     
 
 
@@ -389,20 +421,23 @@ def main():
     small_bed_filt_cnv = bed_filt[bed_filt['SVTYPE'].isin(['DEL', 'DUP']) & bed_filt['is_large_cnv'] == False]
 
 
-
-    if (len(small_bed_filt_cnv.index) > 0):
-        bed_filt_cnv_ref = small_bed_filt_cnv[cols_keep2].to_string(header=False, index=False)
-        bed_filt_cnv_ref = pybedtools.BedTool(bed_filt_cnv_ref, from_string=True).sort()
-        small_bed_filt_cnv_overlap = bed_filt_cnv_ref.intersect(raw_bed_ref,
-                                                          wo=True,
-                                                          f=small_raw_overlap,
-                                                          r=True
-                                                          ).to_dataframe(disable_auto_names=True, header=None)
-        small_cnv_names_overlap = small_bed_filt_cnv_overlap[3].to_list()
-        #if 'phase2_DEL_chr19_484' in cnv_names_overlap:
+    if (len(keep_small) != 0):
+        if (len(small_bed_filt_cnv.index) > 0):
+            bed_filt_cnv_ref = small_bed_filt_cnv[cols_keep2].to_string(header=False, index=False)
+            bed_filt_cnv_ref = pybedtools.BedTool(bed_filt_cnv_ref, from_string=True).sort()
+            small_bed_filt_cnv_overlap = bed_filt_cnv_ref.intersect(raw_bed_ref,
+                                                            wo=True,
+                                                            f=small_raw_overlap,
+                                                            r=True
+                                                            ).to_dataframe(disable_auto_names=True, header=None)
+            small_cnv_names_overlap = small_bed_filt_cnv_overlap[3].to_list()
+            #if 'phase2_DEL_chr19_484' in cnv_names_overlap:
             #print('exists')
+        else:
+            small_cnv_names_overlap = ['']
     else:
         small_cnv_names_overlap = ['']
+    #print(small_bed_filt_cnv_overlap)
 
 
 
