@@ -156,7 +156,7 @@ subset(denovo_in_gd, AF_interv == "AF 0.001-0.01")$chrom_type_sample
 
 denovo_in_gd_sub <- subset(denovo_in_gd, select= c(name,AF_interv))
 
-denovo_not_in_gd_sub <- subset(denovo_not_in_gd, select= c(name,AF,gnomAD_V2_AF))
+#denovo_not_in_gd_sub <- subset(denovo_not_in_gd, select= c(name,AF,gnomAD_V2_AF))
 
 
 denovo_in_gd %>%
