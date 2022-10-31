@@ -253,7 +253,7 @@ denovo %>%
 p_evidence
 
 ##Annotation plot
-annot <- grep("__", names(denovo), value = T)
+annot <- grep("_", names(denovo), value = T)
 annot <- grep("LINCRNA", annot, value = T, invert = T)
 # annot <- annot[!annot %in% c("PROTEIN_CODING__NEAREST_TSS", "PROTEIN_CODING__INTERGENIC")]
 
