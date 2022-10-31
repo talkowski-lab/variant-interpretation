@@ -107,7 +107,7 @@ denovo %>%
   unique() %>%
   ggplot(aes(x = chrom, fill = SVTYPE)) +
   geom_bar() +
-  labs(x="Chromosome", y="Number de novo SVs", title= "Number of DeNovo SVs per Chromosome") +
+  labs(x="Chromosome", y="Number de novo SVs", title= "Number of De Novo SVs per Chromosome") +
   scale_fill_manual(values = rev(c(del_col, dup_col, ins_col, inv_col, cpx_col, ctx_col))) + 
   theme_classic() +
   theme(
@@ -415,14 +415,14 @@ lay <- rbind(c(1,1,1,1,1,1,1,1),
              c(2,2,NA,3,3,NA,4,4),
              c(5,5,5,5,6,6,6,6),
              c(7,7,7,7,7,7,NA,NA))
-ml <- grid.arrange(p_chr_count,p_af_count, p_af_count_in_gd, p_af_count_not_in_gd, p_size_count, p_evidence, grob_annotation_upset_plot, layout_matrix = lay, top=textGrob("Chr16 CMG De Novo SV Data"))
+ml <- grid.arrange(p_chr_count,p_af_count, p_af_count_in_gd, p_af_count_not_in_gd, p_size_count, p_evidence, grob_annotation_upset_plot, layout_matrix = lay, top=textGrob("De Novo SV Data"))
 ggsave(out_file, ml, width = 20, height = 30)
 
 
 # 
 # 
 # lay <- rbind(c(1,1,2,2,3,3))
-# ml <- grid.arrange(p_af_count_known, p_size_count_known, p_evidence_known, layout_matrix = lay, top=textGrob("Chr16 Known CMG DeNovo SV Data"))
+# ml <- grid.arrange(p_af_count_known, p_size_count_known, p_evidence_known, layout_matrix = lay, top=textGrob("Chr16 Known CMG De Novo SV Data"))
 # ggsave(known_out_file, ml, width = 8, height = 5)
 
 
