@@ -123,10 +123,11 @@ p_chr_count
 denovo$AF <- as.numeric(denovo$AF)  
 denovo$AC <- as.numeric(denovo$AC) 
 ac_1_freq <- min(subset(denovo, AC == 1)$AF)
-#denovo$AF_interv <- cut(denovo$AF, breaks = c(0, ac_1_freq, 0.001, 0.01, 0.03, max(denovo$AF)),
-                        #labels = c("AC=1", "AC 1 - AF<=0.001", "AF 0.001-0.01", "AF 0.01-0.03", "AF>0.03"))
+max_AF_str <- toString(round(max(denovo$AF), digits=3))
+# denovo$AF_interv <- cut(denovo$AF, breaks = c(0, ac_1_freq, 0.001, 0.01, 0.03, max(denovo$AF)),
+#                         labels = c("AC=1", "AC 1 - AF<=0.001", "AF 0.001-0.01", "AF 0.01-0.03", "AF>0.03"))
 denovo$AF_interv <- cut(denovo$AF, breaks = c(0, ac_1_freq, 0.001, max(denovo$AF)),
-                        labels = c("AC=1", "AC 1 - AF<=0.001", "AF >0.001"))
+                        labels = c("AC=1", paste("AC 1 - AF<=", max_AF_str), paste("AF >", max_AF_str)))
 
 denovo %>%
   select(AF_interv, name, SVTYPE) %>%
