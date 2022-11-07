@@ -89,7 +89,8 @@ task generate_per_sample_bed{
     String filename = basename(varfile, ".bed")
 
     command <<<
-
+        set -euo pipefail
+        
         grep -w ~{sample_id} ~{varfile} | cut -f1-5 | awk '{print $1,$2,$3,$4,$5}' | sed -e 's/ /\t/g' > ~{filename}.~{sample_id}.bed
         
         >>>
