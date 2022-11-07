@@ -12,6 +12,7 @@ workflow x_plot_tables {
         RuntimeAttr? runtime_attr_override
         Array[String] sample_list
         Array[String] cram_files
+        File merged_denovo_output
     }   
 
     call x_makeDataTable {
@@ -19,6 +20,7 @@ workflow x_plot_tables {
             ped_input = ped_input,
             sample_list = sample_list,
             cram_files = cram_files,
+            merged_denovo_output = merged_denovo_output,
             variant_interpretation_docker=variant_interpretation_docker,
             runtime_attr_override = runtime_attr_override
     }
@@ -30,6 +32,7 @@ task x_makeDataTable{
         Array[String] sample_list
         Array[String] cram_files
         File ped_input
+        File merged_denovo_output
         String variant_interpretation_docker
         RuntimeAttr? runtime_attr_override
     }
@@ -46,7 +49,7 @@ task x_makeDataTable{
     RuntimeAttr runtime_attr = select_first([runtime_attr_override, default_attr])
 
     output{
-        File output_table = "family.sample.table.tsv"
+        File output_table = "trios.table.tsv"
     }
 
     File samples_list = write_lines(sample_list)
@@ -54,7 +57,10 @@ task x_makeDataTable{
 
     command {
 
-        Rscript /src/variant-interpretation/scripts/create_familyid_table.R ${samples_list} ${cram_list} ${ped_input} family.sample.table.tsv
+        Rscript /src/variant-interpretation/scripts/create_familyid_table.R ${samples_list} ${cram_list} ${ped_input} trios.table.tsv
+
+        cut -f 6 ${merged_denovo_output} | tr ',' '\n' | sort -u > denovo_samples.txt
+        cat <(head -n1 trios.table.tsv) <(grep -f denovo_samples.txt trios.table.tsv) > trio_denovo.tsv
 
     }
 
