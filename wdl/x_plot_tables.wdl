@@ -52,8 +52,8 @@ task x_makeDataTable{
     RuntimeAttr runtime_attr = select_first([runtime_attr_override, default_attr])
 
     output{
-        File trio_output_table = "trios.table.tsv"
-        File singleton_output_table = "singletons.table.tsv"
+        File trio_output_table = "trio_denovo.tsv"
+        File singleton_output_table = "singletons_denovo.tsv"
     }
 
     File samples_list = write_lines(sample_list)
