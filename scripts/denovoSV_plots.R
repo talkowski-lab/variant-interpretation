@@ -270,7 +270,7 @@ intergenic<- grep("INTERGENIC", annot, value = T)
 coding <- grep("CODING", annot, value = T)
 coding <- coding[!coding %in% c('PROTEIN_CODING__NEAREST_TSS', "PROTEIN_CODING__INTERGENIC")]
 
-denovo$is_lof <- apply(denovo[,lof], 1, function(r) !all(is.na(r) | r == 'NA' | r == ''))
+denovo$is_lof <- apply(denovo[,lof, drop = FALSE], 1, function(r) !all(is.na(r) | r == 'NA' | r == ''))
 denovo$is_cg <- apply(denovo[,cg, drop = FALSE], 1, function(r) !all(is.na(r) | r == 'NA' | r == ''))
 denovo$is_msv <- apply(denovo[,msv, drop = FALSE], 1, function(r) !all(is.na(r) | r == 'NA' | r == ''))
 denovo$is_inv_span <- apply(denovo[,inv_span, drop = FALSE], 1, function(r) !all(is.na(r) | r == 'NA' | r == ''))
