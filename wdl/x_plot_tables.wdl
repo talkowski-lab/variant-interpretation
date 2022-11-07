@@ -12,6 +12,7 @@ workflow x_plot_tables {
         RuntimeAttr? runtime_attr_override
         Array[String] sample_list
         Array[String] cram_files
+        Array[String] crai_files
         File merged_denovo_output
     }   
 
@@ -20,6 +21,7 @@ workflow x_plot_tables {
             ped_input = ped_input,
             sample_list = sample_list,
             cram_files = cram_files,
+            crai_files = crai_files,
             merged_denovo_output = merged_denovo_output,
             variant_interpretation_docker=variant_interpretation_docker,
             runtime_attr_override = runtime_attr_override
@@ -31,6 +33,7 @@ task x_makeDataTable{
     input{
         Array[String] sample_list
         Array[String] cram_files
+        Array[String] crai_files
         File ped_input
         File merged_denovo_output
         String variant_interpretation_docker
@@ -55,6 +58,7 @@ task x_makeDataTable{
 
     File samples_list = write_lines(sample_list)
     File cram_list = write_lines(cram_files)
+    File crai_list = write_lines(crai_files)
 
     command {
 
