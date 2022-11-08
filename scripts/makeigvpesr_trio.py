@@ -67,7 +67,6 @@ with open(bamfiscript,'w') as h:
     with open(igvfile,'w') as g:
         g.write('new\n')
         g.write('genome {}\n'.format(fasta))
-        g.write('setTrackHeight Gene 60\n')
         with open(varfile,'r') as f:
             for line in f:
                 dat=line.rstrip().split("\t")
@@ -87,6 +86,8 @@ with open(bamfiscript,'w') as h:
                     g.write('sort base\n')
                     g.write('viewaspairs\n')
                     g.write('squish\n')
+                    g.write('collapse Gene\n')
+                    g.write('setTrackHeight Gene 60\n')
                     g.write('snapshotDirectory '+outdir+'\n')
                     g.write('snapshot '+sample+'_'+ID+'.png\n' )
                 else:
@@ -97,12 +98,16 @@ with open(bamfiscript,'w') as h:
                     g.write('sort base\n')
                     g.write('viewaspairs\n')
                     g.write('squish\n')
+                    g.write('collapse Gene\n')
+                    g.write('setTrackHeight Gene 60\n')
                     g.write('snapshotDirectory '+outdir+'\n')
                     g.write('snapshot '+sample+'_'+ID+'.left.png\n' )
                     g.write('goto '+Chr+":"+str(int(End_Buff)-1000)+'-'+End_Buff+'\n')
                     g.write('region '+Chr+":"+str(int(End))+'-'+End+'\n')
                     g.write('sort base\n')
                     g.write('squish\n')
+                    g.write('collapse Gene\n')
+                    g.write('setTrackHeight Gene 60\n')
                     g.write('snapshotDirectory '+outdir+'\n')
                     g.write('snapshot '+sample+'_'+ID+'.right.png\n' )
                 # g.write('goto '+Chr+":"+Start+'-'+End+'\n')
