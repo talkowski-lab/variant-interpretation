@@ -65,7 +65,6 @@ workflow Module09VisualizeTrio{
             Fasta = Fasta,
             Fasta_dict = Fasta_dict,
             Fasta_idx = Fasta_idx,
-            sample_cram = sample_cram,
             prefix = prefix,
             sv_base_mini_docker = sv_base_mini_docker,
             igv_docker = igv_docker,
