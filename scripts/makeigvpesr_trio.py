@@ -67,6 +67,7 @@ with open(bamfiscript,'w') as h:
     with open(igvfile,'w') as g:
         g.write('new\n')
         g.write('genome {}\n'.format(fasta))
+        g.write('setTrackHeight Gene 60\n')
         with open(varfile,'r') as f:
             for line in f:
                 dat=line.rstrip().split("\t")
