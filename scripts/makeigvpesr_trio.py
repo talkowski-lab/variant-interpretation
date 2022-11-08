@@ -89,14 +89,17 @@ with open(bamfiscript,'w') as h:
                     g.write('snapshotDirectory '+outdir+'\n')
                     g.write('snapshot '+sample+'_'+ID+'.png\n' )
                 else:
-                    g.write('goto '+Chr+":"+Start+'-'+str(int(Start)+1000)+'\n') # Extra 1kb buffer if variant large
-                    g.write('goto '+Chr+":"+Start+'-'+str(int(Start)+1000)+'\n')
+                    g.write('goto '+Chr+":"+Start_Buff+'-'+str(int(Start_Buff)+1000)+'\n') # Extra 1kb buffer if variant large
+                    g.write('goto '+Chr+":"+Start_Buff+'-'+str(int(Start_Buff)+1000)+'\n')
+                    g.write('region '+Chr+":"+Start+'-'+str(int(Start))+'\n') 
+                    g.write('region '+Chr+":"+Start+'-'+str(int(Start))+'\n')
                     g.write('sort base\n')
                     g.write('viewaspairs\n')
                     g.write('squish\n')
                     g.write('snapshotDirectory '+outdir+'\n')
                     g.write('snapshot '+sample+'_'+ID+'.left.png\n' )
-                    g.write('goto '+Chr+":"+str(int(End)-1000)+'-'+End+'\n')
+                    g.write('goto '+Chr+":"+str(int(End_Buff)-1000)+'-'+End_Buff+'\n')
+                    g.write('region '+Chr+":"+str(int(End))+'-'+End+'\n')
                     g.write('sort base\n')
                     g.write('squish\n')
                     g.write('snapshotDirectory '+outdir+'\n')
