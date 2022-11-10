@@ -392,7 +392,7 @@ def main():
     verbosePrint('Checking large cnvs in raw files', verbose)
     large_bed_filt_cnv = bed_filt[bed_filt['SVTYPE'].isin(['DEL', 'DUP']) & bed_filt['is_large_cnv'] == True]
 
-    print("Number of large CNVs found:",str(len(large_bed_filt_cnv))
+    print("Number of large CNVs found:",str(len(large_bed_filt_cnv)))
 
     if (len(keep_large) != 0):
         if (len(large_bed_filt_cnv.index) > 0):
