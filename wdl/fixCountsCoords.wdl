@@ -30,7 +30,7 @@ task fixCounts{
     }
 
     RuntimeAttr default_attr = object {
-        cpu: 1,
+        cpu_cores: 1,
         mem_gb: 4,
         disk_gb: 12,
         boot_disk_gb: 8,
@@ -53,7 +53,7 @@ task fixCounts{
     >>>
 
     runtime {
-        cpu: select_first([runtime_attr.cpu, default_attr.cpu])
+        cpu: select_first([runtime_attr.cpu_cores, default_attr.cpu_cores])
         memory: select_first([runtime_attr.mem_gb, default_attr.mem_gb]) + " GiB"
         disks: "local-disk " + select_first([runtime_attr.disk_gb, default_attr.disk_gb]) + " HDD"
         bootDiskSizeGb: select_first([runtime_attr.boot_disk_gb, default_attr.boot_disk_gb])
