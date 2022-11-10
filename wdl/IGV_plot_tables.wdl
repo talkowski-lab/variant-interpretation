@@ -3,7 +3,7 @@ version 1.0
 import "https://raw.githubusercontent.com/broadinstitute/gatk-sv/v0.26-beta/wdl/Structs.wdl"
 
 
-workflow x_plot_tables {
+workflow IGV_plot_tables {
 
     input {
 
