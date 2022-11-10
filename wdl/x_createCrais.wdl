@@ -1,3 +1,7 @@
+version 1.0
+
+import "Structs.wdl"
+
 workflow createCrais {
     input {
 
