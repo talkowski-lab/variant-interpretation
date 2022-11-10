@@ -1,6 +1,6 @@
 version 1.0
 
-import "Structs.wdl"
+import "https://raw.githubusercontent.com/broadinstitute/gatk-sv/v0.26-beta/wdl/Structs.wdl"
 
 workflow createBaiOrCrai {
     input {
@@ -41,11 +41,11 @@ workflow createBaiOrCrai {
         RuntimeAttr? runtime_attr_override
     }
     RuntimeAttr default_attr = object {
-        cpu: 1,
+        cpu_cores: 1,
         mem_gb: 12,
         disk_gb: 4,
         boot_disk_gb: 8,
-        preemptible: 3,
+        preemptible_tries: 3,
         max_retries: 1
     }
     
@@ -57,11 +57,11 @@ workflow createBaiOrCrai {
         samtools index -b ${cram_file}
     }
     runtime {
-        cpu: select_first([runtime_attr.cpu, default_attr.cpu])
+        cpu: select_first([runtime_attr.cpu_cores, default_attr.cpu_cores])
         memory: select_first([runtime_attr.mem_gb, default_attr.mem_gb]) + " GiB"
         disks: "local-disk " + select_first([runtime_attr.disk_gb, default_attr.disk_gb]) + " HDD"
         bootDiskSizeGb: select_first([runtime_attr.boot_disk_gb, default_attr.boot_disk_gb])
-        preemptible: select_first([runtime_attr.preemptible, default_attr.preemptible])
+        preemptible: select_first([runtime_attr.preemptible_tries, default_attr.preemptible_tries])
         maxRetries: select_first([runtime_attr.max_retries, default_attr.max_retries])
         docker: variant_interpretation_docker
     }
@@ -74,11 +74,11 @@ task x_createBais{
         RuntimeAttr? runtime_attr_override
     }
     RuntimeAttr default_attr = object {
-        cpu: 1,
+        cpu_cores: 1,
         mem_gb: 12,
         disk_gb: 4,
         boot_disk_gb: 8,
-        preemptible: 3,
+        preemptible_tries: 3,
         max_retries: 1
     }
     
@@ -90,11 +90,11 @@ task x_createBais{
         samtools index -b ${bam_file}
     }
     runtime {
-        cpu: select_first([runtime_attr.cpu, default_attr.cpu])
+        cpu: select_first([runtime_attr.cpu_cores, default_attr.cpu_cores])
         memory: select_first([runtime_attr.mem_gb, default_attr.mem_gb]) + " GiB"
         disks: "local-disk " + select_first([runtime_attr.disk_gb, default_attr.disk_gb]) + " HDD"
         bootDiskSizeGb: select_first([runtime_attr.boot_disk_gb, default_attr.boot_disk_gb])
-        preemptible: select_first([runtime_attr.preemptible, default_attr.preemptible])
+        preemptible: select_first([runtime_attr.preemptible_tries, default_attr.preemptible_tries])
         maxRetries: select_first([runtime_attr.max_retries, default_attr.max_retries])
         docker: variant_interpretation_docker
     }
