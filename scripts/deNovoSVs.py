@@ -61,7 +61,8 @@ def addFamily(row, ped):
     fam = ped[(ped['subject_id'] == sample)]['family_id'].values
     chr = row['chrom']
     if fam.size != 0:
-        return ('_'.join([fam[0], chr]))
+        return ('_'.join([str(fam[0]), chr]))
+
 
 def getInfoParent(row, ped, vcf, parent, field):    
     row_name = row['name']
@@ -399,14 +400,13 @@ def main():
                                                             f=large_raw_overlap,
                                                             r=True
                                                             ).to_dataframe(disable_auto_names=True, header=None)
-            large_cnv_names_overlap = large_bed_filt_cnv_overlap[3].to_list()
-
-            print(large_cnv_names_overlap)
+            if (len(large_bed_filt_cnv_overlap) != 0):
+                large_cnv_names_overlap = large_bed_filt_cnv_overlap[3].to_list()
        
         #if 'phase2_DEL_chr19_484' in cnv_names_overlap:
             #print('exists')
-        else:
-            large_cnv_names_overlap = ['']
+            else:
+                large_cnv_names_overlap = ['']
     else:
         large_cnv_names_overlap = ['']
 
@@ -430,11 +430,12 @@ def main():
                                                             f=small_raw_overlap,
                                                             r=True
                                                             ).to_dataframe(disable_auto_names=True, header=None)
-            small_cnv_names_overlap = small_bed_filt_cnv_overlap[3].to_list()
+            if (len(small_bed_filt_cnv_overlap) != 0):
+                small_cnv_names_overlap = small_bed_filt_cnv_overlap[3].to_list()
             #if 'phase2_DEL_chr19_484' in cnv_names_overlap:
             #print('exists')
-        else:
-            small_cnv_names_overlap = ['']
+            else:
+                small_cnv_names_overlap = ['']
     else:
         small_cnv_names_overlap = ['']
     #print(small_bed_filt_cnv_overlap)
