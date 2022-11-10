@@ -364,6 +364,7 @@ def main():
 
     bed_filt_ins = bed_filt[bed_filt['SVTYPE'] == 'INS']
 
+    print("Number of insertions found:",str(len(bed_filt_ins)))
 
     if (len(bed_filt_ins.index) > 0):
         bed_filt_ins_ref = bed_filt_ins[cols_keep2].to_string(header=False, index=False)
@@ -383,6 +384,7 @@ def main():
         ins_names_overlap = bed_filt_ins_overlap[(bed_filt_ins_overlap['is_close'] == True)][3].to_list()
     else:
         ins_names_overlap = ['']
+    print("Number of insertions supported by raw evidence:",str(len(ins_names_overlap)))
 
    
 
@@ -390,6 +392,7 @@ def main():
     verbosePrint('Checking large cnvs in raw files', verbose)
     large_bed_filt_cnv = bed_filt[bed_filt['SVTYPE'].isin(['DEL', 'DUP']) & bed_filt['is_large_cnv'] == True]
 
+    print("Number of large CNVs found:",str(len(large_bed_filt_cnv))
 
     if (len(keep_large) != 0):
         if (len(large_bed_filt_cnv.index) > 0):
@@ -410,6 +413,8 @@ def main():
     else:
         large_cnv_names_overlap = ['']
 
+    print("Number of large CNVs supported by raw evidence:",str(len(large_cnv_names_overlap)))
+
    # print(large_cnv_names_overlap)
     
     
@@ -419,7 +424,7 @@ def main():
     verbosePrint('Checking small cnvs in raw files', verbose)
 
     small_bed_filt_cnv = bed_filt[bed_filt['SVTYPE'].isin(['DEL', 'DUP']) & bed_filt['is_large_cnv'] == False]
-
+    print("Number of small CNVs found:",str(len(small_bed_filt_cnv)))
 
     if (len(keep_small) != 0):
         if (len(small_bed_filt_cnv.index) > 0):
@@ -438,7 +443,8 @@ def main():
                 small_cnv_names_overlap = ['']
     else:
         small_cnv_names_overlap = ['']
-    #print(small_bed_filt_cnv_overlap)
+    print("Number of small CNVs supported by raw evidence:",str(len(small_cnv_names_overlap)))
+    
 
 
 
