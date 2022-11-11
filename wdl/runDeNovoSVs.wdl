@@ -484,10 +484,9 @@ task plot_mergeFinalBedFiles{
     }
 
     command {
-
-    	head -n+1 ${bed_files[1]} > final.denovo.merged.bed
-        tail -n+2 -q ${sep=" " bed_files}  >> final.denovo.merged.bed
-
+        head -n+1 ${bed_files[1]} > final.denovo.merged.bed
+        tail -n+2 -q ${sep=" " bed_files} >> final.denovo.merged.bed
+        
         head -n+1 ${outliers_files[1]} > final.denovo.outliers.merged.bed
         tail -n+2 -q ${sep=" " outliers_files} >> final.denovo.outliers.merged.bed
 
