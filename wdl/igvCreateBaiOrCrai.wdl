@@ -51,10 +51,13 @@ workflow createBaiOrCrai {
     
     RuntimeAttr runtime_attr = select_first([runtime_attr_override, default_attr])
     output{
-        File crai_file = "${cram_file}.crai"
+        File crai_file = "${basename}.crai"
     }
+
+    String basename = basename(cram_file)
+
     command {
-        samtools index -b ${cram_file}
+        samtools index -b ${cram_file} > ${basename}.crai
     }
     runtime {
         cpu: select_first([runtime_attr.cpu_cores, default_attr.cpu_cores])
@@ -84,10 +87,12 @@ task createBais{
     
     RuntimeAttr runtime_attr = select_first([runtime_attr_override, default_attr])
     output{
-        File bai_file = "${bam_file}.bai"
+        File bai_file = "${basename}.bai"
     }
+
+    String basename = basename(bam_file)
     command {
-        samtools index -b ${bam_file}
+        samtools index -b ${bam_file} > ${basename}.bai
     }
     runtime {
         cpu: select_first([runtime_attr.cpu_cores, default_attr.cpu_cores])
