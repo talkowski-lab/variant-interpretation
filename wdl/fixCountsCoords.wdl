@@ -5,21 +5,21 @@ import "https://raw.githubusercontent.com/broadinstitute/gatk-sv/v0.26-beta/wdl/
 workflow fixCountsCoords {
 
     input {
-        File counts_fof
+        File counts_file
         String docker
         RuntimeAttr? runtime_attr_override
-
     }
 
-    Array[String] counts_files = transpose(read_tsv(counts_fof))[0]
-
-    scatter (file in counts_files) {
-        call fixCounts {
-            input:
-                counts_file=file,
-                docker=docker
-        }
+    call fixCounts {
+        input:
+            counts_file=file,
+            docker=docker
     }
+
+    output {
+        File output_file_name=fixCounts.output_file
+    }
+
 }
 
 task fixCounts{
