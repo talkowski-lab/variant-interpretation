@@ -123,9 +123,10 @@ task concatinate_plots{
         tar -zxf ~{rd_plots}
         tar -zxf ~{igv_plots}
         mkdir ~{prefix}_igv_rdtest_plots
+        tail -n+2 ~{varfile} > ~{varfile}.noheader
         echo 'test'
         python3 /src/MakeRDtest.py \
-            ~{varfile} \
+            ~{varfile}.noheader \
             ~{pedfile} \
             ~{prefix} \
             10000000 \
