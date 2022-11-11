@@ -5,14 +5,14 @@ import "https://raw.githubusercontent.com/broadinstitute/gatk-sv/v0.26-beta/wdl/
 workflow fixCountsCoords {
 
     input {
-        File counts_file
+        File in_file
         String docker
         RuntimeAttr? runtime_attr_override
     }
 
     call fixCounts {
         input:
-            counts_file=file,
+            counts_file=in_file,
             docker=docker
     }
 
