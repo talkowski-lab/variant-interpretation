@@ -6,7 +6,7 @@ version 1.0
 
 ##########################################################################################
 
-import "igv_trio_plots.wdl" as igv
+import "igvTrioPlots.wdl" as igv
 import "Structs.wdl"
 
 workflow IGV_all_samples {
