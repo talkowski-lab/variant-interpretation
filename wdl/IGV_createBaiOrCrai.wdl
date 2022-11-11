@@ -12,7 +12,7 @@ workflow createBaiOrCrai {
     }   
 
     if (basename(bam_or_cram_file, ".cram") + ".cram" == basename(bam_or_cram_file)) {
-        call x_createCrais{
+        call createCrais{
             input:
                 cram_file = bam_or_cram_file,
                 variant_interpretation_docker=variant_interpretation_docker,
@@ -21,7 +21,7 @@ workflow createBaiOrCrai {
     }
    
     if (basename(bam_or_cram_file, ".bam") + ".bam" == basename(bam_or_cram_file)) {
-        call x_createBais{
+        call createBais{
             input:
                 bam_file = bam_or_cram_file,
                 variant_interpretation_docker=variant_interpretation_docker,
@@ -30,11 +30,11 @@ workflow createBaiOrCrai {
     }
 
     output{
-        File bam_or_cram_index = select_first([x_createCrais.crai_file, x_createBais.bai_file])
+        File bam_or_cram_index = select_first([createCrais.crai_file, createBais.bai_file])
     }
 }
 
-    task x_createCrais{
+    task createCrais{
     input{
         File cram_file
         String variant_interpretation_docker
@@ -67,7 +67,7 @@ workflow createBaiOrCrai {
     }
 }
 
-task x_createBais{
+task createBais{
     input{
         File bam_file
         String variant_interpretation_docker
