@@ -3,7 +3,7 @@ version 1.0
 
 import "Structs.wdl"
 import "RdTestVisualization.wdl" as rdtest
-import "run_igv_trio_plots.wdl" as igv_trio
+import "runIgvTrioPlots.wdl" as igv_trio
 
 workflow Module09VisualizeTrio{
     input{
