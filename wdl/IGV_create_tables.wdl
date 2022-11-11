@@ -3,7 +3,7 @@ version 1.0
 import "https://raw.githubusercontent.com/broadinstitute/gatk-sv/v0.26-beta/wdl/Structs.wdl"
 
 
-workflow IGV_plot_tables {
+workflow IGV_create_tables {
 
     input {
 
@@ -16,7 +16,7 @@ workflow IGV_plot_tables {
         File merged_denovo_output
     }   
 
-    call x_makeDataTable {
+    call makeDataTable {
         input:
             ped_input = ped_input,
             sample_list = sample_list,
@@ -29,7 +29,7 @@ workflow IGV_plot_tables {
 }
 
 
-task x_makeDataTable{
+task makeDataTable{
     input{
         Array[String] sample_list
         Array[String] cram_files
