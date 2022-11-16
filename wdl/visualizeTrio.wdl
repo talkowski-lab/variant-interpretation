@@ -102,8 +102,8 @@ workflow Module09VisualizeTrio{
 
 task concatinate_plots{
     input{
-        File rd_plots
-        File igv_plots
+        File? rd_plots
+        File? igv_plots
         String prefix
         File varfile
         File pedfile
