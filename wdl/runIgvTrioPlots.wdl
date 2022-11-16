@@ -11,20 +11,20 @@ import "Structs.wdl"
 
 workflow IGV_all_samples {
     input {
-        Array[String] pb_list
-        Array[String] fa_list
-        Array[String] mo_list
-        Array[File] pb_cram_list
-        Array[File] pb_crai_list
-        Array[File] fa_cram_list
-        Array[File] fa_crai_list
-        Array[File] mo_cram_list
-        Array[File] mo_crai_list
+        Array[String]? pb_list
+        Array[String]? fa_list
+        Array[String]? mo_list
+        Array[File]? pb_cram_list
+        Array[File]? pb_crai_list
+        Array[File]? fa_cram_list
+        Array[File]? fa_crai_list
+        Array[File]? mo_cram_list
+        Array[File]? mo_crai_list
         File varfile
-        File Fasta
-        File Fasta_dict
-        File Fasta_idx
-        String prefix
+        File Fasta?
+        File Fasta_dict?
+        File Fasta_idx?
+        String prefix?
         String sv_base_mini_docker
         String igv_docker
         RuntimeAttr? runtime_attr_override
@@ -73,7 +73,7 @@ workflow IGV_all_samples {
 task generate_per_sample_bed{
     input {
         File varfile
-        String sample_id
+        String? sample_id
         String sv_base_mini_docker
         RuntimeAttr? runtime_attr_override
     }
@@ -114,8 +114,8 @@ task generate_per_sample_bed{
 
 task integrate_igv_plots{
     input {
-        Array[File] igv_tar
-        String prefix
+        Array[File]? igv_tar
+        String? prefix
         String sv_base_mini_docker
         RuntimeAttr? runtime_attr_override
     }
