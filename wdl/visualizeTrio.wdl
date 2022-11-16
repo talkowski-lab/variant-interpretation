@@ -33,54 +33,70 @@ workflow Module09VisualizeTrio{
         String sv_pipeline_rdtest_docker
         String igv_docker
 
+        Boolean IGV
+        Boolean RD
+
         RuntimeAttr? runtime_attr_override
         RuntimeAttr? runtime_attr_concatinate
         RuntimeAttr? runtime_attr_rdtest
         }
-    call rdtest.RdTestVisualization as RdTest{
-        input:
-            prefix = prefix,
-            medianfile = medianfile,
-            pedfile = pedfile,
-            batch_bincov=batch_bincov,
-            bed = varfile,
-            sv_pipeline_rdtest_docker=sv_pipeline_rdtest_docker,
-            sample_batches = sample_batches,
-            flags = flags,
-            runtime_attr_rdtest=runtime_attr_rdtest
+
+
+    if(RD) {
+        call rdtest.RdTestVisualization as RdTest{
+            input:
+                prefix = prefix,
+                medianfile = medianfile,
+                pedfile = pedfile,
+                batch_bincov=batch_bincov,
+                bed = varfile,
+                sv_pipeline_rdtest_docker=sv_pipeline_rdtest_docker,
+                sample_batches = sample_batches,
+                flags = flags,
+                runtime_attr_rdtest=runtime_attr_rdtest
 
         }
-    call igv_trio.IGV_all_samples as igv_plots {
-        input:
-            pb_list = pb_list,
-            fa_list = fa_list,
-            mo_list = mo_list,
-            pb_cram_list = pb_cram_list,
-            pb_crai_list = pb_crai_list,
-            fa_cram_list = fa_cram_list,
-            fa_crai_list = fa_crai_list,
-            mo_cram_list = mo_cram_list,
-            mo_crai_list = mo_crai_list,
-            varfile = varfile,
-            Fasta = Fasta,
-            Fasta_dict = Fasta_dict,
-            Fasta_idx = Fasta_idx,
-            prefix = prefix,
-            sv_base_mini_docker = sv_base_mini_docker,
-            igv_docker = igv_docker,
-            runtime_attr_override=runtime_attr_override
-        }
-    call concatinate_plots{
-        input:
-            rd_plots = RdTest.Plots,
-            igv_plots = igv_plots.tar_gz_pe,
-            prefix = prefix,
-            varfile = varfile,
-            pedfile = pedfile,
-            igv_docker = igv_docker,
-            runtime_attr_concatinate = runtime_attr_concatinate
     }
+
+    if (IGV) {   
+        call igv_trio.IGV_all_samples as igv_plots {
+            input:
+                pb_list = pb_list,
+                fa_list = fa_list,
+                mo_list = mo_list,
+                pb_cram_list = pb_cram_list,
+                pb_crai_list = pb_crai_list,
+                fa_cram_list = fa_cram_list,
+                fa_crai_list = fa_crai_list,
+                mo_cram_list = mo_cram_list,
+                mo_crai_list = mo_crai_list,
+                varfile = varfile,
+                Fasta = Fasta,
+                Fasta_dict = Fasta_dict,
+                Fasta_idx = Fasta_idx,
+                prefix = prefix,
+                sv_base_mini_docker = sv_base_mini_docker,
+                igv_docker = igv_docker,
+                runtime_attr_override=runtime_attr_override
+        }
+    }
+
+    if (RD && IGV) {
+        call concatinate_plots{
+            input:
+                rd_plots = RdTest.Plots,
+                igv_plots = igv_plots.tar_gz_pe,
+                prefix = prefix,
+                varfile = varfile,
+                pedfile = pedfile,
+                igv_docker = igv_docker,
+                runtime_attr_concatinate = runtime_attr_concatinate
+        }
+    }
+
     output{
+        File rd_plots = rdtest.Plots
+        File igv_plots = igv_trio.tar_gz_pe
         File concatinated_plots = concatinate_plots.plots
         
     }
