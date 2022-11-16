@@ -11,18 +11,18 @@ import "Structs.wdl"
 workflow IGV_trio {
     input{
         File varfile
-        File Fasta
-        File Fasta_idx
-        File Fasta_dict
-        String pb
-        String fa
-        String mo
-        File pb_cram
-        File pb_crai
-        File fa_cram
-        File fa_crai
-        File mo_cram
-        File mo_crai
+        File? Fasta
+        File? Fasta_idx
+        File? Fasta_dict
+        String? pb
+        String? fa
+        String? mo
+        File? pb_cram
+        File? pb_crai
+        File? fa_cram
+        File? fa_crai
+        File? mo_cram
+        File? mo_crai
         String igv_docker
     }
 
@@ -52,18 +52,18 @@ workflow IGV_trio {
 task runIGV_whole_genome{
     input{
         File varfile
-        File fasta
-        File fasta_idx
-        File fasta_dict
-        String pb
-        String fa
-        String mo
-        File pb_cram
-        File pb_crai
-        File fa_cram
-        File fa_crai
-        File mo_cram
-        File mo_crai
+        File? fasta
+        File? fasta_idx
+        File? fasta_dict
+        String? pb
+        String? fa
+        String? mo
+        File? pb_cram
+        File? pb_crai
+        File? fa_cram
+        File? fa_crai
+        File? mo_cram
+        File? mo_crai
         String igv_docker
     }
     command <<<
