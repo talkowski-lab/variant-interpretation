@@ -63,7 +63,7 @@ workflow Module09VisualizeTrio{
     if (run_IGV) {   
         Array[String] pb_list_ = select_first([pb_list])
         Array[String] fa_list_ = select_first([fa_list])
-        Array[String] mo_list_ = = select_first([mo_list])
+        Array[String] mo_list_ = select_first([mo_list])
         Array[File] pb_cram_list_ = select_first([pb_cram_list])
         Array[File] pb_crai_list_ = select_first([pb_cram_list])
         Array[File] fa_cram_list_ = select_first([fa_cram_list])
