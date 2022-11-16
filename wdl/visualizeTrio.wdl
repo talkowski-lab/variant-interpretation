@@ -96,13 +96,13 @@ workflow Module09VisualizeTrio{
     }
 
     if (run_RD && run_IGV) {
-        File igv_plots.tar_gz_pe_ = select_first([igv_plots.tar_gz_pe])
-        File RdTest.Plots_ = select_first([RdTest.Plots])
+        File igv_plots_tar_gz_pe_ = select_first([igv_plots.tar_gz_pe])
+        File RdTest_Plots_ = select_first([RdTest.Plots])
 
         call concatinate_plots{
             input:
-                rd_plots = RdTest.Plots_,
-                igv_plots = igv_plots.tar_gz_pe_,
+                rd_plots = RdTest_Plots_,
+                igv_plots = igv_plots_tar_gz_pe_,
                 prefix = prefix,
                 varfile = varfile,
                 pedfile = pedfile,
