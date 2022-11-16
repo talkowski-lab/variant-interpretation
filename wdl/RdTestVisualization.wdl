@@ -5,13 +5,13 @@ import "Structs.wdl"
 
 workflow RdTestVisualization{
     input{
-        String prefix
-        Array[File] medianfile
+        String? prefix
+        Array[File]? medianfile
         File pedfile
-        File sample_batches
-        File batch_bincov
+        File? sample_batches
+        File? batch_bincov
         File bed
-        String flags
+        String? flags
         String sv_pipeline_rdtest_docker
         RuntimeAttr? runtime_attr_rdtest
     }
@@ -37,13 +37,13 @@ workflow RdTestVisualization{
 task rdtest {
     input{
         File bed
-        File sample_batches # samples, batches
-        File batch_bincov # batch, bincov
-        Array[File] medianfile
+        File? sample_batches # samples, batches
+        File? batch_bincov # batch, bincov
+        Array[File]? medianfile
         File pedfile
-        String prefix
+        String? prefix
         String sv_pipeline_rdtest_docker
-        String flags
+        String? flags
         RuntimeAttr? runtime_attr_override
     }
     RuntimeAttr default_attr = object {
