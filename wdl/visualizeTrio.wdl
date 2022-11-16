@@ -43,10 +43,12 @@ workflow Module09VisualizeTrio{
 
 
     if(run_RD) {
+        Array[File] medianfile_ = select_first([medianfile])
+
         call rdtest.RdTestVisualization as RdTest{
             input:
                 prefix = prefix,
-                medianfile = medianfile,
+                medianfile = medianfile_,
                 pedfile = pedfile,
                 batch_bincov=batch_bincov,
                 bed = varfile,
@@ -59,6 +61,9 @@ workflow Module09VisualizeTrio{
     }
 
     if (run_IGV) {   
+        Array[String] pb_list_ = select_first([pb_list])
+        Array[String] fa_list_ = select_first([fa_list])
+        Array[String] mo_list_ = = select_first([mo_list])
         Array[File] pb_cram_list_ = select_first([pb_cram_list])
         Array[File] pb_crai_list_ = select_first([pb_cram_list])
         Array[File] fa_cram_list_ = select_first([fa_cram_list])
@@ -68,9 +73,9 @@ workflow Module09VisualizeTrio{
 
         call igv_trio.IGV_all_samples as igv_plots {
             input:
-                pb_list = pb_list,
-                fa_list = fa_list,
-                mo_list = mo_list,
+                pb_list = pb_list_,
+                fa_list = fa_list_,
+                mo_list = mo_list_,
                 pb_cram_list = pb_cram_list_,
                 pb_crai_list = pb_crai_list_,
                 fa_cram_list = fa_cram_list_,
