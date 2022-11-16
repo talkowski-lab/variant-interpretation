@@ -44,16 +44,18 @@ workflow Module09VisualizeTrio{
 
     if(run_RD) {
         Array[File] medianfile_ = select_first([medianfile])
+        File batch_bincov_ = select_first([batch_bincov])
+        File sample_batches_ = select_first([sample_batches])
 
         call rdtest.RdTestVisualization as RdTest{
             input:
                 prefix = prefix,
                 medianfile = medianfile_,
                 pedfile = pedfile,
-                batch_bincov=batch_bincov,
+                batch_bincov=batch_bincov_,
                 bed = varfile,
                 sv_pipeline_rdtest_docker=sv_pipeline_rdtest_docker,
-                sample_batches = sample_batches,
+                sample_batches = sample_batches_,
                 flags = flags,
                 runtime_attr_rdtest=runtime_attr_rdtest
 
