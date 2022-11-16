@@ -7,13 +7,13 @@ import "runIgvTrioPlots.wdl" as igv_trio
 
 workflow Module09VisualizeTrio{
     input{
-        File Fasta
-        File Fasta_idx
-        File Fasta_dict
+        File? Fasta
+        File? Fasta_idx
+        File? Fasta_dict
 
         File varfile
         File pedfile
-        String flags
+        String? flags
         String prefix
         File? batch_bincov
         File? sample_batches
@@ -46,6 +46,7 @@ workflow Module09VisualizeTrio{
         Array[File] medianfile_ = select_first([medianfile])
         File batch_bincov_ = select_first([batch_bincov])
         File sample_batches_ = select_first([sample_batches])
+        String flags_ = select_first([flags])
 
         call rdtest.RdTestVisualization as RdTest{
             input:
@@ -56,7 +57,7 @@ workflow Module09VisualizeTrio{
                 bed = varfile,
                 sv_pipeline_rdtest_docker=sv_pipeline_rdtest_docker,
                 sample_batches = sample_batches_,
-                flags = flags,
+                flags = flags_,
                 runtime_attr_rdtest=runtime_attr_rdtest
 
         }
@@ -72,6 +73,9 @@ workflow Module09VisualizeTrio{
         Array[File] fa_crai_list_ = select_first([fa_crai_list])
         Array[File] mo_cram_list_ = select_first([mo_cram_list])
         Array[File] mo_crai_list_ = select_first([mo_crai_list])
+        File Fasta_ = select_first([Fasta])
+        File Fasta_idx_ = select_first([Fasta_idx])
+        File Fasta_dict_ = select_first([Fasta_dict])
 
         call igv_trio.IGV_all_samples as igv_plots {
             input:
@@ -85,9 +89,9 @@ workflow Module09VisualizeTrio{
                 mo_cram_list = mo_cram_list_,
                 mo_crai_list = mo_crai_list_,
                 varfile = varfile,
-                Fasta = Fasta,
-                Fasta_dict = Fasta_dict,
-                Fasta_idx = Fasta_idx,
+                Fasta = Fasta_,
+                Fasta_dict = Fasta_dict_,
+                Fasta_idx = Fasta_idx_,
                 prefix = prefix,
                 sv_base_mini_docker = sv_base_mini_docker,
                 igv_docker = igv_docker,
