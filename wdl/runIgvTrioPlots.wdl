@@ -21,10 +21,10 @@ workflow IGV_all_samples {
         Array[File]? mo_cram_list
         Array[File]? mo_crai_list
         File varfile
-        File Fasta?
-        File Fasta_dict?
-        File Fasta_idx?
-        String prefix?
+        File? Fasta
+        File? Fasta_dict
+        File? Fasta_idx
+        String? prefix
         String sv_base_mini_docker
         String igv_docker
         RuntimeAttr? runtime_attr_override
