@@ -7,34 +7,34 @@ import "runIgvTrioPlots.wdl" as igv_trio
 
 workflow Module09VisualizeTrio{
     input{
-        File Fasta
-        File Fasta_idx
-        File Fasta_dict
+        File? Fasta
+        File? Fasta_idx
+        File? Fasta_dict
 
         File varfile
         File pedfile
-        String flags
-        String prefix
-        File batch_bincov
-        File sample_batches
+        String? flags
+        String? prefix
+        File? batch_bincov
+        File? sample_batches
 
-        Array[File] medianfile
-        Array[String] pb_list
-        Array[String] fa_list
-        Array[String] mo_list
-        Array[File] pb_cram_list
-        Array[File] pb_crai_list
-        Array[File] fa_cram_list
-        Array[File] fa_crai_list
-        Array[File] mo_cram_list
-        Array[File] mo_crai_list
+        Array[File]? medianfile
+        Array[String]? pb_list
+        Array[String]? fa_list
+        Array[String]? mo_list
+        Array[File]? pb_cram_list
+        Array[File]? pb_crai_list
+        Array[File]? fa_cram_list
+        Array[File]? fa_crai_list
+        Array[File]? mo_cram_list
+        Array[File]? mo_crai_list
 
         String sv_base_mini_docker
         String sv_pipeline_rdtest_docker
         String igv_docker
 
-        Boolean IGV
-        Boolean RD
+        Boolean run_IGV
+        Boolean run_RD
 
         RuntimeAttr? runtime_attr_override
         RuntimeAttr? runtime_attr_concatinate
@@ -42,7 +42,7 @@ workflow Module09VisualizeTrio{
         }
 
 
-    if(RD) {
+    if(run_RD) {
         call rdtest.RdTestVisualization as RdTest{
             input:
                 prefix = prefix,
@@ -58,7 +58,7 @@ workflow Module09VisualizeTrio{
         }
     }
 
-    if (IGV) {   
+    if (run_IGV) {   
         call igv_trio.IGV_all_samples as igv_plots {
             input:
                 pb_list = pb_list,
@@ -81,7 +81,7 @@ workflow Module09VisualizeTrio{
         }
     }
 
-    if (RD && IGV) {
+    if (run_RD && run_IGV) {
         call concatinate_plots{
             input:
                 rd_plots = RdTest.Plots,
@@ -104,7 +104,7 @@ task concatinate_plots{
     input{
         File? rd_plots
         File? igv_plots
-        String prefix
+        String? prefix
         File varfile
         File pedfile
         String igv_docker
