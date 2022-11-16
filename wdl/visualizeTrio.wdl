@@ -95,8 +95,8 @@ workflow Module09VisualizeTrio{
     }
 
     output{
-        File rd_plots = rdtest.Plots
-        File igv_plots = igv_trio.tar_gz_pe
+        File rd_plots = Rdtest.Plots
+        File igv_plots = igv_plots.tar_gz_pe
         File concatinated_plots = concatinate_plots.plots
         
     }
