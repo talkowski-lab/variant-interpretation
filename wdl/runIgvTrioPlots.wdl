@@ -30,44 +30,47 @@ workflow IGV_all_samples {
         RuntimeAttr? runtime_attr_override
     }
 
-    scatter (i in range(length(pb_list))){
-        call generate_per_sample_bed{
-            input:
-                varfile = varfile,
-                sample_id = pb_list[i],
-                sv_base_mini_docker=sv_base_mini_docker,
-                runtime_attr_override=runtime_attr_override
+    if (defined(pb_list)) {
+        scatter (i in range(length(pb_list))){
+            call generate_per_sample_bed{
+                input:
+                    varfile = varfile,
+                    sample_id = pb_list[i],
+                    sv_base_mini_docker=sv_base_mini_docker,
+                    runtime_attr_override=runtime_attr_override
+            }
+
+            call igv.IGV_trio as IGV_trio {
+                input:
+                    varfile=generate_per_sample_bed.per_sample_varfile,
+                    Fasta = Fasta,
+                    Fasta_idx = Fasta_idx,
+                    Fasta_dict = Fasta_dict,
+                    pb=pb_list[i],
+                    fa=fa_list[i],
+                    mo=mo_list[i],
+                    pb_cram=pb_cram_list[i],
+                    fa_cram=fa_cram_list[i],
+                    mo_cram=mo_cram_list[i],
+                    pb_crai=pb_crai_list[i],
+                    fa_crai=fa_crai_list[i],
+                    mo_crai=mo_crai_list[i],
+                    igv_docker = igv_docker
+            }
         }
 
-        call igv.IGV_trio as IGV_trio {
-            input:
-                varfile=generate_per_sample_bed.per_sample_varfile,
-                Fasta = Fasta,
-                Fasta_idx = Fasta_idx,
-                Fasta_dict = Fasta_dict,
-                pb=pb_list[i],
-                fa=fa_list[i],
-                mo=mo_list[i],
-                pb_cram=pb_cram_list[i],
-                fa_cram=fa_cram_list[i],
-                mo_cram=mo_cram_list[i],
-                pb_crai=pb_crai_list[i],
-                fa_crai=fa_crai_list[i],
-                mo_crai=mo_crai_list[i],
-                igv_docker = igv_docker
-                }
-        }
     call integrate_igv_plots{
         input:
             igv_tar = IGV_trio.tar_gz_pe,
             prefix = prefix, 
             sv_base_mini_docker = sv_base_mini_docker
     }
+    }
 
     output{
         File tar_gz_pe = integrate_igv_plots.plot_tar
     }
-    }
+}
 
 
 task generate_per_sample_bed{
