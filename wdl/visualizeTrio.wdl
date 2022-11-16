@@ -7,14 +7,14 @@ import "runIgvTrioPlots.wdl" as igv_trio
 
 workflow Module09VisualizeTrio{
     input{
-        File? Fasta
-        File? Fasta_idx
-        File? Fasta_dict
+        File Fasta
+        File Fasta_idx
+        File Fasta_dict
 
         File varfile
         File pedfile
-        String? flags
-        String? prefix
+        String flags
+        String prefix
         File? batch_bincov
         File? sample_batches
 
@@ -33,13 +33,13 @@ workflow Module09VisualizeTrio{
         String sv_pipeline_rdtest_docker
         String igv_docker
 
-        Boolean run_IGV
-        Boolean run_RD
-
         RuntimeAttr? runtime_attr_override
         RuntimeAttr? runtime_attr_concatinate
         RuntimeAttr? runtime_attr_rdtest
-        }
+    }
+    
+    Boolean run_RD = defined(medianfile)
+    Boolean run_IGV = defined(pb_list)
 
 
     if(run_RD) {
@@ -102,8 +102,8 @@ workflow Module09VisualizeTrio{
 
 task concatinate_plots{
     input{
-        File? rd_plots
-        File? igv_plots
+        File rd_plots
+        File igv_plots
         String? prefix
         File varfile
         File pedfile
