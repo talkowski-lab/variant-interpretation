@@ -59,12 +59,12 @@ workflow Module09VisualizeTrio{
     }
 
     if (run_IGV) {   
-        Array[File]? pb_cram_list_ = select_first([pb_cram_list])
-        Array[File]? pb_crai_list_ = select_first([pb_cram_list])
-        Array[File]? fa_cram_list_ = select_first([fa_cram_list])
-        Array[File]? fa_crai_list_ = select_first([fa_crai_list])
-        Array[File]? mo_cram_list_ = select_first([mo_cram_list])
-        Array[File]? mo_crai_list_ = select_first([mo_crai_list])
+        Array[File] pb_cram_list_ = select_first([pb_cram_list])
+        Array[File] pb_crai_list_ = select_first([pb_cram_list])
+        Array[File] fa_cram_list_ = select_first([fa_cram_list])
+        Array[File] fa_crai_list_ = select_first([fa_crai_list])
+        Array[File] mo_cram_list_ = select_first([mo_cram_list])
+        Array[File] mo_crai_list_ = select_first([mo_crai_list])
 
         call igv_trio.IGV_all_samples as igv_plots {
             input:
