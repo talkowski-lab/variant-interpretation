@@ -38,8 +38,8 @@ workflow Module09VisualizeTrio{
         RuntimeAttr? runtime_attr_rdtest
     }
     
-    Boolean run_RD = defined(medianfile)
-    Boolean run_IGV = defined(pb_list)
+    Boolean run_RD = defined(medianfile) && defined(batch_bincov) && defined(sample_batches)
+    Boolean run_IGV = defined(pb_list) && defined(mo_list) && defined(fa_list) && defined(pb_cram_list) && defined(pb_crai_list) && defined(mo_cram_list) && defined(mo_crai_list) && defined(fa_cram_list) && defined(fa_crai_list)
 
 
     if(run_RD) {
