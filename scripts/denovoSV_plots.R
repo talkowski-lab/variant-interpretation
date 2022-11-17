@@ -442,13 +442,12 @@ grob_annotation_upset_plot <- as.grob(p_denovo_upset_all)
 
 
 #Creating a panel of plots
-lay <- rbind(c(1,1,1,1,1,1,1,1),
-             c(2,2,NA,3,3,NA,4,4),
-             c(5,5,5,5,6,6,6,6),
-             c(7,7,7,7,7,7,NA,NA),
-             c(NA,8,8,8,8,8,8,NA))
-ml <- grid.arrange(p_chr_count, p_af_count, p_af_count_in_gd, p_af_count_not_in_gd, p_size_count, p_evidence, grob_annotation_upset_plot, p, layout_matrix = lay, top=textGrob("De Novo SV Data"))
-ggsave("phase3_denovo_output.pdf", ml, width = 30, height = 45)
+lay <- rbind(c(1,1,2,2,2,2,2,2),
+             c(3,3,NA,4,4,NA,5,5),
+             c(6,6,6,6,7,7,7,7),
+             c(8,8,8,8,8,8,NA,NA))
+ml <- grid.arrange(p, p_chr_count, p_af_count, p_af_count_in_gd, p_af_count_not_in_gd, p_size_count, p_evidence, grob_annotation_upset_plot, layout_matrix = lay, top=textGrob("De Novo SV Data"))
+ggsave(out_file, ml, width = 30, height = 45)
 
 
 # 
