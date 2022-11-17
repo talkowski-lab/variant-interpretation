@@ -119,6 +119,36 @@ denovo %>%
     axis.line = element_line(colour = "black")) -> p_chr_count
 p_chr_count
 
+# #Count by sample
+# denovo %>%
+#   select(sample, name, SVTYPE) %>%
+#   unique() %>%
+#   ggplot(aes(x = sample, fill = SVTYPE)) +
+#   geom_bar() +
+#   labs(x="Sample", y="Number de novo SVs", title= "Number of De Novo SVs per Sample") +
+#   scale_fill_manual(values = rev(c(del_col, dup_col, ins_col, inv_col, cpx_col, ctx_col))) + 
+#   theme_classic() +
+#   theme(
+#     legend.position = "right",
+#     axis.text = element_text(size = 10),
+#     axis.title = element_text(size = 11),
+#     axis.text.x = element_text(angle = 45, hjust = 1),
+#     panel.border = element_blank(),
+#     axis.line = element_line(colour = "black")) -> p_sample_count
+# p_sample_count
+
+#count by sample
+
+df <- as.data.frame(table(denovo$sample))
+df$samples <- as.character(df$Var1)
+df$num_of_denovos <- as.numeric(as.character(df$Freq))
+df$samples <- as.factor(df$samples)
+
+
+p <- ggplot(df, aes(y=num_of_denovos)) + geom_boxplot() + labs(title = "Number of de novo SVs per sample", y = "Number of de novos", x = "Samples") + theme_classic()
+p
+
+
 ##De novo count by allele frequency
 denovo$AF <- as.numeric(denovo$AF)  
 denovo$AC <- as.numeric(denovo$AC) 
@@ -415,9 +445,10 @@ grob_annotation_upset_plot <- as.grob(p_denovo_upset_all)
 lay <- rbind(c(1,1,1,1,1,1,1,1),
              c(2,2,NA,3,3,NA,4,4),
              c(5,5,5,5,6,6,6,6),
-             c(7,7,7,7,7,7,NA,NA))
-ml <- grid.arrange(p_chr_count,p_af_count, p_af_count_in_gd, p_af_count_not_in_gd, p_size_count, p_evidence, grob_annotation_upset_plot, layout_matrix = lay, top=textGrob("De Novo SV Data"))
-ggsave(out_file, ml, width = 20, height = 30)
+             c(7,7,7,7,7,7,NA,NA),
+             c(NA,8,8,8,8,8,8,NA))
+ml <- grid.arrange(p_chr_count, p_af_count, p_af_count_in_gd, p_af_count_not_in_gd, p_size_count, p_evidence, grob_annotation_upset_plot, p, layout_matrix = lay, top=textGrob("De Novo SV Data"))
+ggsave("phase3_denovo_output.pdf", ml, width = 30, height = 45)
 
 
 # 
