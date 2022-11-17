@@ -90,6 +90,8 @@ task rdtest {
             -m medianfile.txt \
             -f ~{pedfile} \
             -p TRUE \
+            -a TRUE \
+            -d TRUE \
             -w samples.txt \
             -s 10000000 \
             ~{flags}
