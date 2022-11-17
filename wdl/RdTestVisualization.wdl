@@ -92,6 +92,8 @@ task rdtest {
             -p TRUE \
             -w samples.txt \
             -s 10000000 \
+            -d TRUE \
+            -a TRUE\
             ~{flags}
         mkdir ~{prefix}_rd_plots
         mv *jpg ~{prefix}_rd_plots
