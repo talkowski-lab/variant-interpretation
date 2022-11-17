@@ -89,7 +89,6 @@ task rdtest {
             -c allcovfile.bed.gz \
             -m medianfile.txt \
             -f ~{pedfile} \
-            -p TRUE \
             -a TRUE \
             -d TRUE \
             -w samples.txt \
