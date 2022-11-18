@@ -20,6 +20,8 @@ workflow IGV_all_samples {
         Array[File] fa_crai_list
         Array[File] mo_cram_list
         Array[File] mo_crai_list
+        File nested_repeats
+        File simple_repeats
         File varfile
         File Fasta
         File Fasta_dict
@@ -55,6 +57,8 @@ workflow IGV_all_samples {
                 pb_crai=pb_crai_list[i],
                 fa_crai=fa_crai_list[i],
                 mo_crai=mo_crai_list[i],
+                nested_repeats = nested_repeats,
+                simple_repeats = simple_repeats,
                 igv_docker = igv_docker
         }
     }
