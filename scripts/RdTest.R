@@ -1144,9 +1144,9 @@ runRdTest<-function(bed)
     sib_list <-as.character(
       family[which(family[, 1] %in% includedfams & family[, 3] != 0 & family[, 4] != 0 & family[, 6] == 1) , 2])
     father_list <-as.character(
-      family[which(family[, 1] %in% includedfams & family[, 3] == 0 & family[, 4] == 0 &  family[, 5] == 1 & family[, 6] == 1) , 2])
+      family[which(family[, 1] %in% includedfams & family[, 3] == 0 & family[, 4] == 0 &  family[, 5] == 1 ) , 2])
     mother_list <-as.character(
-      family[which(family[, 1] %in% includedfams & family[, 3] == 0 & family[, 4] == 0 &  family[, 5] == 2 & family[, 6] == 1) , 2])
+      family[which(family[, 1] %in% includedfams & family[, 3] == 0 & family[, 4] == 0 &  family[, 5] == 2 ) , 2])
     for (mem in c("mo","p1","s1","fa")) {
       eval(parse(text=paste(mem,".p.list<-c()",sep="")))
       eval(parse(text=paste(mem,".secmaxp.list<-c()",sep="")))
