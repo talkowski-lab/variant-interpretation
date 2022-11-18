@@ -811,7 +811,7 @@ plotJPG <- function(genotype_matrix,cnv_matrix,chr,start,end,cnvID,sampleIDs,out
     mother_list <-as.character(
       family[which(family[, 1] %in% includedfams &
                      family[, 3] == 0 &
-                     family[, 4] == 0 &  family[, 5] == 2 & ) , 2])
+                     family[, 4] == 0 &  family[, 5] == 2 ) , 2])
     
     #text(c(1:10), as.numeric(cnv_matrix[proband_list,]), "p", cex = 1)
     #text(c(1:10), as.numeric(cnv_matrix[sib_list,]), "s", cex = 1)
