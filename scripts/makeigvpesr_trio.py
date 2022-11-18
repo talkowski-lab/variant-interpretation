@@ -22,7 +22,7 @@ args = parser.parse_args()
 
 buff = int(args.buff)
 fasta = args.fasta
-simple_repeats = fasta = args.simplerepeats
+varfile = args.varfile
 
 
 outstring=os.path.basename(varfile)[0:-4]
