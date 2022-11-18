@@ -1186,12 +1186,12 @@ runRdTest<-function(bed)
         genotype_matrix<-specified_cnv(cnv_matrix, sampleID1s, cnvID, chr, start, end, cnvtype)
         ##remove singlesample for exclusion list##
         p <-onesamplezscore.median(genotype_matrix,cnv_matrix,singlesample,cnvtype)
-        ##write meteric for each family member
-        # eval(parse(text=paste(mem,".p.list[count]<-", p[1],sep="")))
-        # eval(parse(text=paste(mem,".secmaxp.list[count]<-", p[2],sep="")))
-        # rank_sep<-samprank_sep(genotype_matrix,cnv_matrix,cnvtype,singlesample)
-        # eval(parse(text=paste(mem,".rankp.list[count]<-", rank_sep[1],sep="")))
-        # eval(parse(text=paste(mem,".sepp.list[count]<-", rank_sep[2],sep="")))
+        #write metric for each family member
+        eval(parse(text=paste(mem,".p.list[count]<-", p[1],sep="")))
+        eval(parse(text=paste(mem,".secmaxp.list[count]<-", p[2],sep="")))
+        rank_sep<-samprank_sep(genotype_matrix,cnv_matrix,cnvtype,singlesample)
+        eval(parse(text=paste(mem,".rankp.list[count]<-", rank_sep[1],sep="")))
+        eval(parse(text=paste(mem,".sepp.list[count]<-", rank_sep[2],sep="")))
         cnv_matrix<-original_cnv_matrix
         fam_denovo.matrix<-rbind(fam_denovo.matrix,matrix(unlist(c(chr,start,end,cnvID,singlesample,cnvtype,"NA",p[1],p[2],"singlesampZ",rank_sep[1],rank_sep[2])),nrow=1))
       }
