@@ -14,6 +14,8 @@ workflow IGV_trio {
         File? Fasta
         File? Fasta_idx
         File? Fasta_dict
+        File? nested_repeats
+        File? simple_repeats
         String? pb
         String? fa
         String? mo
@@ -32,6 +34,8 @@ workflow IGV_trio {
             fasta = Fasta,
             fasta_dict = Fasta_dict,
             fasta_idx = Fasta_idx,
+            nested_repeats = nested_repeats,
+            simple_repeats = simple_repeats,
             fa = fa,
             mo = mo,
             pb = pb,
@@ -55,6 +59,8 @@ task runIGV_whole_genome{
         File? fasta
         File? fasta_idx
         File? fasta_dict
+        File? nested_repeats
+        File? simple_repeats
         String? pb
         String? fa
         String? mo
@@ -69,7 +75,7 @@ task runIGV_whole_genome{
     command <<<
             set -euo pipefail
             #export GCS_OAUTH_TOKEN=`gcloud auth application-default print-access-token`
-            python /src/makeigvpesr_trio.py ~{varfile} ~{fasta} ~{pb} ~{pb_cram},~{fa_cram},~{mo_cram} pe_igv_plots -b 500
+            python /src/makeigvpesr_trio.py ~{varfile} ~{fasta} ~{nested_repeats} ~{simple_repeats} ~{pb} ~{pb_cram},~{fa_cram},~{mo_cram} pe_igv_plots -b 500
             bash pe.sh
             xvfb-run --server-args="-screen 0, 1920x540x24" bash /IGV_2.4.14/igv.sh -b pe.txt
             tar -czf ~{pb}_pe_igv_plots.tar.gz pe_igv_plots

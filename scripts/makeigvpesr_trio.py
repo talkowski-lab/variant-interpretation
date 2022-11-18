@@ -9,6 +9,8 @@ import sys,os,argparse
 parser = argparse.ArgumentParser("makeigvsplit_cram.py")
 parser.add_argument('varfile', type=str, help='variant file including CHR, POS, END and SVID')
 parser.add_argument('fasta', type=str, help='reference sequences')
+parser.add_argument('nestedrepeats', type=str, help='nested repeats sequences')
+parser.add_argument('simplerepeats', type=str, help='simple repeats sequences')
 parser.add_argument('sample', type=str, help='name of sample to make igv on')
 parser.add_argument('cram_list', type=str, help='comma separated list of all cram files to run igv on')
 parser.add_argument('outdir', type=str, help = 'output folder')
@@ -20,7 +22,10 @@ args = parser.parse_args()
 
 buff = int(args.buff)
 fasta = args.fasta
+simple_repeats = fasta = args.simplerepeats
+nested_repeats = args.nestedrepeats
 varfile = args.varfile
+#repetitiveelements = args.repetitiveelements
 
 outstring=os.path.basename(varfile)[0:-4]
 bamdir="pe_bam"
@@ -67,6 +72,8 @@ with open(bamfiscript,'w') as h:
     with open(igvfile,'w') as g:
         g.write('new\n')
         g.write('genome {}\n'.format(fasta))
+        g.write('load nested_repeats\n')
+        g.write('load simple_repeats\n')
         with open(varfile,'r') as f:
             for line in f:
                 dat=line.rstrip().split("\t")
@@ -103,6 +110,7 @@ with open(bamfiscript,'w') as h:
                     g.write('goto '+Chr+":"+str(int(End_Buff)-1000)+'-'+End_Buff+'\n')
                     g.write('region '+Chr+":"+str(int(End))+'-'+End+'\n')
                     g.write('sort base\n')
+                    g.write('viewaspairs\n')
                     g.write('squish\n')
                     g.write('collapse Gene\n')
                     g.write('snapshotDirectory '+outdir+'\n')
