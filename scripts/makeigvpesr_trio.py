@@ -9,13 +9,13 @@ import sys,os,argparse
 parser = argparse.ArgumentParser("makeigvsplit_cram.py")
 parser.add_argument('varfile', type=str, help='variant file including CHR, POS, END and SVID')
 parser.add_argument('fasta', type=str, help='reference sequences')
-parser.add_argument('nestedrepeats', type=str, help='nested repeats sequences')
-parser.add_argument('simplerepeats', type=str, help='simple repeats sequences')
 parser.add_argument('sample', type=str, help='name of sample to make igv on')
 parser.add_argument('cram_list', type=str, help='comma separated list of all cram files to run igv on')
 parser.add_argument('outdir', type=str, help = 'output folder')
 parser.add_argument('-b','--buff', type=str, help='length of buffer to add around variants', default=500)
 parser.add_argument('-c','--chromosome', type=str, help='name of chromosome to make igv on', default='all')
+parser.add_argument('-nr', '--nestedrepeats', type=str, help='nested repeats sequences')
+parser.add_argument('-sr', '--simplerepeats', type=str, help='simple repeats sequences')
 
 args = parser.parse_args()
 
@@ -23,9 +23,7 @@ args = parser.parse_args()
 buff = int(args.buff)
 fasta = args.fasta
 simple_repeats = fasta = args.simplerepeats
-nested_repeats = args.nestedrepeats
-varfile = args.varfile
-#repetitiveelements = args.repetitiveelements
+
 
 outstring=os.path.basename(varfile)[0:-4]
 bamdir="pe_bam"
@@ -35,6 +33,8 @@ bamfiscript="pe.sh"
 ###################################
 sample = args.sample
 chromosome = args.chromosome
+nested_repeats = args.nestedrepeats
+varfile = args.varfile
 
 def ped_info_readin(ped_file):
     out={}
@@ -63,6 +63,7 @@ def cram_info_readin(cram_file):
 #ped_info = ped_info_readin(args.ped)
 #cram_info = cram_info_readin(args.cram_list)
 cram_list=args.cram_list.split(',')
+print(cram_list)
 
 with open(bamfiscript,'w') as h:
     h.write("#!/bin/bash\n")
