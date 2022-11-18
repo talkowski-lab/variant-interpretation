@@ -34,7 +34,7 @@ bamfiscript="pe.sh"
 sample = args.sample
 chromosome = args.chromosome
 nested_repeats = args.nestedrepeats
-varfile = args.varfile
+simple_repeats = args.simplerepeats
 
 def ped_info_readin(ped_file):
     out={}
