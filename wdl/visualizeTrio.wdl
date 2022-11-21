@@ -78,8 +78,8 @@ workflow Module09VisualizeTrio{
         File Fasta_ = select_first([Fasta])
         File Fasta_idx_ = select_first([Fasta_idx])
         File Fasta_dict_ = select_first([Fasta_dict])
-        File nested_repeats_ = select_first([nested_repeats])
-        File simple_repeats_ = select_first([simple_repeats])
+        #File nested_repeats_ = select_first([nested_repeats])
+        #File simple_repeats_ = select_first([simple_repeats])
 
         call igv_trio.IGV_all_samples as igv_plots {
             input:
@@ -92,8 +92,8 @@ workflow Module09VisualizeTrio{
                 fa_crai_list = fa_crai_list_,
                 mo_cram_list = mo_cram_list_,
                 mo_crai_list = mo_crai_list_,
-                nested_repeats = nested_repeats_,
-                simple_repeats = simple_repeats_,
+                nested_repeats = nested_repeats,
+                simple_repeats = simple_repeats,
                 varfile = varfile,
                 Fasta = Fasta_,
                 Fasta_dict = Fasta_dict_,
