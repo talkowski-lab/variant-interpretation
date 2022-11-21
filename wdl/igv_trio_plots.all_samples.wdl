@@ -24,6 +24,8 @@ workflow IGV_all_samples {
         File Fasta
         File Fasta_dict
         File Fasta_idx
+        File nested_repeats
+        File simple_repeats
         String prefix
         String sv_base_mini_docker
         String igv_docker
@@ -45,6 +47,8 @@ workflow IGV_all_samples {
                 Fasta = Fasta,
                 Fasta_idx = Fasta_idx,
                 Fasta_dict = Fasta_dict,
+                nested_repeats = nested_repeats,
+                simple_repeats = simple_repeats,
                 pb=pb_list[i],
                 fa=fa_list[i],
                 mo=mo_list[i],
