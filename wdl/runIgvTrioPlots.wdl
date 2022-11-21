@@ -20,8 +20,8 @@ workflow IGV_all_samples {
         Array[File] fa_crai_list
         Array[File] mo_cram_list
         Array[File] mo_crai_list
-        File nested_repeats
-        File simple_repeats
+        File? nested_repeats
+        File? simple_repeats
         File varfile
         File Fasta
         File Fasta_dict
