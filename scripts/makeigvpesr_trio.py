@@ -1,21 +1,21 @@
 import sys,os,argparse
 #[_,varfile,buff,fasta]=sys.argv #assume the varfile has *.bed in the end
 # Usage
-# python makeigvpesr_cram.py varfile fasta sample ped cram_list buffer chromosome
+# python makeigvpesr_trio.py varfile fasta sample ped cram_list buffer chromosome
 # bash IL.DUP.HG00514.V2.sh
 # bash igv.sh -b IL.DUP.HG00514.V2.txt
 
 
-parser = argparse.ArgumentParser("makeigvsplit_cram.py")
+parser = argparse.ArgumentParser("makeigvsplit_trio.py")
 parser.add_argument('varfile', type=str, help='variant file including CHR, POS, END and SVID')
+parser.add_argument('nestedrepeats', type=str, help='nested repeats sequences')
+parser.add_argument('simplerepeats', type=str, help='simple repeats sequences')
 parser.add_argument('fasta', type=str, help='reference sequences')
 parser.add_argument('sample', type=str, help='name of sample to make igv on')
 parser.add_argument('cram_list', type=str, help='comma separated list of all cram files to run igv on')
 parser.add_argument('outdir', type=str, help = 'output folder')
 parser.add_argument('-b','--buff', type=str, help='length of buffer to add around variants', default=500)
 parser.add_argument('-c','--chromosome', type=str, help='name of chromosome to make igv on', default='all')
-parser.add_argument('-nr', '--nestedrepeats', type=str, help='nested repeats sequences')
-parser.add_argument('-sr', '--simplerepeats', type=str, help='simple repeats sequences')
 
 args = parser.parse_args()
 
@@ -63,7 +63,6 @@ def cram_info_readin(cram_file):
 #ped_info = ped_info_readin(args.ped)
 #cram_info = cram_info_readin(args.cram_list)
 cram_list=args.cram_list.split(',')
-print(cram_list)
 
 with open(bamfiscript,'w') as h:
     h.write("#!/bin/bash\n")
@@ -95,6 +94,8 @@ with open(bamfiscript,'w') as h:
                     g.write('viewaspairs\n')
                     g.write('squish\n')
                     g.write('collapse Gene\n')
+                    g.write('load '+nested_repeats+'\n')
+                    g.write('load '+simple_repeats+'\n')
                     g.write('snapshotDirectory '+outdir+'\n')
                     g.write('snapshot '+sample+'_'+ID+'.png\n' )
                 else:
@@ -106,6 +107,8 @@ with open(bamfiscript,'w') as h:
                     g.write('viewaspairs\n')
                     g.write('squish\n')
                     g.write('collapse Gene\n')
+                    g.write('load '+nested_repeats+'\n')
+                    g.write('load '+simple_repeats+'\n')
                     g.write('snapshotDirectory '+outdir+'\n')
                     g.write('snapshot '+sample+'_'+ID+'.left.png\n' )
                     g.write('goto '+Chr+":"+str(int(End_Buff)-1000)+'-'+End_Buff+'\n')
@@ -114,6 +117,8 @@ with open(bamfiscript,'w') as h:
                     g.write('viewaspairs\n')
                     g.write('squish\n')
                     g.write('collapse Gene\n')
+                    g.write('load '+nested_repeats+'\n')
+                    g.write('load '+simple_repeats+'\n')
                     g.write('snapshotDirectory '+outdir+'\n')
                     g.write('snapshot '+sample+'_'+ID+'.right.png\n' )
                 # g.write('goto '+Chr+":"+Start+'-'+End+'\n')
