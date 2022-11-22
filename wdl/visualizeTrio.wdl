@@ -22,12 +22,12 @@ workflow Module09VisualizeTrio{
         Array[String]? pb_list
         Array[String]? fa_list
         Array[String]? mo_list
-        Array[File]? pb_cram_list
-        Array[File]? pb_crai_list
-        Array[File]? fa_cram_list
-        Array[File]? fa_crai_list
-        Array[File]? mo_cram_list
-        Array[File]? mo_crai_list
+        Array[File] pb_cram_list
+        Array[File] pb_crai_list
+        Array[File] fa_cram_list
+        Array[File] fa_crai_list
+        Array[File] mo_cram_list
+        Array[File] mo_crai_list
         File? nested_repeats
         File? simple_repeats
 
@@ -69,12 +69,6 @@ workflow Module09VisualizeTrio{
         Array[String] pb_list_ = select_first([pb_list])
         Array[String] fa_list_ = select_first([fa_list])
         Array[String] mo_list_ = select_first([mo_list])
-        Array[File] pb_cram_list_ = select_first([pb_cram_list])
-        Array[File] pb_crai_list_ = select_first([pb_cram_list])
-        Array[File] fa_cram_list_ = select_first([fa_cram_list])
-        Array[File] fa_crai_list_ = select_first([fa_crai_list])
-        Array[File] mo_cram_list_ = select_first([mo_cram_list])
-        Array[File] mo_crai_list_ = select_first([mo_crai_list])
         File Fasta_ = select_first([Fasta])
         File Fasta_idx_ = select_first([Fasta_idx])
         File Fasta_dict_ = select_first([Fasta_dict])
@@ -86,12 +80,12 @@ workflow Module09VisualizeTrio{
                 pb_list = pb_list_,
                 fa_list = fa_list_,
                 mo_list = mo_list_,
-                pb_cram_list = pb_cram_list_,
-                pb_crai_list = pb_crai_list_,
-                fa_cram_list = fa_cram_list_,
-                fa_crai_list = fa_crai_list_,
-                mo_cram_list = mo_cram_list_,
-                mo_crai_list = mo_crai_list_,
+                pb_cram_list = pb_cram_list,
+                pb_crai_list = pb_crai_list,
+                fa_cram_list = fa_cram_list,
+                fa_crai_list = fa_crai_list,
+                mo_cram_list = mo_cram_list,
+                mo_crai_list = mo_crai_list,
                 nested_repeats = nested_repeats_,
                 simple_repeats = simple_repeats_,
                 varfile = varfile,
