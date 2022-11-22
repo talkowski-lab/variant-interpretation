@@ -20,19 +20,18 @@ workflow IGV_all_samples {
         Array[File] fa_crai_list
         Array[File] mo_cram_list
         Array[File] mo_crai_list
-        File? nested_repeats
-        File? simple_repeats
         File varfile
         File Fasta
         File Fasta_dict
         File Fasta_idx
+        File nested_repeats
+        File simple_repeats
         String prefix
         String sv_base_mini_docker
         String igv_docker
         RuntimeAttr? runtime_attr_override
     }
 
-    
     scatter (i in range(length(pb_list))){
         call generate_per_sample_bed{
             input:
@@ -48,6 +47,8 @@ workflow IGV_all_samples {
                 Fasta = Fasta,
                 Fasta_idx = Fasta_idx,
                 Fasta_dict = Fasta_dict,
+                nested_repeats = nested_repeats,
+                simple_repeats = simple_repeats,
                 pb=pb_list[i],
                 fa=fa_list[i],
                 mo=mo_list[i],
@@ -57,24 +58,20 @@ workflow IGV_all_samples {
                 pb_crai=pb_crai_list[i],
                 fa_crai=fa_crai_list[i],
                 mo_crai=mo_crai_list[i],
-                nested_repeats = nested_repeats,
-                simple_repeats = simple_repeats,
                 igv_docker = igv_docker
+                }
         }
-    }
-
     call integrate_igv_plots{
         input:
             igv_tar = IGV_trio.tar_gz_pe,
             prefix = prefix, 
             sv_base_mini_docker = sv_base_mini_docker
     }
-    
 
     output{
         File tar_gz_pe = integrate_igv_plots.plot_tar
     }
-}
+    }
 
 
 task generate_per_sample_bed{
@@ -94,12 +91,9 @@ task generate_per_sample_bed{
     }
 
     String filename = basename(varfile, ".bed")
-
     command <<<
         set -euo pipefail
-        
         grep -w ~{sample_id} ~{varfile} | cut -f1-5 | awk '{print $1,$2,$3,$4,$5}' | sed -e 's/ /\t/g' > ~{filename}.~{sample_id}.bed
-        
         >>>
 
     output{
@@ -159,4 +153,5 @@ task integrate_igv_plots{
         preemptible: select_first([runtime_attr.preemptible, default_attr.preemptible])
         maxRetries: select_first([runtime_attr.max_retries, default_attr.max_retries])
   }
-}
+
+    }

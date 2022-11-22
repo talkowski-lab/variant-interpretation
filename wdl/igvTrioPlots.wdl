@@ -11,20 +11,20 @@ import "Structs.wdl"
 workflow IGV_trio {
     input{
         File varfile
-        File? Fasta
-        File? Fasta_idx
-        File? Fasta_dict
-        File? nested_repeats
-        File? simple_repeats
-        String? pb
-        String? fa
-        String? mo
-        File? pb_cram
-        File? pb_crai
-        File? fa_cram
-        File? fa_crai
-        File? mo_cram
-        File? mo_crai
+        File Fasta
+        File Fasta_idx
+        File Fasta_dict
+        File nested_repeats
+        File simple_repeats
+        String pb
+        String fa
+        String mo
+        File pb_cram
+        File pb_crai
+        File fa_cram
+        File fa_crai
+        File mo_cram
+        File mo_crai
         String igv_docker
     }
 
@@ -56,27 +56,26 @@ workflow IGV_trio {
 task runIGV_whole_genome{
     input{
         File varfile
-        File? fasta
-        File? fasta_idx
-        File? fasta_dict
-        File? nested_repeats
-        File? simple_repeats
-        String? pb
-        String? fa
-        String? mo
-        File? pb_cram
-        File? pb_crai
-        File? fa_cram
-        File? fa_crai
-        File? mo_cram
-        File? mo_crai
+        File fasta
+        File fasta_idx
+        File fasta_dict
+        File nested_repeats
+        File simple_repeats
+        String pb
+        String fa
+        String mo
+        File pb_cram
+        File pb_crai
+        File fa_cram
+        File fa_crai
+        File mo_cram
+        File mo_crai
         String igv_docker
     }
     command <<<
             set -euo pipefail
             #export GCS_OAUTH_TOKEN=`gcloud auth application-default print-access-token`
-            python /src/makeigvpesr_trio.py ~{varfile} ~{fasta} ~{pb} ~{pb_cram},~{fa_cram},~{mo_cram} pe_igv_plots -b 500 
-            #-nr ~{nested_repeats} -sr ~{simple_repeats}
+            python /src/makeigvpesr_trio.py ~{varfile} ~{nested_repeats} ~{simple_repeats} ~{fasta} ~{pb} ~{pb_cram},~{fa_cram},~{mo_cram} pe_igv_plots -b 500
             bash pe.sh
             xvfb-run --server-args="-screen 0, 1920x540x24" bash /IGV_2.4.14/igv.sh -b pe.txt
             tar -czf ~{pb}_pe_igv_plots.tar.gz pe_igv_plots
