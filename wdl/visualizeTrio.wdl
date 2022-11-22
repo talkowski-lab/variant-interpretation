@@ -30,6 +30,7 @@ workflow Module09VisualizeTrio{
         Array[File] mo_crai_list
         File? nested_repeats
         File? simple_repeats
+        File? empty_track
 
         String sv_base_mini_docker
         String sv_pipeline_rdtest_docker
@@ -74,6 +75,7 @@ workflow Module09VisualizeTrio{
         File Fasta_dict_ = select_first([Fasta_dict])
         File nested_repeats_ = select_first([nested_repeats])
         File simple_repeats_ = select_first([simple_repeats])
+        File empty_track_ = select_first([empty_track])
 
         call igv_trio.IGV_all_samples as igv_plots {
             input:
@@ -88,6 +90,7 @@ workflow Module09VisualizeTrio{
                 mo_crai_list = mo_crai_list,
                 nested_repeats = nested_repeats_,
                 simple_repeats = simple_repeats_,
+                empty_track = empty_track_,
                 varfile = varfile,
                 Fasta = Fasta_,
                 Fasta_dict = Fasta_dict_,
