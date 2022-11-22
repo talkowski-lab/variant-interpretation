@@ -68,7 +68,7 @@ workflow Module09VisualizeTrio{
             Fasta_dict = Fasta_dict,
             Fasta_idx = Fasta_idx,
             nested_repeats = nested_repeats,
-            simple_repeats = simple_repeats
+            simple_repeats = simple_repeats,
             prefix = prefix,
             sv_base_mini_docker = sv_base_mini_docker,
             igv_docker = igv_docker,
