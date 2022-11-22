@@ -26,6 +26,7 @@ workflow IGV_all_samples {
         File Fasta_idx
         File nested_repeats
         File simple_repeats
+        File empty_track
         String prefix
         String sv_base_mini_docker
         String igv_docker
@@ -49,6 +50,7 @@ workflow IGV_all_samples {
                 Fasta_dict = Fasta_dict,
                 nested_repeats = nested_repeats,
                 simple_repeats = simple_repeats,
+                empty_track = empty_track,
                 pb=pb_list[i],
                 fa=fa_list[i],
                 mo=mo_list[i],
