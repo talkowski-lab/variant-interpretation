@@ -10,6 +10,7 @@ parser = argparse.ArgumentParser("makeigvsplit_trio.py")
 parser.add_argument('varfile', type=str, help='variant file including CHR, POS, END and SVID')
 parser.add_argument('nestedrepeats', type=str, help='nested repeats sequences')
 parser.add_argument('simplerepeats', type=str, help='simple repeats sequences')
+parser.add_argument('emptytrack', type=str, help='empty track')
 parser.add_argument('fasta', type=str, help='reference sequences')
 parser.add_argument('sample', type=str, help='name of sample to make igv on')
 parser.add_argument('cram_list', type=str, help='comma separated list of all cram files to run igv on')
@@ -35,6 +36,7 @@ sample = args.sample
 chromosome = args.chromosome
 nested_repeats = args.nestedrepeats
 simple_repeats = args.simplerepeats
+empty_track = args.emptytrack
 
 def ped_info_readin(ped_file):
     out={}
@@ -74,6 +76,7 @@ with open(bamfiscript,'w') as h:
         g.write('genome {}\n'.format(fasta))
         g.write('load '+nested_repeats+'\n')
         g.write('load '+simple_repeats+'\n')
+        g.write('load '+empty_track+'\n')
         with open(varfile,'r') as f:
             for line in f:
                 dat=line.rstrip().split("\t")
@@ -96,6 +99,7 @@ with open(bamfiscript,'w') as h:
                     g.write('collapse Gene\n')
                     g.write('load '+nested_repeats+'\n')
                     g.write('load '+simple_repeats+'\n')
+                    g.write('load '+empty_track+'\n')
                     g.write('snapshotDirectory '+outdir+'\n')
                     g.write('snapshot '+sample+'_'+ID+'.png\n' )
                 else:
@@ -109,6 +113,7 @@ with open(bamfiscript,'w') as h:
                     g.write('collapse Gene\n')
                     g.write('load '+nested_repeats+'\n')
                     g.write('load '+simple_repeats+'\n')
+                    g.write('load '+empty_track+'\n')
                     g.write('snapshotDirectory '+outdir+'\n')
                     g.write('snapshot '+sample+'_'+ID+'.left.png\n' )
                     g.write('goto '+Chr+":"+str(int(End_Buff)-1000)+'-'+End_Buff+'\n')
@@ -119,6 +124,7 @@ with open(bamfiscript,'w') as h:
                     g.write('collapse Gene\n')
                     g.write('load '+nested_repeats+'\n')
                     g.write('load '+simple_repeats+'\n')
+                    g.write('load '+empty_track+'\n')
                     g.write('snapshotDirectory '+outdir+'\n')
                     g.write('snapshot '+sample+'_'+ID+'.right.png\n' )
                 # g.write('goto '+Chr+":"+Start+'-'+End+'\n')
