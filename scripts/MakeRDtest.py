@@ -23,13 +23,9 @@ def hstack(f1,f2,name):
     list_im = [f1,f2]
     imgs    = [ Image.open(i) for i in list_im ]
     # pick the image which is the smallest, and resize the others to match it (can be arbitrary image shape here)
-    #min_shape = sorted( [(np.sum(i.size), i.size ) for i in imgs])[0][1]
+    min_shape = sorted( [(np.sum(i.size), i.size ) for i in imgs])[0][1]
 #     print(min_shape)
-    #imgs_comb = np.hstack( [np.asarray( i.resize((min_shape))) for i in imgs ])
-    size_of_img1 = imgs[0].resize(300,300)
-    size_of_img2 = imgs[1].resize(200,200)
-    imgs_comb = np.hstack( [np.asarray( size_of_img1, size_of_img2 ) ])
-    
+    imgs_comb = np.hstack( [np.asarray( i.resize((min_shape))) for i in imgs ])
 
     # save that beautiful picture
     imgs_comb = Image.fromarray( imgs_comb,"RGB")
@@ -51,7 +47,7 @@ def words(STR1,STR2,outfile,n=100):
   # def __init__(self,variantfile,GetVariantFunc=GetVariants,pedfile,prefixfile,pesrdir,rddir):
     # self.variants=GetVariantFunc(inputfile,pedfile,prefixfile).variants
 class Variant():
-  def __init__(self,chr,start,end,name,type,samples,varname,prefix):
+  def __init__(self,chr,start,end,name,type,samples,varname,prefix,family_id):
     self.chr=chr
     self.coord=str(chr)+":"+str(start)+"-"+str(end)
     self.start=start
@@ -62,8 +58,9 @@ class Variant():
     self.varname=varname
     self.sample=samples
     self.samples=samples.split(",")
-    print(samples)
+    self.family_id=family_id
   def pesrplotname(self,dir):
+    #print((dir+self.varname+".png"))
     if os.path.isfile(dir+self.varname+".png"):
       return dir+self.varname+".png"
     elif os.path.isfile(dir+self.varname+".left.png") and os.path.isfile(dir+self.varname+".right.png"):
@@ -80,10 +77,13 @@ class Variant():
     else:
       newstart=self.start
       newend=self.end
+    print(self.name)
+    #print(self.samples[0].split('__')[1])
+    #print((dir+self.chr+"_"+newstart+"_"+newend+"_"+self.samples[0]+"_"+self.name+"_"+self.prefix+"_"+self.samples[0].split('__')[1]+".jpg"))
     if os.path.isfile(dir+self.chr+"_"+newstart+"_"+newend+"_"+self.samples[0]+"_"+self.name+"_"+self.prefix+".jpg"):
       return dir+self.chr+"_"+newstart+"_"+newend+"_"+self.samples[0]+"_"+self.name+"_"+self.prefix+".jpg"
-    elif os.path.isfile(dir+self.chr+"_"+newstart+"_"+newend+"_"+self.samples[0]+"_"+self.name+"_"+self.prefix+".jpg"):
-      return dir+self.chr+"_"+newstart+"_"+newend+"_"+self.samples[0]+"_"+self.name+"_"+self.prefix+".jpg"
+    elif os.path.isfile(dir+self.chr+"_"+newstart+"_"+newend+"_"+self.samples[0]+"_"+self.name+"_"+self.prefix+"_"+self.family_id+".jpg"):
+      return dir+self.chr+"_"+newstart+"_"+newend+"_"+self.samples[0]+"_"+self.name+"_"+self.prefix+"_"+self.family_id+".jpg"
     else:
       #raise Exception(dir+self.chr+"_"+newstart+"_"+newend+"_"+self.samples[0]+"_"+self.name+"_"+self.prefix+".jpg"+" Rdplot not found")
       return 'Error'
@@ -97,6 +97,7 @@ class Variant():
       STR2=self.varname
     pesrplot=self.pesrplotname(pedir)
     rdplot=self.rdplotname(rddir, flank)
+    #print(rdplot)
     if pesrplot!='Error' and rdplot!='Error':
         img = Image.open(rdplot) #rd plot
         img2 = img.crop((0, 230, img.size[0], img.size[1])) # crop out original RD plot annotations
@@ -105,14 +106,12 @@ class Variant():
         STR1=self.chr+":"+'{0:,}'.format(int(self.start))+'-'+'{0:,}'.format(int(self.end))+" (+"+build+")"
         outfile='info.jpg'
         words(STR1,STR2,outfile,100) # new Rd plot
-        #vstack(['info.jpg',"croprd.jpg",pesrplot],outdir+self.varname+"_denovo.png") # combine rd pe and sr together
         vstack([pesrplot,'info.jpg',"croprd.jpg"],outdir+self.varname+"_denovo.png") # combine rd pe and sr together
     elif pesrplot!='Error' and rdplot=='Error':
         STR1=self.chr+":"+'{0:,}'.format(int(self.start))+'-'+'{0:,}'.format(int(self.end))+" (hg38)"
         outfile='info.jpg'
         words(STR1,STR2,outfile,50)
-        #vstack(['info.jpg',pesrplot],outdir+self.varname+"_denovo.png")
-        vstack([pesrplot,'info.jpg'],outdir+self.varname+"_denovo.png")
+        vstack(['info.jpg',pesrplot],outdir+self.varname+"_denovo.png")
 
 class VariantInfo():
   def __init__(self,pedfile,prefix):
@@ -131,6 +130,7 @@ class VariantInfo():
       self.prefix=prefix
     famdct={}
     reversedct={}
+    reversedctfam={}
     self.samplelist=[]
     with open(pedfile,"r") as f:
       for line in f:
@@ -141,10 +141,11 @@ class VariantInfo():
         else:
           famdct[father+","+mother].append(sample)
         reversedct[sample]=father+","+mother
-        print(reversedct[sample])
+        reversedctfam[sample]=fam
         self.samplelist.append(sample)
     self.famdct=famdct
     self.reversedct=reversedct
+    self.reversedctfam=reversedctfam
     ## QC
     # if self.prefixdir!={}:
       # if set(self.samplelist)!=set(self.prefixdir.keys()):
@@ -157,7 +158,6 @@ class VariantInfo():
       return self.prefixdir[sample]
   def getnuclear(self,sample):
     parents=self.reversedct[sample]
-    print(parents)
     if parents!="0,0":
       kids=self.famdct[parents].copy()
       kids.remove(sample)
@@ -176,14 +176,12 @@ class GetVariants():
           dat=line.rstrip().split("\t")
           [chr,start,end,name,type,samples]=dat[0:6]
           sample=samples.split(',')[0]
-          print(chr)
           varname=samples.split(',')[0]+'_'+name
           if "," in sample:
             raise Exception("should only have 1 sample per variant")
           prefix=self.variantinfo.getprefix(sample)
-          print(prefix)
           nuclearfam=self.variantinfo.getnuclear(sample)
-          variant=Variant(chr,start,end,name,type,nuclearfam,varname,prefix)
+          variant=Variant(chr,start,end,name,type,nuclearfam,varname,prefix,self.variantinfo.reversedctfam[sample])
           self.variants.append(variant)
   def GetRdfiles(self):
     with open(self.inputfile+".igv","w") as g:
