@@ -112,9 +112,8 @@ workflow deNovoSV {
 
     output {
     
-        Array[File] denovo_output = getDeNovo.denovo_output
-        Array[File] denovo_outliers = getDeNovo.denovo_outliers
         File concat_output = plot_mergeFinalBedFiles.concat_final_bed_output
+        File concat_outlier_output = plot_mergeFinalBedFiles.concat_final_bed_outliers_output
         File denovo_output_plots = plot_createPlots.output_plots
 
     }
@@ -479,17 +478,18 @@ task plot_mergeFinalBedFiles{
     RuntimeAttr runtime_attr = select_first([runtime_attr_override, default_attr])
 
     output{
-        File concat_final_bed_output = "final.denovo.merged.bed"
-        File concat_final_bed_outliers_output = "final.denovo.outliers.merged.bed"
+        File concat_final_bed_output = "final.denovo.merged.bed.gz"
+        File concat_final_bed_outliers_output = "final.denovo.outliers.merged.bed.gz"
     }
 
     command {
         head -n+1 ${bed_files[1]} > final.denovo.merged.bed
         tail -n+2 -q ${sep=" " bed_files} >> final.denovo.merged.bed
+        bgzip final.denovo.merged.bed
         
         head -n+1 ${outliers_files[1]} > final.denovo.outliers.merged.bed
         tail -n+2 -q ${sep=" " outliers_files} >> final.denovo.outliers.merged.bed
-
+        bgzip final.denovov.outliers.merged.bed
     }
 
     runtime {
