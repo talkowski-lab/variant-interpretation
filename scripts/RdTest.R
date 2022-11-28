@@ -807,11 +807,11 @@ plotJPG <- function(genotype_matrix,cnv_matrix,chr,start,end,cnvID,sampleIDs,out
     father_list <-as.character(
       family[which(family[, 1] %in% includedfams &
                      family[, 3] == 0 &
-                     family[, 4] == 0 &  family[, 5] == 1 ) , 2])
+                     family[, 4] == 0 &  (family[, 5] == 1 | family[, 5] == 0)) , 2])
     mother_list <-as.character(
       family[which(family[, 1] %in% includedfams &
                      family[, 3] == 0 &
-                     family[, 4] == 0 &  family[, 5] == 2 ) , 2])
+                     family[, 4] == 0 &  (family[, 5] == 2 | family[, 5] == 0)) , 2])
     
     #text(c(1:10), as.numeric(cnv_matrix[proband_list,]), "p", cex = 1)
     #text(c(1:10), as.numeric(cnv_matrix[sib_list,]), "s", cex = 1)
@@ -1144,9 +1144,9 @@ runRdTest<-function(bed)
     sib_list <-as.character(
       family[which(family[, 1] %in% includedfams & family[, 3] != 0 & family[, 4] != 0 & family[, 6] == 1) , 2])
     father_list <-as.character(
-      family[which(family[, 1] %in% includedfams & family[, 3] == 0 & family[, 4] == 0 &  family[, 5] == 1 ) , 2])
+      family[which(family[, 1] %in% includedfams & family[, 3] == 0 & family[, 4] == 0 &  (family[, 5] == 1 | family[, 5] == 0) ) , 2])
     mother_list <-as.character(
-      family[which(family[, 1] %in% includedfams & family[, 3] == 0 & family[, 4] == 0 &  family[, 5] == 2 ) , 2])
+      family[which(family[, 1] %in% includedfams & family[, 3] == 0 & family[, 4] == 0 &  (family[, 5] == 2 | family[, 5] == 0) ) , 2])
     for (mem in c("mo","p1","s1","fa")) {
       eval(parse(text=paste(mem,".p.list<-c()",sep="")))
       eval(parse(text=paste(mem,".secmaxp.list<-c()",sep="")))
