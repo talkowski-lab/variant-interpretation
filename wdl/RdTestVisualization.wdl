@@ -30,7 +30,7 @@ workflow RdTestVisualization{
         output{
             File Plots = rdtest.plots
             File allcovfile = rdtest.allcovfile
-            File medianfile = rdtest.medianfile
+            File median_file = rdtest.median_file
         }
 }
 
@@ -104,7 +104,7 @@ task rdtest {
     output {
         File plots = "~{prefix}_rd_plots.tar.gz"
         File allcovfile = "allcovfile.bed.gz"
-        File medianfile = "medianfile.txt"
+        File median_file = "medianfile.txt"
     }
     
     runtime {
