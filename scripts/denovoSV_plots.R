@@ -112,8 +112,9 @@ denovo %>%
   theme_classic() +
   theme(
     legend.position = "right",
-    axis.text = element_text(size = 10),
-    axis.title = element_text(size = 11),
+    axis.text = element_text(size = 20),
+    axis.title = element_text(size = 20),
+    plot.title = element_text(size=25),
     axis.text.x = element_text(angle = 45, hjust = 1),
     panel.border = element_blank(),
     axis.line = element_line(colour = "black")) -> p_chr_count
@@ -145,9 +146,10 @@ df$num_of_denovos <- as.numeric(as.character(df$Freq))
 df$samples <- as.factor(df$samples)
 
 
-p <- ggplot(df, aes(y=num_of_denovos)) + geom_boxplot() + labs(title = "Number of de novo SVs per sample", y = "Number of de novos", x = "Samples") + theme_classic()
-p
-
+p <- ggplot(df, aes(y=num_of_denovos)) + geom_boxplot() + labs(title = "Number of de novo SVs per sample", y = "Number of de novos", x = "Samples") + theme_classic() + theme(
+  axis.text = element_text(size = 20),
+  axis.title = element_text(size = 20),
+  plot.title = element_text(size=25))
 
 ##De novo count by allele frequency
 denovo$AF <- as.numeric(denovo$AF)  
@@ -170,8 +172,9 @@ denovo %>%
   theme_classic() +
   theme(
     legend.position = "right",
-    axis.text = element_text(size = 10),
-    axis.title = element_text(size = 11),
+    axis.text = element_text(size = 20),
+    axis.title = element_text(size = 20),
+    plot.title = element_text(size=25),
     axis.text.x = element_text(angle = 45, hjust = 1),
     panel.border = element_blank(),
     axis.line = element_line(colour = "black")) -> p_af_count
@@ -201,8 +204,9 @@ denovo_in_gd %>%
   theme_classic() +
   theme(
     legend.position = "right",
-    axis.text = element_text(size = 10),
-    axis.title = element_text(size = 11),
+    axis.text = element_text(size = 20),
+    axis.title = element_text(size = 20),
+    plot.title = element_text(size=25),
     axis.text.x = element_text(angle = 45, hjust = 1),
     panel.border = element_blank(),
     axis.line = element_line(colour = "black")) -> p_af_count_in_gd
@@ -219,8 +223,9 @@ denovo_not_in_gd %>%
   theme_classic() +
   theme(
     legend.position = "right",
-    axis.text = element_text(size = 10),
-    axis.title = element_text(size = 11),
+    axis.text = element_text(size = 20),
+    axis.title = element_text(size = 20),
+    plot.title = element_text(size=25),
     axis.text.x = element_text(angle = 45, hjust = 1),
     panel.border = element_blank(),
     axis.line = element_line(colour = "black")) -> p_af_count_not_in_gd
@@ -251,8 +256,9 @@ denovo %>%
   theme_classic() +
   theme(
     legend.position = "right",
-    axis.text = element_text(size = 10),
-    axis.title = element_text(size = 11),
+    axis.text = element_text(size = 20),
+    axis.title = element_text(size = 20),
+    plot.title = element_text(size=25),
     axis.text.x = element_text(angle = 45, hjust = 1),
     panel.border = element_blank(),
     axis.line = element_line(colour = "black")) -> p_size_count
@@ -275,8 +281,9 @@ denovo %>%
   theme_classic() +
   theme(
     legend.position = "right",
-    axis.text = element_text(size = 10),
-    axis.title = element_text(size = 11),
+    axis.text = element_text(size = 20),
+    axis.title = element_text(size = 20),
+    plot.title = element_text(size=25),
     axis.text.x = element_text(angle = 45, hjust = 1),
     panel.border = element_blank(),
     axis.line = element_line(colour = "black")) -> p_evidence
@@ -355,7 +362,7 @@ denovo_cons_type %>%
         order.by = "freq", 
         set_size.show = TRUE,
         # set_size.scale_max = 15000, 
-        text.scale = 2, 
+        text.scale = 2.5, 
         query.legend = "top") -> p_denovo_upset_all
 
 grob_annotation_upset_plot <- as.grob(p_denovo_upset_all)
@@ -446,8 +453,9 @@ lay <- rbind(c(1,1,2,2,2,2,2,2),
              c(3,3,NA,4,4,NA,5,5),
              c(6,6,6,6,7,7,7,7),
              c(8,8,8,8,8,8,NA,NA))
-ml <- grid.arrange(p, p_chr_count, p_af_count, p_af_count_in_gd, p_af_count_not_in_gd, p_size_count, p_evidence, grob_annotation_upset_plot, layout_matrix = lay, top=textGrob("De Novo SV Data"))
-ggsave(out_file, ml, width = 30, height = 45)
+
+ml <- grid.arrange(p, p_chr_count, p_af_count, p_af_count_in_gd, p_af_count_not_in_gd, p_size_count, p_evidence, grob_annotation_upset_plot, layout_matrix = lay, top=textGrob("De Novo SV Data", gp=gpar(fontsize=30)))
+ggsave(out_file, ml, width = 35, height = 45)
 
 
 # 
@@ -455,8 +463,6 @@ ggsave(out_file, ml, width = 30, height = 45)
 # lay <- rbind(c(1,1,2,2,3,3))
 # ml <- grid.arrange(p_af_count_known, p_size_count_known, p_evidence_known, layout_matrix = lay, top=textGrob("Chr16 Known CMG De Novo SV Data"))
 # ggsave(known_out_file, ml, width = 8, height = 5)
-
-
 
 
 
