@@ -108,7 +108,7 @@ denovo %>%
   ggplot(aes(x = chrom, fill = SVTYPE)) +
   geom_bar() +
   labs(x="Chromosome", y="Number de novo SVs", title= "Number of De Novo SVs per Chromosome") +
-  scale_fill_manual(values = rev(c(del_col, dup_col, ins_col, inv_col, cpx_col, ctx_col))) + 
+  scale_fill_manual(values = rev(c("DEL"=del_col, "DUP"=dup_col, "INS"=ins_col, "INV"=inv_col, "CPX"=cpx_col, "CTX"=ctx_col))) + 
   theme_classic() +
   theme(
     legend.position = "right",
@@ -168,7 +168,7 @@ denovo %>%
   geom_bar() +
   # scale_y_log10()+
   labs(x="Allele Frequency", y="Number de novo SVs", title="Number of De Novo\n SVs by Frequency") +
-  scale_fill_manual(values = rev(c(del_col, dup_col, ins_col, inv_col, cpx_col, ctx_col))) + 
+  scale_fill_manual(values = rev(c("DEL"=del_col, "DUP"=dup_col, "INS"=ins_col, "INV"=inv_col, "CPX"=cpx_col, "CTX"=ctx_col))) + 
   theme_classic() +
   theme(
     legend.position = "right",
@@ -200,7 +200,7 @@ denovo_in_gd %>%
   geom_bar() +
   # scale_y_log10()+
   labs(x="Allele Frequency", y="Number de novo SVs", title= "Number of De Novo SVs \nin Genomic Disorder Regions by Frequency") +
-  scale_fill_manual(values = rev(c(del_col, dup_col, ins_col, inv_col, cpx_col, ctx_col))) + 
+  scale_fill_manual(values = rev(c("DEL"=del_col, "DUP"=dup_col, "INS"=ins_col, "INV"=inv_col, "CPX"=cpx_col, "CTX"=ctx_col))) + 
   theme_classic() +
   theme(
     legend.position = "right",
@@ -219,7 +219,7 @@ denovo_not_in_gd %>%
   geom_bar() +
   # scale_y_log10()+
   labs(x="Allele Frequency", y="Number de novo SVs", title= "Number of De Novo SVs not in \n Genomic Disorder Regions by Frequency") +
-  scale_fill_manual(values = rev(c(del_col, dup_col, ins_col, inv_col, cpx_col, ctx_col))) + 
+  scale_fill_manual(values = rev(c("DEL"=del_col, "DUP"=dup_col, "INS"=ins_col, "INV"=inv_col, "CPX"=cpx_col, "CTX"=ctx_col))) + 
   theme_classic() +
   theme(
     legend.position = "right",
@@ -252,7 +252,7 @@ denovo %>%
   geom_bar() +
   # scale_y_log10()+
   labs(x="Size of SV", y="Number de novo SVs", title= "De Novo SVs by Size") +
-  scale_fill_manual(values = rev(c(del_col, dup_col, ins_col, inv_col, cpx_col, ctx_col))) + 
+  scale_fill_manual(values = rev(c("DEL"=del_col, "DUP"=dup_col, "INS"=ins_col, "INV"=inv_col, "CPX"=cpx_col, "CTX"=ctx_col))) + 
   theme_classic() +
   theme(
     legend.position = "right",
@@ -277,7 +277,7 @@ denovo %>%
   geom_bar() +
   # scale_y_log10()+
   labs(x="Evidence", y="Number de novo SVs", title= "De Novo SVs by Evidence") +
-  scale_fill_manual(values = rev(c(del_col, dup_col, ins_col, inv_col, cpx_col, ctx_col))) + 
+  scale_fill_manual(values = rev(c("DEL"=del_col, "DUP"=dup_col, "INS"=ins_col, "INV"=inv_col, "CPX"=cpx_col, "CTX"=ctx_col))) + 
   theme_classic() +
   theme(
     legend.position = "right",
