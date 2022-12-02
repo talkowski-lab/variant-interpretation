@@ -1199,13 +1199,19 @@ runRdTest<-function(bed)
       if (opt$plotfamily==TRUE) {
         famIdInSampleId <- grep(i,unlist(strsplit(as.character(sampleIDs),split=",")),value=TRUE,ignore.case = TRUE)
         if (identical(famIdInSampleId, character(0))) {
-          cat(sprintf("Family ID %s not found in sample ID\n", i))
-          next()
+          i_new <- gsub('-','_',i)
+          famIdInSampleId2 <- grep(i_new,unlist(strsplit(as.character(sampleIDs),split=",")),value=TRUE,ignore.case = TRUE)
+          if (identical(famIdInSampleId2, character(0))) {
+            cat(sprintf("Family ID %s not found in sample ID\n", i))
+            next()
+          }
+          else {
+          sampleID2s<-paste(unique(grep(i_new,unlist(strsplit(as.character(sampleIDs),split=",")),value=TRUE,ignore.case = TRUE)),collapse=",")
+          }
         }
+        else {
         sampleID2s<-paste(unique(grep(i,unlist(strsplit(as.character(sampleIDs),split=",")),value=TRUE,ignore.case = TRUE)),collapse=",")
-        plotJPG(original_genotype_matrix,original_cnv_matrix,chr,start,end,cnvID,sampleIDs=sampleID2s,outputname=paste(outputname,"_",i,sep=""),cnvtype,plotK=FALSE,plotfamily,famfile,outFolder)
-      }
-        sampleID2s<-paste(unique(grep(i,unlist(strsplit(as.character(sampleIDs),split=",")),value=TRUE)),collapse=",")
+        }
         plotJPG(original_genotype_matrix,original_cnv_matrix,chr,start,end,cnvID,sampleIDs=sampleID2s,outputname=paste(outputname,"_",i,sep=""),cnvtype,plotK=FALSE,plotfamily,famfile,outFolder)
       }
     }
