@@ -49,7 +49,7 @@ list <- structure(NA, class = "result")
 
 option_list = list(
   make_option(c("-b", "--bed"), type="character", default=NULL,
-              help="Bed file of CNVs to check. No header. Locus ID as fourth column. SampleIDs of interest comma delimited as sixth column. CNVtype (DEL,DUP) as the fifth column", metavar="character"),
+              help="Bed file of CNVs to check. No header. Locus ID as fourth column. SampleIDs of interest comma delimited as fifth column. CNVtype (DEL,DUP) as the sixth column", metavar="character"),
   make_option(c("-c", "--coveragefile"), type="character", default=NULL,
               help="Full path to 1kb or 100bp binned coverage matrix for entire cohort", metavar="character"),
   make_option(c("-m", "--medianfile"), type="character", default=NULL,
@@ -146,8 +146,8 @@ intervals[, c(2:3)] <-
   })
 
 ##CNVtype check##
-if (length(grep("del",intervals[,5],ignore.case = TRUE))+
-    length(grep("dup",intervals[,5],ignore.case = TRUE))<length(intervals[,5]))
+if (length(grep("del",intervals[,6],ignore.case = TRUE))+
+    length(grep("dup",intervals[,6],ignore.case = TRUE))<length(intervals[,6]))
   {
     stop("WARNING: Incorrect CNV type specified")
   }
@@ -1007,10 +1007,10 @@ runRdTest<-function(bed)
   start<-as.numeric(bed[2])
   end<-as.numeric(bed[3])
   cnvID<-as.character(bed[4])
-  sampleIDs<-as.character(bed[6])
-  sampleOrigIDs<-as.character(bed[6])
-  cnvtype<-as.character(bed[5])
-  cnvtypeOrigIDs<-as.character(bed[5])
+  sampleIDs<-as.character(bed[5])
+  sampleOrigIDs<-as.character(bed[5])
+  cnvtype<-as.character(bed[6])
+  cnvtypeOrigIDs<-as.character(bed[6])
   
   ##Assign input values from opt list to variable##
   for (names in names(opt))
