@@ -229,14 +229,15 @@ task ValidateSamFile {
 }
 
 task AddOrReplaceReadGroups {
-    File inputBam
-    String sampleName
-    String readgroupLibrary
-    String readgroupPlatform
-    String readgroupRunBarcode
-    Int memoryGb
-    Int diskSpaceGb
-
+    input {
+        File inputBam
+        String sampleName
+        String readgroupLibrary
+        String readgroupPlatform
+        String readgroupRunBarcode
+        Int memoryGb
+        Int diskSpaceGb
+    }
     command <<<
         java -jar /usr/gitc/picard.jar AddOrReplaceReadGroups \
         I=${inputBam} \
