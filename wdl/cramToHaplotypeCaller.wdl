@@ -26,7 +26,6 @@ workflow CramToBamFlow {
         File ref_dict
         File input_cram
         String sample_name
-        String sample_name_addOrReplaceGroups
         String gotc_docker = "broadinstitute/genomes-in-the-cloud:2.3.1-1500064817"
         Int preemptible_tries = 3
         File scattered_calling_intervals_list
@@ -67,7 +66,7 @@ workflow CramToBamFlow {
     call AddOrReplaceReadGroups {
         input:
             inputBam = CramToBamTask.outputBam,
-            sample_name = sample_name_addOrReplaceGroups,
+            sample_name = sample_name,
             readgroupLibrary = readgroup_library,
             readgroupPlatform = readgroup_platform,
             readgroupRunBarcode = readgroup_run_barcode,
@@ -225,15 +224,15 @@ task AddOrReplaceReadGroups {
     }
     command <<<
         java -jar /usr/gitc/picard.jar AddOrReplaceReadGroups \
-            I=${inputBam} \
-            O=${sample_name}.readgroupadded.bam \
+            I=~{inputBam} \
+            O=~{sample_name}.readgroupadded.bam \
             RGID=1 \
-            RGLB=${readgroupLibrary} \
-            RGPL=${readgroupPlatform} \
-            RGPU=${readgroupRunBarcode} \
-            RGSM=${sample_name}
+            RGLB=~{readgroupLibrary} \
+            RGPL=~{readgroupPlatform} \
+            RGPU=~{readgroupRunBarcode} \
+            RGSM=~{sample_name}
 
-        samtools index ${sample_name}.readgroupadded.bam
+        samtools index ~{sample_name}.readgroupadded.bam
     >>>
 
     output {
