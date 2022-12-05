@@ -1126,7 +1126,7 @@ runRdTest<-function(bed)
     ##Read in family file##
     family <- read.table(famfile, sep="\t")
     child<-family[which(family[, 3] != 0 & family[, 4] != 0 ) , 2]
-    samplesPrior <- samplesPrior[which(samplesPrior %in% child)]
+    samplesPrior <- samplesPrior[which(samplesPrior %in% child)] #list of all children with two parents in ped
     ##If ID only has parents or all children removed by filtering##
     if (length(samplesPrior) == 0 ) {
       denovo_output <- cbind(chr,start,end,cnvID,cnvtype,"No_samples_for_analysis","No_samples_for_analysis","No_samples_for_analysis","No_samples_for_analysis","No_samples_for_analysis","No_samples_for_analysis","No_samples_for_analysis","No_samples_for_analysis","No_samples_for_analysis","No_samples_for_analysis",
@@ -1136,6 +1136,7 @@ runRdTest<-function(bed)
       return(denovo_output)
     }
     includedfams <- unique(family[which(family[, 2]  %in% samplesPrior), 1])
+    includedproband <- unique(family[which(family[, 2]  %in% samplesPrior), 2])
     original_cnv_matrix<-cnv_matrix
     original_genotype_matrix<-genotype_matrix
     ##Find samples to include##
@@ -1156,7 +1157,7 @@ runRdTest<-function(bed)
     affecteded_fam<-c()
     count=0
     fam_denovo.matrix<-c(NA,NA,NA,NA,NA,NA,NA,NA,NA,NA,NA,NA)
-    for (i in includedfams) {
+    for (i in includedproband) {
       count = count + 1
       for (singlesample in na.omit(c(proband_list[count],sib_list[count],father_list[count],mother_list[count]))) {
         if (singlesample %in% proband_list) {mem="p1"}
@@ -1165,11 +1166,11 @@ runRdTest<-function(bed)
         if (singlesample %in% mother_list) {mem="mo"}
         ##Add family members to sample include list##
         sampleID1s = unique(c(
-            as.character(sampleIDs),
-            father_list[count],
-            mother_list[count],
-            sib_list[count],
-            proband_list[count]))
+          as.character(sampleIDs),
+          father_list[count],
+          mother_list[count],
+          sib_list[count],
+          proband_list[count]))
         ##gender restrict variants on X or Y###
         if ((chr == "X" ||
              chr == "Y")  &&
@@ -1195,24 +1196,12 @@ runRdTest<-function(bed)
         cnv_matrix<-original_cnv_matrix
         fam_denovo.matrix<-rbind(fam_denovo.matrix,matrix(unlist(c(chr,start,end,cnvID,singlesample,cnvtype,"NA",p[1],p[2],"singlesampZ",rank_sep[1],rank_sep[2])),nrow=1))
       }
-      affecteded_fam[count]<-paste(unique(grep(i,unlist(strsplit(as.character(sampleIDs),split=",")),value=TRUE, ignore.case = TRUE)),collapse=",")
-      if (opt$plotfamily==TRUE) {
-        famIdInSampleId <- grep(i,unlist(strsplit(as.character(sampleIDs),split=",")),value=TRUE,ignore.case = TRUE)
-        if (identical(famIdInSampleId, character(0))) {
-          i_new <- gsub('-','_',i)
-          famIdInSampleId2 <- grep(i_new,unlist(strsplit(as.character(sampleIDs),split=",")),value=TRUE,ignore.case = TRUE)
-          if (identical(famIdInSampleId2, character(0))) {
-            cat(sprintf("Family ID %s not found in sample ID\n", i))
-            next()
-          }
-          else {
-          sampleID2s<-paste(unique(grep(i_new,unlist(strsplit(as.character(sampleIDs),split=",")),value=TRUE,ignore.case = TRUE)),collapse=",")
-          }
-        }
-        else {
-        sampleID2s<-paste(unique(grep(i,unlist(strsplit(as.character(sampleIDs),split=",")),value=TRUE,ignore.case = TRUE)),collapse=",")
-        }
-        plotJPG(original_genotype_matrix,original_cnv_matrix,chr,start,end,cnvID,sampleIDs=sampleID2s,outputname=paste(outputname,"_",i,sep=""),cnvtype,plotK=FALSE,plotfamily,famfile,outFolder)
+      #affected_fam[count]<-paste(unique(grep(i,unlist(strsplit(as.character(sampleIDs),split=",")),value=TRUE)),collapse=",")
+      #we do not need affected_fam for this module, which is the only reason we need to preserve fam_id
+      if (TRUE==TRUE) {
+        #sampleID2s<-paste(unique(grep(i,unlist(strsplit(as.character(sampleIDs),split=",")),value=TRUE)),collapse=",")
+        sampleID2s<-paste(unique(unlist(strsplit(as.character(sampleIDs),split=",")),value=TRUE),collapse=",")
+        plotJPG(original_genotype_matrix,original_cnv_matrix,chr,start,end,cnvID,sampleIDs=i,outputname=paste(outputname,"_",i,sep=""),cnvtype,plotK=FALSE,plotfamily,famfile,outFolder)
       }
     }
     if (opt$quartetDenovo==TRUE) {
