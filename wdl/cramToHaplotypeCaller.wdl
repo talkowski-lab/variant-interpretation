@@ -74,34 +74,18 @@ workflow CramToBamFlow {
             diskSpaceGb = disk_addOrReplaceGroups
     }
 
-    Array[File] scattered_calling_intervals = read_lines(scattered_calling_intervals_list)
-
-    #is the input a cram file?
-    Boolean is_cram = sub(basename(input_bam), ".*\\.", "") == "cram"
-
-    String sample_basename = if is_cram then  basename(input_bam, ".cram") else basename(input_bam, ".bam")
-    String vcf_basename = sample_basename
-    String output_suffix = if make_gvcf then ".g.vcf.gz" else ".vcf.gz"
-    String output_filename = vcf_basename + output_suffix
-
     # We need disk to localize the sharded input and output due to the scatter for HaplotypeCaller.
     # If we take the number we are scattering by and reduce by 20 we will have enough disk space
     # to account for the fact that the data is quite uneven across the shards.
+    Array[File] scattered_calling_intervals = read_lines(scattered_calling_intervals_list)
     Int potential_hc_divisor = length(scattered_calling_intervals) - 20
     Int hc_divisor = if potential_hc_divisor > 1 then potential_hc_divisor else 1
 
-    if ( is_cram ) {
-        call CramToBamTask {
-            input:
-                input_cram = input_bam,
-                sample_name = sample_basename,
-                ref_dict = ref_dict,
-                ref_fasta = ref_fasta,
-                ref_fasta_index = ref_fasta_index,
-                docker = gitc_docker,
-                samtools_path = samtools_path
-        }
-    }
+    #Define output filename
+    String sample_basename = basename(AddOrReplaceReadGroups.bamWithReadGroupAdded, ".bam")
+    String vcf_basename = sample_basename
+    String output_suffix = if make_gvcf then ".g.vcf.gz" else ".vcf.gz"
+    String output_filename = vcf_basename + output_suffix
 
     # Call variants in parallel over grouped calling intervals
     scatter (interval_file in scattered_calling_intervals) {
@@ -109,8 +93,8 @@ workflow CramToBamFlow {
         # Generate GVCF by interval
         call HaplotypeCaller {
             input:
-                input_bam = select_first([CramToBamTask.output_bam, AddOrReplaceReadGroups.bamWithReadGroupAdded]),
-                input_bam_index = select_first([CramToBamTask.output_bai, AddOrReplaceReadGroups.bamWithReadGroupAddedIndex]),
+                input_bam = AddOrReplaceReadGroups.bamWithReadGroupAdded,
+                input_bam_index = AddOrReplaceReadGroups.bamWithReadGroupAddedIndex,
                 interval_list = interval_file,
                 output_filename = output_filename,
                 ref_dict = ref_dict,
