@@ -66,7 +66,7 @@ workflow CramToBamFlow {
     call AddOrReplaceReadGroups {
         input:
             inputBam = CramToBamTask.outputBam,
-            sampleName = sample_name,
+            sample_name = sample_name,
             readgroupLibrary = readgroup_library,
             readgroupPlatform = readgroup_platform,
             readgroupRunBarcode = readgroup_run_barcode,
@@ -215,7 +215,7 @@ task ValidateSamFile {
 task AddOrReplaceReadGroups {
     input {
         File inputBam
-        String sampleName
+        String sample_name
         String readgroupLibrary
         String readgroupPlatform
         String readgroupRunBarcode
@@ -225,19 +225,19 @@ task AddOrReplaceReadGroups {
     command <<<
         java -jar /usr/gitc/picard.jar AddOrReplaceReadGroups \
             I=${inputBam} \
-            O=${sampleName}.readgroupadded.bam \
+            O=${sample_name}.readgroupadded.bam \
             RGID=1 \
             RGLB=${readgroupLibrary} \
             RGPL=${readgroupPlatform} \
             RGPU=${readgroupRunBarcode} \
-            RGSM=${sampleName}
+            RGSM=${sample_name}
 
-        samtools index ${sampleName}.readgroupadded.bam
+        samtools index ${sample_name}.readgroupadded.bam
     >>>
 
     output {
-        File bamWithReadGroupAdded = "${sampleName}.readgroupadded.bam"
-        File bamWithReadGroupAddedIndex = "${sampleName}.readgroupadded.bam.bai"
+        File bamWithReadGroupAdded = "${sample_name}.readgroupadded.bam"
+        File bamWithReadGroupAddedIndex = "${sample_name}.readgroupadded.bam.bai"
     }
 
     runtime {
