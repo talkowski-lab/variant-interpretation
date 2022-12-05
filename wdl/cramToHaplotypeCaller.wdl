@@ -224,13 +224,13 @@ task AddOrReplaceReadGroups {
     }
     command <<<
         java -jar /usr/gitc/picard.jar AddOrReplaceReadGroups \
-        I=${inputBam} \
-        O=${sampleName}.readgroupadded.bam \
-        RGID=1 \
-        RGLB=${readgroupLibrary} \
-        RGPL=${readgroupPlatform} \
-        RGPU=${readgroupRunBarcode} \
-        RGSM=${sampleName}
+            I=${inputBam} \
+            O=${sampleName}.readgroupadded.bam \
+            RGID=1 \
+            RGLB=${readgroupLibrary} \
+            RGPL=${readgroupPlatform} \
+            RGPU=${readgroupRunBarcode} \
+            RGSM=${sampleName}
 
         samtools index ${sampleName}.readgroupadded.bam
     >>>
