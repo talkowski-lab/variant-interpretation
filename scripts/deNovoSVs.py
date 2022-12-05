@@ -467,6 +467,26 @@ def main():
     #bed_final = bed_final.astype('str')
     bed_final = bed_final.drop_duplicates(subset=['name'])  # write unique values
 
+    
+    
+    #If parent was not removed previously, looks to see if proband's parent also has the SV and removes the samples from that SV output
+    for j in range(len(bed_final)):
+        samples_from_column = bed_final.iat[j,5].split(",")
+        i=0
+        print(samples_from_column)
+        while i < len(samples_from_column):
+            if ((ped[(ped['subject_id'] == samples_from_column[i])]['maternal_id'].item() in samples_from_column)):
+                samples_from_column.remove(ped[(ped['subject_id'] == samples_from_column[i])]['maternal_id'].item())
+                samples_from_column.remove(samples_from_column[i])
+            elif ((ped[(ped['subject_id'] == samples_from_column[i])]['paternal_id'].item() in samples_from_column)):
+                samples_from_column.remove(ped[(ped['subject_id'] == samples_from_column[i])]['paternal_id'].item())
+                samples_from_column.remove(samples_from_column[i])
+            print(samples_from_column)
+            string_of_samples = ','.join([str(samples) for samples in samples_from_column])
+            print(string_of_samples)
+            bed_final.iat[j,5] = string_of_samples
+            i=i+1
+
 
     ##Keep samples and outliers in sepparate files
     output = bed_final[(bed_final['sample'].isin(samples_keep))]
