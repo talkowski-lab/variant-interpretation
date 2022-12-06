@@ -61,7 +61,11 @@ task rdtest {
     RuntimeAttr runtime_attr = select_first([runtime_attr_override, default_attr])
     command <<<
         set -ex
-        awk -v OFS="\t" '{print $1,$2,$3,$4,$6,$5}' ~{bed} |egrep "DEL|DUP" | sort -k1,1 -k2,2n> test.bed
+        cat ~{bed} | cut -f97 > sample.bed
+        cat ~{bed} | cut -f1-4 > start.bed
+        cat ~{bed} | cut -f5 > svtype.bed
+        paste start.bed sample.bed svtype.bed > final.bed
+        cat final.bed |egrep "DEL|DUP" | sort -k1,1 -k2,2n> test.bed
         cut -f5 test.bed |sed 's/\,/\n/g'|sort -u > samples.txt
         fgrep -wf samples.txt ~{sample_batches} |awk '{print $2}' |sort -u >existing_batches.txt
         fgrep -f existing_batches.txt ~{batch_bincov} > bincovlist.txt
