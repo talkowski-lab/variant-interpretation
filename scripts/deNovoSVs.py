@@ -465,7 +465,7 @@ def main():
 
 
     #bed_final = bed_final.astype('str')
-    bed_final = bed_final.drop_duplicates(subset=['name'])  # write unique values
+    #bed_final = bed_final.drop_duplicates(subset=['name'])  # write unique values
 
     
     ##Keep samples and outliers in sepparate files
