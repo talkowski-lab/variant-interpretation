@@ -117,7 +117,7 @@ workflow Module09VisualizeTrio{
                 rd_plots = RdTest_Plots,
                 igv_plots = igv_plots_tar_gz_pe,
                 prefix = prefix,
-                varfile = igv_plots.updated_varfile,
+                varfile = varfile,
                 pedfile = pedfile,
                 igv_docker = igv_docker,
                 runtime_attr_concatinate = runtime_attr_concatinate
