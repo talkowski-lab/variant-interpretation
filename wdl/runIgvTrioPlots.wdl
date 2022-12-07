@@ -72,6 +72,7 @@ workflow IGV_all_samples {
 
     output{
         File tar_gz_pe = integrate_igv_plots.plot_tar
+        File updated_varfile = generate_per_sample_bed.updated_varfile
     }
     }
 
@@ -101,6 +102,7 @@ task generate_per_sample_bed{
 
     output{
         File per_sample_varfile= "~{filename}.~{sample_id}.bed"
+        File updated_varfile = "updated_varfile.bed"
     }
 
     RuntimeAttr runtime_attr = select_first([runtime_attr_override, default_attr])
