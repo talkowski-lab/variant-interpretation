@@ -114,8 +114,8 @@ workflow Module09VisualizeTrio{
 
         call concatinate_plots{
             input:
-                rd_plots = RdTest_Plots,
-                igv_plots = igv_plots_tar_gz_pe,
+                rd_plots = RdTest_Plots_,
+                igv_plots = igv_plots_tar_gz_pe_,
                 prefix = prefix,
                 varfile = varfile,
                 pedfile = pedfile,
