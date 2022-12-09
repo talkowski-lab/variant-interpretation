@@ -80,6 +80,19 @@ def getInfoParent(row, ped, vcf, parent, field):
 
     return(parent_info_field)
 
+def getParents(proband,ped):
+    mother = ped[(ped['subject_id'] == proband)]['maternal_id'].values
+    father = ped[(ped['subject_id'] == proband)]['paternal_id'].values
+    parent_list = [mother,father]
+    return(parent_list)
+
+def getFamilyID(row,ped):
+    samp = row['sample']
+    family_id = ped[(ped['subject_id'] == samp)]['family_id'].values
+    return(family_id)
+
+    
+
 def main():
     """
     Parse arguments
@@ -90,7 +103,8 @@ def main():
     parser.add_argument('--vcf', dest='vcf', help='VCF file')
     parser.add_argument('--disorder', dest='disorder', help='Genomic disorder regions')
     parser.add_argument('--out', dest='out', help='Output file')
-    parser.add_argument('--raw', dest='raw', help='Directory with raw SV calls - output from m01')
+    parser.add_argument('--raw_proband', dest='raw_proband', help='Directory with raw SV calls - output from m01')
+    parser.add_argument('--raw_parents', dest='raw_parents', help='Directory with raw SV calls - output from m01')
     parser.add_argument('--outliers', dest='outliers', help='Output file with SV calls in outlier samples')
     parser.add_argument('--config', dest='config', help='Config file')
     parser.add_argument('--verbose', dest='verbose', help='Verbosity')
@@ -101,7 +115,8 @@ def main():
     vcf_file = args.vcf
     disorder_file = args.disorder
     out_file = args.out
-    raw_file = args.raw
+    raw_file_proband = args.raw_proband
+    raw_file_parent = args.raw_parents
     outlier_samples = args.outliers
     verbose = args.verbose
     config_file = args.config
@@ -129,8 +144,9 @@ def main():
     vcf = pd.read_csv(vcf_file, sep='\t')
     ped = pd.read_csv(ped_file, sep='\t')
     disorder = pd.read_csv(disorder_file, sep='\t', header=None)
-    raw_bed = pd.read_csv(raw_file, sep='\t', header=None).replace(np.nan, '', regex=True)
-
+    raw_bed_colnames = colnames=['ID', 'start', 'end', 'svtype', 'sample'] 
+    raw_bed_child = pd.read_csv(raw_file_proband, sep='\t', names= raw_bed_colnames, header=None).replace(np.nan, '', regex=True)
+    raw_bed_parent = pd.read_csv(raw_file_parent, sep='\t', names= raw_bed_colnames, header=None).replace(np.nan, '', regex=True)
 
 
 
@@ -195,10 +211,6 @@ def main():
 
     print("Size of bed_child after filtering by frequency:",str(len(bed_child)))
 
-
-    # bed_child = bed_child[ ((bed_child['AF'] < 0.01) | (bed_child['AF'].isnull())) |
-    #                        ((bed_child['in_gd'] == True) & ((bed_child['AF'] < 0.03) | (bed_child['AF'].isnull()) )) ]
-
     # Get counts within family and remove if SV in parents
     verbosePrint('Keep variants in children only', verbose)
     bed_child['num_parents_family'] = bed_child.apply(lambda r: getFamilyCount(r, ped), axis=1)
@@ -231,9 +243,6 @@ def main():
     bed_child = bed_child[~((bed_child['ALGORITHMS'] == "wham") & (bed_child['GQ'] == '1'))]
 
     print("Size of bed_child after removing wham only and GT=1 calls:",str(len(bed_child)))
-
-    #print(bed_child.loc[bed_child['name'].str.contains('INS_chr16_366')][['name','RD_CN', 'SR_GQ']])
-
 
 
     # LARGE CNV: Check for false negative in parents: check depth in parents, independently of the calls
@@ -347,46 +356,130 @@ def main():
     verbosePrint('Checking raw files', verbose)
 
     #Reformat raw files
-    raw_bed_ref = raw_bed.to_string(header=False, index=False)
-    raw_bed_ref = pybedtools.BedTool(raw_bed_ref, from_string=True)
+    #print(raw_bed)
+    raw_bed_ref_child = raw_bed_child.to_string(header=False, index=False)
+    raw_bed_ref_child = pybedtools.BedTool(raw_bed_ref_child, from_string=True)
 
+
+    raw_bed_ref_parent = raw_bed_parent.to_string(header=False, index=False)
+    raw_bed_ref_parent = pybedtools.BedTool(raw_bed_ref_parent, from_string=True)
+
+
+
+    #raw_bed_ref = pybedtools.BedTool.from_dataframe(raw_bed, disable_auto_names=True)
     #print(raw_bed_ref)
+    
+
+    #raw_bed_ref_child = pybedtools.BedTool(raw_file_proband)
+    #raw_bed_ref_parent = pybedtools.BedTool(raw_file_parent)
+    
+    #name = svtype
+    #score = sample
+    #print(raw_bed_ref[1].score)
+    #print(raw_bed_ref.filter(lambda x: x.score == '__3176003__2f003a'))
+    #it has the mom and child in raw_file
     #exit()
 
+
     #Reformat de novo filt calls
+
+    bed_filt['family_id'] = bed_filt.apply(lambda r: getFamilyID(r,ped), axis=1)
     bed_filt['chrom_type_sample'] = bed_filt['chrom'] + "_" + bed_filt['SVTYPE'] + "_" + bed_filt['sample']
+    bed_filt['chrom_type_family'] = bed_filt['chrom'] + "_" + bed_filt['SVTYPE'] + "_" + bed_filt['family_id'].astype(str).str.strip("[]")
+
 
 
     cols_keep2 = ['chrom_type_sample', 'start', 'end', 'name', 'svtype', 'sample']
+    cols_keep3 = ['chrom_type_family', 'start', 'end', 'name', 'svtype', 'sample']
+
 
     ##INSERTIONS: dist < 100bp (& INS ratio > 0.1 & INS ratio < 10 ?) (dis is START-start and INS ratio is SVLEN/svlen)
     verbosePrint('Checking insertions in raw files', verbose)
+
+    verbosePrint('Checking if insertions in proband is in raw files', verbose)
 
     bed_filt_ins = bed_filt[bed_filt['SVTYPE'] == 'INS']
 
     print("Number of insertions found:",str(len(bed_filt_ins)))
 
     if (len(bed_filt_ins.index) > 0):
-        bed_filt_ins_ref = bed_filt_ins[cols_keep2].to_string(header=False, index=False)
-
-        bed_filt_ins_ref = pybedtools.BedTool(bed_filt_ins_ref, from_string=True).sort()
+        bed_filt_ins_proband = bed_filt_ins[cols_keep2].to_string(header=False, index=False)
+        bed_filt_ins_proband = pybedtools.BedTool(bed_filt_ins_proband, from_string=True).sort()
         # bed_filt_ins_ref = pybedtools.BedTool(bed_filt_ins_ref, from_string=True)
-        bed_filt_ins_overlap = bed_filt_ins_ref.closest(raw_bed_ref).to_dataframe(disable_auto_names=True, header=None)
-        bed_filt_ins_overlap['is_close'] = abs(bed_filt_ins_overlap[7] - bed_filt_ins_overlap[1]) < 100
+        bed_filt_ins_overlap_proband = bed_filt_ins_proband.closest(raw_bed_ref_child).to_dataframe(disable_auto_names=True, header=None)
+        bed_filt_ins_overlap_proband['is_close'] = abs(bed_filt_ins_overlap_proband[7] - bed_filt_ins_overlap_proband[1]) < 100
+
+        ins_names_overlap_proband = bed_filt_ins_overlap_proband[(bed_filt_ins_overlap_proband['is_close'] == True)][3].to_list()
+    else:
+        ins_names_overlap_proband = ['']
+    print("Number of insertions supported by raw evidence:",str(len(ins_names_overlap_proband)))
+    print(ins_names_overlap_proband)
+
+    #subset_parents = a.filter(lambda x: x.name == )
+    #We will want to compare original raw evidence with subsetted raw evidence and check if parent has variant
+    #print(bed_filt_ins_overlap_proband)
+    #print(ins_names_overlap_proband)
+
+
+
+
+    verbosePrint('Checking if insertions in proband are also in raw files for the parents', verbose)
+
+    if (len(bed_filt_ins.index) > 0):
+        bed_filt_ins_fam = bed_filt_ins[ cols_keep3 ].to_string(header=False, index=False)
+        bed_filt_ins_fam = pybedtools.BedTool(bed_filt_ins_fam, from_string=True).sort()
+        # bed_filt_ins_ref = pybedtools.BedTool(bed_filt_ins_ref, from_string=True)
+        bed_filt_ins_overlap_parents = bed_filt_ins_fam.closest(raw_bed_ref_parent).to_dataframe(disable_auto_names=True, header=None)
+        bed_filt_ins_overlap_parents[ 'is_close' ] = abs(bed_filt_ins_overlap_parents[ 7 ] - bed_filt_ins_overlap_parents[ 1 ]) < 100
         
 
-        #print(bed_filt_ins_overlap)
-        #print(bed_filt_ins_overlap.loc[bed_filt_ins_overlap.iloc[:, 3].str.contains('DEL_chr16_4510')])
-        #print(bed_filt_ins_overlap[['is_close']])
-        #print(bed_filt_ins_overlap.iloc[36])
-        #exit()
-
-        ins_names_overlap = bed_filt_ins_overlap[(bed_filt_ins_overlap['is_close'] == True)][3].to_list()
+        ins_names_overlap_parents = bed_filt_ins_overlap_parents[ (bed_filt_ins_overlap_parents[ 'is_close' ] == True) ][ 3 ].to_list()
     else:
-        ins_names_overlap = ['']
-    print("Number of insertions supported by raw evidence:",str(len(ins_names_overlap)))
+        ins_names_overlap_parents = [ '' ]
 
-   
+    print('INS in parents: ', ins_names_overlap_parents)
+    #print("Number of insertions supported by raw evidence in parents:", str(len(ins_names_overlap_parents)))
+
+    #ins_names_overlap = ins_names_overlap_proband not in ins_names_overlap_parents
+    ins_names_overlap = [x for x in ins_names_overlap_proband if x not in ins_names_overlap_parents]
+    print(ins_names_overlap)
+    #print(ins_names_overlap)
+    exit()
+
+
+
+
+
+
+
+
+
+
+
+    if len(ins_names_overlap) != 0:
+        bed_filt_ins_new = bed_filt_ins_ref.filter(lambda x: x.name in ins_names_overlap).saveas() # create bedtool object of all SVs in ins_names_overlap
+    #print(bed_filt_ins_new)
+    #print(bed_filt_ins_new[1].fields[5])
+    
+        print(ins_names_overlap)
+        for i in range(len(bed_filt_ins_new)): #for each SV
+            parent_list = getParents(bed_filt_ins_new[i].fields[5], ped) #get parents
+            start = int(bed_filt_ins_new[i].fields[2]) - 500 #get start and end position +- 100
+            end = int(bed_filt_ins_new[i].fields[2]) + 500
+            check_parents = raw_bed_ref.filter(lambda b: b.score in parent_list and b.start > start and b.start < end).saveas().to_dataframe(header=None) #check if there is a parent in raw evidence that has SV with the same start and end
+        #print(check_parents)
+        #if check_parents[1].fields[5] == parent_list[1] | parent_list[2]:
+            #ins_names_overlap.remove(bed_filt_ins_ref[i].fields[5])
+            if (bed_filt_ins_new[i].fields[3] not in ins_names_overlap):
+                ins_names_overlap.append(bed_filt_ins_new[i].fields[3]) # if it is not in the list that means that it has been removed before becasuse there were multiple with this name, so readd it and check if it needs to be deleted
+            if check_parents.shape[0] != 0: #if there was a parent with similar SV
+            #print(bed_filt_ins_new[i].fields[3])
+            #print(ins_names_overlap)
+                ins_names_overlap.remove(bed_filt_ins_new[i].fields[3]) #remove SV from ins_names_overlap because it is inherited
+        print(ins_names_overlap)
+        exit()
+
+       
 
     ## Large CNVS: Reciprocal overlap >0.4%
     verbosePrint('Checking large cnvs in raw files', verbose)
@@ -406,18 +499,12 @@ def main():
             if (len(large_bed_filt_cnv_overlap) != 0):
                 large_cnv_names_overlap = large_bed_filt_cnv_overlap[3].to_list()
        
-        #if 'phase2_DEL_chr19_484' in cnv_names_overlap:
-            #print('exists')
             else:
                 large_cnv_names_overlap = ['']
     else:
         large_cnv_names_overlap = ['']
 
     print("Number of large CNVs supported by raw evidence:",str(len(large_cnv_names_overlap)))
-
-   # print(large_cnv_names_overlap)
-    
-    
 
 
     ## Small CNVs - Reciprocal overlap >0.8%
@@ -446,36 +533,20 @@ def main():
     print("Number of small CNVs supported by raw evidence:",str(len(small_cnv_names_overlap)))
     
 
-
-
-    #print(cnv_names_overlap)
-
-    #print(bed_filt[~bed_filt['SVTYPE'].isin(['DEL', 'DUP', 'INS'])])
-    #exit()
-    
-
     ##Filtering out INS and CNV with no raw evidence
     verbosePrint('Filtering out variants with no raw evidence', verbose)
 
     #bed_test = bed_filt[ (bed_filt['SVTYPE'].isin(['DEL', 'DUP', 'INS'])) |
                           #(bed_filt['name'].isin(ins_names_overlap + cnv_names_overlap)) ]
+
     bed_final = bed_filt[ (~bed_filt['SVTYPE'].isin(['DEL', 'DUP', 'INS'])) |
                           (bed_filt['name'].isin(ins_names_overlap + large_cnv_names_overlap + small_cnv_names_overlap)) ]
-
-
-
-    #bed_final = bed_final.astype('str')
-    #bed_final = bed_final.drop_duplicates(subset=['name'])  # write unique values
 
     
     ##Keep samples and outliers in sepparate files
     output = bed_final[(bed_final['sample'].isin(samples_keep))]
 
-    #output = output[((output["AF"] <= 0.001) | (output['in_gd'] == True))]
 
-
-
-    #output = bed_test[(bed_test['sample'].isin(samples_keep))]
     output_outliers = bed_final[(~bed_final['sample'].isin(samples_keep))]
 
     # TO DO
