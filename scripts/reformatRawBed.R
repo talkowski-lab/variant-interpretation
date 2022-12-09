@@ -10,10 +10,10 @@ require(plyr)
 library(data.table)
 library(tidyverse)
 
-input_bed <- "chr16.bed"
-input_ped <- "REU_ped.tsv"
-out_probands <- "probands.bed"
-out_parents <- "parents.bed"
+input_bed <- args[1]
+input_ped <- args[2]
+out_probands <- args[3]
+out_parents <- args[4]
 
 #Read input bed
 bed <- fread(input_bed)
@@ -52,9 +52,8 @@ bed_probands$CHROM <- paste0(bed_probands$CHROM, "_", bed_probands$SVTYPE, "_", 
 
 bed_parents$CHROM <- paste0(bed_parents$CHROM, "_", bed_parents$SVTYPE, "_", bed_parents$family_id)
 
-#reorder the columns of bed_parents and remove fam_id column
-#bed_parents2 <- bed_parents[, c(2,3,4,5,6,1)]
-bed_parents2 <- subset(bed_parents, select = c(CHROM,start, end, SVTYPE, samples))
+#reorder the columns of bed_parents
+bed_parents2 <- bed_parents[, c(2,3,4,5,1)]
 
 #Select specific samples
 #bed_subset <- subset(bed_split, select = c(CHROM, start, end, SVTYPE, samples))
