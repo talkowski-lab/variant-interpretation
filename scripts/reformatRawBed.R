@@ -10,16 +10,21 @@ require(plyr)
 library(data.table)
 library(tidyverse)
 
-input_bed <- args[1]
-out_bed <- args[2]
+input_bed <- "chr16.bed"
+input_ped <- "REU_ped.tsv"
+out_probands <- "probands.bed"
+out_parents <- "parents.bed"
 
 #Read input bed
 bed <- fread(input_bed)
+ped <- fread(input_ped)
+
 
 #adding back column names
 colnames(bed) <- c("CHROM", "start", "end", "name", "svtype", "samples", "SVTYPE")
 
-print(bed)
+
+#print(bed)
 
 #Split into one sample per row
 bed %>%
@@ -28,11 +33,32 @@ bed %>%
 
 #print(bed)
 
+#split into parents and probands
+bed_probands <- bed_split
+bed_probands <- subset(bed_probands, !(samples %in% ped$maternal_id) & !(samples %in% ped$paternal_id))
+
+bed_parents <- bed_split
+bed_parents <- subset(bed_parents, samples %in% ped$maternal_id | samples %in% ped$paternal_id)
+
+#add in a family ID column to bed_parents
+ped_subset <- subset(ped, select = c('family_id', 'subject_id'))
+colnames(ped_subset) <- c('family_id', 'samples')
+
+bed_parents <- merge(bed_parents,ped_subset, by="samples", all.x = TRUE)
+
+
 #Reformat chromosome column
-bed_split$CHROM <- paste0(bed_split$CHROM, "_", bed_split$SVTYPE, "_", bed_split$samples)
+bed_probands$CHROM <- paste0(bed_probands$CHROM, "_", bed_probands$SVTYPE, "_", bed_probands$samples)
+
+bed_parents$CHROM <- paste0(bed_parents$CHROM, "_", bed_parents$SVTYPE, "_", bed_parents$family_id)
+
+#reorder the columns of bed_parents and remove fam_id column
+#bed_parents2 <- bed_parents[, c(2,3,4,5,6,1)]
+bed_parents2 <- subset(bed_parents, select = c(CHROM,start, end, SVTYPE, samples))
 
 #Select specific samples
-bed_subset <- subset(bed_split, select = c(CHROM, start, end, SVTYPE, samples))
+#bed_subset <- subset(bed_split, select = c(CHROM, start, end, SVTYPE, samples))
 
 #Write output file
-write.table(bed_subset, out_bed, sep = "\t", quote = F, row.names = F, col.names = F)
+write.table(bed_probands, out_probands, sep = "\t", quote = F, row.names = F, col.names = F)
+write.table(bed_parents2, out_parents, sep = "\t", quote = F, row.names = F, col.names = F)
