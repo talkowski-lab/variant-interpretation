@@ -27,7 +27,7 @@ workflow HaplotypeCallerGvcf_GATK4 {
   call MergeGVCFs {
     input:
       input_vcfs = input_vcfs,
-      input_vcfs_indexes = input_vcfs_index,
+      input_vcfs_indexes = input_vcfs_indexes,
       output_filename = output_filename,
       docker = gatk_docker,
       gatk_path = gatk_path
