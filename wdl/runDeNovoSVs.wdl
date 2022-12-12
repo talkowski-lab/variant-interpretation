@@ -73,6 +73,7 @@ workflow deNovoSV {
         call raw_reformatBed{
             input:
                 per_chromosome_bed_file = raw_divideByChrom.per_chromosome_bed_output,
+                ped_input=ped_input,
                 chromosome=contig,
                 variant_interpretation_docker=variant_interpretation_docker,
                 runtime_attr_override = runtime_attr_override
@@ -85,7 +86,8 @@ workflow deNovoSV {
                 vcf_input=subsetVcf.no_header_vcf_output,
                 disorder_input=getGenomicDisorders.gd_output,
                 chromosome=contig,
-                raw_input=raw_reformatBed.reformatted_output,
+                raw_proband=raw_reformatBed.reformatted_proband_output,
+                raw_parents=raw_reformatBed.reformatted_parents_output,
                 python_config=python_config,
                 variant_interpretation_docker=variant_interpretation_docker,
                 runtime_attr_override = runtime_attr_override
@@ -126,7 +128,8 @@ task getDeNovo{
         File vcf_input
         File disorder_input
         String chromosome
-        File raw_input
+        File raw_proband
+        File raw_parents
         File python_config
         String variant_interpretation_docker
         RuntimeAttr? runtime_attr_override
@@ -154,7 +157,8 @@ task getDeNovo{
                 --vcf ~{vcf_input} \
                 --disorder ~{disorder_input} \
                 --out ~{chromosome}.denovo.bed \
-                --raw ~{raw_input} \
+                --raw_proband ~{raw_proband} \
+                --raw_parents ~{raw_parents} \
                 --config ~{python_config} \
                 --verbose True \
                 --outliers ~{chromosome}.denovo.outliers.bed
@@ -419,6 +423,7 @@ task raw_divideByChrom{
 task raw_reformatBed{
     input{
         File per_chromosome_bed_file
+        File ped_input
         String chromosome
         String variant_interpretation_docker
         RuntimeAttr? runtime_attr_override
@@ -436,14 +441,16 @@ task raw_reformatBed{
     RuntimeAttr runtime_attr = select_first([runtime_attr_override, default_attr])
 
     output{
-       File reformatted_output = "${chromosome}.reformatted.sorted.bed"
+       File reformatted_proband_output = "${chromosome}.proband.reformatted.sorted.bed"
+       File reformatted_parents_output = "${chromosome}.parents.reformatted.sorted.bed"
     }
 
     command {
 
         #reformat bed file
-        Rscript /src/variant-interpretation/scripts/reformatRawBed.R ${per_chromosome_bed_file} ${chromosome}.reformatted.bed
-        sortBed -i ${chromosome}.reformatted.bed > ${chromosome}.reformatted.sorted.bed
+        Rscript /src/variant-interpretation/scripts/reformatRawBed.R ${per_chromosome_bed_file} ${ped_input} ${chromosome}.proband.reformatted.bed ${chromosome}.parents.reformatted.bed
+        sortBed -i ${chromosome}.proband.reformatted.bed > ${chromosome}.proband.reformatted.sorted.bed
+        sortBed -i ${chromosome}.parents.reformatted.bed > ${chromosome}.parents.reformatted.sorted.bed
 
     }
 
