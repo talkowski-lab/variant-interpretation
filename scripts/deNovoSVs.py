@@ -383,14 +383,16 @@ def main():
 
     #Reformat de novo filt calls
 
+    #bed_filt['name_sample'] = bed_filt['name'] + "_" + bed_filt['sample']
     bed_filt['family_id'] = bed_filt.apply(lambda r: getFamilyID(r,ped), axis=1)
+    bed_filt['name_famid'] = bed_filt['name'] + "_" + bed_filt['family_id'].astype(str).str.strip("[]")
     bed_filt['chrom_type_sample'] = bed_filt['chrom'] + "_" + bed_filt['SVTYPE'] + "_" + bed_filt['sample']
     bed_filt['chrom_type_family'] = bed_filt['chrom'] + "_" + bed_filt['SVTYPE'] + "_" + bed_filt['family_id'].astype(str).str.strip("[]")
+    
 
 
-
-    cols_keep2 = ['chrom_type_sample', 'start', 'end', 'name', 'svtype', 'sample']
-    cols_keep3 = ['chrom_type_family', 'start', 'end', 'name', 'svtype', 'sample']
+    cols_keep2 = ['chrom_type_sample', 'start', 'end', 'name', 'svtype', 'sample', 'name_famid']
+    cols_keep3 = ['chrom_type_family', 'start', 'end', 'name', 'svtype', 'sample', 'name_famid']
 
 
     ##INSERTIONS: dist < 100bp (& INS ratio > 0.1 & INS ratio < 10 ?) (dis is START-start and INS ratio is SVLEN/svlen)
@@ -400,6 +402,7 @@ def main():
 
     bed_filt_ins = bed_filt[bed_filt['SVTYPE'] == 'INS']
 
+
     print("Number of insertions found:",str(len(bed_filt_ins)))
 
     if (len(bed_filt_ins.index) > 0):
@@ -407,13 +410,14 @@ def main():
         bed_filt_ins_proband = pybedtools.BedTool(bed_filt_ins_proband, from_string=True).sort()
         # bed_filt_ins_ref = pybedtools.BedTool(bed_filt_ins_ref, from_string=True)
         bed_filt_ins_overlap_proband = bed_filt_ins_proband.closest(raw_bed_ref_child).to_dataframe(disable_auto_names=True, header=None)
-        bed_filt_ins_overlap_proband['is_close'] = abs(bed_filt_ins_overlap_proband[7] - bed_filt_ins_overlap_proband[1]) < 100
+        bed_filt_ins_overlap_proband['is_close'] = abs(bed_filt_ins_overlap_proband[8] - bed_filt_ins_overlap_proband[1]) < 100
 
-        ins_names_overlap_proband = bed_filt_ins_overlap_proband[(bed_filt_ins_overlap_proband['is_close'] == True)][3].to_list()
+        ins_names_overlap_proband = bed_filt_ins_overlap_proband[(bed_filt_ins_overlap_proband['is_close'] == True)][6].to_list()
     else:
         ins_names_overlap_proband = ['']
     print("Number of insertions supported by raw evidence:",str(len(ins_names_overlap_proband)))
-    print(ins_names_overlap_proband)
+    #print(ins_names_overlap_proband)
+    #exit()
 
     #subset_parents = a.filter(lambda x: x.name == )
     #We will want to compare original raw evidence with subsetted raw evidence and check if parent has variant
@@ -430,17 +434,17 @@ def main():
         bed_filt_ins_fam = pybedtools.BedTool(bed_filt_ins_fam, from_string=True).sort()
         # bed_filt_ins_ref = pybedtools.BedTool(bed_filt_ins_ref, from_string=True)
         bed_filt_ins_overlap_parents = bed_filt_ins_fam.closest(raw_bed_ref_parent).to_dataframe(disable_auto_names=True, header=None)
-        bed_filt_ins_overlap_parents[ 'is_close' ] = abs(bed_filt_ins_overlap_parents[ 7 ] - bed_filt_ins_overlap_parents[ 1 ]) < 100
+        bed_filt_ins_overlap_parents[ 'is_close' ] = abs(bed_filt_ins_overlap_parents[ 8 ] - bed_filt_ins_overlap_parents[ 1 ]) < 100
         
 
-        ins_names_overlap_parents = bed_filt_ins_overlap_parents[ (bed_filt_ins_overlap_parents[ 'is_close' ] == True) ][ 3 ].to_list()
+        ins_names_overlap_parents = bed_filt_ins_overlap_parents[ (bed_filt_ins_overlap_parents[ 'is_close' ] == True) ][6].to_list()
     else:
         ins_names_overlap_parents = [ '' ]
 
     print('INS in parents: ', ins_names_overlap_parents)
-    #print("Number of insertions supported by raw evidence in parents:", str(len(ins_names_overlap_parents)))
+    print("Number of insertions supported by raw evidence in parents:", str(len(ins_names_overlap_parents)))
 
-    #ins_names_overlap = ins_names_overlap_proband not in ins_names_overlap_parents
+
     ins_names_overlap = [x for x in ins_names_overlap_proband if x not in ins_names_overlap_parents]
     print(ins_names_overlap)
     #print(ins_names_overlap)
@@ -448,13 +452,7 @@ def main():
 
 
 
-
-
-
-
-
-
-
+'''
 
     if len(ins_names_overlap) != 0:
         bed_filt_ins_new = bed_filt_ins_ref.filter(lambda x: x.name in ins_names_overlap).saveas() # create bedtool object of all SVs in ins_names_overlap
@@ -478,8 +476,9 @@ def main():
                 ins_names_overlap.remove(bed_filt_ins_new[i].fields[3]) #remove SV from ins_names_overlap because it is inherited
         print(ins_names_overlap)
         exit()
+    '''
 
-       
+    
 
     ## Large CNVS: Reciprocal overlap >0.4%
     verbosePrint('Checking large cnvs in raw files', verbose)
