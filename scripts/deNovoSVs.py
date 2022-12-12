@@ -447,36 +447,8 @@ def main():
 
     ins_names_overlap = [x for x in ins_names_overlap_proband if x not in ins_names_overlap_parents]
     print(ins_names_overlap)
+    print("Final number of insertions in de novo output:", str(len(ins_names_overlap_parents)))
     #print(ins_names_overlap)
-    exit()
-
-
-
-'''
-
-    if len(ins_names_overlap) != 0:
-        bed_filt_ins_new = bed_filt_ins_ref.filter(lambda x: x.name in ins_names_overlap).saveas() # create bedtool object of all SVs in ins_names_overlap
-    #print(bed_filt_ins_new)
-    #print(bed_filt_ins_new[1].fields[5])
-    
-        print(ins_names_overlap)
-        for i in range(len(bed_filt_ins_new)): #for each SV
-            parent_list = getParents(bed_filt_ins_new[i].fields[5], ped) #get parents
-            start = int(bed_filt_ins_new[i].fields[2]) - 500 #get start and end position +- 100
-            end = int(bed_filt_ins_new[i].fields[2]) + 500
-            check_parents = raw_bed_ref.filter(lambda b: b.score in parent_list and b.start > start and b.start < end).saveas().to_dataframe(header=None) #check if there is a parent in raw evidence that has SV with the same start and end
-        #print(check_parents)
-        #if check_parents[1].fields[5] == parent_list[1] | parent_list[2]:
-            #ins_names_overlap.remove(bed_filt_ins_ref[i].fields[5])
-            if (bed_filt_ins_new[i].fields[3] not in ins_names_overlap):
-                ins_names_overlap.append(bed_filt_ins_new[i].fields[3]) # if it is not in the list that means that it has been removed before becasuse there were multiple with this name, so readd it and check if it needs to be deleted
-            if check_parents.shape[0] != 0: #if there was a parent with similar SV
-            #print(bed_filt_ins_new[i].fields[3])
-            #print(ins_names_overlap)
-                ins_names_overlap.remove(bed_filt_ins_new[i].fields[3]) #remove SV from ins_names_overlap because it is inherited
-        print(ins_names_overlap)
-        exit()
-    '''
 
     
 
@@ -488,23 +460,54 @@ def main():
 
     if (len(keep_large) != 0):
         if (len(large_bed_filt_cnv.index) > 0):
-            bed_filt_cnv_ref = large_bed_filt_cnv[cols_keep2].to_string(header=False, index=False)
-            bed_filt_cnv_ref = pybedtools.BedTool(bed_filt_cnv_ref, from_string=True).sort()
-            large_bed_filt_cnv_overlap = bed_filt_cnv_ref.intersect(raw_bed_ref,
+            bed_filt_cnv_proband = large_bed_filt_cnv[cols_keep2].to_string(header=False, index=False)
+            bed_filt_cnv_proband = pybedtools.BedTool(bed_filt_cnv_proband, from_string=True).sort()
+            large_bed_filt_cnv_overlap_proband = bed_filt_cnv_proband.intersect(raw_bed_ref_child,
                                                             wo=True,
                                                             f=large_raw_overlap,
                                                             r=True
                                                             ).to_dataframe(disable_auto_names=True, header=None)
-            if (len(large_bed_filt_cnv_overlap) != 0):
-                large_cnv_names_overlap = large_bed_filt_cnv_overlap[3].to_list()
+            if (len(large_bed_filt_cnv_overlap_proband) != 0):
+                large_cnv_names_overlap_proband = large_bed_filt_cnv_overlap_proband[6].to_list()
        
             else:
-                large_cnv_names_overlap = ['']
+                large_cnv_names_overlap_proband = ['']
     else:
-        large_cnv_names_overlap = ['']
+        large_cnv_names_overlap_proband = ['']
 
-    print("Number of large CNVs supported by raw evidence:",str(len(large_cnv_names_overlap)))
+    print("Number of large CNVs supported by raw evidence:",str(len(large_cnv_names_overlap_proband)))
+    print(large_cnv_names_overlap_proband)
+    #exit()
 
+
+
+    
+    verbosePrint('Checking if large cnvs in proband are also in raw files for the parents', verbose)
+    if (len(keep_large) != 0):
+        if (len(large_bed_filt_cnv.index) > 0):
+            bed_filt_cnv_fam = large_bed_filt_cnv[cols_keep3].to_string(header=False, index=False)
+            bed_filt_cnv_fam = pybedtools.BedTool(bed_filt_cnv_fam, from_string=True).sort()
+            large_bed_filt_cnv_overlap_parents = bed_filt_cnv_fam.intersect(raw_bed_ref_parent,
+                                                            wo=True,
+                                                            f=large_raw_overlap,
+                                                            r=True
+                                                            ).to_dataframe(disable_auto_names=True, header=None)
+            if (len(large_bed_filt_cnv_overlap_parents) != 0):
+                large_cnv_names_overlap_parents = large_bed_filt_cnv_overlap_parents[6].to_list()
+       
+            else:
+                large_cnv_names_overlap_parents = ['']
+    else:
+        large_cnv_names_overlap_parents = ['']
+
+    print("Number of large CNVs supported by raw evidence in parents:",str(len(large_cnv_names_overlap_parents)))
+    print(large_cnv_names_overlap_parents)
+    #exit()
+
+    large_cnv_names_overlap = [x for x in large_cnv_names_overlap_proband if x not in large_cnv_names_overlap_parents]
+    print(large_cnv_names_overlap)
+    print("Final number of large CNVs in de novo output:",str(len(large_cnv_names_overlap)))
+    #exit()
 
     ## Small CNVs - Reciprocal overlap >0.8%
     verbosePrint('Checking small cnvs in raw files', verbose)
@@ -514,22 +517,56 @@ def main():
 
     if (len(keep_small) != 0):
         if (len(small_bed_filt_cnv.index) > 0):
-            bed_filt_cnv_ref = small_bed_filt_cnv[cols_keep2].to_string(header=False, index=False)
-            bed_filt_cnv_ref = pybedtools.BedTool(bed_filt_cnv_ref, from_string=True).sort()
-            small_bed_filt_cnv_overlap = bed_filt_cnv_ref.intersect(raw_bed_ref,
+            bed_filt_cnv_probands = small_bed_filt_cnv[cols_keep2].to_string(header=False, index=False)
+            bed_filt_cnv_probands = pybedtools.BedTool(bed_filt_cnv_probands, from_string=True).sort()
+            small_bed_filt_cnv_overlap_probands = bed_filt_cnv_probands.intersect(raw_bed_ref_child,
                                                             wo=True,
                                                             f=small_raw_overlap,
                                                             r=True
                                                             ).to_dataframe(disable_auto_names=True, header=None)
-            if (len(small_bed_filt_cnv_overlap) != 0):
-                small_cnv_names_overlap = small_bed_filt_cnv_overlap[3].to_list()
+            if (len(small_bed_filt_cnv_overlap_probands) != 0):
+                small_cnv_names_overlap_probands = small_bed_filt_cnv_overlap_probands[6].to_list()
             #if 'phase2_DEL_chr19_484' in cnv_names_overlap:
             #print('exists')
             else:
-                small_cnv_names_overlap = ['']
+                small_cnv_names_overlap_probands = ['']
     else:
-        small_cnv_names_overlap = ['']
-    print("Number of small CNVs supported by raw evidence:",str(len(small_cnv_names_overlap)))
+        small_cnv_names_overlap_probands = ['']
+    print("Number of small CNVs supported by raw evidence:",str(len(small_cnv_names_overlap_probands)))
+    print(small_cnv_names_overlap_probands)
+    #exit()
+
+
+    verbosePrint('Checking small cnvs in probands are also in raw files for parents', verbose)
+
+    small_bed_filt_cnv = bed_filt[bed_filt['SVTYPE'].isin(['DEL', 'DUP']) & bed_filt['is_large_cnv'] == False]
+    print("Number of small CNVs found:",str(len(small_bed_filt_cnv)))
+
+    if (len(keep_small) != 0):
+        if (len(small_bed_filt_cnv.index) > 0):
+            bed_filt_cnv_fam = small_bed_filt_cnv[cols_keep3].to_string(header=False, index=False)
+            bed_filt_cnv_fam = pybedtools.BedTool(bed_filt_cnv_fam, from_string=True).sort()
+            small_bed_filt_cnv_overlap_parents = bed_filt_cnv_fam.intersect(raw_bed_ref_parent,
+                                                            wo=True,
+                                                            f=small_raw_overlap,
+                                                            r=True
+                                                            ).to_dataframe(disable_auto_names=True, header=None)
+            if (len(small_bed_filt_cnv_overlap_parents) != 0):
+                small_cnv_names_overlap_parents = small_bed_filt_cnv_overlap_parents[6].to_list()
+            #if 'phase2_DEL_chr19_484' in cnv_names_overlap:
+            #print('exists')
+            else:
+                small_cnv_names_overlap_parents = ['']
+    else:
+        small_cnv_names_overlap_parents = ['']
+    print("Number of small CNVs supported by raw evidence in parents:",str(len(small_cnv_names_overlap_parents)))
+    print(small_cnv_names_overlap_parents)
+
+
+    small_cnv_names_overlap = [x for x in small_cnv_names_overlap_probands if x not in small_cnv_names_overlap_parents]
+    print(small_cnv_names_overlap)
+    print("Final number of small CNVs in de novo output:",str(len(small_cnv_names_overlap)))
+
     
 
     ##Filtering out INS and CNV with no raw evidence
@@ -539,7 +576,9 @@ def main():
                           #(bed_filt['name'].isin(ins_names_overlap + cnv_names_overlap)) ]
 
     bed_final = bed_filt[ (~bed_filt['SVTYPE'].isin(['DEL', 'DUP', 'INS'])) |
-                          (bed_filt['name'].isin(ins_names_overlap + large_cnv_names_overlap + small_cnv_names_overlap)) ]
+                          (bed_filt['name_famid'].isin(ins_names_overlap + large_cnv_names_overlap + small_cnv_names_overlap)) ]
+
+    print(bed_final)
 
     
     ##Keep samples and outliers in sepparate files
