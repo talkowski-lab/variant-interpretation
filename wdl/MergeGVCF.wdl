@@ -26,8 +26,8 @@ workflow HaplotypeCallerGvcf_GATK4 {
   # Merge per-interval GVCFs
   call MergeGVCFs {
     input:
-      input_vcfs = input_vcf,
-      input_vcfs_indexes = input_vcf_index,
+      input_vcfs = input_vcfs,
+      input_vcfs_indexes = input_vcfs_index,
       output_filename = output_filename,
       docker = gatk_docker,
       gatk_path = gatk_path
