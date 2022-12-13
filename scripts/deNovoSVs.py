@@ -103,10 +103,11 @@ def main():
     parser.add_argument('--vcf', dest='vcf', help='VCF file')
     parser.add_argument('--disorder', dest='disorder', help='Genomic disorder regions')
     parser.add_argument('--out', dest='out', help='Output file')
-    parser.add_argument('--raw_proband', dest='raw_proband', help='Directory with raw SV calls - output from m01')
-    parser.add_argument('--raw_parents', dest='raw_parents', help='Directory with raw SV calls - output from m01')
+    parser.add_argument('--raw_proband', dest='raw_proband', help='Directory with raw SV calls - output from m04')
+    parser.add_argument('--raw_parents', dest='raw_parents', help='Directory with raw SV calls - output from m04')
     parser.add_argument('--outliers', dest='outliers', help='Output file with SV calls in outlier samples')
     parser.add_argument('--config', dest='config', help='Config file')
+    parser.add_argument('--filtered', dest='filtered_out', help='Output file')
     parser.add_argument('--verbose', dest='verbose', help='Verbosity')
     args = parser.parse_args()
 
@@ -120,6 +121,7 @@ def main():
     outlier_samples = args.outliers
     verbose = args.verbose
     config_file = args.config
+    filtered_out = args.filtered_out
 
 
 
@@ -206,7 +208,7 @@ def main():
     bed_child["AF"] = pd.to_numeric(bed_child["AF"])
 
 
-    f = open("filtered_out.txt", "w")
+    f = open(filtered_out, "w")
     f.write("Removed after filtering by frequency \n")
     f.write(str(bed_child[~( ((bed_child[gnomad_col] <= gnomad_AF) & (bed_child['AF'] <= cohort_AF)) |
                            ((bed_child[gnomad_col].isnull() )  & (bed_child['AF'] <= cohort_AF)) |

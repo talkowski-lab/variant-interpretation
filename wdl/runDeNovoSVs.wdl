@@ -149,7 +149,7 @@ task getDeNovo{
     output{
         File denovo_output = "~{chromosome}.denovo.bed"
         File denovo_outliers = "~{chromosome}.denovo.outliers.bed"
-        File filtered_out = "filtered_out.txt"
+        File filtered_out = "~{chromosome}.filtered.txt"
     }
 
     command <<<
@@ -162,6 +162,7 @@ task getDeNovo{
                 --raw_proband ~{raw_proband} \
                 --raw_parents ~{raw_parents} \
                 --config ~{python_config} \
+                --filtered ~{chromosome}.filtered.txt \
                 --verbose True \
                 --outliers ~{chromosome}.denovo.outliers.bed
     >>>
