@@ -197,10 +197,22 @@ def main():
     verbosePrint('Flagging variants in GD', verbose)
     bed_child['in_gd'] = bed_child['name'].isin(disorder[0])
 
+    bed_child['family_id'] = bed_child.apply(lambda r: getFamilyID(r,ped), axis=1)
+    bed_child['name_famid'] = bed_child['name'] + "_" + bed_child['family_id'].astype(str).str.strip("[]")
+
     # Filter out by frequency - AF gnomad < 0.01 OR inGD
     verbosePrint('Filtering by frequency', verbose)
     bed_child[gnomad_col] = pd.to_numeric(bed_child[gnomad_col])
     bed_child["AF"] = pd.to_numeric(bed_child["AF"])
+
+
+    f = open("filtered_out.txt", "w")
+    f.write("Removed after filtering by frequency \n")
+    f.write(str(bed_child[~( ((bed_child[gnomad_col] <= gnomad_AF) & (bed_child['AF'] <= cohort_AF)) |
+                           ((bed_child[gnomad_col].isnull() )  & (bed_child['AF'] <= cohort_AF)) |
+                          (bed_child['in_gd'] == True) )]['name_famid'].tolist()))
+    f.write("\n")
+
 
     bed_child = bed_child[( ((bed_child[gnomad_col] <= gnomad_AF) & (bed_child['AF'] <= cohort_AF)) |
                            ((bed_child[gnomad_col].isnull() )  & (bed_child['AF'] <= cohort_AF)) |
@@ -210,10 +222,22 @@ def main():
     
 
     print("Size of bed_child after filtering by frequency:",str(len(bed_child)))
+    
 
     # Get counts within family and remove if SV in parents
     verbosePrint('Keep variants in children only', verbose)
     bed_child['num_parents_family'] = bed_child.apply(lambda r: getFamilyCount(r, ped), axis=1)
+
+    
+    f.write("Removed after keeping variants in children only \n")
+    f.write(str(bed_child[~( (bed_child['num_parents_family'] == 0) &
+                           (bed_child['num_children'] >= 1) &
+                           (bed_child['AF_parents'] <= parents_AF) &
+                           (bed_child['num_parents'] <= parents_SC) )]['name_famid'].tolist()))
+    f.write("\n")
+
+
+
     bed_child = bed_child[ (bed_child['num_parents_family'] == 0) &
                            (bed_child['num_children'] >= 1) &
                            (bed_child['AF_parents'] <= parents_AF) &
@@ -238,8 +262,13 @@ def main():
     bed_child['SR_GT'] = bed_child.apply(lambda r: variantInfo(r, 'SR_GT', vcf), axis=1)
 
 
+
     # Remove WHAM only and GT = 1
     verbosePrint('Remove wham only and GT=1 calls', verbose)
+    f.write("Removed wham only and GT=1 calls \n")
+    f.write(str(bed_child[((bed_child['ALGORITHMS'] == "wham") & (bed_child['GQ'] == '1'))]['name_famid'].tolist()))
+    f.write("\n")
+    #print(bed_child[((bed_child['ALGORITHMS'] == "wham") & (bed_child['GQ'] == '1'))])
     bed_child = bed_child[~((bed_child['ALGORITHMS'] == "wham") & (bed_child['GQ'] == '1'))]
 
     print("Size of bed_child after removing wham only and GT=1 calls:",str(len(bed_child)))
@@ -256,6 +285,10 @@ def main():
     bed_child = bed_child.loc[(bed_child['is_large_cnv'] == False) | ((bed_child['RD_CN'] != bed_child['maternal_rdcn']) & (bed_child['RD_CN'] != bed_child['paternal_rdcn']))]
     
     print("Size of bed_child after removing if RD_CN field is same as parent:",str(len(bed_child)))
+    f.write("Removed if RD_CN field is same as parent\n")
+    f.write(str(bed_child.loc[(bed_child['is_large_cnv'] == True) & ((bed_child['RD_CN'] == bed_child['maternal_rdcn']) | (bed_child['RD_CN'] == bed_child['paternal_rdcn']))]['name_famid'].tolist()))
+    f.write("\n")
+    
 
     # 2. Check if call in parents with bedtools coverage (332)
     verbosePrint('CNV present in parents check', verbose)
@@ -277,7 +310,6 @@ def main():
     bed_child['overlap_parent'] = (bed_child['name'].isin(names_overlap))
 
 
-
     # Small calls:
     # If RD,SR and <1Kb, treat RD,SR as SR
     verbosePrint('Small CNVs check', verbose)
@@ -296,24 +328,24 @@ def main():
     verbosePrint('Filtering out calls', verbose)
     # Keep if in GD region
     keep_gd = bed_child[(bed_child['in_gd'] == True)]['name'].to_list()
-    print(len(keep_gd))
+    #print(len(keep_gd))
     # Filter out if large CNVs don't have RD support and parents overlap
     keep_large = bed_child[ (bed_child['is_large_cnv'] == True) &
                             (bed_child['contains_RD'] == True) &
                             (bed_child['overlap_parent'] == False) ]['name'].to_list()
-    print("large_cnvs")
-    print(len(keep_large))
+    #print("large_cnvs")
+    #print(len(keep_large))
     # Filter out if small cnvs that are SR-only don't have BOTHSIDES_SUPPORT
     keep_small = bed_child[(bed_child['is_small_cnv'] == True) &
                            ( (bed_child['EVIDENCE_FIX'] != 'SR') |
                            ( (bed_child['EVIDENCE_FIX'] == 'SR') &
                              (bed_child.FILTER.str.contains('BOTHSIDES_SUPPORT'))))
                           ]['name'].to_list()
-    print("small_cnvs before filtering:")
-    print(bed_child[(bed_child['is_small_cnv'] == True)]["FILTER"])
-    print(bed_child[(bed_child['is_small_cnv'] == True)])
-    print("small cnvs after filtering")
-    print(keep_small)
+    #print("small_cnvs before filtering:")
+    #print(bed_child[(bed_child['is_small_cnv'] == True)]["FILTER"])
+    #print(bed_child[(bed_child['is_small_cnv'] == True)])
+    #print("small cnvs after filtering")
+    #print(keep_small)
 
     # Keep any other SV type
     keep_other_sv = bed_child[~bed_child['SVTYPE'].isin(['DEL', 'DUP'])]['name'].to_list()
@@ -325,6 +357,9 @@ def main():
     bed_filt = bed_child[(bed_child['name'].isin(keep_names))]
 
     print("Size of bed_filt after removing large CNVs that dont have RD support and parents overlap and small cnvs that are SR only and dont have support on both sides:",str(len(bed_filt)))
+    f.write("Removed if large CNV and does not have RD support and parent overlap and small cnvs that are SR only and dont have support of both sides\n")
+    f.write(str(bed_child[(~bed_child['name'].isin(keep_names))]['name_famid'].tolist()))
+    f.write("\n")
     
 
     bed_filt.to_csv(path_or_buf="bed_filt.bed", mode='a', index=False, sep='\t', header=True)
@@ -384,8 +419,8 @@ def main():
     #Reformat de novo filt calls
 
     #bed_filt['name_sample'] = bed_filt['name'] + "_" + bed_filt['sample']
-    bed_filt['family_id'] = bed_filt.apply(lambda r: getFamilyID(r,ped), axis=1)
-    bed_filt['name_famid'] = bed_filt['name'] + "_" + bed_filt['family_id'].astype(str).str.strip("[]")
+    #bed_filt['family_id'] = bed_filt.apply(lambda r: getFamilyID(r,ped), axis=1)
+    #bed_filt['name_famid'] = bed_filt['name'] + "_" + bed_filt['family_id'].astype(str).str.strip("[]")
     bed_filt['chrom_type_sample'] = bed_filt['chrom'] + "_" + bed_filt['SVTYPE'] + "_" + bed_filt['sample']
     bed_filt['chrom_type_family'] = bed_filt['chrom'] + "_" + bed_filt['SVTYPE'] + "_" + bed_filt['family_id'].astype(str).str.strip("[]")
     
@@ -416,6 +451,12 @@ def main():
     else:
         ins_names_overlap_proband = ['']
     print("Number of insertions supported by raw evidence:",str(len(ins_names_overlap_proband)))
+    
+    f.write("Insertions removed because not supported by raw evidence \n")
+    f.write(str([x for x in bed_filt_ins['name_famid'] if x not in ins_names_overlap_proband]))
+    f.write("\n")
+    
+
     #print(ins_names_overlap_proband)
     #exit()
 
@@ -450,7 +491,10 @@ def main():
     print("Final number of insertions in de novo output:", str(len(ins_names_overlap_parents)))
     #print(ins_names_overlap)
 
-    
+    f.write("Insertions removed because supported by raw evidence of parents \n")
+    f.write(str(ins_names_overlap_parents))
+    f.write("\n")
+
 
     ## Large CNVS: Reciprocal overlap >0.4%
     verbosePrint('Checking large cnvs in raw files', verbose)
@@ -479,6 +523,10 @@ def main():
     print(large_cnv_names_overlap_proband)
     #exit()
 
+    f.write("Large CNVs removed because not supported by raw evidence \n")
+    f.write(str([x for x in large_bed_filt_cnv['name_famid'] if x not in large_cnv_names_overlap_proband]))
+    f.write("\n")
+
 
 
     
@@ -502,12 +550,19 @@ def main():
 
     print("Number of large CNVs supported by raw evidence in parents:",str(len(large_cnv_names_overlap_parents)))
     print(large_cnv_names_overlap_parents)
-    #exit()
+
+    f.write("Large CNVs removed because supported by raw evidence of parents \n")
+    f.write(str(large_cnv_names_overlap_parents))
+    f.write("\n")
+    
+    
 
     large_cnv_names_overlap = [x for x in large_cnv_names_overlap_proband if x not in large_cnv_names_overlap_parents]
     print(large_cnv_names_overlap)
     print("Final number of large CNVs in de novo output:",str(len(large_cnv_names_overlap)))
     #exit()
+
+
 
     ## Small CNVs - Reciprocal overlap >0.8%
     verbosePrint('Checking small cnvs in raw files', verbose)
@@ -534,8 +589,11 @@ def main():
         small_cnv_names_overlap_probands = ['']
     print("Number of small CNVs supported by raw evidence:",str(len(small_cnv_names_overlap_probands)))
     print(small_cnv_names_overlap_probands)
-    #exit()
+   
 
+    f.write("Small CNVs removed because not supported by raw evidence \n")
+    f.write(str([x for x in small_bed_filt_cnv['name_famid'] if x not in small_cnv_names_overlap_probands]))
+    f.write("\n")
 
     verbosePrint('Checking small cnvs in probands are also in raw files for parents', verbose)
 
@@ -561,6 +619,12 @@ def main():
         small_cnv_names_overlap_parents = ['']
     print("Number of small CNVs supported by raw evidence in parents:",str(len(small_cnv_names_overlap_parents)))
     print(small_cnv_names_overlap_parents)
+
+    f.write("Small CNVs removed because supported by raw evidence of parents \n")
+    f.write(str(small_cnv_names_overlap_parents))
+    f.write("\n")
+    f.close()
+    
 
 
     small_cnv_names_overlap = [x for x in small_cnv_names_overlap_probands if x not in small_cnv_names_overlap_parents]
