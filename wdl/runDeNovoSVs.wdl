@@ -151,7 +151,7 @@ task getDeNovo{
     }
 
     command <<<
-            python /src/variant-interpretation/scripts/deNovoSVs.py \
+            python3.9 /src/variant-interpretation/scripts/deNovoSVs.py \
                 --bed ~{bed_input} \
                 --ped ~{ped_input} \
                 --vcf ~{vcf_input} \
