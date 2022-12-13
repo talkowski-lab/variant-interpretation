@@ -499,7 +499,7 @@ task plot_mergeFinalBedFiles{
         
         head -n+1 ${outliers_files[1]} > final.denovo.outliers.merged.bed
         tail -n+2 -q ${sep=" " outliers_files} >> final.denovo.outliers.merged.bed
-        bgzip final.denovov.outliers.merged.bed
+        bgzip final.denovo.outliers.merged.bed
     }
 
     runtime {
