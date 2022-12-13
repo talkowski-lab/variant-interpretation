@@ -117,7 +117,7 @@ workflow deNovoSV {
         File concat_output = plot_mergeFinalBedFiles.concat_final_bed_output
         File concat_outlier_output = plot_mergeFinalBedFiles.concat_final_bed_outliers_output
         File denovo_output_plots = plot_createPlots.output_plots
-        File filtered_out = getDeNovo.filtered_out
+        Array[File] filtered_out = getDeNovo.filtered_out
 
     }
 }
