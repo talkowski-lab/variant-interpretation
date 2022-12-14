@@ -64,7 +64,7 @@ task makeDataTable{
 
         Rscript /src/variant-interpretation/scripts/create_familyid_table.R ${samples_list} ${cram_list} ${crai_list} ${ped_input} trios.table.tsv singletons.table.tsv
 
-        cut -f 97 ${merged_denovo_output} | tr ',' '\n' | sort -u > denovo_samples.txt
+        cat ${merged_denovo_output} | gunzip | csvcut -t -c  sample |  tr ',' '\n' | sort -u > denovo_samples.txt
         cat <(head -n1 trios.table.tsv) <(grep -f denovo_samples.txt trios.table.tsv) > trio_denovo.tsv
         cat <(head -n1 singletons.table.tsv) <(grep -f denovo_samples.txt singletons.table.tsv) > singletons_denovo.tsv
 
