@@ -89,7 +89,7 @@ def getParents(proband,ped):
 def getFamilyID(row,ped):
     samp = row['sample']
     family_id = ped[(ped['subject_id'] == samp)]['family_id'].values
-    return(family_id)
+    return(family_id[0])
 
     
 
@@ -190,7 +190,6 @@ def main():
     verbosePrint('Sepparate variants in children and parents', verbose)
     bed_child = bed_split[bed_split['sample'].str.contains("|".join(children))]
     bed_parents = bed_split[bed_split['sample'].str.contains("|".join(parents))]
-
 
     print("Size of bed_child:",str(len(bed_child)))
 
@@ -424,7 +423,8 @@ def main():
     #bed_filt['family_id'] = bed_filt.apply(lambda r: getFamilyID(r,ped), axis=1)
     #bed_filt['name_famid'] = bed_filt['name'] + "_" + bed_filt['family_id'].astype(str).str.strip("[]")
     bed_filt['chrom_type_sample'] = bed_filt['chrom'] + "_" + bed_filt['SVTYPE'] + "_" + bed_filt['sample']
-    bed_filt['chrom_type_family'] = bed_filt['chrom'] + "_" + bed_filt['SVTYPE'] + "_" + bed_filt['family_id'].astype(str).str.strip("[]")
+    bed_filt['chrom_type_family'] = bed_filt['chrom'] + "_" + bed_filt['SVTYPE'] + "_" + bed_filt['family_id'].astype(str)
+
     
 
 
@@ -645,7 +645,18 @@ def main():
                           (bed_filt['name_famid'].isin(ins_names_overlap + large_cnv_names_overlap + small_cnv_names_overlap)) ]
 
     print(bed_final)
+    
+    #Remove if parents SR_GQ is 0
+    bed_final = bed_final[~((bed_final['paternal_srgq'] == '0') | (bed_final['maternal_srgq'] == '0'))]
 
+
+    '''
+    bed_final_bedtools = bed_final[cols_keep2].to_string(header=False, index=False)
+    bed_final_bedtools = pybedtools.BedTool(bed_final_bedtools, from_string=True).sort()
+    c = bed_final_bedtools.coverage(bed_final_bedtools)
+    print(c)
+    exit()
+    '''
     
     ##Keep samples and outliers in sepparate files
     output = bed_final[(bed_final['sample'].isin(samples_keep))]
