@@ -168,7 +168,9 @@ task concatinate_plots{
         tar -zxf ~{rd_plots}
         tar -zxf ~{igv_plots}
         mkdir ~{prefix}_igv_rdtest_plots
-        cat ~{varfile} | cut -f1-5,97 > updated_varfile.bed
+        cat ~{varfile} | gunzip | cut -f1-5 > updated_varfile_1.bed
+        cat ~{varfile} | gunzip | csvcut -t -c sample > updated_varfile_2.bed
+        paste updated_varfile_1.bed updated_varfile_2.bed > updated_varfile.bed
         tail -n+2 updated_varfile.bed > ~{varfile}.noheader
         echo 'test'
         python3 /src/MakeRDtest.py \
