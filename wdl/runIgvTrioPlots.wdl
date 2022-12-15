@@ -95,7 +95,9 @@ task generate_per_sample_bed{
     String filename = basename(varfile, ".bed")
     command <<<
         set -euo pipefail
-        cat ~{varfile} | cut -f1-5,97 > updated_varfile.bed
+        cat ~{varfile} | gunzip | cut -f1-5 > updated_varfile_1.bed
+        cat ~{varfile} | gunzip | csvcut -t -c sample > updated_varfile_2.bed
+        paste updated_varfile_1.bed updated_varfile_2.bed > updated_varfile.bed
         grep -w ~{sample_id} updated_varfile.bed | cut -f1-5 | awk '{print $1,$2,$3,$4,$5}' | sed -e 's/ /\t/g' > ~{filename}.~{sample_id}.bed
         >>>
 

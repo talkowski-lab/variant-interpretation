@@ -61,9 +61,9 @@ task rdtest {
     RuntimeAttr runtime_attr = select_first([runtime_attr_override, default_attr])
     command <<<
         set -ex
-        cat ~{bed} | cut -f97 > sample.bed
-        cat ~{bed} | cut -f1-4 > start.bed
-        cat ~{bed} | cut -f5 > svtype.bed
+        cat ~{bed} | gunzip | csvcut -t -c sample > sample.bed
+        cat ~{bed} | gunzip | cut -f1-4 > start.bed
+        cat ~{bed} | gunzip | cut -f5 > svtype.bed
         paste start.bed sample.bed svtype.bed > final.bed
         cat final.bed |egrep "DEL|DUP" | sort -k1,1 -k2,2n> test.bed
         cut -f5 test.bed |sed 's/\,/\n/g'|sort -u > samples.txt
