@@ -645,7 +645,9 @@ def main():
     bed_final = bed_filt[ (~bed_filt['SVTYPE'].isin(['DEL', 'DUP', 'INS'])) |
                           (bed_filt['name_famid'].isin(ins_names_overlap + large_cnv_names_overlap + small_cnv_names_overlap)) ]
 
-    print(bed_final)
+    #print("Bed final")
+
+    #print(len(bed_final))
     
     #Remove if parents SR_GQ is 0
     parental_srqc_0 = bed_final[((bed_final['paternal_srgq'] == '0') | (bed_final['maternal_srgq'] == '0'))]['name_famid'].to_list()
@@ -677,13 +679,15 @@ def main():
         f.write("\n")
     f.close()
 
-    #print(intersect_output)
+    print("Intersect")
+    print(somatic_mutation_regions_overlap)
     #print(somatic_mutation_regions_overlap)
     
     
-    bed_final = bed_final[~(bed_final['SVTYPE'].isin(['DEL', 'DUP', 'INS'])) | (bed_final['name_famid'].isin(somatic_mutation_regions_overlap))]
+    bed_final = bed_final[~(bed_final['SVTYPE'].isin(['DEL', 'DUP', 'INS'])) | ~(bed_final['name_famid'].isin(somatic_mutation_regions_overlap))]
+    #print(bed_final[bed_final['name_famid'].isin(somatic_mutation_regions_overlap)])
 
-    print(bed_final)
+    #print(len(bed_final))
 
 
     '''
