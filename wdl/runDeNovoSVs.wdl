@@ -12,6 +12,7 @@ workflow deNovoSV {
         Array[String] contigs
         File genomic_disorder_input
         File raw_files_list
+        File somatic_mutation_regions
         String variant_interpretation_docker
         RuntimeAttr? runtime_attr_override
 
@@ -88,6 +89,7 @@ workflow deNovoSV {
                 chromosome=contig,
                 raw_proband=raw_reformatBed.reformatted_proband_output,
                 raw_parents=raw_reformatBed.reformatted_parents_output,
+                somatic_mutation_regions = somatic_mutation_regions,
                 python_config=python_config,
                 variant_interpretation_docker=variant_interpretation_docker,
                 runtime_attr_override = runtime_attr_override
@@ -131,6 +133,7 @@ task getDeNovo{
         String chromosome
         File raw_proband
         File raw_parents
+        File somatic_mutation_regions
         File python_config
         String variant_interpretation_docker
         RuntimeAttr? runtime_attr_override
@@ -163,6 +166,7 @@ task getDeNovo{
                 --raw_parents ~{raw_parents} \
                 --config ~{python_config} \
                 --filtered ~{chromosome}.filtered.txt \
+                --SM_regions ~{somatic_mutation_regions} \
                 --verbose True \
                 --outliers ~{chromosome}.denovo.outliers.bed
     >>>

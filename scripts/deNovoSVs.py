@@ -108,6 +108,7 @@ def main():
     parser.add_argument('--outliers', dest='outliers', help='Output file with SV calls in outlier samples')
     parser.add_argument('--config', dest='config', help='Config file')
     parser.add_argument('--filtered', dest='filtered_out', help='Output file')
+    parser.add_argument('--SM_regions', dest='somatic_mutation_regions', help='File containing regions with known somatic mutations')
     parser.add_argument('--verbose', dest='verbose', help='Verbosity')
     args = parser.parse_args()
 
@@ -122,7 +123,7 @@ def main():
     verbose = args.verbose
     config_file = args.config
     filtered_out = args.filtered_out
-
+    somatic_mutation_regions = args.somatic_mutation_regions
 
 
     with open(config_file, "r") as f:
@@ -149,6 +150,7 @@ def main():
     raw_bed_colnames = colnames=['ID', 'start', 'end', 'svtype', 'sample'] 
     raw_bed_child = pd.read_csv(raw_file_proband, sep='\t', names= raw_bed_colnames, header=None).replace(np.nan, '', regex=True)
     raw_bed_parent = pd.read_csv(raw_file_parent, sep='\t', names= raw_bed_colnames, header=None).replace(np.nan, '', regex=True)
+    b = pd.read_csv(somatic_mutation_regions, sep='\t').replace(np.nan, '', regex=True)
 
 
 
@@ -625,7 +627,6 @@ def main():
     f.write("Small CNVs removed because supported by raw evidence of parents \n")
     f.write(str(small_cnv_names_overlap_parents))
     f.write("\n")
-    f.close()
     
 
 
@@ -647,7 +648,42 @@ def main():
     print(bed_final)
     
     #Remove if parents SR_GQ is 0
-    bed_final = bed_final[~((bed_final['paternal_srgq'] == '0') | (bed_final['maternal_srgq'] == '0'))]
+    parental_srqc_0 = bed_final[((bed_final['paternal_srgq'] == '0') | (bed_final['maternal_srgq'] == '0'))]['name_famid'].to_list()
+    bed_final = bed_final[~(bed_final['SVTYPE'].isin(['DEL', 'DUP', 'INS'])) | ~((bed_final['paternal_srgq'] == '0') | (bed_final['maternal_srgq'] == '0'))]
+
+    f.write("Removed if paternal SR_QC or maternal SR_QC is 0 \n")
+    f.write(str(parental_srqc_0))
+    f.write("\n")
+
+
+
+    #remove if in somatic mutation region
+    b_string = b.to_string(header=False, index=False)
+    b_bt = pybedtools.BedTool(b_string, from_string=True).sort()
+    
+
+    #convert bed_final to bedtool
+
+    cols_keep4 = ['chrom', 'start', 'end', 'name', 'svtype', 'sample', 'name_famid']
+
+    bed_final_string = bed_final[cols_keep4].to_string(header=False, index=False)
+    bed_final_bt = pybedtools.BedTool(bed_final_string, from_string=True).sort()
+    #intersect_output = bed_final_bt.intersect(b_bt, wo=True, F=0.5).to_dataframe(disable_auto_names=True, header=None)
+    intersect_output = bed_final_bt.coverage(b_bt, f=0.5).to_dataframe(disable_auto_names=True, header=None) #HB said to use bedtools coverage, -f and -F give the same SVs to be removed
+    if (len(intersect_output) != 0):
+        somatic_mutation_regions_overlap = intersect_output[6].to_list()
+
+
+    #print(intersect_output)
+    print(somatic_mutation_regions_overlap)
+    f.write("Removed if overlaps with known somatic mutation region \n")
+    f.write(str(somatic_mutation_regions_overlap))
+    f.write("\n")
+    f.close()
+    
+    bed_final = bed_final[~(bed_final['SVTYPE'].isin(['DEL', 'DUP', 'INS'])) | (bed_final['name_famid'].isin(somatic_mutation_regions_overlap))]
+
+    print(bed_final)
 
 
     '''
