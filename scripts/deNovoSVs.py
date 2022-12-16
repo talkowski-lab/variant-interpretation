@@ -672,14 +672,14 @@ def main():
     intersect_output = bed_final_bt.coverage(b_bt, f=0.5).to_dataframe(disable_auto_names=True, header=None) #HB said to use bedtools coverage, -f and -F give the same SVs to be removed
     if (len(intersect_output) != 0):
         somatic_mutation_regions_overlap = intersect_output[6].to_list()
-
+        f.write("Removed if overlaps with known somatic mutation region \n")
+        f.write(str(somatic_mutation_regions_overlap))
+        f.write("\n")
+    f.close()
 
     #print(intersect_output)
-    print(somatic_mutation_regions_overlap)
-    f.write("Removed if overlaps with known somatic mutation region \n")
-    f.write(str(somatic_mutation_regions_overlap))
-    f.write("\n")
-    f.close()
+    #print(somatic_mutation_regions_overlap)
+    
     
     bed_final = bed_final[~(bed_final['SVTYPE'].isin(['DEL', 'DUP', 'INS'])) | (bed_final['name_famid'].isin(somatic_mutation_regions_overlap))]
 
