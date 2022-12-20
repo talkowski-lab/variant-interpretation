@@ -12,6 +12,7 @@ import math
 import numpy as np
 import pandas as pd
 import pybedtools
+import tabix
 pd.options.mode.chained_assignment = None  # default='warn'
 
 # Define functions
@@ -109,6 +110,7 @@ def main():
     parser.add_argument('--config', dest='config', help='Config file')
     parser.add_argument('--filtered', dest='filtered_out', help='Output file')
     parser.add_argument('--SM_regions', dest='somatic_mutation_regions', help='File containing regions with known somatic mutations')
+    parser.add_argument('--coverage', dest='coverage', help='Coverage matrix')
     parser.add_argument('--verbose', dest='verbose', help='Verbosity')
     args = parser.parse_args()
 
@@ -124,6 +126,7 @@ def main():
     config_file = args.config
     filtered_out = args.filtered_out
     somatic_mutation_regions = args.somatic_mutation_regions
+    coverage = args.coverage
 
 
     with open(config_file, "r") as f:
@@ -645,20 +648,31 @@ def main():
     bed_final = bed_filt[ (~bed_filt['SVTYPE'].isin(['DEL', 'DUP', 'INS'])) |
                           (bed_filt['name_famid'].isin(ins_names_overlap + large_cnv_names_overlap + small_cnv_names_overlap)) ]
 
-    #print("Bed final")
-
-    #print(len(bed_final))
     
+    
+
     #Remove if parents SR_GQ is 0
     parental_srqc_0 = bed_final[((bed_final['paternal_srgq'] == '0') | (bed_final['maternal_srgq'] == '0'))]['name_famid'].to_list()
-    bed_final = bed_final[~(bed_final['SVTYPE'].isin(['DEL', 'DUP', 'INS'])) | ~((bed_final['paternal_srgq'] == '0') | (bed_final['maternal_srgq'] == '0'))]
+    bed_final = bed_final[~((bed_final['paternal_srgq'] == '0') | (bed_final['maternal_srgq'] == '0'))]
 
     f.write("Removed if paternal SR_QC or maternal SR_QC is 0 \n")
     f.write(str(parental_srqc_0))
     f.write("\n")
+    print(bed_final)
 
 
 
+
+    #remove calls that are depth only and < 10kb
+    f.write("Removed if depth only and < 10kb \n")
+    f.write(str((bed_final[(bed_final['is_depth_only'] == True) & (bed_final['SVLEN'] < 10000)]['name_famid'].to_list())))
+    f.write("\n")
+    bed_final = bed_final[~((bed_final['is_depth_only'] == True) & (bed_final['SVLEN'] < 10000))]
+    print(bed_final)
+
+
+   
+    
     #remove if in somatic mutation region
     b_string = b.to_string(header=False, index=False)
     b_bt = pybedtools.BedTool(b_string, from_string=True).sort()
@@ -671,32 +685,137 @@ def main():
     bed_final_string = bed_final[cols_keep4].to_string(header=False, index=False)
     bed_final_bt = pybedtools.BedTool(bed_final_string, from_string=True).sort()
     #intersect_output = bed_final_bt.intersect(b_bt, wo=True, F=0.5).to_dataframe(disable_auto_names=True, header=None)
-    intersect_output = bed_final_bt.coverage(b_bt, f=0.5).to_dataframe(disable_auto_names=True, header=None) #HB said to use bedtools coverage, -f and -F give the same SVs to be removed
+    intersect_output = bed_final_bt.coverage(b_bt).to_dataframe(disable_auto_names=True, header=None) #HB said to use bedtools coverage, -f and -F give the same SVs to be removed
+    #print(intersect_output[intersect_output[3] == 'batch1.chr14.final_cleanup_CPX_chr14_32'])
+
     if (len(intersect_output) != 0):
-        somatic_mutation_regions_overlap = intersect_output[6].to_list()
+        somatic_mutation_regions_overlap = intersect_output[intersect_output[10] > 0.5][6].to_list()
         f.write("Removed if overlaps with known somatic mutation region \n")
         f.write(str(somatic_mutation_regions_overlap))
         f.write("\n")
+    
+    
+
+    
+    
+    bed_final = bed_final[~(bed_final['name_famid'].isin(somatic_mutation_regions_overlap))]
+    print(bed_final)
+    
+
+
+    #remove low coverage  
+    from subprocess import Popen, PIPE
+    def tabix_query(filename, chrom, start, end):
+    #Call tabix and generate an array of strings for each line it returns.
+        query = '{}:{}-{}'.format(chrom, start, end)
+        process = Popen(['tabix', '-h', filename, query], stdout=PIPE)
+        for line in process.stdout:
+            yield line.strip().split()
+
+    remove_for_coverage = []
+    for name_famid in bed_final['name_famid']:
+        chrom = bed_final[bed_final['name_famid'] == name_famid]['chrom'].tolist()[0]
+        start = int(bed_final[bed_final['name_famid'] == name_famid]['start'])
+        end = int(bed_final[bed_final['name_famid'] == name_famid]['end'])
+        proband = bed_final[bed_final['name_famid'] == name_famid]['sample'].tolist()[0]
+        mom = getParents(proband,ped)[0][0]
+        dad = getParents(proband,ped)[1][0]
+
+        chunks = tabix_query(coverage, chrom, start, end)
+        cov = []
+        for chunk in chunks:
+            cov.append(chunk)
+        cov_matrix = pd.DataFrame(cov)
+        header = cov_matrix.iloc[0].to_list() #grab the first row for the header
+        new_header = []
+        for x in header:
+            x = x.decode()
+            new_header.append(x)
+        cov_matrix = cov_matrix[1:] #take the data less the header row
+        cov_matrix.columns = new_header
+        proband_list = cov_matrix[proband].tolist()
+        proband_list_decoded = []
+        for x in proband_list:
+            x = x.decode()
+            proband_list_decoded.append(x)
+        mother_list = cov_matrix[proband].tolist()
+        mother_list_decoded = []
+        for x in mother_list:
+            x = x.decode()
+            mother_list_decoded.append(x)
+        father_list = cov_matrix[proband].tolist()
+        father_list_decoded = []
+        for x in father_list:
+            x = x.decode()
+            father_list_decoded.append(x)
+
+        coverage_d = {
+        'Proband': proband_list_decoded,
+        'Mother' : mother_list_decoded,
+        'Father': father_list_decoded
+          }
+
+        coverage_df = pd.DataFrame(coverage_d)
+
+        median = coverage_df.median()
+
+        coverage_cutoff = 20
+        median_filtered = [x for x in median if x < coverage_cutoff]
+        if len(median_filtered) > 0:
+            remove_for_coverage.append(name_famid)
+
+    f.write("Removed if coverage <10 for proband, mom, or dad \n")
+    f.write(str(remove_for_coverage))
+    f.write("\n")
     f.close()
 
-    print("Intersect")
-    print(somatic_mutation_regions_overlap)
-    #print(somatic_mutation_regions_overlap)
+    bed_final = bed_final[~(bed_final['name_famid'].isin(remove_for_coverage))]
+    print(bed_final)
     
-    
-    bed_final = bed_final[~(bed_final['SVTYPE'].isin(['DEL', 'DUP', 'INS'])) | ~(bed_final['name_famid'].isin(somatic_mutation_regions_overlap))]
-    #print(bed_final[bed_final['name_famid'].isin(somatic_mutation_regions_overlap)])
 
-    #print(len(bed_final))
+
+
 
 
     '''
+    tb = tabix.open(coverage)
+    #tabix(tb, index)
+    for name_famid in bed_final['name_famid']:
+        chrom = str(bed_final[bed_final['name_famid'] == name_famid]['chrom'])
+        start = int(bed_final[bed_final['name_famid'] == name_famid]['start'])
+        end = int(bed_final[bed_final['name_famid'] == name_famid]['end'])
+        tb.query(chrom, start, end)
+        exit()
+    
+
     bed_final_bedtools = bed_final[cols_keep2].to_string(header=False, index=False)
     bed_final_bedtools = pybedtools.BedTool(bed_final_bedtools, from_string=True).sort()
     c = bed_final_bedtools.coverage(bed_final_bedtools)
     print(c)
     exit()
+    
+
+    batch_bincov = pd.read_csv("tabix_test_2.bed", sep='\t', header=0).replace(np.nan, '', regex=True)
+    print(batch_bincov)
+    batch_bincov['median'] = batch_bincov.iloc[:, 3:].median(axis=1).to_list()
+    print(batch_bincov[batch_bincov['median'] < 5]) #find the median of all rows and if its less than 5 remove any SV in that region from de novo list, but the problem is that the sample itself might not be low coverage at that region
+    batch_bincov.to_csv(path_or_buf="median.txt", mode='a', index=False, sep='\t', header=True)
+
+
+    print(batch_bincov[batch_bincov['__1883001__7ff04c'] < 10]['Start'])
+    exit()
+
+    low_coverage = pd.read_csv("tabix_test_after.bed", sep='\t', header=None).replace(np.nan, '', regex=True)
+    low_coverage_IDs = low_coverage[118]
+    print(low_coverage_IDs)
+    bed_final = bed_final[ ~((bed_final['name_famid'].isin(low_coverage_IDs)))]
+
+    print(bed_final)
+    exit()
     '''
+
+    
+
     
     ##Keep samples and outliers in sepparate files
     output = bed_final[(bed_final['sample'].isin(samples_keep))]
