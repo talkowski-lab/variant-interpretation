@@ -29,6 +29,7 @@ workflow deNovoSV {
 
 
     Array[String] raw_files = transpose(read_tsv(raw_files_list))[0]
+    Array[String] coverage_files = transpose(read_tsv(coverage_file))[0]
 
     scatter(raw_file in raw_files){
         call raw_VcfToBed {
@@ -81,11 +82,11 @@ workflow deNovoSV {
                 runtime_attr_override = runtime_attr_override
         }
 
-        scatter(cov in coverage_file){
+        scatter(cov in coverage_files){
             call splitCoverageFile {
                 input:
                     coverage_file = cov,
-                    prefix = basename(cov, ".bed.gz")
+                    prefix = basename(cov, ".bed.gz"),
                     chromosome=contig,
                     variant_interpretation_docker=variant_interpretation_docker,
                     runtime_attr_override = runtime_attr_override
@@ -109,7 +110,7 @@ workflow deNovoSV {
                 raw_proband=raw_reformatBed.reformatted_proband_output,
                 raw_parents=raw_reformatBed.reformatted_parents_output,
                 somatic_mutation_regions = somatic_mutation_regions,
-                coverage = mergeCoverageFiles.merged_coverage_file
+                coverage = mergeCoverageFiles.merged_coverage_file,
                 python_config=python_config,
                 variant_interpretation_docker=variant_interpretation_docker,
                 runtime_attr_override = runtime_attr_override
