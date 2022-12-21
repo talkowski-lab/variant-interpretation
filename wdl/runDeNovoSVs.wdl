@@ -14,6 +14,7 @@ workflow deNovoSV {
         File raw_files_list
         File somatic_mutation_regions
         Array[File] coverage_files
+        Array[File] coverage_index_files
         String variant_interpretation_docker
         RuntimeAttr? runtime_attr_override
 
@@ -48,7 +49,7 @@ workflow deNovoSV {
     }
 
 
-    Int coveragefiles_length = length(array)
+    Int coveragefiles_length = length(coverage_files)
     if(coveragefiles_length > 1){
         call mergeCoverageFiles{
                 input:
@@ -103,6 +104,7 @@ workflow deNovoSV {
                 raw_parents=raw_reformatBed.reformatted_parents_output,
                 somatic_mutation_regions = somatic_mutation_regions,
                 coverage = select_first([mergeCoverageFiles.merged_coverage_file, coverage_files[0]]),
+                coverage_index = select_first([mergeCoverageFiles.merged_coverage_index_file, coverage_index_files[0]]),
                 python_config=python_config,
                 variant_interpretation_docker=variant_interpretation_docker,
                 runtime_attr_override = runtime_attr_override
@@ -148,6 +150,7 @@ task getDeNovo{
         File raw_parents
         File somatic_mutation_regions
         File coverage
+        File coverage_index
         File python_config
         String variant_interpretation_docker
         RuntimeAttr? runtime_attr_override
@@ -594,11 +597,13 @@ task mergeCoverageFiles{
 
     output{
         File merged_coverage_file = "concat.coverage.bed.gz"
+        File merged_coverage_index_file = "concat.coverage.bed.gz.tbi"
     }
 
     command <<<
         cat ${sep=" " coverage_files} > concat.coverage.bed
         bgzip concat.coverage.bed
+        tabix -p bed concat.coverage.bed.gz
 
         
     >>>
