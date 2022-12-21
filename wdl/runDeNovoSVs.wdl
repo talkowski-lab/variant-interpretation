@@ -13,7 +13,7 @@ workflow deNovoSV {
         File genomic_disorder_input
         File raw_files_list
         File somatic_mutation_regions
-        File coverage_file
+        Array[File] coverage_files
         String variant_interpretation_docker
         RuntimeAttr? runtime_attr_override
 
@@ -29,7 +29,6 @@ workflow deNovoSV {
 
 
     Array[String] raw_files = transpose(read_tsv(raw_files_list))[0]
-    Array[String] coverage_files = transpose(read_tsv(coverage_file))[0]
 
     scatter(raw_file in raw_files){
         call raw_VcfToBed {
@@ -46,6 +45,17 @@ workflow deNovoSV {
                 bed_files=raw_VcfToBed.bed_output,
                 variant_interpretation_docker=variant_interpretation_docker,
                 runtime_attr_override = runtime_attr_override
+    }
+
+
+    Int coveragefiles_length = length(array)
+    if(coveragefiles_length > 1){
+        call mergeCoverageFiles{
+                input:
+                    coverage_files = coverage_files,
+                    variant_interpretation_docker=variant_interpretation_docker,
+                    runtime_attr_override = runtime_attr_override
+        }
     }
 
     scatter (contig in contigs){
@@ -82,24 +92,6 @@ workflow deNovoSV {
                 runtime_attr_override = runtime_attr_override
         }
 
-        scatter(cov in coverage_files){
-            call splitCoverageFile {
-                input:
-                    coverage_file = cov,
-                    prefix = basename(cov, ".bed.gz"),
-                    chromosome=contig,
-                    variant_interpretation_docker=variant_interpretation_docker,
-                    runtime_attr_override = runtime_attr_override
-            }
-        }
-
-        call mergeCoverageFiles{
-            input:
-                coverage_files = splitCoverageFile.by_chrom_coverage_output,
-                variant_interpretation_docker=variant_interpretation_docker,
-                runtime_attr_override = runtime_attr_override
-        }
-
         call getDeNovo{
             input:
                 bed_input=vcfToBed.bed_output,
@@ -110,7 +102,7 @@ workflow deNovoSV {
                 raw_proband=raw_reformatBed.reformatted_proband_output,
                 raw_parents=raw_reformatBed.reformatted_parents_output,
                 somatic_mutation_regions = somatic_mutation_regions,
-                coverage = mergeCoverageFiles.merged_coverage_file,
+                coverage = select_first([mergeCoverageFiles.merged_coverage_file, coverage_files[0]]),
                 python_config=python_config,
                 variant_interpretation_docker=variant_interpretation_docker,
                 runtime_attr_override = runtime_attr_override
@@ -581,52 +573,10 @@ task plot_createPlots{
     }
 }
 
-task splitCoverageFile{
-    input{
-        File coverage_file
-        String prefix
-        String chromosome
-        String variant_interpretation_docker
-        RuntimeAttr? runtime_attr_override
-    }
-
-    RuntimeAttr default_attr = object {
-        cpu_cores: 1,
-        mem_gb: 12,
-        disk_gb: 4,
-        boot_disk_gb: 8,
-        preemptible_tries: 3,
-        max_retries: 1
-    }
-    
-    RuntimeAttr runtime_attr = select_first([runtime_attr_override, default_attr])
-
-    output{
-        File by_chrom_coverage_output = "~{chromosome}.~{prefix}.coverage.bed"
-    }
-
-    command <<<
-        tabix ~{coverage_file} ~{chromosome} > ~{chromosome}.~{prefix}.coverage.bed
-        bgzip ~{chromosome}.~{prefix}.coverage.bed
-
-        
-    >>>
-
-    runtime {
-        cpu: select_first([runtime_attr.cpu_cores, default_attr.cpu_cores])
-        memory: select_first([runtime_attr.mem_gb, default_attr.mem_gb]) + " GiB"
-        disks: "local-disk " + select_first([runtime_attr.disk_gb, default_attr.disk_gb]) + " HDD"
-        bootDiskSizeGb: select_first([runtime_attr.boot_disk_gb, default_attr.boot_disk_gb])
-        preemptible: select_first([runtime_attr.preemptible_tries, default_attr.preemptible_tries])
-        maxRetries: select_first([runtime_attr.max_retries, default_attr.max_retries])
-        docker: variant_interpretation_docker
-    }
-}
 
 task mergeCoverageFiles{
     input{
         Array[File] coverage_files
-        String chromosome
         String variant_interpretation_docker
         RuntimeAttr? runtime_attr_override
     }
@@ -643,12 +593,12 @@ task mergeCoverageFiles{
     RuntimeAttr runtime_attr = select_first([runtime_attr_override, default_attr])
 
     output{
-        File merged_coverage_file = "concat.~{chromosome}.coverage.bed.gz"
+        File merged_coverage_file = "concat.coverage.bed.gz"
     }
 
     command <<<
-        cat ${sep=" " coverage_files} > concat.~{chromosome}.coverage.bed
-        bgzip concat.~{chromosome}.coverage.bed
+        cat ${sep=" " coverage_files} > concat.coverage.bed
+        bgzip concat.coverage.bed
 
         
     >>>

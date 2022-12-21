@@ -140,6 +140,7 @@ def main():
     large_raw_overlap = float(config['large_raw_overlap'])
     small_raw_overlap = float(config['small_raw_overlap'])
     cohort_AF = float(config['cohort_AF'])
+    coverage_cutoff = float(config['coverage_cutoff'])
 
     # Read files
     verbosePrint('Reading Input Files', verbose)
@@ -653,7 +654,7 @@ def main():
 
     #Remove if parents SR_GQ is 0
     parental_srqc_0 = bed_final[((bed_final['paternal_srgq'] == '0') | (bed_final['maternal_srgq'] == '0'))]['name_famid'].to_list()
-    bed_final = bed_final[~((bed_final['paternal_srgq'] == '0') | (bed_final['maternal_srgq'] == '0'))]
+    bed_final = bed_final[(~bed_final['SVTYPE'].isin(['DEL', 'DUP', 'INS'])) | ~(bed_final['name_famid'].isin(parental_srqc_0))]
 
     f.write("Removed if paternal SR_QC or maternal SR_QC is 0 \n")
     f.write(str(parental_srqc_0))
@@ -667,7 +668,7 @@ def main():
     f.write("Removed if depth only and < 10kb \n")
     f.write(str((bed_final[(bed_final['is_depth_only'] == True) & (bed_final['SVLEN'] < 10000)]['name_famid'].to_list())))
     f.write("\n")
-    bed_final = bed_final[~((bed_final['is_depth_only'] == True) & (bed_final['SVLEN'] < 10000))]
+    bed_final = bed_final[(~bed_final['SVTYPE'].isin(['DEL', 'DUP', 'INS'])) | ~((bed_final['is_depth_only'] == True) & (bed_final['SVLEN'] < 10000))]
     print(bed_final)
 
 
@@ -698,7 +699,7 @@ def main():
 
     
     
-    bed_final = bed_final[~(bed_final['name_famid'].isin(somatic_mutation_regions_overlap))]
+    bed_final = bed_final[(~bed_final['SVTYPE'].isin(['DEL', 'DUP', 'INS'])) | ~(bed_final['name_famid'].isin(somatic_mutation_regions_overlap))]
     print(bed_final)
     
 
@@ -759,7 +760,7 @@ def main():
 
         median = coverage_df.median()
 
-        coverage_cutoff = 20
+
         median_filtered = [x for x in median if x < coverage_cutoff]
         if len(median_filtered) > 0:
             remove_for_coverage.append(name_famid)
@@ -769,9 +770,9 @@ def main():
     f.write("\n")
     f.close()
 
-    bed_final = bed_final[~(bed_final['name_famid'].isin(remove_for_coverage))]
+    bed_final = bed_final[(~bed_final['SVTYPE'].isin(['DEL', 'DUP', 'INS'])) | ~(bed_final['name_famid'].isin(remove_for_coverage))]
     print(bed_final)
-    
+    #exit()
 
 
 
