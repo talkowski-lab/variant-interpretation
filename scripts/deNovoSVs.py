@@ -765,7 +765,7 @@ def main():
         if len(median_filtered) > 0:
             remove_for_coverage.append(name_famid)
 
-    f.write("Removed if coverage <10 for proband, mom, or dad \n")
+    f.write("Removed if coverage is low for proband, mom, or dad \n")
     f.write(str(remove_for_coverage))
     f.write("\n")
     f.close()
