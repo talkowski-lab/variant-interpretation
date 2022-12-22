@@ -22,7 +22,8 @@ version 1.0
 workflow CramToBamFlow {
     input {
         File ref_fasta
-        File ref_fasta_index
+        File ref_fasta_index_fai
+        File ref_fasta_index_gzi
         File ref_dict
         File input_cram
         String sample_name
@@ -46,7 +47,8 @@ workflow CramToBamFlow {
     call CramToBamTask {
         input:
             ref_fasta = ref_fasta,
-            ref_fasta_index = ref_fasta_index,
+            ref_fasta_index_fai = ref_fasta_index_fai,
+            ref_fasta_index_gzi = ref_fasta_index_gzi,
             ref_dict = ref_dict,
             input_cram = input_cram,
             sample_name = sample_name,
@@ -99,7 +101,8 @@ workflow CramToBamFlow {
                 output_filename = output_filename,
                 ref_dict = ref_dict,
                 ref_fasta = ref_fasta,
-                ref_fasta_index = ref_fasta_index,
+                ref_fasta_index_fai = ref_fasta_index_fai,
+                ref_fasta_index_gzi = ref_fasta_index_gzi,
                 hc_scatter = hc_divisor,
                 make_gvcf = make_gvcf,
                 make_bamout = make_bamout,
@@ -132,7 +135,8 @@ task CramToBamTask {
     input {
         # Command parameters
         File ref_fasta
-        File ref_fasta_index
+        File ref_fasta_index_fai
+        File ref_fasta_index_gzi
         File ref_dict
         File input_cram
         String sample_name
@@ -144,7 +148,7 @@ task CramToBamTask {
         Int preemptible_tries
     }
     Float output_bam_size = size(input_cram, "GB") / 0.60
-    Float ref_size = size(ref_fasta, "GB") + size(ref_fasta_index, "GB") + size(ref_dict, "GB")
+    Float ref_size = size(ref_fasta, "GB") + size(ref_fasta_index_fai, "GB") + size(ref_dict, "GB")
     Int disk_size = ceil(size(input_cram, "GB") + output_bam_size + ref_size) + addtional_disk_size
 
     #Calls samtools view to do the conversion
@@ -259,7 +263,8 @@ task HaplotypeCaller {
         String output_filename
         File ref_dict
         File ref_fasta
-        File ref_fasta_index
+        File ref_fasta_index_fai
+        File ref_fasta_index_gzi
         Float? contamination
         Boolean make_gvcf
         Boolean make_bamout
@@ -283,7 +288,7 @@ task HaplotypeCaller {
     Int machine_mem_gb = select_first([mem_gb, 7])
     Int command_mem_gb = machine_mem_gb - 1
 
-    Float ref_size = size(ref_fasta, "GB") + size(ref_fasta_index, "GB") + size(ref_dict, "GB")
+    Float ref_size = size(ref_fasta, "GB") + size(ref_fasta_index_fai, "GB") + size(ref_dict, "GB")
     Int disk_size = ceil(((size(input_bam, "GB") + 30) / hc_scatter) + ref_size) + 20
 
     String vcf_basename = if make_gvcf then  basename(output_filename, ".gvcf") else basename(output_filename, ".vcf")
