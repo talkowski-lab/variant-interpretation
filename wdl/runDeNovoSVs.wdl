@@ -596,14 +596,14 @@ task mergeCoverageFiles{
     RuntimeAttr runtime_attr = select_first([runtime_attr_override, default_attr])
 
     output{
-        File merged_coverage_file = "concat.coverage.bed.gz"
-        File merged_coverage_index_file = "concat.coverage.bed.gz.tbi"
+        File merged_coverage_file = "concat.coverage.txt.gz"
+        File merged_coverage_index_file = "concat.coverage.txt.gz.tbi"
     }
 
     command <<<
-        cat ${sep=" " coverage_files} > concat.coverage.bed
-        bgzip concat.coverage.bed
-        tabix -p bed concat.coverage.bed.gz
+        cat ${sep=" " coverage_files} > concat.coverage.txt
+        bgzip concat.coverage.txt
+        tabix -p bed concat.coverage.txt.gz
 
         
     >>>
