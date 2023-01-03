@@ -185,6 +185,8 @@ def main():
     bed['is_large_cnv'] = (bed['SVLEN'] >= large_cnv_size) & ((bed['svtype'] == 'DEL') | (bed['svtype'] == 'DUP'))
     bed['is_small_cnv'] = (bed['SVLEN'] < large_cnv_size) & ((bed['svtype'] == 'DEL') | (bed['svtype'] == 'DUP'))
     bed['is_depth_only'] = (bed['EVIDENCE'] == "RD")
+    bed['is_depth_only2'] = (bed['ALGORITHMS'] == "depth")
+
 
     # Split into one row per sample
     verbosePrint('Split into one row per sample', verbose)
@@ -666,9 +668,12 @@ def main():
 
     #remove calls that are depth only and < 10kb
     f.write("Removed if depth only and < 10kb \n")
-    f.write(str((bed_final[(bed_final['is_depth_only'] == True) & (bed_final['SVLEN'] < 10000)]['name_famid'].to_list())))
+    f.write(str((bed_final[(bed_final['is_depth_only2'] == True) & (bed_final['SVLEN'] <= 10000)]['name_famid'].to_list())))
     f.write("\n")
-    bed_final = bed_final[(~bed_final['SVTYPE'].isin(['DEL', 'DUP', 'INS'])) | ~((bed_final['is_depth_only'] == True) & (bed_final['SVLEN'] < 10000))]
+    #print(bed_final[(bed_final['is_depth_only'] == True) & (bed_final['SVLEN'] < 10000)]['SVLEN'])
+    #exit()
+    bed_final = bed_final[(~bed_final['SVTYPE'].isin(['DEL', 'DUP', 'INS'])) | ~((bed_final['is_depth_only2'] == True) & (bed_final['SVLEN'] <= 10000))]
+    #bed_final = bed_final[ ~((bed_final['is_depth_only'] == True) & (bed_final['SVLEN'] < 10000))]
     print(bed_final)
 
 
