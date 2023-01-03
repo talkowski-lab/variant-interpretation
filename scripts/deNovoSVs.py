@@ -652,6 +652,9 @@ def main():
                           (bed_filt['name_famid'].isin(ins_names_overlap + large_cnv_names_overlap + small_cnv_names_overlap)) ]
 
     
+    ###################
+    ##FINAL FILTERING##
+    ###################
     
 
     #Remove if parents SR_GQ is 0
@@ -661,7 +664,7 @@ def main():
     f.write("Removed if paternal SR_QC or maternal SR_QC is 0 \n")
     f.write(str(parental_srqc_0))
     f.write("\n")
-    print(bed_final)
+    #print(bed_final)
 
 
 
@@ -674,7 +677,7 @@ def main():
     #exit()
     bed_final = bed_final[(~bed_final['SVTYPE'].isin(['DEL', 'DUP', 'INS'])) | ~((bed_final['is_depth_only2'] == True) & (bed_final['SVLEN'] <= 10000))]
     #bed_final = bed_final[ ~((bed_final['is_depth_only'] == True) & (bed_final['SVLEN'] < 10000))]
-    print(bed_final)
+    #print(bed_final)
 
 
    
@@ -701,12 +704,10 @@ def main():
         f.write("\n")
     
     
-
-    
-    
     bed_final = bed_final[(~bed_final['SVTYPE'].isin(['DEL', 'DUP', 'INS'])) | ~(bed_final['name_famid'].isin(somatic_mutation_regions_overlap))]
-    print(bed_final)
-    
+    #print(bed_final)
+
+
 
 
     #remove low coverage  
@@ -776,10 +777,17 @@ def main():
     f.close()
 
     bed_final = bed_final[(~bed_final['SVTYPE'].isin(['DEL', 'DUP', 'INS'])) | ~(bed_final['name_famid'].isin(remove_for_coverage))]
-    print(bed_final)
+    #print(bed_final)
     #exit()
 
 
+
+    #Remove duplicated CPX events that come from vcf output of module 18
+    bed_final['is_cpx'] = (bed_final['SVTYPE'] == "CPX")
+    #cpx = bed_final[bed_final['is_cpx'] == True]
+    print(bed_final)
+    bed_final = bed_final.drop_duplicates(subset=['start', 'end', 'sample'])
+    print(bed_final)
 
 
 
