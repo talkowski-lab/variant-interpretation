@@ -610,7 +610,7 @@ task mergeCoverageFiles{
         cat ~{coverage_files}[0] | gunzip | cut -f 1,2,3 > header.coverage.txt
 
         command=paste
-        for i in ~{sep=" " coverage_files}; do command="$command <(gzip -cd $i | cut -f4-)"; done
+        for i in ${sep=" " coverage_files}; do command="$command <(gzip -cd $i | cut -f4-)"; done
         paste header.coverage.txt <(eval $command) > concat.coverage.txt
 
         bgzip concat.coverage.txt
