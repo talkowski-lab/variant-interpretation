@@ -604,13 +604,18 @@ task mergeCoverageFiles{
         File merged_coverage_index_file = "concat.coverage.txt.gz.tbi"
     }
 
-
+    
     command <<<
 
         cat ~{coverage_files}[0] | gunzip | cut -f 1,2,3 > header.coverage.txt
 
         command=paste
-        for i in ${sep=" " coverage_files}; do command="$command <(gzip -cd $i | cut -f4-)"; done
+
+        coverage_arr=(~{sep=" " coverage_files})
+        for i in "${coverage_arr[@]}"; do
+            command="$command <(gzip -cd $i | cut -f4-)"
+        done
+
         paste header.coverage.txt <(eval $command) > concat.coverage.txt
 
         bgzip concat.coverage.txt
