@@ -55,19 +55,9 @@ workflow deNovoSV {
 
     Int coveragefiles_length = length(coverage_files)
     if(coveragefiles_length > 1){
-        scatter(coverage_file in coverage_files){
-            call reformatCoverageFiles{
-                input:
-                    coverage_file = coverage_file,
-                    prefix = basename(coverage_file, ".txt.gz"),
-                    variant_interpretation_docker=variant_interpretation_docker,
-                    runtime_attr_override = runtime_attr_merge_cov_files
-            }
-        }
         call mergeCoverageFiles{
                 input:
-                    coverage_files = reformatCoverageFiles.reformatted_coverage_file,
-                    coverage_file_header = coverage_files[0],
+                    coverage_files = coverage_files,
                     variant_interpretation_docker=variant_interpretation_docker,
                     runtime_attr_override = runtime_attr_merge_cov_files
         }
@@ -594,7 +584,6 @@ task plot_createPlots{
 task mergeCoverageFiles{
     input{
         Array[File] coverage_files
-        File coverage_file_header
         String variant_interpretation_docker
         RuntimeAttr? runtime_attr_override
     }
@@ -615,9 +604,15 @@ task mergeCoverageFiles{
         File merged_coverage_index_file = "concat.coverage.txt.gz.tbi"
     }
 
+
     command <<<
-        cut -f 1,2,3 ~{coverage_file_header} > chrom_position.txt
-        paste chrom_position.txt ${sep=" " coverage_files}  > concat.coverage.txt
+
+        cat ~{coverage_files}[0] | gunzip | cut -f 1,2,3 > header.coverage.txt
+
+        command=paste
+        for i in ~{sep=' ' coverage_files}; do command="$command <(gzip -cd $i | cut -f4-)"; done
+        paste header.coverage.txt <(eval $command) > concat.coverage.txt
+
         bgzip concat.coverage.txt
         tabix -p bed concat.coverage.txt.gz
 
@@ -634,46 +629,3 @@ task mergeCoverageFiles{
         docker: variant_interpretation_docker
     }
 }
-
-task reformatCoverageFiles{
-    input{
-        File coverage_file
-        String prefix
-        String variant_interpretation_docker
-        RuntimeAttr? runtime_attr_override
-    }
-
-    RuntimeAttr default_attr = object {
-        cpu_cores: 1,
-        mem_gb: 12,
-        disk_gb: 50,
-        boot_disk_gb: 8,
-        preemptible_tries: 3,
-        max_retries: 1
-    }
-    
-    RuntimeAttr runtime_attr = select_first([runtime_attr_override, default_attr])
-
-    output{
-        File reformatted_coverage_file = "reformatted.~{prefix}.coverage.txt.gz"
-    }
-
-    command <<<
-        cut -f4- ~{coverage_file} > reformatted.~{prefix}.coverage.txt
-        bgzip reformatted.~{prefix}.coverage.txt
-
-    >>>
-
-    runtime {
-        cpu: select_first([runtime_attr.cpu_cores, default_attr.cpu_cores])
-        memory: select_first([runtime_attr.mem_gb, default_attr.mem_gb]) + " GiB"
-        disks: "local-disk " + select_first([runtime_attr.disk_gb, default_attr.disk_gb]) + " HDD"
-        bootDiskSizeGb: select_first([runtime_attr.boot_disk_gb, default_attr.boot_disk_gb])
-        preemptible: select_first([runtime_attr.preemptible_tries, default_attr.preemptible_tries])
-        maxRetries: select_first([runtime_attr.max_retries, default_attr.max_retries])
-        docker: variant_interpretation_docker
-    }
-}
-
-
-
