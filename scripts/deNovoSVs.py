@@ -92,6 +92,12 @@ def getFamilyID(row,ped):
     family_id = ped[(ped['subject_id'] == samp)]['family_id'].values
     return(family_id[0])
 
+def getBincovMatrix(sample,sample_batches,batch_bincov):
+    batch = sample_batches.loc[sample_batches['sample'] == sample]['batch'].iloc[0]
+    bincov = batch_bincov.loc[batch_bincov['batch'] == batch]['bincov'].iloc[0]
+    return(bincov)
+
+
     
 
 def main():
@@ -110,7 +116,8 @@ def main():
     parser.add_argument('--config', dest='config', help='Config file')
     parser.add_argument('--filtered', dest='filtered_out', help='Output file')
     parser.add_argument('--SM_regions', dest='somatic_mutation_regions', help='File containing regions with known somatic mutations')
-    parser.add_argument('--coverage', dest='coverage', help='Coverage matrix')
+    parser.add_argument('--coverage', dest='coverage', help='File with batch in first column respective coverage file in second column')
+    parser.add_argument('--sample_batches', dest='sample_batches', help='File with samples in first column and their respective batch in second column')
     parser.add_argument('--verbose', dest='verbose', help='Verbosity')
     args = parser.parse_args()
 
@@ -127,6 +134,7 @@ def main():
     filtered_out = args.filtered_out
     somatic_mutation_regions = args.somatic_mutation_regions
     coverage = args.coverage
+    batches = args.sample_batches
 
 
     with open(config_file, "r") as f:
@@ -155,6 +163,10 @@ def main():
     raw_bed_child = pd.read_csv(raw_file_proband, sep='\t', names= raw_bed_colnames, header=None).replace(np.nan, '', regex=True)
     raw_bed_parent = pd.read_csv(raw_file_parent, sep='\t', names= raw_bed_colnames, header=None).replace(np.nan, '', regex=True)
     b = pd.read_csv(somatic_mutation_regions, sep='\t').replace(np.nan, '', regex=True)
+    bincov_colnames = colnames=['batch', 'bincov'] 
+    sample_batches_colnames = colnames=['sample', 'batch'] 
+    bincov = pd.read_csv(coverage, sep='\t', names= bincov_colnames, header=None).replace(np.nan, '', regex=True)
+    sample_batches = pd.read_csv(batches, sep='\t', names= sample_batches_colnames, header=None).replace(np.nan, '', regex=True)
 
 
 
@@ -719,20 +731,26 @@ def main():
         for line in process.stdout:
             yield line.strip().split()
 
+    
     remove_for_coverage = []
     for name_famid in bed_final['name_famid']:
         chrom = bed_final[bed_final['name_famid'] == name_famid]['chrom'].tolist()[0]
         start = int(bed_final[bed_final['name_famid'] == name_famid]['start'])
         end = int(bed_final[bed_final['name_famid'] == name_famid]['end'])
         proband = bed_final[bed_final['name_famid'] == name_famid]['sample'].tolist()[0]
+        proband_matrix = getBincovMatrix(proband, sample_batches, bincov)
         mom = getParents(proband,ped)[0][0]
+        mom_matrix = getBincovMatrix(mom, sample_batches, bincov)
         dad = getParents(proband,ped)[1][0]
+        dad_matrix = getBincovMatrix(dad, sample_batches, bincov)
 
-        chunks = tabix_query(coverage, chrom, start, end)
+
+        #proband
+        chunks = tabix_query(proband_matrix, chrom, start, end)
         cov = []
         for chunk in chunks:
             cov.append(chunk)
-        cov_matrix = pd.DataFrame(cov)
+        cov_matrix = pd.DataFrame(cov) #coverage matrix of only that region
         header = cov_matrix.iloc[0].to_list() #grab the first row for the header
         new_header = []
         for x in header:
@@ -745,22 +763,51 @@ def main():
         for x in proband_list:
             x = x.decode()
             proband_list_decoded.append(x)
-        mother_list = cov_matrix[proband].tolist()
+
+        #mom
+        chunks = tabix_query(mom_matrix, chrom, start, end)
+        cov = []
+        for chunk in chunks:
+            cov.append(chunk)
+        cov_matrix = pd.DataFrame(cov) #coverage matrix of only that region
+        header = cov_matrix.iloc[0].to_list() #grab the first row for the header
+        new_header = []
+        for x in header:
+            x = x.decode()
+            new_header.append(x)
+        cov_matrix = cov_matrix[1:] #take the data less the header row
+        cov_matrix.columns = new_header
+        mother_list = cov_matrix[mom].tolist()
         mother_list_decoded = []
         for x in mother_list:
             x = x.decode()
             mother_list_decoded.append(x)
-        father_list = cov_matrix[proband].tolist()
+
+        #dad
+        chunks = tabix_query(dad_matrix, chrom, start, end)
+        cov = []
+        for chunk in chunks:
+            cov.append(chunk)
+        cov_matrix = pd.DataFrame(cov) #coverage matrix of only that region
+        header = cov_matrix.iloc[0].to_list() #grab the first row for the header
+        new_header = []
+        for x in header:
+            x = x.decode()
+            new_header.append(x)
+        cov_matrix = cov_matrix[1:] #take the data less the header row
+        cov_matrix.columns = new_header
+        father_list = cov_matrix[dad].tolist()
         father_list_decoded = []
         for x in father_list:
             x = x.decode()
             father_list_decoded.append(x)
 
+
         coverage_d = {
         'Proband': proband_list_decoded,
         'Mother' : mother_list_decoded,
         'Father': father_list_decoded
-          }
+        }
 
         coverage_df = pd.DataFrame(coverage_d)
 
@@ -771,6 +818,7 @@ def main():
         if len(median_filtered) > 0:
             remove_for_coverage.append(name_famid)
 
+
     f.write("Removed if coverage is low for proband, mom, or dad \n")
     f.write(str(remove_for_coverage))
     f.write("\n")
@@ -779,7 +827,6 @@ def main():
     bed_final = bed_final[(~bed_final['SVTYPE'].isin(['DEL', 'DUP', 'INS'])) | ~(bed_final['name_famid'].isin(remove_for_coverage))]
     #print(bed_final)
     #exit()
-
 
 
     #Remove duplicated CPX events that come from vcf output of module 18

@@ -15,13 +15,13 @@ workflow deNovoSV {
         File somatic_mutation_regions
         Array[File] coverage_files
         Array[File] coverage_index_files
+        File sample_batches
+        File batch_bincov
         String variant_interpretation_docker
         RuntimeAttr? runtime_attr_override
         RuntimeAttr? runtime_attr_merge_cov_files
         RuntimeAttr? runtime_attr_denovo
-        
-
-
+    
     }
 
     call getGenomicDisorders{
@@ -50,17 +50,6 @@ workflow deNovoSV {
                 bed_files=raw_VcfToBed.bed_output,
                 variant_interpretation_docker=variant_interpretation_docker,
                 runtime_attr_override = runtime_attr_override
-    }
-
-
-    Int coveragefiles_length = length(coverage_files)
-    if(coveragefiles_length > 1){
-        call mergeCoverageFiles{
-                input:
-                    coverage_files = coverage_files,
-                    variant_interpretation_docker=variant_interpretation_docker,
-                    runtime_attr_override = runtime_attr_merge_cov_files
-        }
     }
 
     scatter (contig in contigs){
@@ -109,6 +98,8 @@ workflow deNovoSV {
                 somatic_mutation_regions = somatic_mutation_regions,
                 coverage = select_first([mergeCoverageFiles.merged_coverage_file, coverage_files[0]]),
                 coverage_index = select_first([mergeCoverageFiles.merged_coverage_index_file, coverage_index_files[0]]),
+                sample_batches = sample_batches,
+                batch_bincov = batch_bincov,
                 python_config=python_config,
                 variant_interpretation_docker=variant_interpretation_docker,
                 runtime_attr_override = runtime_attr_denovo
@@ -155,6 +146,8 @@ task getDeNovo{
         File somatic_mutation_regions
         File coverage
         File coverage_index
+        File batch_bincov
+        File sample_batches
         File python_config
         String variant_interpretation_docker
         RuntimeAttr? runtime_attr_override
@@ -188,7 +181,8 @@ task getDeNovo{
                 --config ~{python_config} \
                 --filtered ~{chromosome}.filtered.txt \
                 --SM_regions ~{somatic_mutation_regions} \
-                --coverage ~{coverage} \
+                --coverage ~{batch_bincov} \
+                --sample_batches ~{sample_batches} \
                 --verbose True \
                 --outliers ~{chromosome}.denovo.outliers.bed
     >>>
@@ -568,60 +562,6 @@ task plot_createPlots{
         Rscript /src/variant-interpretation/scripts/denovoSV_plots.R ${bed_file} ${outliers_file} ${ped_input} output_plots.pdf
 
     }
-
-    runtime {
-        cpu: select_first([runtime_attr.cpu_cores, default_attr.cpu_cores])
-        memory: select_first([runtime_attr.mem_gb, default_attr.mem_gb]) + " GiB"
-        disks: "local-disk " + select_first([runtime_attr.disk_gb, default_attr.disk_gb]) + " HDD"
-        bootDiskSizeGb: select_first([runtime_attr.boot_disk_gb, default_attr.boot_disk_gb])
-        preemptible: select_first([runtime_attr.preemptible_tries, default_attr.preemptible_tries])
-        maxRetries: select_first([runtime_attr.max_retries, default_attr.max_retries])
-        docker: variant_interpretation_docker
-    }
-}
-
-
-task mergeCoverageFiles{
-    input{
-        Array[File] coverage_files
-        String variant_interpretation_docker
-        RuntimeAttr? runtime_attr_override
-    }
-
-    RuntimeAttr default_attr = object {
-        cpu_cores: 1,
-        mem_gb: 12,
-        disk_gb: 50,
-        boot_disk_gb: 8,
-        preemptible_tries: 3,
-        max_retries: 1
-    }
-    
-    RuntimeAttr runtime_attr = select_first([runtime_attr_override, default_attr])
-
-    output{
-        File merged_coverage_file = "concat.coverage.txt.gz"
-        File merged_coverage_index_file = "concat.coverage.txt.gz.tbi"
-    }
-
-    File coverage_files_list = write_lines(coverage_files)
-
-    command <<<
-
-        cat ~{coverage_files}[0] | gunzip | cut -f 1,2,3 > header.coverage.txt
-
-        command=paste
-        for i in $(cat ~{coverage_files_list}); do 
-            command="$command <(gunzip $i | cut -f4-)"
-        done
-
-        paste header.coverage.txt <(eval $command) > concat.coverage.txt
-
-        bgzip concat.coverage.txt
-        tabix -p bed concat.coverage.txt.gz
-
-        
-    >>>
 
     runtime {
         cpu: select_first([runtime_attr.cpu_cores, default_attr.cpu_cores])
