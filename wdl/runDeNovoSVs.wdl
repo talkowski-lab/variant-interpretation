@@ -19,7 +19,6 @@ workflow deNovoSV {
         File batch_bincov
         String variant_interpretation_docker
         RuntimeAttr? runtime_attr_override
-        RuntimeAttr? runtime_attr_merge_cov_files
         RuntimeAttr? runtime_attr_denovo
     
     }
@@ -96,8 +95,8 @@ workflow deNovoSV {
                 raw_proband=raw_reformatBed.reformatted_proband_output,
                 raw_parents=raw_reformatBed.reformatted_parents_output,
                 somatic_mutation_regions = somatic_mutation_regions,
-                coverage = select_first([mergeCoverageFiles.merged_coverage_file, coverage_files[0]]),
-                coverage_index = select_first([mergeCoverageFiles.merged_coverage_index_file, coverage_index_files[0]]),
+                coverage_files = coverage_files,
+                coverage_indeces = coverage_index_files,
                 sample_batches = sample_batches,
                 batch_bincov = batch_bincov,
                 python_config=python_config,
@@ -144,8 +143,8 @@ task getDeNovo{
         File raw_proband
         File raw_parents
         File somatic_mutation_regions
-        File coverage
-        File coverage_index
+        Array[File] coverage_files
+        Array[File] coverage_indeces
         File batch_bincov
         File sample_batches
         File python_config

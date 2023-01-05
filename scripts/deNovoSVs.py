@@ -94,7 +94,8 @@ def getFamilyID(row,ped):
 
 def getBincovMatrix(sample,sample_batches,batch_bincov):
     batch = sample_batches.loc[sample_batches['sample'] == sample]['batch'].iloc[0]
-    bincov = batch_bincov.loc[batch_bincov['batch'] == batch]['bincov'].iloc[0]
+    bincov_gs = batch_bincov.loc[batch_bincov['batch'] == batch]['bincov'].iloc[0]
+    bincov = bincov_gs.replace('gs://', '/cromwell_root/')
     return(bincov)
 
 
