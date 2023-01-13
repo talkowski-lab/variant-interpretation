@@ -19,13 +19,13 @@ version 1.0
 
 # WORKFLOW DEFINITION
 
-workflow CramToBamFlow {
+workflow CramToHaplotypeCallerFlow {
     input {
         File ref_fasta
         File ref_fasta_index_fai
         File ref_fasta_index_gzi
         File ref_dict
-        File input_cram
+        File bam_or_cram
         String sample_name
         String gotc_docker = "broadinstitute/genomes-in-the-cloud:2.3.1-1500064817"
         Int preemptible_tries = 3
@@ -43,18 +43,24 @@ workflow CramToBamFlow {
         String samtools_path = "samtools"
     }
 
-    #Converts CRAM to SAM to BAM and makes BAI
-    call CramToBamTask {
-        input:
-            ref_fasta = ref_fasta,
-            ref_fasta_index_fai = ref_fasta_index_fai,
-            ref_fasta_index_gzi = ref_fasta_index_gzi,
-            ref_dict = ref_dict,
-            input_cram = input_cram,
-            sample_name = sample_name,
-            docker_image = gotc_docker,
-            preemptible_tries = preemptible_tries
-    }
+    Boolean is_cram =
+        basename(bam_or_cram, ".cram") + ".cram" == basename(bam_or_cram)
+
+    if is_cram:
+        #Converts CRAM to SAM to BAM and makes BAI
+        call CramToBamTask {
+            input:
+                ref_fasta = ref_fasta,
+                ref_fasta_index_fai = ref_fasta_index_fai,
+                ref_fasta_index_gzi = ref_fasta_index_gzi,
+                ref_dict = ref_dict,
+                bam_or_cram = bam_or_cram,
+                sample_name = sample_name,
+                docker_image = gotc_docker,
+                preemptible_tries = preemptible_tries
+        }
+    else:
+        CramToBamTask.outputBam = bam_or_cram
 
     #Validates Bam
     call ValidateSamFile {
@@ -138,7 +144,7 @@ task CramToBamTask {
         File ref_fasta_index_fai
         File ref_fasta_index_gzi
         File ref_dict
-        File input_cram
+        File bam_or_cram
         String sample_name
 
         # Runtime parameters
@@ -147,18 +153,16 @@ task CramToBamTask {
         String docker_image
         Int preemptible_tries
     }
-    Float output_bam_size = size(input_cram, "GB") / 0.60
+    Float output_bam_size = size(bam_or_cram, "GB") / 0.60
     Float ref_size = size(ref_fasta, "GB") + size(ref_fasta_index_fai, "GB") + size(ref_dict, "GB")
-    Int disk_size = ceil(size(input_cram, "GB") + output_bam_size + ref_size) + addtional_disk_size
+    Int disk_size = ceil(size(bam_or_cram, "GB") + output_bam_size + ref_size) + addtional_disk_size
 
     #Calls samtools view to do the conversion
     command {
         set -eo pipefail
 
-        samtools view -h -T ~{ref_fasta} ~{input_cram} |
-        samtools view -b -o ~{sample_name}.bam -
-        samtools index -b ~{sample_name}.bam
-        mv ~{sample_name}.bam.bai ~{sample_name}.bai
+        samtools view -h -T ~{ref_fasta} ~{bam_or_cram} | \
+            samtools view -b -o ~{sample_name}.bam -
     }
 
     #Run time attributes:
@@ -175,9 +179,9 @@ task CramToBamTask {
     #Outputs a BAM and BAI with the same sample name
     output {
         File outputBam = "~{sample_name}.bam"
-        File outputBai = "~{sample_name}.bai"
     }
 }
+
 
 #Validates BAM output to ensure it wasn't corrupted during the file conversion
 
