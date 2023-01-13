@@ -46,7 +46,7 @@ workflow CramToHaplotypeCallerFlow {
     Boolean is_cram =
         basename(bam_or_cram, ".cram") + ".cram" == basename(bam_or_cram)
 
-    if (is_cram){
+    if is_cram then
         #Converts CRAM to SAM to BAM and makes BAI
         call CramToBamTask {
             input:
@@ -58,10 +58,8 @@ workflow CramToHaplotypeCallerFlow {
                 sample_name = sample_name,
                 docker_image = gotc_docker,
                 preemptible_tries = preemptible_tries
-        }
-    }else{
+    else
         CramToBamTask.outputBam = bam_or_cram
-    }
 
     #Validates Bam
     call ValidateSamFile {
