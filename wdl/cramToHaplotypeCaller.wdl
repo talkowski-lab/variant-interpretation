@@ -58,15 +58,16 @@ workflow CramToHaplotypeCallerFlow {
                 sample_name = sample_name,
                 docker_image = gotc_docker,
                 preemptible_tries = preemptible_tries
+        }
     }
-    if (!is_cram){
-        CramToBamTask.outputBam = bam_or_cram
-    }
+
+    File bam_file = select_first([CramToBamTask.outputBam, bam_or_cram])
+
 
     #Validates Bam
     call ValidateSamFile {
         input:
-            input_bam = CramToBamTask.outputBam,
+            input_bam = bam_file,
             docker_image = gotc_docker,
             preemptible_tries = preemptible_tries
     }
@@ -74,7 +75,7 @@ workflow CramToHaplotypeCallerFlow {
     ##Adds or replaces read groups and makes BAI
     call AddOrReplaceReadGroups {
         input:
-            inputBam = CramToBamTask.outputBam,
+            inputBam = bam_file,
             sample_name = sample_name,
             readgroupLibrary = readgroup_library,
             readgroupPlatform = readgroup_platform,
