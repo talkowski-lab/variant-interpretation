@@ -58,7 +58,7 @@ workflow CramToHaplotypeCallerFlow {
                 sample_name = sample_name,
                 docker_image = gotc_docker,
                 preemptible_tries = preemptible_tries
-    else
+    if !is_cram then
         CramToBamTask.outputBam = bam_or_cram
 
     #Validates Bam
