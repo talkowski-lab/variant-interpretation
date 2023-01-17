@@ -676,6 +676,7 @@ def main():
 
     #Remove if parents GQ is 0
     remove_gq_list = []
+    minimum = ['1','2','3','4','5']
     for name_famid in bed_final['name_famid']:
         paternal_srgq = bed_final[bed_final['name_famid'] == name_famid]['paternal_srgq'].tolist()[0]
         maternal_srgq = bed_final[bed_final['name_famid'] == name_famid]['maternal_srgq'].tolist()[0]
@@ -684,8 +685,8 @@ def main():
         paternal_gq = bed_final[bed_final['name_famid'] == name_famid]['paternal_gq'].tolist()[0]
         maternal_gq = bed_final[bed_final['name_famid'] == name_famid]['paternal_gq'].tolist()[0]
 
-        
-        if min([paternal_srgq, maternal_srgq, paternal_gq, maternal_gq, paternal_pegq, maternal_pegq]) == '0':
+  
+        if min([paternal_srgq, maternal_srgq, paternal_gq, maternal_gq, paternal_pegq, maternal_pegq]) in minimum:
             print(name_famid)
             remove_gq_list.append(name_famid)
 
@@ -693,7 +694,7 @@ def main():
     bed_final = bed_final[(~bed_final['SVTYPE'].isin(['DEL', 'DUP', 'INS'])) | ~(bed_final['name_famid'].isin(remove_gq_list))]
 
 
-    f.write("Removed if paternal GQ or maternal GQ is 0 \n")
+    f.write("Removed if paternal GQ or maternal GQ is <5 \n")
     f.write(str(remove_gq_list))
     f.write("\n")
     
@@ -755,8 +756,8 @@ def main():
     remove_for_coverage = []
     for name_famid in bed_final['name_famid']:
         chrom = bed_final[bed_final['name_famid'] == name_famid]['chrom'].tolist()[0]
-        start = int(bed_final[bed_final['name_famid'] == name_famid]['start'])
-        end = int(bed_final[bed_final['name_famid'] == name_famid]['end'])
+        start = int(bed_final[bed_final['name_famid'] == name_famid]['start'].tolist()[0])
+        end = int(bed_final[bed_final['name_famid'] == name_famid]['end'].tolist()[0])
         proband = bed_final[bed_final['name_famid'] == name_famid]['sample'].tolist()[0]
         proband_matrix = getBincovMatrix(proband, sample_batches, bincov)
         mom = getParents(proband,ped)[0][0]
