@@ -173,8 +173,8 @@ def main():
 
     # Get parents and children ids
     verbosePrint('Getting parents/children/affected/unaffected IDs', verbose)
-    # families = ped[(ped['family_size'] >= 3) &
-    families = ped[(ped['family_size'] == 3) &
+    
+    families = ped[(ped['family_size'] >= 3) &
                    (ped['paternal_id'] != "0") &
                    (ped['maternal_id'] != "0")]['family_id'].values
     trios = ped[(ped['family_id'].isin(families))]
@@ -670,14 +670,29 @@ def main():
     ###################
     
 
-    #Remove if parents SR_GQ is 0
-    parental_srqc_0 = bed_final[((bed_final['paternal_srgq'] == '0') | (bed_final['maternal_srgq'] == '0'))]['name_famid'].to_list()
-    bed_final = bed_final[(~bed_final['SVTYPE'].isin(['DEL', 'DUP', 'INS'])) | ~(bed_final['name_famid'].isin(parental_srqc_0))]
+    #Remove if parents GQ is 0
+    remove_gq_list = []
+    for name_famid in bed_final['name_famid']:
+        paternal_srgq = bed_final[bed_final['name_famid'] == name_famid]['paternal_srgq'].tolist()[0]
+        maternal_srgq = bed_final[bed_final['name_famid'] == name_famid]['maternal_srgq'].tolist()[0]
+        paternal_pegq = bed_final[bed_final['name_famid'] == name_famid]['paternal_pegq'].tolist()[0]
+        maternal_pegq = bed_final[bed_final['name_famid'] == name_famid]['maternal_pegq'].tolist()[0]
+        paternal_gq = bed_final[bed_final['name_famid'] == name_famid]['paternal_gq'].tolist()[0]
+        maternal_gq = bed_final[bed_final['name_famid'] == name_famid]['paternal_gq'].tolist()[0]
 
-    f.write("Removed if paternal SR_QC or maternal SR_QC is 0 \n")
-    f.write(str(parental_srqc_0))
+        
+        if min([paternal_srgq, maternal_srgq, paternal_gq, maternal_gq, paternal_pegq, maternal_pegq]) == '0':
+            print(name_famid)
+            remove_gq_list.append(name_famid)
+
+
+    bed_final = bed_final[(~bed_final['SVTYPE'].isin(['DEL', 'DUP', 'INS'])) | ~(bed_final['name_famid'].isin(remove_gq_list))]
+
+
+    f.write("Removed if paternal GQ or maternal GQ is 0 \n")
+    f.write(str(remove_gq_list))
     f.write("\n")
-    #print(bed_final)
+    
 
 
 
