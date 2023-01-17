@@ -303,6 +303,10 @@ def main():
     bed_child['maternal_rdcn'] = bed_child.apply(lambda r: getInfoParent(r, ped, vcf, 'maternal_id', 'RD_CN'), axis=1)
     bed_child['paternal_srgq'] = bed_child.apply(lambda r: getInfoParent(r, ped, vcf, 'paternal_id', 'SR_GQ'), axis=1)
     bed_child['maternal_srgq'] = bed_child.apply(lambda r: getInfoParent(r, ped, vcf, 'maternal_id', 'SR_GQ'), axis=1)
+    bed_child['paternal_gq'] = bed_child.apply(lambda r: getInfoParent(r, ped, vcf, 'paternal_id', 'GQ'), axis=1)
+    bed_child['maternal_gq'] = bed_child.apply(lambda r: getInfoParent(r, ped, vcf, 'maternal_id', 'GQ'), axis=1)
+    bed_child['paternal_pegq'] = bed_child.apply(lambda r: getInfoParent(r, ped, vcf, 'paternal_id', 'PE_GQ'), axis=1)
+    bed_child['maternal_pegq'] = bed_child.apply(lambda r: getInfoParent(r, ped, vcf, 'maternal_id', 'PE_GQ'), axis=1)
 
     bed_child = bed_child.loc[(bed_child['is_large_cnv'] == False) | ((bed_child['RD_CN'] != bed_child['maternal_rdcn']) & (bed_child['RD_CN'] != bed_child['paternal_rdcn']))]
     
