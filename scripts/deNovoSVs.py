@@ -676,7 +676,7 @@ def main():
 
     #Remove if parents GQ is 0
     remove_gq_list = []
-    minimum = ['1','2','3','4','5']
+    minimum = ['0']
     for name_famid in bed_final['name_famid']:
         paternal_srgq = bed_final[bed_final['name_famid'] == name_famid]['paternal_srgq'].tolist()[0]
         maternal_srgq = bed_final[bed_final['name_famid'] == name_famid]['maternal_srgq'].tolist()[0]
