@@ -269,8 +269,6 @@ def main():
 
 
 
-    #print(bed_child['svtype'].value_counts()['INS']) #JUMPED DOWN TO 14
-
     # Extract info from the VCF file - no PE_GT, PE_GQ, SR_GT, SR_GQ
     verbosePrint('Appending FILTER information', verbose)
     bed_child['GT']    = bed_child.apply(lambda r: variantInfo(r, 'GT', vcf), axis=1)
@@ -354,24 +352,19 @@ def main():
     verbosePrint('Filtering out calls', verbose)
     # Keep if in GD region
     keep_gd = bed_child[(bed_child['in_gd'] == True)]['name'].to_list()
-    #print(len(keep_gd))
+
     # Filter out if large CNVs don't have RD support and parents overlap
     keep_large = bed_child[ (bed_child['is_large_cnv'] == True) &
                             (bed_child['contains_RD'] == True) &
                             (bed_child['overlap_parent'] == False) ]['name'].to_list()
-    #print("large_cnvs")
-    #print(len(keep_large))
+    
     # Filter out if small cnvs that are SR-only don't have BOTHSIDES_SUPPORT
     keep_small = bed_child[(bed_child['is_small_cnv'] == True) &
                            ( (bed_child['EVIDENCE_FIX'] != 'SR') |
                            ( (bed_child['EVIDENCE_FIX'] == 'SR') &
                              (bed_child.FILTER.str.contains('BOTHSIDES_SUPPORT'))))
                           ]['name'].to_list()
-    #print("small_cnvs before filtering:")
-    #print(bed_child[(bed_child['is_small_cnv'] == True)]["FILTER"])
-    #print(bed_child[(bed_child['is_small_cnv'] == True)])
-    #print("small cnvs after filtering")
-    #print(keep_small)
+   
 
     # Keep any other SV type
     keep_other_sv = bed_child[~bed_child['SVTYPE'].isin(['DEL', 'DUP'])]['name'].to_list()
@@ -417,7 +410,7 @@ def main():
     verbosePrint('Checking raw files', verbose)
 
     #Reformat raw files
-    #print(raw_bed)
+
     raw_bed_ref_child = raw_bed_child.to_string(header=False, index=False)
     raw_bed_ref_child = pybedtools.BedTool(raw_bed_ref_child, from_string=True)
 
@@ -426,27 +419,9 @@ def main():
     raw_bed_ref_parent = pybedtools.BedTool(raw_bed_ref_parent, from_string=True)
 
 
-
-    #raw_bed_ref = pybedtools.BedTool.from_dataframe(raw_bed, disable_auto_names=True)
-    #print(raw_bed_ref)
-    
-
-    #raw_bed_ref_child = pybedtools.BedTool(raw_file_proband)
-    #raw_bed_ref_parent = pybedtools.BedTool(raw_file_parent)
-    
-    #name = svtype
-    #score = sample
-    #print(raw_bed_ref[1].score)
-    #print(raw_bed_ref.filter(lambda x: x.score == '__3176003__2f003a'))
-    #it has the mom and child in raw_file
-    #exit()
-
-
     #Reformat de novo filt calls
 
-    #bed_filt['name_sample'] = bed_filt['name'] + "_" + bed_filt['sample']
-    #bed_filt['family_id'] = bed_filt.apply(lambda r: getFamilyID(r,ped), axis=1)
-    #bed_filt['name_famid'] = bed_filt['name'] + "_" + bed_filt['family_id'].astype(str).str.strip("[]")
+   
     bed_filt['chrom_type_sample'] = bed_filt['chrom'] + "_" + bed_filt['SVTYPE'] + "_" + bed_filt['sample']
     bed_filt['chrom_type_family'] = bed_filt['chrom'] + "_" + bed_filt['SVTYPE'] + "_" + bed_filt['family_id'].astype(str)
 
@@ -482,15 +457,7 @@ def main():
     f.write("Insertions removed because not supported by raw evidence \n")
     f.write(str([x for x in bed_filt_ins['name_famid'] if x not in ins_names_overlap_proband]))
     f.write("\n")
-    
 
-    #print(ins_names_overlap_proband)
-    #exit()
-
-    #subset_parents = a.filter(lambda x: x.name == )
-    #We will want to compare original raw evidence with subsetted raw evidence and check if parent has variant
-    #print(bed_filt_ins_overlap_proband)
-    #print(ins_names_overlap_proband)
 
 
 
@@ -516,7 +483,7 @@ def main():
     ins_names_overlap = [x for x in ins_names_overlap_proband if x not in ins_names_overlap_parents]
     print(ins_names_overlap)
     print("Final number of insertions in de novo output:", str(len(ins_names_overlap_parents)))
-    #print(ins_names_overlap)
+
 
     f.write("Insertions removed because supported by raw evidence of parents \n")
     f.write(str(ins_names_overlap_parents))
@@ -548,7 +515,7 @@ def main():
 
     print("Number of large CNVs supported by raw evidence:",str(len(large_cnv_names_overlap_proband)))
     print(large_cnv_names_overlap_proband)
-    #exit()
+
 
     f.write("Large CNVs removed because not supported by raw evidence \n")
     f.write(str([x for x in large_bed_filt_cnv['name_famid'] if x not in large_cnv_names_overlap_proband]))
@@ -587,7 +554,7 @@ def main():
     large_cnv_names_overlap = [x for x in large_cnv_names_overlap_proband if x not in large_cnv_names_overlap_parents]
     print(large_cnv_names_overlap)
     print("Final number of large CNVs in de novo output:",str(len(large_cnv_names_overlap)))
-    #exit()
+    
 
 
 
@@ -608,8 +575,6 @@ def main():
                                                             ).to_dataframe(disable_auto_names=True, header=None)
             if (len(small_bed_filt_cnv_overlap_probands) != 0):
                 small_cnv_names_overlap_probands = small_bed_filt_cnv_overlap_probands[6].to_list()
-            #if 'phase2_DEL_chr19_484' in cnv_names_overlap:
-            #print('exists')
             else:
                 small_cnv_names_overlap_probands = ['']
     else:
@@ -638,8 +603,6 @@ def main():
                                                             ).to_dataframe(disable_auto_names=True, header=None)
             if (len(small_bed_filt_cnv_overlap_parents) != 0):
                 small_cnv_names_overlap_parents = small_bed_filt_cnv_overlap_parents[6].to_list()
-            #if 'phase2_DEL_chr19_484' in cnv_names_overlap:
-            #print('exists')
             else:
                 small_cnv_names_overlap_parents = ['']
     else:
@@ -662,8 +625,6 @@ def main():
     ##Filtering out INS and CNV with no raw evidence
     verbosePrint('Filtering out variants with no raw evidence', verbose)
 
-    #bed_test = bed_filt[ (bed_filt['SVTYPE'].isin(['DEL', 'DUP', 'INS'])) |
-                          #(bed_filt['name'].isin(ins_names_overlap + cnv_names_overlap)) ]
 
     bed_final = bed_filt[ (~bed_filt['SVTYPE'].isin(['DEL', 'DUP', 'INS'])) |
                           (bed_filt['name_famid'].isin(ins_names_overlap + large_cnv_names_overlap + small_cnv_names_overlap)) ]
@@ -674,7 +635,7 @@ def main():
     ###################
     
 
-    #Remove if parents GQ is 0
+    # Remove if parents GQ is 0
     remove_gq_list = []
     minimum = ['0']
     for name_famid in bed_final['name_famid']:
@@ -700,22 +661,16 @@ def main():
     
 
 
-
-
-    #remove calls that are depth only and < 10kb
+    # Remove calls that are depth only and < 10kb
     f.write("Removed if depth only and < 10kb \n")
     f.write(str((bed_final[(bed_final['is_depth_only2'] == True) & (bed_final['SVLEN'] <= 10000)]['name_famid'].to_list())))
     f.write("\n")
-    #print(bed_final[(bed_final['is_depth_only'] == True) & (bed_final['SVLEN'] < 10000)]['SVLEN'])
-    #exit()
     bed_final = bed_final[(~bed_final['SVTYPE'].isin(['DEL', 'DUP', 'INS'])) | ~((bed_final['is_depth_only2'] == True) & (bed_final['SVLEN'] <= 10000))]
-    #bed_final = bed_final[ ~((bed_final['is_depth_only'] == True) & (bed_final['SVLEN'] < 10000))]
-    #print(bed_final)
 
 
    
     
-    #remove if in somatic mutation region
+    # Remove if in somatic mutation region
     b_string = b.to_string(header=False, index=False)
     b_bt = pybedtools.BedTool(b_string, from_string=True).sort()
     
@@ -738,12 +693,11 @@ def main():
     
     
     bed_final = bed_final[(~bed_final['SVTYPE'].isin(['DEL', 'DUP', 'INS'])) | ~(bed_final['name_famid'].isin(somatic_mutation_regions_overlap))]
-    #print(bed_final)
 
 
 
 
-    #remove low coverage  
+    #Remove low coverage  
     from subprocess import Popen, PIPE
     def tabix_query(filename, chrom, start, end):
     #Call tabix and generate an array of strings for each line it returns.
@@ -846,55 +800,15 @@ def main():
     f.close()
 
     bed_final = bed_final[(~bed_final['SVTYPE'].isin(['DEL', 'DUP', 'INS'])) | ~(bed_final['name_famid'].isin(remove_for_coverage))]
-    #print(bed_final)
-    #exit()
+   
 
 
-    #Remove duplicated CPX events that come from vcf output of module 18
+    # Remove duplicated CPX events that come from vcf output of module 18
     bed_final['is_cpx'] = (bed_final['SVTYPE'] == "CPX")
     #cpx = bed_final[bed_final['is_cpx'] == True]
     print(bed_final)
     bed_final = bed_final.drop_duplicates(subset=['start', 'end', 'sample'])
     print(bed_final)
-
-
-
-    '''
-    tb = tabix.open(coverage)
-    #tabix(tb, index)
-    for name_famid in bed_final['name_famid']:
-        chrom = str(bed_final[bed_final['name_famid'] == name_famid]['chrom'])
-        start = int(bed_final[bed_final['name_famid'] == name_famid]['start'])
-        end = int(bed_final[bed_final['name_famid'] == name_famid]['end'])
-        tb.query(chrom, start, end)
-        exit()
-    
-
-    bed_final_bedtools = bed_final[cols_keep2].to_string(header=False, index=False)
-    bed_final_bedtools = pybedtools.BedTool(bed_final_bedtools, from_string=True).sort()
-    c = bed_final_bedtools.coverage(bed_final_bedtools)
-    print(c)
-    exit()
-    
-
-    batch_bincov = pd.read_csv("tabix_test_2.bed", sep='\t', header=0).replace(np.nan, '', regex=True)
-    print(batch_bincov)
-    batch_bincov['median'] = batch_bincov.iloc[:, 3:].median(axis=1).to_list()
-    print(batch_bincov[batch_bincov['median'] < 5]) #find the median of all rows and if its less than 5 remove any SV in that region from de novo list, but the problem is that the sample itself might not be low coverage at that region
-    batch_bincov.to_csv(path_or_buf="median.txt", mode='a', index=False, sep='\t', header=True)
-
-
-    print(batch_bincov[batch_bincov['__1883001__7ff04c'] < 10]['Start'])
-    exit()
-
-    low_coverage = pd.read_csv("tabix_test_after.bed", sep='\t', header=None).replace(np.nan, '', regex=True)
-    low_coverage_IDs = low_coverage[118]
-    print(low_coverage_IDs)
-    bed_final = bed_final[ ~((bed_final['name_famid'].isin(low_coverage_IDs)))]
-
-    print(bed_final)
-    exit()
-    '''
 
     
 
