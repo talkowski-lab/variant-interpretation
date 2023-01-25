@@ -13,7 +13,11 @@ workflow familyFiltering {
         File rconfig
         File rconfig
         String variant_interpretation_docker
-        RuntimeAttr? runtime_attr_override
+
+        RuntimeAttr? runtime_attr_override_vcfToBed
+        RuntimeAttr? runtime_attr_override_getGD
+        RuntimeAttr? runtime_attr_override_subsetFamily
+        RuntimeAttr? runtime_attr_override_svFiltering
     }
 
     call vcfToBed{
@@ -21,14 +25,14 @@ workflow familyFiltering {
             vcf_file=vcf_file,
             cohort_prefix = cohort_prefix,
             variant_interpretation_docker=variant_interpretation_docker,
-            runtime_attr_override = runtime_attr_override
+            runtime_attr_override = runtime_attr_override_vcfToBed
     }
     call getGenomicDisorders{
         input:
             genomic_disorder_input=genomic_disorder_input,
             bed_file=vcfToBed.bed_output,
             variant_interpretation_docker=variant_interpretation_docker,
-            runtime_attr_override = runtime_attr_override
+            runtime_attr_override = runtime_attr_override_getGD
     }
 
     scatter (family in families) {
@@ -39,7 +43,7 @@ workflow familyFiltering {
                 ped_file=ped_file,
                 genomic_disorder_input=genomic_disorder_input,
                 variant_interpretation_docker=variant_interpretation_docker,
-                runtime_attr_override = runtime_attr_override
+                runtime_attr_override = runtime_attr_override_subsetFamily
         }
 
         call SVfamilyFiltering{
@@ -51,7 +55,7 @@ workflow familyFiltering {
                 genomic_disorder_names=getGenomicDisorders.gd_output,
                 rconfig=rconfig,
                 variant_interpretation_docker=variant_interpretation_docker,
-                runtime_attr_override = runtime_attr_override
+                runtime_attr_override = runtime_attr_override_svFiltering
         }
     }
 }
