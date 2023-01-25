@@ -58,6 +58,10 @@ workflow familyFiltering {
                 runtime_attr_override = runtime_attr_override_svFiltering
         }
     }
+
+    output{
+        File family_filtered_svs = SVfamilyFiltering.family_filtered_svs
+    }
 }
 
 task vcfToBed{
