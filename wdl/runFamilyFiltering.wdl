@@ -5,7 +5,8 @@ import "Structs.wdl"
 workflow familyFiltering {
 
     input {
-        File vcf_file
+        File bed_file
+        File? vcf_file
         File ped_file
         File genomic_disorder_input
         String cohort_prefix
@@ -20,17 +21,18 @@ workflow familyFiltering {
         RuntimeAttr? runtime_attr_override_svFiltering
     }
 
-    call vcfToBed{
-        input:
-            vcf_file=vcf_file,
-            cohort_prefix = cohort_prefix,
-            variant_interpretation_docker=variant_interpretation_docker,
-            runtime_attr_override = runtime_attr_override_vcfToBed
-    }
+#    call vcfToBed{
+#        input:
+#            vcf_file=vcf_file,
+#            cohort_prefix = cohort_prefix,
+#            variant_interpretation_docker=variant_interpretation_docker,
+#            runtime_attr_override = runtime_attr_override_vcfToBed
+#    }
     call getGenomicDisorders{
         input:
             genomic_disorder_input=genomic_disorder_input,
-            bed_file=vcfToBed.bed_output,
+#            bed_file=vcfToBed.bed_output,
+            bed_file=bed_file,
             variant_interpretation_docker=variant_interpretation_docker,
             runtime_attr_override = runtime_attr_override_getGD
     }
@@ -50,7 +52,8 @@ workflow familyFiltering {
             input:
                 family=family,
                 family_vcf=subsetFamilyVCF.vcf_family,
-                bed_file=vcfToBed.bed_output,
+#                bed_file=vcfToBed.bed_output,
+                bed_file=bed_file,
                 ped_file=ped_file,
                 genomic_disorder_names=getGenomicDisorders.gd_output,
                 rconfig=rconfig,
@@ -88,7 +91,6 @@ task vcfToBed{
 
     command <<<
         svtk vcf2bed ~{vcf_file} --info ALL --include-filters ~{cohort_prefix}.bed.gz
-        bgzip ~{cohort_prefix}.bed.gz
     >>>
 
     runtime {
