@@ -13,9 +13,9 @@ workflow removeDuplicatesWorkflow {
 
   call removeDuplicatesVCF {
     input:
-        File input_vcf = input_vcf,
-        String sample_id = sample_id,
-        String docker = docker
+        input_vcf = input_vcf,
+        sample_id = sample_id,
+        docker = docker
   }
 
   output {
