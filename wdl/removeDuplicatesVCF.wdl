@@ -8,7 +8,7 @@ workflow removeDuplicatesWorkflow {
   input {
     File input_vcf
     String sample_id
-    String docker = "us.gcr.io/broad-gatk/gatk:4.2.0.0"
+    String docker
   }
 
   call removeDuplicatesVCF {
