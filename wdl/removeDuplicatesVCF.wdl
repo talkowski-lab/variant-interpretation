@@ -46,9 +46,9 @@ task removeDuplicatesVCF {
     set -e
 
     bcftools view -h ~{input_vcf} | uniq | \
-        bcftools view -h ~{input_vcf} -O z -o ~{sample_id}.readgroupadded.g.vcf.gz
+        bcftools view -h ~{input_vcf} -O z -o ~{sample_id}.readgroupadded.uniq.g.vcf.gz
 
-    bcftools index ~{sample_id}.readgroupadded.g.vcf.gz
+    bcftools index ~{sample_id}.readgroupadded.uniq.g.vcf.gz
 
   }
   runtime {
@@ -58,7 +58,7 @@ task removeDuplicatesVCF {
     preemptible: select_first([preemptible_attempts, 3])
   }
   output {
-    File output_vcf = "~{sample_id}.readgroupadded.g.vcf.gz"
-    File output_vcf_index = "~{sample_id}.readgroupadded.g.vcf.gz.tbi"
+    File output_vcf = "~{sample_id}.readgroupadded.uniq.g.vcf.gz"
+    File output_vcf_index = "~{sample_id}.readgroupadded.uniq.g.vcf.gz"
   }
 }
