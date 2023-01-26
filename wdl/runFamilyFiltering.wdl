@@ -212,7 +212,7 @@ task SVfamilyFiltering{
     }
 
     command <<<
-        Rscript familyFiltering.R \
+        Rscript /src/variant-interpretation/scripts/familyFiltering.R \
             -f ~{family} \
             -g ~{family_vcf} \
             -i ~{bed_file} \
