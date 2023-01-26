@@ -46,8 +46,8 @@ task removeDuplicatesVCF {
   command {
     set -e
 
-    bcftools view -h ~{input_vcf} | uniq | \
-      bcftools view -h ~{input_vcf} -O z -o ~{sample_id}.readgroupadded.uniq.g.vcf.gz
+    bcftools view ~{input_vcf} | uniq | \
+      bcftools view -O z -o ~{sample_id}.readgroupadded.uniq.g.vcf.gz
 
     bcftools index ~{sample_id}.readgroupadded.uniq.g.vcf.gz
 
