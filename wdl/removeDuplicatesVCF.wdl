@@ -15,7 +15,7 @@ workflow removeDuplicatesWorkflow {
     input:
         input_vcf = input_vcf,
         sample_id = sample_id,
-        docker = docker
+        docker = docker_path
   }
 
   output {
