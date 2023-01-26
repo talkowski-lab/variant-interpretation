@@ -19,8 +19,8 @@ workflow removeDuplicatesWorkflow {
   }
 
   output {
-    File output_vcf = uniqueVCF.output_vcf
-    File output_vcf_index = uniqueVCF.output_vcf_index
+    File output_vcf = removeDuplicatesVCF.output_vcf
+    File output_vcf_index = removeDuplicatesVCF.output_vcf_index
   }
 }
 
