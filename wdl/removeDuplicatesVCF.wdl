@@ -38,6 +38,7 @@ task removeDuplicatesVCF {
     Int? disk_space_gb
     Int? preemptible_attempts
   }
+
     Boolean use_ssd = false
     Int machine_mem_gb = select_first([mem_gb, 3])
     Int command_mem_gb = machine_mem_gb - 1
@@ -46,7 +47,7 @@ task removeDuplicatesVCF {
     set -e
 
     bcftools view -h ~{input_vcf} | uniq | \
-        bcftools view -h ~{input_vcf} -O z -o ~{sample_id}.readgroupadded.uniq.g.vcf.gz
+      bcftools view -h ~{input_vcf} -O z -o ~{sample_id}.readgroupadded.uniq.g.vcf.gz
 
     bcftools index ~{sample_id}.readgroupadded.uniq.g.vcf.gz
 
