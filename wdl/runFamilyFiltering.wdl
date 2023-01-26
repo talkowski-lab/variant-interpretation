@@ -6,7 +6,7 @@ workflow familyFiltering {
 
     input {
         File bed_file
-        File? vcf_file
+        File vcf_file
         File ped_file
         File genomic_disorder_input
         String cohort_prefix
