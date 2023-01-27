@@ -129,6 +129,7 @@ workflow deNovoSV {
         File concat_outlier_output = plot_mergeFinalBedFiles.concat_final_bed_outliers_output
         File denovo_output_plots = plot_createPlots.output_plots
         Array[File] filtered_out = getDeNovo.filtered_out
+        Array[File] size_file_out = getDeNovo.size_file_out
 
     }
 }
@@ -166,6 +167,7 @@ task getDeNovo{
         File denovo_output = "~{chromosome}.denovo.bed"
         File denovo_outliers = "~{chromosome}.denovo.outliers.bed"
         File filtered_out = "~{chromosome}.filtered.txt"
+        File size_file_out = "~{chromosome}.size.txt"
     }
 
     command <<<
@@ -179,6 +181,7 @@ task getDeNovo{
                 --raw_parents ~{raw_parents} \
                 --config ~{python_config} \
                 --filtered ~{chromosome}.filtered.txt \
+                --size_file ~{chromosome}.size.txt \ 
                 --exclude_regions ~{exclude_regions} \
                 --coverage ~{batch_bincov} \
                 --sample_batches ~{sample_batches} \
