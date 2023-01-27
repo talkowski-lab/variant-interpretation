@@ -3,53 +3,52 @@ library(data.table)
 
 args = commandArgs(trailingOnly=TRUE)
 
-sample_list <- args[1]
-cram_list <- args[2]
-crai_list <- args[3]
-ped_input <- args[4]
-out_trios <- args[5]
+sample_list <- 'sample_list.txt'
+cram_list <- 'cram_list.txt'
+crai_list <- 'crai_list.txt'
+ped_input <- 'REU_ped.tsv'
+out_trios <- 'out_trio.tsv'
 # out_trios_single_parent <- args[5]
-out_singletons <- args[6]
+out_singletons <- 'out_singleton.tsv'
 
 ped <- fread(ped_input)
 
-ped <- subset(ped, select=c(family_id, subject_id, maternal_id, paternal_id, family_size))
+ped <- subset(ped, select=c(FamID, IndividualID, MotherID, FatherID))
+trio_families <- names(which((table(ped$FamID) == 3)))
 
 #Trios
-trio_samples <- subset(ped, family_size==3)
+trio_samples <- subset(ped, FamID %in% trio_families)
 
 sample_list <- as.data.frame(read.table(sample_list, header = FALSE, sep="\t",stringsAsFactors=FALSE, quote=""))
 cram_list <- as.data.frame(read.table(cram_list, header = FALSE, sep="\t",stringsAsFactors=FALSE, quote=""))
 crai_list <- as.data.frame(read.table(crai_list, header = FALSE, sep="\t",stringsAsFactors=FALSE, quote=""))
 data_table <- data.frame(sample_list, cram_list, crai_list)
+colnames(data_table) <- c('IndividualID','bam_or_cram_file', 'bai_or_crai_file')
 
-
-
-colnames(data_table) <- c('subject_id','bam_or_cram_file')
 #Xuefang said we can get it working for if only one parent also (this means there are two kids and one parent)
 #this gets only pb in subject_id column
-trios <- subset(trio_samples, (paternal_id != 0) & (maternal_id != 0))
+trios <- subset(trio_samples, (FatherID != 0) & (MotherID != 0))
 
-pb_table <- subset(data_table, data_table$subject_id %in% trios$subject_id)
-colnames(pb_table) <- c('subject_id','pb_cram_file', 'pb_crai_file')
+pb_table <- subset(data_table, data_table$IndividualID %in% trios$IndividualID)
+colnames(pb_table) <- c('IndividualID','pb_cram_file', 'pb_crai_file')
 
 
 #get pb cram into ped
-trios <- merge(trios,pb_table, by="subject_id")
+trios <- merge(trios,pb_table, by="IndividualID")
 
 
 #set up mo and fa tables to get crams in trio table
-mo_table <- subset(data_table, data_table$subject_id %in% trios$maternal_id)
-colnames(mo_table) <- c('maternal_id','mo_cram_file', 'mo_crai_file')
-fa_table <- subset(data_table, data_table$subject_id %in% trios$paternal_id)
-colnames(fa_table) <- c('paternal_id','fa_cram_file', 'fa_crai_file')
+mo_table <- subset(data_table, data_table$IndividualID %in% trios$MotherID)
+colnames(mo_table) <- c('MotherID','mo_cram_file', 'mo_crai_file')
+fa_table <- subset(data_table, data_table$IndividualID %in% trios$FatherID)
+colnames(fa_table) <- c('FatherID','fa_cram_file', 'fa_crai_file')
 
 
 #add mo and fa crams to table
-trios <- merge(trios,mo_table, by="maternal_id", all.x = TRUE)
-trios <- merge(trios,fa_table, by="paternal_id", all.x = TRUE)
+trios <- merge(trios,mo_table, by="MotherID", all.x = TRUE)
+trios <- merge(trios,fa_table, by="FatherID", all.x = TRUE)
 
-trios <- subset(trios, select=c("family_id", "subject_id", "maternal_id", "paternal_id", "pb_cram_file","mo_cram_file","fa_cram_file", "pb_crai_file","mo_crai_file","fa_crai_file"))
+trios <- subset(trios, select=c("FamID", "IndividualID", "MotherID", "FatherID", "pb_cram_file","mo_cram_file","fa_cram_file", "pb_crai_file","mo_crai_file","fa_crai_file"))
 colnames(trios)[1] <- "entity:trio_id"
 
 write.table(trios, out_trios, sep="\t", quote=F, row.names=F)
@@ -94,17 +93,15 @@ write.table(trios, out_trios, sep="\t", quote=F, row.names=F)
 # 
 
 #Singletons
-singletons <- subset(ped, family_size==1)
-pb_table <- subset(data_table, data_table$subject_id %in% singletons$subject_id)
-colnames(pb_table) <- c('subject_id','pb_cram_file', 'pb_crai_file')
+singleton_families <- names(which((table(ped$FamID) == 1)))
+singletons <- subset(ped, FamID %in% singleton_families)
+pb_table <- subset(data_table, data_table$IndividualID %in% singletons$IndividualID)
+colnames(pb_table) <- c('IndividualID','pb_cram_file', 'pb_crai_file')
 
 
 #get pb cram into ped
-singletons <- merge(singletons,pb_table, by="subject_id")
+singletons <- merge(singletons,pb_table, by="IndividualID")
 
-singletons <- subset(singletons, select=c("family_id", "subject_id", "maternal_id", "paternal_id", "pb_cram_file", 'pb_crai_file'))
+singletons <- subset(singletons, select=c("FamID", "IndividualID", "MotherID", "FatherID", "pb_cram_file", 'pb_crai_file'))
 colnames(singletons)[1] <- "entity:singleton_id"
 write.table(singletons, out_singletons, sep="\t", quote=F, row.names=F)
-
-
-
