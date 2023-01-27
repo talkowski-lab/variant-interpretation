@@ -140,8 +140,8 @@ vars_aff_rare_gt <- merge(vars_aff_rare, gt_info, by = "name", all.x = T, all.y 
 
 #Define columns that have gene annotations
 # gene_cols <- as.vector(names(vars_aff_rare_gt)[c(19:34,37,39)])
-gene_cols <- grep("LINC|CODING", names(vars_aff_rare_gt), value = T)
-gene_cols <- gene_cols[gene_cols %ni% c("NONCODING_SPAN", "NONCODING_BREAKPOINT", "PROTEIN_CODING__INTERGENIC")]
+gene_cols <- grep("PREDICTED_", names(vars_aff_rare_gt), value = T)
+#gene_cols <- gene_cols[gene_cols %ni% c("PREDICTED_NONCODING_SPAN", "PREDICTED_NONCODING_BREAKPOINT")]
 
 verbose("Annotating sample counts")
 
