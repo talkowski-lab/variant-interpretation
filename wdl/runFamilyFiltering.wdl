@@ -11,8 +11,6 @@ workflow familyFiltering {
         File genomic_disorder_input
         String cohort_prefix
         Array[String] families
-        File rconfig
-        File rconfig
         String variant_interpretation_docker
 
         File genelist
@@ -203,7 +201,6 @@ task SVfamilyFiltering{
         File bed_file
         File ped_file
         File genomic_disorder_names
-        File rconfig
 
         File genelist
         File eo_file
