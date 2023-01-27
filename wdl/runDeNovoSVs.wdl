@@ -94,7 +94,7 @@ workflow deNovoSV {
                 chromosome=contig,
                 raw_proband=raw_reformatBed.reformatted_proband_output,
                 raw_parents=raw_reformatBed.reformatted_parents_output,
-                somatic_mutation_regions = somatic_mutation_regions,
+                exclude_regions = exclude_regions,
                 coverage_files = coverage_files,
                 coverage_indeces = coverage_index_files,
                 sample_batches = sample_batches,
@@ -142,7 +142,7 @@ task getDeNovo{
         String chromosome
         File raw_proband
         File raw_parents
-        File somatic_mutation_regions
+        File exclude_regions
         Array[File] coverage_files
         Array[File] coverage_indeces
         File batch_bincov
@@ -179,7 +179,7 @@ task getDeNovo{
                 --raw_parents ~{raw_parents} \
                 --config ~{python_config} \
                 --filtered ~{chromosome}.filtered.txt \
-                --SM_regions ~{somatic_mutation_regions} \
+                --exclude_regions ~{exclude_regions} \
                 --coverage ~{batch_bincov} \
                 --sample_batches ~{sample_batches} \
                 --verbose True \
