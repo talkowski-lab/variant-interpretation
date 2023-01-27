@@ -15,6 +15,13 @@ workflow familyFiltering {
         File rconfig
         String variant_interpretation_docker
 
+        File genelist
+        File eo_file
+        File prec_file
+        File pli_file
+        File hpo_db
+        File mim_file
+
         RuntimeAttr? runtime_attr_override_vcfToBed
         RuntimeAttr? runtime_attr_override_getGD
         RuntimeAttr? runtime_attr_override_subsetFamily
@@ -56,9 +63,14 @@ workflow familyFiltering {
                 bed_file=bed_file,
                 ped_file=ped_file,
                 genomic_disorder_names=getGenomicDisorders.gd_output,
-                rconfig=rconfig,
+                genelist=genelist,
+                eo_file=eo_file,
+                prec_file=prec_file,
+                pli_file=pli_file,
+                hpo_db=hpo_db,
+                mim_file=mim_file,
                 variant_interpretation_docker=variant_interpretation_docker,
-                runtime_attr_override = runtime_attr_override_svFiltering
+                runtime_attr_override=runtime_attr_override_svFiltering
         }
     }
     output{
@@ -192,6 +204,14 @@ task SVfamilyFiltering{
         File ped_file
         File genomic_disorder_names
         File rconfig
+
+        File genelist
+        File eo_file
+        File prec_file
+        File pli_file
+        File hpo_db
+        File mim_file
+
         String variant_interpretation_docker
         RuntimeAttr? runtime_attr_override
     }
@@ -212,13 +232,23 @@ task SVfamilyFiltering{
     }
 
     command <<<
+
+        echo "
+            genelist_path <- '~{genelist}'
+            eo_path <- '~{eo_file}'
+            prec_path <- '~{prec_file}'
+            pli_path <- '~{pli_file}'
+            hpodb_path <- '~{hpo_db}'
+            mim_path <- '~{mim_file}'
+        " > config.R
+
         Rscript /src/variant-interpretation/scripts/familyFiltering.R \
             -f ~{family} \
             -g ~{family_vcf} \
             -i ~{bed_file} \
             -m ~{ped_file} \
             -d ~{genomic_disorder_names} \
-            -c ~{rconfig} \
+            -c config.R \
             -u /src/variant-interpretation/scripts/familyFilteringFunctions.R \
             -v
     >>>
