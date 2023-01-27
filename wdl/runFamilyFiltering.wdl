@@ -239,14 +239,14 @@ task SVfamilyFiltering{
             mim_path <- '~{mim_file}'
         " > config.R
 
-        Rscript /src/variant-interpretation/scripts/familyFiltering.R \
+        Rscript /scripts/variant-interpretation/scripts/familyFiltering.R \
             -f ~{family} \
             -g ~{family_vcf} \
             -i ~{bed_file} \
             -m ~{ped_file} \
             -d ~{genomic_disorder_names} \
             -c config.R \
-            -u /src/variant-interpretation/scripts/familyFilteringFunctions.R \
+            -u /scripts/variant-interpretation/scripts/familyFilteringFunctions.R \
             -v
     >>>
 
