@@ -12,7 +12,7 @@ workflow deNovoSV {
         Array[String] contigs
         File genomic_disorder_input
         File raw_files_list
-        File somatic_mutation_regions
+        File exclude_regions
         Array[File] coverage_files
         Array[File] coverage_index_files
         File sample_batches
