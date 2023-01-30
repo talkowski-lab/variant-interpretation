@@ -37,13 +37,13 @@ task uninterleave_fqs {
     Int addtional_disk_size = 10
   }
     Int disk_size = ceil(size(input_fastq, "GB") * 2) + addtional_disk_size
-    String r1_name = basename(input_fastq, ".fastq") + "_reads_1.fastq"
-    String r2_name = basename(input_fastq, ".fastq") + "_reads_2.fastq"
+    String r1_name = basename(input_fastq, ".fastq") + "_reads_1.fastq.gz"
+    String r2_name = basename(input_fastq, ".fastq") + "_reads_2.fastq.gz"
 
   command {
-    cat ~{input_fastq} | paste - - - - - - - -  | \
-    tee >(cut -f 1-4 | tr "\t" "\n" > ~{r1_name}) | \
-    cut -f 5-8 | tr "\t" "\n" > ~{r2_name}
+    zcat ~{input_fastq} | paste - - - - - - - -  | \
+    tee >(cut -f 1-4 | tr "\t" "\n" | gzip > ~{r1_name}) | \
+    cut -f 5-8 | tr "\t" "\n" | gzip > ~{r2_name}
   }
 
   runtime {
