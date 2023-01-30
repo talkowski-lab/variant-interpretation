@@ -123,8 +123,8 @@ workflow deNovoSV {
 
     call plot_createPlots{
         input:
-            bed_file = plot_mergeFinalBedFiles.concat_final_bed_output,
-            outliers_file = plot_mergeFinalBedFiles.concat_final_bed_outliers_output,
+            bed_file = plot_mergeFinalBedFiles.final_denovo_output,
+            outliers_file = plot_mergeFinalBedFiles.final_denovo_outliers_output,
             ped_input = ped_input,
             variant_interpretation_docker=variant_interpretation_docker,
             runtime_attr_override = runtime_attr_create_plots
@@ -317,7 +317,7 @@ task getGenomicDisorders{
     }
 
     command <<<
-        bedtools intersect -wa -wb -f 0.5 -a ~{vcf_file} -b ~{genomic_disorder_input} | cut -f 3 |sort -u> annotated.gd.variants.names.txt
+        bedtools intersect -wa -wb -f 0.3 -r -a ~{vcf_file} -b ~{genomic_disorder_input} | cut -f 3 |sort -u> annotated.gd.variants.names.txt
     >>>
 
     runtime {
