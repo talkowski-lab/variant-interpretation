@@ -18,8 +18,16 @@ workflow deNovoSV {
         File sample_batches
         File batch_bincov
         String variant_interpretation_docker
-        RuntimeAttr? runtime_attr_override
+        RuntimeAttr? runtime_attr_gd
         RuntimeAttr? runtime_attr_denovo
+        RuntimeAttr? runtime_attr_vcf_to_bed
+        RuntimeAttr? runtime_attr_merge_bed
+        RuntimeAttr? runtime_attr_subset_vcf
+        RuntimeAttr? runtime_attr_vcf_to_bed
+        RuntimeAttr? runtime_attr_divide_by_chrom
+        RuntimeAttr? runtime_attr_reformat_bed
+        RuntimeAttr? runtime_attr_merge_final_bed_files
+        RuntimeAttr? runtime_attr_create_plots
     
     }
 
@@ -28,7 +36,7 @@ workflow deNovoSV {
             genomic_disorder_input=genomic_disorder_input,
             vcf_file=vcf_file,
             variant_interpretation_docker=variant_interpretation_docker,
-            runtime_attr_override = runtime_attr_override
+            runtime_attr_override = runtime_attr_gd
     }
 
 
@@ -40,7 +48,7 @@ workflow deNovoSV {
                 vcf_file=raw_file,
                 variant_interpretation_docker=variant_interpretation_docker,
                 prefix = basename(raw_file, ".vcf.gz"),
-                runtime_attr_override = runtime_attr_override
+                runtime_attr_override = runtime_attr_vcf_to_bed
         }
     }
 
@@ -48,7 +56,7 @@ workflow deNovoSV {
             input:
                 bed_files=raw_VcfToBed.bed_output,
                 variant_interpretation_docker=variant_interpretation_docker,
-                runtime_attr_override = runtime_attr_override
+                runtime_attr_override = runtime_attr_merge_bed
     }
 
     scatter (contig in contigs){
@@ -57,7 +65,7 @@ workflow deNovoSV {
                 vcf_file=vcf_file,
                 chromosome=contig,
                 variant_interpretation_docker=variant_interpretation_docker,
-                runtime_attr_override = runtime_attr_override
+                runtime_attr_override = runtime_attr_subset_vcf
         }
 
         call vcfToBed{
@@ -65,7 +73,7 @@ workflow deNovoSV {
                 vcf_file=subsetVcf.vcf_output,
                 chromosome=contig,
                 variant_interpretation_docker=variant_interpretation_docker,
-                runtime_attr_override = runtime_attr_override
+                runtime_attr_override = runtime_attr_vcf_to_bed
         }    
 
         call raw_divideByChrom {
@@ -73,7 +81,7 @@ workflow deNovoSV {
                 bed_file = raw_mergeBed.concat_bed_output,
                 chromosome = contig,
                 variant_interpretation_docker=variant_interpretation_docker,
-                runtime_attr_override = runtime_attr_override
+                runtime_attr_override = runtime_attr_divide_by_chrom
         }
 
         call raw_reformatBed{
@@ -82,7 +90,7 @@ workflow deNovoSV {
                 ped_input=ped_input,
                 chromosome=contig,
                 variant_interpretation_docker=variant_interpretation_docker,
-                runtime_attr_override = runtime_attr_override
+                runtime_attr_override = runtime_attr_reformat_bed
         }
 
         call getDeNovo{
@@ -110,7 +118,7 @@ workflow deNovoSV {
             bed_files = getDeNovo.denovo_output,
             outliers_files = getDeNovo.denovo_outliers,
             variant_interpretation_docker=variant_interpretation_docker,
-            runtime_attr_override = runtime_attr_override
+            runtime_attr_override = runtime_attr_merge_final_bed_files
     }
 
     call plot_createPlots{
@@ -119,14 +127,14 @@ workflow deNovoSV {
             outliers_file = plot_mergeFinalBedFiles.concat_final_bed_outliers_output,
             ped_input = ped_input,
             variant_interpretation_docker=variant_interpretation_docker,
-            runtime_attr_override = runtime_attr_override
+            runtime_attr_override = runtime_attr_create_plots
     }
 
 
     output {
     
-        File concat_output = plot_mergeFinalBedFiles.concat_final_bed_output
-        File concat_outlier_output = plot_mergeFinalBedFiles.concat_final_bed_outliers_output
+        File denovo_output = plot_mergeFinalBedFiles.final_denovo_output
+        File denovo_outliers_output = plot_mergeFinalBedFiles.final_denovo_outliers_output
         File denovo_output_plots = plot_createPlots.output_plots
         Array[File] filtered_out = getDeNovo.filtered_out
         Array[File] size_file_out = getDeNovo.size_file_out
@@ -158,7 +166,7 @@ task getDeNovo{
         mem_gb: 12,
         disk_gb: 25,
         boot_disk_gb: 8,
-        preemptible_tries: 3,
+        preemptible_tries: 5,
         max_retries: 1
     }
     RuntimeAttr runtime_attr = select_first([runtime_attr_override, default_attr])
@@ -181,7 +189,7 @@ task getDeNovo{
                 --raw_parents ~{raw_parents} \
                 --config ~{python_config} \
                 --filtered ~{chromosome}.filtered.txt \
-                --size_file ~{chromosome}.size.txt \ 
+                --size_file ~{chromosome}.size.txt \
                 --exclude_regions ~{exclude_regions} \
                 --coverage ~{batch_bincov} \
                 --sample_batches ~{sample_batches} \
@@ -510,8 +518,8 @@ task plot_mergeFinalBedFiles{
     RuntimeAttr runtime_attr = select_first([runtime_attr_override, default_attr])
 
     output{
-        File concat_final_bed_output = "final.denovo.merged.bed.gz"
-        File concat_final_bed_outliers_output = "final.denovo.outliers.merged.bed.gz"
+        File final_denovo_output = "final.denovo.merged.bed.gz"
+        File final_denovo_outliers_output = "final.denovo.outliers.merged.bed.gz"
     }
 
     command {
