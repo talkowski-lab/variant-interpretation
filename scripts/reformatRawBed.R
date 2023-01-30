@@ -35,14 +35,14 @@ bed %>%
 
 #split into parents and probands
 bed_probands <- bed_split
-bed_probands <- subset(bed_probands, !(samples %in% ped$maternal_id) & !(samples %in% ped$paternal_id))
+bed_probands <- subset(bed_probands, !(samples %in% ped$MotherID) & !(samples %in% ped$FatherID))
 
 bed_parents <- bed_split
-bed_parents <- subset(bed_parents, samples %in% ped$maternal_id | samples %in% ped$paternal_id)
+bed_parents <- subset(bed_parents, samples %in% ped$MotherID | samples %in% ped$FatherID)
 
 #add in a family ID column to bed_parents
-ped_subset <- subset(ped, select = c('family_id', 'subject_id'))
-colnames(ped_subset) <- c('family_id', 'samples')
+ped_subset <- subset(ped, select = c('FamID', 'IndividualID'))
+colnames(ped_subset) <- c('FamID', 'samples')
 
 bed_parents <- merge(bed_parents,ped_subset, by="samples", all.x = TRUE)
 
@@ -50,7 +50,7 @@ bed_parents <- merge(bed_parents,ped_subset, by="samples", all.x = TRUE)
 #Reformat chromosome column
 bed_probands$CHROM <- paste0(bed_probands$CHROM, "_", bed_probands$SVTYPE, "_", bed_probands$samples)
 
-bed_parents$CHROM <- paste0(bed_parents$CHROM, "_", bed_parents$SVTYPE, "_", bed_parents$family_id)
+bed_parents$CHROM <- paste0(bed_parents$CHROM, "_", bed_parents$SVTYPE, "_", bed_parents$FamID)
 
 #reorder the columns of bed_parents
 bed_parents2 <- bed_parents[, c(2,3,4,5,1)]
