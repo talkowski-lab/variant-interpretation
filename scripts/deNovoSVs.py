@@ -101,9 +101,14 @@ def getBincovMatrixUrl(sample,sample_batches,batch_bincov):
 
 def writeToFilterFile(file,header,original_df,filtered_df):
     file.write(header)
+    file.write("\n")
+    file.write("\n")
+    file.write("\n")
     original = original_df['name_famid']
     filtered = filtered_df['name_famid']
-    to_write = [x for x in original if x not in filtered]
+    to_write = list(set(original) - set(filtered))
+    print('to_write')
+    print(to_write)
     file.write(str(to_write))
     file.write("\n")
 
