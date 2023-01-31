@@ -49,7 +49,7 @@ task removeDuplicatesVCF {
     bcftools view ~{input_vcf} | uniq | \
       bcftools view -O z -o ~{sample_id}.readgroupadded.uniq.g.vcf.gz
 
-    bcftools index ~{sample_id}.readgroupadded.uniq.g.vcf.gz
+    tabix -p vcf ~{sample_id}.readgroupadded.uniq.g.vcf.gz
 
   }
   runtime {
@@ -60,6 +60,6 @@ task removeDuplicatesVCF {
   }
   output {
     File output_vcf = "~{sample_id}.readgroupadded.uniq.g.vcf.gz"
-    File output_vcf_index = "~{sample_id}.readgroupadded.uniq.g.vcf.gz"
+    File output_vcf_index = "~{sample_id}.readgroupadded.uniq.g.vcf.gz.tbi"
   }
 }
