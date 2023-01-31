@@ -107,8 +107,6 @@ def writeToFilterFile(file,header,original_df,filtered_df):
     original = original_df['name_famid']
     filtered = filtered_df['name_famid']
     to_write = list(set(original) - set(filtered))
-    print('to_write')
-    print(to_write)
     file.write(str(to_write))
     file.write("\n")
 
