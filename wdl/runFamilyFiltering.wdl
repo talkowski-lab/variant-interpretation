@@ -247,7 +247,7 @@ task SVfamilyFiltering{
             -d ~{genomic_disorder_names} \
             -c config.R \
             -u /scripts/variant-interpretation/scripts/familyFilteringFunctions.R \
-            -o ~{family}.filt.txt
+            -o ~{family}.filt.txt \
             -v
     >>>
 
