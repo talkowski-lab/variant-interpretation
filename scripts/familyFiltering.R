@@ -240,7 +240,7 @@ tmp_vars_aff_rare_gt <- vars_aff_rare_gt
 if(fam_struct %in% c("trio", "quad")){
 	vars_aff_rare_gt <- cbind(tmp_vars_aff_rare_gt, 
 						do.call(rbind, apply(tmp_vars_aff_rare_gt, 1, function(row) 
-							get_comphet_trio(row, tmp_vars_aff_rare_gt)
+							get_comphet_trio(row, tmp_vars_aff_rare_gt, gene_cols)
 						)))
 
 	#vars_aff_rare_gt$FILT_MULT_HIT <- apply(vars_aff_rare_gt, 1, function(row, vars_aff_rare_gt) 
@@ -250,7 +250,7 @@ if(fam_struct %in% c("trio", "quad")){
 		#get_comphet_singleton(row) )
     vars_aff_rare_gt <- cbind(tmp_vars_aff_rare_gt,
                         do.call(rbind, apply(tmp_vars_aff_rare_gt, 1, function(row)
-                            get_comphet_other(row, tmp_vars_aff_rare_gt)
+                            get_comphet_other(row, tmp_vars_aff_rare_gt, gene_cols)
                         )))
 }
 
