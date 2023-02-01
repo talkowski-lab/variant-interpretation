@@ -225,7 +225,7 @@ task SVfamilyFiltering{
     RuntimeAttr runtime_attr = select_first([runtime_attr_override, default_attr])
 
     output{
-        File family_filtered_svs = "~{family}.txt.gz"
+        File family_filtered_svs = "~{family}.filt.txt"
     }
 
     command <<<
@@ -247,6 +247,7 @@ task SVfamilyFiltering{
             -d ~{genomic_disorder_names} \
             -c config.R \
             -u /scripts/variant-interpretation/scripts/familyFilteringFunctions.R \
+            -o ~{family}.filt.txt
             -v
     >>>
 
