@@ -109,6 +109,7 @@ def writeToFilterFile(file,header,original_df,filtered_df):
     to_write = list(set(original) - set(filtered))
     file.write(str(to_write))
     file.write("\n")
+    file.write("\n")
 
 def writeToSizeFile(file,header,df):
     file.write(header)
