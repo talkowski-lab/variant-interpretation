@@ -7,9 +7,9 @@ sample_list <- args[1]
 cram_list <- args[2]
 crai_list <- args[3]
 ped_input <- args[4]
-out_trios <- 'out_trio.tsv'
+out_trios <- args[5]
 # out_trios_single_parent <- args[5]
-out_singletons <- 'out_singleton.tsv'
+out_singletons <- args[6]
 
 ped <- fread(ped_input)
 
