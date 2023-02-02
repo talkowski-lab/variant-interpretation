@@ -3,10 +3,10 @@ library(data.table)
 
 args = commandArgs(trailingOnly=TRUE)
 
-sample_list <- 'sample_list.txt'
-cram_list <- 'cram_list.txt'
-crai_list <- 'crai_list.txt'
-ped_input <- 'REU_ped.tsv'
+sample_list <- args[1]
+cram_list <- args[2]
+crai_list <- args[3]
+ped_input <- args[4]
 out_trios <- 'out_trio.tsv'
 # out_trios_single_parent <- args[5]
 out_singletons <- 'out_singleton.tsv'
