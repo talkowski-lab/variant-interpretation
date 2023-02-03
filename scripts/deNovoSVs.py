@@ -580,6 +580,11 @@ vcf_metrics    """
     bed_child_tmp = bed_child[~(bed_child['name_famid'].isin(remove_depth_small))]
     writeToFilterFile(filtered_out_file,"Removed if depth only and < 10kb \n",bed_child,bed_child_tmp)
 
+    # Filter out DELs that are >500bp and RD_CN=2 and PE only envidence
+    remove_dels = bed_child[(bed_child['SVTYPE'] == 'DEL') & ((bed_child['RD_CN'] == '2') | (bed_child['RD_CN'] == '3')) & (bed_child['EVIDENCE'] == 'PE')]['name_famid'].to_list()
+    bed_child_tmp = bed_child[~(bed_child['name_famid'].isin(remove_dels))]
+    writeToFilterFile(filtered_out_file,"Removed if DEL with RD_CN >= 2 and PE only evidence \n",bed_child,bed_child_tmp)
+
     # 4. Filter by quality
     # Filter out if parents GQ is <= gq_min
     bed_child['keep_gq'] = bed_child.apply(lambda r: minGQ(r, gq_min), axis=1)
@@ -603,7 +608,7 @@ vcf_metrics    """
     
     # Join lists to remove and keep unique values
     keep_names = list(set(keep_gd + keep_other_sv))
-    remove_names = list(set(remove_regions + remove_large + remove_small + remove_depth_small + remove_gq + remove_coverage))
+    remove_names = list(set(remove_regions + remove_large + remove_small + remove_depth_small + remove_dels + remove_gq + remove_coverage))
     final_remove_names = [x for x in remove_names if x not in keep_names]
     
     # Subset table
