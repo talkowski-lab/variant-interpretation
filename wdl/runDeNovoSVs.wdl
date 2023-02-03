@@ -166,7 +166,7 @@ task getDeNovo{
         mem_gb: 12,
         disk_gb: 25,
         boot_disk_gb: 8,
-        preemptible_tries: 5,
+        preemptible_tries: 2,
         max_retries: 1
     }
     RuntimeAttr runtime_attr = select_first([runtime_attr_override, default_attr])
@@ -222,7 +222,7 @@ task subsetVcf{
         mem_gb: 12,
         disk_gb: 4,
         boot_disk_gb: 8,
-        preemptible_tries: 3,
+        preemptible_tries: 2,
         max_retries: 1
     }
     
@@ -234,6 +234,8 @@ task subsetVcf{
     }
 
     command <<<
+        set -euo pipefail
+
         bcftools index ~{vcf_file}
 
         bcftools view ~{vcf_file} --regions ~{chromosome} -O z -o  ~{chromosome}.vcf.gz
@@ -267,7 +269,7 @@ task vcfToBed{
         mem_gb: 12,
         disk_gb: 4,
         boot_disk_gb: 8,
-        preemptible_tries: 3,
+        preemptible_tries: 2,
         max_retries: 1
     }
     
@@ -278,6 +280,8 @@ task vcfToBed{
     }
 
     command <<<
+        set -euo pipefail
+
         svtk vcf2bed ~{vcf_file} --info ALL --include-filters ~{chromosome}.bed
         bgzip ~{chromosome}.bed
     >>>
@@ -306,7 +310,7 @@ task getGenomicDisorders{
         mem_gb: 12,
         disk_gb: 4,
         boot_disk_gb: 8,
-        preemptible_tries: 3,
+        preemptible_tries: 2,
         max_retries: 1
     }
     
@@ -317,6 +321,8 @@ task getGenomicDisorders{
     }
 
     command <<<
+        set -euo pipefail
+
         bedtools intersect -wa -wb -f 0.3 -r -a ~{vcf_file} -b ~{genomic_disorder_input} | cut -f 3 |sort -u> annotated.gd.variants.names.txt
     >>>
 
@@ -344,7 +350,7 @@ task raw_VcfToBed{
         mem_gb: 12,
         disk_gb: 4,
         boot_disk_gb: 8,
-        preemptible_tries: 3,
+        preemptible_tries: 2,
         max_retries: 1
     }
     
@@ -355,9 +361,9 @@ task raw_VcfToBed{
     }
 
     command {
+        set -euo pipefail
 
         #convert from vcf to bed file
-        
         svtk vcf2bed ~{vcf_file} --info SVTYPE ${prefix}.bed
 
     }
@@ -386,7 +392,7 @@ task raw_mergeBed{
         mem_gb: 12,
         disk_gb: 4,
         boot_disk_gb: 8,
-        preemptible_tries: 3,
+        preemptible_tries: 2,
         max_retries: 1
     }
     
@@ -397,6 +403,7 @@ task raw_mergeBed{
     }
 
     command {
+        set -euo pipefail
 
         cat ${sep=" " bed_files} > concat.bed
 
@@ -426,7 +433,7 @@ task raw_divideByChrom{
         mem_gb: 12,
         disk_gb: 4,
         boot_disk_gb: 8,
-        preemptible_tries: 3,
+        preemptible_tries: 2,
         max_retries: 1
     }
     
@@ -437,8 +444,9 @@ task raw_divideByChrom{
     }
 
     command {
+        set -euo pipefail
 
-         grep -w ^${chromosome} ${bed_file} > ${chromosome}.bed
+        grep -w ^${chromosome} ${bed_file} > ${chromosome}.bed
 
     }
 
@@ -467,7 +475,7 @@ task raw_reformatBed{
         mem_gb: 12,
         disk_gb: 4,
         boot_disk_gb: 8,
-        preemptible_tries: 3,
+        preemptible_tries: 2,
         max_retries: 1
     }
     
@@ -479,6 +487,7 @@ task raw_reformatBed{
     }
 
     command {
+        set -euo pipefail
 
         #reformat bed file
         Rscript /src/variant-interpretation/scripts/reformatRawBed.R ${per_chromosome_bed_file} ${ped_input} ${chromosome}.proband.reformatted.bed ${chromosome}.parents.reformatted.bed
@@ -511,7 +520,7 @@ task plot_mergeFinalBedFiles{
         mem_gb: 12,
         disk_gb: 4,
         boot_disk_gb: 8,
-        preemptible_tries: 3,
+        preemptible_tries: 2,
         max_retries: 1
     }
     
@@ -523,6 +532,8 @@ task plot_mergeFinalBedFiles{
     }
 
     command {
+        set -euo pipefail
+
         head -n+1 ${bed_files[1]} > final.denovo.merged.bed
         tail -n+2 -q ${sep=" " bed_files} >> final.denovo.merged.bed
         bgzip final.denovo.merged.bed
@@ -557,7 +568,7 @@ task plot_createPlots{
         mem_gb: 12,
         disk_gb: 4,
         boot_disk_gb: 8,
-        preemptible_tries: 3,
+        preemptible_tries: 2,
         max_retries: 1
     }
     
@@ -568,6 +579,7 @@ task plot_createPlots{
     }
 
     command {
+        set -euo pipefail
 
         Rscript /src/variant-interpretation/scripts/denovoSV_plots.R ${bed_file} ${outliers_file} ${ped_input} output_plots.pdf
 
