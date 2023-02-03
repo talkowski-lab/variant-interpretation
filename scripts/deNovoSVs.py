@@ -101,15 +101,10 @@ def getBincovMatrixUrl(sample,sample_batches,batch_bincov):
 
 def writeToFilterFile(file,header,original_df,filtered_df):
     file.write(header)
-    file.write("\n")
-    file.write("\n")
-    file.write("\n")
     original = original_df['name_famid']
     filtered = filtered_df['name_famid']
     to_write = list(set(original) - set(filtered))
     file.write(str(to_write))
-    file.write("\n")
-    file.write("\n")
 
 def writeToSizeFile(file,header,df):
     file.write(header)
@@ -378,7 +373,7 @@ vcf_metrics    """
                            ((bed_child[alt_gnomad_col].isnull() )  & (bed_child['AF'] <= cohort_AF)) |
                           (bed_child['in_gd'] == True) )]  
     
-    writeToFilterFile(filtered_out_file,"Removed after filtering by frequency: \n",bed_child,bed_child_tmp)
+    writeToFilterFile(filtered_out_file,"Removed after filtering by frequency: ",bed_child,bed_child_tmp)
     bed_child = bed_child_tmp
     writeToSizeFile(size_file,"Size of bed_child after filtering by frequency: ",bed_child)
 
@@ -389,7 +384,7 @@ vcf_metrics    """
                            (bed_child['num_children'] >= 1) &
                            (bed_child['AF_parents'] <= parents_AF) &
                            (bed_child['num_parents'] <= parents_SC) ]
-    writeToFilterFile(filtered_out_file,"Removed after keeping variants in children only \n",bed_child,bed_child_tmp)
+    writeToFilterFile(filtered_out_file,"Removed after keeping variants in children only: ",bed_child,bed_child_tmp)
     bed_child = bed_child_tmp  
     writeToSizeFile(size_file,"Size of bed_child after keeping variants in children only: ",bed_child)
     
@@ -408,7 +403,7 @@ vcf_metrics    """
     # Remove WHAM only and GT = 1
     verbosePrint('Remove wham only and GT=1 calls', verbose)
     bed_child_tmp = bed_child[~((bed_child['ALGORITHMS'] == "wham") & (bed_child['GQ'] == '1'))]
-    writeToFilterFile(filtered_out_file,"Removed wham only and GT=1 calls \n",bed_child,bed_child_tmp)
+    writeToFilterFile(filtered_out_file,"Removed wham only and GT=1 calls: ",bed_child,bed_child_tmp)
     bed_child = bed_child_tmp  
     writeToSizeFile(size_file,"Size of bed_child after removing wham only and GT=1 calls: ",bed_child)
 
@@ -426,7 +421,7 @@ vcf_metrics    """
     verbosePrint('Large CNVs check', verbose)
     # 1. Strip out if same CN in parents and proband proband
     bed_child_tmp = bed_child.loc[(bed_child['is_large_cnv'] == False) | ((bed_child['RD_CN'] != bed_child['maternal_rdcn']) & (bed_child['RD_CN'] != bed_child['paternal_rdcn']))]
-    writeToFilterFile(filtered_out_file,"Removed if RD_CN field is same as parent\n",bed_child,bed_child_tmp)
+    writeToFilterFile(filtered_out_file,"Removed if RD_CN field is same as parent: ",bed_child,bed_child_tmp)
     bed_child = bed_child_tmp  
     writeToSizeFile(size_file,"Size of bed_child after removing if RD_CN field is same as parent: ",bed_child)
 
@@ -485,12 +480,12 @@ vcf_metrics    """
         bed_filt_ins_proband = convertToBedtool(bed_filt_ins, cols_to_keep=cols_keep_child,sort=True)
         ins_names_overlap_proband = getInsertionIntersection(bed_filt_ins_proband, raw_bed_ref_child)
         bed_filt_ins_tmp = bed_filt_ins[bed_filt_ins['name_famid'].isin(ins_names_overlap_proband)]
-        writeToFilterFile(filtered_out_file,"Removed if large cnv is not supported by raw evidence\n",bed_filt_ins, bed_filt_ins_tmp)
+        writeToFilterFile(filtered_out_file,"Removed if large cnv is not supported by raw evidence: ",bed_filt_ins, bed_filt_ins_tmp)
         verbosePrint('Checking if insertion in proband are also in raw files for the parents', verbose)
         bed_filt_ins_fam = convertToBedtool(bed_filt_ins, cols_to_keep=cols_keep_parent,sort=True)
         ins_names_overlap_parent = getInsertionIntersection(bed_filt_ins_fam, raw_bed_ref_parent)
         bed_filt_ins_tmp = bed_filt_ins[~(bed_filt_ins['name_famid'].isin(ins_names_overlap_parent))]
-        writeToFilterFile(filtered_out_file,"Removed if insertion is supported by raw evidence in parent\n",bed_filt_ins, bed_filt_ins_tmp)
+        writeToFilterFile(filtered_out_file,"Removed if insertion is supported by raw evidence in parent: ",bed_filt_ins, bed_filt_ins_tmp)
         ins_names_overlap = [x for x in ins_names_overlap_proband if x not in ins_names_overlap_parent]
     else:
         ins_names_overlap = ['']
@@ -503,12 +498,12 @@ vcf_metrics    """
         bed_filt_cnv_proband = convertToBedtool(large_bed_filt_cnv, cols_to_keep=cols_keep_child,sort=True)
         large_cnv_names_overlap_proband = getCnvIntersection(bed_filt_cnv_proband,raw_bed_ref_child,large_raw_overlap)
         large_bed_filt_cnv_tmp = large_bed_filt_cnv[large_bed_filt_cnv['name_famid'].isin(large_cnv_names_overlap_proband)]
-        writeToFilterFile(filtered_out_file,"Removed if large cnv is not supported by raw evidence\n",large_bed_filt_cnv, large_bed_filt_cnv_tmp)
+        writeToFilterFile(filtered_out_file,"Removed if large cnv is not supported by raw evidence: ",large_bed_filt_cnv, large_bed_filt_cnv_tmp)
         verbosePrint('Checking if large cnvs in proband are also in raw files for the parents', verbose)
         bed_filt_cnv_fam = convertToBedtool(large_bed_filt_cnv, cols_to_keep=cols_keep_parent,sort=True)
         large_cnv_names_overlap_parent = getCnvIntersection(bed_filt_cnv_fam,raw_bed_ref_parent,large_raw_overlap)
         large_bed_filt_cnv_tmp = large_bed_filt_cnv[~(large_bed_filt_cnv['name_famid'].isin(large_cnv_names_overlap_parent))]
-        writeToFilterFile(filtered_out_file,"Removed if large cnv is supported by raw evidence in parent\n",large_bed_filt_cnv, large_bed_filt_cnv_tmp)
+        writeToFilterFile(filtered_out_file,"Removed if large cnv is supported by raw evidence in parent: ",large_bed_filt_cnv, large_bed_filt_cnv_tmp)
         large_cnv_names_overlap = [x for x in large_cnv_names_overlap_proband if x not in large_cnv_names_overlap_parent]
     else:
         large_cnv_names_overlap = ['']
@@ -521,12 +516,12 @@ vcf_metrics    """
         bed_filt_cnv_proband = convertToBedtool(small_bed_filt_cnv, cols_to_keep=cols_keep_child,sort=True)
         small_cnv_names_overlap_proband = getCnvIntersection(bed_filt_cnv_proband,raw_bed_ref_child,small_raw_overlap)
         small_bed_filt_cnv_tmp = small_bed_filt_cnv[small_bed_filt_cnv['name_famid'].isin(small_cnv_names_overlap_proband)]
-        writeToFilterFile(filtered_out_file,"Removed if small cnv is not supported by raw evidence\n",small_bed_filt_cnv, small_bed_filt_cnv_tmp)
+        writeToFilterFile(filtered_out_file,"Removed if small cnv is not supported by raw evidence: ",small_bed_filt_cnv, small_bed_filt_cnv_tmp)
         verbosePrint('Checking small cnvs in probands are also in raw files for parents', verbose)
         bed_filt_cnv_fam = convertToBedtool(small_bed_filt_cnv, cols_to_keep=cols_keep_parent,sort=True)
         small_cnv_names_overlap_parent = getCnvIntersection(bed_filt_cnv_fam,raw_bed_ref_parent,small_raw_overlap)
         small_bed_filt_cnv_tmp = small_bed_filt_cnv[~(small_bed_filt_cnv['name_famid'].isin(small_cnv_names_overlap_parent))]
-        writeToFilterFile(filtered_out_file,"Removed if small cnv is supported by raw evidence in parent\n",small_bed_filt_cnv, small_bed_filt_cnv_tmp)
+        writeToFilterFile(filtered_out_file,"Removed if small cnv is supported by raw evidence in parent: ",small_bed_filt_cnv, small_bed_filt_cnv_tmp)
         small_cnv_names_overlap = [x for x in small_cnv_names_overlap_proband if x not in small_cnv_names_overlap_parent]
     else:
         small_cnv_names_overlap = ['']
@@ -552,7 +547,7 @@ vcf_metrics    """
     if (len(exclude_regions_intersect) != 0):
         remove_regions = exclude_regions_intersect[exclude_regions_intersect[10] > 0.5][6].to_list()
         bed_child_tmp = bed_child[~(bed_child['name_famid'].isin(remove_regions))]
-        writeToFilterFile(filtered_out_file,"Removed if overlaps with exclude region \n",bed_child,bed_child_tmp)
+        writeToFilterFile(filtered_out_file,"Removed if overlaps with exclude region: ",bed_child,bed_child_tmp)
     else:
         remove_regions = ['']
     
@@ -566,14 +561,14 @@ vcf_metrics    """
     remove_large = bed_child[(bed_child['is_large_cnv'] == True) &
                             ((bed_child['contains_RD'] == False) | (bed_child['overlap_parent'] == True))]['name_famid'].to_list()
     bed_child_tmp = bed_child[~(bed_child['name_famid'].isin(remove_large))]
-    writeToFilterFile(filtered_out_file,"Removed if large CNV that does not have RD support and parents overlap\n",bed_child,bed_child_tmp)
+    writeToFilterFile(filtered_out_file,"Removed if large CNV that does not have RD support and parents overlap: ",bed_child,bed_child_tmp)
 
     # Filter out if small cnvs that are SR-only don't have BOTHSIDES_SUPPORT
     remove_small = bed_child[(bed_child['is_small_cnv'] == True) &
                              (bed_child['EVIDENCE_FIX'] == 'SR') &
                              ~(bed_child.FILTER.str.contains('BOTHSIDES_SUPPORT'))]['name_famid'].to_list()
     bed_child_tmp = bed_child[~(bed_child['name_famid'].isin(remove_small))]
-    writeToFilterFile(filtered_out_file,"Removed if small cnv that is SR-only and does not have BOTHSIDES_SUPPORT\n",bed_child,bed_child_tmp)
+    writeToFilterFile(filtered_out_file,"Removed if small cnv that is SR-only and does not have BOTHSIDES_SUPPORT: ",bed_child,bed_child_tmp)
 
     # Filter out calls that are depth only and < depth_only_size
     remove_depth_small = bed_child[ (bed_child['is_depth_only_small'] == True) ]['name_famid'].to_list()
@@ -583,20 +578,20 @@ vcf_metrics    """
     # Filter out DELs that are >500bp and RD_CN=2 and PE only envidence
     remove_dels = bed_child[(bed_child['SVTYPE'] == 'DEL') & ((bed_child['RD_CN'] == '2') | (bed_child['RD_CN'] == '3')) & (bed_child['EVIDENCE'] == 'PE')]['name_famid'].to_list()
     bed_child_tmp = bed_child[~(bed_child['name_famid'].isin(remove_dels))]
-    writeToFilterFile(filtered_out_file,"Removed if DEL with RD_CN >= 2 and PE only evidence \n",bed_child,bed_child_tmp)
+    writeToFilterFile(filtered_out_file,"Removed if DEL with RD_CN >= 2 and PE only evidence: ",bed_child,bed_child_tmp)
 
     # 4. Filter by quality
     # Filter out if parents GQ is <= gq_min
     bed_child['keep_gq'] = bed_child.apply(lambda r: minGQ(r, gq_min), axis=1)
     remove_gq = bed_child[bed_child['keep_gq'] == 'Remove']['name_famid'].to_list()
     bed_child_tmp = bed_child[~(bed_child['name_famid'].isin(remove_gq))]
-    writeToFilterFile(filtered_out_file,"Removed if minimum parental GQ is <= gq_min\n",bed_child,bed_child_tmp)
+    writeToFilterFile(filtered_out_file,"Removed if minimum parental GQ is <= gq_min: ",bed_child,bed_child_tmp)
 
     # Remove if low coverage
     bed_child['median_coverage'] = bed_child.apply(lambda r: getMedianCoverage(findCoverage(r, ped, sample_batches, bincov, family_member='proband'),findCoverage(r, ped, sample_batches, bincov, family_member='mother'),findCoverage(r, ped, sample_batches, bincov, family_member='father'), coverage_cutoff), axis=1)
     remove_coverage = bed_child[bed_child['median_coverage'] == 'Remove']['name_famid'].to_list()
     bed_child_tmp = bed_child[~(bed_child['name_famid'].isin(remove_coverage))]
-    writeToFilterFile(filtered_out_file,"Removed if median coverage in proband, mother, or father is <= coverage_cutoff\n",bed_child,bed_child_tmp)
+    writeToFilterFile(filtered_out_file,"Removed if median coverage in proband, mother, or father is <= coverage_cutoff: ",bed_child,bed_child_tmp)
     
     # 5. Clean up and remove duplicated CPX SV
     # Remove duplicated CPX events that come from vcf output of module 18
@@ -604,7 +599,7 @@ vcf_metrics    """
     bed_child['is_duplicated'] = bed_child.duplicated(keep='first', subset=['start', 'end', 'sample'])
     remove_duplicated = bed_child[(bed_child['is_duplicated'] == True) & (bed_child['is_cpx'] == True)]['name_famid'].to_list()
     bed_child_tmp = bed_child[~(bed_child['name_famid'].isin(remove_duplicated))]
-    writeToFilterFile(filtered_out_file,"Removed CPX if duplicated SV\n",bed_child,bed_child_tmp)
+    writeToFilterFile(filtered_out_file,"Removed CPX if duplicated SV: ",bed_child,bed_child_tmp)
     
     # Join lists to remove and keep unique values
     keep_names = list(set(keep_gd + keep_other_sv))
