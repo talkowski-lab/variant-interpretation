@@ -105,6 +105,7 @@ def writeToFilterFile(file,header,original_df,filtered_df):
     filtered = filtered_df['name_famid']
     to_write = list(set(original) - set(filtered))
     file.write(str(to_write))
+    file.write("\n")
 
 def writeToSizeFile(file,header,df):
     file.write(header)
@@ -167,8 +168,8 @@ def findCoverage(row,ped,sample_batches,batch_bincov,family_member):
     chrom = row['chrom']
     start = int(row['start'])
     end = int(row['end'])
-    if family_member == 'proband':
-        matrix = getPerSampleMatrix(row,ped,sample_batches,batch_bincov,family_member='proband')[1]
+    #if family_member == 'proband':
+        #matrix = getPerSampleMatrix(row,ped,sample_batches,batch_bincov,family_member='proband')[1]
     if family_member == 'mother':
         matrix = getPerSampleMatrix(row,ped,sample_batches,batch_bincov,family_member='mother')[1]
     if family_member == 'father':
@@ -185,8 +186,8 @@ def findCoverage(row,ped,sample_batches,batch_bincov,family_member):
         new_header.append(x)
     cov_matrix = cov_matrix[1:] #take the data less the header row
     cov_matrix.columns = new_header
-    if family_member == 'proband':
-        indv = getPerSampleMatrix(row,ped,sample_batches,batch_bincov,family_member='proband')[0]
+    #if family_member == 'proband':
+        #indv = getPerSampleMatrix(row,ped,sample_batches,batch_bincov,family_member='proband')[0]
     if family_member == 'mother':
         indv = getPerSampleMatrix(row,ped,sample_batches,batch_bincov,family_member='mother')[0]
     if family_member == 'father':
@@ -198,13 +199,11 @@ def findCoverage(row,ped,sample_batches,batch_bincov,family_member):
         sample_cov_matrix_decoded.append(x)
     return(sample_cov_matrix_decoded)
 
-def getMedianCoverage(proband_matrix,mom_matrix,dad_matrix,coverage_cutoff):
-    proband_coverage = proband_matrix
+def getMedianCoverage(mom_matrix,dad_matrix,coverage_cutoff):
     mom_coverage = mom_matrix
     dad_coverage = dad_matrix
         
     coverage_d = {
-    'Proband': proband_coverage,
     'Mother' : mom_coverage,
     'Father': dad_coverage
     }
@@ -219,12 +218,25 @@ def getMedianCoverage(proband_matrix,mom_matrix,dad_matrix,coverage_cutoff):
         return('Keep')
 
 def getCnvIntersection(bed,raw,overlap):
-    overlap = bed.intersect(raw, wo=True, f=overlap, r=True).to_dataframe(disable_auto_names=True, header=None)
-    if (len(overlap) != 0):
-        names_overlap = overlap[6].to_list()
+    intersect = bed.coverage(raw).to_dataframe(disable_auto_names=True, header=None)
+    if (len(intersect) != 0):
+        names_overlap = intersect[intersect[10] > 0.5][6].to_list()
     else:
         names_overlap = ['']
     return(names_overlap)
+        
+    #overlap = bed.intersect(raw, wo=True, f=overlap, r=True).to_dataframe(disable_auto_names=True, header=None)
+    #if (len(overlap) != 0):
+        #names_overlap = overlap[6].to_list()
+    #else:
+        #names_overlap = ['']
+    #return(names_overlap)
+
+
+    bed_child_bt.coverage(exclue_regions_bt).to_dataframe(disable_auto_names=True, header=None) #HB said to use bedtools coverage, -f and -F give the same SVs to be removed
+    if (len(exclude_regions_intersect) != 0):
+        remove_regions = exclude_regions_intersect[exclude_regions_intersect[10] > 0.5][6].to_list()
+        bed_child_tmp = bed_child[~(bed_child['name_famid'].isin(remove_regions))]
 
 def getInsertionIntersection(bed, raw):
     overlap = bed.closest(raw).to_dataframe(disable_auto_names=True, header=None)
@@ -282,7 +294,6 @@ vcf_metrics    """
     alt_gnomad_col = config['alt_gnomad_col']
     gnomad_AF = float(config['gnomad_AF'])
     parents_AF = float(config['parents_AF'])
-    parents_SC = int(config['parents_SC'])
     large_raw_overlap = float(config['large_raw_overlap'])
     small_raw_overlap = float(config['small_raw_overlap'])
     cohort_AF = float(config['cohort_AF'])
@@ -339,7 +350,7 @@ vcf_metrics    """
     bed['is_large_cnv'] = (bed['SVLEN'] >= large_cnv_size) & ((bed['svtype'] == 'DEL') | (bed['svtype'] == 'DUP'))
     bed['is_small_cnv'] = (bed['SVLEN'] < large_cnv_size) & ((bed['svtype'] == 'DEL') | (bed['svtype'] == 'DUP'))
     bed['is_depth_only'] = (bed['EVIDENCE'] == "RD")
-    bed['is_depth_only_small'] = (bed['ALGORITHMS'] == "depth") & (bed['SVLEN'] <= depth_only_size)
+    bed['is_depth_only_small'] = (bed['svtype'] == "DUP") & (bed['ALGORITHMS'] == "depth") & (bed['SVLEN'] <= depth_only_size)
 
     # Split into one row per sample
     verbosePrint('Split into one row per sample', verbose)
@@ -379,6 +390,10 @@ vcf_metrics    """
 
     # Get counts within family and remove if SV in parents
     verbosePrint('Keep variants in children only', verbose)
+    try:
+        parents_SC = int(config['parents_SC'])
+    except KeyError:
+        parents_SC = len(parents)
     bed_child['num_parents_family'] = bed_child.apply(lambda r: getFamilyCount(r, ped), axis=1)
     bed_child_tmp = bed_child[ (bed_child['num_parents_family'] == 0) &
                            (bed_child['num_children'] >= 1) &
@@ -419,11 +434,11 @@ vcf_metrics    """
 
     # LARGE CNV: Check for false negative in parents: check depth in parents, independently of the calls
     verbosePrint('Large CNVs check', verbose)
-    # 1. Strip out if same CN in parents and proband proband
-    bed_child_tmp = bed_child.loc[(bed_child['is_large_cnv'] == False) | ((bed_child['RD_CN'] != bed_child['maternal_rdcn']) & (bed_child['RD_CN'] != bed_child['paternal_rdcn']))]
-    writeToFilterFile(filtered_out_file,"Removed if RD_CN field is same as parent: ",bed_child,bed_child_tmp)
+    # 1. Strip out if same CN in parents and proband if not in chrX
+    bed_child_tmp = bed_child.loc[((bed_child['is_large_cnv'] == False) | ((bed_child['RD_CN'] != bed_child['maternal_rdcn']) & (bed_child['RD_CN'] != bed_child['paternal_rdcn']))) | (bed_child['chrom'] == 'chrX')]
+    writeToFilterFile(filtered_out_file,"Removed if RD_CN field is same as parent and not in chrX: ",bed_child,bed_child_tmp)
     bed_child = bed_child_tmp  
-    writeToSizeFile(size_file,"Size of bed_child after removing if RD_CN field is same as parent: ",bed_child)
+    writeToSizeFile(size_file,"Size of bed_child after removing if RD_CN field is same as parent and not in chrX: ",bed_child)
 
     # 2. Check if call in parents with bedtools coverage (332)
     verbosePrint('CNV present in parents check', verbose)
@@ -559,7 +574,7 @@ vcf_metrics    """
     # Filter by size
     # Filter out if large CNVs don't have RD support and parents overlap
     remove_large = bed_child[(bed_child['is_large_cnv'] == True) &
-                            ((bed_child['contains_RD'] == False) | (bed_child['overlap_parent'] == True))]['name_famid'].to_list()
+                            (bed_child['overlap_parent'] == True)]['name_famid'].to_list()
     bed_child_tmp = bed_child[~(bed_child['name_famid'].isin(remove_large))]
     writeToFilterFile(filtered_out_file,"Removed if large CNV that does not have RD support and parents overlap: ",bed_child,bed_child_tmp)
 
@@ -587,11 +602,11 @@ vcf_metrics    """
     bed_child_tmp = bed_child[~(bed_child['name_famid'].isin(remove_gq))]
     writeToFilterFile(filtered_out_file,"Removed if minimum parental GQ is <= gq_min: ",bed_child,bed_child_tmp)
 
-    # Remove if low coverage
-    bed_child['median_coverage'] = bed_child.apply(lambda r: getMedianCoverage(findCoverage(r, ped, sample_batches, bincov, family_member='proband'),findCoverage(r, ped, sample_batches, bincov, family_member='mother'),findCoverage(r, ped, sample_batches, bincov, family_member='father'), coverage_cutoff), axis=1)
+    # Remove if low coverage in parents
+    bed_child['median_coverage'] = bed_child.apply(lambda r: getMedianCoverage(findCoverage(r, ped, sample_batches, bincov, family_member='mother'),findCoverage(r, ped, sample_batches, bincov, family_member='father'), coverage_cutoff), axis=1)
     remove_coverage = bed_child[bed_child['median_coverage'] == 'Remove']['name_famid'].to_list()
     bed_child_tmp = bed_child[~(bed_child['name_famid'].isin(remove_coverage))]
-    writeToFilterFile(filtered_out_file,"Removed if median coverage in proband, mother, or father is <= coverage_cutoff: ",bed_child,bed_child_tmp)
+    writeToFilterFile(filtered_out_file,"Removed if median coverage in mother or father is <= coverage_cutoff: ",bed_child,bed_child_tmp)
     
     # 5. Clean up and remove duplicated CPX SV
     # Remove duplicated CPX events that come from vcf output of module 18
