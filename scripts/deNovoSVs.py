@@ -572,11 +572,11 @@ vcf_metrics    """
 
     # 3. Filter on DELs, DUPs, and INS
     # Filter by size
-    # Filter out if large CNVs don't have RD support and parents overlap
+    # Filter out if large CNVs don't have parents overlap
     remove_large = bed_child[(bed_child['is_large_cnv'] == True) &
                             (bed_child['overlap_parent'] == True)]['name_famid'].to_list()
     bed_child_tmp = bed_child[~(bed_child['name_famid'].isin(remove_large))]
-    writeToFilterFile(filtered_out_file,"Removed if large CNV that does not have RD support and parents overlap: ",bed_child,bed_child_tmp)
+    writeToFilterFile(filtered_out_file,"Removed if large CNV that does not parents overlap: ",bed_child,bed_child_tmp)
 
     # Filter out if small cnvs that are SR-only don't have BOTHSIDES_SUPPORT
     remove_small = bed_child[(bed_child['is_small_cnv'] == True) &
