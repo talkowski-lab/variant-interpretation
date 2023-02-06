@@ -165,8 +165,8 @@ task getDeNovo{
     Float base_disk_gb = 10.0
     Float base_mem_gb = 3.75
 
-    RuntimeAttr runtime_default = object {
-                                      mem_gb: base_mem_gb + input_size * 3.0,
+    RuntimeAttr default_attr = object {
+                                      mem_gb: ceil(base_mem_gb + input_size * 3.0),
                                       disk_gb: ceil(base_disk_gb + input_size * 5.0),
                                       cpu_cores: 1,
                                       preemptible_tries: 2,
@@ -204,8 +204,8 @@ task getDeNovo{
 
     runtime {
         cpu: select_first([runtime_attr.cpu_cores, default_attr.cpu_cores])
-        memory: "~{select_first([runtime_override.mem_gb, runtime_default.mem_gb])} GB"
-        disks: "local-disk ~{select_first([runtime_override.disk_gb, runtime_default.disk_gb])} HDD"
+        memory: "~{select_first([runtime_attr.mem_gb, default_attr.mem_gb])} GB"
+        disks: "local-disk ~{select_first([runtime_attr.disk_gb, default_attr.disk_gb])} HDD"
         bootDiskSizeGb: select_first([runtime_attr.boot_disk_gb, default_attr.boot_disk_gb])
         preemptible: select_first([runtime_attr.preemptible_tries, default_attr.preemptible_tries])
         maxRetries: select_first([runtime_attr.max_retries, default_attr.max_retries])
@@ -226,7 +226,7 @@ task subsetVcf{
     Float base_disk_gb = 10.0
     Float base_mem_gb = 3.75
 
-    RuntimeAttr runtime_default = object {
+    RuntimeAttr default_attr = object {
                                       mem_gb: base_mem_gb + input_size * 3.0,
                                       disk_gb: ceil(base_disk_gb + input_size * 5.0),
                                       cpu_cores: 1,
@@ -256,8 +256,8 @@ task subsetVcf{
 
     runtime {
         cpu: select_first([runtime_attr.cpu_cores, default_attr.cpu_cores])
-        memory: "~{select_first([runtime_override.mem_gb, runtime_default.mem_gb])} GB"
-        disks: "local-disk ~{select_first([runtime_override.disk_gb, runtime_default.disk_gb])} HDD"
+        memory: "~{select_first([runtime_attr.mem_gb, default_attr.mem_gb])} GB"
+        disks: "local-disk ~{select_first([runtime_attr.disk_gb, default_attr.disk_gb])} HDD"
         bootDiskSizeGb: select_first([runtime_attr.boot_disk_gb, default_attr.boot_disk_gb])
         preemptible: select_first([runtime_attr.preemptible_tries, default_attr.preemptible_tries])
         maxRetries: select_first([runtime_attr.max_retries, default_attr.max_retries])
@@ -277,7 +277,7 @@ task vcfToBed{
     Float base_disk_gb = 10.0
     Float base_mem_gb = 3.75
 
-    RuntimeAttr runtime_default = object {
+    RuntimeAttr default_attr = object {
                                       mem_gb: base_mem_gb + input_size * 3.0,
                                       disk_gb: ceil(base_disk_gb + input_size * 5.0),
                                       cpu_cores: 1,
@@ -301,8 +301,8 @@ task vcfToBed{
 
     runtime {
         cpu: select_first([runtime_attr.cpu_cores, default_attr.cpu_cores])
-        memory: "~{select_first([runtime_override.mem_gb, runtime_default.mem_gb])} GB"
-        disks: "local-disk ~{select_first([runtime_override.disk_gb, runtime_default.disk_gb])} HDD"
+        memory: "~{select_first([runtime_attr.mem_gb, default_attr.mem_gb])} GB"
+        disks: "local-disk ~{select_first([runtime_attr.disk_gb, default_attr.disk_gb])} HDD"
         bootDiskSizeGb: select_first([runtime_attr.boot_disk_gb, default_attr.boot_disk_gb])
         preemptible: select_first([runtime_attr.preemptible_tries, default_attr.preemptible_tries])
         maxRetries: select_first([runtime_attr.max_retries, default_attr.max_retries])
@@ -318,20 +318,11 @@ task getGenomicDisorders{
         RuntimeAttr? runtime_attr_override
     }
 
-    RuntimeAttr default_attr = object {
-        cpu_cores: 1,
-        mem_gb: 12,
-        disk_gb: 4,
-        boot_disk_gb: 8,
-        preemptible_tries: 2,
-        max_retries: 1
-    }
-
     Float input_size = size(vcf_file, "GB")
     Float base_disk_gb = 10.0
     Float base_mem_gb = 3.75
 
-    RuntimeAttr runtime_default = object {
+    RuntimeAttr default_attr = object {
                                       mem_gb: base_mem_gb + input_size * 3.0,
                                       disk_gb: ceil(base_disk_gb + input_size * 5.0),
                                       cpu_cores: 1,
@@ -354,8 +345,8 @@ task getGenomicDisorders{
 
     runtime {
         cpu: select_first([runtime_attr.cpu_cores, default_attr.cpu_cores])
-        memory: "~{select_first([runtime_override.mem_gb, runtime_default.mem_gb])} GB"
-        disks: "local-disk ~{select_first([runtime_override.disk_gb, runtime_default.disk_gb])} HDD"
+        memory: "~{select_first([runtime_attr.mem_gb, default_attr.mem_gb])} GB"
+        disks: "local-disk ~{select_first([runtime_attr.disk_gb, default_attr.disk_gb])} HDD"
         bootDiskSizeGb: select_first([runtime_attr.boot_disk_gb, default_attr.boot_disk_gb])
         preemptible: select_first([runtime_attr.preemptible_tries, default_attr.preemptible_tries])
         maxRetries: select_first([runtime_attr.max_retries, default_attr.max_retries])
@@ -375,7 +366,7 @@ task raw_VcfToBed{
     Float base_disk_gb = 10.0
     Float base_mem_gb = 3.75
 
-    RuntimeAttr runtime_default = object {
+    RuntimeAttr default_attr = object {
                                       mem_gb: base_mem_gb + input_size * 3.0,
                                       disk_gb: ceil(base_disk_gb + input_size * 5.0),
                                       cpu_cores: 1,
@@ -400,8 +391,8 @@ task raw_VcfToBed{
 
     runtime {
         cpu: select_first([runtime_attr.cpu_cores, default_attr.cpu_cores])
-        memory: "~{select_first([runtime_override.mem_gb, runtime_default.mem_gb])} GB"
-        disks: "local-disk ~{select_first([runtime_override.disk_gb, runtime_default.disk_gb])} HDD"
+        memory: "~{select_first([runtime_attr.mem_gb, default_attr.mem_gb])} GB"
+        disks: "local-disk ~{select_first([runtime_attr.disk_gb, default_attr.disk_gb])} HDD"
         bootDiskSizeGb: select_first([runtime_attr.boot_disk_gb, default_attr.boot_disk_gb])
         preemptible: select_first([runtime_attr.preemptible_tries, default_attr.preemptible_tries])
         maxRetries: select_first([runtime_attr.max_retries, default_attr.max_retries])
@@ -421,7 +412,7 @@ task raw_mergeBed{
     Float base_disk_gb = 10.0
     Float base_mem_gb = 3.75
 
-    RuntimeAttr runtime_default = object {
+    RuntimeAttr default_attr = object {
                                       mem_gb: base_mem_gb + input_size * 3.0,
                                       disk_gb: ceil(base_disk_gb + input_size * 5.0),
                                       cpu_cores: 1,
@@ -445,8 +436,8 @@ task raw_mergeBed{
 
     runtime {
         cpu: select_first([runtime_attr.cpu_cores, default_attr.cpu_cores])
-        memory: "~{select_first([runtime_override.mem_gb, runtime_default.mem_gb])} GB"
-        disks: "local-disk ~{select_first([runtime_override.disk_gb, runtime_default.disk_gb])} HDD"
+        memory: "~{select_first([runtime_attr.mem_gb, default_attr.mem_gb])} GB"
+        disks: "local-disk ~{select_first([runtime_attr.disk_gb, default_attr.disk_gb])} HDD"
         bootDiskSizeGb: select_first([runtime_attr.boot_disk_gb, default_attr.boot_disk_gb])
         preemptible: select_first([runtime_attr.preemptible_tries, default_attr.preemptible_tries])
         maxRetries: select_first([runtime_attr.max_retries, default_attr.max_retries])
@@ -466,7 +457,7 @@ task raw_divideByChrom{
     Float base_disk_gb = 10.0
     Float base_mem_gb = 3.75
 
-    RuntimeAttr runtime_default = object {
+    RuntimeAttr default_attr = object {
                                       mem_gb: base_mem_gb + input_size * 3.0,
                                       disk_gb: ceil(base_disk_gb + input_size * 5.0),
                                       cpu_cores: 1,
@@ -490,8 +481,8 @@ task raw_divideByChrom{
 
     runtime {
         cpu: select_first([runtime_attr.cpu_cores, default_attr.cpu_cores])
-        memory: "~{select_first([runtime_override.mem_gb, runtime_default.mem_gb])} GB"
-        disks: "local-disk ~{select_first([runtime_override.disk_gb, runtime_default.disk_gb])} HDD"
+        memory: "~{select_first([runtime_attr.mem_gb, default_attr.mem_gb])} GB"
+        disks: "local-disk ~{select_first([runtime_attr.disk_gb, default_attr.disk_gb])} HDD"
         bootDiskSizeGb: select_first([runtime_attr.boot_disk_gb, default_attr.boot_disk_gb])
         preemptible: select_first([runtime_attr.preemptible_tries, default_attr.preemptible_tries])
         maxRetries: select_first([runtime_attr.max_retries, default_attr.max_retries])
@@ -512,7 +503,7 @@ task raw_reformatBed{
     Float base_disk_gb = 10.0
     Float base_mem_gb = 3.75
 
-    RuntimeAttr runtime_default = object {
+    RuntimeAttr default_attr = object {
                                       mem_gb: base_mem_gb + input_size * 3.0,
                                       disk_gb: ceil(base_disk_gb + input_size * 5.0),
                                       cpu_cores: 1,
@@ -540,8 +531,8 @@ task raw_reformatBed{
 
     runtime {
         cpu: select_first([runtime_attr.cpu_cores, default_attr.cpu_cores])
-        memory: "~{select_first([runtime_override.mem_gb, runtime_default.mem_gb])} GB"
-        disks: "local-disk ~{select_first([runtime_override.disk_gb, runtime_default.disk_gb])} HDD"
+        memory: "~{select_first([runtime_attr.mem_gb, default_attr.mem_gb])} GB"
+        disks: "local-disk ~{select_first([runtime_attr.disk_gb, default_attr.disk_gb])} HDD"
         bootDiskSizeGb: select_first([runtime_attr.boot_disk_gb, default_attr.boot_disk_gb])
         preemptible: select_first([runtime_attr.preemptible_tries, default_attr.preemptible_tries])
         maxRetries: select_first([runtime_attr.max_retries, default_attr.max_retries])
@@ -557,11 +548,11 @@ task plot_mergeFinalBedFiles{
         RuntimeAttr? runtime_attr_override
     }
 
-    Float input_size = size(select_all([bed_files, outliers_file]), "GB")
+    Float input_size = size(select_all([bed_files, outliers_files]), "GB")
     Float base_disk_gb = 10.0
     Float base_mem_gb = 3.75
 
-    RuntimeAttr runtime_default = object {
+    RuntimeAttr default_attr = object {
                                       mem_gb: base_mem_gb + input_size * 3.0,
                                       disk_gb: ceil(base_disk_gb + input_size * 5.0),
                                       cpu_cores: 1,
@@ -591,8 +582,8 @@ task plot_mergeFinalBedFiles{
 
     runtime {
         cpu: select_first([runtime_attr.cpu_cores, default_attr.cpu_cores])
-        memory: "~{select_first([runtime_override.mem_gb, runtime_default.mem_gb])} GB"
-        disks: "local-disk ~{select_first([runtime_override.disk_gb, runtime_default.disk_gb])} HDD"
+        memory: "~{select_first([runtime_attr.mem_gb, default_attr.mem_gb])} GB"
+        disks: "local-disk ~{select_first([runtime_attr.disk_gb, default_attr.disk_gb])} HDD"
         bootDiskSizeGb: select_first([runtime_attr.boot_disk_gb, default_attr.boot_disk_gb])
         preemptible: select_first([runtime_attr.preemptible_tries, default_attr.preemptible_tries])
         maxRetries: select_first([runtime_attr.max_retries, default_attr.max_retries])
@@ -613,7 +604,7 @@ task plot_createPlots{
     Float base_disk_gb = 10.0
     Float base_mem_gb = 3.75
 
-    RuntimeAttr runtime_default = object {
+    RuntimeAttr default_attr = object {
                                       mem_gb: base_mem_gb + input_size * 3.0,
                                       disk_gb: ceil(base_disk_gb + input_size * 5.0),
                                       cpu_cores: 1,
@@ -637,8 +628,8 @@ task plot_createPlots{
 
     runtime {
         cpu: select_first([runtime_attr.cpu_cores, default_attr.cpu_cores])
-        memory: "~{select_first([runtime_override.mem_gb, runtime_default.mem_gb])} GB"
-        disks: "local-disk ~{select_first([runtime_override.disk_gb, runtime_default.disk_gb])} HDD"
+        memory: "~{select_first([runtime_attr.mem_gb, default_attr.mem_gb])} GB"
+        disks: "local-disk ~{select_first([runtime_attr.disk_gb, default_attr.disk_gb])} HDD"
         bootDiskSizeGb: select_first([runtime_attr.boot_disk_gb, default_attr.boot_disk_gb])
         preemptible: select_first([runtime_attr.preemptible_tries, default_attr.preemptible_tries])
         maxRetries: select_first([runtime_attr.max_retries, default_attr.max_retries])
