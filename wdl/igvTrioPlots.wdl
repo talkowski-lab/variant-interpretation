@@ -35,6 +35,8 @@ workflow IGV_trio {
             empty_track = empty_track,
             fam_id = fam_id,
             ped_file = ped_file,
+            crams = crams,
+            crais = crais,
             igv_docker = igv_docker
     }
 
