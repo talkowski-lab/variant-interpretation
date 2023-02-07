@@ -19,6 +19,8 @@ workflow IGV_trio {
         File empty_track
         String fam_id
         File ped_file
+        Array[File] crams
+        Array[File] crais
         String igv_docker
     }
 
