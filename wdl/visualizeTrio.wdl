@@ -19,15 +19,8 @@ workflow Module09VisualizeTrio{
         File? sample_batches
         Array[File]? medianfile
 
-        Array[String]? pb_list
-        Array[String]? fa_list
-        Array[String]? mo_list
-        Array[File]? pb_cram_list
-        Array[File]? pb_crai_list
-        Array[File]? fa_cram_list
-        Array[File]? fa_crai_list
-        Array[File]? mo_cram_list
-        Array[File]? mo_crai_list
+        Array[String]? fam_ids
+        File? sample_cram
         File? nested_repeats
         File? simple_repeats
         File? empty_track
@@ -67,15 +60,8 @@ workflow Module09VisualizeTrio{
     }
 
     if (run_IGV) {   
-        Array[String] pb_list_ = select_first([pb_list])
-        Array[String] fa_list_ = select_first([fa_list])
-        Array[String] mo_list_ = select_first([mo_list])
-        Array[File] pb_cram_list_ = select_first([pb_cram_list])
-        Array[File] fa_cram_list_ = select_first([fa_cram_list])
-        Array[File] mo_cram_list_ = select_first([mo_cram_list])
-        Array[File] pb_crai_list_ = select_first([pb_crai_list])
-        Array[File] fa_crai_list_ = select_first([fa_crai_list])
-        Array[File] mo_crai_list_ = select_first([mo_crai_list])
+        Array[String] fam_ids_ = select_first([fam_ids])
+        File sample_cram_ = select_first([sample_cram])
         File Fasta_ = select_first([Fasta])
         File Fasta_idx_ = select_first([Fasta_idx])
         File Fasta_dict_ = select_first([Fasta_dict])
@@ -85,15 +71,9 @@ workflow Module09VisualizeTrio{
 
         call igv_trio.IGV_all_samples as igv_plots {
             input:
-                pb_list = pb_list_,
-                fa_list = fa_list_,
-                mo_list = mo_list_,
-                pb_cram_list = pb_cram_list_,
-                pb_crai_list = pb_crai_list_,
-                fa_cram_list = fa_cram_list_,
-                fa_crai_list = fa_crai_list_,
-                mo_cram_list = mo_cram_list_,
-                mo_crai_list = mo_crai_list_,
+                fam_id = fam_id_,
+                pedfile = pedfile,
+                sample_cram = sample_cram_,
                 nested_repeats = nested_repeats_,
                 simple_repeats = simple_repeats_,
                 empty_track = empty_track_,
