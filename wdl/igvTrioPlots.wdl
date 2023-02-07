@@ -19,7 +19,6 @@ workflow IGV_trio {
         File empty_track
         String fam_id
         File ped_file
-        File sample_cram
         String igv_docker
     }
 
