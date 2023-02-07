@@ -11,15 +11,6 @@ import "Structs.wdl"
 
 workflow IGV_all_samples {
     input {
-        #Array[String] pb_list
-        #Array[String] fa_list
-        #Array[String] mo_list
-        #Array[File] pb_cram_list
-        #Array[File] pb_crai_list
-        #Array[File] fa_cram_list
-        #Array[File] fa_crai_list
-        #Array[File] mo_cram_list
-        #Array[File] mo_crai_list
         Array[String] fam_ids
         File ped_file
         File sample_cram
@@ -46,6 +37,15 @@ workflow IGV_all_samples {
                 runtime_attr_override=runtime_attr_override
         }
 
+        call generate_per_family_sample_cram{
+            input:
+                fam_id = fam_id,
+                ped_file = ped_file,
+                sample_cram = sample_cram,
+                sv_base_mini_docker = sv_base_mini_docker,
+                runtime_attr_override = runtime_attr_override
+        }
+
         call igv.IGV_trio as IGV_trio {
             input:
                 varfile=generate_per_family_bed.per_family_varfile,
@@ -57,7 +57,8 @@ workflow IGV_all_samples {
                 empty_track = empty_track,
                 fam_id = fam_id,
                 ped_file = ped_file,
-                sample_cram = sample_cram,
+                crams = generate_per_family_sample_cram.per_family_crams,
+                crais = generate_per_family_sample_cram.per_family_crais,
                 igv_docker = igv_docker
                 }
         }
@@ -103,6 +104,50 @@ task generate_per_family_bed{
 
     output{
         File per_family_varfile= "~{filename}.~{fam_id}.bed"
+    }
+
+    RuntimeAttr runtime_attr = select_first([runtime_attr_override, default_attr])
+    runtime {
+        cpu: select_first([runtime_attr.cpu, default_attr.cpu])
+        memory: select_first([runtime_attr.mem_gb, default_attr.mem_gb]) + " GiB"
+        disks: "local-disk " + select_first([runtime_attr.disk_gb, default_attr.disk_gb]) + " HDD"
+        bootDiskSizeGb: select_first([runtime_attr.boot_disk_gb, default_attr.boot_disk_gb])
+        docker: sv_base_mini_docker
+        preemptible: select_first([runtime_attr.preemptible, default_attr.preemptible])
+        maxRetries: select_first([runtime_attr.max_retries, default_attr.max_retries])
+  }
+
+    }
+
+task generate_per_family_sample_cram{
+    input {
+        String fam_id
+        File ped_file
+        File sample_cram
+        String sv_base_mini_docker
+        RuntimeAttr? runtime_attr_override
+    }
+    RuntimeAttr default_attr=object {
+        cpu: 1,
+        mem_gb: 1,
+        disk_gb: 10,
+        boot_disk_gb: 10,
+        preemptible: 1,
+        max_retries: 1
+    }
+
+    command <<<
+        set -euo pipefail
+        grep ~{fam_id} ~{ped_file} | cut -f2 > ~{fam_id}.samples.txt
+        grep -f ~{fam_id}.samples.txt ~{sample_cram} > subset_sample_cram.txt
+        cut -f2 subset_sample_cram.txt > ~{fam_id}.cram.txt
+        cut -f3 subset_sample_cram.txt > ~{fam_id}.crai.txt
+        >>>
+
+    output{
+        Array[File] per_family_samples = read_lines("~{fam_id}.samples.txt")
+        Array[File] per_family_crams = read_lines("~{fam_id}.cram.txt")
+        Array[File] per_family_crais = read_lines("~{fam_id}.crai.txt")
     }
 
     RuntimeAttr runtime_attr = select_first([runtime_attr_override, default_attr])

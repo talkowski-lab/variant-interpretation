@@ -54,16 +54,16 @@ task runIGV_whole_genome{
         File empty_track
         String fam_id
         File ped_file
-        File sample_cram
+        Array[File] crams
+        Array[File] crais
         String igv_docker
     }
+
+
     command <<<
             set -euo pipefail
             #export GCS_OAUTH_TOKEN=`gcloud auth application-default print-access-token`
-
-            grep ~{fam_id} ~{ped_file} > sample_ids.txt
-            grep -f sample_ids.txt ~{sample_cram} > subset_sample_cram.txt
-            python /src/makeigvpesr_trio.py ~{varfile} ~{nested_repeats} ~{simple_repeats} ~{empty_track} ~{fasta} ~{fam_id} subset_sample_cram.txt pe_igv_plots -b 500
+            python /src/makeigvpesr_trio.py ~{varfile} ~{nested_repeats} ~{simple_repeats} ~{empty_track} ~{fasta} ~{fam_id} ~{write_lines(crams)} pe_igv_plots -b 500
             xvfb-run --server-args="-screen 0, 1920x540x24" bash /IGV_2.4.14/igv.sh -b pe.txt
             tar -czf ~{fam_id}_pe_igv_plots.tar.gz pe_igv_plots
 
