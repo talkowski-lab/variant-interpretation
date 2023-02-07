@@ -63,10 +63,9 @@ task runIGV_whole_genome{
 
             grep ~{fam_id} ~{ped_file} > sample_ids.txt
             grep -f sample_ids.txt ~{sample_cram} > subset_sample_cram.txt
-            python /src/makeigvpesr_trio.py ~{varfile} ~{nested_repeats} ~{simple_repeats} ~{empty_track} ~{fasta} ~{fam_id} ~{sample_cram} pe_igv_plots -b 500
-            bash pe.sh
+            python /src/makeigvpesr_trio.py ~{varfile} ~{nested_repeats} ~{simple_repeats} ~{empty_track} ~{fasta} ~{fam_id} subset_sample_cram.txt pe_igv_plots -b 500
             xvfb-run --server-args="-screen 0, 1920x540x24" bash /IGV_2.4.14/igv.sh -b pe.txt
-            tar -czf ~{pb}_pe_igv_plots.tar.gz pe_igv_plots
+            tar -czf ~{fam_id}_pe_igv_plots.tar.gz pe_igv_plots
 
         >>>
     runtime {
@@ -76,7 +75,7 @@ task runIGV_whole_genome{
         disks: "local-disk 100 HDD"
         }
     output{
-        File pe_plots="~{pb}_pe_igv_plots.tar.gz"
+        File pe_plots="~{fam_id}_pe_igv_plots.tar.gz"
         File pe_txt = "pe.txt"
         }
     }
