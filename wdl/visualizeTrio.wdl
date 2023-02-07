@@ -72,7 +72,7 @@ workflow Module09VisualizeTrio{
         call igv_trio.IGV_all_samples as igv_plots {
             input:
                 fam_ids = fam_ids_,
-                pedfile = pedfile,
+                ped_file = pedfile,
                 sample_cram = sample_cram_,
                 nested_repeats = nested_repeats_,
                 simple_repeats = simple_repeats_,
