@@ -96,7 +96,7 @@ task generate_per_family_bed{
     command <<<
         set -euo pipefail
         cat ~{varfile} | gunzip | cut -f1-6 > updated_varfile.bed
-        grep ~{fam_id} ~{ped_file} | cut -f2 > sample_ids.txt
+        grep -w ^~{fam_id} ~{ped_file} | cut -f2 > sample_ids.txt
         grep -f sample_ids.txt updated_varfile.bed | cut -f1-5 | awk '{print $1,$2,$3,$4,$5}' | sed -e 's/ /\t/g' > ~{filename}.~{fam_id}.bed
         >>>
 
@@ -136,7 +136,7 @@ task generate_per_family_sample_cram{
 
     command <<<
         set -euo pipefail
-        grep ~{fam_id} ~{ped_file} | cut -f2 > ~{fam_id}.samples.txt
+       grep -w ^~{fam_id} ~{ped_file} | cut -f2 > ~{fam_id}.samples.txt
         grep -f ~{fam_id}.samples.txt ~{sample_cram} > subset_sample_cram.txt
         cut -f2 subset_sample_cram.txt > ~{fam_id}.crai.txt
         cut -f3 subset_sample_cram.txt > ~{fam_id}.cram.txt
