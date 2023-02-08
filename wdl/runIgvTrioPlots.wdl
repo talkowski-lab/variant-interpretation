@@ -95,9 +95,7 @@ task generate_per_family_bed{
     String filename = basename(varfile, ".bed")
     command <<<
         set -euo pipefail
-        cat ~{varfile} | gunzip | cut -f1-5 > updated_varfile_1.bed
-        cat ~{varfile} | gunzip | csvcut -t -c sample > updated_varfile_2.bed
-        paste updated_varfile_1.bed updated_varfile_2.bed > updated_varfile.bed
+        cat ~{varfile} | gunzip | cut -f1-5 > updated_varfile.bed
         grep ~{fam_id} ~{ped_file} | cut -f2 > sample_ids.txt
         grep -f sample_ids.txt updated_varfile.bed | cut -f1-5 | awk '{print $1,$2,$3,$4,$5}' | sed -e 's/ /\t/g' > ~{filename}.~{fam_id}.bed
         >>>
