@@ -97,7 +97,7 @@ task generate_per_family_bed{
         set -euo pipefail
         cat ~{varfile} | gunzip | cut -f1-6 > updated_varfile.bed
         grep ~{fam_id} ~{ped_file} | cut -f2 > sample_ids.txt
-        grep -f sample_ids.txt ~{varfile} | cut -f1-5 | awk '{print $1,$2,$3,$4,$5}' | sed -e 's/ /\t/g' > ~{filename}.~{fam_id}.bed
+        grep -f sample_ids.txt updated_varfile.bed | cut -f1-5 | awk '{print $1,$2,$3,$4,$5}' | sed -e 's/ /\t/g' > ~{filename}.~{fam_id}.bed
         >>>
 
     output{
