@@ -499,7 +499,7 @@ task raw_reformatBed{
         RuntimeAttr? runtime_attr_override
     }
 
-    Float input_size = size(per_chromosome_bed_file, "GB")
+    Float input_size = size(select_all([per_chromosome_bed_file, ped_input]), "GB")
     Float base_disk_gb = 10.0
     Float base_mem_gb = 3.75
 
