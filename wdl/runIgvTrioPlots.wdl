@@ -136,7 +136,7 @@ task generate_per_family_sample_cram{
 
     command <<<
         set -euo pipefail
-       grep -w ^~{fam_id} ~{ped_file} | cut -f2 > ~{fam_id}.samples.txt
+        grep -w ^~{fam_id} ~{ped_file} | cut -f2 > ~{fam_id}.samples.txt
         grep -f ~{fam_id}.samples.txt ~{sample_cram} > subset_sample_cram.txt
         cut -f2 subset_sample_cram.txt > ~{fam_id}.crai.txt
         cut -f3 subset_sample_cram.txt > ~{fam_id}.cram.txt
