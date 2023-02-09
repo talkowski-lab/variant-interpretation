@@ -65,7 +65,7 @@ task runIGV_whole_genome{
     command <<<
             set -euo pipefail
             #export GCS_OAUTH_TOKEN=`gcloud auth application-default print-access-token`
-            python /src/makeigvpesr_trio.py ~{varfile} ~{nested_repeats} ~{simple_repeats} ~{empty_track} ~{fasta} ~{fam_id} ${sep="," crams} pe_igv_plots -b 500
+            python /src/makeigvpesr_trio.py -v ~{varfile} -n ~{nested_repeats} -s ~{simple_repeats} -e ~{empty_track} -f ~{fasta} -fam ~{fam_id} -crams ~{sep="," crams} -o pe_igv_plots -b 500
             xvfb-run --server-args="-screen 0, 1920x540x24" bash /IGV_2.4.14/igv.sh -b pe.txt
             tar -czf ~{fam_id}_pe_igv_plots.tar.gz pe_igv_plots
 
