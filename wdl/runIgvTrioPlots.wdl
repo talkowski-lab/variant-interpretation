@@ -47,7 +47,7 @@ workflow IGV_all_samples {
         }
         call igv.IGV_trio as IGV_trio {
             input:
-                varfile=generate_per_sample_bed.per_family_varfile,
+                varfile=generate_per_family_bed.per_family_varfile,
                 Fasta = Fasta,
                 Fasta_idx = Fasta_idx,
                 Fasta_dict = Fasta_dict,
