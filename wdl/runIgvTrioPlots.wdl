@@ -137,6 +137,7 @@ task generate_per_sample_bed{
     }
 
     String filename = basename(varfile, ".bed")
+
     command <<<
         set -euo pipefail
         cat ~{varfile} | gunzip | cut -f1-6 > updated_varfile.bed
@@ -145,7 +146,7 @@ task generate_per_sample_bed{
 
     output{
         File per_sample_varfile= "~{filename}.~{sample_id}.bed"
-    }
+        }
 
     RuntimeAttr runtime_attr = select_first([runtime_attr_override, default_attr])
     runtime {
@@ -156,7 +157,8 @@ task generate_per_sample_bed{
         docker: sv_base_mini_docker
         preemptible: select_first([runtime_attr.preemptible, default_attr.preemptible])
         maxRetries: select_first([runtime_attr.max_retries, default_attr.max_retries])
-  }
+    }
+    }
 
 task integrate_igv_plots{
     input {
