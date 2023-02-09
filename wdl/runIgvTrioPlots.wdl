@@ -62,6 +62,7 @@ workflow IGV_all_samples {
                     igv_docker = igv_docker
                 }
         }
+    }
     call integrate_igv_plots{
         input:
             igv_tar = IGV_trio.tar_gz_pe,
@@ -72,7 +73,7 @@ workflow IGV_all_samples {
     output{
         File tar_gz_pe = integrate_igv_plots.plot_tar
     }
-    }
+}
 
 task generate_per_family_sample_cram_crai{
     input {
