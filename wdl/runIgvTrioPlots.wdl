@@ -65,7 +65,7 @@ workflow IGV_all_samples {
     }
     call integrate_igv_plots{
         input:
-            igv_tar = IGV_trio.tar_gz_pe,
+            igv_tar = flatten(IGV_trio.tar_gz_pe),
             prefix = prefix, 
             sv_base_mini_docker = sv_base_mini_docker
     }
