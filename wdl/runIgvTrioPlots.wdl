@@ -36,36 +36,34 @@ workflow IGV_all_samples {
                     sv_base_mini_docker = sv_base_mini_docker,
                     runtime_attr_override = runtime_attr_override
             }
-        scatter (sample_id in generate_per_family_sample_cram_crai.per_family_samples) {
-            call generate_per_sample_bed{
-                input:
-                    varfile = varfile,
-                    sample_id = sample_id,
-                    ped_file = ped_file,
-                    sv_base_mini_docker=sv_base_mini_docker,
-                    runtime_attr_override=runtime_attr_override
-            }
-
-            call igv.IGV_trio as IGV_trio {
-                input:
-                    varfile=generate_per_sample_bed.per_sample_varfile,
-                    Fasta = Fasta,
-                    Fasta_idx = Fasta_idx,
-                    Fasta_dict = Fasta_dict,
-                    nested_repeats = nested_repeats,
-                    simple_repeats = simple_repeats,
-                    empty_track = empty_track,
-                    sample_id = sample_id,
-                    ped_file = ped_file,
-                    crams = generate_per_family_sample_cram_crai.per_family_crams,
-                    crais = generate_per_family_sample_cram_crai.per_family_crais,
-                    igv_docker = igv_docker
+        call generate_per_family_bed{
+            input:
+                varfile = varfile,
+                fam_id = fam_id,
+                sample_ids = generate_per_family_sample_cram_crai.per_family_samples,
+                ped_file = ped_file,
+                sv_base_mini_docker=sv_base_mini_docker,
+                runtime_attr_override=runtime_attr_override
+        }
+        call igv.IGV_trio as IGV_trio {
+            input:
+                varfile=generate_per_sample_bed.per_family_varfile,
+                Fasta = Fasta,
+                Fasta_idx = Fasta_idx,
+                Fasta_dict = Fasta_dict,
+                nested_repeats = nested_repeats,
+                simple_repeats = simple_repeats,
+                empty_track = empty_track,
+                fam_id = fam_id,
+                ped_file = ped_file,
+                crams = generate_per_family_sample_cram_crai.per_family_crams,
+                crais = generate_per_family_sample_cram_crai.per_family_crais,
+                igv_docker = igv_docker
                 }
         }
-    }
     call integrate_igv_plots{
         input:
-            igv_tar = flatten(IGV_trio.tar_gz_pe),
+            igv_tar =IGV_trio.tar_gz_pe,
             prefix = prefix, 
             sv_base_mini_docker = sv_base_mini_docker
     }
@@ -117,12 +115,13 @@ task generate_per_family_sample_cram_crai{
         maxRetries: select_first([runtime_attr.max_retries, default_attr.max_retries])
   }
 
-    }
+}
 
-task generate_per_sample_bed{
+task generate_per_family_bed{
     input {
         File varfile
-        String sample_id
+        String fam_id
+        Array[String] sample_ids
         File ped_file
         String sv_base_mini_docker
         RuntimeAttr? runtime_attr_override
@@ -137,15 +136,16 @@ task generate_per_sample_bed{
     }
 
     String filename = basename(varfile, ".bed")
+    File samples = write_lines(sample_ids)
 
     command <<<
         set -euo pipefail
         cat ~{varfile} | gunzip | cut -f1-6 > updated_varfile.bed
-        grep ~{sample_id} updated_varfile.bed | cut -f1-5 | awk '{print $1,$2,$3,$4,$5}' | sed -e 's/ /\t/g' > ~{filename}.~{sample_id}}.bed
+        grep -f ~{samples} updated_varfile.bed | cut -f1-5 | awk '{print $1,$2,$3,$4,$5}' | sed -e 's/ /\t/g' > ~{filename}.~{fam_id}.bed
         >>>
 
     output{
-        File per_sample_varfile= "~{filename}.~{sample_id}.bed"
+        File per_family_varfile= "~{filename}.~{fam_id}.bed"
         }
 
     RuntimeAttr runtime_attr = select_first([runtime_attr_override, default_attr])
