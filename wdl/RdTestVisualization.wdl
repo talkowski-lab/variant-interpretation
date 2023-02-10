@@ -61,7 +61,7 @@ task rdtest {
     RuntimeAttr runtime_attr = select_first([runtime_attr_override, default_attr])
     command <<<
         set -ex
-        cat ~{bed} | gunzip | csvcut -t -c sample > sample.bed
+        cat ~{bed} | gunzip | cut -f6 > sample.bed
         cat ~{bed} | gunzip | cut -f1-4 > start.bed
         cat ~{bed} | gunzip | cut -f5 > svtype.bed
         paste start.bed sample.bed svtype.bed > final.bed
