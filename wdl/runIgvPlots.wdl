@@ -134,17 +134,17 @@ task generate_per_family_sample_cram_crai{
 
     command <<<
         set -euo pipefail
-        grep -w ^~{sample} ~{ped_file} | cut -f1 > ~{fam_id}.txt
-        grep -w -f ~{fam_id}.txt ~{ped_file} | cut -f2 > ~{fam_id}.samples.txt
-        grep -f ~{fam_id}.samples.txt ~{sample_cram} > subset_sample_cram.txt
-        cut -f2 subset_sample_cram.txt > ~{fam_id}.crai.txt
-        cut -f3 subset_sample_cram.txt > ~{fam_id}.cram.txt
+        grep -w ^~{sample} ~{ped_file} | cut -f1 > fam_id.txt
+        grep -w -f fam_id.txt ~{ped_file} | cut -f2 > samples.txt
+        grep -f samples.txt ~{sample_cram} > subset_sample_cram.txt
+        cut -f2 subset_sample_cram.txt > crai.txt
+        cut -f3 subset_sample_cram.txt > cram.txt
         >>>
 
     output{
-        Array[String] per_family_samples = read_lines("~{fam_id}.samples.txt")
-        Array[File] per_family_crams = read_lines("~{fam_id}.cram.txt")
-        Array[File] per_family_crais = read_lines("~{fam_id}.crai.txt")
+        Array[String] per_family_samples = read_lines("samples.txt")
+        Array[File] per_family_crams = read_lines("cram.txt")
+        Array[File] per_family_crais = read_lines("crai.txt")
     }
 
     RuntimeAttr runtime_attr = select_first([runtime_attr_override, default_attr])
