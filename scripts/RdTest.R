@@ -574,6 +574,7 @@ onesamplezscore.median <- function(genotype_matrix,cnv_matrix,singlesample,cnvty
       cnv_matrix[which(genotype_matrix[, 5:ncol(genotype_matrix)] == 2), column]
     Treat2 <-
       cnv_matrix[singlesample, column]
+    #print(Treat2)
     if (toupper(cnvtype) == "DEL") {
       single.p <- pnorm((Treat2 - mean(Control2)) / sd(Control2))
     } else {
@@ -793,32 +794,68 @@ plotJPG <- function(genotype_matrix,cnv_matrix,chr,start,end,cnvID,sampleIDs,out
   if (plotfamily == TRUE ) {
     ##Call familes to plot###
     ##May have issues with multi-generation pedigress, Designed for Quad and Trio Families##
-    family <- read.table(famfile, sep="\t")
-    includedfams <-
-      unique(family[which(family[, 2]  %in% samplesPrior), 1])
-    proband_list <-as.character(
-      family[which(family[, 1] %in% includedfams &
-                     family[, 3] != 0 &
-                     family[, 4] != 0 & family[, 6] == 2) , 2])
-    sib_list <-as.character(
-      family[which(family[, 1] %in% includedfams &
-                     family[, 3] != 0 &
-                     family[, 4] != 0 & family[, 6] == 1) , 2])
-    father_list <-as.character(
-      family[which(family[, 1] %in% includedfams &
-                     family[, 3] == 0 &
-                     family[, 4] == 0 &  (family[, 5] == 1 | family[, 5] == 0)) , 2])
-    mother_list <-as.character(
-      family[which(family[, 1] %in% includedfams &
-                     family[, 3] == 0 &
-                     family[, 4] == 0 &  (family[, 5] == 2 | family[, 5] == 0)) , 2])
+    family <- read.table('subset_ped.txt', sep="\t",header=TRUE)
+    singleton_families <- names(which((table(family$FamID) == 1)))
+    singleton_samples <- subset(family, FamID %in% singleton_families)
+    #child<-family[which(family[, 3] != 0 & family[, 4] != 0 ) , 2]
+    #paternal_id <- family$FatherID[ family$FatherID  != '0' ]
+    #paternal_id[paternal_id == 0] <- NA
+    #maternal_id <- family$MotherID[ family$MotherID  != '0' ]
+    #maternal_id[maternal_id == 0] <- NA
+    children <- subset(family, FatherID != '0' | MotherID != '0' | FamID %in% singleton_families) # or singleton
+    children$sibling <- NA
     
+    for(i in 1:nrow(children)) 
+    {
+      family_id = children[i,1]
+      ind_id = children[i,2]
+      father_id = children[i,3]
+      mother_id = children[i,4]
+      
+      sibling_list <- children[which(children[, 4] == mother_id & children[, 3] == father_id & children[, 2] != ind_id), 2]
+      if(length(sibling_list) == 0){sibling_list = NA}
+      if (length(sibling_list)==2){sibling_list = paste(sibling_list,collapse = ',')}
+      #strsplit(sibling_list, " ")
+      #print(sibling_list)
+      children[i,7] = sibling_list
+    }
+    #samplesPrior <- children$IndividualID #list of all children with one parent in ped or singleton
+    #paternal_id <- children$FatherID #values that do not exist are 0
+    #paternal_id[paternal_id == 0] <- NA
+    #maternal_id <- children$MotherID #values that do not exist are 0
+    #maternal_id[maternal_id == 0] <- NA
+    #sibling_id <- children$sibling #values that do not exist are NA
+    includedproband <- samplesPrior
+    #original_cnv_matrix<-cnv_matrix
+    #original_genotype_matrix<-genotype_matrix
+    ##Find samples to include##
+    proband_list <-as.character(samplesPrior)
+    sib_list <-as.character(children[which(children[,2] == samplesPrior), 7])
+    father_list <-as.character(children[which(children[,2] == samplesPrior), 3])
+    mother_list <-as.character(children[which(children[,2] == samplesPrior), 4])
     #text(c(1:10), as.numeric(cnv_matrix[proband_list,]), "p", cex = 1)
     #text(c(1:10), as.numeric(cnv_matrix[sib_list,]), "s", cex = 1)
     #text(c(1:10), as.numeric(cnv_matrix[father_list,]), "fa", cex = 1)
     #text(c(1:10), as.numeric(cnv_matrix[mother_list,]), "mo", cex = 1)
-    lines(as.numeric(cnv_matrix[mother_list,]), col = "deeppink1" )
-    lines(as.numeric(cnv_matrix[father_list,]), col = "darkgreen" )
+    #print(proband_list)
+    #print(sib_list)
+    #print(mother_list)
+    #print(father_list)
+    if(mother_list != '0' | mother_list != 0) {lines(as.numeric(cnv_matrix[mother_list,]), col = "deeppink1" )}
+    if(father_list != '0' | father_list != 0) {lines(as.numeric(cnv_matrix[father_list,]), col = "darkgreen" )}
+    #print(sib_list)
+    #print(length(strsplit(sib_list, ",")[[1]]))
+    if(!is.na(sib_list)){
+      if(length(strsplit(sib_list, ",")[[1]]) > 1) {
+        for (i in (1:length(strsplit(sib_list, ",")[[1]]))) {
+          print(strsplit(sib_list, ",")[[1]][i])
+          lines(as.numeric(cnv_matrix[strsplit(sib_list, ",")[[1]][i],]), col = "blueviolet" )
+        }
+      }
+      else {
+        lines(as.numeric(cnv_matrix[sib_list,]), col = "blueviolet" )
+      }
+    } 
   }
   if (plotK == TRUE) {
     copy_states = as.numeric(unique(plot_colormatrix[1,5:ncol(plot_colormatrix)]))
@@ -832,17 +869,17 @@ plotJPG <- function(genotype_matrix,cnv_matrix,chr,start,end,cnvID,sampleIDs,out
   } else if (toupper(cnvtype) == "DEL") {
     legend(
       'topright',
-      c("Deletion", "Diploid", "Mother" , "Father"),
+      c("Deletion", "Diploid", "Mother" , "Father", "Sibling"),
       lty = 1,
-      col = c("red", "grey", "deeppink1", "darkgreen"),
+      col = c("red", "grey", "deeppink1", "darkgreen", "blueviolet"),
       cex = .5
     )
   } else {
     legend(
       'topright',
-      c("Diploid", "Duplication", "Mother" , "Father"),
+      c("Diploid", "Duplication", "Mother" , "Father", "Sibling"),
       lty = 1,
-      col = c("grey", "blue", "deeppink1", "darkgreen"),
+      col = c("grey", "blue", "deeppink1", "darkgreen", "blueviolet"),
       cex = .5
     )
   }
@@ -1124,9 +1161,40 @@ runRdTest<-function(bed)
   ##De Novo Module##
   if (opt$denovo == TRUE) {
     ##Read in family file##
-    family <- read.table(famfile, sep="\t")
-    child<-family[which(family[, 3] != 0 & family[, 4] != 0 ) , 2]
-    samplesPrior <- samplesPrior[which(samplesPrior %in% child)] #list of all children with two parents in ped
+    family <- read.table('subset_ped.txt', sep="\t",header=TRUE)
+    samplesPrior <- family$IndividualID
+    singleton_families <- names(which((table(family$FamID) == 1)))
+    singleton_samples <- subset(family, FamID %in% singleton_families)
+    #child<-family[which(family[, 3] != 0 & family[, 4] != 0 ) , 2]
+    #paternal_id <- family$FatherID[ family$FatherID  != '0' ]
+    #paternal_id[paternal_id == 0] <- NA
+    #maternal_id <- family$MotherID[ family$MotherID  != '0' ]
+    #maternal_id[maternal_id == 0] <- NA
+    children <- subset(family, FatherID != '0' | MotherID != '0' | FamID %in% singleton_families) # or singleton
+    children$sibling <- NA
+    
+    for(i in 1:nrow(children)) 
+    {
+      family_id = children[i,1]
+      ind_id = children[i,2]
+      father_id = children[i,3]
+      mother_id = children[i,4]
+      
+      sibling_list <- children[which(children[, 4] == mother_id & children[, 3] == father_id & children[, 2] != ind_id), 2]
+      #print(typeof(sibling_list))
+      if(length(sibling_list) == 0){sibling_list = NA}
+      if (length(sibling_list)==2){sibling_list = paste(sibling_list,collapse = ',')}
+      #strsplit(sibling_list, " ")
+      #print(sibling_list)
+      children[i,7] = sibling_list
+    }
+    
+    samplesPrior <- children$IndividualID #list of all children with one parent in ped or singleton
+    paternal_id <- children$FatherID #values that do not exist are 0
+    paternal_id[paternal_id == 0] <- NA
+    maternal_id <- children$MotherID #values that do not exist are 0
+    maternal_id[maternal_id == 0] <- NA
+    sibling_id <- children$sibling #values that do not exist are NA
     ##If ID only has parents or all children removed by filtering##
     if (length(samplesPrior) == 0 ) {
       denovo_output <- cbind(chr,start,end,cnvID,cnvtype,"No_samples_for_analysis","No_samples_for_analysis","No_samples_for_analysis","No_samples_for_analysis","No_samples_for_analysis","No_samples_for_analysis","No_samples_for_analysis","No_samples_for_analysis","No_samples_for_analysis","No_samples_for_analysis",
@@ -1135,19 +1203,15 @@ runRdTest<-function(bed)
       
       return(denovo_output)
     }
-    includedfams <- unique(family[which(family[, 2]  %in% samplesPrior), 1])
-    includedproband <- unique(family[which(family[, 2]  %in% samplesPrior), 2])
+    #includedfams <- unique(family[which(family[, 2]  %in% samplesPrior), 1])
+    includedproband <- samplesPrior
     original_cnv_matrix<-cnv_matrix
     original_genotype_matrix<-genotype_matrix
     ##Find samples to include##
-    proband_list <-as.character(
-      family[which(family[, 1] %in% includedfams & family[, 3] != 0 & family[, 4] != 0 & family[, 6] == 2) , 2])
-    sib_list <-as.character(
-      family[which(family[, 1] %in% includedfams & family[, 3] != 0 & family[, 4] != 0 & family[, 6] == 1) , 2])
-    father_list <-as.character(
-      family[which(family[, 1] %in% includedfams & family[, 3] == 0 & family[, 4] == 0 &  (family[, 5] == 1 | family[, 5] == 0) ) , 2])
-    mother_list <-as.character(
-      family[which(family[, 1] %in% includedfams & family[, 3] == 0 & family[, 4] == 0 &  (family[, 5] == 2 | family[, 5] == 0) ) , 2])
+    proband_list <-as.character(samplesPrior)
+    sib_list <-as.character(sibling_id)
+    father_list <-as.character(paternal_id)
+    mother_list <-as.character(maternal_id)
     for (mem in c("mo","p1","s1","fa")) {
       eval(parse(text=paste(mem,".p.list<-c()",sep="")))
       eval(parse(text=paste(mem,".secmaxp.list<-c()",sep="")))
@@ -1159,18 +1223,19 @@ runRdTest<-function(bed)
     fam_denovo.matrix<-c(NA,NA,NA,NA,NA,NA,NA,NA,NA,NA,NA,NA)
     for (i in includedproband) {
       count = count + 1
-      for (singlesample in na.omit(c(proband_list[count],sib_list[count],father_list[count],mother_list[count]))) {
+      for (singlesample in na.omit(c(proband_list[count],strsplit(sib_list[count], ",")[[1]],father_list[count],mother_list[count]))) {
         if (singlesample %in% proband_list) {mem="p1"}
-        if (singlesample %in% sib_list) {mem="s1"}
+        if (singlesample %in%  strsplit(sib_list[count], ",")[[1]] ) {mem="s1"} #see if sibling in the sibling string the is divided by ,
         if (singlesample %in% father_list) {mem="fa"}
         if (singlesample %in% mother_list) {mem="mo"}
         ##Add family members to sample include list##
         sampleID1s = unique(c(
           as.character(sampleIDs),
           father_list[count],
-          mother_list[count],
-          sib_list[count],
+          mother_list[count], 
+          strsplit(sib_list[count], ",")[[1]],
           proband_list[count]))
+        #print(sampleID1s)
         ##gender restrict variants on X or Y###
         if ((chr == "X" ||
              chr == "Y")  &&
@@ -1186,6 +1251,7 @@ runRdTest<-function(bed)
         ##remove sample of interest from sample exclude list and make new genotype matrix##
         genotype_matrix<-specified_cnv(cnv_matrix, sampleID1s, cnvID, chr, start, end, cnvtype)
         ##remove singlesample for exclusion list##
+        #print(singlesample)
         p <-onesamplezscore.median(genotype_matrix,cnv_matrix,singlesample,cnvtype)
         #write metric for each family member
         eval(parse(text=paste(mem,".p.list[count]<-", p[1],sep="")))
