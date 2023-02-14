@@ -11,7 +11,6 @@ workflow RdTestVisualization{
         File sample_batches
         File batch_bincov
         File bed
-        String flags
         String sv_pipeline_rdtest_docker
         RuntimeAttr? runtime_attr_rdtest
     }
@@ -23,7 +22,6 @@ workflow RdTestVisualization{
                 sample_batches=sample_batches,
                 batch_bincov=batch_bincov,
                 prefix=prefix,
-                flags=flags,
                 sv_pipeline_rdtest_docker=sv_pipeline_rdtest_docker,
                 runtime_attr_override = runtime_attr_rdtest
         }
@@ -47,7 +45,6 @@ task rdtest {
         File pedfile
         String prefix
         String sv_pipeline_rdtest_docker
-        String flags
         RuntimeAttr? runtime_attr_override
     }
     RuntimeAttr default_attr = object {
@@ -101,7 +98,6 @@ task rdtest {
             -d TRUE \
             -w samples.txt \
             -s 10000000 \
-            ~{flags}
         mkdir ~{prefix}_rd_plots
         mv *jpg ~{prefix}_rd_plots
         tar -czvf ~{prefix}_rd_plots.tar.gz ~{prefix}_rd_plots/
