@@ -137,7 +137,6 @@ task generate_per_sample_bed{
     }
 
     String filename = basename(varfile, ".bed")
-    File samples = write_lines(sample_ids)
 
     command <<<
         set -euo pipefail
