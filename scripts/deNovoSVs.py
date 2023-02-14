@@ -503,8 +503,8 @@ vcf_metrics    """
     
     ## Large CNVS: Reciprocal overlap large_raw_overlap
     verbosePrint('Checking large cnvs in raw files', verbose)
-    large_bed_filt_cnv_other = bed_child[(bed_child['is_large_cnv'] == True) & (bed_child['ALGORITHMS'] == "depth") & (bed_child['SVLEN'] >= 5000)]
-    large_bed_filt_cnv_depth = bed_child[(bed_child['is_large_cnv'] == True) & (bed_child['ALGORITHMS'] != "depth")]
+    large_bed_filt_cnv_depth = bed_child[(bed_child['is_large_cnv'] == True) & (bed_child['ALGORITHMS'] == "depth") & (bed_child['SVLEN'] >= 5000)]
+    large_bed_filt_cnv_other = bed_child[(bed_child['is_large_cnv'] == True) & (bed_child['ALGORITHMS'] != "depth")]
     if (len(large_bed_filt_cnv_other.index) > 0):
         verbosePrint('Checking if large cnv in proband is in raw files', verbose)
         bed_filt_cnv_proband_other = convertToBedtool(large_bed_filt_cnv_other, cols_to_keep=cols_keep_child,sort=True)
@@ -539,7 +539,7 @@ vcf_metrics    """
     verbosePrint('Checking small cnvs in raw files', verbose)
     #small_bed_filt_cnv = bed_child[bed_child['is_small_cnv'] == True]
     #small_bed_filt_cnv_depth = bed_child[(bed_child['is_small_cnv'] == True) & (bed_child['ALGORITHMS'] == "depth") & (bed['SVLEN'] >= 5000)]
-    small_bed_filt_cnv = bed_child[(bed_child['is_small_cnv'] == True) &(bed_child['ALGORITHMS'] != "depth")] # we do not want to check against raw depth files if CNV <= 5kb
+    small_bed_filt_cnv = bed_child[(bed_child['is_small_cnv'] == True) & (bed_child['ALGORITHMS'] != "depth")] # we do not want to check against raw depth files if CNV <= 5kb
     if (len(small_bed_filt_cnv.index) > 0):
         verbosePrint('Checking if small cnv in proband is in raw files', verbose)
         bed_filt_cnv_proband = convertToBedtool(small_bed_filt_cnv, cols_to_keep=cols_keep_child,sort=True)
