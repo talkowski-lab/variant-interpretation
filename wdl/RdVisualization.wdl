@@ -88,7 +88,7 @@ task rdtest {
         tabix allcovfile.bed.gz
         rm covfile.*.bed
         zcat allcovfile.bed.gz |head -n 1|cut -f 4-|tr '\t' '\n'>samples.txt
-        Rscript /opt/RdTest/RdTest.R \
+        Rscript /opt/RdTest/Rd.R \
             -b test.bed \
             -n ~{prefix} \
             -c allcovfile.bed.gz \
