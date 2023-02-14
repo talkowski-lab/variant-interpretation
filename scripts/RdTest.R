@@ -794,7 +794,7 @@ plotJPG <- function(genotype_matrix,cnv_matrix,chr,start,end,cnvID,sampleIDs,out
   if (plotfamily == TRUE ) {
     ##Call familes to plot###
     ##May have issues with multi-generation pedigress, Designed for Quad and Trio Families##
-    family <- read.table('subset_ped.txt', sep="\t",header=TRUE)
+    family <- read.table(famfile, sep="\t",header=TRUE)
     singleton_families <- names(which((table(family$FamID) == 1)))
     singleton_samples <- subset(family, FamID %in% singleton_families)
     #child<-family[which(family[, 3] != 0 & family[, 4] != 0 ) , 2]
@@ -848,7 +848,7 @@ plotJPG <- function(genotype_matrix,cnv_matrix,chr,start,end,cnvID,sampleIDs,out
     if(!is.na(sib_list)){
       if(length(strsplit(sib_list, ",")[[1]]) > 1) {
         for (i in (1:length(strsplit(sib_list, ",")[[1]]))) {
-          print(strsplit(sib_list, ",")[[1]][i])
+          #print(strsplit(sib_list, ",")[[1]][i])
           lines(as.numeric(cnv_matrix[strsplit(sib_list, ",")[[1]][i],]), col = "blueviolet" )
         }
       }
@@ -1161,7 +1161,7 @@ runRdTest<-function(bed)
   ##De Novo Module##
   if (opt$denovo == TRUE) {
     ##Read in family file##
-    family <- read.table('subset_ped.txt', sep="\t",header=TRUE)
+    family <- read.table(famfile, sep="\t",header=TRUE)
     samplesPrior <- family$IndividualID
     singleton_families <- names(which((table(family$FamID) == 1)))
     singleton_samples <- subset(family, FamID %in% singleton_families)
