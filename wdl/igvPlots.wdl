@@ -72,7 +72,7 @@ task runIGV_whole_genome{
             python /src/makeigvpesr.py -v ~{varfile} -n ~{nested_repeats} -s ~{simple_repeats} -e ~{empty_track} -f ~{fasta} -sample ~{sample} -samples ~{sep="," samples} -crams ~{sep="," crams} -o pe_igv_plots -b 500
             bash pe.sh
             xvfb-run --server-args="-screen 0, 1920x540x24" bash /IGV_2.4.14/igv.sh -b pe.txt
-            tar -czf ~{fam_id}_pe_igv_plots.tar.gz pe_igv_plots
+            tar -czf ~{sample}_pe_igv_plots.tar.gz pe_igv_plots
 
         >>>
     runtime {
@@ -82,7 +82,7 @@ task runIGV_whole_genome{
         disks: "local-disk 100 HDD"
         }
     output{
-        File pe_plots="~{fam_id}_pe_igv_plots.tar.gz"
+        File pe_plots="~{sample}_pe_igv_plots.tar.gz"
         File pe_txt = "pe.txt"
         }
     }

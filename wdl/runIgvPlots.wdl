@@ -142,11 +142,11 @@ task generate_per_sample_bed{
     command <<<
         set -euo pipefail
         cat ~{varfile} | gunzip | cut -f1-6 > updated_varfile.bed
-        grep ~{sample} updated_varfile.bed | cut -f1-5 | awk '{print $1,$2,$3,$4,$5}' | sed -e 's/ /\t/g' > ~{filename}.~{sample_id}.bed
+        grep ~{sample} updated_varfile.bed | cut -f1-5 | awk '{print $1,$2,$3,$4,$5}' | sed -e 's/ /\t/g' > ~{filename}.~{sample}.bed
         >>>
 
     output{
-        File per_sample_varfile= "~{filename}.~{sample_id}.bed"
+        File per_sample_varfile= "~{filename}.~{sample}.bed"
         }
 
     RuntimeAttr runtime_attr = select_first([runtime_attr_override, default_attr])
