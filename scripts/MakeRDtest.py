@@ -61,11 +61,15 @@ class Variant():
     self.family_id=family_id
   def pesrplotname(self,dir):
     #print((dir+self.varname+".png"))
-    if os.path.isfile(dir+self.varname+".png"):
-      return dir+self.varname+".png"
-    elif os.path.isfile(dir+self.varname+".left.png") and os.path.isfile(dir+self.varname+".right.png"):
-      hstack(dir+self.varname+".left.png",dir+self.varname+".right.png",dir+self.varname+".png")
-      return dir+self.varname+".png"
+    #print(dir+self.family_id+"_"+self.name+".png")
+    #exit()
+    #print('igv')
+    #print(dir+self.family_id+"_"+self.name+".left.png",dir+self.family_id+"_"+self.name+".png")
+    if os.path.isfile(dir+self.family_id+"_"+self.name+".png"):
+      return dir+self.family_id+"_"+self.name+".png"
+    elif os.path.isfile(dir+self.family_id+"_"+self.name+".left.png") and os.path.isfile(dir+self.family_id+"_"+self.name+".right.png"):
+      hstack(dir+self.family_id+"_"+self.name+".left.png",dir+self.family_id+"_"+self.name+".png")
+      return dir+self.family_id+"_"+self.name+".png"
     else:
       #raise Exception(dir+self.varname+".png"+" PESR files not found")
       return 'Error'
@@ -77,7 +81,8 @@ class Variant():
     else:
       newstart=self.start
       newend=self.end
-    print(self.name)
+    #print('rd')
+    #print(dir+self.chr+"_"+newstart+"_"+newend+"_"+self.samples[0]+"_"+self.name+"_"+self.prefix+"_"+self.samples[0]+".jpg")
     #print(self.samples[0].split('__')[1])
     #print((dir+self.chr+"_"+newstart+"_"+newend+"_"+self.samples[0]+"_"+self.name+"_"+self.prefix+"_"+self.samples[0].split('__')[1]+".jpg"))
     if os.path.isfile(dir+self.chr+"_"+newstart+"_"+newend+"_"+self.samples[0]+"_"+self.name+"_"+self.prefix+"_"+self.samples[0]+".jpg"):
