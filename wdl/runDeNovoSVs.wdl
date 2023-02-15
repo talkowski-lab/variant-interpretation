@@ -626,6 +626,7 @@ task plot_createPlots{
         File size_plot = "size.png"
         File evidence_plot = "evidence.png"
         File annotation_plot = "annotation.png"
+        File per_type_plot = "per_type.png"
 
     }
 
