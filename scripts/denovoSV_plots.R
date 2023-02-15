@@ -388,7 +388,7 @@ denovo_cons_type %>%
         query.legend = "top") -> p_denovo_upset_all
 
 grob_annotation_upset_plot <- as.grob(p_denovo_upset_all)
-ggsave("annotation.png", p_size_count, width = 25, height = 20) 
+ggsave("annotation.png", grob_annotation_upset_plot, width = 20, height = 20) 
 
 # denovo_cons_coding %>% 
 #   upset(sets = names(denovo_cons_coding),
