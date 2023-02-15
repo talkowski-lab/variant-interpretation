@@ -701,10 +701,11 @@ samprank_sep <- function(genotype_matrix,cnv_matrix,cnvtype,sample=NULL)
 }
 
 ##Plot of intensities across cohorts## 
-plotJPG <- function(genotype_matrix,cnv_matrix,chr,start,end,cnvID,sampleIDs,outputname,cnvtype,plotK,plotfamily,famfile,outFolder)
+plotJPG <- function(genotype_matrix,cnv_matrix,chr,start,end,cnvID,sampleIDs,allSamples,outputname,cnvtype,plotK,plotfamily,famfile,outFolder)
 {
   samplesPrior <- unlist(strsplit(as.character(sampleIDs),","))
   samplenames<-colnames(genotype_matrix)
+  allSamples = allSamples
   
   ##If only one bin##
   if(ncol(cnv_matrix)==1)
@@ -849,33 +850,53 @@ plotJPG <- function(genotype_matrix,cnv_matrix,chr,start,end,cnvID,sampleIDs,out
     #print(sib_list)
     #print(mother_list)
     #print(father_list)
-    if(mother_list != '0' | mother_list != 0) {lines(as.numeric(cnv_matrix[mother_list,]), col = "deeppink1" )}
-    if(father_list != '0' | father_list != 0) {lines(as.numeric(cnv_matrix[father_list,]), col = "darkgreen" )}
+    if(!(mother_list %in% allSamples)){if(mother_list != '0' | mother_list != 0) {lines(as.numeric(cnv_matrix[mother_list,]), col = "deeppink1" )}}
+    else {
+      if(mother_list != '0' | mother_list != 0) {lines(as.numeric(cnv_matrix[mother_list,]), col = "deeppink1", lwd = 3)}
+    }
+    #if(mother_list != '0' | mother_list != 0) {lines(as.numeric(cnv_matrix[mother_list,]), col = "deeppink1" )}
+    #if(father_list != '0' | father_list != 0) {lines(as.numeric(cnv_matrix[father_list,]), col = "darkgreen" )}
+    if(!(father_list %in% allSamples)){if(father_list != '0' | father_list != 0) {lines(as.numeric(cnv_matrix[father_list,]), col = "darkgreen" )}}
+    else {
+      if(father_list != '0' | father_list != 0) {lines(as.numeric(cnv_matrix[father_list,]), col = "darkgreen", lwd = 3)}
+    }
     #print(sib_list)
     #print(length(strsplit(sib_list, ",")[[1]]))
     if(!is.na(sib_list)){
       if(length(strsplit(sib_list, ",")[[1]]) > 1) {
         for (i in (1:length(strsplit(sib_list, ",")[[1]]))) {
           #print(strsplit(sib_list, ",")[[1]][i])
-          lines(as.numeric(cnv_matrix[strsplit(sib_list, ",")[[1]][i],]), col = "blueviolet" )
+          if(!(strsplit(sib_list, ",")[[1]][i] %in% allSamples)) {
+            lines(as.numeric(cnv_matrix[strsplit(sib_list, ",")[[1]][i],]), col = "blueviolet")
+          }
+          else {
+          lines(as.numeric(cnv_matrix[strsplit(sib_list, ",")[[1]][i],]), col = "blueviolet", lwd = 3 )
+          }
         }
       }
       else {
-        lines(as.numeric(cnv_matrix[sib_list,]), col = "blueviolet" )
+        if(!(sib_list %in% allSamples)) {lines(as.numeric(cnv_matrix[sib_list,]), col = "blueviolet" )}
+        else{lines(as.numeric(cnv_matrix[sib_list,]), col = "blueviolet", lwd = 3 )}
       }
     } 
     if(!is.na(child_list)){
       if(length(strsplit(child_list, ",")[[1]]) > 1) {
         for (i in (1:length(strsplit(child_list, ",")[[1]]))) {
-          #print(strsplit(sib_list, ",")[[1]][i])
-          lines(as.numeric(cnv_matrix[strsplit(child_list, ",")[[1]][i],]), col = "cornflowerblue" )
+          if(!(strsplit(child_list, ",")[[1]][i] %in% allSamples)) {
+            lines(as.numeric(cnv_matrix[strsplit(child_list, ",")[[1]][i],]), col = "gold1")
+          }
+          else {
+            lines(as.numeric(cnv_matrix[strsplit(child_list, ",")[[1]][i],]), col = "gold1", lwd = 3 )
+          }
         }
       }
       else {
-        lines(as.numeric(cnv_matrix[child_list,]), col = "cornflowerblue" )
-      }
+        if(!(child_list %in% allSamples)) {lines(as.numeric(cnv_matrix[child_list,]), col = "gold1" )}
+        else{lines(as.numeric(cnv_matrix[child_list,]), col = "gold1", lwd = 3 )}
+    }
     }
   }
+  
   if (plotK == TRUE) {
     copy_states = as.numeric(unique(plot_colormatrix[1,5:ncol(plot_colormatrix)]))
     legend(
@@ -890,7 +911,7 @@ plotJPG <- function(genotype_matrix,cnv_matrix,chr,start,end,cnvID,sampleIDs,out
       'topright',
       c("Deletion", "Diploid", "Mother" , "Father", "Sibling", "Children"),
       lty = 1,
-      col = c("red", "grey", "deeppink1", "darkgreen", "blueviolet", "cornflowerblue"),
+      col = c("red", "grey", "deeppink1", "darkgreen", "blueviolet", "gold1"),
       cex = .5
     )
   } else {
@@ -898,7 +919,7 @@ plotJPG <- function(genotype_matrix,cnv_matrix,chr,start,end,cnvID,sampleIDs,out
       'topright',
       c("Diploid", "Duplication", "Mother" , "Father", "Sibling", "Children"),
       lty = 1,
-      col = c("grey", "blue", "deeppink1", "darkgreen", "blueviolet", "cornflowerblue"),
+      col = c("grey", "blue", "deeppink1", "darkgreen", "blueviolet", "gold1"),
       cex = .5
     )
   }
@@ -1046,14 +1067,7 @@ if(!file.exists(paste(outFolder,outputname,".geno",sep=""))) {
  } 
  write.table(matrix(c(chr, start, end, cnvID,copystate),nrow=1),paste(outFolder, outputname, ".geno", sep = ""),
              quote = FALSE,col.names = FALSE, row.names = FALSE,append=TRUE,sep= "\t")
- 
- ##plot genotypes##
- if (opt$plotK==TRUE) {
-   ##plotting expect copy state >1 than predicted because kmeans code, this is corrected in final plot##
-   plot_matrix<-matrix(c(cnvID,chr, start, end,copystate+1),nrow=1)
-   colnames(plot_matrix)<-colnames(genotype_matrix)
-   plotJPG(plot_matrix,plot_cnvmatrix,chr,start,end,cnvID,sampleIDs,outputname,cnvtype,plotK=TRUE,plotfamily=FALSE,famfile,outFolder)
- }
+
  
 }
 
@@ -1061,9 +1075,14 @@ runRdTest<-function(bed)
 { 
   chr<-as.character(bed[1])
   start<-as.numeric(bed[2])
+  print(start)
   end<-as.numeric(bed[3])
+  print(end)
   cnvID<-as.character(bed[4])
+  print(cnvID)
   sampleIDs<-as.character(bed[5])
+  sampleIDs_v <- strsplit(sampleIDs, ",")
+  print(sampleIDs_v)
   sampleOrigIDs<-as.character(bed[5])
   cnvtype<-as.character(bed[6])
   cnvtypeOrigIDs<-as.character(bed[6])
@@ -1144,13 +1163,7 @@ runRdTest<-function(bed)
   samplestokeep<-match(unlist(strsplit(sampleIDs,",")),idsforsearch)
   sampleIDs<-idsforsearch[na.omit(samplestokeep)]
   samplesPrior <-unlist(strsplit(as.character(sampleIDs),split=","))
-  ##Run K Test if Specified##
-  if (opt$runKmeans == TRUE) {
-    k_matrix<-kMeans(cnv_matrix,chr,start,end,cnvID,Kinterval,Kintervalstart,Kintervalend,outFolder,outputname)
-    if (opt$plotK==TRUE) {
-      plotJPG(k_matrix,cnv_matrix,chr,start,end,cnvID,sampleIDs,outputname,cnvtype,plotK,plotfamily=FALSE,famfile,outFolder)
-    }
-  }
+ 
   ##Assign intial genotypes (del=1,dup=3,diploid=2)##
   genotype_matrix<-specified_cnv(cnv_matrix, sampleIDs, cnvID, chr, start, end, cnvtype)
   ##check if no samples are found in genotype matrix##
@@ -1173,15 +1186,12 @@ runRdTest<-function(bed)
   if (is.na(dipcount)){
         return(c(chr,start,end,cnvID,sampleOrigIDs,cnvtypeOrigIDs,"All_samples_called_CNV_no_analysis","All_samples_called_CNV_no_analysis","All_samples_called_CNV_no_analysis","All_samples_called_CNV_no_analysis","All_samples_called_CNV_no_analysis","All_samples_called_CNV_no_analysis"))
   } 
-  ##Plot JPG##
-  if (opt$plot == TRUE){
-    plotJPG(genotype_matrix,cnv_matrix,chr,start,end,cnvID,sampleIDs,outputname,cnvtype,plotK=FALSE,plotfamily=FALSE,famfile,outFolder)
-  }
+  
   ##De Novo Module##
   if (opt$denovo == TRUE) {
     ##Read in family file##
     family <- read.table(famfile, sep="\t",header=TRUE)
-    samplesPrior <- family$IndividualID
+    samples <- family$IndividualID
     singleton_families <- names(which((table(family$FamID) == 1)))
     singleton_samples <- subset(family, FamID %in% singleton_families)
     #child<-family[which(family[, 3] != 0 & family[, 4] != 0 ) , 2]
@@ -1215,13 +1225,14 @@ runRdTest<-function(bed)
       family[i,8] = children_list
     }
     
-    samplesPrior <- family$IndividualID #list of all samples
-    paternal_id <- family$FatherID #values that do not exist are 0
+    subset_ped <- subset(family, IndividualID %in% sampleIDs_v[[1]])
+    samplesPrior <- subset_ped$IndividualID #list of all samples
+    paternal_id <- subset_ped$FatherID #values that do not exist are 0
     paternal_id[paternal_id == 0] <- NA
-    maternal_id <- family$MotherID #values that do not exist are 0
+    maternal_id <- subset_ped$MotherID #values that do not exist are 0
     maternal_id[maternal_id == 0] <- NA
-    sibling_id <- family$sibling #values that do not exist are NA
-    children_id <- family$children #values that do not exist are NA
+    sibling_id <- subset_ped$sibling #values that do not exist are NA
+    children_id <- subset_ped$children #values that do not exist are NA
     ##If ID only has parents or all children removed by filtering##
     if (length(samplesPrior) == 0 ) {
       denovo_output <- cbind(chr,start,end,cnvID,cnvtype,"No_samples_for_analysis","No_samples_for_analysis","No_samples_for_analysis","No_samples_for_analysis","No_samples_for_analysis","No_samples_for_analysis","No_samples_for_analysis","No_samples_for_analysis","No_samples_for_analysis","No_samples_for_analysis",
@@ -1239,8 +1250,9 @@ runRdTest<-function(bed)
     sib_list <-as.character(sibling_id)
     child_list <- as.character(children_id)
     father_list <-as.character(paternal_id)
+    print(father_list)
     mother_list <-as.character(maternal_id)
-    for (mem in c("mo","p1","s1","fa","c1")) {
+    for (mem in c("mo","p1","s1","fa", "c1")) {
       eval(parse(text=paste(mem,".p.list<-c()",sep="")))
       eval(parse(text=paste(mem,".secmaxp.list<-c()",sep="")))
       eval(parse(text=paste(mem,".rankp.list<-c()",sep="")))
@@ -1252,6 +1264,7 @@ runRdTest<-function(bed)
     for (i in included) {
       count = count + 1
       for (singlesample in na.omit(c(individual_list[count],strsplit(sib_list[count], ",")[[1]], strsplit(child_list[count], ",")[[1]], father_list[count],mother_list[count]))) {
+        print(singlesample)
         if (singlesample %in% individual_list) {mem="p1"}
         if (singlesample %in%  strsplit(sib_list[count], ",")[[1]] ) {mem="s1"} #see if sibling in the sibling string the is divided by ,
         if (singlesample %in%  strsplit(child_list[count], ",")[[1]] ) {mem="c1"} #see if child in the child string the is divided by ,
@@ -1259,7 +1272,7 @@ runRdTest<-function(bed)
         if (singlesample %in% mother_list) {mem="mo"}
         ##Add family members to sample include list##
         sampleID1s = unique(c(
-          as.character(sampleIDs),
+          #as.character(sampleIDs),
           father_list[count],
           mother_list[count], 
           strsplit(sib_list[count], ",")[[1]],
@@ -1297,7 +1310,7 @@ runRdTest<-function(bed)
       if (TRUE==TRUE) {
         #sampleID2s<-paste(unique(grep(i,unlist(strsplit(as.character(sampleIDs),split=",")),value=TRUE)),collapse=",")
         sampleID2s<-paste(unique(unlist(strsplit(as.character(sampleIDs),split=",")),value=TRUE),collapse=",")
-        plotJPG(original_genotype_matrix,original_cnv_matrix,chr,start,end,cnvID,sampleIDs=i,outputname=paste(outputname,"_",i,sep=""),cnvtype,plotK=FALSE,plotfamily,famfile,outFolder)
+        plotJPG(original_genotype_matrix,original_cnv_matrix,chr,start,end,cnvID,sampleIDs=i,sampleIDs,outputname=paste(outputname,"_",i,sep=""),cnvtype,plotK=FALSE,plotfamily,famfile,outFolder)
       }
     }
     if (opt$quartetDenovo==TRUE) {
