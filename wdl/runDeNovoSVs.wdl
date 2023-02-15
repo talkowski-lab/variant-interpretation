@@ -618,6 +618,15 @@ task plot_createPlots{
 
     output{
         File output_plots = "output_plots.pdf"
+        File per_chrom_plot = "per_chrom.png"
+        File per_sample_plot = "per_sample.png"
+        File per_freq_plot = "per_freq.png"
+        File per_freq_gd_plot = "per_freq_gd.png"
+        File per_freq_not_gd = "per_freq_not_gd.png"
+        File size_plot = "size.png"
+        File evidence_plot = "evidence.png"
+        File annotation_plot = "annotation.png"
+
     }
 
     command {
