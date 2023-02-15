@@ -113,9 +113,9 @@ denovo %>%
   scale_x_discrete(limits = rev(levels(denovo$SVTYPE))) +
   theme(
     legend.position = "right",
-    axis.text = element_text(size = 40),
-    axis.title = element_text(size = 40),
-    plot.title = element_text(size=40),
+    axis.text = element_text(size = 50),
+    axis.title = element_text(size = 50),
+    plot.title = element_text(size=50),
     axis.text.x = element_text(angle = 45, hjust = 1),
     panel.border = element_blank(),
     axis.line = element_line(colour = "black"),
@@ -137,9 +137,9 @@ denovo %>%
   theme_classic() +
   theme(
     legend.position = "right",
-    axis.text = element_text(size = 40),
-    axis.title = element_text(size = 40),
-    plot.title = element_text(size=40),
+    axis.text = element_text(size = 50),
+    axis.title = element_text(size = 50),
+    plot.title = element_text(size=50),
     axis.text.x = element_text(angle = 45, hjust = 1),
     panel.border = element_blank(),
     axis.line = element_line(colour = "black"),
@@ -179,9 +179,9 @@ df$samples <- as.factor(df$samples)
 p <- ggplot(df, aes(y=num_of_denovos)) + geom_boxplot() + labs(title = "Number of de novo SVs per sample", y = "Number of de novos", x = "Samples") + theme_classic() +
   theme(
     legend.position = "right",
-    axis.text = element_text(size = 40),
-    axis.title = element_text(size = 40),
-    plot.title = element_text(size=40),
+    axis.text = element_text(size = 50),
+    axis.title = element_text(size = 50),
+    plot.title = element_text(size=50),
     axis.text.x = element_text(angle = 45, hjust = 1),
     panel.border = element_blank(),
     axis.line = element_line(colour = "black"),
@@ -210,9 +210,9 @@ denovo %>%
   theme_classic() +
   theme(
     legend.position = "right",
-    axis.text = element_text(size = 40),
-    axis.title = element_text(size = 40),
-    plot.title = element_text(size=40),
+    axis.text = element_text(size = 50),
+    axis.title = element_text(size = 50),
+    plot.title = element_text(size=50),
     axis.text.x = element_text(angle = 45, hjust = 1),
     panel.border = element_blank(),
     axis.line = element_line(colour = "black"),
@@ -244,9 +244,9 @@ denovo_in_gd %>%
   theme_classic() +
   theme(
     legend.position = "right",
-    axis.text = element_text(size = 40),
-    axis.title = element_text(size = 40),
-    plot.title = element_text(size=40),
+    axis.text = element_text(size = 50),
+    axis.title = element_text(size = 50),
+    plot.title = element_text(size=50),
     axis.text.x = element_text(angle = 45, hjust = 1),
     panel.border = element_blank(),
     axis.line = element_line(colour = "black"),
@@ -265,9 +265,9 @@ denovo_not_in_gd %>%
   theme_classic() +
   theme(
     legend.position = "right",
-    axis.text = element_text(size = 40),
-    axis.title = element_text(size = 40),
-    plot.title = element_text(size=40),
+    axis.text = element_text(size = 50),
+    axis.title = element_text(size = 50),
+    plot.title = element_text(size=50),
     axis.text.x = element_text(angle = 45, hjust = 1),
     panel.border = element_blank(),
     axis.line = element_line(colour = "black"),
@@ -300,9 +300,9 @@ denovo %>%
   theme_classic() +
   theme(
     legend.position = "right",
-    axis.text = element_text(size = 40),
-    axis.title = element_text(size = 40),
-    plot.title = element_text(size=40),
+    axis.text = element_text(size = 50),
+    axis.title = element_text(size = 50),
+    plot.title = element_text(size=50),
     axis.text.x = element_text(angle = 45, hjust = 1),
     panel.border = element_blank(),
     axis.line = element_line(colour = "black"),
@@ -326,9 +326,9 @@ denovo %>%
   theme_classic() +
   theme(
     legend.position = "right",
-    axis.text = element_text(size = 40),
-    axis.title = element_text(size = 40),
-    plot.title = element_text(size=40),
+    axis.text = element_text(size = 50),
+    axis.title = element_text(size = 50),
+    plot.title = element_text(size=50),
     axis.text.x = element_text(angle = 45, hjust = 1),
     panel.border = element_blank(),
     axis.line = element_line(colour = "black"),
@@ -409,8 +409,9 @@ denovo_cons_type %>%
         order.by = "freq", 
         set_size.show = TRUE,
         # set_size.scale_max = 15000, 
-        text.scale = 2.5, 
-        query.legend = "top") -> p_denovo_upset_all
+        text.scale = 4, 
+        query.legend = "top",
+        ) -> p_denovo_upset_all
 
 grob_annotation_upset_plot <- as.grob(p_denovo_upset_all)
 ggsave("annotation.png", grob_annotation_upset_plot, width = 30, height = 20) 
@@ -503,8 +504,8 @@ lay <- rbind(c(1,1,2,2,2,2,2,2),
              c(7,7,7,7,8,8,8,8),
              c(9,9,9,9,9,9,NA,NA))
 
-ml <- grid.arrange(p, p_type_count, p_chr_count, p_af_count, p_af_count_in_gd, p_af_count_not_in_gd, p_size_count, p_evidence, grob_annotation_upset_plot, layout_matrix = lay, top=textGrob("De Novo SV Data", gp=gpar(fontsize=40)))
-ggsave(out_file, ml, width = 49, height = 45)
+ml <- grid.arrange(p, p_type_count, p_chr_count, p_af_count, p_af_count_in_gd, p_af_count_not_in_gd, p_size_count, p_evidence, grob_annotation_upset_plot, layout_matrix = lay, top=textGrob("De Novo SV Data", gp=gpar(fontsize=50)))
+ggsave(out_file, ml, width = 70, height = 65, limitsize = FALSE)
 
 
 # 
@@ -512,3 +513,4 @@ ggsave(out_file, ml, width = 49, height = 45)
 # lay <- rbind(c(1,1,2,2,3,3))
 # ml <- grid.arrange(p_af_count_known, p_size_count_known, p_evidence_known, layout_matrix = lay, top=textGrob("Chr16 Known CMG De Novo SV Data"))
 # ggsave(known_out_file, ml, width = 8, height = 5)
+
