@@ -97,7 +97,7 @@ task rdtest {
             -a TRUE \
             -d TRUE \
             -w samples.txt \
-            -s 10000000 \
+            -s 10000000
         mkdir ~{prefix}_rd_plots
         mv *jpg ~{prefix}_rd_plots
         tar -czvf ~{prefix}_rd_plots.tar.gz ~{prefix}_rd_plots/
