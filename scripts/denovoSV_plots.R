@@ -101,6 +101,30 @@ cpx_col <- "#4DA1A9"
 ##Make plots
 denovo$chrom <- factor(denovo$chrom, levels = c("chr1", "chr2", "chr3", "chr4", "chr5", "chr6", "chr7", "chr8", "chr9", "chr10", "chr11", "chr12", "chr13", "chr14", "chr15", "chr16", "chr17", "chr18", "chr19", "chr20", "chr21", "chr22", "chrX"))
 
+##Count by SV Type
+denovo %>%
+  select(SVTYPE, name, SVTYPE) %>%
+  unique() %>%
+  ggplot(aes(x = SVTYPE, fill = SVTYPE)) +
+  geom_bar() +
+  labs(x="SV Type", y="Number de novo SVs", title= "Number of De Novo SVs per SV Type") +
+  scale_fill_manual(values = rev(c("DEL"=del_col, "DUP"=dup_col, "INS"=ins_col, "INV"=inv_col, "CPX"=cpx_col, "CTX"=ctx_col))) + 
+  theme_classic() +
+  scale_x_discrete(limits = rev(levels(denovo$SVTYPE))) +
+  theme(
+    legend.position = "right",
+    axis.text = element_text(size = 40),
+    axis.title = element_text(size = 40),
+    plot.title = element_text(size=40),
+    axis.text.x = element_text(angle = 45, hjust = 1),
+    panel.border = element_blank(),
+    axis.line = element_line(colour = "black"),
+    legend.title = element_text(size=30),
+    legend.text = element_text(size=25)) -> p_type_count
+p_type_count
+
+ggsave("per_type.png", p_type_count, width = 20, height = 15)
+
 
 ##Count by chromosome
 denovo %>%
@@ -124,6 +148,7 @@ denovo %>%
 p_chr_count
 
 ggsave("per_chrom.png", p_chr_count, width = 30, height = 15)
+
 
 # #Count by sample
 # denovo %>%
@@ -388,7 +413,7 @@ denovo_cons_type %>%
         query.legend = "top") -> p_denovo_upset_all
 
 grob_annotation_upset_plot <- as.grob(p_denovo_upset_all)
-ggsave("annotation.png", grob_annotation_upset_plot, width = 20, height = 20) 
+ggsave("annotation.png", grob_annotation_upset_plot, width = 30, height = 20) 
 
 # denovo_cons_coding %>% 
 #   upset(sets = names(denovo_cons_coding),
@@ -473,11 +498,12 @@ ggsave("annotation.png", grob_annotation_upset_plot, width = 20, height = 20)
 
 #Creating a panel of plots
 lay <- rbind(c(1,1,2,2,2,2,2,2),
-             c(3,3,NA,4,4,NA,5,5),
-             c(6,6,6,6,7,7,7,7),
-             c(8,8,8,8,8,8,NA,NA))
+             c(1,1,3,3,3,3,3,3),
+             c(4,4,NA,5,5,NA,6,6),
+             c(7,7,7,7,8,8,8,8),
+             c(9,9,9,9,9,9,NA,NA))
 
-ml <- grid.arrange(p, p_chr_count, p_af_count, p_af_count_in_gd, p_af_count_not_in_gd, p_size_count, p_evidence, grob_annotation_upset_plot, layout_matrix = lay, top=textGrob("De Novo SV Data", gp=gpar(fontsize=40)))
+ml <- grid.arrange(p, p_type_count, p_chr_count, p_af_count, p_af_count_in_gd, p_af_count_not_in_gd, p_size_count, p_evidence, grob_annotation_upset_plot, layout_matrix = lay, top=textGrob("De Novo SV Data", gp=gpar(fontsize=40)))
 ggsave(out_file, ml, width = 49, height = 45)
 
 
