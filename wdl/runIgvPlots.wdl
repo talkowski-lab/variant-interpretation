@@ -12,7 +12,7 @@ import "Structs.wdl"
 workflow IGV_all_samples {
     input {
         File ped_file
-        File sample_cram
+        File sample_crai_cram
         File varfile
         File Fasta
         File Fasta_dict
@@ -26,32 +26,34 @@ workflow IGV_all_samples {
         RuntimeAttr? runtime_attr_override
     }
 
-    call generate_samples{
+    call generate_families{
         input:
         varfile = varfile,
+        ped_file = ped_file,
         sv_base_mini_docker = sv_base_mini_docker,
         runtime_attr_override = runtime_attr_override
     }
-    scatter (sample in generate_samples.samples){
-        call generate_per_family_sample_cram_crai{
+    scatter (family in generate_families.families){
+        call generate_per_family_sample_crai_cram{
             input:
-                sample = sample,
+                family = family,
                 ped_file = ped_file,
                 sample_cram = sample_cram,
                 sv_base_mini_docker = sv_base_mini_docker,
                 runtime_attr_override = runtime_attr_override
             }
-        call generate_per_sample_bed{
+        call generate_per_family_bed{
             input:
                 varfile = varfile,
-                sample = sample,
+                samples = samples,
+                family = family,
                 ped_file = ped_file,
                 sv_base_mini_docker=sv_base_mini_docker,
                 runtime_attr_override=runtime_attr_override
             }
         call igv.IGV_trio as IGV_trio {
             input:
-                varfile=generate_per_sample_bed.per_sample_varfile,
+                varfile=generate_per_family_bed.per_family_varfile,
                 Fasta = Fasta,
                 Fasta_idx = Fasta_idx,
                 Fasta_dict = Fasta_dict,
@@ -60,9 +62,9 @@ workflow IGV_all_samples {
                 empty_track = empty_track,
                 sample = sample,
                 ped_file = ped_file,
-                samples = generate_per_family_sample_cram_crai.per_family_samples,
-                crams = generate_per_family_sample_cram_crai.per_family_crams,
-                crais = generate_per_family_sample_cram_crai.per_family_crais,
+                samples = generate_per_family_sample_crai_cram.per_family_samples,
+                crams = generate_per_family_sample_crai_cram.per_family_crams,
+                crais = generate_per_family_sample_crai_cram.per_family_crais,
                 igv_docker = igv_docker
             }
         }
@@ -78,9 +80,10 @@ workflow IGV_all_samples {
     }
 }
 
-task generate_samples{
+task generate_families{
     input {
         File varfile
+        File ped_file
         String sv_base_mini_docker
         RuntimeAttr? runtime_attr_override
     }
@@ -96,10 +99,11 @@ task generate_samples{
     command <<<
         set -euo pipefail
         cat ~{varfile} | gunzip | tail -n+2 | cut -f6 | tr ',' '\n' | sort -u > samples.txt #must have header line
+        grep -w -f samples.txt ~{ped_file} | cut -f1 | sort -u  > families.txt
         >>>
 
     output{
-        Array[String] samples = read_lines("samples.txt")
+        Array[String] families = read_lines("families.txt")
     }
 
     RuntimeAttr runtime_attr = select_first([runtime_attr_override, default_attr])
@@ -115,11 +119,11 @@ task generate_samples{
 
 }
 
-task generate_per_family_sample_cram_crai{
+task generate_per_family_sample_crai_cram{
     input {
-        String sample
+        String family
         File ped_file
-        File sample_cram
+        File sample_crai_cram
         String sv_base_mini_docker
         RuntimeAttr? runtime_attr_override
     }
@@ -134,11 +138,10 @@ task generate_per_family_sample_cram_crai{
 
     command <<<
         set -euo pipefail
-        grep -w ^~{sample} ~{ped_file} | cut -f1 > fam_id.txt
-        grep -w -f fam_id.txt ~{ped_file} | cut -f2 > samples.txt
-        grep -f samples.txt ~{sample_cram} > subset_sample_cram.txt
-        cut -f2 subset_sample_cram.txt > crai.txt
-        cut -f3 subset_sample_cram.txt > cram.txt
+        grep -w ~{family} ~{ped_file} | cut -f2 > samples.txt
+        grep -f samples.txt ~{sample_crai_cram} > subset_sample_crai_cram.txt
+        cut -f2 subset_sample_crai_cram.txt > crai.txt
+        cut -f3 subset_sample_crai_cram.txt > cram.txt
         >>>
 
     output{
@@ -160,10 +163,11 @@ task generate_per_family_sample_cram_crai{
 
 }
 
-task generate_per_sample_bed{
+task generate_per_family_bed{
     input {
         File varfile
-        String sample
+        Array[String] samples
+        String family
         File ped_file
         String sv_base_mini_docker
         RuntimeAttr? runtime_attr_override
@@ -182,11 +186,11 @@ task generate_per_sample_bed{
     command <<<
         set -euo pipefail
         cat ~{varfile} | gunzip | cut -f1-6 > updated_varfile.bed
-        grep ~{sample} updated_varfile.bed | cut -f1-5 | awk '{print $1,$2,$3,$4,$5}' | sed -e 's/ /\t/g' > ~{filename}.~{sample}.bed
+        grep -f ~{write_lines(samples)} updated_varfile.bed | cut -f1-5 | awk '{print $1,$2,$3,$4,$5}' | sed -e 's/ /\t/g' > ~{filename}.~{family}.bed
         >>>
 
     output{
-        File per_sample_varfile= "~{filename}.~{sample}.bed"
+        File per_family_varfile= "~{filename}.~{family}.bed"
         }
 
     RuntimeAttr runtime_attr = select_first([runtime_attr_override, default_attr])

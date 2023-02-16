@@ -17,7 +17,7 @@ workflow IGV_trio {
         File nested_repeats
         File simple_repeats
         File empty_track
-        String sample
+        String family
         File ped_file
         Array[String] samples
         Array[File] crams
@@ -34,7 +34,7 @@ workflow IGV_trio {
             nested_repeats = nested_repeats,
             simple_repeats = simple_repeats,
             empty_track = empty_track,
-            sample = sample,
+            family = family,
             ped_file = ped_file,
             samples = samples,
             crams = crams,
@@ -56,7 +56,7 @@ task runIGV_whole_genome{
         File nested_repeats
         File simple_repeats
         File empty_track
-        String sample
+        String family
         File ped_file
         Array[String] samples
         Array[File] crams
@@ -69,10 +69,10 @@ task runIGV_whole_genome{
             set -euo pipefail
             #export GCS_OAUTH_TOKEN=`gcloud auth application-default print-access-token`
             mkdir pe_igv_plots
-            python /src/makeigvpesr.py -v ~{varfile} -n ~{nested_repeats} -s ~{simple_repeats} -e ~{empty_track} -f ~{fasta} -sample ~{sample} -samples ~{sep="," samples} -crams ~{sep="," crams} -o pe_igv_plots -b 500
+            python /src/makeigvpesr.py -v ~{varfile} -n ~{nested_repeats} -s ~{simple_repeats} -e ~{empty_track} -f ~{fasta} -family ~{family} -samples ~{sep="," samples} -crams ~{sep="," crams} -p ~{ped_file} -o pe_igv_plots -b 500
             bash pe.sh
             xvfb-run --server-args="-screen 0, 1920x540x24" bash /IGV_2.4.14/igv.sh -b pe.txt
-            tar -czf ~{sample}_pe_igv_plots.tar.gz pe_igv_plots
+            tar -czf ~{family}_pe_igv_plots.tar.gz pe_igv_plots
 
         >>>
     runtime {
@@ -82,7 +82,7 @@ task runIGV_whole_genome{
         disks: "local-disk 100 HDD"
         }
     output{
-        File pe_plots="~{sample}_pe_igv_plots.tar.gz"
+        File pe_plots="~{family}_pe_igv_plots.tar.gz"
         File pe_txt = "pe.txt"
         }
     }
