@@ -45,7 +45,7 @@ workflow IGV_all_samples {
         call generate_per_family_bed{
             input:
                 varfile = varfile,
-                samples = samples,
+                samples = generate_per_family_sample_crai_cram.per_family_samples,
                 family = family,
                 ped_file = ped_file,
                 sv_base_mini_docker=sv_base_mini_docker,
