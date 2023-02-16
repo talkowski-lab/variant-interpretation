@@ -38,7 +38,7 @@ workflow IGV_all_samples {
             input:
                 family = family,
                 ped_file = ped_file,
-                sample_cram = sample_cram,
+                sample_crai_cram = sample_crai_cram,
                 sv_base_mini_docker = sv_base_mini_docker,
                 runtime_attr_override = runtime_attr_override
             }
