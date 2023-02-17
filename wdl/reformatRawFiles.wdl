@@ -54,8 +54,8 @@ workflow reformatRawFiles {
 
     output {
     
-        Array[File] reformatted_parents_raw_files = reformatRawBed.reformatted_parents_output
-        Array[File] reformatted_proband_raw_files = reformatRawBed.reformatted_proband_output
+        Array[File] reformatted_parents_raw_files = raw_reformatRawBed.reformatted_parents_output
+        Array[File] reformatted_proband_raw_files = raw_reformatRawBed.reformatted_proband_output
     }
 }   
 
