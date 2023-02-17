@@ -3,7 +3,7 @@ version 1.0
 
 import "Structs.wdl"
 import "RdVisualization.wdl" as rdtest
-import "runIgvPlots.wdl" as igv_trio
+import "runIgvPlots.wdl" as igv
 
 workflow VisualizePlots{
     input{
@@ -64,7 +64,7 @@ workflow VisualizePlots{
         File simple_repeats_ = select_first([simple_repeats])
         File empty_track_ = select_first([empty_track])
 
-        call igv_trio.IGV_all_samples as igv_plots {
+        call igv.IGV_all_samples as igv_plots {
             input:
                 ped_file = pedfile,
                 sample_crai_cram = sample_crai_cram_,
