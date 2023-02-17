@@ -7,6 +7,7 @@ workflow reformatRawFiles {
     input {
         Array[String] contigs
         File raw_files_list
+        File ped_input
         String variant_interpretation_docker
         RuntimeAttr? runtime_attr_vcf_to_bed
         RuntimeAttr? runtime_attr_merge_bed
