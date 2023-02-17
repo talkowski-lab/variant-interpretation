@@ -51,7 +51,7 @@ workflow deNovoSV {
             variant_interpretation_docker = variant_interpretation_docker,
             runtime_attr_vcf_to_bed = runtime_attr_raw_vcf_to_bed,
             runtime_attr_merge_bed = runtime_attr_raw_merge_bed,
-            runtime_attr_divide_by_chrom = runtime_attr_raw_divide_by_chrom
+            runtime_attr_divide_by_chrom = runtime_attr_raw_divide_by_chrom,
             runtime_attr_reformat_bed = runtime_attr_raw_reformat_bed
     }
       
