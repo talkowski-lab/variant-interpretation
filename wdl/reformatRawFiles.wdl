@@ -51,13 +51,13 @@ workflow reformatRawFiles {
                 runtime_attr_override = runtime_attr_reformat_bed
         }
     }
-}
 
     output {
     
         Array[File] reformatted_parents_raw_files = reformatRawBed.reformatted_parents_output
         Array[File] reformatted_proband_raw_files = reformatRawBed.reformatted_proband_output
-}
+    }
+}   
 
 task raw_VcfToBed{
     input{
