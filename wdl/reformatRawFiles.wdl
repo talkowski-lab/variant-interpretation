@@ -74,8 +74,8 @@ task raw_VcfToBed{
     RuntimeAttr default_attr = object {
                                       mem_gb: base_mem_gb + input_size * 3.0,
                                       disk_gb: ceil(base_disk_gb + input_size * 5.0),
-                                      cpu_cores: 1,
-                                      preemptible_tries: 2,
+                                      cpu: 1,
+                                      preemptible: 2,
                                       max_retries: 1,
                                       boot_disk_gb: 8
                                   }
@@ -95,11 +95,11 @@ task raw_VcfToBed{
     }
 
     runtime {
-        cpu: select_first([runtime_attr.cpu_cores, default_attr.cpu_cores])
+        cpu: select_first([runtime_attr.cpu, default_attr.cpu])
         memory: "~{select_first([runtime_attr.mem_gb, default_attr.mem_gb])} GB"
         disks: "local-disk ~{select_first([runtime_attr.disk_gb, default_attr.disk_gb])} HDD"
         bootDiskSizeGb: select_first([runtime_attr.boot_disk_gb, default_attr.boot_disk_gb])
-        preemptible: select_first([runtime_attr.preemptible_tries, default_attr.preemptible_tries])
+        preemptible: select_first([runtime_attr.preemptible, default_attr.preemptible])
         maxRetries: select_first([runtime_attr.max_retries, default_attr.max_retries])
         docker: variant_interpretation_docker
     }
@@ -120,8 +120,8 @@ task raw_mergeBed{
     RuntimeAttr default_attr = object {
                                       mem_gb: base_mem_gb + input_size * 3.0,
                                       disk_gb: ceil(base_disk_gb + input_size * 5.0),
-                                      cpu_cores: 1,
-                                      preemptible_tries: 2,
+                                      cpu: 1,
+                                      preemptible: 2,
                                       max_retries: 1,
                                       boot_disk_gb: 8
                                   }
@@ -140,11 +140,11 @@ task raw_mergeBed{
     }
 
     runtime {
-        cpu: select_first([runtime_attr.cpu_cores, default_attr.cpu_cores])
+        cpu: select_first([runtime_attr.cpu, default_attr.cpu])
         memory: "~{select_first([runtime_attr.mem_gb, default_attr.mem_gb])} GB"
         disks: "local-disk ~{select_first([runtime_attr.disk_gb, default_attr.disk_gb])} HDD"
         bootDiskSizeGb: select_first([runtime_attr.boot_disk_gb, default_attr.boot_disk_gb])
-        preemptible: select_first([runtime_attr.preemptible_tries, default_attr.preemptible_tries])
+        preemptible: select_first([runtime_attr.preemptible, default_attr.preemptible])
         maxRetries: select_first([runtime_attr.max_retries, default_attr.max_retries])
         docker: variant_interpretation_docker
     }
@@ -165,8 +165,8 @@ task raw_divideByChrom{
     RuntimeAttr default_attr = object {
                                       mem_gb: base_mem_gb + input_size * 3.0,
                                       disk_gb: ceil(base_disk_gb + input_size * 5.0),
-                                      cpu_cores: 1,
-                                      preemptible_tries: 2,
+                                      cpu: 1,
+                                      preemptible: 2,
                                       max_retries: 1,
                                       boot_disk_gb: 8
                                   }
@@ -185,11 +185,11 @@ task raw_divideByChrom{
     }
 
     runtime {
-        cpu: select_first([runtime_attr.cpu_cores, default_attr.cpu_cores])
+        cpu: select_first([runtime_attr.cpu, default_attr.cpu])
         memory: "~{select_first([runtime_attr.mem_gb, default_attr.mem_gb])} GB"
         disks: "local-disk ~{select_first([runtime_attr.disk_gb, default_attr.disk_gb])} HDD"
         bootDiskSizeGb: select_first([runtime_attr.boot_disk_gb, default_attr.boot_disk_gb])
-        preemptible: select_first([runtime_attr.preemptible_tries, default_attr.preemptible_tries])
+        preemptible: select_first([runtime_attr.preemptible, default_attr.preemptible])
         maxRetries: select_first([runtime_attr.max_retries, default_attr.max_retries])
         docker: variant_interpretation_docker
     }
@@ -211,8 +211,8 @@ task raw_reformatBed{
     RuntimeAttr default_attr = object {
                                       mem_gb: base_mem_gb + input_size * 3.0,
                                       disk_gb: ceil(base_disk_gb + input_size * 5.0),
-                                      cpu_cores: 1,
-                                      preemptible_tries: 2,
+                                      cpu: 1,
+                                      preemptible: 2,
                                       max_retries: 1,
                                       boot_disk_gb: 8
                                   }
@@ -235,11 +235,11 @@ task raw_reformatBed{
     }
 
     runtime {
-        cpu: select_first([runtime_attr.cpu_cores, default_attr.cpu_cores])
+        cpu: select_first([runtime_attr.cpu, default_attr.cpu])
         memory: "~{select_first([runtime_attr.mem_gb, default_attr.mem_gb])} GB"
         disks: "local-disk ~{select_first([runtime_attr.disk_gb, default_attr.disk_gb])} HDD"
         bootDiskSizeGb: select_first([runtime_attr.boot_disk_gb, default_attr.boot_disk_gb])
-        preemptible: select_first([runtime_attr.preemptible_tries, default_attr.preemptible_tries])
+        preemptible: select_first([runtime_attr.preemptible, default_attr.preemptible])
         maxRetries: select_first([runtime_attr.max_retries, default_attr.max_retries])
         docker: variant_interpretation_docker
     }
