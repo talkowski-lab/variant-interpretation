@@ -1,6 +1,7 @@
 version 1.0
     
-import "https://raw.githubusercontent.com/broadinstitute/gatk-sv/v0.26-beta/wdl/Structs.wdl"
+import "Structs.wdl"
+import "reformatRawFiles.wdl" as raw
 
 workflow deNovoSV {
 
@@ -12,6 +13,7 @@ workflow deNovoSV {
         Array[String] contigs
         File genomic_disorder_input
         File raw_files_list
+        File depth_raw_files_list
         File exclude_regions
         Array[File] coverage_files
         Array[File] coverage_index_files
@@ -20,17 +22,39 @@ workflow deNovoSV {
         String variant_interpretation_docker
         RuntimeAttr? runtime_attr_gd
         RuntimeAttr? runtime_attr_denovo
-        RuntimeAttr? runtime_attr_vcf_to_bed
-        RuntimeAttr? runtime_attr_merge_bed
+        RuntimeAttr? runtime_attr_raw_vcf_to_bed
+        RuntimeAttr? runtime_attr_raw_merge_bed
         RuntimeAttr? runtime_attr_subset_vcf
         RuntimeAttr? runtime_attr_vcf_to_bed
-        RuntimeAttr? runtime_attr_divide_by_chrom
-        RuntimeAttr? runtime_attr_reformat_bed
+        RuntimeAttr? runtime_attr_raw_divide_by_chrom
+        RuntimeAttr? runtime_attr_raw_reformat_bed
         RuntimeAttr? runtime_attr_merge_final_bed_files
         RuntimeAttr? runtime_attr_create_plots
     
     }
 
+    call raw.reformatRawFiles as reformatRawFiles {
+        input:
+            contigs = contigs,
+            raw_files_list = raw_files_list,
+            variant_interpretation_docker = variant_interpretation_docker,
+            runtime_attr_vcf_to_bed = runtime_attr_raw_vcf_to_bed,
+            runtime_attr_merge_bed = runtime_attr_raw_merge_bed,
+            runtime_attr_divide_by_chrom = runtime_attr_raw_divide_by_chrom
+            runtime_attr_reformat_bed = runtime_attr_raw_reformat_bed
+    }
+
+    call raw.reformatRawFiles as reformatDepthRawFiles {
+        input:
+            contigs = contigs,
+            raw_files_list = depth_raw_files_list,
+            variant_interpretation_docker = variant_interpretation_docker,
+            runtime_attr_vcf_to_bed = runtime_attr_raw_vcf_to_bed,
+            runtime_attr_merge_bed = runtime_attr_raw_merge_bed,
+            runtime_attr_divide_by_chrom = runtime_attr_raw_divide_by_chrom
+            runtime_attr_reformat_bed = runtime_attr_raw_reformat_bed
+    }
+      
     call getGenomicDisorders{
         input:
             genomic_disorder_input=genomic_disorder_input,
@@ -38,32 +62,12 @@ workflow deNovoSV {
             variant_interpretation_docker=variant_interpretation_docker,
             runtime_attr_override = runtime_attr_gd
     }
-
-
-    Array[String] raw_files = transpose(read_tsv(raw_files_list))[0]
-
-    scatter(raw_file in raw_files){
-        call raw_VcfToBed {
-            input:
-                vcf_file=raw_file,
-                variant_interpretation_docker=variant_interpretation_docker,
-                prefix = basename(raw_file, ".vcf.gz"),
-                runtime_attr_override = runtime_attr_vcf_to_bed
-        }
-    }
-
-    call raw_mergeBed {
-            input:
-                bed_files=raw_VcfToBed.bed_output,
-                variant_interpretation_docker=variant_interpretation_docker,
-                runtime_attr_override = runtime_attr_merge_bed
-    }
-
-    scatter (contig in contigs){
+    
+    scatter (i in range(length(contigs))){
         call subsetVcf {
             input:
                 vcf_file=vcf_file,
-                chromosome=contig,
+                chromosome=contigs[i],
                 variant_interpretation_docker=variant_interpretation_docker,
                 runtime_attr_override = runtime_attr_subset_vcf
         }
@@ -71,27 +75,10 @@ workflow deNovoSV {
         call vcfToBed{
             input:
                 vcf_file=subsetVcf.vcf_output,
-                chromosome=contig,
+                chromosome=contigs[i],
                 variant_interpretation_docker=variant_interpretation_docker,
                 runtime_attr_override = runtime_attr_vcf_to_bed
         }    
-
-        call raw_divideByChrom {
-            input:
-                bed_file = raw_mergeBed.concat_bed_output,
-                chromosome = contig,
-                variant_interpretation_docker=variant_interpretation_docker,
-                runtime_attr_override = runtime_attr_divide_by_chrom
-        }
-
-        call raw_reformatBed{
-            input:
-                per_chromosome_bed_file = raw_divideByChrom.per_chromosome_bed_output,
-                ped_input=ped_input,
-                chromosome=contig,
-                variant_interpretation_docker=variant_interpretation_docker,
-                runtime_attr_override = runtime_attr_reformat_bed
-        }
 
         call getDeNovo{
             input:
@@ -99,9 +86,11 @@ workflow deNovoSV {
                 ped_input=ped_input,
                 vcf_input=subsetVcf.no_header_vcf_output,
                 disorder_input=getGenomicDisorders.gd_output,
-                chromosome=contig,
-                raw_proband=raw_reformatBed.reformatted_proband_output,
-                raw_parents=raw_reformatBed.reformatted_parents_output,
+                chromosome=contigs[i],
+                raw_proband=reformatRawFiles.reformatted_proband_raw_files[i],
+                raw_parents=reformatRawFiles.reformatted_parents_raw_files[i],
+                raw_depth_proband=reformatDepthRawFiles.reformatted_proband_raw_files[i],
+                raw_depth_parents=reformatDepthRawFiles.reformatted_parents_raw_files[i],
                 exclude_regions = exclude_regions,
                 coverage_files = coverage_files,
                 coverage_indeces = coverage_index_files,
@@ -130,7 +119,6 @@ workflow deNovoSV {
             runtime_attr_override = runtime_attr_create_plots
     }
 
-
     output {
     
         File denovo_output = plot_mergeFinalBedFiles.final_denovo_output
@@ -138,7 +126,6 @@ workflow deNovoSV {
         File denovo_output_plots = plot_createPlots.output_plots
         Array[File] filtered_out = getDeNovo.filtered_out
         Array[File] size_file_out = getDeNovo.size_file_out
-
     }
 }
 
@@ -151,6 +138,8 @@ task getDeNovo{
         String chromosome
         File raw_proband
         File raw_parents
+        File raw_depth_proband
+        File raw_depth_parents
         File exclude_regions
         Array[File] coverage_files
         Array[File] coverage_indeces
@@ -192,6 +181,8 @@ task getDeNovo{
                 --out ~{chromosome}.denovo.bed \
                 --raw_proband ~{raw_proband} \
                 --raw_parents ~{raw_parents} \
+                --raw_depth_proband ~{raw_depth_proband} \
+                --raw_depth_parents ~{raw_depth_parents} \
                 --config ~{python_config} \
                 --filtered ~{chromosome}.filtered.txt \
                 --size_file ~{chromosome}.size.txt \
