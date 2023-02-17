@@ -8,7 +8,7 @@ version 1.0
 
 import "Structs.wdl"
 
-workflow IGV_trio {
+workflow IGV {
     input{
         File varfile
         File Fasta

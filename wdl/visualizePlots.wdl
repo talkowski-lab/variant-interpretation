@@ -5,7 +5,7 @@ import "Structs.wdl"
 import "RdVisualization.wdl" as rdtest
 import "runIgvPlots.wdl" as igv_trio
 
-workflow Module09VisualizeTrio{
+workflow VisualizePlots{
     input{
         File? Fasta
         File? Fasta_idx

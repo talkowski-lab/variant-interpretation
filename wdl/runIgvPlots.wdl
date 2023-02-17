@@ -51,7 +51,7 @@ workflow IGV_all_samples {
                 sv_base_mini_docker=sv_base_mini_docker,
                 runtime_attr_override=runtime_attr_override
             }
-        call igv.IGV_trio as IGV_trio {
+        call igv.IGV as IGV {
             input:
                 varfile=generate_per_family_bed.per_family_varfile,
                 Fasta = Fasta,
@@ -70,7 +70,7 @@ workflow IGV_all_samples {
         }
     call integrate_igv_plots{
         input:
-            igv_tar = IGV_trio.tar_gz_pe,
+            igv_tar = IGV.tar_gz_pe,
             prefix = prefix, 
             sv_base_mini_docker = sv_base_mini_docker
     }
