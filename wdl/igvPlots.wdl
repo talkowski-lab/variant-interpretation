@@ -43,7 +43,7 @@ workflow IGV {
     }
 
     output{
-        File tar_gz_pe = runIGV_whole_genome.pe_plots
+        File? tar_gz_pe = runIGV_whole_genome.pe_plots
     }
 }
 
@@ -82,7 +82,7 @@ task runIGV_whole_genome{
         disks: "local-disk 100 HDD"
         }
     output{
-        File pe_plots="~{family}_pe_igv_plots.tar.gz"
-        File pe_txt = "pe.txt"
+        File? pe_plots="~{family}_pe_igv_plots.tar.gz"
+        File? pe_txt = "pe.txt"
         }
     }
