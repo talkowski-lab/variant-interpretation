@@ -55,9 +55,10 @@ workflow IGV_all_samples {
                 runtime_attr_override=runtime_attr_override
             }
         if (defined(generate_per_family_bed.per_family_varfile)) {
+            File per_family_varfile = select_first([generate_per_family_bed.per_family_varfile])
             call igv.IGV as IGV {
                 input:
-                    varfile=generate_per_family_bed.per_family_varfile,
+                    varfile = per_family_varfile,
                     Fasta = Fasta,
                     Fasta_idx = Fasta_idx,
                     Fasta_dict = Fasta_dict,
