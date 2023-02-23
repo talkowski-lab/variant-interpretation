@@ -12,6 +12,7 @@ import "Structs.wdl"
 workflow IGV_all_samples {
     input {
         File ped_file
+        Array[String]? fam_ids
         File sample_crai_cram
         File varfile
         File Fasta
@@ -26,14 +27,16 @@ workflow IGV_all_samples {
         RuntimeAttr? runtime_attr_override
     }
 
-    call generate_families{
-        input:
-        varfile = varfile,
-        ped_file = ped_file,
-        sv_base_mini_docker = sv_base_mini_docker,
-        runtime_attr_override = runtime_attr_override
+    if (!(defined(fam_ids))) {
+        call generate_families{
+            input:
+                varfile = varfile,
+                ped_file = ped_file,
+                sv_base_mini_docker = sv_base_mini_docker,
+                runtime_attr_override = runtime_attr_override
+        }
     }
-    scatter (family in generate_families.families){
+    scatter (family in select_first([fam_ids, generate_families.families])){
         call generate_per_family_sample_crai_cram{
             input:
                 family = family,
@@ -51,23 +54,25 @@ workflow IGV_all_samples {
                 sv_base_mini_docker=sv_base_mini_docker,
                 runtime_attr_override=runtime_attr_override
             }
-        call igv.IGV as IGV {
-            input:
-                varfile=generate_per_family_bed.per_family_varfile,
-                Fasta = Fasta,
-                Fasta_idx = Fasta_idx,
-                Fasta_dict = Fasta_dict,
-                nested_repeats = nested_repeats,
-                simple_repeats = simple_repeats,
-                empty_track = empty_track,
-                family = family,
-                ped_file = ped_file,
-                samples = generate_per_family_sample_crai_cram.per_family_samples,
-                crams = generate_per_family_sample_crai_cram.per_family_crams,
-                crais = generate_per_family_sample_crai_cram.per_family_crais,
-                igv_docker = igv_docker
+        if (defined(generate_per_family_bed.per_family_varfile)) {
+            call igv.IGV as IGV {
+                input:
+                    varfile=generate_per_family_bed.per_family_varfile,
+                    Fasta = Fasta,
+                    Fasta_idx = Fasta_idx,
+                    Fasta_dict = Fasta_dict,
+                    nested_repeats = nested_repeats,
+                    simple_repeats = simple_repeats,
+                    empty_track = empty_track,
+                    family = family,
+                    ped_file = ped_file,
+                    samples = generate_per_family_sample_crai_cram.per_family_samples,
+                    crams = generate_per_family_sample_crai_cram.per_family_crams,
+                    crais = generate_per_family_sample_crai_cram.per_family_crais,
+                    igv_docker = igv_docker
             }
         }
+    }
     call integrate_igv_plots{
         input:
             igv_tar = IGV.tar_gz_pe,
@@ -190,7 +195,7 @@ task generate_per_family_bed{
         >>>
 
     output{
-        File per_family_varfile= "~{filename}.~{family}.bed"
+        File? per_family_varfile = "~{filename}.~{family}.bed"
         }
 
     RuntimeAttr runtime_attr = select_first([runtime_attr_override, default_attr])
