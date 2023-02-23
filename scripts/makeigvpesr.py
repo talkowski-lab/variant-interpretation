@@ -22,12 +22,14 @@ parser.add_argument('-samples', '--samples', type=str, help='comma separated lis
 parser.add_argument('-crams', '--crams', type=str, help='comma separated list of all cram files to run igv on')
 parser.add_argument('-o', '--outdir', type=str, help = 'output folder')
 parser.add_argument('-b', '--buff', type=str, help='length of buffer to add around variants', default=500)
+parser.add_argument('-l', '--large_buff', type=str, help='length of buffer for large regions to add around variants', default=500)
 parser.add_argument('-c', '--chromosome', type=str, help='name of chromosome to make igv on', default='all')
 
 args = parser.parse_args()
 
 
 buff = int(args.buff)
+large_buff = int(args.large_buff)
 fasta = args.fasta
 varfile = args.varfile
 pedigree = args.ped
@@ -134,8 +136,8 @@ with open(bamfiscript,'w') as h:
                     g.write('snapshotDirectory '+outdir+'\n')
                     g.write('snapshot '+fam_id+'_'+ID+'.png\n' )
                 else:
-                    g.write('goto '+Chr+":"+Start_Buff+'-'+str(int(Start_Buff)+1000)+'\n') # Extra 1kb buffer if variant large
-                    g.write('goto '+Chr+":"+Start_Buff+'-'+str(int(Start_Buff)+1000)+'\n')
+                    g.write('goto '+Chr+":"+Start_Buff+'-'+str(int(Start_Buff)+large_buff)+'\n') # Extra 1kb buffer if variant large
+                    g.write('goto '+Chr+":"+Start_Buff+'-'+str(int(Start_Buff)+large_buff)+'\n')
                     g.write('region '+Chr+":"+Start+'-'+str(int(Start))+'\n') 
                     g.write('region '+Chr+":"+Start+'-'+str(int(Start))+'\n')
                     g.write('sort base\n')
@@ -147,7 +149,7 @@ with open(bamfiscript,'w') as h:
                     g.write('load '+empty_track+'\n')
                     g.write('snapshotDirectory '+outdir+'\n')
                     g.write('snapshot '+fam_id+'_'+ID+'.left.png\n' )
-                    g.write('goto '+Chr+":"+str(int(End_Buff)-1000)+'-'+End_Buff+'\n')
+                    g.write('goto '+Chr+":"+str(int(End_Buff)-large_buff)+'-'+End_Buff+'\n')
                     g.write('region '+Chr+":"+str(int(End))+'-'+End+'\n')
                     g.write('sort base\n')
                     g.write('viewaspairs\n')
