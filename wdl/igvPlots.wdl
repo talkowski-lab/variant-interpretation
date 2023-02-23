@@ -69,8 +69,8 @@ task runIGV_whole_genome{
         String igv_docker
     }
 
-    buff = select_first([buffer, 500])
-    large_buff = select_first([buffer_large, 1000])
+    String buff = select_first([buffer, 500])
+    String large_buff = select_first([buffer_large, 1000])
     command <<<
             set -euo pipefail
             #export GCS_OAUTH_TOKEN=`gcloud auth application-default print-access-token`
