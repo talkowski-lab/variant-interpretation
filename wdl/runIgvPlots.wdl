@@ -54,24 +54,21 @@ workflow IGV_all_samples {
                 sv_base_mini_docker=sv_base_mini_docker,
                 runtime_attr_override=runtime_attr_override
             }
-        if (defined(generate_per_family_bed.per_family_varfile)) {
-            File per_family_varfile = select_first([generate_per_family_bed.per_family_varfile])
-            call igv.IGV as IGV {
-                input:
-                    varfile = per_family_varfile,
-                    Fasta = Fasta,
-                    Fasta_idx = Fasta_idx,
-                    Fasta_dict = Fasta_dict,
-                    nested_repeats = nested_repeats,
-                    simple_repeats = simple_repeats,
-                    empty_track = empty_track,
-                    family = family,
-                    ped_file = ped_file,
-                    samples = generate_per_family_sample_crai_cram.per_family_samples,
-                    crams = generate_per_family_sample_crai_cram.per_family_crams,
-                    crais = generate_per_family_sample_crai_cram.per_family_crais,
-                    igv_docker = igv_docker
-            }
+        call igv.IGV as IGV {
+            input:
+                varfile = per_family_varfile,
+                Fasta = Fasta,
+                Fasta_idx = Fasta_idx,
+                Fasta_dict = Fasta_dict,
+                nested_repeats = nested_repeats,
+                simple_repeats = simple_repeats,
+                empty_track = empty_track,
+                family = family,
+                ped_file = ped_file,
+                samples = generate_per_family_sample_crai_cram.per_family_samples,
+                crams = generate_per_family_sample_crai_cram.per_family_crams,
+                crais = generate_per_family_sample_crai_cram.per_family_crais,
+                igv_docker = igv_docker
         }
     }
     call integrate_igv_plots{
@@ -196,7 +193,7 @@ task generate_per_family_bed{
         >>>
 
     output{
-        File? per_family_varfile = "~{filename}.~{family}.bed"
+        File per_family_varfile = "~{filename}.~{family}.bed"
         }
 
     RuntimeAttr runtime_attr = select_first([runtime_attr_override, default_attr])
@@ -213,7 +210,7 @@ task generate_per_family_bed{
 
 task integrate_igv_plots{
     input {
-        Array[File?] igv_tar
+        Array[File] igv_tar
         String prefix
         String sv_base_mini_docker
         RuntimeAttr? runtime_attr_override
