@@ -54,6 +54,7 @@ workflow IGV_all_samples {
                 sv_base_mini_docker=sv_base_mini_docker,
                 runtime_attr_override=runtime_attr_override
             }
+
         if (defined(generate_per_family_bed.per_family_varfile)) {
             File per_family_varfile = select_first([generate_per_family_bed.per_family_varfile])
             call igv.IGV as IGV {
@@ -74,9 +75,10 @@ workflow IGV_all_samples {
             }
         }
     }
+    Array[File] tar_gz_pe = select_first([IGV.tar_gz_pe])
     call integrate_igv_plots{
         input:
-            igv_tar = IGV.tar_gz_pe,
+            igv_tar = tar_gz_pe,
             prefix = prefix, 
             sv_base_mini_docker = sv_base_mini_docker
     }
