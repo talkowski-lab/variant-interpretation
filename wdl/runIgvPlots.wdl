@@ -74,10 +74,9 @@ workflow IGV_all_samples {
             }
         }
     }
-    Array[File] gz_pe = select_first([IGV.tar_gz_pe])
     call integrate_igv_plots{
         input:
-            igv_tar = gz_pe,
+            igv_tar = IGV.tar_gz_pe,
             prefix = prefix, 
             sv_base_mini_docker = sv_base_mini_docker
     }
@@ -214,7 +213,7 @@ task generate_per_family_bed{
 
 task integrate_igv_plots{
     input {
-        Array[File] igv_tar
+        Array[File?] igv_tar
         String prefix
         String sv_base_mini_docker
         RuntimeAttr? runtime_attr_override
