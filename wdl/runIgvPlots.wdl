@@ -74,10 +74,10 @@ workflow IGV_all_samples {
             }
         }
     }
-    Array[File] tar_gz_pe = select_first([IGV.tar_gz_pe])
+    Array[File] gz_pe = select_first([IGV.tar_gz_pe])
     call integrate_igv_plots{
         input:
-            igv_tar = tar_gz_pe,
+            igv_tar = gz_pe,
             prefix = prefix, 
             sv_base_mini_docker = sv_base_mini_docker
     }
