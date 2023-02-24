@@ -221,7 +221,7 @@ def getMedianCoverage(mom_matrix,dad_matrix,coverage_cutoff):
 def getCnvIntersectionDepth(bed,raw,overlap):
     intersect = bed.coverage(raw).to_dataframe(disable_auto_names=True, header=None)
     if (len(intersect) != 0):
-        names_overlap = intersect[intersect[10] > 0.5][6].to_list()
+        names_overlap = intersect[intersect[10] > overlap][6].to_list()
     else:
         names_overlap = ['']
     return(names_overlap)
@@ -256,6 +256,8 @@ vcf_metrics    """
     parser.add_argument('--out', dest='out', help='Output file')
     parser.add_argument('--raw_proband', dest='raw_proband', help='Directory with raw SV calls - output from m04')
     parser.add_argument('--raw_parents', dest='raw_parents', help='Directory with raw SV calls - output from m04')
+    parser.add_argument('--raw_depth_proband', dest='raw_depth_proband', help='Directory with raw SV depth calls - output from m04')
+    parser.add_argument('--raw_depth_parents', dest='raw_depth_parents', help='Directory with raw depth SV calls - output from m04')
     parser.add_argument('--outliers', dest='outliers', help='Output file with SV calls in outlier samples')
     parser.add_argument('--config', dest='config', help='Config file')
     parser.add_argument('--filtered', dest='filtered_out', help='Output of filtered out variants file')
@@ -273,6 +275,8 @@ vcf_metrics    """
     out_file = args.out
     raw_file_proband = args.raw_proband
     raw_file_parent = args.raw_parents
+    raw_file_depth_proband = args.raw_depth_proband
+    raw_file_depth_parent = args.raw_depth_parents
     outlier_samples = args.outliers
     verbose = args.verbose
     config_file = args.config
@@ -310,6 +314,8 @@ vcf_metrics    """
     raw_bed_colnames = colnames=['ID', 'start', 'end', 'svtype', 'sample'] 
     raw_bed_child = pd.read_csv(raw_file_proband, sep='\t', names= raw_bed_colnames, header=None).replace(np.nan, '', regex=True)
     raw_bed_parent = pd.read_csv(raw_file_parent, sep='\t', names= raw_bed_colnames, header=None).replace(np.nan, '', regex=True)
+    raw_bed_depth_child = pd.read_csv(raw_file_depth_proband, sep='\t', names= raw_bed_colnames, header=None).replace(np.nan, '', regex=True)
+    raw_bed_depth_parent = pd.read_csv(raw_file_depth_parent, sep='\t', names= raw_bed_colnames, header=None).replace(np.nan, '', regex=True)
     exclude_regions = pd.read_csv(exclude_regions, sep='\t').replace(np.nan, '', regex=True)
     bincov_colnames = colnames=['batch', 'bincov'] 
     sample_batches_colnames = colnames=['sample', 'batch'] 
@@ -475,6 +481,8 @@ vcf_metrics    """
     # Reformat raw files
     raw_bed_ref_child = convertToBedtool(raw_bed_child, sort=False)
     raw_bed_ref_parent = convertToBedtool(raw_bed_parent, sort=False)
+    raw_bed_ref_depth_child = convertToBedtool(raw_bed_depth_child, sort=False)
+    raw_bed_ref_depth_parent = convertToBedtool(raw_bed_depth_parent, sort=False)
 
     #Reformat de novo filt calls
     bed_child['chrom_type_sample'] = bed_child['chrom'] + "_" + bed_child['SVTYPE'] + "_" + bed_child['sample']
@@ -503,8 +511,8 @@ vcf_metrics    """
     
     ## Large CNVS: Reciprocal overlap large_raw_overlap
     verbosePrint('Checking large cnvs in raw files', verbose)
-    large_bed_filt_cnv_depth = bed_child[(bed_child['is_large_cnv'] == True) & (bed_child['ALGORITHMS'] == "depth") & (bed_child['SVLEN'] >= 5000)]
-    large_bed_filt_cnv_other = bed_child[(bed_child['is_large_cnv'] == True) & (bed_child['ALGORITHMS'] != "depth")]
+    large_bed_filt_cnv_depth = bed_child[(bed_child['is_large_cnv'] == True) & (bed_child['SVLEN'] >= 5000)]
+    large_bed_filt_cnv_other = bed_child[(bed_child['is_large_cnv'] == True) & (bed_child['SVLEN'] <= 5000)]
     if (len(large_bed_filt_cnv_other.index) > 0):
         verbosePrint('Checking if large cnv in proband is in raw files', verbose)
         bed_filt_cnv_proband_other = convertToBedtool(large_bed_filt_cnv_other, cols_to_keep=cols_keep_child,sort=True)
@@ -522,12 +530,12 @@ vcf_metrics    """
     if (len(large_bed_filt_cnv_depth.index) > 0):
         verbosePrint('Checking if large cnv depth call in proband is in raw files', verbose)
         bed_filt_cnv_proband_depth = convertToBedtool(large_bed_filt_cnv_depth, cols_to_keep=cols_keep_child,sort=True)
-        large_cnv_names_overlap_proband_depth = getCnvIntersectionDepth(bed_filt_cnv_proband_depth,raw_bed_ref_child,large_raw_overlap)
+        large_cnv_names_overlap_proband_depth = getCnvIntersectionDepth(bed_filt_cnv_proband_depth,raw_bed_ref_depth_child,large_raw_overlap)
         large_bed_filt_cnv_tmp_depth = large_bed_filt_cnv_depth[large_bed_filt_cnv_depth['name_famid'].isin(large_cnv_names_overlap_proband_depth)]
         writeToFilterFile(filtered_out_file,"Removed if large cnv depth call is not supported by raw evidence: ",large_bed_filt_cnv_depth, large_bed_filt_cnv_tmp_depth)
         verbosePrint('Checking if large cnv depth call in proband are also in raw files for the parents', verbose)
         bed_filt_cnv_fam_depth = convertToBedtool(large_bed_filt_cnv_depth, cols_to_keep=cols_keep_parent,sort=True)
-        large_cnv_names_overlap_parent_depth = getCnvIntersectionDepth(bed_filt_cnv_fam_depth,raw_bed_ref_parent,large_raw_overlap)
+        large_cnv_names_overlap_parent_depth = getCnvIntersectionDepth(bed_filt_cnv_fam_depth,raw_bed_ref_depth_parent,large_raw_overlap)
         large_bed_filt_cnv_tmp_depth = large_bed_filt_cnv_depth[~(large_bed_filt_cnv_depth['name_famid'].isin(large_cnv_names_overlap_parent_depth))]
         writeToFilterFile(filtered_out_file,"Removed if large cnv depth call is supported by raw evidence in parent: ",large_bed_filt_cnv_depth, large_bed_filt_cnv_tmp_depth)
         large_cnv_names_overlap_depth = [x for x in large_cnv_names_overlap_proband_depth if x not in large_cnv_names_overlap_parent_depth]
