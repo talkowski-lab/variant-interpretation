@@ -68,7 +68,7 @@ class Variant():
     if os.path.isfile(dir+self.family_id+"_"+self.name+".png"):
       return dir+self.family_id+"_"+self.name+".png"
     elif os.path.isfile(dir+self.family_id+"_"+self.name+".left.png") and os.path.isfile(dir+self.family_id+"_"+self.name+".right.png"):
-      hstack(dir+self.family_id+"_"+self.name+".left.png",dir+self.family_id+"_"+self.name+".png")
+      hstack(dir+self.family_id+"_"+self.name+".left.png",dir+self.family_id+"_"+self.name+".right.png",dir+self.family_id+"_"+self.name+".png")
       return dir+self.family_id+"_"+self.name+".png"
     else:
       #raise Exception(dir+self.varname+".png"+" PESR files not found")
@@ -93,7 +93,7 @@ class Variant():
       #raise Exception(dir+self.chr+"_"+newstart+"_"+newend+"_"+self.samples[0]+"_"+self.name+"_"+self.prefix+".jpg"+" Rdplot not found")
       return 'Error'
   def makeplot(self,pedir,rddir,outdir,flank,build="hg38"):
-    if self.type!="INS":
+    if ((self.type!="INS") | (self.type!="SNV") | (self.type!="INDEL")):
       if int(self.end)-int(self.start)<2000:
           STR2=self.varname+" "+str(int(self.end)-int(self.start))+'bp'
       else:
