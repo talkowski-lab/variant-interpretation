@@ -566,6 +566,10 @@ vcf_metrics    """
     bed_child = bed_child[(~bed_child['SVTYPE'].isin(['DEL', 'DUP', 'INS'])) | (bed_child['name_famid'].isin(ins_names_overlap + large_cnv_names_overlap + small_cnv_names_overlap))]
     writeToSizeFile(size_file,"Size of bed_child after checking raw files: ",bed_child)
 
+    #output intermediate file
+    bed_child.to_csv(path_or_buf='intermediate_file_after_raw_file.bed', mode='a', index=False, sep='\t', header=True)
+
+
     ###############
     ## FILTERING ##
     ###############
