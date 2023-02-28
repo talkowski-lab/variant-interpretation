@@ -30,7 +30,7 @@ workflow VisualizePlots{
         Boolean run_RD 
         Boolean run_IGV
 
-        RuntimeAttr? runtime_attr_override
+        RuntimeAttr? runtime_attr_run_igv
         RuntimeAttr? runtime_attr_concatinate
         RuntimeAttr? runtime_attr_rdtest
     }
@@ -78,7 +78,7 @@ workflow VisualizePlots{
                 prefix = prefix,
                 sv_base_mini_docker = sv_base_mini_docker,
                 igv_docker = igv_docker,
-                runtime_attr_override=runtime_attr_override
+                runtime_attr_run_igv = runtime_attr_run_igv
         }
     }
 

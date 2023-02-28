@@ -25,6 +25,7 @@ workflow IGV {
         String? buffer
         String? buffer_large
         String igv_docker
+        RuntimeAttr? runtime_attr_run_igv
     }
 
     call runIGV_whole_genome{
@@ -42,7 +43,8 @@ workflow IGV {
             crams = crams,
             crais = crais,
             buffer = buffer,
-            igv_docker = igv_docker
+            igv_docker = igv_docker,
+            runtime_attr_override = runtime_attr_run_igv
     }
 
     output{
@@ -67,6 +69,16 @@ task runIGV_whole_genome{
         String? buffer
         String? buffer_large
         String igv_docker
+        RuntimeAttr? runtime_attr_override
+    }
+
+    RuntimeAttr default_attr=object {
+        cpu: 1,
+        mem_gb: 1,
+        disk_gb: 10,
+        boot_disk_gb: 10,
+        preemptible: 1,
+        max_retries: 1
     }
 
     String buff = select_first([buffer, 500])
@@ -81,12 +93,16 @@ task runIGV_whole_genome{
             tar -czf ~{family}_pe_igv_plots.tar.gz pe_igv_plots
 
         >>>
+    RuntimeAttr runtime_attr = select_first([runtime_attr_override, default_attr])
     runtime {
-        docker: igv_docker
-        preemptible: 1
-        memory: "15 GB"
-        disks: "local-disk 100 HDD"
-        }
+        cpu: select_first([runtime_attr.cpu, default_attr.cpu])
+        memory: select_first([runtime_attr.mem_gb, default_attr.mem_gb]) + " GiB"
+        disks: "local-disk " + select_first([runtime_attr.disk_gb, default_attr.disk_gb]) + " HDD"
+        bootDiskSizeGb: select_first([runtime_attr.boot_disk_gb, default_attr.boot_disk_gb])
+        docker: sv_base_mini_docker
+        preemptible: select_first([runtime_attr.preemptible, default_attr.preemptible])
+        maxRetries: select_first([runtime_attr.max_retries, default_attr.max_retries])
+  }
     output{
         File pe_plots="~{family}_pe_igv_plots.tar.gz"
         File pe_txt = "pe.txt"

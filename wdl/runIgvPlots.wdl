@@ -26,7 +26,7 @@ workflow IGV_all_samples {
         String? buffer_large
         String sv_base_mini_docker
         String igv_docker
-        RuntimeAttr? runtime_attr_override
+        RuntimeAttr? runtime_attr_run_igv
     }
 
     if (!(defined(fam_ids))) {
@@ -35,7 +35,7 @@ workflow IGV_all_samples {
                 varfile = varfile,
                 ped_file = ped_file,
                 sv_base_mini_docker = sv_base_mini_docker,
-                runtime_attr_override = runtime_attr_override
+                runtime_attr_override = runtime_attr_run_igv
         }
     }
     scatter (family in select_first([fam_ids, generate_families.families])){
@@ -45,7 +45,7 @@ workflow IGV_all_samples {
                 ped_file = ped_file,
                 sample_crai_cram = sample_crai_cram,
                 sv_base_mini_docker = sv_base_mini_docker,
-                runtime_attr_override = runtime_attr_override
+                runtime_attr_override = runtime_attr_run_igv
             }
         call generate_per_family_bed{
             input:
@@ -54,7 +54,7 @@ workflow IGV_all_samples {
                 family = family,
                 ped_file = ped_file,
                 sv_base_mini_docker=sv_base_mini_docker,
-                runtime_attr_override=runtime_attr_override
+                runtime_attr_override=runtime_attr_run_igv
             }
         call igv.IGV as IGV {
             input:
@@ -72,14 +72,16 @@ workflow IGV_all_samples {
                 crais = generate_per_family_sample_crai_cram.per_family_crais,
                 buffer = buffer,
                 buffer_large = buffer_large,
-                igv_docker = igv_docker
+                igv_docker = igv_docker,
+                runtime_attr_override = runtime_attr_run_igv
         }
     }
     call integrate_igv_plots{
         input:
             igv_tar = IGV.tar_gz_pe,
             prefix = prefix, 
-            sv_base_mini_docker = sv_base_mini_docker
+            sv_base_mini_docker = sv_base_mini_docker,
+            runtime_attr_override = runtime_attr_run_igv
     }
 
     output{
