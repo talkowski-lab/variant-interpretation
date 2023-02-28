@@ -397,10 +397,10 @@ vcf_metrics    """
     except KeyError:
         parents_SC = len(parents)
     bed_child['num_parents_family'] = bed_child.apply(lambda r: getFamilyCount(r, ped), axis=1)
-    bed_child_tmp = bed_child[ (bed_child['num_parents_family'] == 0) &
-                           (bed_child['num_children'] >= 1) &
-                           (bed_child['AF_parents'] <= parents_AF) &
-                           (bed_child['num_parents'] <= parents_SC) ]
+    bed_child_tmp = bed_child[ (bed_child['num_parents_family'] == 0) & #there are no parents of the affected child in the samples column
+                           (bed_child['num_children'] >= 1) &   #for each line there is at least one child in the samples column
+                           (bed_child['AF_parents'] <= parents_AF) & #for each line, the frequency of parents in the samples column must be < 0.01
+                           (bed_child['num_parents'] <= parents_SC) ] #for each line, the number of parents must be <= parents_SC or the total number of parents in the ped
     writeToFilterFile(filtered_out_file,"Removed after keeping variants in children only: ",bed_child,bed_child_tmp)
     bed_child = bed_child_tmp  
     writeToSizeFile(size_file,"Size of bed_child after keeping variants in children only: ",bed_child)
@@ -437,7 +437,7 @@ vcf_metrics    """
     # LARGE CNV: Check for false negative in parents: check depth in parents, independently of the calls
     verbosePrint('Large CNVs check', verbose)
     # 1. Strip out if same CN in parents and proband if not in chrX
-    bed_child_tmp = bed_child.loc[((bed_child['is_large_cnv'] == False) | ((bed_child['RD_CN'] != bed_child['maternal_rdcn']) & (bed_child['RD_CN'] != bed_child['paternal_rdcn']))) | (bed_child['chrom'] == 'chrX')]
+    bed_child_tmp = bed_child.loc[((bed_child['SVLEN'] <= 5000) | ((bed_child['RD_CN'] != bed_child['maternal_rdcn']) & (bed_child['RD_CN'] != bed_child['paternal_rdcn']))) | (bed_child['chrom'] == 'chrX')]
     writeToFilterFile(filtered_out_file,"Removed if RD_CN field is same as parent and not in chrX: ",bed_child,bed_child_tmp)
     bed_child = bed_child_tmp  
     writeToSizeFile(size_file,"Size of bed_child after removing if RD_CN field is same as parent and not in chrX: ",bed_child)
@@ -512,7 +512,7 @@ vcf_metrics    """
     ## Large CNVS: Reciprocal overlap large_raw_overlap
     verbosePrint('Checking large cnvs in raw files', verbose)
     large_bed_filt_cnv_depth = bed_child[(bed_child['is_large_cnv'] == True) & (bed_child['SVLEN'] >= 5000)]
-    large_bed_filt_cnv_other = bed_child[(bed_child['is_large_cnv'] == True) & (bed_child['SVLEN'] <= 5000)]
+    large_bed_filt_cnv_other = bed_child[(bed_child['is_large_cnv'] == True) & (bed_child['SVLEN'] < 5000)]
     if (len(large_bed_filt_cnv_other.index) > 0):
         verbosePrint('Checking if large cnv in proband is in raw files', verbose)
         bed_filt_cnv_proband_other = convertToBedtool(large_bed_filt_cnv_other, cols_to_keep=cols_keep_child,sort=True)
@@ -547,7 +547,7 @@ vcf_metrics    """
     verbosePrint('Checking small cnvs in raw files', verbose)
     #small_bed_filt_cnv = bed_child[bed_child['is_small_cnv'] == True]
     #small_bed_filt_cnv_depth = bed_child[(bed_child['is_small_cnv'] == True) & (bed_child['ALGORITHMS'] == "depth") & (bed['SVLEN'] >= 5000)]
-    small_bed_filt_cnv = bed_child[(bed_child['is_small_cnv'] == True) & (bed_child['ALGORITHMS'] != "depth")] # we do not want to check against raw depth files if CNV <= 5kb
+    small_bed_filt_cnv = bed_child[(bed_child['is_small_cnv'] == True)] # we do not want to check against raw depth files if CNV <= 5kb
     if (len(small_bed_filt_cnv.index) > 0):
         verbosePrint('Checking if small cnv in proband is in raw files', verbose)
         bed_filt_cnv_proband = convertToBedtool(small_bed_filt_cnv, cols_to_keep=cols_keep_child,sort=True)
