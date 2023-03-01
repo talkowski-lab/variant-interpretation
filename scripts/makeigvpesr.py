@@ -89,6 +89,7 @@ ped.Affected = pd.to_numeric(ped.Affected)
 for sample_id in samples_list:
 	if(ped.loc[(ped['IndividualID'] == sample_id)]['Affected'].iloc[0] == 2):
 		if((ped.loc[(ped['IndividualID'] == sample_id)]['MotherID'].iloc[0] != '0' )| (ped.loc[(ped['IndividualID'] == sample_id)]['FatherID'].iloc[0] != '0' )):
+			print(sample_id)
 			proband_cram_file = mydict[sample_id]
 			cram_list.remove(proband_cram_file)
 			cram_list.insert(0, proband_cram_file)
@@ -96,8 +97,7 @@ for sample_id in samples_list:
 			affected_cram_file = mydict[sample_id]
 			cram_list.remove(affected_cram_file)
 			cram_list.insert(1, affected_cram_file)
-			
-
+print(cram_list)
 
 with open(bamfiscript,'w') as h:
     h.write("#!/bin/bash\n")
