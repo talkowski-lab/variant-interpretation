@@ -237,7 +237,7 @@ task integrate_igv_plots{
         String sv_base_mini_docker
         RuntimeAttr? runtime_attr_override
     }
-    Float input_size = size(select_all([igv_tar]), "GB")
+    Float input_size = size(igv_tar, "GB")
     Float base_disk_gb = 10.0
     Float base_mem_gb = 3.75
 
