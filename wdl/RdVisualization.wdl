@@ -47,14 +47,19 @@ task rdtest {
         String sv_pipeline_rdtest_docker
         RuntimeAttr? runtime_attr_override
     }
+    Float input_size = size(select_all([bed, sample_batches, batch_bincov, medianfile, pedfile]), "GB")
+    Float base_disk_gb = 10.0
+    Float base_mem_gb = 3.75
+
     RuntimeAttr default_attr = object {
-        cpu: 1, 
-        mem_gb: 7.5,
-        disk_gb: 10,
-        boot_disk_gb: 10,
-        preemptible: 3,
-        max_retries: 1
-    }
+                                      mem_gb: ceil(base_mem_gb + input_size * 3.0),
+                                      disk_gb: ceil(base_disk_gb + input_size * 5.0),
+                                      cpu: 1,
+                                      preemptible: 2,
+                                      max_retries: 1,
+                                      boot_disk_gb: 8
+                                  }
+
     RuntimeAttr runtime_attr = select_first([runtime_attr_override, default_attr])
     command <<<
         set -ex

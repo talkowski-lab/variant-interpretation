@@ -72,14 +72,20 @@ task runIGV_whole_genome{
         RuntimeAttr? runtime_attr_override
     }
 
-    RuntimeAttr default_attr=object {
-        cpu: 1,
-        mem_gb: 1,
-        disk_gb: 10,
-        boot_disk_gb: 10,
-        preemptible: 1,
-        max_retries: 1
-    }
+    Float input_size = size(select_all([varfile, fasta, fasta_idx, fasta_dict, nested_repeats, simple_repeats, empty_track, ped_file, crams, crais]), "GB")
+    Float base_disk_gb = 10.0
+    Float base_mem_gb = 3.75
+
+    RuntimeAttr default_attr = object {
+                                      mem_gb: ceil(base_mem_gb + input_size * 3.0),
+                                      disk_gb: ceil(base_disk_gb + input_size * 5.0),
+                                      cpu: 1,
+                                      preemptible: 2,
+                                      max_retries: 1,
+                                      boot_disk_gb: 8
+                                  }
+
+    RuntimeAttr runtime_attr = select_first([runtime_attr_override, default_attr])
 
     String buff = select_first([buffer, 500])
     String large_buff = select_first([buffer_large, 1000])
@@ -93,16 +99,16 @@ task runIGV_whole_genome{
             tar -czf ~{family}_pe_igv_plots.tar.gz pe_igv_plots
 
         >>>
-    RuntimeAttr runtime_attr = select_first([runtime_attr_override, default_attr])
+    
     runtime {
         cpu: select_first([runtime_attr.cpu, default_attr.cpu])
-        memory: select_first([runtime_attr.mem_gb, default_attr.mem_gb]) + " GiB"
-        disks: "local-disk " + select_first([runtime_attr.disk_gb, default_attr.disk_gb]) + " HDD"
+        memory: "~{select_first([runtime_attr.mem_gb, default_attr.mem_gb])} GB"
+        disks: "local-disk ~{select_first([runtime_attr.disk_gb, default_attr.disk_gb])} HDD"
         bootDiskSizeGb: select_first([runtime_attr.boot_disk_gb, default_attr.boot_disk_gb])
-        docker: igv_docker
         preemptible: select_first([runtime_attr.preemptible, default_attr.preemptible])
         maxRetries: select_first([runtime_attr.max_retries, default_attr.max_retries])
-  }
+        docker: variant_interpretation_docker
+    }
     output{
         File pe_plots="~{family}_pe_igv_plots.tar.gz"
         File pe_txt = "pe.txt"
