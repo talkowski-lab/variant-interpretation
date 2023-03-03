@@ -96,14 +96,21 @@ task generate_families{
         String sv_base_mini_docker
         RuntimeAttr? runtime_attr_override
     }
-    RuntimeAttr default_attr=object {
-        cpu: 1,
-        mem_gb: 1,
-        disk_gb: 10,
-        boot_disk_gb: 10,
-        preemptible: 1,
-        max_retries: 1
-    }
+    Float input_size = size(select_all([varfile, ped_file]), "GB")
+    Float base_disk_gb = 10.0
+    Float base_mem_gb = 3.75
+
+    RuntimeAttr default_attr = object {
+                                      mem_gb: ceil(base_mem_gb + input_size * 3.0),
+                                      disk_gb: ceil(base_disk_gb + input_size * 5.0),
+                                      cpu: 1,
+                                      preemptible: 2,
+                                      max_retries: 1,
+                                      boot_disk_gb: 8
+                                  }
+
+    RuntimeAttr runtime_attr = select_first([runtime_attr_override, default_attr])
+
 
     command <<<
         set -euo pipefail
@@ -115,16 +122,15 @@ task generate_families{
         Array[String] families = read_lines("families.txt")
     }
 
-    RuntimeAttr runtime_attr = select_first([runtime_attr_override, default_attr])
     runtime {
         cpu: select_first([runtime_attr.cpu, default_attr.cpu])
-        memory: select_first([runtime_attr.mem_gb, default_attr.mem_gb]) + " GiB"
-        disks: "local-disk " + select_first([runtime_attr.disk_gb, default_attr.disk_gb]) + " HDD"
+        memory: "~{select_first([runtime_attr.mem_gb, default_attr.mem_gb])} GB"
+        disks: "local-disk ~{select_first([runtime_attr.disk_gb, default_attr.disk_gb])} HDD"
         bootDiskSizeGb: select_first([runtime_attr.boot_disk_gb, default_attr.boot_disk_gb])
-        docker: sv_base_mini_docker
         preemptible: select_first([runtime_attr.preemptible, default_attr.preemptible])
         maxRetries: select_first([runtime_attr.max_retries, default_attr.max_retries])
-  }
+        docker: sv_base_mini_docker
+    }
 
 }
 
@@ -136,14 +142,20 @@ task generate_per_family_sample_crai_cram{
         String sv_base_mini_docker
         RuntimeAttr? runtime_attr_override
     }
-    RuntimeAttr default_attr=object {
-        cpu: 1,
-        mem_gb: 1,
-        disk_gb: 10,
-        boot_disk_gb: 10,
-        preemptible: 1,
-        max_retries: 1
-    }
+    Float input_size = size(select_all([sample_crai_cram, ped_file]), "GB")
+    Float base_disk_gb = 10.0
+    Float base_mem_gb = 3.75
+
+    RuntimeAttr default_attr = object {
+                                      mem_gb: ceil(base_mem_gb + input_size * 3.0),
+                                      disk_gb: ceil(base_disk_gb + input_size * 5.0),
+                                      cpu: 1,
+                                      preemptible: 2,
+                                      max_retries: 1,
+                                      boot_disk_gb: 8
+                                  }
+
+    RuntimeAttr runtime_attr = select_first([runtime_attr_override, default_attr])
 
     command <<<
         set -euo pipefail
@@ -160,7 +172,6 @@ task generate_per_family_sample_crai_cram{
         Array[File] per_family_crais = read_lines("crai.txt")
     }
 
-    RuntimeAttr runtime_attr = select_first([runtime_attr_override, default_attr])
     runtime {
         cpu: select_first([runtime_attr.cpu, default_attr.cpu])
         memory: select_first([runtime_attr.mem_gb, default_attr.mem_gb]) + " GiB"
@@ -182,15 +193,20 @@ task generate_per_family_bed{
         String sv_base_mini_docker
         RuntimeAttr? runtime_attr_override
     }
-    RuntimeAttr default_attr=object {
-        cpu: 1,
-        mem_gb: 1,
-        disk_gb: 10,
-        boot_disk_gb: 10,
-        preemptible: 1,
-        max_retries: 1
-    }
+    Float input_size = size(select_all([varfile, ped_file]), "GB")
+    Float base_disk_gb = 10.0
+    Float base_mem_gb = 3.75
 
+    RuntimeAttr default_attr = object {
+                                      mem_gb: ceil(base_mem_gb + input_size * 3.0),
+                                      disk_gb: ceil(base_disk_gb + input_size * 5.0),
+                                      cpu: 1,
+                                      preemptible: 2,
+                                      max_retries: 1,
+                                      boot_disk_gb: 8
+                                  }
+
+    RuntimeAttr runtime_attr = select_first([runtime_attr_override, default_attr])
     String filename = basename(varfile, ".bed")
 
     command <<<
@@ -203,7 +219,6 @@ task generate_per_family_bed{
         File per_family_varfile = "~{filename}.~{family}.bed"
         }
 
-    RuntimeAttr runtime_attr = select_first([runtime_attr_override, default_attr])
     runtime {
         cpu: select_first([runtime_attr.cpu, default_attr.cpu])
         memory: select_first([runtime_attr.mem_gb, default_attr.mem_gb]) + " GiB"
@@ -212,8 +227,8 @@ task generate_per_family_bed{
         docker: sv_base_mini_docker
         preemptible: select_first([runtime_attr.preemptible, default_attr.preemptible])
         maxRetries: select_first([runtime_attr.max_retries, default_attr.max_retries])
-    }
-    }
+  }
+}
 
 task integrate_igv_plots{
     input {
@@ -222,15 +237,20 @@ task integrate_igv_plots{
         String sv_base_mini_docker
         RuntimeAttr? runtime_attr_override
     }
-    RuntimeAttr default_attr=object {
-        cpu: 1,
-        mem_gb: 1,
-        disk_gb: 10,
-        boot_disk_gb: 10,
-        preemptible: 1,
-        max_retries: 1
-    }
+    Float input_size = size(select_all([igv_tar]), "GB")
+    Float base_disk_gb = 10.0
+    Float base_mem_gb = 3.75
 
+    RuntimeAttr default_attr = object {
+                                      mem_gb: ceil(base_mem_gb + input_size * 3.0),
+                                      disk_gb: ceil(base_disk_gb + input_size * 5.0),
+                                      cpu: 1,
+                                      preemptible: 2,
+                                      max_retries: 1,
+                                      boot_disk_gb: 8
+                                  }
+
+    RuntimeAttr runtime_attr = select_first([runtime_attr_override, default_attr])
     command <<<
         mkdir ~{prefix}_igv_plots
         while read file; do
@@ -244,8 +264,6 @@ task integrate_igv_plots{
         File plot_tar = "~{prefix}_igv_plots.tar.gz"
     }
 
-    RuntimeAttr runtime_attr = select_first([runtime_attr_override, default_attr])
-
     runtime {
         cpu: select_first([runtime_attr.cpu, default_attr.cpu])
         memory: select_first([runtime_attr.mem_gb, default_attr.mem_gb]) + " GiB"
@@ -256,4 +274,4 @@ task integrate_igv_plots{
         maxRetries: select_first([runtime_attr.max_retries, default_attr.max_retries])
   }
 
-    }
+}

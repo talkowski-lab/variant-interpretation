@@ -107,7 +107,7 @@ task runIGV_whole_genome{
         bootDiskSizeGb: select_first([runtime_attr.boot_disk_gb, default_attr.boot_disk_gb])
         preemptible: select_first([runtime_attr.preemptible, default_attr.preemptible])
         maxRetries: select_first([runtime_attr.max_retries, default_attr.max_retries])
-        docker: variant_interpretation_docker
+        docker: igv_docker
     }
     output{
         File pe_plots="~{family}_pe_igv_plots.tar.gz"
