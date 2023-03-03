@@ -128,7 +128,7 @@ task concatinate_plots{
                                       boot_disk_gb: 8
                                   }
 
-    RuntimeAttr runtime_attr = select_first([runtime_attr_override, default_attr])
+    RuntimeAttr runtime_attr = select_first([runtime_attr_concatinate, default_attr])
 
     
 
