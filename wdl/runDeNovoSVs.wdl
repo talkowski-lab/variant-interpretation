@@ -128,7 +128,6 @@ workflow deNovoSV {
         File denovo_output_plots = plot_createPlots.output_plots
         Array[File] filtered_out = getDeNovo.filtered_out
         Array[File] size_file_out = getDeNovo.size_file_out
-        Array[File] intermediate_file_out = getDeNovo.intermediate_file
     }
 }
 
@@ -173,7 +172,6 @@ task getDeNovo{
         File denovo_outliers = "~{chromosome}.denovo.outliers.bed"
         File filtered_out = "~{chromosome}.filtered.txt"
         File size_file_out = "~{chromosome}.size.txt"
-        File intermediate_file = "intermediate_file_after_raw_file.bed"
     }
 
     command <<<
