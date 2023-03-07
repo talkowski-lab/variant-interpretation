@@ -399,11 +399,11 @@ vcf_metrics    """
     bed_child['num_parents_family'] = bed_child.apply(lambda r: getFamilyCount(r, ped), axis=1)
     bed_child_tmp = bed_child[ (bed_child['num_parents_family'] == 0) & #there are no parents of the affected child in the samples column
                            (bed_child['num_children'] >= 1) &   #for each line there is at least one child in the samples column
-                           (bed_child['AF_parents'] <= parents_AF) & #for each line, the frequency of parents in the samples column must be < 0.01
+                           (bed_child['AF_parents'] <= parents_AF) & #for each line, the frequency of parents in the samples column must be < 0.05
                            (bed_child['num_parents'] <= parents_SC) ] #for each line, the number of parents must be <= parents_SC or the total number of parents in the ped
-    writeToFilterFile(filtered_out_file,"Removed after keeping variants in children only: ",bed_child,bed_child_tmp)
+    writeToFilterFile(filtered_out_file,"Removed because of cohort wide parental support: ",bed_child,bed_child_tmp)
     bed_child = bed_child_tmp  
-    writeToSizeFile(size_file,"Size of bed_child after keeping variants in children only: ",bed_child)
+    writeToSizeFile(size_file,"Size of bed_child after removing because of cohort wide parental support: ",bed_child)
     
     # Extract info from the VCF file
     verbosePrint('Appending FILTER information', verbose)
@@ -478,11 +478,15 @@ vcf_metrics    """
     # Keep all CPT and CTX - they are rare and the type is different than in the raw files
     # Check only DEL,DUP and INS for raw evidence
     verbosePrint('Checking raw files', verbose)
+    # Remove depth raw calls > 1MB
+    raw_bed_depth_parent['SVLEN'] = raw_bed_depth_parent['end'] - raw_bed_depth_parent['start']
+    raw_bed_ref_depth_parent_subset = raw_bed_depth_parent[(raw_bed_depth_parent['SVLEN'] < 1000000)]
+
     # Reformat raw files
     raw_bed_ref_child = convertToBedtool(raw_bed_child, sort=False)
     raw_bed_ref_parent = convertToBedtool(raw_bed_parent, sort=False)
     raw_bed_ref_depth_child = convertToBedtool(raw_bed_depth_child, sort=False)
-    raw_bed_ref_depth_parent = convertToBedtool(raw_bed_depth_parent, sort=False)
+    raw_bed_ref_depth_parent = convertToBedtool(raw_bed_ref_depth_parent_subset, sort=False)
 
     #Reformat de novo filt calls
     bed_child['chrom_type_sample'] = bed_child['chrom'] + "_" + bed_child['SVTYPE'] + "_" + bed_child['sample']
@@ -514,30 +518,30 @@ vcf_metrics    """
     large_bed_filt_cnv_depth = bed_child[(bed_child['is_large_cnv'] == True) & (bed_child['SVLEN'] >= 5000)]
     large_bed_filt_cnv_other = bed_child[(bed_child['is_large_cnv'] == True) & (bed_child['SVLEN'] < 5000)]
     if (len(large_bed_filt_cnv_other.index) > 0):
-        verbosePrint('Checking if large cnv in proband is in raw files', verbose)
+        verbosePrint('Checking if intermediate cnv in proband is in raw files', verbose)
         bed_filt_cnv_proband_other = convertToBedtool(large_bed_filt_cnv_other, cols_to_keep=cols_keep_child,sort=True)
         large_cnv_names_overlap_proband_other = getCnvIntersectionOther(bed_filt_cnv_proband_other,raw_bed_ref_child,large_raw_overlap)
         large_bed_filt_cnv_tmp_other = large_bed_filt_cnv_other[large_bed_filt_cnv_other['name_famid'].isin(large_cnv_names_overlap_proband_other)]
-        writeToFilterFile(filtered_out_file,"Removed if large cnv is not supported by raw evidence: ",large_bed_filt_cnv_other, large_bed_filt_cnv_tmp_other)
-        verbosePrint('Checking if large cnvs in proband are also in raw files for the parents', verbose)
+        writeToFilterFile(filtered_out_file,"Removed if intermediate cnv is not supported by raw evidence: ",large_bed_filt_cnv_other, large_bed_filt_cnv_tmp_other)
+        verbosePrint('Checking if intermediate cnvs in proband are also in raw files for the parents', verbose)
         bed_filt_cnv_fam_other = convertToBedtool(large_bed_filt_cnv_other, cols_to_keep=cols_keep_parent,sort=True)
         large_cnv_names_overlap_parent_other = getCnvIntersectionOther(bed_filt_cnv_fam_other,raw_bed_ref_parent,large_raw_overlap)
         large_bed_filt_cnv_tmp_other = large_bed_filt_cnv_other[~(large_bed_filt_cnv_other['name_famid'].isin(large_cnv_names_overlap_parent_other))]
-        writeToFilterFile(filtered_out_file,"Removed if large cnv is supported by raw evidence in parent: ",large_bed_filt_cnv_other, large_bed_filt_cnv_tmp_other)
+        writeToFilterFile(filtered_out_file,"Removed if intermediate cnv is supported by raw evidence in parent: ",large_bed_filt_cnv_other, large_bed_filt_cnv_tmp_other)
         large_cnv_names_overlap_other = [x for x in large_cnv_names_overlap_proband_other if x not in large_cnv_names_overlap_parent_other]
     else:
         large_cnv_names_overlap_other = ['']
     if (len(large_bed_filt_cnv_depth.index) > 0):
-        verbosePrint('Checking if large cnv depth call in proband is in raw files', verbose)
+        verbosePrint('Checking if large cnv in proband is in raw files', verbose)
         bed_filt_cnv_proband_depth = convertToBedtool(large_bed_filt_cnv_depth, cols_to_keep=cols_keep_child,sort=True)
         large_cnv_names_overlap_proband_depth = getCnvIntersectionDepth(bed_filt_cnv_proband_depth,raw_bed_ref_depth_child,large_raw_overlap)
         large_bed_filt_cnv_tmp_depth = large_bed_filt_cnv_depth[large_bed_filt_cnv_depth['name_famid'].isin(large_cnv_names_overlap_proband_depth)]
-        writeToFilterFile(filtered_out_file,"Removed if large cnv depth call is not supported by raw evidence: ",large_bed_filt_cnv_depth, large_bed_filt_cnv_tmp_depth)
-        verbosePrint('Checking if large cnv depth call in proband are also in raw files for the parents', verbose)
+        writeToFilterFile(filtered_out_file,"Removed if large cnv is not supported by raw evidence: ",large_bed_filt_cnv_depth, large_bed_filt_cnv_tmp_depth)
+        verbosePrint('Checking if large cnv in proband are also in raw files for the parents', verbose)
         bed_filt_cnv_fam_depth = convertToBedtool(large_bed_filt_cnv_depth, cols_to_keep=cols_keep_parent,sort=True)
         large_cnv_names_overlap_parent_depth = getCnvIntersectionDepth(bed_filt_cnv_fam_depth,raw_bed_ref_depth_parent,large_raw_overlap)
         large_bed_filt_cnv_tmp_depth = large_bed_filt_cnv_depth[~(large_bed_filt_cnv_depth['name_famid'].isin(large_cnv_names_overlap_parent_depth))]
-        writeToFilterFile(filtered_out_file,"Removed if large cnv depth call is supported by raw evidence in parent: ",large_bed_filt_cnv_depth, large_bed_filt_cnv_tmp_depth)
+        writeToFilterFile(filtered_out_file,"Removed if large cnv is supported by raw evidence in parent: ",large_bed_filt_cnv_depth, large_bed_filt_cnv_tmp_depth)
         large_cnv_names_overlap_depth = [x for x in large_cnv_names_overlap_proband_depth if x not in large_cnv_names_overlap_parent_depth]
     else:
         large_cnv_names_overlap_depth = ['']
@@ -565,9 +569,6 @@ vcf_metrics    """
     
     bed_child = bed_child[(~bed_child['SVTYPE'].isin(['DEL', 'DUP', 'INS'])) | (bed_child['name_famid'].isin(ins_names_overlap + large_cnv_names_overlap + small_cnv_names_overlap))]
     writeToSizeFile(size_file,"Size of bed_child after checking raw files: ",bed_child)
-
-    #output intermediate file
-    bed_child.to_csv(path_or_buf='intermediate_file_after_raw_file.bed', mode='a', index=False, sep='\t', header=True)
 
 
     ###############
@@ -598,11 +599,11 @@ vcf_metrics    """
 
     # 3. Filter on DELs, DUPs, and INS
     # Filter by size
-    # Filter out if large CNVs don't have parents overlap
+    # Filter out if large CNVs have parents overlap
     remove_large = bed_child[(bed_child['is_large_cnv'] == True) &
                             (bed_child['overlap_parent'] == True)]['name_famid'].to_list()
     bed_child_tmp = bed_child[~(bed_child['name_famid'].isin(remove_large))]
-    writeToFilterFile(filtered_out_file,"Removed if large CNV that does not parents overlap: ",bed_child,bed_child_tmp)
+    writeToFilterFile(filtered_out_file,"Removed if large CNV that has parents overlap: ",bed_child,bed_child_tmp)
 
     # Filter out if small cnvs that are SR-only don't have BOTHSIDES_SUPPORT
     remove_small = bed_child[(bed_child['is_small_cnv'] == True) &
