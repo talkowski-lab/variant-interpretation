@@ -32,6 +32,7 @@ workflow deNovoSV {
         RuntimeAttr? runtime_attr_raw_reformat_bed
         RuntimeAttr? runtime_attr_merge_final_bed_files
         RuntimeAttr? runtime_attr_create_plots
+        RuntimeAttr? runtime_override_shard_vcf
     
     }
     
@@ -96,7 +97,7 @@ workflow deNovoSV {
                 prefix=prefix,
                 records_per_shard=records_per_shard,
                 sv_pipeline_docker=sv_pipeline_updates_docker,
-                runtime_attr_override=runtime_override_split_vcf_to_genotype
+                runtime_attr_override=runtime_override_shard_vcf
         }
 
         # Scatter genotyping over shards
