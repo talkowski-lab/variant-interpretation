@@ -2,6 +2,7 @@ version 1.0
     
 import "Structs.wdl"
 import "reformatRawFiles.wdl" as raw
+import "TasksMakeCohortVcf.wdl" as MiniTasks
 
 workflow deNovoSV {
 
@@ -15,11 +16,12 @@ workflow deNovoSV {
         File raw_files_list
         File depth_raw_files_list
         File exclude_regions
-        Array[File] coverage_files
-        Array[File] coverage_index_files
         File sample_batches
         File batch_bincov
+        Int records_per_shard
+        String prefix
         String variant_interpretation_docker
+        String sv_pipeline_docker
         RuntimeAttr? runtime_attr_gd
         RuntimeAttr? runtime_attr_denovo
         RuntimeAttr? runtime_attr_raw_vcf_to_bed
@@ -31,6 +33,11 @@ workflow deNovoSV {
         RuntimeAttr? runtime_attr_merge_final_bed_files
         RuntimeAttr? runtime_attr_create_plots
     
+    }
+    
+    Array[String] coverage_files = transpose(read_tsv(batch_bincov))[1]
+    scatter(coverage_file in coverage_files) {
+        String coverage_index_files = basename(coverage_file) + ".tbi"
     }
 
     call raw.reformatRawFiles as reformatRawFiles {
@@ -82,25 +89,38 @@ workflow deNovoSV {
                 runtime_attr_override = runtime_attr_vcf_to_bed
         }    
 
-        call getDeNovo{
+        
+        call MiniTasks.ScatterVcf as SplitVcfToGenotype {
             input:
-                bed_input=vcfToBed.bed_output,
-                ped_input=ped_input,
-                vcf_input=subsetVcf.no_header_vcf_output,
-                disorder_input=getGenomicDisorders.gd_output,
-                chromosome=contigs[i],
-                raw_proband=reformatRawFiles.reformatted_proband_raw_files[i],
-                raw_parents=reformatRawFiles.reformatted_parents_raw_files[i],
-                raw_depth_proband=reformatDepthRawFiles.reformatted_proband_raw_files[i],
-                raw_depth_parents=reformatDepthRawFiles.reformatted_parents_raw_files[i],
-                exclude_regions = exclude_regions,
-                coverage_files = coverage_files,
-                coverage_indeces = coverage_index_files,
-                sample_batches = sample_batches,
-                batch_bincov = batch_bincov,
-                python_config=python_config,
-                variant_interpretation_docker=variant_interpretation_docker,
-                runtime_attr_override = runtime_attr_denovo
+                vcf=vcf_file,
+                prefix=prefix,
+                records_per_shard=records_per_shard,
+                sv_pipeline_docker=sv_pipeline_updates_docker,
+                runtime_attr_override=runtime_override_split_vcf_to_genotype
+        }
+
+        # Scatter genotyping over shards
+        scatter ( shard in SplitVcfToGenotype.shards ) {
+            call getDeNovo{
+                input:
+                    bed_input=vcfToBed.bed_output,
+                    ped_input=ped_input,
+                    vcf_input=subsetVcf.no_header_vcf_output,
+                    disorder_input=getGenomicDisorders.gd_output,
+                    chromosome=contigs[i],
+                    raw_proband=reformatRawFiles.reformatted_proband_raw_files[i],
+                    raw_parents=reformatRawFiles.reformatted_parents_raw_files[i],
+                    raw_depth_proband=reformatDepthRawFiles.reformatted_proband_raw_files[i],
+                    raw_depth_parents=reformatDepthRawFiles.reformatted_parents_raw_files[i],
+                    exclude_regions = exclude_regions,
+                    coverage_files = coverage_files,
+                    coverage_indeces = coverage_index_files,
+                    sample_batches = sample_batches,
+                    batch_bincov = batch_bincov,
+                    python_config=python_config,
+                    variant_interpretation_docker=variant_interpretation_docker,
+                    runtime_attr_override = runtime_attr_denovo
+            }
         }
     }
 
@@ -188,11 +208,15 @@ task getDeNovo{
                 --config ~{python_config} \
                 --filtered ~{chromosome}.filtered.txt \
                 --size_file ~{chromosome}.size.txt \
+                --coverage_output_file ~{chromosome}.coverage.txt \
                 --exclude_regions ~{exclude_regions} \
                 --coverage ~{batch_bincov} \
                 --sample_batches ~{sample_batches} \
                 --verbose True \
                 --outliers ~{chromosome}.denovo.outliers.bed
+            
+            bgzip ~{chromosome}.denovo.bed
+            bgzip ~{chromosome}.denovo.outliers.bed
     >>>
 
     runtime {
@@ -379,8 +403,8 @@ task plot_mergeFinalBedFiles{
     command {
         set -euo pipefail
 
-        head -n+1 ${bed_files[1]} > final.denovo.merged.bed
-        tail -n+2 -q ${sep=" " bed_files} >> final.denovo.merged.bed
+        zcat ${bed_files[1]} | head -n+1 > final.denovo.merged.bed
+        zcat ${sep=" " bed_files} | tail -n+2 -q >> final.denovo.merged.bed
         bgzip final.denovo.merged.bed
         
         head -n+1 ${outliers_files[1]} > final.denovo.outliers.merged.bed
