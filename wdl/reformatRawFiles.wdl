@@ -84,7 +84,7 @@ task raw_VcfToBed{
     RuntimeAttr runtime_attr = select_first([runtime_attr_override, default_attr])
 
     output{
-        File bed_output = "${prefix}.bed"
+        File bed_output = "${prefix}.bed.gz"
     }
 
     command {
@@ -92,6 +92,7 @@ task raw_VcfToBed{
 
         #convert from vcf to bed file
         svtk vcf2bed ~{vcf_file} --info SVTYPE ${prefix}.bed
+        bgzip ${prefix}.bed
 
     }
 
@@ -130,13 +131,12 @@ task raw_mergeBed{
     RuntimeAttr runtime_attr = select_first([runtime_attr_override, default_attr])
 
     output{
-        File concat_bed_output = "concat.bed"
+        File concat_bed_output = "concat.bed.gz"
     }
 
     command {
         set -euo pipefail
-
-        cat ${sep=" " bed_files} > concat.bed
+        zcat ${sep=" " bed_files} | bgzip -c > concat.bed.gz
 
     }
 
@@ -175,13 +175,15 @@ task raw_divideByChrom{
     RuntimeAttr runtime_attr = select_first([runtime_attr_override, default_attr])
 
     output{
-        File per_chromosome_bed_output = "${chromosome}.bed"
+        File per_chromosome_bed_output = "${chromosome}.bed.gz"
     }
 
     command {
         set -euo pipefail
-
-        grep -w ^${chromosome} ${bed_file} > ${chromosome}.bed
+        
+        zcat ${bed_file} | \
+        grep -w ^${chromosome} ${bed_file} | \
+        bgzip -c > ${chromosome}.bed.gz
 
     }
 
@@ -221,17 +223,20 @@ task raw_reformatBed{
     RuntimeAttr runtime_attr = select_first([runtime_attr_override, default_attr])
 
     output{
-       File reformatted_proband_output = "${chromosome}.proband.reformatted.sorted.bed"
-       File reformatted_parents_output = "${chromosome}.parents.reformatted.sorted.bed"
+       File reformatted_proband_output = "${chromosome}.proband.reformatted.sorted.bed.gz"
+       File reformatted_parents_output = "${chromosome}.parents.reformatted.sorted.bed.gz"
     }
 
     command {
         set -euo pipefail
 
         #reformat bed file
+        zcat ${per_chromosome_bed_file} | \
         Rscript /src/variant-interpretation/scripts/reformatRawBed.R ${per_chromosome_bed_file} ${ped_input} ${chromosome}.proband.reformatted.bed ${chromosome}.parents.reformatted.bed
-        sortBed -i ${chromosome}.proband.reformatted.bed > ${chromosome}.proband.reformatted.sorted.bed
-        sortBed -i ${chromosome}.parents.reformatted.bed > ${chromosome}.parents.reformatted.sorted.bed
+        sortBed -i ${chromosome}.proband.reformatted.bed > ${chromosome}.proband.reformatted.sorted.bed | \
+        bgzip -c > ${chromosome}.proband.reformatted.sorted.bed.gz
+        sortBed -i ${chromosome}.parents.reformatted.bed > ${chromosome}.parents.reformatted.sorted.bed | \
+        bgzip -c > ${chromosome}.parents.reformatted.sorted.bed.gz
 
     }
 
