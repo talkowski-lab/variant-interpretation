@@ -21,7 +21,7 @@ workflow deNovoSV {
         Int records_per_shard
         String prefix
         String variant_interpretation_docker
-        String sv_pipeline_docker
+        String sv_pipeline_updates_docker
         RuntimeAttr? runtime_attr_gd
         RuntimeAttr? runtime_attr_denovo
         RuntimeAttr? runtime_attr_raw_vcf_to_bed
