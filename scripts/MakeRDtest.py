@@ -93,7 +93,7 @@ class Variant():
       #raise Exception(dir+self.chr+"_"+newstart+"_"+newend+"_"+self.samples[0]+"_"+self.name+"_"+self.prefix+".jpg"+" Rdplot not found")
       return 'Error'
   def makeplot(self,pedir,rddir,outdir,flank,build="hg38"):
-    if ((self.type!="INS") | (self.type!="snv") | (self.type!="indel")):
+    if ((self.type!="INS") | (self.type!="snv") | (self.type!="indel") | (self.type!="INS:ME:SVA") |  (self.type!="INS:ME:LINE1") | (self.type!="INS:ME:ALU")):
       if int(self.end)-int(self.start)<2000:
           STR2=self.varname+" "+str(int(self.end)-int(self.start))+'bp'
       else:
