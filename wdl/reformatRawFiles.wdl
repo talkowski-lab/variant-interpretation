@@ -231,7 +231,7 @@ task raw_reformatBed{
         set -euo pipefail
 
         #reformat bed file
-        Rscript /src/variant-interpretation/scripts/reformatRawBed.R <(zcat ${per_chromosome_bed_file}) ${ped_input} ${chromosome}.proband.reformatted.bed ${chromosome}.parents.reformatted.bed
+        Rscript /src/variant-interpretation/scripts/reformatRawBed.R ${per_chromosome_bed_file} ${ped_input} ${chromosome}.proband.reformatted.bed ${chromosome}.parents.reformatted.bed
         sortBed -i ${chromosome}.proband.reformatted.bed > ${chromosome}.proband.reformatted.sorted.bed | \
         bgzip -c > ${chromosome}.proband.reformatted.sorted.bed.gz
         sortBed -i ${chromosome}.parents.reformatted.bed > ${chromosome}.parents.reformatted.sorted.bed | \
