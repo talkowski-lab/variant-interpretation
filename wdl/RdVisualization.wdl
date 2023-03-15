@@ -70,7 +70,7 @@ task rdtest {
         cat final.bed |egrep "DEL|DUP" | sort -k1,1 -k2,2n> test.bed
         cut -f5 test.bed |sed 's/\,/\n/g'|sort -u > samples.txt
         fgrep -wf samples.txt ~{sample_batches} |awk '{print $2}' |sort -u >existing_batches.txt
-        fgrep -f existing_batches.txt ~{batch_bincov} > bincovlist.txt
+        fgrep -f existing_batches.txt ~{batch_bincov} | cut -f1,2 > bincovlist.txt
         paste ~{sep=" " medianfile} > medianfile.txt
 
         i=0
