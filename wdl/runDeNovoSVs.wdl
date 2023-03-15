@@ -304,7 +304,7 @@ task vcfToBed{
     RuntimeAttr runtime_attr = select_first([runtime_attr_override, default_attr])
 
     output{
-        File bed_output = "~{chromosome}.bed.gz"
+        File bed_output = "~{basename}.bed.gz"
     }
 
     String basename = basename(vcf_file, ".vcf.gz")
