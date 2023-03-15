@@ -98,7 +98,6 @@ workflow deNovoSV {
                 raw_depth_proband=reformatDepthRawFiles.reformatted_proband_raw_files[i],
                 raw_depth_parents=reformatDepthRawFiles.reformatted_parents_raw_files[i],
                 exclude_regions = exclude_regions,
-                coverage_files = coverage_files,
                 sample_batches = sample_batches,
                 batch_bincov = batch_bincov,
                 python_config=python_config,
