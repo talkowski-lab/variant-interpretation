@@ -6,7 +6,7 @@ workflow deNovoSVsScatter {
 
     input {
         File ped_input
-        File vcf_files
+        Array[File] vcf_files
         File disorder_input
         String chromosome
         File raw_proband
