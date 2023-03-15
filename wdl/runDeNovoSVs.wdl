@@ -82,31 +82,29 @@ workflow deNovoSV {
                 runtime_attr_override = runtime_attr_subset_vcf
         }
 
-        call vcfToBed{
-            input:
-                vcf_file=subsetVcf.vcf_output,
-                chromosome=contigs[i],
-                variant_interpretation_docker=variant_interpretation_docker,
-                runtime_attr_override = runtime_attr_vcf_to_bed
-        }    
-
-        
         call MiniTasks.ScatterVcf as SplitVcfToGenotype {
             input:
-                vcf=vcf_file,
+                vcf=subsetVcf.vcf_output,
                 prefix=prefix,
                 records_per_shard=records_per_shard,
                 sv_pipeline_docker=sv_pipeline_updates_docker,
                 runtime_attr_override=runtime_override_shard_vcf
         }
 
+        call vcfToBed{
+            input:
+                vcf_file=SplitVcfToGenotype.shard,
+                variant_interpretation_docker=variant_interpretation_docker,
+                runtime_attr_override = runtime_attr_vcf_to_bed
+        }
+
         # Scatter genotyping over shards
-        scatter ( shard in SplitVcfToGenotype.shards ) {
+        scatter ( shard in SplitVcfToGenotype.shards_noheader ) {
             call getDeNovo{
                 input:
                     bed_input=vcfToBed.bed_output,
                     ped_input=ped_input,
-                    vcf_input=subsetVcf.no_header_vcf_output,
+                    vcf_input=shard,
                     disorder_input=getGenomicDisorders.gd_output,
                     chromosome=contigs[i],
                     raw_proband=reformatRawFiles.reformatted_proband_raw_files[i],
@@ -286,7 +284,6 @@ task subsetVcf{
 task vcfToBed{
     input{
         File vcf_file
-        String chromosome
         String variant_interpretation_docker
         RuntimeAttr? runtime_attr_override
     }
@@ -310,11 +307,12 @@ task vcfToBed{
         File bed_output = "~{chromosome}.bed.gz"
     }
 
+    String basename = basename(vcf_file, ".vcf.gz")
     command <<<
         set -euo pipefail
 
-        svtk vcf2bed ~{vcf_file} --info ALL --include-filters ~{chromosome}.bed
-        bgzip ~{chromosome}.bed
+        svtk vcf2bed ~{vcf_file} --info ALL --include-filters ~{basename}.bed
+        bgzip ~{basename}.bed
     >>>
 
     runtime {
