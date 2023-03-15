@@ -82,7 +82,7 @@ workflow deNovoSV {
                 runtime_attr_override = runtime_attr_subset_vcf
         }
 
-        call MiniTasks.ScatterVcf as SplitVcfToGenotype {
+        call MiniTasks.ScatterVcf as SplitVcf {
             input:
                 vcf=subsetVcf.vcf_output,
                 prefix=prefix,
@@ -93,13 +93,13 @@ workflow deNovoSV {
 
         call vcfToBed{
             input:
-                vcf_file=SplitVcfToGenotype.shard,
+                vcf_file=SplitVcf.shards,
                 variant_interpretation_docker=variant_interpretation_docker,
                 runtime_attr_override = runtime_attr_vcf_to_bed
         }
 
         # Scatter genotyping over shards
-        scatter ( shard in SplitVcfToGenotype.shards_noheader ) {
+        scatter ( shard in SplitVcf.shards_noheader ) {
             call getDeNovo{
                 input:
                     bed_input=vcfToBed.bed_output,
