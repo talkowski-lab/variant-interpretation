@@ -3,6 +3,7 @@ version 1.0
 import "Structs.wdl"
 import "reformatRawFiles.wdl" as raw
 import "TasksMakeCohortVcf.wdl" as MiniTasks
+import "runDeNovoSVsScatter" as runDeNovo
 
 workflow deNovoSV {
 
@@ -34,11 +35,6 @@ workflow deNovoSV {
         RuntimeAttr? runtime_attr_create_plots
         RuntimeAttr? runtime_override_shard_vcf
     
-    }
-    
-    Array[String] coverage_files = transpose(read_tsv(batch_bincov))[1]
-    scatter(coverage_file in coverage_files) {
-        String coverage_index_files = basename(coverage_file) + ".tbi"
     }
 
     call raw.reformatRawFiles as reformatRawFiles {
@@ -90,36 +86,24 @@ workflow deNovoSV {
                 sv_pipeline_docker=sv_pipeline_updates_docker,
                 runtime_attr_override=runtime_override_shard_vcf
         }
-
-    # Scatter genotyping over shards
-    scatter ( shard in SplitVcf.shards ) {
-        call vcfToBed{
+    
+        call runDeNovo.runDeNovoSVsScatter as getDeNovo {
             input:
-                vcf_file=shard,
+                ped_input=ped_input,
+                vcf_input=SplitVcf.shards,
+                disorder_input=getGenomicDisorders.gd_output,
+                chromosome=contigs[i],
+                raw_proband=reformatRawFiles.reformatted_proband_raw_files[i],
+                raw_parents=reformatRawFiles.reformatted_parents_raw_files[i],
+                raw_depth_proband=reformatDepthRawFiles.reformatted_proband_raw_files[i],
+                raw_depth_parents=reformatDepthRawFiles.reformatted_parents_raw_files[i],
+                exclude_regions = exclude_regions,
+                coverage_files = coverage_files,
+                sample_batches = sample_batches,
+                batch_bincov = batch_bincov,
+                python_config=python_config,
                 variant_interpretation_docker=variant_interpretation_docker,
-                runtime_attr_override = runtime_attr_vcf_to_bed
-        }
-
-            call getDeNovo{
-                input:
-                    bed_input=vcfToBed.bed_output,
-                    ped_input=ped_input,
-                    vcf_input=shard,
-                    disorder_input=getGenomicDisorders.gd_output,
-                    chromosome=contigs[i],
-                    raw_proband=reformatRawFiles.reformatted_proband_raw_files[i],
-                    raw_parents=reformatRawFiles.reformatted_parents_raw_files[i],
-                    raw_depth_proband=reformatDepthRawFiles.reformatted_proband_raw_files[i],
-                    raw_depth_parents=reformatDepthRawFiles.reformatted_parents_raw_files[i],
-                    exclude_regions = exclude_regions,
-                    coverage_files = coverage_files,
-                    coverage_indeces = coverage_index_files,
-                    sample_batches = sample_batches,
-                    batch_bincov = batch_bincov,
-                    python_config=python_config,
-                    variant_interpretation_docker=variant_interpretation_docker,
-                    runtime_attr_override = runtime_attr_denovo
-            }
+                runtime_attr_override = runtime_attr_denovo
         }
     }
 
@@ -147,6 +131,7 @@ workflow deNovoSV {
         File denovo_output_plots = plot_createPlots.output_plots
         Array[Array[File]] filtered_out = getDeNovo.filtered_out
         Array[Array[File]] size_file_out = getDeNovo.size_file_out
+        Array[Array[File]] coverage_file_out = getDeNovo.coverage_output_file
     }
 }
 
