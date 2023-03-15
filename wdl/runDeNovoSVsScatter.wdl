@@ -14,7 +14,6 @@ workflow deNovoSVsScatter {
         File raw_depth_proband
         File raw_depth_parents
         File exclude_regions
-        File coverage_files
         File sample_batches
         File batch_bincov
         File python_config

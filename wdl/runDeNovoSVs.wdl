@@ -102,7 +102,8 @@ workflow deNovoSV {
                 batch_bincov = batch_bincov,
                 python_config=python_config,
                 variant_interpretation_docker=variant_interpretation_docker,
-                runtime_attr_override = runtime_attr_denovo
+                runtime_attr_denovo = runtime_attr_denovo,
+                runtime_attr_vcf_to_bed = runtime_attr_vcf_to_bed
         }
     }
 
