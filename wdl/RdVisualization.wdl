@@ -9,7 +9,7 @@ workflow RdTestVisualization{
         Array[File] medianfile
         File pedfile
         File sample_batches
-        File batch_bincov
+        File batch_bincov_index
         File bed
         String sv_pipeline_rdtest_docker
         RuntimeAttr? runtime_attr_rdtest
@@ -20,7 +20,7 @@ workflow RdTestVisualization{
                 medianfile=medianfile,
                 pedfile=pedfile,
                 sample_batches=sample_batches,
-                batch_bincov=batch_bincov,
+                batch_bincov_index=batch_bincov_index,
                 prefix=prefix,
                 sv_pipeline_rdtest_docker=sv_pipeline_rdtest_docker,
                 runtime_attr_override = runtime_attr_rdtest
@@ -40,14 +40,14 @@ task rdtest {
     input{
         File bed
         File sample_batches # samples, batches
-        File batch_bincov # batch, bincov
+        File batch_bincov_index # batch, bincov, index
         Array[File] medianfile
         File pedfile
         String prefix
         String sv_pipeline_rdtest_docker
         RuntimeAttr? runtime_attr_override
     }
-    Float input_size = size(select_all([bed, sample_batches, batch_bincov, medianfile, pedfile]), "GB")
+    Float input_size = size(select_all([bed, sample_batches, batch_bincov_index, medianfile, pedfile]), "GB")
     Float base_disk_gb = 10.0
     Float base_mem_gb = 3.75
 
@@ -70,7 +70,7 @@ task rdtest {
         cat final.bed |egrep "DEL|DUP" | sort -k1,1 -k2,2n> test.bed
         cut -f5 test.bed |sed 's/\,/\n/g'|sort -u > samples.txt
         fgrep -wf samples.txt ~{sample_batches} |awk '{print $2}' |sort -u >existing_batches.txt
-        fgrep -f existing_batches.txt ~{batch_bincov} | cut -f1,2 > bincovlist.txt
+        fgrep -f existing_batches.txt ~{batch_bincov_index} | cut -f1,2 > bincovlist.txt
         paste ~{sep=" " medianfile} > medianfile.txt
 
         i=0
