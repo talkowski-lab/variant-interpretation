@@ -34,7 +34,15 @@ workflow deNovoSV {
         RuntimeAttr? runtime_attr_merge_final_bed_files
         RuntimeAttr? runtime_attr_create_plots
         RuntimeAttr? runtime_override_shard_vcf
+        RuntimeAttr? runtime_attr_clean_ped
     
+    }
+
+    call cleanPed{
+        input:
+            ped_input = ped_input,
+            variant_interpretation_docker=variant_interpretation_docker,
+            runtime_attr_override = runtime_attr_clean_ped
     }
 
     call raw.reformatRawFiles as reformatRawFiles {
@@ -216,7 +224,6 @@ task getDeNovo{
         docker: variant_interpretation_docker
     }
 }
-
 
 task subsetVcf{
     input{
@@ -452,6 +459,50 @@ task plot_createPlots{
         set -euo pipefail
 
         Rscript /src/variant-interpretation/scripts/denovoSV_plots.R ${bed_file} ${outliers_file} ${ped_input} output_plots.pdf
+
+    }
+
+    runtime {
+        cpu: select_first([runtime_attr.cpu, default_attr.cpu])
+        memory: "~{select_first([runtime_attr.mem_gb, default_attr.mem_gb])} GB"
+        disks: "local-disk ~{select_first([runtime_attr.disk_gb, default_attr.disk_gb])} HDD"
+        bootDiskSizeGb: select_first([runtime_attr.boot_disk_gb, default_attr.boot_disk_gb])
+        preemptible: select_first([runtime_attr.preemptible, default_attr.preemptible])
+        maxRetries: select_first([runtime_attr.max_retries, default_attr.max_retries])
+        docker: variant_interpretation_docker
+    }
+}
+
+task plot_createPlots{
+    input{
+        File ped_input
+        String variant_interpretation_docker
+        RuntimeAttr? runtime_attr_override
+    }
+
+    Float input_size = size(select_all([bed_file, outliers_file]), "GB")
+    Float base_disk_gb = 10.0
+    Float base_mem_gb = 3.75
+
+    RuntimeAttr default_attr = object {
+                                      mem_gb: base_mem_gb + input_size * 3.0,
+                                      disk_gb: ceil(base_disk_gb + input_size * 5.0),
+                                      cpu: 1,
+                                      preemptible: 2,
+                                      max_retries: 1,
+                                      boot_disk_gb: 8
+                                  }
+    
+    RuntimeAttr runtime_attr = select_first([runtime_attr_override, default_attr])
+
+    output{
+        File cleaned_ped = "cleaned_ped.txt"
+    }
+
+    command {
+        set -euo pipefail
+
+        Rscript /src/variant-interpretation/scripts/cleanPed.R ${ped_input}
 
     }
 

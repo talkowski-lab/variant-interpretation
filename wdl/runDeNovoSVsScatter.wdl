@@ -15,17 +15,15 @@ workflow deNovoSVsScatter {
         File raw_depth_parents
         File exclude_regions
         File sample_batches
-        File batch_bincov
+        File batch_bincov_index
         File python_config
         String variant_interpretation_docker
         RuntimeAttr? runtime_attr_denovo
         RuntimeAttr? runtime_attr_vcf_to_bed
     }
     
-    Array[String] coverage_files = transpose(read_tsv(batch_bincov))[1]
-    scatter(coverage_file in coverage_files) {
-        String coverage_index_files = basename(coverage_file) + ".tbi"
-    }
+    Array[String] coverage_files = transpose(read_tsv(batch_bincov_index))[1]
+    Array[String] coverage_index_files = transpose(read_tsv(batch_bincov_index))[2]
 
     # Scatter genotyping over shards
     scatter ( shard in vcf_files ) {
@@ -51,7 +49,7 @@ workflow deNovoSVsScatter {
                 coverage_files = coverage_files,
                 coverage_indeces = coverage_index_files,
                 sample_batches = sample_batches,
-                batch_bincov = batch_bincov,
+                batch_bincov_index = batch_bincov_index,
                 python_config=python_config,
                 variant_interpretation_docker=variant_interpretation_docker,
                 runtime_attr_override = runtime_attr_denovo
@@ -81,14 +79,14 @@ task runDeNovo{
         File exclude_regions
         Array[File] coverage_files
         Array[File] coverage_indeces
-        File batch_bincov
+        File batch_bincov_index
         File sample_batches
         File python_config
         String variant_interpretation_docker
         RuntimeAttr? runtime_attr_override
     }
 
-    Float input_size = size(select_all([vcf_input, bed_input, ped_input, disorder_input, raw_proband, raw_parents, exclude_regions, coverage_files, coverage_indeces, batch_bincov, sample_batches]), "GB")
+    Float input_size = size(select_all([vcf_input, bed_input, ped_input, disorder_input, raw_proband, raw_parents, exclude_regions, coverage_files, coverage_indeces, batch_bincov_index, sample_batches]), "GB")
     Float base_disk_gb = 10.0
     Float base_mem_gb = 3.75
 
@@ -130,7 +128,7 @@ task runDeNovo{
                 --size_file ~{basename}.size.txt \
                 --coverage_output_file ~{basename}.coverage.txt \
                 --exclude_regions ~{exclude_regions} \
-                --coverage ~{batch_bincov} \
+                --coverage ~{batch_bincov_index} \
                 --sample_batches ~{sample_batches} \
                 --verbose True \
                 --outliers ~{basename}.denovo.outliers.bed
