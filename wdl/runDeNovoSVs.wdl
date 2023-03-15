@@ -91,15 +91,15 @@ workflow deNovoSV {
                 runtime_attr_override=runtime_override_shard_vcf
         }
 
+    # Scatter genotyping over shards
+    scatter ( shard in SplitVcf.shards ) {
         call vcfToBed{
             input:
-                vcf_file=SplitVcf.shards,
+                vcf_file=shard,
                 variant_interpretation_docker=variant_interpretation_docker,
                 runtime_attr_override = runtime_attr_vcf_to_bed
         }
 
-        # Scatter genotyping over shards
-        scatter ( shard in SplitVcf.shards_noheader ) {
             call getDeNovo{
                 input:
                     bed_input=vcfToBed.bed_output,
@@ -193,11 +193,14 @@ task getDeNovo{
         File size_file_out = "~{chromosome}.size.txt"
     }
 
+    String basename = basename(vcf_input, ".vcf.gz")
     command <<<
+
+            bcftools view ~{vcf_input} | grep -v ^## | bgzip -c > ~{basename}.noheader.vcf.gz
             python3.9 /src/variant-interpretation/scripts/deNovoSVs.py \
                 --bed ~{bed_input} \
                 --ped ~{ped_input} \
-                --vcf ~{vcf_input} \
+                --vcf ~{basename}.noheader.vcf.gz \
                 --disorder ~{disorder_input} \
                 --out ~{chromosome}.denovo.bed \
                 --raw_proband ~{raw_proband} \

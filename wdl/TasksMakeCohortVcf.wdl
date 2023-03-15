@@ -1001,13 +1001,9 @@ task ScatterVcf {
       mv "$VCF" "~{prefix}.shard_${shard_no}.vcf.gz"
       i=$((i+1))
     done < vcfs.list
-
-    bcftools view ~{prefix}.shard_${shard_no}.vcf.gz | grep -v ^## | bgzip -c > ~{prefix}.shard_${shard_no}.noheader.vcf.gz
-
   >>>
   output {
     Array[File] shards = glob("~{prefix}.shard_*.vcf.gz")
-    Array[File] shards_noheader = glob("~{prefix}.shard_*.noheader.vcf.gz")
   }
 }
 
