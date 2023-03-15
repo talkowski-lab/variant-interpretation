@@ -37,7 +37,7 @@ workflow deNovoSVsScatter {
             runtime_attr_override = runtime_attr_vcf_to_bed
         }
 
-        call getDeNovo{
+        call runDeNovo{
             input:
                 bed_input=vcfToBed.bed_output,
                 ped_input=ped_input,
