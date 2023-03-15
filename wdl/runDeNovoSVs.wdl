@@ -87,7 +87,7 @@ workflow deNovoSV {
                 runtime_attr_override=runtime_override_shard_vcf
         }
     
-        call runDeNovo.runDeNovoSVsScatter as getDeNovo {
+        call runDeNovo.deNovoSVsScatter as getDeNovo {
             input:
                 ped_input=ped_input,
                 vcf_input=SplitVcf.shards,
