@@ -18,7 +18,7 @@ workflow deNovoSV {
         File depth_raw_files_list
         File exclude_regions
         File sample_batches
-        File batch_bincov
+        File batch_bincov_index
         Int records_per_shard
         String prefix
         String variant_interpretation_docker
@@ -49,7 +49,7 @@ workflow deNovoSV {
         input:
             contigs = contigs,
             raw_files_list = raw_files_list,
-            ped_input = ped_input,
+            ped_input = cleanPed.cleaned_ped,
             variant_interpretation_docker = variant_interpretation_docker,
             runtime_attr_vcf_to_bed = runtime_attr_raw_vcf_to_bed,
             runtime_attr_merge_bed = runtime_attr_raw_merge_bed,
@@ -61,7 +61,7 @@ workflow deNovoSV {
         input:
             contigs = contigs,
             raw_files_list = depth_raw_files_list,
-            ped_input = ped_input,
+            ped_input = cleanPed.cleaned_ped,
             variant_interpretation_docker = variant_interpretation_docker,
             runtime_attr_vcf_to_bed = runtime_attr_raw_vcf_to_bed,
             runtime_attr_merge_bed = runtime_attr_raw_merge_bed,
@@ -97,7 +97,7 @@ workflow deNovoSV {
     
         call runDeNovo.deNovoSVsScatter as getDeNovo {
             input:
-                ped_input=ped_input,
+                ped_input=cleanPed.cleaned_ped,
                 vcf_files=SplitVcf.shards,
                 disorder_input=getGenomicDisorders.gd_output,
                 chromosome=contigs[i],
@@ -107,7 +107,7 @@ workflow deNovoSV {
                 raw_depth_parents=reformatDepthRawFiles.reformatted_parents_raw_files[i],
                 exclude_regions = exclude_regions,
                 sample_batches = sample_batches,
-                batch_bincov = batch_bincov,
+                batch_bincov_index = batch_bincov_index,
                 python_config=python_config,
                 variant_interpretation_docker=variant_interpretation_docker,
                 runtime_attr_denovo = runtime_attr_denovo,
@@ -157,14 +157,14 @@ task getDeNovo{
         File exclude_regions
         Array[File] coverage_files
         Array[File] coverage_indeces
-        File batch_bincov
+        File batch_bincov_index
         File sample_batches
         File python_config
         String variant_interpretation_docker
         RuntimeAttr? runtime_attr_override
     }
 
-    Float input_size = size(select_all([vcf_input, bed_input, ped_input, disorder_input, raw_proband, raw_parents, exclude_regions, coverage_files, coverage_indeces, batch_bincov, sample_batches]), "GB")
+    Float input_size = size(select_all([vcf_input, bed_input, ped_input, disorder_input, raw_proband, raw_parents, exclude_regions, coverage_files, coverage_indeces, batch_bincov_index, sample_batches]), "GB")
     Float base_disk_gb = 10.0
     Float base_mem_gb = 3.75
 
@@ -205,7 +205,7 @@ task getDeNovo{
                 --size_file ~{chromosome}.size.txt \
                 --coverage_output_file ~{chromosome}.coverage.txt \
                 --exclude_regions ~{exclude_regions} \
-                --coverage ~{batch_bincov} \
+                --coverage ~{batch_bincov_index} \
                 --sample_batches ~{sample_batches} \
                 --verbose True \
                 --outliers ~{chromosome}.denovo.outliers.bed
@@ -473,7 +473,7 @@ task plot_createPlots{
     }
 }
 
-task plot_createPlots{
+task cleanPed{
     input{
         File ped_input
         String variant_interpretation_docker
