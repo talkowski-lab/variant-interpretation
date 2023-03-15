@@ -90,7 +90,7 @@ workflow deNovoSV {
         call runDeNovo.deNovoSVsScatter as getDeNovo {
             input:
                 ped_input=ped_input,
-                vcf_input=SplitVcf.shards,
+                vcf_files=SplitVcf.shards,
                 disorder_input=getGenomicDisorders.gd_output,
                 chromosome=contigs[i],
                 raw_proband=reformatRawFiles.reformatted_proband_raw_files[i],
