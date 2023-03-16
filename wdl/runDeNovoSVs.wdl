@@ -188,11 +188,15 @@ task getDeNovo{
 
     String basename = basename(vcf_input, ".vcf.gz")
     command <<<
-
+            cut -f2 ~{ped_input} | tail -n+2 > all_samples.txt
+            bcftools query -l ~{vcf_input} > samples_to_include_in_ped.txt
+            grep -w -v -f samples_to_include_in_ped.txt all_samples.txt > excluded_samples.txt
+            grep -w -f excluded_samples.txt ~{ped_input} | cut -f1 | sort -u > excluded_families.txt
+            grep -w -v -f excluded_families.txt ~{ped_input} > subset_ped.txt
             bcftools view ~{vcf_input} | grep -v ^## | bgzip -c > ~{basename}.noheader.vcf.gz
             python3.9 /src/variant-interpretation/scripts/deNovoSVs.py \
                 --bed ~{bed_input} \
-                --ped ~{ped_input} \
+                --ped subset_ped.txt \
                 --vcf ~{basename}.noheader.vcf.gz \
                 --disorder ~{disorder_input} \
                 --out ~{chromosome}.denovo.bed \
