@@ -41,6 +41,7 @@ workflow deNovoSV {
     call cleanPed{
         input:
             ped_input = ped_input,
+            vcf_input = vcf_file,
             variant_interpretation_docker=variant_interpretation_docker,
             runtime_attr_override = runtime_attr_clean_ped
     }
@@ -143,92 +144,6 @@ workflow deNovoSV {
     }
 }
 
-task getDeNovo{
-    input{
-        File bed_input
-        File ped_input
-        File vcf_input
-        File disorder_input
-        String chromosome
-        File raw_proband
-        File raw_parents
-        File raw_depth_proband
-        File raw_depth_parents
-        File exclude_regions
-        Array[File] coverage_files
-        Array[File] coverage_indeces
-        File batch_bincov_index
-        File sample_batches
-        File python_config
-        String variant_interpretation_docker
-        RuntimeAttr? runtime_attr_override
-    }
-
-    Float input_size = size(select_all([vcf_input, bed_input, ped_input, disorder_input, raw_proband, raw_parents, exclude_regions, coverage_files, coverage_indeces, batch_bincov_index, sample_batches]), "GB")
-    Float base_disk_gb = 10.0
-    Float base_mem_gb = 3.75
-
-    RuntimeAttr default_attr = object {
-                                      mem_gb: ceil(base_mem_gb + input_size * 3.0),
-                                      disk_gb: ceil(base_disk_gb + input_size * 5.0),
-                                      cpu: 1,
-                                      preemptible: 2,
-                                      max_retries: 1,
-                                      boot_disk_gb: 8
-                                  }
-
-    RuntimeAttr runtime_attr = select_first([runtime_attr_override, default_attr])
-
-    output{
-        File denovo_output = "~{chromosome}.denovo.bed"
-        File denovo_outliers = "~{chromosome}.denovo.outliers.bed"
-        File filtered_out = "~{chromosome}.filtered.txt"
-        File size_file_out = "~{chromosome}.size.txt"
-    }
-
-    String basename = basename(vcf_input, ".vcf.gz")
-    command <<<
-            cut -f2 ~{ped_input} | tail -n+2 > all_samples.txt
-            bcftools query -l ~{vcf_input} > samples_to_include_in_ped.txt
-            grep -w -v -f samples_to_include_in_ped.txt all_samples.txt > excluded_samples.txt
-            grep -w -f excluded_samples.txt ~{ped_input} | cut -f1 | sort -u > excluded_families.txt
-            grep -w -v -f excluded_families.txt ~{ped_input} > subset_ped.txt
-            bcftools view ~{vcf_input} | grep -v ^## | bgzip -c > ~{basename}.noheader.vcf.gz
-            python3.9 /src/variant-interpretation/scripts/deNovoSVs.py \
-                --bed ~{bed_input} \
-                --ped subset_ped.txt \
-                --vcf ~{basename}.noheader.vcf.gz \
-                --disorder ~{disorder_input} \
-                --out ~{chromosome}.denovo.bed \
-                --raw_proband ~{raw_proband} \
-                --raw_parents ~{raw_parents} \
-                --raw_depth_proband ~{raw_depth_proband} \
-                --raw_depth_parents ~{raw_depth_parents} \
-                --config ~{python_config} \
-                --filtered ~{chromosome}.filtered.txt \
-                --size_file ~{chromosome}.size.txt \
-                --coverage_output_file ~{chromosome}.coverage.txt \
-                --exclude_regions ~{exclude_regions} \
-                --coverage ~{batch_bincov_index} \
-                --sample_batches ~{sample_batches} \
-                --verbose True \
-                --outliers ~{chromosome}.denovo.outliers.bed
-            
-            bgzip ~{chromosome}.denovo.bed
-            bgzip ~{chromosome}.denovo.outliers.bed
-    >>>
-
-    runtime {
-        cpu: select_first([runtime_attr.cpu, default_attr.cpu])
-        memory: "~{select_first([runtime_attr.mem_gb, default_attr.mem_gb])} GB"
-        disks: "local-disk ~{select_first([runtime_attr.disk_gb, default_attr.disk_gb])} HDD"
-        bootDiskSizeGb: select_first([runtime_attr.boot_disk_gb, default_attr.boot_disk_gb])
-        preemptible: select_first([runtime_attr.preemptible, default_attr.preemptible])
-        maxRetries: select_first([runtime_attr.max_retries, default_attr.max_retries])
-        docker: variant_interpretation_docker
-    }
-}
-
 task subsetVcf{
     input{
         File vcf_file
@@ -267,51 +182,6 @@ task subsetVcf{
         bcftools view ~{chromosome}.vcf.gz | grep -v ^## | bgzip -c > ~{chromosome}.noheader.vcf.gz
 
         
-    >>>
-
-    runtime {
-        cpu: select_first([runtime_attr.cpu, default_attr.cpu])
-        memory: "~{select_first([runtime_attr.mem_gb, default_attr.mem_gb])} GB"
-        disks: "local-disk ~{select_first([runtime_attr.disk_gb, default_attr.disk_gb])} HDD"
-        bootDiskSizeGb: select_first([runtime_attr.boot_disk_gb, default_attr.boot_disk_gb])
-        preemptible: select_first([runtime_attr.preemptible, default_attr.preemptible])
-        maxRetries: select_first([runtime_attr.max_retries, default_attr.max_retries])
-        docker: variant_interpretation_docker
-    }
-}
-
-task vcfToBed{
-    input{
-        File vcf_file
-        String variant_interpretation_docker
-        RuntimeAttr? runtime_attr_override
-    }
-
-    Float input_size = size(vcf_file, "GB")
-    Float base_disk_gb = 10.0
-    Float base_mem_gb = 3.75
-
-    RuntimeAttr default_attr = object {
-                                      mem_gb: base_mem_gb + input_size * 3.0,
-                                      disk_gb: ceil(base_disk_gb + input_size * 5.0),
-                                      cpu: 1,
-                                      preemptible: 2,
-                                      max_retries: 1,
-                                      boot_disk_gb: 8
-                                  }
-    
-    RuntimeAttr runtime_attr = select_first([runtime_attr_override, default_attr])
-
-    output{
-        File bed_output = "~{basename}.bed.gz"
-    }
-
-    String basename = basename(vcf_file, ".vcf.gz")
-    command <<<
-        set -euo pipefail
-
-        svtk vcf2bed ~{vcf_file} --info ALL --include-filters ~{basename}.bed
-        bgzip ~{basename}.bed
     >>>
 
     runtime {
@@ -480,11 +350,12 @@ task plot_createPlots{
 task cleanPed{
     input{
         File ped_input
+        File vcf_input
         String variant_interpretation_docker
         RuntimeAttr? runtime_attr_override
     }
 
-    Float input_size = size(select_all([ped_input]), "GB")
+    Float input_size = size(select_all([ped_input, vcf_input]), "GB")
     Float base_disk_gb = 10.0
     Float base_mem_gb = 3.75
 
@@ -500,13 +371,18 @@ task cleanPed{
     RuntimeAttr runtime_attr = select_first([runtime_attr_override, default_attr])
 
     output{
-        File cleaned_ped = "cleaned_ped.txt"
+        File cleaned_ped = "subset_cleaned_ped.txt"
     }
 
     command {
         set -euo pipefail
 
         Rscript /src/variant-interpretation/scripts/cleanPed.R ${ped_input}
+        cut -f2 cleaned_ped.txt | tail -n+2 > all_samples.txt
+        bcftools query -l ~{vcf_input} > samples_to_include_in_ped.txt
+        grep -w -v -f samples_to_include_in_ped.txt all_samples.txt > excluded_samples.txt
+        grep -w -f excluded_samples.txt ~{ped_input} | cut -f1 | sort -u > excluded_families.txt
+        grep -w -v -f excluded_families.txt ~{ped_input} > subset_cleaned_ped.txt
 
     }
 
