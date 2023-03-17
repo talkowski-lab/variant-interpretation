@@ -62,7 +62,7 @@ workflow deNovoSVsScatter {
                 bed_files = runDeNovo.denovo_output,
                 outliers_files = runDeNovo.denovo_outliers,
                 chromosome = chromosome,
-                variant_interpretation_docker = variant_interpretation_docker
+                variant_interpretation_docker = variant_interpretation_docker,
                 runtime_attr_override = runtime_attr_merge_bed
     }
 
