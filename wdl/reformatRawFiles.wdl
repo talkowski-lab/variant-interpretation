@@ -69,8 +69,8 @@ workflow reformatRawFiles {
 
 
     output {
-        Array[File?] reformatted_parents_raw_files = select_first([raw_reformatBed.reformatted_parents_output, raw_reformatBedDepth.reformatted_parents_output])
-        Array[File?] reformatted_proband_raw_files = select_first([raw_reformatBed.reformatted_proband_output, raw_reformatBedDepth.reformatted_proband_output])
+        Array[File] reformatted_parents_raw_files = select_first([raw_reformatBed.reformatted_parents_output, raw_reformatBedDepth.reformatted_parents_depth_output])
+        Array[File] reformatted_proband_raw_files = select_first([raw_reformatBed.reformatted_proband_output, raw_reformatBedDepth.reformatted_proband_depth_output])
     }
 }   
 
@@ -287,8 +287,8 @@ task raw_reformatBedDepth{
     RuntimeAttr runtime_attr = select_first([runtime_attr_override, default_attr])
 
     output{
-       File reformatted_proband_output = "${chromosome}.proband.depth.reformatted.sorted.bed.gz"
-       File reformatted_parents_output = "${chromosome}.parents.depth.reformatted.sorted.bed.gz"
+       File reformatted_proband_depth_output = "${chromosome}.proband.depth.reformatted.sorted.bed.gz"
+       File reformatted_parents_depth_output = "${chromosome}.parents.depth.reformatted.sorted.bed.gz"
     }
 
     command {

@@ -72,10 +72,10 @@ task runDeNovo{
         File vcf_input
         File disorder_input
         String chromosome
-        File? raw_proband
-        File? raw_parents
-        File? raw_depth_proband
-        File? raw_depth_parents
+        File raw_proband
+        File raw_parents
+        File raw_depth_proband
+        File raw_depth_parents
         File exclude_regions
         Array[File] coverage_files
         Array[File] coverage_indeces
