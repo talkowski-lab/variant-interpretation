@@ -8,13 +8,12 @@ workflow reformatRawFiles {
         Array[String] contigs
         File raw_files_list
         File ped_input
-        Boolean depth
         String variant_interpretation_docker
+        Boolean depth
         RuntimeAttr? runtime_attr_vcf_to_bed
         RuntimeAttr? runtime_attr_merge_bed
         RuntimeAttr? runtime_attr_divide_by_chrom
         RuntimeAttr? runtime_attr_reformat_bed
-        RuntimeAttr? runtime_attr_reformat_rename_bed
     }
 
     Array[String] raw_files = transpose(read_tsv(raw_files_list))[0]
@@ -44,32 +43,38 @@ workflow reformatRawFiles {
                 variant_interpretation_docker=variant_interpretation_docker,
                 runtime_attr_override = runtime_attr_divide_by_chrom
         }
-        
-        call raw_reformatBed{
-            input:
-                per_chromosome_bed_file = raw_divideByChrom.per_chromosome_bed_output,
-                ped_input=ped_input,
-                chromosome=contig,
-                variant_interpretation_docker=variant_interpretation_docker,
-                runtime_attr_override = runtime_attr_reformat_bed
-        }
 
-        if (depth){
-            call raw_renameBed{
+        if (depth) {
+            call raw_reformatBedDepth{
                 input:
-                    reformatted_proband_file = raw_reformatBed.reformatted_proband_output,
-                    reformatted_parents_file = raw_reformatBed.reformatted_parents_output,
-                    chromosome = contig,
+                    per_chromosome_bed_file = raw_divideByChrom.per_chromosome_bed_output,
+                    ped_input=ped_input,
+                    chromosome=contig,
                     variant_interpretation_docker=variant_interpretation_docker,
-                    runtime_attr_override = runtime_attr_reformat_rename_bed
+                    runtime_attr_override = runtime_attr_reformat_bed
             }
         }
+
+        if (!(depth)) {
+            call raw_reformatBed{
+                input:
+                    per_chromosome_bed_file = raw_divideByChrom.per_chromosome_bed_output,
+                    ped_input=ped_input,
+                    chromosome=contig,
+                    variant_interpretation_docker=variant_interpretation_docker,
+                    runtime_attr_override = runtime_attr_reformat_bed
+            }
+        }
+        File reformatted_parents_output_ = select_first([raw_reformatBed.reformatted_parents_output])
+        File reformatted_proband_output_ = select_first([raw_reformatBed.reformatted_proband_output])
+        File reformatted_parents_depth_output_ = select_first([raw_reformatBedDepth.reformatted_parents_depth_output])
+        File reformatted_proband_depth_output_ = select_first([raw_reformatBedDepth.reformatted_proband_depth_output])
     }
 
 
     output {
-        Array[File] reformatted_parents_raw_files = select_first([raw_renameBed.reformatted_parents_depth_output, raw_reformatBed.reformatted_parents_output])
-        Array[File] reformatted_proband_raw_files = select_first([raw_renameBed.reformatted_proband_depth_output, raw_reformatBed.reformatted_proband_output])
+        Array[File] reformatted_parents_raw_files = select_first([reformatted_parents_output_, reformatted_parents_depth_output_])
+        Array[File] reformatted_proband_raw_files = select_first([reformatted_proband_output_, reformatted_proband_depth_output_])
     }
 }   
 
@@ -260,18 +265,17 @@ task raw_reformatBed{
         docker: variant_interpretation_docker
     }
 }   
- 
 
-task raw_renameBed{
+task raw_reformatBedDepth{
     input{
-        File reformatted_proband_file
-        File reformatted_parents_file
+        File per_chromosome_bed_file
+        File ped_input
         String chromosome
         String variant_interpretation_docker
         RuntimeAttr? runtime_attr_override
     }
 
-    Float input_size = size(select_all([reformatted_proband_file, reformatted_parents_file]), "GB")
+    Float input_size = size(select_all([per_chromosome_bed_file, ped_input]), "GB")
     Float base_disk_gb = 10.0
     Float base_mem_gb = 3.75
 
@@ -294,8 +298,10 @@ task raw_renameBed{
     command {
         set -euo pipefail
 
-        cp ${reformatted_proband_file} ${chromosome}.proband.depth.reformatted.sorted.bed.gz
-        cp ${reformatted_parents_file} ${chromosome}.parents.depth.reformatted.sorted.bed.gz
+        #reformat bed file
+        Rscript /src/variant-interpretation/scripts/reformatRawBed.R ${per_chromosome_bed_file} ${ped_input} ${chromosome}.proband.reformatted.bed ${chromosome}.parents.reformatted.bed
+        sortBed -i ${chromosome}.proband.reformatted.bed | bgzip -c > ${chromosome}.proband.depth.reformatted.sorted.bed.gz
+        sortBed -i ${chromosome}.parents.reformatted.bed | bgzip -c > ${chromosome}.parents.depth.reformatted.sorted.bed.gz
 
     }
 
