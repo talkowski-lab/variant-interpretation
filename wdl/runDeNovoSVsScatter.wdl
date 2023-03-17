@@ -9,10 +9,10 @@ workflow deNovoSVsScatter {
         Array[File] vcf_files
         File disorder_input
         String chromosome
-        File? raw_proband
-        File? raw_parents
-        File? raw_depth_proband
-        File? raw_depth_parents
+        File raw_proband
+        File raw_parents
+        File raw_depth_proband
+        File raw_depth_parents
         File exclude_regions
         File sample_batches
         File batch_bincov_index
