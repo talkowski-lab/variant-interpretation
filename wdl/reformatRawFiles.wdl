@@ -44,8 +44,8 @@ workflow reformatRawFiles {
                 runtime_attr_override = runtime_attr_divide_by_chrom
         }
 
-        if (!(depth)) {
-            call raw_reformatBed{
+        if (depth) {
+            call raw_reformatBedDepth{
                 input:
                     per_chromosome_bed_file = raw_divideByChrom.per_chromosome_bed_output,
                     ped_input=ped_input,
@@ -55,8 +55,8 @@ workflow reformatRawFiles {
             }
         }
 
-        if (depth) {
-            call raw_reformatBedDepth{
+        else {
+            call raw_reformatBed{
                 input:
                     per_chromosome_bed_file = raw_divideByChrom.per_chromosome_bed_output,
                     ped_input=ped_input,
