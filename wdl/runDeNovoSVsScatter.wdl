@@ -113,7 +113,7 @@ task runDeNovo{
     String basename_raw_proband = basename(raw_proband, ".gz")
     String basename_raw_parents = basename(raw_parents, ".gz")
     String basename_raw_depth_proband = basename(raw_depth_proband, ".gz")
-    String basename_raw__depth_parents = basename(raw_depth_parents, ".gz")
+    String basename_raw_depth_parents = basename(raw_depth_parents, ".gz")
     command <<<
 
             bcftools view ~{vcf_input} | grep -v ^## | bgzip -c > ~{basename}.noheader.vcf.gz
@@ -130,7 +130,7 @@ task runDeNovo{
                 --raw_proband ~{basename_raw_proband} \
                 --raw_parents ~{basename_raw_parents} \
                 --raw_depth_proband ~{basename_raw_depth_proband} \
-                --raw_depth_parents ~{basename_raw__depth_parents} \
+                --raw_depth_parents ~{basename_raw_depth_parents} \
                 --config ~{python_config} \
                 --filtered ~{basename}.filtered.txt \
                 --size_file ~{basename}.size.txt \
