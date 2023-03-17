@@ -110,27 +110,23 @@ task runDeNovo{
     }
 
     String basename = basename(vcf_input, ".vcf.gz")
-    String basename_raw_proband = basename(raw_proband, ".gz")
-    String basename_raw_parents = basename(raw_parents, ".gz")
-    String basename_raw_depth_proband = basename(raw_depth_proband, ".gz")
-    String basename_raw_depth_parents = basename(raw_depth_parents, ".gz")
     command <<<
 
             bcftools view ~{vcf_input} | grep -v ^## | bgzip -c > ~{basename}.noheader.vcf.gz
-            gunzip ~{raw_proband}
-            gunzip ~{raw_parents}
-            gunzip ~{raw_depth_proband}
-            gunzip ~{raw_depth_parents}
+            gunzip -c ~{raw_proband} > ${chromosome}.proband.reformatted.sorted.bed
+            gunzip -c ~{raw_parents} > ${chromosome}.parents.reformatted.sorted.bed
+            gunzip -c ~{raw_depth_proband} > ${chromosome}.proband.depth.reformatted.sorted.bed
+            gunzip -c ~{raw_depth_parents} > ${chromosome}.parents.depth.reformatted.sorted.bed
             python3.9 /src/variant-interpretation/scripts/deNovoSVs.py \
                 --bed ~{bed_input} \
                 --ped ~{ped_input} \
                 --vcf ~{basename}.noheader.vcf.gz \
                 --disorder ~{disorder_input} \
                 --out ~{basename}.denovo.bed \
-                --raw_proband ~{basename_raw_proband} \
-                --raw_parents ~{basename_raw_parents} \
-                --raw_depth_proband ~{basename_raw_depth_proband} \
-                --raw_depth_parents ~{basename_raw_depth_parents} \
+                --raw_proband ${chromosome}.proband.reformatted.sorted.bed \
+                --raw_parents ${chromosome}.parents.reformatted.sorted.bed \
+                --raw_depth_proband ${chromosome}.proband.depth.reformatted.sorted.bed \
+                --raw_depth_parents ${chromosome}.parents.depth.reformatted.sorted.bed \
                 --config ~{python_config} \
                 --filtered ~{basename}.filtered.txt \
                 --size_file ~{basename}.size.txt \
