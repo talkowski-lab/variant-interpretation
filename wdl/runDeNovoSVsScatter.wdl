@@ -44,7 +44,7 @@ workflow deNovoSVsScatter {
                 raw_proband=raw_proband,
                 raw_parents=raw_parents,
                 raw_depth_proband=raw_depth_proband,
-                raw_depth_parents=raw_depth_proband,
+                raw_depth_parents=raw_depth_parents,
                 exclude_regions = exclude_regions,
                 coverage_files = coverage_files,
                 coverage_indeces = coverage_index_files,
