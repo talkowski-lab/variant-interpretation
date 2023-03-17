@@ -271,7 +271,7 @@ task raw_renameBed{
         RuntimeAttr? runtime_attr_override
     }
 
-    Float input_size = size(select_all([per_chromosome_bed_file, ped_input]), "GB")
+    Float input_size = size(select_all([reformatted_proband_file, reformatted_parents_file]), "GB")
     Float base_disk_gb = 10.0
     Float base_mem_gb = 3.75
 
@@ -294,7 +294,6 @@ task raw_renameBed{
     command {
         set -euo pipefail
 
-        #reformat bed file
         cp ${reformatted_proband_file} ${chromosome}.proband.depth.reformatted.sorted.bed.gz
         cp ${reformatted_parents_file} ${chromosome}.parents.depth.reformatted.sorted.bed.gz
 
