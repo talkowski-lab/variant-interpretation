@@ -65,16 +65,14 @@ workflow reformatRawFiles {
                     runtime_attr_override = runtime_attr_reformat_bed
             }
         }
-        File reformatted_parents_output_ = select_first([raw_reformatBed.reformatted_parents_output])
-        File reformatted_proband_output_ = select_first([raw_reformatBed.reformatted_proband_output])
-        File reformatted_parents_depth_output_ = select_first([raw_reformatBedDepth.reformatted_parents_depth_output])
-        File reformatted_proband_depth_output_ = select_first([raw_reformatBedDepth.reformatted_proband_depth_output])
+        File reformatted_parents_output_ = select_first([raw_reformatBed.reformatted_parents_output, raw_reformatBedDepth.reformatted_parents_depth_output])
+        File reformatted_proband_output_ = select_first([raw_reformatBed.reformatted_proband_output, raw_reformatBedDepth.reformatted_proband_depth_output])
     }
 
 
     output {
-        Array[File] reformatted_parents_raw_files = select_first([reformatted_parents_output_, reformatted_parents_depth_output_])
-        Array[File] reformatted_proband_raw_files = select_first([reformatted_proband_output_, reformatted_proband_depth_output_])
+        Array[File] reformatted_parents_raw_files = reformatted_parents_output_
+        Array[File] reformatted_proband_raw_files = reformatted_proband_output_
     }
 }   
 
