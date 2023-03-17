@@ -102,27 +102,35 @@ task runDeNovo{
     RuntimeAttr runtime_attr = select_first([runtime_attr_override, default_attr])
 
     output{
-        File denovo_output = "~{basename}.denovo.bed"
-        File denovo_outliers = "~{basename}.denovo.outliers.bed"
+        File denovo_output = "~{basename}.denovo.bed.gz"
+        File denovo_outliers = "~{basename}.denovo.outliers.bed.gz"
         File filtered_out = "~{basename}.filtered.txt"
         File size_file_out = "~{basename}.size.txt"
         File coverage_output_file = "~{basename}.coverage.txt"
     }
 
     String basename = basename(vcf_input, ".vcf.gz")
+    String basename_raw_proband = basename(raw_proband, ".gz")
+    String basename_raw_parents = basename(raw_parents, ".gz")
+    String basename_raw_depth_proband = basename(raw_depth_proband, ".gz")
+    String basename_raw__depth_parents = basename(raw_depth_parents, ".gz")
     command <<<
 
             bcftools view ~{vcf_input} | grep -v ^## | bgzip -c > ~{basename}.noheader.vcf.gz
+            gunzip ~{raw_proband}
+            gunzip ~{raw_parents}
+            gunzip ~{raw_depth_proband}
+            gunzip ~{raw_depth_parents}
             python3.9 /src/variant-interpretation/scripts/deNovoSVs.py \
                 --bed ~{bed_input} \
                 --ped ~{ped_input} \
                 --vcf ~{basename}.noheader.vcf.gz \
                 --disorder ~{disorder_input} \
                 --out ~{basename}.denovo.bed \
-                --raw_proband ~{raw_proband} \
-                --raw_parents ~{raw_parents} \
-                --raw_depth_proband ~{raw_depth_proband} \
-                --raw_depth_parents ~{raw_depth_parents} \
+                --raw_proband ~{basename_raw_proband} \
+                --raw_parents ~{basename_raw_parents} \
+                --raw_depth_proband ~{basename_raw_depth_proband} \
+                --raw_depth_parents ~{basename_raw__depth_parents} \
                 --config ~{python_config} \
                 --filtered ~{basename}.filtered.txt \
                 --size_file ~{basename}.size.txt \
