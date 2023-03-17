@@ -20,6 +20,7 @@ workflow deNovoSVsScatter {
         String variant_interpretation_docker
         RuntimeAttr? runtime_attr_denovo
         RuntimeAttr? runtime_attr_vcf_to_bed
+        RuntimeAttr? runtime_attr_merge_bed
     }
     
     Array[String] coverage_files = transpose(read_tsv(batch_bincov_index))[1]
@@ -53,7 +54,16 @@ workflow deNovoSVsScatter {
                 python_config=python_config,
                 variant_interpretation_docker=variant_interpretation_docker,
                 runtime_attr_override = runtime_attr_denovo
-        }
+        }   
+    }
+
+    call mergeBedFiles{
+            input:
+                bed_files = runDeNovo.denovo_output,
+                outliers_files = runDeNovo.denovo_outliers,
+                chromosome = chromosome,
+                variant_interpretation_docker = variant_interpretation_docker
+                runtime_attr_override = runtime_attr_merge_bed
     }
 
     output {
@@ -62,6 +72,8 @@ workflow deNovoSVsScatter {
         Array[File] filtered_out = runDeNovo.filtered_out
         Array[File] size_file_out = runDeNovo.size_file_out
         Array[File] coverage_output_file = runDeNovo.coverage_output_file
+        File merged_denovo_output_file = mergeBedFiles.per_chromosome_denovo_output
+        File merged_denovo_outliers_file = mergeBedFiles.per_chromosome_denovo_outliers_output
     }
 }
 
@@ -102,11 +114,11 @@ task runDeNovo{
     RuntimeAttr runtime_attr = select_first([runtime_attr_override, default_attr])
 
     output{
-        File denovo_output = "${chromosome}.~{basename}.denovo.bed.gz"
-        File denovo_outliers = "${chromosome}.~{basename}.denovo.outliers.bed.gz"
-        File filtered_out = "${chromosome}.~{basename}.filtered.txt"
-        File size_file_out = "${chromosome}.~{basename}.size.txt"
-        File coverage_output_file = "${chromosome}.~{basename}.coverage.txt"
+        File denovo_output = "~{basename}.denovo.bed.gz"
+        File denovo_outliers = "~{basename}.denovo.outliers.bed.gz"
+        File filtered_out = "~{basename}.filtered.txt"
+        File size_file_out = "~{basename}.size.txt"
+        File coverage_output_file = "~{basename}.coverage.txt"
     }
 
     String basename = basename(vcf_input, ".vcf.gz")
@@ -122,23 +134,23 @@ task runDeNovo{
                 --ped ~{ped_input} \
                 --vcf ~{basename}.noheader.vcf.gz \
                 --disorder ~{disorder_input} \
-                --out ${chromosome}.~{basename}.denovo.bed \
+                --out ~{basename}.denovo.bed \
                 --raw_proband ${chromosome}.proband.reformatted.sorted.bed \
                 --raw_parents ${chromosome}.parents.reformatted.sorted.bed \
                 --raw_depth_proband ${chromosome}.proband.depth.reformatted.sorted.bed \
                 --raw_depth_parents ${chromosome}.parents.depth.reformatted.sorted.bed \
                 --config ~{python_config} \
-                --filtered ${chromosome}.~{basename}.filtered.txt \
-                --size_file ${chromosome}.~{basename}.size.txt \
-                --coverage_output_file ${chromosome}.~{basename}.coverage.txt \
+                --filtered ~{basename}.filtered.txt \
+                --size_file ~{basename}.size.txt \
+                --coverage_output_file ~{basename}.coverage.txt \
                 --exclude_regions ~{exclude_regions} \
                 --coverage ~{batch_bincov_index} \
                 --sample_batches ~{sample_batches} \
                 --verbose True \
-                --outliers ${chromosome}.~{basename}.denovo.outliers.bed
+                --outliers ~{basename}.denovo.outliers.bed
             
-            bgzip ${chromosome}.~{basename}.denovo.bed
-            bgzip ${chromosome}.~{basename}.denovo.outliers.bed
+            bgzip ~{basename}.denovo.bed
+            bgzip ~{basename}.denovo.outliers.bed
     >>>
 
     runtime {
@@ -185,6 +197,59 @@ task vcfToBed{
         svtk vcf2bed ~{vcf_file} --info ALL --include-filters ~{basename}.bed
         bgzip ~{basename}.bed
     >>>
+
+    runtime {
+        cpu: select_first([runtime_attr.cpu, default_attr.cpu])
+        memory: "~{select_first([runtime_attr.mem_gb, default_attr.mem_gb])} GB"
+        disks: "local-disk ~{select_first([runtime_attr.disk_gb, default_attr.disk_gb])} HDD"
+        bootDiskSizeGb: select_first([runtime_attr.boot_disk_gb, default_attr.boot_disk_gb])
+        preemptible: select_first([runtime_attr.preemptible, default_attr.preemptible])
+        maxRetries: select_first([runtime_attr.max_retries, default_attr.max_retries])
+        docker: variant_interpretation_docker
+    }
+}
+
+task mergeBedFiles{
+    input{
+        Array[File] bed_files
+        Array[File] outliers_files
+        String chromosome
+        String variant_interpretation_docker
+        RuntimeAttr? runtime_attr_override
+    }
+
+    Float bed_files_size = size(bed_files, "GB")
+    Float outliers_files_size = size(outliers_files, "GB")
+    Float base_disk_gb = 10.0
+    Float base_mem_gb = 3.75
+
+    RuntimeAttr default_attr = object {
+                                      mem_gb: base_mem_gb + (bed_files_size + outliers_files_size) * 3.0,
+                                      disk_gb: ceil(base_disk_gb + (bed_files_size + outliers_files_size) * 5.0),
+                                      cpu: 1,
+                                      preemptible: 2,
+                                      max_retries: 1,
+                                      boot_disk_gb: 8
+                                  }
+    
+    RuntimeAttr runtime_attr = select_first([runtime_attr_override, default_attr])
+
+    output{
+        File per_chromosome_denovo_output = "~{chromosome}.denovo.merged.bed.gz"
+        File per_chromosome_denovo_outliers_output = "~{chromosome}.denovo.outliers.merged.bed.gz"
+    }
+
+    command {
+        set -euo pipefail
+
+        zcat ${bed_files[1]} | head -n+1 > ~{chromosome}.denovo.merged.bed
+        zcat ${sep=" " bed_files} | tail -n+2 -q >> ~{chromosome}.denovo.merged.bed
+        bgzip ~{chromosome}.denovo.merged.bed
+        
+        zcat ${outliers_files[1]} | head -n+1 > ~{chromosome}.denovo.outliers.merged.bed
+        zcat ${sep=" " outliers_files} | tail -n+2 -q >> ~{chromosome}.denovo.outliers.merged.bed
+        bgzip ~{chromosome}.denovo.outliers.merged.bed
+    }
 
     runtime {
         cpu: select_first([runtime_attr.cpu, default_attr.cpu])

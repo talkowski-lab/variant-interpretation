@@ -120,8 +120,8 @@ workflow deNovoSV {
 
     call plot_mergeFinalBedFiles{
         input:
-            bed_files = flatten(getDeNovo.per_shard_de_novo_output),
-            outliers_files = flatten(getDeNovo.per_shard_de_novo_outliers),
+            bed_files = getDeNovo.merged_denovo_output_file,
+            outliers_files = getDeNovo.merged_denovo_outliers_file,
             variant_interpretation_docker=variant_interpretation_docker,
             runtime_attr_override = runtime_attr_merge_final_bed_files
     }
