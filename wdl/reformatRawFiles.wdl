@@ -55,7 +55,7 @@ workflow reformatRawFiles {
             }
         }
 
-        else {
+        if (!(depth)) {
             call raw_reformatBed{
                 input:
                     per_chromosome_bed_file = raw_divideByChrom.per_chromosome_bed_output,
@@ -69,8 +69,8 @@ workflow reformatRawFiles {
 
 
     output {
-        Array[File] reformatted_parents_raw_files = select_first([raw_reformatBed.reformatted_parents_output, raw_reformatBedDepth.reformatted_parents_output])
-        Array[File] reformatted_proband_raw_files = select_first([raw_reformatBed.reformatted_proband_output, raw_reformatBedDepth.reformatted_proband_output])
+        Array[File?] reformatted_parents_raw_files = select_first([raw_reformatBed.reformatted_parents_output, raw_reformatBedDepth.reformatted_parents_output])
+        Array[File?] reformatted_proband_raw_files = select_first([raw_reformatBed.reformatted_proband_output, raw_reformatBedDepth.reformatted_proband_output])
     }
 }   
 
