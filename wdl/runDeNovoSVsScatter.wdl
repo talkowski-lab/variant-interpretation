@@ -102,11 +102,11 @@ task runDeNovo{
     RuntimeAttr runtime_attr = select_first([runtime_attr_override, default_attr])
 
     output{
-        File denovo_output = "~{basename}.denovo.bed.gz"
-        File denovo_outliers = "~{basename}.denovo.outliers.bed.gz"
-        File filtered_out = "~{basename}.filtered.txt"
-        File size_file_out = "~{basename}.size.txt"
-        File coverage_output_file = "~{basename}.coverage.txt"
+        File denovo_output = "${chromosome}.~{basename}.denovo.bed.gz"
+        File denovo_outliers = "${chromosome}.~{basename}.denovo.outliers.bed.gz"
+        File filtered_out = "${chromosome}.~{basename}.filtered.txt"
+        File size_file_out = "${chromosome}.~{basename}.size.txt"
+        File coverage_output_file = "${chromosome}.~{basename}.coverage.txt"
     }
 
     String basename = basename(vcf_input, ".vcf.gz")
@@ -122,23 +122,23 @@ task runDeNovo{
                 --ped ~{ped_input} \
                 --vcf ~{basename}.noheader.vcf.gz \
                 --disorder ~{disorder_input} \
-                --out ~{basename}.denovo.bed \
+                --out ${chromosome}.~{basename}.denovo.bed \
                 --raw_proband ${chromosome}.proband.reformatted.sorted.bed \
                 --raw_parents ${chromosome}.parents.reformatted.sorted.bed \
                 --raw_depth_proband ${chromosome}.proband.depth.reformatted.sorted.bed \
                 --raw_depth_parents ${chromosome}.parents.depth.reformatted.sorted.bed \
                 --config ~{python_config} \
-                --filtered ~{basename}.filtered.txt \
-                --size_file ~{basename}.size.txt \
-                --coverage_output_file ~{basename}.coverage.txt \
+                --filtered ${chromosome}.~{basename}.filtered.txt \
+                --size_file ${chromosome}.~{basename}.size.txt \
+                --coverage_output_file ${chromosome}.~{basename}.coverage.txt \
                 --exclude_regions ~{exclude_regions} \
                 --coverage ~{batch_bincov_index} \
                 --sample_batches ~{sample_batches} \
                 --verbose True \
-                --outliers ~{basename}.denovo.outliers.bed
+                --outliers ${chromosome}.~{basename}.denovo.outliers.bed
             
-            bgzip ~{basename}.denovo.bed
-            bgzip ~{basename}.denovo.outliers.bed
+            bgzip ${chromosome}.~{basename}.denovo.bed
+            bgzip ${chromosome}.~{basename}.denovo.outliers.bed
     >>>
 
     runtime {
