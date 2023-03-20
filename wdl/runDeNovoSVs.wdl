@@ -140,6 +140,15 @@ workflow deNovoSV {
         File denovo_output = plot_mergeFinalBedFiles.final_denovo_output
         File denovo_outliers_output = plot_mergeFinalBedFiles.final_denovo_outliers_output
         File denovo_output_plots = plot_createPlots.output_plots
+        File per_chrom_plot = plot_createPlots.per_chrom_plot
+        File per_sample_plot = plot_createPlots.per_sample_plot
+        File per_freq_plot = plot_createPlots.per_freq_plot
+        File per_freq_gd_plot = plot_createPlots.per_freq_gd_plot
+        File per_freq_not_gd = plot_createPlots.per_freq_not_gd
+        File size_plot = plot_createPlots.size_plot
+        File evidence_plot = plot_createPlots.evidence_plot
+        File annotation_plot = plot_createPlots.annotation_plot
+        File per_type_plot = plot_createPlots.per_type_plot
         Array[Array[File]] filtered_out = getDeNovo.filtered_out
         Array[Array[File]] size_file_out = getDeNovo.size_file_out
         Array[Array[File]] coverage_file_out = getDeNovo.coverage_output_file
