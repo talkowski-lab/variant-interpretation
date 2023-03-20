@@ -71,8 +71,8 @@ workflow IGV_all_samples {
                 samples = generate_per_family_sample_crai_cram.per_family_samples,
                 crams = generate_per_family_sample_crai_cram.per_family_crams,
                 crais = generate_per_family_sample_crai_cram.per_family_crais,
-                buffer = buffer_,
-                buffer_large = buffer_large_,
+                buffer = buffer,
+                buffer_large = buffer_large,
                 igv_docker = igv_docker,
                 runtime_attr_run_igv = runtime_attr_run_igv
         }
