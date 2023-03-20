@@ -14,7 +14,7 @@ workflow VisualizePlots{
         File varfile
         File pedfile
         String prefix
-        File? batch_bincov_index
+        File? batch_bincov
         File? sample_batches
         Array[File]? medianfile
 
@@ -40,7 +40,7 @@ workflow VisualizePlots{
 
     if(run_RD) {
         Array[File] medianfile_ = select_first([medianfile])
-        File batch_bincov_index_ = select_first([batch_bincov_index])
+        File batch_bincov_ = select_first([batch_bincov])
         File sample_batches_ = select_first([sample_batches])
 
         call rdtest.RdTestVisualization as RdTest{
@@ -48,7 +48,7 @@ workflow VisualizePlots{
                 prefix = prefix,
                 medianfile = medianfile_,
                 pedfile = pedfile,
-                batch_bincov_index=batch_bincov_index_,
+                batch_bincov=batch_bincov_,
                 bed = varfile,
                 sv_pipeline_rdtest_docker=sv_pipeline_rdtest_docker,
                 sample_batches = sample_batches_,
