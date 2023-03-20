@@ -22,6 +22,8 @@ workflow VisualizePlots{
         File? nested_repeats
         File? simple_repeats
         File? empty_track
+        String? buffer
+        String? buffer_large
 
         String sv_base_mini_docker
         String sv_pipeline_rdtest_docker
@@ -63,6 +65,8 @@ workflow VisualizePlots{
         File nested_repeats_ = select_first([nested_repeats])
         File simple_repeats_ = select_first([simple_repeats])
         File empty_track_ = select_first([empty_track])
+        File buffer_ = select_first([buffer,500])
+        File buffer_large_ = select_first([buffer_large,1000])
 
         call igv.IGV_all_samples as igv_plots {
             input:
@@ -71,6 +75,8 @@ workflow VisualizePlots{
                 nested_repeats = nested_repeats_,
                 simple_repeats = simple_repeats_,
                 empty_track = empty_track_,
+                buffer = buffer_,
+                buffer_large = buffer_large_,
                 varfile = varfile,
                 Fasta = Fasta_,
                 Fasta_dict = Fasta_dict_,

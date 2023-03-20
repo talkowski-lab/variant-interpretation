@@ -22,8 +22,8 @@ workflow IGV {
         Array[String] samples
         Array[File] crams
         Array[File] crais
-        String? buffer
-        String? buffer_large
+        String buffer
+        String buffer_large
         String igv_docker
         RuntimeAttr? runtime_attr_run_igv
     }
@@ -66,8 +66,8 @@ task runIGV_whole_genome{
         Array[String] samples
         Array[File] crams
         Array[File] crais
-        String? buffer
-        String? buffer_large
+        String buffer
+        String buffer_large
         String igv_docker
         RuntimeAttr? runtime_attr_override
     }
@@ -87,13 +87,11 @@ task runIGV_whole_genome{
 
     RuntimeAttr runtime_attr = select_first([runtime_attr_override, default_attr])
 
-    String buff = select_first([buffer, 500])
-    String large_buff = select_first([buffer_large, 1000])
     command <<<
             set -euo pipefail
             #export GCS_OAUTH_TOKEN=`gcloud auth application-default print-access-token`
             mkdir pe_igv_plots
-        python /src/makeigvpesr.py -v ~{varfile} -n ~{nested_repeats} -s ~{simple_repeats} -e ~{empty_track} -f ~{fasta} -fam_id ~{family} -samples ~{sep="," samples} -crams ~{sep="," crams} -p ~{ped_file} -o pe_igv_plots -b ~{buff} -l ~{large_buff}
+        python /src/makeigvpesr.py -v ~{varfile} -n ~{nested_repeats} -s ~{simple_repeats} -e ~{empty_track} -f ~{fasta} -fam_id ~{family} -samples ~{sep="," samples} -crams ~{sep="," crams} -p ~{ped_file} -o pe_igv_plots -b ~{buffer} -l ~{buffer_large}
             bash pe.sh
             xvfb-run --server-args="-screen 0, 1920x540x24" bash /IGV_2.4.14/igv.sh -b pe.txt
             tar -czf ~{family}_pe_igv_plots.tar.gz pe_igv_plots

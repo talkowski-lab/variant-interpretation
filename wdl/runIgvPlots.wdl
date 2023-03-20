@@ -22,8 +22,8 @@ workflow IGV_all_samples {
         File simple_repeats
         File empty_track
         String prefix
-        String? buffer
-        String? buffer_large
+        String buffer
+        String buffer_large
         String sv_base_mini_docker
         String igv_docker
         RuntimeAttr? runtime_attr_run_igv
@@ -56,6 +56,7 @@ workflow IGV_all_samples {
                 sv_base_mini_docker=sv_base_mini_docker,
                 runtime_attr_override=runtime_attr_run_igv
             }
+        
         call igv.IGV as IGV {
             input:
                 varfile = generate_per_family_bed.per_family_varfile,
@@ -70,8 +71,8 @@ workflow IGV_all_samples {
                 samples = generate_per_family_sample_crai_cram.per_family_samples,
                 crams = generate_per_family_sample_crai_cram.per_family_crams,
                 crais = generate_per_family_sample_crai_cram.per_family_crais,
-                buffer = buffer,
-                buffer_large = buffer_large,
+                buffer = buffer_,
+                buffer_large = buffer_large_,
                 igv_docker = igv_docker,
                 runtime_attr_run_igv = runtime_attr_run_igv
         }
