@@ -43,6 +43,7 @@ workflow IGV {
             crams = crams,
             crais = crais,
             buffer = buffer,
+            buffer_large = buffer_large,
             igv_docker = igv_docker,
             runtime_attr_override = runtime_attr_run_igv
     }
