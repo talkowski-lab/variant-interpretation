@@ -240,14 +240,14 @@ task mergeBedFiles{
     }
 
     command {
-        set -euo pipefail
+        set -eu
 
         zcat ${bed_files[1]} | head -n+1 > ~{chromosome}.denovo.merged.bed
-        zcat ${sep=" " bed_files} | tail -n+2 -q >> ~{chromosome}.denovo.merged.bed
+        zcat ${sep=" " bed_files} | grep -v ^chrom >> ~{chromosome}.denovo.merged.bed
         bgzip ~{chromosome}.denovo.merged.bed
         
         zcat ${outliers_files[1]} | head -n+1 > ~{chromosome}.denovo.outliers.merged.bed
-        zcat ${sep=" " outliers_files} | tail -n+2 -q >> ~{chromosome}.denovo.outliers.merged.bed
+        zcat ${sep=" " outliers_files} | grep -v ^chrom >> ~{chromosome}.denovo.outliers.merged.bed
         bgzip ~{chromosome}.denovo.outliers.merged.bed
     }
 

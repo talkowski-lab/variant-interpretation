@@ -271,14 +271,14 @@ task plot_mergeFinalBedFiles{
     }
 
     command {
-        set -euo pipefail
+        set -eu
 
         zcat ${bed_files[1]} | head -n+1 > final.denovo.merged.bed
-        zcat ${sep=" " bed_files} | tail -n+2 -q >> final.denovo.merged.bed
+        zcat ${sep=" " bed_files} | grep -v ^chrom >> final.denovo.merged.bed
         bgzip final.denovo.merged.bed
         
         zcat ${outliers_files[1]} | head -n+1 > final.denovo.outliers.merged.bed
-        zcat ${sep=" " outliers_files} | tail -n+2 -q >> final.denovo.outliers.merged.bed
+        zcat ${sep=" " outliers_files} | grep -v ^chrom >> final.denovo.outliers.merged.bed
         bgzip final.denovo.outliers.merged.bed
     }
 
