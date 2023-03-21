@@ -41,7 +41,7 @@ workflow deNovoSV {
     
     }
 
-    if (defined(fam_id)){
+    if (defined(fam_ids)){
         String fam_ids_ = select_first([fam_ids])
         call getBatchedFiles{
             input:
