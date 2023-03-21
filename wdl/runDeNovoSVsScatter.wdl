@@ -212,13 +212,12 @@ task mergeBedFiles{
     }
 
     Float bed_files_size = size(bed_files, "GB")
-    Float outliers_files_size = size(outliers_files, "GB")
     Float base_disk_gb = 10.0
     Float base_mem_gb = 3.75
 
     RuntimeAttr default_attr = object {
-                                      mem_gb: base_mem_gb + (bed_files_size + outliers_files_size) * 3.0,
-                                      disk_gb: ceil(base_disk_gb + (bed_files_size + outliers_files_size) * 5.0),
+                                      mem_gb: base_mem_gb + (bed_files_size) * 3.0,
+                                      disk_gb: ceil(base_disk_gb + (bed_files_size) * 5.0),
                                       cpu: 1,
                                       preemptible: 2,
                                       max_retries: 1,
