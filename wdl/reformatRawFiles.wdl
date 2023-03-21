@@ -16,7 +16,7 @@ workflow reformatRawFiles {
         RuntimeAttr? runtime_attr_reformat_bed
     }
 
-    Array[String] raw_files = transpose(read_tsv(raw_files_list))[0]
+    Array[String] raw_files = transpose(read_tsv(raw_files_list))[1]
 
     scatter(raw_file in raw_files){
         call raw_VcfToBed {

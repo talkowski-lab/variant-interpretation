@@ -60,7 +60,6 @@ workflow deNovoSVsScatter {
     call mergeBedFiles{
             input:
                 bed_files = runDeNovo.denovo_output,
-                outliers_files = runDeNovo.denovo_outliers,
                 chromosome = chromosome,
                 variant_interpretation_docker = variant_interpretation_docker,
                 runtime_attr_override = runtime_attr_merge_bed
@@ -68,12 +67,10 @@ workflow deNovoSVsScatter {
 
     output {
         Array[File] per_shard_de_novo_output = runDeNovo.denovo_output
-        Array[File] per_shard_de_novo_outliers = runDeNovo.denovo_outliers
         Array[File] filtered_out = runDeNovo.filtered_out
         Array[File] size_file_out = runDeNovo.size_file_out
         Array[File] coverage_output_file = runDeNovo.coverage_output_file
         File merged_denovo_output_file = mergeBedFiles.per_chromosome_denovo_output
-        File merged_denovo_outliers_file = mergeBedFiles.per_chromosome_denovo_outliers_output
     }
 }
 
@@ -115,7 +112,6 @@ task runDeNovo{
 
     output{
         File denovo_output = "~{basename}.denovo.bed.gz"
-        File denovo_outliers = "~{basename}.denovo.outliers.bed.gz"
         File filtered_out = "~{basename}.filtered.txt"
         File size_file_out = "~{basename}.size.txt"
         File coverage_output_file = "~{basename}.coverage.txt"
@@ -146,11 +142,9 @@ task runDeNovo{
                 --exclude_regions ~{exclude_regions} \
                 --coverage ~{batch_bincov_index} \
                 --sample_batches ~{sample_batches} \
-                --verbose True \
-                --outliers ~{basename}.denovo.outliers.bed
+                --verbose True
             
             bgzip ~{basename}.denovo.bed
-            bgzip ~{basename}.denovo.outliers.bed
     >>>
 
     runtime {
@@ -212,7 +206,6 @@ task vcfToBed{
 task mergeBedFiles{
     input{
         Array[File] bed_files
-        Array[File] outliers_files
         String chromosome
         String variant_interpretation_docker
         RuntimeAttr? runtime_attr_override
@@ -236,7 +229,6 @@ task mergeBedFiles{
 
     output{
         File per_chromosome_denovo_output = "~{chromosome}.denovo.merged.bed.gz"
-        File per_chromosome_denovo_outliers_output = "~{chromosome}.denovo.outliers.merged.bed.gz"
     }
 
     command {
@@ -245,10 +237,7 @@ task mergeBedFiles{
         zcat ${bed_files[1]} | head -n+1 > ~{chromosome}.denovo.merged.bed
         zcat ${sep=" " bed_files} | grep -v ^chrom >> ~{chromosome}.denovo.merged.bed
         bgzip ~{chromosome}.denovo.merged.bed
-        
-        zcat ${outliers_files[1]} | head -n+1 > ~{chromosome}.denovo.outliers.merged.bed
-        zcat ${sep=" " outliers_files} | grep -v ^chrom >> ~{chromosome}.denovo.outliers.merged.bed
-        bgzip ~{chromosome}.denovo.outliers.merged.bed
+
     }
 
     runtime {
