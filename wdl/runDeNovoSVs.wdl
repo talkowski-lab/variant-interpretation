@@ -479,12 +479,13 @@ task getBatchedFiles{
         File fam_ids
         File ped_input
         File sample_batches
+        File vcf_file
         File batch_bincov_index
         String variant_interpretation_docker
         RuntimeAttr? runtime_attr_override
     }
 
-    Float input_size = size(select_all([ped_input, vcf_input]), "GB")
+    Float input_size = size(select_all([batch_raw_file, batch_depth_raw_file, ped_input, vcf_file, sample_batches, batch_bincov_index]), "GB")
     Float base_disk_gb = 10.0
     Float base_mem_gb = 3.75
 
