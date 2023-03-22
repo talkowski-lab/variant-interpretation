@@ -284,12 +284,12 @@ task generate_per_family_bed{
         for family in ~{sep=' ' families}
         do
             grep -w "${family}" ~{ped_file} | cut -f2 | sort -u > samples.${family}.txt
-            grep -w -f samples.${family}.txt updated_varfile.bed | cut -f1-5 | awk '{print $1,$2,$3,$4,$5}' | sed -e 's/ /\t/g' > ~{filename}.${family}.bed
+            grep -w -f samples.${family}.txt updated_varfile.bed | cut -f1-5 | awk '{print $1,$2,$3,$4,$5}' | sed -e 's/ /\t/g' > ~{filename}.$family.bed
         done;
         >>>
 
     output{
-        Array[File] per_family_varfile = "~{filename}.${family}.bed"
+        Array[File] per_family_varfile = "~{filename}.$family.bed"
         }
 
     runtime {
