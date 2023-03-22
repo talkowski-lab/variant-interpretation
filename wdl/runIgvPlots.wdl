@@ -32,8 +32,11 @@ workflow IGV_all_samples {
         RuntimeAttr? runtime_attr_run_igv
     }
 
+    if (defined(fam_ids)) {
+        Array[String] family_ids = transpose(read_tsv(fam_ids))[0]
+    }
+    
     if (!(defined(fam_ids))) {
-    Array[String] family_ids = transpose(read_tsv(fam_ids))[0]
         call generate_families{
             input:
                 varfile = varfile,
@@ -43,7 +46,7 @@ workflow IGV_all_samples {
         }
     }
 
-    Int num_families = length(select_first([family_ids,families]))
+    Int num_families = length(select_first([family_ids,generate_families.families]))
     Float num_families_float = num_families
     Int num_shards = ceil(num_families_float / families_per_shard)
 
