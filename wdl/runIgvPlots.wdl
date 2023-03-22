@@ -91,14 +91,14 @@ workflow IGV_all_samples {
     }
     call integrate_igv_plots{
         input:
-            igv_tar = flatten(flatten(IGV.tar_gz_pe)),
+            igv_tar = flatten(IGV.tar_gz_pe),
             prefix = prefix, 
             sv_base_mini_docker = sv_base_mini_docker,
             runtime_attr_override = runtime_attr_run_igv
     }
 
     output{
-        File tar_gz_pe = integrate_igv_plots.plot_tar
+        File tar_gz_pe = flatten(integrate_igv_plots.plot_tar)
     }
 }
 
