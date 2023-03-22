@@ -98,7 +98,7 @@ workflow IGV_all_samples {
     }
 
     output{
-        File tar_gz_pe = flatten(integrate_igv_plots.plot_tar)
+        File tar_gz_pe = integrate_igv_plots.plot_tar
     }
 }
 
