@@ -48,7 +48,6 @@ workflow deNovoSV {
                 batch_raw_file = batch_raw_file,
                 batch_depth_raw_file = batch_depth_raw_file,
                 fam_ids = fam_ids_,
-                vcf_file = vcf_file,
                 sample_batches = sample_batches,
                 batch_bincov_index = batch_bincov_index,
                 variant_interpretation_docker=variant_interpretation_docker,
@@ -59,7 +58,7 @@ workflow deNovoSV {
     call cleanPed{
         input:
             ped_input = ped_input,
-            vcf_input = select_first([getBatchedFiles.subset_vcf, vcf_file]),
+            vcf_input = vcf_file,
             variant_interpretation_docker=variant_interpretation_docker,
             runtime_attr_override = runtime_attr_clean_ped
     }
@@ -93,7 +92,7 @@ workflow deNovoSV {
     call getGenomicDisorders{
         input:
             genomic_disorder_input=genomic_disorder_input,
-            vcf_file = select_first([getBatchedFiles.subset_vcf, vcf_file]),
+            vcf_file = vcf_file,
             variant_interpretation_docker=variant_interpretation_docker,
             runtime_attr_override = runtime_attr_gd
     }
@@ -101,7 +100,7 @@ workflow deNovoSV {
     scatter (i in range(length(contigs))){
         call subsetVcf {
             input:
-                vcf_file = select_first([getBatchedFiles.subset_vcf, vcf_file]),
+                vcf_file = vcf_file,
                 chromosome=contigs[i],
                 variant_interpretation_docker=variant_interpretation_docker,
                 runtime_attr_override = runtime_attr_subset_vcf
@@ -479,13 +478,12 @@ task getBatchedFiles{
         File fam_ids
         File ped_input
         File sample_batches
-        File vcf_file
         File batch_bincov_index
         String variant_interpretation_docker
         RuntimeAttr? runtime_attr_override
     }
 
-    Float input_size = size(select_all([batch_raw_file, batch_depth_raw_file, ped_input, vcf_file, sample_batches, batch_bincov_index]), "GB")
+    Float input_size = size(select_all([batch_raw_file, batch_depth_raw_file, ped_input, sample_batches, batch_bincov_index]), "GB")
     Float base_disk_gb = 10.0
     Float base_mem_gb = 3.75
 
@@ -504,7 +502,6 @@ task getBatchedFiles{
         File batch_raw_files_list = "batch_raw_files_list.txt"
         File batch_depth_raw_files_list = "batch_depth_raw_files_list.txt"
         File batch_bincov_index_subset = "batch_bincov_index.txt"
-        File subset_vcf = "subset_vcf_file.vcf"
     }
 
     command {
@@ -514,7 +511,6 @@ task getBatchedFiles{
         grep -w -f batches.txt ${batch_bincov_index} > batch_bincov_index.txt
         grep -w -f batches.txt ${batch_raw_file} > batch_raw_files_list.txt
         grep -w -f batches.txt ${batch_depth_raw_file} > batch_depth_raw_files_list.txt
-        grep -w -f samples.txt ${vcf_file} > subset_vcf_file.vcf
     }
 
     runtime {
