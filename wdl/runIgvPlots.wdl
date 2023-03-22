@@ -51,7 +51,7 @@ workflow IGV_all_samples {
     scatter (family_cluster in clusterPed.family_clusters){
         call generate_per_family_sample_crai_cram{
             input:
-                families = family,
+                families = family_cluster,
                 ped_file = ped_file,
                 sample_crai_cram = sample_crai_cram,
                 sv_base_mini_docker = sv_base_mini_docker,
@@ -62,7 +62,7 @@ workflow IGV_all_samples {
             input:
                 varfile = varfile,
                 ped_file = ped_file,
-                families = family,
+                families = family_cluster,
                 ped_file = ped_file,
                 sv_base_mini_docker=sv_base_mini_docker,
                 runtime_attr_override=runtime_attr_run_igv
@@ -77,7 +77,7 @@ workflow IGV_all_samples {
                 nested_repeats = nested_repeats,
                 simple_repeats = simple_repeats,
                 empty_track = empty_track,
-                family = family,
+                families = family_cluster,
                 ped_file = ped_file,
                 samples = generate_per_family_sample_crai_cram.per_family_samples,
                 crams = generate_per_family_sample_crai_cram.per_family_crams,
