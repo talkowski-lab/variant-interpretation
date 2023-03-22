@@ -102,8 +102,8 @@ task runIGV_whole_genome{
                 crai_list = ${crais[$i]}
                 python /src/makeigvpesr.py -v "${varfile}" -n ~{nested_repeats} -s ~{simple_repeats} -e ~{empty_track} -f ~{fasta} -fam_id ~{family} -samples ~{sep="," sample_list} -crams ~{sep="," cram_list} -p ~{ped_file} -o pe_igv_plots -b ~{buffer} -l ~{buffer_large}
                 bash pe.sh
-                xvfb-run --server-args="-screen 0, 1920x540x24" bash /IGV_2.4.14/igv.sh -b pe.txt
-                tar -czf ~{family[$i]}_pe_igv_plots.tar.gz pe_igv_plots
+                xvfb-run --server-args="-screen 0, 1920x540x24" bash /IGV_2.4.14/igv.sh -b pe.$i.txt
+                tar -czf ~{family}_pe_igv_plots.tar.gz pe_igv_plots
             done;
 
         >>>
@@ -118,7 +118,7 @@ task runIGV_whole_genome{
         docker: igv_docker
     }
     output{
-        File pe_plots="~{family[$i]}_pe_igv_plots.tar.gz"
-        File pe_txt = "pe.txt"
+        Array[File] pe_plots="~{family}_pe_igv_plots.tar.gz"
+        Array[File] pe_txt = "pe.$i.txt"
         }
     }
