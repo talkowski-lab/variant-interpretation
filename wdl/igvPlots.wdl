@@ -17,7 +17,7 @@ workflow IGV {
         File nested_repeats
         File simple_repeats
         File empty_track
-        Array[String] family
+        Array[String] families
         File ped_file
         Array[Array[String]] samples
         Array[Array[File]] crams
