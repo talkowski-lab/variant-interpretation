@@ -96,7 +96,7 @@ task runIGV_whole_genome{
             for varfile in ~{sep=' ' varfiles}
             do
                 let "i=$i+1"
-                python /src/makeigvpesr.py -v "${varfile}" -n ~{nested_repeats} -s ~{simple_repeats} -e ~{empty_track} -f ~{fasta} -fam_id ~{family[$i]} -samples ~{sep="," samples[$i]} -crams ~{sep="," crams[$i]} -p ~{ped_file} -o pe_igv_plots -b ~{buffer} -l ~{buffer_large}
+                python /src/makeigvpesr.py -v "${varfile}" -n ~{nested_repeats} -s ~{simple_repeats} -e ~{empty_track} -f ~{fasta} -fam_id ~{families[$i]} -samples ~{sep="," samples[$i]} -crams ~{sep="," crams[$i]} -p ~{ped_file} -o pe_igv_plots -b ~{buffer} -l ~{buffer_large}
                 bash pe.sh
                 xvfb-run --server-args="-screen 0, 1920x540x24" bash /IGV_2.4.14/igv.sh -b pe.txt
                 tar -czf ~{family[$i]}_pe_igv_plots.tar.gz pe_igv_plots
