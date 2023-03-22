@@ -73,7 +73,7 @@ task runIGV_whole_genome{
         RuntimeAttr? runtime_attr_override
     }
 
-    Float input_size = size(select_all([varfile, fasta, fasta_idx, fasta_dict, nested_repeats, simple_repeats, empty_track, ped_file, crams, crais]), "GB")
+    Float input_size = size(select_all([varfiles, fasta, fasta_idx, fasta_dict, nested_repeats, simple_repeats, empty_track, ped_file, crams, crais]), "GB")
     Float base_disk_gb = 10.0
     Float base_mem_gb = 3.75
 
