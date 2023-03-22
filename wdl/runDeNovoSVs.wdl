@@ -21,7 +21,7 @@ workflow deNovoSV {
         File batch_bincov_index
         Int records_per_shard
         String prefix
-        String? fam_ids
+        File? fam_ids
         String variant_interpretation_docker
         String sv_pipeline_updates_docker
         RuntimeAttr? runtime_attr_gd
@@ -42,7 +42,7 @@ workflow deNovoSV {
     }
 
     if (defined(fam_ids)){
-        String fam_ids_ = select_first([fam_ids])
+        File fam_ids_ = select_first([fam_ids])
         call getBatchedFiles{
             input:
                 batch_raw_file = batch_raw_file,
