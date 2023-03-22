@@ -35,7 +35,7 @@ workflow IGV_all_samples {
     if (defined(fam_ids)) {
         Array[String] family_ids = transpose(read_tsv(fam_ids))[0]
     }
-    
+
     if (!(defined(fam_ids))) {
         call generate_families{
             input:
@@ -56,7 +56,7 @@ workflow IGV_all_samples {
                 items_per_shard = families_per_shard,
                 shard_number = i,
                 num_items = num_families,
-                all_items = families
+                all_items = select_first([family_ids,generate_families.families])
     }
         call generate_per_family_sample_crai_cram{
             input:
