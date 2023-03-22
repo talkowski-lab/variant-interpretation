@@ -25,6 +25,7 @@ workflow IGV_all_samples {
         String prefix
         String buffer
         String buffer_large
+        Int families_per_shard
         String sv_base_mini_docker
         String igv_docker
         String variant_interpretation_docker
