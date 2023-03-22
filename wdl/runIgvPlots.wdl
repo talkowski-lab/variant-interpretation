@@ -8,6 +8,7 @@ version 1.0
 
 import "igvPlots.wdl" as igv
 import "Structs.wdl"
+import "GetShardInputs.wdl" as GetShardInputs
 
 workflow IGV_all_samples {
     input {
@@ -31,6 +32,7 @@ workflow IGV_all_samples {
     }
 
     if (!(defined(fam_ids))) {
+    Array[String] family_ids = transpose(read_tsv(fam_ids))[0]
         call generate_families{
             input:
                 varfile = varfile,
@@ -40,18 +42,21 @@ workflow IGV_all_samples {
         }
     }
 
-    call clusterPed{
-        input:
-            ped_file = ped_file,
-            families = select_first([fam_ids,generate_families.families]),
-            variant_interpretation_docker = variant_interpretation_docker,
-            runtime_attr_override = runtime_attr_run_igv
-    }
+    Int num_families = length(select_first([family_ids,families]))
+    Float num_families_float = num_families
+    Int num_shards = ceil(num_families_float / families_per_shard)
 
-    scatter (family_cluster in clusterPed.family_clusters){
+    scatter (i in range(num_shards)) {
+        call GetShardInputs.GetShardInputs as GetShardSamples {
+            input:
+                items_per_shard = families_per_shard,
+                shard_number = i,
+                num_items = num_families,
+                all_items = families
+    }
         call generate_per_family_sample_crai_cram{
             input:
-                families = family_cluster,
+                families = GetShardInputs.shard_items,
                 ped_file = ped_file,
                 sample_crai_cram = sample_crai_cram,
                 sv_base_mini_docker = sv_base_mini_docker,
@@ -62,7 +67,7 @@ workflow IGV_all_samples {
             input:
                 varfile = varfile,
                 ped_file = ped_file,
-                families = family_cluster,
+                families = GetShardInputs.shard_items,
                 ped_file = ped_file,
                 sv_base_mini_docker=sv_base_mini_docker,
                 runtime_attr_override=runtime_attr_run_igv
@@ -78,7 +83,7 @@ workflow IGV_all_samples {
                 simple_repeats = simple_repeats,
                 empty_track = empty_track,
                 sample_crai_cram=sample_crai_cram,
-                families = family_cluster,
+                families = GetShardInputs.shard_items,
                 ped_file = ped_file,
                 samples = generate_per_family_sample_crai_cram.per_family_samples,
                 crams = generate_per_family_sample_crai_cram.per_family_crams,
