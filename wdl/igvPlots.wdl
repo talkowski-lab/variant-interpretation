@@ -98,6 +98,7 @@ task runIGV_whole_genome{
                 let "i=$i+1"
                 family = ${families[$i]}
                 sample_list = ${samples[$i]}
+                samples_file = write_lines(${samples[$i]})
                 cram_list = ${crams[$i]}
                 crai_list = ${crais[$i]}
                 python /src/makeigvpesr.py -v "${varfile}" -n ~{nested_repeats} -s ~{simple_repeats} -e ~{empty_track} -f ~{fasta} -fam_id ${family} -samples ~{sep="," $sample_list} -crams ~{sep="," $cram_list} -p ~{ped_file} -o pe_igv_plots -b ~{buffer} -l ~{buffer_large}
