@@ -33,7 +33,8 @@ workflow IGV_all_samples {
     }
 
     if (defined(fam_ids)) {
-        Array[String] family_ids = transpose(read_tsv(fam_ids))[0]
+        File fam_ids_ = select_first([fam_ids])
+        Array[String] family_ids = transpose(read_tsv(fam_ids_))[0]
     }
 
     if (!(defined(fam_ids))) {
