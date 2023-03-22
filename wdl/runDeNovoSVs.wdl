@@ -47,6 +47,7 @@ workflow deNovoSV {
             input:
                 batch_raw_file = batch_raw_file,
                 batch_depth_raw_file = batch_depth_raw_file,
+                vcf_file = vcf_file,
                 fam_ids = fam_ids_,
                 sample_batches = sample_batches,
                 batch_bincov_index = batch_bincov_index,
