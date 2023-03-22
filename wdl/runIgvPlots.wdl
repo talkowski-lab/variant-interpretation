@@ -51,7 +51,7 @@ workflow IGV_all_samples {
     Int num_shards = ceil(num_families_float / families_per_shard)
 
     scatter (i in range(num_shards)) {
-        call GetShardInputs.GetShardInputs as GetShardSamples {
+        call GetShardInputs.GetShardInputs as GetShardFamilies {
             input:
                 items_per_shard = families_per_shard,
                 shard_number = i,
@@ -60,7 +60,7 @@ workflow IGV_all_samples {
     }
         call generate_per_family_sample_crai_cram{
             input:
-                families = GetShardInputs.shard_items,
+                families = GetShardFamilies.shard_items,
                 ped_file = ped_file,
                 sample_crai_cram = sample_crai_cram,
                 sv_base_mini_docker = sv_base_mini_docker,
