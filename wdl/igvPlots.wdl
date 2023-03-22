@@ -97,11 +97,13 @@ task runIGV_whole_genome{
             do
                 let "i=$i+1"
                 family = ${families[$i]}
-                sample_list = ${samples[$i]}
                 samples_file = write_lines(${samples[$i]})
-                cram_list = ${crams[$i]}
+                crams_file = write_lines(${crams[$i]})
                 crai_list = ${crais[$i]}
-                python /src/makeigvpesr.py -v "${varfile}" -n ~{nested_repeats} -s ~{simple_repeats} -e ~{empty_track} -f ~{fasta} -fam_id ${family} -samples ~{sep="," $sample_list} -crams ~{sep="," $cram_list} -p ~{ped_file} -o pe_igv_plots -b ~{buffer} -l ~{buffer_large}
+                #if HB does not think above will work we can do
+                grep -w family ~{ped_file} | cut -f2 | sort -u > samples.txt
+                grep -w -f samples.txt ~{sample_cram_crai} | cut -f2 > crams.txt
+                python /src/makeigvpesr.py -v "${varfile}" -n ~{nested_repeats} -s ~{simple_repeats} -e ~{empty_track} -f ~{fasta} -fam_id ${family} -samples $samples_file -crams $crams_file -p ~{ped_file} -o pe_igv_plots -b ~{buffer} -l ~{buffer_large}
                 bash pe.sh
                 xvfb-run --server-args="-screen 0, 1920x540x24" bash /IGV_2.4.14/igv.sh -b pe.$i.txt
                 tar -czf $family_pe_igv_plots.tar.gz pe_igv_plots
