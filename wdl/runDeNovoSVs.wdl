@@ -477,7 +477,7 @@ task getBatchedFiles{
         File batch_raw_file
         File batch_depth_raw_file
         File fam_ids
-        File vcf_files
+        File vcf_file
         File ped_input
         File sample_batches
         File batch_bincov_index
