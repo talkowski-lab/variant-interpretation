@@ -477,6 +477,7 @@ task getBatchedFiles{
         File batch_raw_file
         File batch_depth_raw_file
         File fam_ids
+        File vcf_files
         File ped_input
         File sample_batches
         File batch_bincov_index
@@ -484,7 +485,7 @@ task getBatchedFiles{
         RuntimeAttr? runtime_attr_override
     }
 
-    Float input_size = size(select_all([batch_raw_file, batch_depth_raw_file, ped_input, sample_batches, batch_bincov_index]), "GB")
+    Float input_size = size(select_all([vcf_file,batch_raw_file, batch_depth_raw_file, ped_input, sample_batches, batch_bincov_index]), "GB")
     Float base_disk_gb = 10.0
     Float base_mem_gb = 3.75
 
