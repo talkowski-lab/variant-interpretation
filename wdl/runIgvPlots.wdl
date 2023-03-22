@@ -71,7 +71,7 @@ workflow IGV_all_samples {
             input:
                 varfile = varfile,
                 ped_file = ped_file,
-                families = GetShardInputs.shard_items,
+                families = GetShardFamilies.shard_items,
                 ped_file = ped_file,
                 sv_base_mini_docker=sv_base_mini_docker,
                 runtime_attr_override=runtime_attr_run_igv
@@ -87,7 +87,7 @@ workflow IGV_all_samples {
                 simple_repeats = simple_repeats,
                 empty_track = empty_track,
                 sample_crai_cram=sample_crai_cram,
-                families = GetShardInputs.shard_items,
+                families = GetShardFamilies.shard_items,
                 ped_file = ped_file,
                 samples = generate_per_family_sample_crai_cram.per_family_samples,
                 crams = generate_per_family_sample_crai_cram.per_family_crams,
