@@ -280,17 +280,15 @@ task generate_per_family_bed{
     command <<<
         set -euo pipefail
         cat ~{varfile} | gunzip | cut -f1-6 > updated_varfile.bed
-        i=0
         for family in ~{sep=' ' families}
         do
-            let "i=$i+1"
             grep -w "${family}" ~{ped_file} | cut -f2 | sort -u > samples.${family}.txt
-            grep -w -f samples.${family}.txt updated_varfile.bed | cut -f1-5 | awk '{print $1,$2,$3,$4,$5}' | sed -e 's/ /\t/g' > ~{filename}.~{families[$i]}.bed
+            grep -w -f samples.${family}.txt updated_varfile.bed | cut -f1-5 | awk '{print $1,$2,$3,$4,$5}' | sed -e 's/ /\t/g' > ~{filename}.${family}.bed
         done;
         >>>
 
     output{
-        Array[File] per_family_varfile = "~{filename}.~{families[$i]}.bed"
+        Array[File] per_family_varfile = "~{filename}.${family}.bed"
         }
 
     runtime {
