@@ -10,18 +10,18 @@ import "Structs.wdl"
 
 workflow IGV {
     input{
-        File varfile
+        Array[File] varfiles
         File Fasta
         File Fasta_idx
         File Fasta_dict
         File nested_repeats
         File simple_repeats
         File empty_track
-        String family
+        Array[String] family
         File ped_file
-        Array[String] samples
-        Array[File] crams
-        Array[File] crais
+        Array[Array[String]] samples
+        Array[Array[File]] crams
+        Array[Array[File]] crais
         String buffer
         String buffer_large
         String igv_docker
@@ -55,18 +55,18 @@ workflow IGV {
 
 task runIGV_whole_genome{
     input{
-        File varfile
+        Array[File] varfiles
         File fasta
         File fasta_idx
         File fasta_dict
         File nested_repeats
         File simple_repeats
         File empty_track
-        String family
+        Array[String] families
         File ped_file
-        Array[String] samples
-        Array[File] crams
-        Array[File] crais
+        Array[Array[String]] samples
+        Array[Array[File]] crams
+        Array[Array[File]] crais
         String buffer
         String buffer_large
         String igv_docker
@@ -92,10 +92,15 @@ task runIGV_whole_genome{
             set -euo pipefail
             #export GCS_OAUTH_TOKEN=`gcloud auth application-default print-access-token`
             mkdir pe_igv_plots
-        python /src/makeigvpesr.py -v ~{varfile} -n ~{nested_repeats} -s ~{simple_repeats} -e ~{empty_track} -f ~{fasta} -fam_id ~{family} -samples ~{sep="," samples} -crams ~{sep="," crams} -p ~{ped_file} -o pe_igv_plots -b ~{buffer} -l ~{buffer_large}
-            bash pe.sh
-            xvfb-run --server-args="-screen 0, 1920x540x24" bash /IGV_2.4.14/igv.sh -b pe.txt
-            tar -czf ~{family}_pe_igv_plots.tar.gz pe_igv_plots
+            i=0
+            for varfile in ~{sep=' ' varfiles}
+            do
+                let "i=$i+1"
+                python /src/makeigvpesr.py -v "${varfile}" -n ~{nested_repeats} -s ~{simple_repeats} -e ~{empty_track} -f ~{fasta} -fam_id ~{family[$i]} -samples ~{sep="," samples[$i]} -crams ~{sep="," crams[$i]} -p ~{ped_file} -o pe_igv_plots -b ~{buffer} -l ~{buffer_large}
+                bash pe.sh
+                xvfb-run --server-args="-screen 0, 1920x540x24" bash /IGV_2.4.14/igv.sh -b pe.txt
+                tar -czf ~{family[$i]}_pe_igv_plots.tar.gz pe_igv_plots
+            done;
 
         >>>
     
@@ -109,7 +114,7 @@ task runIGV_whole_genome{
         docker: igv_docker
     }
     output{
-        File pe_plots="~{family}_pe_igv_plots.tar.gz"
+        File pe_plots="~{family[$i]}_pe_igv_plots.tar.gz"
         File pe_txt = "pe.txt"
         }
     }

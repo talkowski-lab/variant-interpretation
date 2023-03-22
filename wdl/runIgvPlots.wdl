@@ -12,7 +12,7 @@ import "Structs.wdl"
 workflow IGV_all_samples {
     input {
         File ped_file
-        Array[String]? fam_ids
+        File? fam_ids
         File sample_crai_cram
         File varfile
         File Fasta
@@ -26,6 +26,7 @@ workflow IGV_all_samples {
         String buffer_large
         String sv_base_mini_docker
         String igv_docker
+        String variant_interpretation_docker
         RuntimeAttr? runtime_attr_run_igv
     }
 
@@ -38,20 +39,30 @@ workflow IGV_all_samples {
                 runtime_attr_override = runtime_attr_run_igv
         }
     }
-    scatter (family in select_first([fam_ids, generate_families.families])){
+
+    call clusterPed{
+        input:
+            ped_file = ped_file,
+            families = select_first([fam_ids,generate_families.families]),
+            variant_interpretation_docker = variant_interpretation_docker,
+            runtime_attr_override = runtime_attr_run_igv
+    }
+
+    scatter (family_cluster in clusterPed.family_clusters){
         call generate_per_family_sample_crai_cram{
             input:
-                family = family,
+                families = family,
                 ped_file = ped_file,
                 sample_crai_cram = sample_crai_cram,
                 sv_base_mini_docker = sv_base_mini_docker,
                 runtime_attr_override = runtime_attr_run_igv
             }
+
         call generate_per_family_bed{
             input:
                 varfile = varfile,
-                samples = generate_per_family_sample_crai_cram.per_family_samples,
-                family = family,
+                ped_file = ped_file,
+                families = family,
                 ped_file = ped_file,
                 sv_base_mini_docker=sv_base_mini_docker,
                 runtime_attr_override=runtime_attr_run_igv
@@ -120,7 +131,7 @@ task generate_families{
         >>>
 
     output{
-        Array[String] families = read_lines("families.txt")
+        File families = "families.txt"
     }
 
     runtime {
@@ -132,12 +143,65 @@ task generate_families{
         maxRetries: select_first([runtime_attr.max_retries, default_attr.max_retries])
         docker: sv_base_mini_docker
     }
-
 }
+
+task clusterPed{
+    input {
+        File families
+        File ped_file
+        String variant_interpretation_docker
+        RuntimeAttr? runtime_attr_override
+    }
+    Float input_size = size(select_all([families, ped_file]), "GB")
+    Float base_disk_gb = 10.0
+    Float base_mem_gb = 3.75
+
+    RuntimeAttr default_attr = object {
+                                      mem_gb: ceil(base_mem_gb + input_size * 3.0),
+                                      disk_gb: ceil(base_disk_gb + input_size * 5.0),
+                                      cpu: 1,
+                                      preemptible: 2,
+                                      max_retries: 1,
+                                      boot_disk_gb: 8
+                                  }
+
+    RuntimeAttr runtime_attr = select_first([runtime_attr_override, default_attr])
+
+
+    command <<<
+        set -euo pipefail
+        grep -w -f ~{families} ~{ped_file} > updated_ped.txt
+        Rscript src/variant-interpretation/scripts/clusterPed.R updated_ped.txt
+        cat subset_ped.txt | cut -f7 | sort -u > clusters.txt
+        i=0
+        while read -r line;
+        do
+            let "i=$i+1"
+            grep -w "$line" clustered_ped.txt | cut -f1 | sort -u > family_ids.$i.txt 
+        done<clusters.txt
+
+        >>>
+
+    output{
+        File clusters = "clusters.txt"
+        Array[Array[String]] family_clusters = read_lines("family_ids.$i.txt")
+    }
+
+    runtime {
+        cpu: select_first([runtime_attr.cpu, default_attr.cpu])
+        memory: "~{select_first([runtime_attr.mem_gb, default_attr.mem_gb])} GB"
+        disks: "local-disk ~{select_first([runtime_attr.disk_gb, default_attr.disk_gb])} HDD"
+        bootDiskSizeGb: select_first([runtime_attr.boot_disk_gb, default_attr.boot_disk_gb])
+        preemptible: select_first([runtime_attr.preemptible, default_attr.preemptible])
+        maxRetries: select_first([runtime_attr.max_retries, default_attr.max_retries])
+        docker: variant_interpretation_docker
+    }
+}
+
 
 task generate_per_family_sample_crai_cram{
     input {
-        String family
+        Array[String] families
         File ped_file
         File sample_crai_cram
         String sv_base_mini_docker
@@ -160,17 +224,20 @@ task generate_per_family_sample_crai_cram{
 
     command <<<
         set -euo pipefail
-        grep -w ~{family} ~{ped_file} | cut -f2 > samples_list.txt
-        grep -f samples_list.txt ~{sample_crai_cram} > subset_sample_crai_cram.txt
-        cut -f1 subset_sample_crai_cram.txt > samples.txt
-        cut -f2 subset_sample_crai_cram.txt > crai.txt
-        cut -f3 subset_sample_crai_cram.txt > cram.txt
+        for family in ~{sep=' ' families}
+        do
+            grep -w "${family}" ~{ped_file} | cut -f2 > samples_list.${family}.txt
+            grep -f samples_list."${family}".txt ~{sample_crai_cram} > subset_sample_crai_cram.${family}.txt
+            cut -f1 subset_sample_crai_cram.txt > samples.${family}.txt
+            cut -f2 subset_sample_crai_cram.txt > crai.${family}.txt
+            cut -f3 subset_sample_crai_cram.txt > cram.${family}.txt
+        done;
         >>>
 
     output{
-        Array[String] per_family_samples = read_lines("samples.txt")
-        Array[File] per_family_crams = read_lines("cram.txt")
-        Array[File] per_family_crais = read_lines("crai.txt")
+        Array[Array[String]] per_family_samples = read_lines("samples.${family}.txt")
+        Array[Array[File]] per_family_crams = read_lines("cram.${family}.txt")
+        Array[Array[File]] per_family_crais = read_lines("crai.${family}.txt")
     }
 
     runtime {
@@ -188,8 +255,8 @@ task generate_per_family_sample_crai_cram{
 task generate_per_family_bed{
     input {
         File varfile
-        Array[String] samples
-        String family
+        File ped_file
+        Array[String] families
         File ped_file
         String sv_base_mini_docker
         RuntimeAttr? runtime_attr_override
@@ -213,11 +280,17 @@ task generate_per_family_bed{
     command <<<
         set -euo pipefail
         cat ~{varfile} | gunzip | cut -f1-6 > updated_varfile.bed
-        grep -f ~{write_lines(samples)} updated_varfile.bed | cut -f1-5 | awk '{print $1,$2,$3,$4,$5}' | sed -e 's/ /\t/g' > ~{filename}.~{family}.bed
+        i=0
+        for family in ~{sep=' ' families}
+        do
+            let "i=$i+1"
+            grep -w "${family}" ~{ped_file} | cut -f2 | sort -u > samples."${family}".txt
+            grep -w -f samples."${family}".txt updated_varfile.bed | cut -f1-5 | awk '{print $1,$2,$3,$4,$5}' | sed -e 's/ /\t/g' > ~{filename}.~{families[$i]}.bed
+        done;
         >>>
 
     output{
-        File per_family_varfile = "~{filename}.~{family}.bed"
+        Array[File] per_family_varfile = "~{filename}.~{families[$i]}.bed"
         }
 
     runtime {
