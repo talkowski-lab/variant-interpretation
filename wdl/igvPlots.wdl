@@ -37,7 +37,7 @@ workflow IGV {
             nested_repeats = nested_repeats,
             simple_repeats = simple_repeats,
             empty_track = empty_track,
-            family = family,
+            families = families,
             ped_file = ped_file,
             samples = samples,
             crams = crams,
