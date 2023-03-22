@@ -70,7 +70,7 @@ workflow IGV_all_samples {
         
         call igv.IGV as IGV {
             input:
-                varfile = generate_per_family_bed.per_family_varfile,
+                varfiles = generate_per_family_bed.per_family_varfile,
                 Fasta = Fasta,
                 Fasta_idx = Fasta_idx,
                 Fasta_dict = Fasta_dict,
