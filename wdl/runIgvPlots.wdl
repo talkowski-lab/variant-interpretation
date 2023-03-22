@@ -77,6 +77,7 @@ workflow IGV_all_samples {
                 nested_repeats = nested_repeats,
                 simple_repeats = simple_repeats,
                 empty_track = empty_track,
+                sample_cram_crai=sample_cram_crai,
                 families = family_cluster,
                 ped_file = ped_file,
                 samples = generate_per_family_sample_crai_cram.per_family_samples,

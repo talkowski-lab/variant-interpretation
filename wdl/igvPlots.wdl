@@ -17,6 +17,7 @@ workflow IGV {
         File nested_repeats
         File simple_repeats
         File empty_track
+        File sample_cram_crai
         Array[String] families
         File ped_file
         Array[Array[String]] samples
@@ -37,6 +38,7 @@ workflow IGV {
             nested_repeats = nested_repeats,
             simple_repeats = simple_repeats,
             empty_track = empty_track,
+            sample_cram_crai=sample_cram_crai,
             families = families,
             ped_file = ped_file,
             samples = samples,
@@ -62,6 +64,7 @@ task runIGV_whole_genome{
         File nested_repeats
         File simple_repeats
         File empty_track
+        File sample_cram_crai
         Array[String] families
         File ped_file
         Array[Array[String]] samples
