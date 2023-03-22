@@ -227,18 +227,18 @@ task generate_per_family_sample_crai_cram{
         set -euo pipefail
         for family in ~{sep=' ' families}
         do
-            grep -w "${family}" ~{ped_file} | cut -f2 > samples_list.${family}.txt
-            grep -f samples_list."${family}".txt ~{sample_crai_cram} > subset_sample_crai_cram.${family}.txt
-            cut -f1 subset_sample_crai_cram.txt > samples.${family}.txt
-            cut -f2 subset_sample_crai_cram.txt > crai.${family}.txt
-            cut -f3 subset_sample_crai_cram.txt > cram.${family}.txt
+            grep -w "${family}" ~{ped_file} | cut -f2 > samples_list.$family.txt
+            grep -f samples_list."${family}".txt ~{sample_crai_cram} > subset_sample_crai_cram.$family.txt
+            cut -f1 subset_sample_crai_cram.txt > samples.$family.txt
+            cut -f2 subset_sample_crai_cram.txt > crai.$family.txt
+            cut -f3 subset_sample_crai_cram.txt > cram.$family.txt
         done;
         >>>
 
     output{
-        Array[Array[String]] per_family_samples = read_lines("samples.${family}.txt")
-        Array[Array[File]] per_family_crams = read_lines("cram.${family}.txt")
-        Array[Array[File]] per_family_crais = read_lines("crai.${family}.txt")
+        Array[Array[String]] per_family_samples = read_lines("samples.$family.txt")
+        Array[Array[File]] per_family_crams = read_lines("cram.$family.txt")
+        Array[Array[File]] per_family_crais = read_lines("crai.$family.txt")
     }
 
     runtime {
