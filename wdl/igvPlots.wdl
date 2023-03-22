@@ -30,7 +30,7 @@ workflow IGV {
 
     call runIGV_whole_genome{
         input:
-            varfile = varfile,
+            varfiles = varfiles,
             fasta = Fasta,
             fasta_dict = Fasta_dict,
             fasta_idx = Fasta_idx,
