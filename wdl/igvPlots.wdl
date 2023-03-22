@@ -118,7 +118,7 @@ task runIGV_whole_genome{
         docker: igv_docker
     }
     output{
-        Array[File] pe_plots="~{family}_pe_igv_plots.tar.gz"
+        Array[File] pe_plots="${family}_pe_igv_plots.tar.gz"
         Array[File] pe_txt = "pe.$i.txt"
         }
     }
