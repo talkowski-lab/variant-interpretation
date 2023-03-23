@@ -73,9 +73,9 @@ task runIGV_whole_genome{
         File ped_file
         Array[File] samples
         Array[File] crams
-        Array[String] crams_to_localize
+        Array[File] crams_to_localize
         Array[File] crais
-        Array[String] crais_to_localize
+        Array[File] crais_to_localize
         String buffer
         String buffer_large
         String igv_docker
