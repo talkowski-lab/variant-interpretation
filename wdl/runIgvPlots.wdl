@@ -191,14 +191,16 @@ task generate_per_family_sample_crai_cram{
             cut -f2 subset_sample_crai_cram.$family.txt > crai.$family.txt
             cut -f3 subset_sample_crai_cram.$family.txt > cram.$family.txt
         done
+        cat cram.*.txt > all_crams.txt
+        cat crai.*.txt > all_crais.txt
         >>>
 
     output{
         Array[File] per_family_samples = glob("samples.*.txt")
         Array[File] per_family_crams = glob("cram.*.txt")
         Array[File] per_family_crais = glob("crai.*.txt")
-        Array[String] per_family_string_crams = read_lines(glob("cram.*.txt"))
-        Array[String] per_family_string_crais = read_lines(glob("crai.*.txt"))
+        Array[String] per_family_string_crams = read_lines(all_crams.txt)
+        Array[String] per_family_string_crais = read_lines(all_crais.txt)
     }
 
     runtime {
