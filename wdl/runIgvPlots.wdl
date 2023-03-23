@@ -239,9 +239,9 @@ task generate_per_family_sample_crai_cram{
         do
             grep -w "${family}" ~{ped_file} | cut -f2 > samples_list.$family.txt
             grep -f samples_list."${family}".txt ~{sample_crai_cram} > subset_sample_crai_cram.$family.txt
-            cut -f1 subset_sample_crai_cram.txt > samples.$family.txt
-            cut -f2 subset_sample_crai_cram.txt > crai.$family.txt
-            cut -f3 subset_sample_crai_cram.txt > cram.$family.txt
+            cut -f1 subset_sample_crai_cram.$family.txt > samples.$family.txt
+            cut -f2 subset_sample_crai_cram.$family.txt > crai.$family.txt
+            cut -f3 subset_sample_crai_cram.$family.txt > cram.$family.txt
         done;
         >>>
 
