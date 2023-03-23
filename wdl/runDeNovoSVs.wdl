@@ -37,7 +37,7 @@ workflow deNovoSV {
         RuntimeAttr? runtime_override_shard_vcf
         RuntimeAttr? runtime_attr_clean_ped
         RuntimeAttr? runtime_attr_call_outliers
-        RuntimeAttr? runtime_attr_get_raw_files
+        RuntimeAttr? runtime_attr_get_batched_files
     
     }
 
@@ -52,7 +52,7 @@ workflow deNovoSV {
                 sample_batches = sample_batches,
                 batch_bincov_index = batch_bincov_index,
                 variant_interpretation_docker=variant_interpretation_docker,
-                runtime_attr_override = runtime_attr_get_raw_files
+                runtime_attr_override = runtime_attr_get_batched_files
         }
     }
 
@@ -504,7 +504,8 @@ task getBatchedFiles{
         File batch_raw_files_list = "batch_raw_files_list.txt"
         File batch_depth_raw_files_list = "batch_depth_raw_files_list.txt"
         File batch_bincov_index_subset = "batch_bincov_index.txt"
-        File subset_vcf = "filtered.vcf"
+        File subset_vcf = "filtered.vcf.gz"
+        File samples = "samples.txt"
     }
 
     command {
@@ -514,7 +515,7 @@ task getBatchedFiles{
         grep -w -f batches.txt ${batch_bincov_index} > batch_bincov_index.txt
         grep -w -f batches.txt ${batch_raw_file} > batch_raw_files_list.txt
         grep -w -f batches.txt ${batch_depth_raw_file} > batch_depth_raw_files_list.txt
-        bcftools view -S samples.txt ${vcf_file} > filtered.vcf
+        bcftools view -S samples.txt ${vcf_file} -O z -o filtered.vcf.gz
     }
 
     runtime {
