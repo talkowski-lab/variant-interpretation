@@ -199,8 +199,8 @@ task generate_per_family_sample_crai_cram{
         Array[File] per_family_samples = glob("samples.*.txt")
         Array[File] per_family_crams = glob("cram.*.txt")
         Array[File] per_family_crais = glob("crai.*.txt")
-        Array[String] per_family_string_crams = read_lines("all_crams.txt")
-        Array[String] per_family_string_crais = read_lines("all_crais.txt")
+        Array[File] per_family_string_crams = read_lines("all_crams.txt")
+        Array[File] per_family_string_crais = read_lines("all_crais.txt")
     }
 
     runtime {
