@@ -242,13 +242,13 @@ task generate_per_family_sample_crai_cram{
             cut -f1 subset_sample_crai_cram.$family.txt > samples.$family.txt
             cut -f2 subset_sample_crai_cram.$family.txt > crai.$family.txt
             cut -f3 subset_sample_crai_cram.$family.txt > cram.$family.txt
-        done;
+        done
         >>>
 
     output{
-        Array[Array[String]] per_family_samples = read_lines("samples.$family.txt")
-        Array[Array[File]] per_family_crams = read_lines("cram.$family.txt")
-        Array[Array[File]] per_family_crais = read_lines("crai.$family.txt")
+        Array[File] per_family_samples = glob("samples.*.txt")
+        Array[File] per_family_crams = glob("cram.*.txt")
+        Array[File] per_family_crais = glob("crai.*.txt")
     }
 
     runtime {
@@ -295,11 +295,11 @@ task generate_per_family_bed{
         do
             grep -w "${family}" ~{ped_file} | cut -f2 | sort -u > samples.$family.txt
             grep -w -f samples.$family.txt updated_varfile.bed | cut -f1-5 | awk '{print $1,$2,$3,$4,$5}' | sed -e 's/ /\t/g' > ~{filename}.$family.bed
-        done;
+        done
         >>>
 
     output{
-        Array[File] per_family_varfile = "~{filename}.$family.bed"
+        Array[File] per_family_varfile = glob("~{filename}.*.bed")
         }
 
     runtime {

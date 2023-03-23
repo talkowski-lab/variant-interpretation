@@ -20,9 +20,9 @@ workflow IGV {
         File sample_crai_cram
         Array[String] families
         File ped_file
-        Array[Array[String]] samples
-        Array[Array[File]] crams
-        Array[Array[File]] crais
+        Array[File] samples
+        Array[File] crams
+        Array[File] crais
         String buffer
         String buffer_large
         String igv_docker
@@ -67,9 +67,9 @@ task runIGV_whole_genome{
         File sample_crai_cram
         Array[String] families
         File ped_file
-        Array[Array[String]] samples
-        Array[Array[File]] crams
-        Array[Array[File]] crais
+        Array[File] samples
+        Array[File] crams
+        Array[File] crais
         String buffer
         String buffer_large
         String igv_docker
@@ -100,8 +100,8 @@ task runIGV_whole_genome{
             do
                 let "i=$i+1"
                 family = ${families[$i]}
-                samples_file = write_lines(${samples[$i]})
-                crams_file = write_lines(${crams[$i]})
+                samples_file = ${samples[$i]}
+                crams_file = ${crams[$i]}
                 crai_list = ${crais[$i]}
                 #if HB does not think above will work we can do
                 #grep -w family ~{ped_file} | cut -f1 | sort -u > samples.txt
@@ -110,7 +110,7 @@ task runIGV_whole_genome{
                 bash pe.sh
                 xvfb-run --server-args="-screen 0, 1920x540x24" bash /IGV_2.4.14/igv.sh -b pe.$i.txt
                 tar -czf $family_pe_igv_plots.tar.gz pe_igv_plots
-            done;
+            done
 
         >>>
     
