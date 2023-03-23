@@ -33,6 +33,7 @@ workflow VisualizePlots{
         Boolean run_IGV
 
         RuntimeAttr? runtime_attr_run_igv
+        RuntimeAttr? runtime_attr_igv
         RuntimeAttr? runtime_attr_concatinate
         RuntimeAttr? runtime_attr_rdtest
     }
@@ -85,6 +86,7 @@ workflow VisualizePlots{
                 sv_base_mini_docker = sv_base_mini_docker,
                 igv_docker = igv_docker,
                 runtime_attr_run_igv = runtime_attr_run_igv
+                runtime_attr_run_igv = runtime_attr_igv
         }
     }
 

@@ -30,6 +30,7 @@ workflow IGV_all_samples {
         String igv_docker
         String variant_interpretation_docker
         RuntimeAttr? runtime_attr_run_igv
+        RuntimeAttr? runtime_attr_igv
     }
 
     if (defined(fam_ids)) {
@@ -98,7 +99,7 @@ workflow IGV_all_samples {
                 buffer = buffer,
                 buffer_large = buffer_large,
                 igv_docker = igv_docker,
-                runtime_attr_run_igv = runtime_attr_run_igv
+                runtime_attr_run_igv = runtime_attr_igv
         }
     }
     call integrate_igv_plots{

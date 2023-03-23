@@ -28,7 +28,7 @@ workflow IGV {
         String buffer
         String buffer_large
         String igv_docker
-        RuntimeAttr? runtime_attr_run_igv
+        RuntimeAttr? runtime_attr_igv
     }
 
     call runIGV_whole_genome{
@@ -51,7 +51,7 @@ workflow IGV {
             buffer = buffer,
             buffer_large = buffer_large,
             igv_docker = igv_docker,
-            runtime_attr_override = runtime_attr_run_igv
+            runtime_attr_override = runtime_attr_igv
     }
 
     output{
