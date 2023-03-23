@@ -22,7 +22,9 @@ workflow IGV {
         File ped_file
         Array[File] samples
         Array[File] crams
+        Array[String] crams_to_localize
         Array[File] crais
+        Array[String] crais_to_localize
         String buffer
         String buffer_large
         String igv_docker
@@ -43,7 +45,9 @@ workflow IGV {
             ped_file = ped_file,
             samples = samples,
             crams = crams,
+            crams_to_localize = crams_to_localize,
             crais = crais,
+            crais_to_localize = crais_to_localize,
             buffer = buffer,
             buffer_large = buffer_large,
             igv_docker = igv_docker,
@@ -69,7 +73,9 @@ task runIGV_whole_genome{
         File ped_file
         Array[File] samples
         Array[File] crams
+        Array[String] crams_to_localize
         Array[File] crais
+        Array[String] crais_to_localize
         String buffer
         String buffer_large
         String igv_docker
@@ -99,14 +105,14 @@ task runIGV_whole_genome{
             for varfile in ~{sep=' ' varfiles}
             do
                 let "i=$i+1"
-                family = ${families[$i]}
-                samples_file = ${samples[$i]}
-                crams_file = ${crams[$i]}
-                crai_list = ${crais[$i]}
+                family=${families[$i]}
+                samples_file=${samples[$i]}
+                crams_file=${crams[$i]}
+                crai_list=${crais[$i]}
                 #if HB does not think above will work we can do
                 #grep -w family ~{ped_file} | cut -f1 | sort -u > samples.txt
                 #grep -w -f samples.txt ~{sample_crai_cram} | cut -f3 > crams.txt
-                python /src/makeigvpesr.py -v "${varfile}" -n ~{nested_repeats} -s ~{simple_repeats} -e ~{empty_track} -f ~{fasta} -fam_id ${family} -samples $samples_file -crams $crams_file -p ~{ped_file} -o pe_igv_plots -b ~{buffer} -l ~{buffer_large}
+                python /src/makeigvpesr.py -v "${varfile}" -n ~{nested_repeats} -s ~{simple_repeats} -e ~{empty_track} -f ~{fasta} -fam_id $family -samples $samples_file -crams $crams_file -p ~{ped_file} -o pe_igv_plots -b ~{buffer} -l ~{buffer_large}
                 bash pe.sh
                 xvfb-run --server-args="-screen 0, 1920x540x24" bash /IGV_2.4.14/igv.sh -b pe.$i.txt
                 tar -czf $family_pe_igv_plots.tar.gz pe_igv_plots

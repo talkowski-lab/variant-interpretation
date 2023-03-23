@@ -92,7 +92,9 @@ workflow IGV_all_samples {
                 ped_file = ped_file,
                 samples = generate_per_family_sample_crai_cram.per_family_samples,
                 crams = generate_per_family_sample_crai_cram.per_family_crams,
+                crams_to_localize = generate_per_family_sample_crai_cram.per_family_string_crams,
                 crais = generate_per_family_sample_crai_cram.per_family_crais,
+                crais_to_localize = generate_per_family_sample_crai_cram.per_family_string_crais,
                 buffer = buffer,
                 buffer_large = buffer_large,
                 igv_docker = igv_docker,
@@ -156,60 +158,6 @@ task generate_families{
     }
 }
 
-task clusterPed{
-    input {
-        File families
-        File ped_file
-        String variant_interpretation_docker
-        RuntimeAttr? runtime_attr_override
-    }
-    Float input_size = size(select_all([families, ped_file]), "GB")
-    Float base_disk_gb = 10.0
-    Float base_mem_gb = 3.75
-
-    RuntimeAttr default_attr = object {
-                                      mem_gb: ceil(base_mem_gb + input_size * 3.0),
-                                      disk_gb: ceil(base_disk_gb + input_size * 5.0),
-                                      cpu: 1,
-                                      preemptible: 2,
-                                      max_retries: 1,
-                                      boot_disk_gb: 8
-                                  }
-
-    RuntimeAttr runtime_attr = select_first([runtime_attr_override, default_attr])
-
-
-    command <<<
-        set -euo pipefail
-        grep -w -f ~{families} ~{ped_file} > updated_ped.txt
-        Rscript src/variant-interpretation/scripts/clusterPed.R updated_ped.txt
-        cat subset_ped.txt | cut -f7 | sort -u > clusters.txt
-        i=0
-        while read -r line;
-        do
-            let "i=$i+1"
-            grep -w "$line" clustered_ped.txt | cut -f1 | sort -u > family_ids.$i.txt 
-        done<clusters.txt
-
-        >>>
-
-    output{
-        File clusters = "clusters.txt"
-        Array[Array[String]] family_clusters = read_lines("family_ids.$i.txt")
-    }
-
-    runtime {
-        cpu: select_first([runtime_attr.cpu, default_attr.cpu])
-        memory: "~{select_first([runtime_attr.mem_gb, default_attr.mem_gb])} GB"
-        disks: "local-disk ~{select_first([runtime_attr.disk_gb, default_attr.disk_gb])} HDD"
-        bootDiskSizeGb: select_first([runtime_attr.boot_disk_gb, default_attr.boot_disk_gb])
-        preemptible: select_first([runtime_attr.preemptible, default_attr.preemptible])
-        maxRetries: select_first([runtime_attr.max_retries, default_attr.max_retries])
-        docker: variant_interpretation_docker
-    }
-}
-
-
 task generate_per_family_sample_crai_cram{
     input {
         Array[String] families
@@ -249,6 +197,8 @@ task generate_per_family_sample_crai_cram{
         Array[File] per_family_samples = glob("samples.*.txt")
         Array[File] per_family_crams = glob("cram.*.txt")
         Array[File] per_family_crais = glob("crai.*.txt")
+        Array[String] per_family_string_crams = read_lines(glob("cram.*.txt"))
+        Array[String] per_family_string_crais = read_lines(glob("crai.*.txt"))
     }
 
     runtime {
