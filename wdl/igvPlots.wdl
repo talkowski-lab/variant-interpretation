@@ -101,14 +101,16 @@ task runIGV_whole_genome{
             set -euo pipefail
             #export GCS_OAUTH_TOKEN=`gcloud auth application-default print-access-token`
             mkdir pe_igv_plots
+            families_new=(~{sep=" " families})
+            samples_new=(~{sep=" " samples})
+            crams_new=(~{sep=" " crams})
             i=0
             for varfile in ~{sep=' ' varfiles}
             do
                 let "i=$i+1"
-                family=${families[$i]}
-                samples_file=${samples[$i]}
-                crams_file=${crams[$i]}
-                crai_list=${crais[$i]}
+                family=${families_new[$i]}
+                samples_file=${samples_new[$i]}
+                crams_file=${crams_new[$i]}
                 #if HB does not think above will work we can do
                 #grep -w family ~{ped_file} | cut -f1 | sort -u > samples.txt
                 #grep -w -f samples.txt ~{sample_crai_cram} | cut -f3 > crams.txt
