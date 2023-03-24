@@ -120,5 +120,6 @@ task runIGV_whole_genome{
     output{
         File pe_plots= "~{family}_pe_igv_plots.tar.gz"
         File pe_txt = "pe.txt"
+        File per_family_bed = "~{family}.bed"
         }
     }
