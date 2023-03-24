@@ -18,9 +18,6 @@ workflow IGV {
         File simple_repeats
         File empty_track
         File ped_file
-        Array[String] samples
-        Array[File] crams
-        Array[File] crais
         Array[File] sample_crai_cram
         String buffer
         String buffer_large
