@@ -24,7 +24,7 @@ workflow liftoverVCF {
 
     output {
         File output_vcf = liftover.output_name
-        File output_vcf_index = liftover.output_vcf_index
+        File output_vcf_index = liftover.output_name_index
     }
 }
 
@@ -62,7 +62,7 @@ task liftover {
 
   }
   runtime {
-    docker: docker_path
+    docker: docker
     memory: machine_mem_gb + " GB"
     disks: "local-disk " + select_first([disk_space_gb, 20]) + if use_ssd then " SSD" else " HDD"
     preemptible: select_first([preemptible_attempts, 3])
