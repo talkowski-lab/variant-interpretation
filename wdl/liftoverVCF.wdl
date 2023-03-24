@@ -51,12 +51,12 @@ task liftover {
     command {
         set -e
 
-        java -jar picard.jar LiftoverVcf \
-            I=~{input_vcf} \
-            O=~{output_name} \
-            CHAIN=~{chain_file} \
-            REJECT=rejected.vcf.gz \
-            R=~{genome_build}
+        gatk LiftoverVcf \
+            -I ~{input_vcf} \
+            -O ~{output_name} \
+            --CHAIN ~{chain_file} \
+            --REJECT rejected.vcf.gz \
+            -R ~{genome_build}
 
         tabix -p vcf ~{output_name}
 
