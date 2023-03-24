@@ -60,15 +60,17 @@ task liftover {
 
         tabix -p vcf ~{output_name}
 
-  }
-  runtime {
-    docker: docker
-    memory: machine_mem_gb + " GB"
-    disks: "local-disk " + select_first([disk_space_gb, 20]) + if use_ssd then " SSD" else " HDD"
-    preemptible: select_first([preemptible_attempts, 3])
-  }
-  output {
-    File output_name = output_name
-    File output_name_index = "{output_name}.tbi"
-  }
+    }
+
+    runtime {
+        docker: docker
+        memory: machine_mem_gb + " GB"
+        disks: "local-disk " + select_first([disk_space_gb, 20]) + if use_ssd then " SSD" else " HDD"
+        preemptible: select_first([preemptible_attempts, 3])
+    }
+
+    output {
+        File output_name = output_name
+        File output_name_index = "{output_name}.tbi"
+    }
 }
