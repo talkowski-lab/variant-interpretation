@@ -15,10 +15,10 @@ workflow liftoverVCF {
 
     call liftover {
         input:
-            input_vcf = input_vcf
-            chain_file = chain_file
-            new_ref_genome = new_ref_genome
-            output_name = output_name
+            input_vcf = input_vcf,
+            chain_file = chain_file,
+            new_ref_genome = new_ref_genome,
+            output_name = output_name,
             docker = docker_path
     }
 
