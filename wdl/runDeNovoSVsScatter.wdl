@@ -100,7 +100,7 @@ task runDeNovo{
     Float base_mem_gb = 3.75
 
     RuntimeAttr default_attr = object {
-                                      mem_gb: ceil(base_mem_gb + input_size * 3.0),
+                                      mem_gb: ceil(base_mem_gb),
                                       disk_gb: ceil(base_disk_gb + input_size * 5.0),
                                       cpu: 1,
                                       preemptible: 2,
@@ -170,7 +170,7 @@ task vcfToBed{
     Float base_mem_gb = 3.75
 
     RuntimeAttr default_attr = object {
-                                      mem_gb: base_mem_gb + input_size * 3.0,
+                                      mem_gb: base_mem_gb,
                                       disk_gb: ceil(base_disk_gb + input_size * 5.0),
                                       cpu: 1,
                                       preemptible: 2,
@@ -216,7 +216,7 @@ task mergeBedFiles{
     Float base_mem_gb = 3.75
 
     RuntimeAttr default_attr = object {
-                                      mem_gb: base_mem_gb + (bed_files_size) * 3.0,
+                                      mem_gb: base_mem_gb,
                                       disk_gb: ceil(base_disk_gb + (bed_files_size) * 5.0),
                                       cpu: 1,
                                       preemptible: 2,

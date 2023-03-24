@@ -89,7 +89,7 @@ task raw_VcfToBed{
     Float base_mem_gb = 3.75
 
     RuntimeAttr default_attr = object {
-                                      mem_gb: base_mem_gb + input_size * 3.0,
+                                      mem_gb: base_mem_gb + input_size * 1.5,
                                       disk_gb: ceil(base_disk_gb + input_size * 5.0),
                                       cpu: 1,
                                       preemptible: 2,
@@ -136,7 +136,7 @@ task raw_mergeBed{
     Float base_mem_gb = 3.75
 
     RuntimeAttr default_attr = object {
-                                      mem_gb: base_mem_gb + input_size * 3.0,
+                                      mem_gb: base_mem_gb,
                                       disk_gb: ceil(base_disk_gb + input_size * 5.0),
                                       cpu: 1,
                                       preemptible: 2,
@@ -180,7 +180,7 @@ task raw_divideByChrom{
     Float base_mem_gb = 3.75
 
     RuntimeAttr default_attr = object {
-                                      mem_gb: base_mem_gb + input_size * 3.0,
+                                      mem_gb: base_mem_gb,
                                       disk_gb: ceil(base_disk_gb + input_size * 5.0),
                                       cpu: 1,
                                       preemptible: 2,
@@ -228,7 +228,7 @@ task raw_reformatBed{
     Float base_mem_gb = 3.75
 
     RuntimeAttr default_attr = object {
-                                      mem_gb: base_mem_gb + input_size * 3.0,
+                                      mem_gb: base_mem_gb,
                                       disk_gb: ceil(base_disk_gb + input_size * 5.0),
                                       cpu: 1,
                                       preemptible: 2,
@@ -278,7 +278,7 @@ task raw_reformatBedDepth{
     Float base_mem_gb = 3.75
 
     RuntimeAttr default_attr = object {
-                                      mem_gb: base_mem_gb + input_size * 3.0,
+                                      mem_gb: base_mem_gb,
                                       disk_gb: ceil(base_disk_gb + input_size * 5.0),
                                       cpu: 1,
                                       preemptible: 2,
