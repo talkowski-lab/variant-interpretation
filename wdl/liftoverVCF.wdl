@@ -8,7 +8,8 @@ workflow liftoverVCF {
   input {
     File input_vcf
     File chain_file
-    File new_ref_genome
+    File new_reference_fasta
+    File new_reference_dict
     String output_name
     String docker_path
   }
@@ -17,7 +18,8 @@ workflow liftoverVCF {
     input:
       input_vcf = input_vcf,
       chain_file = chain_file,
-      new_ref_genome = new_ref_genome,
+      new_reference_fasta = new_reference_fasta,
+      new_reference_dict = new_reference_dict,
       output_name = output_name,
       docker_path = docker_path
   }
@@ -34,7 +36,8 @@ task liftover {
   input {
     File input_vcf
     File chain_file
-    File new_ref_genome
+    File new_reference_fasta
+    File new_reference_dict
     String output_name
     String docker_path
 
@@ -56,7 +59,7 @@ task liftover {
       -O ~{output_name} \
       --CHAIN ~{chain_file} \
       --REJECT rejected.vcf.gz \
-      -R ~{new_ref_genome}
+      -R ~{new_reference_fasta}
 
       tabix -p vcf ~{output_name}
 
