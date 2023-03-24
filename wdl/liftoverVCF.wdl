@@ -3,6 +3,16 @@ version 1.0
 ## This workflow performs lifover of a VCF to a new genome assembly
 ## Author: asanchis@broadinstitute.org
 
+# IMPORT STRUCTS
+struct RuntimeAttr {
+    Float? mem_gb
+    Int? cpu_cores
+    Int? disk_gb
+    Int? boot_disk_gb
+    Int? preemptible_tries
+    Int? max_retries
+}
+
 # WORKFLOW DEFINITION
 workflow liftoverVCF {
   input {
@@ -27,7 +37,7 @@ workflow liftoverVCF {
     call splitVCF{
       input:
         input_vcf = input_vcf,
-        chromosome = contig,
+        contig = contig,
         docker_path = docker_path,
         runtime_attr_override = runtime_attr_splitVCF
       }
@@ -38,7 +48,7 @@ workflow liftoverVCF {
         chain_file = chain_file,
         new_reference_fasta = new_reference_fasta,
         new_reference_dict = new_reference_dict,
-        chromosome = contig,
+        contig = contig,
         docker_path = docker_path,
         runtime_attr_override = runtime_attr_liftOver
       }
@@ -64,7 +74,7 @@ workflow liftoverVCF {
 task splitVCF {
   input {
     File input_vcf
-    String chromosome
+    String contig
     String docker_path
     RuntimeAttr? runtime_attr_override
   }
@@ -116,7 +126,7 @@ task liftover {
     File chain_file
     File new_reference_fasta
     File new_reference_dict
-    String chromosome
+    String contig
     String docker_path
     RuntimeAttr? runtime_attr_override
   }
