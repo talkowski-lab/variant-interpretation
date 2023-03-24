@@ -104,8 +104,6 @@ task runIGV_whole_genome{
             bash pe.sh
             xvfb-run --server-args="-screen 0, 1920x540x24" bash /IGV_2.4.14/igv.sh -b pe.txt
             tar -czf ~{family}_pe_igv_plots.tar.gz pe_igv_plots
-            done
-
         >>>
     
     runtime {
