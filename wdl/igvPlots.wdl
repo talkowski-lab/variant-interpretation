@@ -10,52 +10,50 @@ import "Structs.wdl"
 
 workflow IGV {
     input{
-        Array[File] varfiles
+        File varfile
         File Fasta
         File Fasta_idx
         File Fasta_dict
         File nested_repeats
         File simple_repeats
         File empty_track
-        File sample_crai_cram
-        Array[String] families
         File ped_file
-        Array[File] samples
+        Array[String] samples
         Array[File] crams
-        Array[File] crams_to_localize
         Array[File] crais
-        Array[File] crais_to_localize
+        Array[File] sample_crai_cram
         String buffer
         String buffer_large
         String igv_docker
         RuntimeAttr? runtime_attr_igv
     }
 
-    call runIGV_whole_genome{
-        input:
-            varfiles = varfiles,
-            fasta = Fasta,
-            fasta_dict = Fasta_dict,
-            fasta_idx = Fasta_idx,
-            nested_repeats = nested_repeats,
-            simple_repeats = simple_repeats,
-            empty_track = empty_track,
-            sample_crai_cram=sample_crai_cram,
-            families = families,
-            ped_file = ped_file,
-            samples = samples,
-            crams = crams,
-            crams_to_localize = crams_to_localize,
-            crais = crais,
-            crais_to_localize = crais_to_localize,
-            buffer = buffer,
-            buffer_large = buffer_large,
-            igv_docker = igv_docker,
-            runtime_attr_override = runtime_attr_igv
+    scatter (file in sample_crai_cram) {
+        Array[String] samples = transpose(read_tsv(file))[0]
+        Array[File] crais = transpose(read_tsv(file))[1]
+        Array[File] crams = transpose(read_tsv(file))[2]
+        call runIGV_whole_genome{
+            input:
+                varfile = varfile,
+                fasta = Fasta,
+                fasta_dict = Fasta_dict,
+                fasta_idx = Fasta_idx,
+                nested_repeats = nested_repeats,
+                simple_repeats = simple_repeats,
+                empty_track = empty_track,
+                ped_file = ped_file,
+                samples = samples,
+                crams = crams,
+                crais = crais,
+                sample_crai_cram = file,
+                buffer = buffer,
+                buffer_large = buffer_large,
+                igv_docker = igv_docker,
+                runtime_attr_override = runtime_attr_igv
     }
 
     output{
-        Array[File] tar_gz_pe = runIGV_whole_genome.pe_plots
+        File tar_gz_pe = runIGV_whole_genome.pe_plots
     }
 }
 
@@ -68,14 +66,11 @@ task runIGV_whole_genome{
         File nested_repeats
         File simple_repeats
         File empty_track
-        File sample_crai_cram
-        Array[String] families
         File ped_file
-        Array[File] samples
+        File sample_crai_cram
+        Array[String] samples
         Array[File] crams
-        Array[File] crams_to_localize
         Array[File] crais
-        Array[File] crais_to_localize
         String buffer
         String buffer_large
         String igv_docker
@@ -97,27 +92,19 @@ task runIGV_whole_genome{
 
     RuntimeAttr runtime_attr = select_first([runtime_attr_override, default_attr])
 
+    File samples_file = write_lines(samples)
+    File crams_file = write_lines(crams)
+    String family = basename(sample_crai_cram, ".subset_sample_crai_cram.txt")
     command <<<
             set -euo pipefail
             #export GCS_OAUTH_TOKEN=`gcloud auth application-default print-access-token`
             mkdir pe_igv_plots
-            families_new=(~{sep=" " families})
-            samples_new=(~{sep=" " samples})
-            crams_new=(~{sep=" " crams})
-            i=0
-            for varfile in ~{sep=' ' varfiles}
-            do
-                let "i=$i+1"
-                family=${families_new[$i]}
-                samples_file=${samples_new[$i]}
-                crams_file=${crams_new[$i]}
-                #if HB does not think above will work we can do
-                #grep -w family ~{ped_file} | cut -f1 | sort -u > samples.txt
-                #grep -w -f samples.txt ~{sample_crai_cram} | cut -f3 > crams.txt
-                python /src/makeigvpesr.py -v "${varfile}" -n ~{nested_repeats} -s ~{simple_repeats} -e ~{empty_track} -f ~{fasta} -fam_id $family -samples $samples_file -crams $crams_file -p ~{ped_file} -o pe_igv_plots -b ~{buffer} -l ~{buffer_large} -i pe.$i.txt -bam pe.$i.sh
-                bash pe.$i.sh
-                xvfb-run --server-args="-screen 0, 1920x540x24" bash /IGV_2.4.14/igv.sh -b pe.$i.txt
-                tar -czf $family_pe_igv_plots.tar.gz pe_igv_plots
+            cat ~{varfile} | gunzip | cut -f1-6 > updated_varfile.bed
+            grep -w -f ~{samples_file} updated_varfile.bed | cut -f1-5 | awk '{print $1,$2,$3,$4,$5}' | sed -e 's/ /\t/g' > ~{family}.bed
+            python /src/makeigvpesr.py -v ~{family}.bed -n ~{nested_repeats} -s ~{simple_repeats} -e ~{empty_track} -f ~{fasta} -fam_id ~{family} -samples ~{samples_file} -crams ~{crams_file} -p ~{ped_file} -o pe_igv_plots -b ~{buffer} -l ~{buffer_large} -i pe.txt -bam pe.sh
+            bash pe.sh
+            xvfb-run --server-args="-screen 0, 1920x540x24" bash /IGV_2.4.14/igv.sh -b pe.txt
+            tar -czf ~{family}_pe_igv_plots.tar.gz pe_igv_plots
             done
 
         >>>
@@ -132,7 +119,7 @@ task runIGV_whole_genome{
         docker: igv_docker
     }
     output{
-        Array[File] pe_plots= glob("*_pe_igv_plots.tar.gz")
-        Array[File] pe_txt = glob("pe.*.txt")
+        File pe_plots= "~{family}_pe_igv_plots.tar.gz"
+        File pe_txt = "pe.txt"
         }
     }

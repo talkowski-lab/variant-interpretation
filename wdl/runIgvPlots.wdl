@@ -59,7 +59,7 @@ workflow IGV_all_samples {
                 shard_number = i,
                 num_items = num_families,
                 all_items = select_first([family_ids,generate_families.families])
-    }
+        }
         call generate_per_family_sample_crai_cram{
             input:
                 families = GetShardFamilies.shard_items,
@@ -68,34 +68,21 @@ workflow IGV_all_samples {
                 sv_base_mini_docker = sv_base_mini_docker,
                 runtime_attr_override = runtime_attr_run_igv
             }
-
-        call generate_per_family_bed{
-            input:
-                varfile = varfile,
-                ped_file = ped_file,
-                families = GetShardFamilies.shard_items,
-                ped_file = ped_file,
-                sv_base_mini_docker=sv_base_mini_docker,
-                runtime_attr_override=runtime_attr_run_igv
-            }
         
         call igv.IGV as IGV {
             input:
-                varfiles = generate_per_family_bed.per_family_varfile,
+                varfile = varfile,
                 Fasta = Fasta,
                 Fasta_idx = Fasta_idx,
                 Fasta_dict = Fasta_dict,
                 nested_repeats = nested_repeats,
                 simple_repeats = simple_repeats,
                 empty_track = empty_track,
-                sample_crai_cram=sample_crai_cram,
-                families = GetShardFamilies.shard_items,
                 ped_file = ped_file,
-                samples = generate_per_family_sample_crai_cram.per_family_samples,
-                crams = generate_per_family_sample_crai_cram.per_family_crams,
-                crams_to_localize = generate_per_family_sample_crai_cram.per_family_string_crams,
-                crais = generate_per_family_sample_crai_cram.per_family_crais,
-                crais_to_localize = generate_per_family_sample_crai_cram.per_family_string_crais,
+                samples = samples,
+                crams = crams,
+                crais = crais,
+                sample_crai_cram = generate_per_family_sample_crai_cram.per_family_sample_crai_cram,
                 buffer = buffer,
                 buffer_large = buffer_large,
                 igv_docker = igv_docker,
@@ -104,7 +91,7 @@ workflow IGV_all_samples {
     }
     call integrate_igv_plots{
         input:
-            igv_tar = flatten(IGV.tar_gz_pe),
+            igv_tar = IGV.tar_gz_pe,
             prefix = prefix, 
             sv_base_mini_docker = sv_base_mini_docker,
             runtime_attr_override = runtime_attr_run_igv
@@ -187,10 +174,10 @@ task generate_per_family_sample_crai_cram{
         for family in ~{sep=' ' families}
         do
             grep -w "${family}" ~{ped_file} | cut -f2 > samples_list.$family.txt
-            grep -f samples_list."${family}".txt ~{sample_crai_cram} > subset_sample_crai_cram.$family.txt
-            cut -f1 subset_sample_crai_cram.$family.txt > samples.$family.txt
-            cut -f2 subset_sample_crai_cram.$family.txt > crai.$family.txt
-            cut -f3 subset_sample_crai_cram.$family.txt > cram.$family.txt
+            grep -f samples_list."${family}".txt ~{sample_crai_cram} > $family.subset_sample_crai_cram.txt
+            cut -f1 $family.subset_sample_crai_cram.txt > samples.$family.txt
+            cut -f2 $family.subset_sample_crai_cram.txt > crai.$family.txt
+            cut -f3 $family.subset_sample_crai_cram.txt > cram.$family.txt
         done
         cat cram.*.txt > all_crams.txt
         cat crai.*.txt > all_crais.txt
@@ -202,6 +189,7 @@ task generate_per_family_sample_crai_cram{
         Array[File] per_family_crais = glob("crai.*.txt")
         Array[File] per_family_string_crams = read_lines("all_crams.txt")
         Array[File] per_family_string_crais = read_lines("all_crais.txt")
+        Array[File] per_family_sample_crai_cram = glob("*.subset_sample_crai_cram.txt")
     }
 
     runtime {
