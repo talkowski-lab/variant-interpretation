@@ -68,7 +68,7 @@ task liftover {
     preemptible: select_first([preemptible_attempts, 3])
   }
   output {
-    File output_name
-    File output_name_index
+    File output_name = output_name
+    File output_name_index = "{output_name}.tbi"
   }
 }
