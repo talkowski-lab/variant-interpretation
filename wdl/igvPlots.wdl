@@ -55,7 +55,7 @@ workflow IGV {
 
 
     output{
-        File tar_gz_pe = runIGV_whole_genome.pe_plots
+        Array[File] tar_gz_pe = runIGV_whole_genome.pe_plots
     }
 }
 
