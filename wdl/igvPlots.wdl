@@ -50,7 +50,9 @@ workflow IGV {
                 buffer_large = buffer_large,
                 igv_docker = igv_docker,
                 runtime_attr_override = runtime_attr_igv
+        }
     }
+
 
     output{
         File tar_gz_pe = runIGV_whole_genome.pe_plots
@@ -59,7 +61,7 @@ workflow IGV {
 
 task runIGV_whole_genome{
     input{
-        Array[File] varfiles
+        File varfile
         File fasta
         File fasta_idx
         File fasta_dict
