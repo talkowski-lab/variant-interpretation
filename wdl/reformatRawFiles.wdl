@@ -90,7 +90,7 @@ task raw_VcfToBed{
 
     RuntimeAttr default_attr = object {
                                       mem_gb: base_mem_gb + input_size * 1.5,
-                                      disk_gb: ceil(base_disk_gb + input_size * 5.0),
+                                      disk_gb: ceil(base_disk_gb + input_size * 2.0),
                                       cpu: 1,
                                       preemptible: 2,
                                       max_retries: 1,
@@ -137,7 +137,7 @@ task raw_mergeBed{
 
     RuntimeAttr default_attr = object {
                                       mem_gb: base_mem_gb,
-                                      disk_gb: ceil(base_disk_gb + input_size * 5.0),
+                                      disk_gb: ceil(base_disk_gb + input_size * 2.0),
                                       cpu: 1,
                                       preemptible: 2,
                                       max_retries: 1,
@@ -181,7 +181,7 @@ task raw_divideByChrom{
 
     RuntimeAttr default_attr = object {
                                       mem_gb: base_mem_gb,
-                                      disk_gb: ceil(base_disk_gb + input_size * 5.0),
+                                      disk_gb: ceil(base_disk_gb + input_size * 2.0),
                                       cpu: 1,
                                       preemptible: 2,
                                       max_retries: 1,
@@ -229,7 +229,7 @@ task raw_reformatBed{
 
     RuntimeAttr default_attr = object {
                                       mem_gb: base_mem_gb,
-                                      disk_gb: ceil(base_disk_gb + input_size * 5.0),
+                                      disk_gb: ceil(base_disk_gb + input_size * 2.0),
                                       cpu: 1,
                                       preemptible: 2,
                                       max_retries: 1,
@@ -279,7 +279,7 @@ task raw_reformatBedDepth{
 
     RuntimeAttr default_attr = object {
                                       mem_gb: base_mem_gb,
-                                      disk_gb: ceil(base_disk_gb + input_size * 5.0),
+                                      disk_gb: ceil(base_disk_gb + input_size * 2.0),
                                       cpu: 1,
                                       preemptible: 2,
                                       max_retries: 1,

@@ -112,7 +112,7 @@ task generate_families{
 
     RuntimeAttr default_attr = object {
                                       mem_gb: ceil(base_mem_gb),
-                                      disk_gb: ceil(base_disk_gb + input_size * 5.0),
+                                      disk_gb: ceil(base_disk_gb + input_size * 2.0),
                                       cpu: 1,
                                       preemptible: 2,
                                       max_retries: 1,
@@ -157,7 +157,7 @@ task generate_per_family_sample_crai_cram{
 
     RuntimeAttr default_attr = object {
                                       mem_gb: ceil(base_mem_gb),
-                                      disk_gb: ceil(base_disk_gb + input_size * 5.0),
+                                      disk_gb: ceil(base_disk_gb + input_size * 2.0),
                                       cpu: 1,
                                       preemptible: 2,
                                       max_retries: 1,
@@ -216,7 +216,7 @@ task generate_per_family_bed{
 
     RuntimeAttr default_attr = object {
                                       mem_gb: ceil(base_mem_gb),
-                                      disk_gb: ceil(base_disk_gb + input_size * 5.0),
+                                      disk_gb: ceil(base_disk_gb + input_size * 2.0),
                                       cpu: 1,
                                       preemptible: 2,
                                       max_retries: 1,
@@ -264,7 +264,7 @@ task integrate_igv_plots{
 
     RuntimeAttr default_attr = object {
                                       mem_gb: ceil(base_mem_gb),
-                                      disk_gb: ceil(base_disk_gb + input_size * 5.0),
+                                      disk_gb: ceil(base_disk_gb + input_size * 2.0),
                                       cpu: 1,
                                       preemptible: 2,
                                       max_retries: 1,

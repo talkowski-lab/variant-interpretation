@@ -193,7 +193,7 @@ task subsetVcf{
 
     RuntimeAttr default_attr = object {
                                       mem_gb: base_mem_gb + input_size * 1.5,
-                                      disk_gb: ceil(base_disk_gb + input_size * 5.0),
+                                      disk_gb: ceil(base_disk_gb + input_size * 2.0),
                                       cpu: 1,
                                       preemptible: 2,
                                       max_retries: 1,
@@ -244,7 +244,7 @@ task getGenomicDisorders{
 
     RuntimeAttr default_attr = object {
                                       mem_gb: base_mem_gb + input_size * 1.5,
-                                      disk_gb: ceil(base_disk_gb + input_size * 5.0),
+                                      disk_gb: ceil(base_disk_gb + input_size * 2.0),
                                       cpu: 1,
                                       preemptible: 2,
                                       max_retries: 1,
@@ -287,7 +287,7 @@ task plot_mergeFinalBedFiles{
 
     RuntimeAttr default_attr = object {
                                       mem_gb: base_mem_gb,
-                                      disk_gb: ceil(base_disk_gb + (bed_files_size) * 5.0),
+                                      disk_gb: ceil(base_disk_gb + (bed_files_size) * 2.0),
                                       cpu: 1,
                                       preemptible: 2,
                                       max_retries: 1,
@@ -332,7 +332,7 @@ task callOutliers{
 
     RuntimeAttr default_attr = object {
                                       mem_gb: base_mem_gb,
-                                      disk_gb: ceil(base_disk_gb + (bed_files_size) * 5.0),
+                                      disk_gb: ceil(base_disk_gb + (bed_files_size) * 2.0),
                                       cpu: 1,
                                       preemptible: 2,
                                       max_retries: 1,
@@ -381,7 +381,7 @@ task plot_createPlots{
 
     RuntimeAttr default_attr = object {
                                       mem_gb: base_mem_gb,
-                                      disk_gb: ceil(base_disk_gb + input_size * 5.0),
+                                      disk_gb: ceil(base_disk_gb + input_size * 2.0),
                                       cpu: 1,
                                       preemptible: 2,
                                       max_retries: 1,
@@ -436,7 +436,7 @@ task cleanPed{
 
     RuntimeAttr default_attr = object {
                                       mem_gb: base_mem_gb,
-                                      disk_gb: ceil(base_disk_gb + input_size * 5.0),
+                                      disk_gb: ceil(base_disk_gb + input_size * 2.0),
                                       cpu: 1,
                                       preemptible: 2,
                                       max_retries: 1,
@@ -491,7 +491,7 @@ task getBatchedFiles{
 
     RuntimeAttr default_attr = object {
                                       mem_gb: base_mem_gb,
-                                      disk_gb: ceil(base_disk_gb + input_size * 5.0),
+                                      disk_gb: ceil(base_disk_gb + input_size * 2.0),
                                       cpu: 1,
                                       preemptible: 2,
                                       max_retries: 1,
