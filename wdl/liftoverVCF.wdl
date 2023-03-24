@@ -25,6 +25,7 @@ workflow liftoverVCF {
   output {
     File output_vcf = liftover.output_name
     File output_vcf_index = liftover.output_name_index
+    File rejected_file = liftover.rejected_file
   }
 }
 
@@ -71,5 +72,6 @@ task liftover {
   output {
     File output_name = output_name
     File output_name_index = "{output_name}.tbi"
+    File rejected_file = "rejected.vcf.gz"
   }
 }
