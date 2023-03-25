@@ -96,16 +96,12 @@ task splitVCF {
   }
 
   command {
-    if [[ ~{input_vcf} == *.gz ]] ;  then
-      tabix -f -p vcf ~{input_vcf}
-      tabix -h ~{input_vcf} ~{contig} | bgzip > ~{contig}.vcf.gz
-      tabix -p vcf ~{contig}.vcf.gz
-    else
-      bgzip ~{input_vcf}
-      tabix -f -p vcf ~{input_vcf}.gz
-      tabix -h ~{input_vcf}.gz ~{input_vcf} | bgzip > ~{contig}.vcf.gz
-      tabix -p vcf ~{contig}.vcf.gz
-    fi
+    set -e
+
+    tabix -p vcf ~{input_vcf}
+
+    bcftools view -r ~{contig} ~{input_vcf} -O z -o ~{contig}.vcf.gz
+    tabix -p vcf ~{contig}.vcf.gz
   }
 
   runtime {
