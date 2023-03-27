@@ -154,7 +154,7 @@ task liftover {
   command {
     set -euo pipefail
 
-    gatk --java-options "-Xmx~{java_mem}G" LiftoverVcf \
+    gatk --java-options "-Xmx~{java_mem}g" LiftoverVcf \
       -I ~{input_vcf} \
       -O ~{contig}.lov.vcf.gz \
       --CHAIN ~{chain_file} \
