@@ -147,9 +147,7 @@ task liftover {
 
   output {
     File contig_vcf = "~{contig}.lov.vcf.gz"
-    File contig_vcf_index = "~{contig}.lov.vcf.gz.tbi"
     File rejected_file = "~{contig}.rejected.vcf.gz"
-    File rejected_file = "~{contig}.rejected.vcf.gz.tbi"
   }
 
   command {
