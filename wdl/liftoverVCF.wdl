@@ -17,6 +17,7 @@ struct RuntimeAttr {
 workflow liftoverVCF {
   input {
     File input_vcf
+    File input_vcf_index
     File chain_file
     File new_reference_fasta
     File new_reference_dict
@@ -37,6 +38,7 @@ workflow liftoverVCF {
     call splitVCF{
       input:
         input_vcf = input_vcf,
+        input_vcf_index = input_vcf_index,
         contig = contig,
         docker_path = docker_path,
         runtime_attr_override = runtime_attr_splitVCF
@@ -74,6 +76,7 @@ workflow liftoverVCF {
 task splitVCF {
   input {
     File input_vcf
+    File input_vcf_index
     String contig
     String docker_path
     RuntimeAttr? runtime_attr_override
@@ -97,9 +100,6 @@ task splitVCF {
 
   command {
     set -e
-
-    tabix -p vcf ~{input_vcf}
-
     bcftools view -r ~{contig} ~{input_vcf} -O z -o ~{contig}.vcf.gz
     tabix -p vcf ~{contig}.vcf.gz
   }
