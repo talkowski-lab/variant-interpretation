@@ -294,15 +294,14 @@ task plot_mergeFinalBedFiles{
     RuntimeAttr runtime_attr = select_first([runtime_attr_override, default_attr])
 
     output{
-        File merged_output = "final.denovo.merged.bed.gz"
+        File merged_output = "merged.bed.gz"
     }
 
     command {
-        set -eu
 
-        zcat ${bed_files[1]} | head -n+1 > final.denovo.merged.bed
-        zcat ${sep=" " bed_files} | grep -v ^chrom >> final.denovo.merged.bed
-        bgzip final.denovo.merged.bed
+        zcat ${bed_files[1]} | head -n+1 > merged.bed
+        zcat ${sep=" " bed_files} | grep -v ^chrom >> merged.bed
+        bgzip merged.bed
     }
 
     runtime {

@@ -229,7 +229,6 @@ task mergeBedFiles{
     }
 
     command {
-        set -eu
 
         zcat ${bed_files[1]} | head -n+1 > ~{chromosome}.denovo.merged.bed
         zcat ${sep=" " bed_files} | grep -v ^chrom >> ~{chromosome}.denovo.merged.bed
