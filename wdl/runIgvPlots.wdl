@@ -27,6 +27,7 @@ workflow IGV_all_samples {
         String sv_base_mini_docker
         String igv_docker
         RuntimeAttr? runtime_attr_run_igv
+        RuntimeAttr? runtime_attr_igv
     }
 
     if (!(defined(fam_ids))) {
