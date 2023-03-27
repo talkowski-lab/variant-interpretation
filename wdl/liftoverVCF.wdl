@@ -47,6 +47,7 @@ workflow liftoverVCF {
     call liftover {
       input:
         input_vcf = splitVCF.contig_vcf,
+        input_vcf_index = splitVCF.contig_vcf_index
         chain_file = chain_file,
         new_reference_fasta = new_reference_fasta,
         new_reference_dict = new_reference_dict,
@@ -119,6 +120,7 @@ task splitVCF {
 task liftover {
   input {
     File input_vcf
+    File input_vcf_index
     File chain_file
     File new_reference_fasta
     File new_reference_dict
