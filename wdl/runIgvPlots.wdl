@@ -8,12 +8,11 @@ version 1.0
 
 import "igvPlots.wdl" as igv
 import "Structs.wdl"
-import "GetShardInputs.wdl" as GetShardInputs
 
 workflow IGV_all_samples {
     input {
         File ped_file
-        File? fam_ids
+        Array[String]? fam_ids
         File sample_crai_cram
         File varfile
         File Fasta
@@ -25,17 +24,9 @@ workflow IGV_all_samples {
         String prefix
         String buffer
         String buffer_large
-        Int families_per_shard
         String sv_base_mini_docker
         String igv_docker
-        String variant_interpretation_docker
         RuntimeAttr? runtime_attr_run_igv
-        RuntimeAttr? runtime_attr_igv
-    }
-
-    if (defined(fam_ids)) {
-        File fam_ids_ = select_first([fam_ids])
-        Array[String] family_ids = transpose(read_tsv(fam_ids_))[0]
     }
 
     if (!(defined(fam_ids))) {
@@ -47,48 +38,48 @@ workflow IGV_all_samples {
                 runtime_attr_override = runtime_attr_run_igv
         }
     }
-
-    Int num_families = length(select_first([family_ids,generate_families.families]))
-    Float num_families_float = num_families
-    Int num_shards = ceil(num_families_float / families_per_shard)
-
-    scatter (i in range(num_shards)) {
-        call GetShardInputs.GetShardInputs as GetShardFamilies {
-            input:
-                items_per_shard = families_per_shard,
-                shard_number = i,
-                num_items = num_families,
-                all_items = select_first([family_ids,generate_families.families])
-        }
+    scatter (family in select_first([fam_ids, generate_families.families])){
         call generate_per_family_sample_crai_cram{
             input:
-                families = GetShardFamilies.shard_items,
+                family = family,
                 ped_file = ped_file,
                 sample_crai_cram = sample_crai_cram,
                 sv_base_mini_docker = sv_base_mini_docker,
                 runtime_attr_override = runtime_attr_run_igv
             }
+        call generate_per_family_bed{
+            input:
+                varfile = varfile,
+                samples = generate_per_family_sample_crai_cram.per_family_samples,
+                family = family,
+                ped_file = ped_file,
+                sv_base_mini_docker=sv_base_mini_docker,
+                runtime_attr_override=runtime_attr_run_igv
+            }
         
         call igv.IGV as IGV {
             input:
-                varfile = varfile,
+                varfile = generate_per_family_bed.per_family_varfile,
                 Fasta = Fasta,
                 Fasta_idx = Fasta_idx,
                 Fasta_dict = Fasta_dict,
                 nested_repeats = nested_repeats,
                 simple_repeats = simple_repeats,
                 empty_track = empty_track,
+                family = family,
                 ped_file = ped_file,
-                sample_crai_cram = generate_per_family_sample_crai_cram.per_family_sample_crai_cram,
+                samples = generate_per_family_sample_crai_cram.per_family_samples,
+                crams = generate_per_family_sample_crai_cram.per_family_crams,
+                crais = generate_per_family_sample_crai_cram.per_family_crais,
                 buffer = buffer,
                 buffer_large = buffer_large,
                 igv_docker = igv_docker,
-                runtime_attr_igv = runtime_attr_igv
+                runtime_attr_run_igv = runtime_attr_run_igv
         }
     }
     call integrate_igv_plots{
         input:
-            igv_tar = flatten(IGV.tar_gz_pe),
+            igv_tar = IGV.tar_gz_pe,
             prefix = prefix, 
             sv_base_mini_docker = sv_base_mini_docker,
             runtime_attr_override = runtime_attr_run_igv
@@ -107,7 +98,6 @@ task generate_families{
         RuntimeAttr? runtime_attr_override
     }
     Float input_size = size(select_all([varfile, ped_file]), "GB")
-    Float base_disk_gb = 10.0
     Float base_mem_gb = 3.75
 
     RuntimeAttr default_attr = object {
@@ -129,7 +119,7 @@ task generate_families{
         >>>
 
     output{
-        File families = "families.txt"
+        Array[String] families = read_lines("families.txt")
     }
 
     runtime {
@@ -141,11 +131,12 @@ task generate_families{
         maxRetries: select_first([runtime_attr.max_retries, default_attr.max_retries])
         docker: sv_base_mini_docker
     }
+
 }
 
 task generate_per_family_sample_crai_cram{
     input {
-        Array[String] families
+        String family
         File ped_file
         File sample_crai_cram
         String sv_base_mini_docker
@@ -156,7 +147,7 @@ task generate_per_family_sample_crai_cram{
 
     RuntimeAttr default_attr = object {
                                       mem_gb: base_mem_gb,
-                                      disk_gb: ceil(10 + input_size * 2.0),
+                                      disk_gb: ceil(10 + input_size),
                                       cpu: 1,
                                       preemptible: 2,
                                       max_retries: 1,
@@ -167,25 +158,17 @@ task generate_per_family_sample_crai_cram{
 
     command <<<
         set -euo pipefail
-        for family in ~{sep=' ' families}
-        do
-            grep -w "${family}" ~{ped_file} | cut -f2 > samples_list.$family.txt
-            grep -f samples_list."${family}".txt ~{sample_crai_cram} > $family.subset_sample_crai_cram.txt
-            cut -f1 $family.subset_sample_crai_cram.txt > samples.$family.txt
-            cut -f2 $family.subset_sample_crai_cram.txt > crai.$family.txt
-            cut -f3 $family.subset_sample_crai_cram.txt > cram.$family.txt
-        done
-        cat cram.*.txt > all_crams.txt
-        cat crai.*.txt > all_crais.txt
+        grep -w ~{family} ~{ped_file} | cut -f2 > samples_list.txt
+        grep -f samples_list.txt ~{sample_crai_cram} > subset_sample_crai_cram.txt
+        cut -f1 subset_sample_crai_cram.txt > samples.txt
+        cut -f2 subset_sample_crai_cram.txt > crai.txt
+        cut -f3 subset_sample_crai_cram.txt > cram.txt
         >>>
 
     output{
-        Array[File] per_family_samples = glob("samples.*.txt")
-        Array[File] per_family_crams = glob("cram.*.txt")
-        Array[File] per_family_crais = glob("crai.*.txt")
-        Array[File] per_family_string_crams = read_lines("all_crams.txt")
-        Array[File] per_family_string_crais = read_lines("all_crais.txt")
-        Array[File] per_family_sample_crai_cram = glob("*.subset_sample_crai_cram.txt")
+        Array[String] per_family_samples = read_lines("samples.txt")
+        Array[File] per_family_crams = read_lines("cram.txt")
+        Array[File] per_family_crais = read_lines("crai.txt")
     }
 
     runtime {
@@ -203,20 +186,18 @@ task generate_per_family_sample_crai_cram{
 task generate_per_family_bed{
     input {
         File varfile
-        File ped_file
-        Array[String] families
+        Array[String] samples
+        String family
         File ped_file
         String sv_base_mini_docker
         RuntimeAttr? runtime_attr_override
     }
-    Float bed_size = size(varfile, "GB")
-    Float ped_size = size(ped_file, "GB")
-    Float base_disk_gb = 10.0
+    Float input_size = size(select_all([varfile, ped_file]), "GB")
     Float base_mem_gb = 3.75
 
     RuntimeAttr default_attr = object {
                                       mem_gb: base_mem_gb,
-                                      disk_gb: ceil(10 + ped_size + bed_size * 1.2),
+                                      disk_gb: ceil(10 + input_size),
                                       cpu: 1,
                                       preemptible: 2,
                                       max_retries: 1,
@@ -229,15 +210,11 @@ task generate_per_family_bed{
     command <<<
         set -euo pipefail
         cat ~{varfile} | gunzip | cut -f1-6 > updated_varfile.bed
-        for family in ~{sep=' ' families}
-        do
-            grep -w "${family}" ~{ped_file} | cut -f2 | sort -u > samples.$family.txt
-            grep -w -f samples.$family.txt updated_varfile.bed | cut -f1-5 | awk '{print $1,$2,$3,$4,$5}' | sed -e 's/ /\t/g' > ~{filename}.$family.bed
-        done
+        grep -f ~{write_lines(samples)} updated_varfile.bed | cut -f1-5 | awk '{print $1,$2,$3,$4,$5}' | sed -e 's/ /\t/g' > ~{filename}.~{family}.bed
         >>>
 
     output{
-        Array[File] per_family_varfile = glob("~{filename}.*.bed")
+        File per_family_varfile = "~{filename}.~{family}.bed"
         }
 
     runtime {
@@ -263,7 +240,7 @@ task integrate_igv_plots{
 
     RuntimeAttr default_attr = object {
                                       mem_gb: base_mem_gb,
-                                      disk_gb: ceil(10 + input_size * 2.0),
+                                      disk_gb: ceil(10 + input_size),
                                       cpu: 1,
                                       preemptible: 2,
                                       max_retries: 1,
