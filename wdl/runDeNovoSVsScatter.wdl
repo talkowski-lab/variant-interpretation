@@ -170,7 +170,7 @@ task vcfToBed{
 
     RuntimeAttr default_attr = object {
                                       mem_gb: base_mem_gb,
-                                      disk_gb: ceil(base_disk_gb + input_size * 1.5),
+                                      disk_gb: ceil(10 + input_size * 1.5),
                                       cpu: 1,
                                       preemptible: 2,
                                       max_retries: 1,
