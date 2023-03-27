@@ -226,7 +226,7 @@ task raw_reformatBed{
 
     RuntimeAttr default_attr = object {
                                       mem_gb: base_mem_gb,
-                                      disk_gb: ceil(10 + size + bed_file_size * 2.0),
+                                      disk_gb: ceil(10 + ped_size + bed_file_size * 2.0),
                                       cpu: 1,
                                       preemptible: 2,
                                       max_retries: 1,
@@ -276,7 +276,7 @@ task raw_reformatBedDepth{
 
     RuntimeAttr default_attr = object {
                                       mem_gb: base_mem_gb,
-                                      disk_gb: ceil(10 + size + bed_file_size * 2.0),
+                                      disk_gb: ceil(10 + ped_size + bed_file_size * 2.0),
                                       cpu: 1,
                                       preemptible: 2,
                                       max_retries: 1,
