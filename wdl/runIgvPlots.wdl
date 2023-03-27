@@ -12,7 +12,7 @@ import "Structs.wdl"
 workflow IGV_all_samples {
     input {
         File ped_file
-        Array[String]? fam_ids
+        File? fam_ids
         File sample_crai_cram
         File varfile
         File Fasta
@@ -30,6 +30,11 @@ workflow IGV_all_samples {
         RuntimeAttr? runtime_attr_igv
     }
 
+    if (defined(fam_ids)) {
+        File fam_ids_ = select_first([fam_ids])
+        Array[String] family_ids = transpose(read_tsv(fam_ids_))[0]
+    }
+
     if (!(defined(fam_ids))) {
         call generate_families{
             input:
@@ -39,7 +44,7 @@ workflow IGV_all_samples {
                 runtime_attr_override = runtime_attr_run_igv
         }
     }
-    scatter (family in select_first([fam_ids, generate_families.families])){
+    scatter (family in select_first([family_ids, generate_families.families])){
         call generate_per_family_sample_crai_cram{
             input:
                 family = family,
