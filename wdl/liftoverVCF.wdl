@@ -149,6 +149,7 @@ task liftover {
     File contig_vcf = "~{contig}.lov.vcf.gz"
     File contig_vcf_index = "~{contig}.lov.vcf.gz.tbi"
     File rejected_file = "~{contig}.rejected.vcf.gz"
+    File rejected_file = "~{contig}.rejected.vcf.gz.tbi"
   }
 
   command {
@@ -160,9 +161,6 @@ task liftover {
       --CHAIN ~{chain_file} \
       --REJECT ~{contig}.rejected.vcf.gz \
       -R ~{new_reference_fasta}
-
-      tabix -p vcf ~{contig}.lov.vcf.gz
-      tabix -p vcf ~{contig}.rejected.vcf.gz
   }
 
   runtime {
