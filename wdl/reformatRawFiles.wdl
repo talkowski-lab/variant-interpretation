@@ -85,12 +85,11 @@ task raw_VcfToBed{
     }
 
     Float input_size = size(vcf_file, "GB")
-    Float base_disk_gb = 10.0
     Float base_mem_gb = 3.75
 
     RuntimeAttr default_attr = object {
-                                      mem_gb: base_mem_gb + input_size * 1.5,
-                                      disk_gb: ceil(base_disk_gb + input_size * 2.0),
+                                      mem_gb: base_mem_gb,
+                                      disk_gb: ceil(10 + input_size * 2.0),
                                       cpu: 1,
                                       preemptible: 2,
                                       max_retries: 1,
@@ -132,12 +131,11 @@ task raw_mergeBed{
     }
 
     Float input_size = size(bed_files, "GB")
-    Float base_disk_gb = 10.0
     Float base_mem_gb = 3.75
 
     RuntimeAttr default_attr = object {
                                       mem_gb: base_mem_gb,
-                                      disk_gb: ceil(base_disk_gb + input_size * 2.0),
+                                      disk_gb: ceil(base_disk_gb + input_size * 1.5),
                                       cpu: 1,
                                       preemptible: 2,
                                       max_retries: 1,
@@ -176,12 +174,11 @@ task raw_divideByChrom{
     }
 
     Float input_size = size(bed_file, "GB")
-    Float base_disk_gb = 10.0
     Float base_mem_gb = 3.75
 
     RuntimeAttr default_attr = object {
                                       mem_gb: base_mem_gb,
-                                      disk_gb: ceil(base_disk_gb + input_size * 2.0),
+                                      disk_gb: ceil(10 + input_size * 1.3),
                                       cpu: 1,
                                       preemptible: 2,
                                       max_retries: 1,
@@ -223,13 +220,13 @@ task raw_reformatBed{
         RuntimeAttr? runtime_attr_override
     }
 
-    Float input_size = size(select_all([per_chromosome_bed_file, ped_input]), "GB")
-    Float base_disk_gb = 10.0
+    Float bed_file_size = size(per_chromosome_bed_file, "GB")
+    Float ped_size = size(ped_input, "GB")
     Float base_mem_gb = 3.75
 
     RuntimeAttr default_attr = object {
                                       mem_gb: base_mem_gb,
-                                      disk_gb: ceil(base_disk_gb + input_size * 2.0),
+                                      disk_gb: ceil(10 + size + bed_file_size * 2.0),
                                       cpu: 1,
                                       preemptible: 2,
                                       max_retries: 1,
@@ -273,13 +270,13 @@ task raw_reformatBedDepth{
         RuntimeAttr? runtime_attr_override
     }
 
-    Float input_size = size(select_all([per_chromosome_bed_file, ped_input]), "GB")
-    Float base_disk_gb = 10.0
+     Float bed_file_size = size(per_chromosome_bed_file, "GB")
+    Float ped_size = size(ped_input, "GB")
     Float base_mem_gb = 3.75
 
     RuntimeAttr default_attr = object {
                                       mem_gb: base_mem_gb,
-                                      disk_gb: ceil(base_disk_gb + input_size * 2.0),
+                                      disk_gb: ceil(10 + size + bed_file_size * 2.0),
                                       cpu: 1,
                                       preemptible: 2,
                                       max_retries: 1,

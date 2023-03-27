@@ -124,12 +124,11 @@ task concatinate_plots{
     }
 
     Float input_size = size(select_all([rd_plots, igv_plots, varfile, pedfile]), "GB")
-    Float base_disk_gb = 10.0
     Float base_mem_gb = 3.75
 
     RuntimeAttr default_attr = object {
-                                      mem_gb: ceil(base_mem_gb),
-                                      disk_gb: ceil(base_disk_gb + input_size * 2.0),
+                                      mem_gb: base_mem_gb,
+                                      disk_gb: 10,
                                       cpu: 1,
                                       preemptible: 2,
                                       max_retries: 1,

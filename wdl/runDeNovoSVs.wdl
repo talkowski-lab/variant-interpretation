@@ -188,12 +188,11 @@ task subsetVcf{
     }
 
     Float input_size = size(vcf_file, "GB")
-    Float base_disk_gb = 10.0
     Float base_mem_gb = 3.75
 
     RuntimeAttr default_attr = object {
-                                      mem_gb: base_mem_gb + input_size * 1.5,
-                                      disk_gb: ceil(base_disk_gb + input_size * 2.0),
+                                      mem_gb: base_mem_gb,
+                                      disk_gb: ceil(10 + input_size * 1.5),
                                       cpu: 1,
                                       preemptible: 2,
                                       max_retries: 1,
@@ -239,12 +238,11 @@ task getGenomicDisorders{
     }
 
     Float input_size = size(vcf_file, "GB")
-    Float base_disk_gb = 10.0
     Float base_mem_gb = 3.75
 
     RuntimeAttr default_attr = object {
-                                      mem_gb: base_mem_gb + input_size * 1.5,
-                                      disk_gb: ceil(base_disk_gb + input_size * 2.0),
+                                      mem_gb: base_mem_gb,
+                                      disk_gb: ceil(10 + input_size),
                                       cpu: 1,
                                       preemptible: 2,
                                       max_retries: 1,
@@ -282,12 +280,11 @@ task plot_mergeFinalBedFiles{
     }
 
     Float bed_files_size = size(bed_files, "GB")
-    Float base_disk_gb = 10.0
     Float base_mem_gb = 3.75
 
     RuntimeAttr default_attr = object {
                                       mem_gb: base_mem_gb,
-                                      disk_gb: ceil(base_disk_gb + (bed_files_size) * 2.0),
+                                      disk_gb: ceil(10 + (bed_files_size) * 2.0),
                                       cpu: 1,
                                       preemptible: 2,
                                       max_retries: 1,
@@ -297,7 +294,7 @@ task plot_mergeFinalBedFiles{
     RuntimeAttr runtime_attr = select_first([runtime_attr_override, default_attr])
 
     output{
-        File merged_output = "merged.bed.gz"
+        File merged_output = "final.denovo.merged.bed.gz"
     }
 
     command {
@@ -327,12 +324,11 @@ task callOutliers{
     }
 
     Float bed_files_size = size(bed_file, "GB")
-    Float base_disk_gb = 10.0
     Float base_mem_gb = 3.75
 
     RuntimeAttr default_attr = object {
                                       mem_gb: base_mem_gb,
-                                      disk_gb: ceil(base_disk_gb + (bed_files_size) * 2.0),
+                                      disk_gb: ceil(10 + (bed_files_size) * 2.0),
                                       cpu: 1,
                                       preemptible: 2,
                                       max_retries: 1,
@@ -376,12 +372,11 @@ task plot_createPlots{
     }
 
     Float input_size = size(select_all([bed_file, outliers_file]), "GB")
-    Float base_disk_gb = 10.0
     Float base_mem_gb = 3.75
 
     RuntimeAttr default_attr = object {
                                       mem_gb: base_mem_gb,
-                                      disk_gb: ceil(base_disk_gb + input_size * 2.0),
+                                      disk_gb: ceil(10 + input_size * 1.2),
                                       cpu: 1,
                                       preemptible: 2,
                                       max_retries: 1,
@@ -430,13 +425,13 @@ task cleanPed{
         RuntimeAttr? runtime_attr_override
     }
 
-    Float input_size = size(select_all([ped_input, vcf_input]), "GB")
-    Float base_disk_gb = 10.0
+    Float ped_size = size(ped_input, "GB")
+    Float vcf_size = size(vcf_input, "GB")
     Float base_mem_gb = 3.75
 
     RuntimeAttr default_attr = object {
                                       mem_gb: base_mem_gb,
-                                      disk_gb: ceil(base_disk_gb + input_size * 2.0),
+                                      disk_gb: ceil(10 + vcf_size + ped_size * 1.5),
                                       cpu: 1,
                                       preemptible: 2,
                                       max_retries: 1,
@@ -485,13 +480,13 @@ task getBatchedFiles{
         RuntimeAttr? runtime_attr_override
     }
 
-    Float input_size = size(select_all([vcf_file,batch_raw_file, batch_depth_raw_file, ped_input, sample_batches, batch_bincov_index]), "GB")
-    Float base_disk_gb = 10.0
+    Float input_size = size(select_all([batch_raw_file, batch_depth_raw_file, ped_input, sample_batches, batch_bincov_index, fam_ids]), "GB")
+    Float vcf_size = size(vcf_file, "GB")
     Float base_mem_gb = 3.75
 
     RuntimeAttr default_attr = object {
                                       mem_gb: base_mem_gb,
-                                      disk_gb: ceil(base_disk_gb + input_size * 2.0),
+                                      disk_gb: ceil(10 + input_size + vcf_size * 1.5),
                                       cpu: 1,
                                       preemptible: 2,
                                       max_retries: 1,

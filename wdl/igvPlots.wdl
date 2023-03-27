@@ -81,8 +81,8 @@ task runIGV_whole_genome{
     Float base_mem_gb = 3.75
 
     RuntimeAttr default_attr = object {
-                                      mem_gb: ceil(base_mem_gb),
-                                      disk_gb: ceil(base_disk_gb),
+                                      mem_gb: base_mem_gb,
+                                      disk_gb: ceil(10 + input_size),
                                       cpu: 1,
                                       preemptible: 2,
                                       max_retries: 1,

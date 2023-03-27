@@ -111,8 +111,8 @@ task generate_families{
     Float base_mem_gb = 3.75
 
     RuntimeAttr default_attr = object {
-                                      mem_gb: ceil(base_mem_gb),
-                                      disk_gb: ceil(base_disk_gb + input_size * 2.0),
+                                      mem_gb: base_mem_gb,
+                                      disk_gb: ceil(10 + input_size),
                                       cpu: 1,
                                       preemptible: 2,
                                       max_retries: 1,
@@ -152,12 +152,11 @@ task generate_per_family_sample_crai_cram{
         RuntimeAttr? runtime_attr_override
     }
     Float input_size = size(select_all([sample_crai_cram, ped_file]), "GB")
-    Float base_disk_gb = 10.0
     Float base_mem_gb = 3.75
 
     RuntimeAttr default_attr = object {
-                                      mem_gb: ceil(base_mem_gb),
-                                      disk_gb: ceil(base_disk_gb + input_size * 2.0),
+                                      mem_gb: base_mem_gb,
+                                      disk_gb: ceil(10 + input_size * 2.0),
                                       cpu: 1,
                                       preemptible: 2,
                                       max_retries: 1,
@@ -210,13 +209,14 @@ task generate_per_family_bed{
         String sv_base_mini_docker
         RuntimeAttr? runtime_attr_override
     }
-    Float input_size = size(select_all([varfile, ped_file]), "GB")
+    Float bed_size = size(varfile, "GB")
+    Float ped_size = size(ped_file, "GB")
     Float base_disk_gb = 10.0
     Float base_mem_gb = 3.75
 
     RuntimeAttr default_attr = object {
-                                      mem_gb: ceil(base_mem_gb),
-                                      disk_gb: ceil(base_disk_gb + input_size * 2.0),
+                                      mem_gb: base_mem_gb,
+                                      disk_gb: ceil(10 + ped_size + bed_size * 1.2),
                                       cpu: 1,
                                       preemptible: 2,
                                       max_retries: 1,
@@ -259,12 +259,11 @@ task integrate_igv_plots{
         RuntimeAttr? runtime_attr_override
     }
     Float input_size = size(igv_tar, "GB")
-    Float base_disk_gb = 10.0
     Float base_mem_gb = 3.75
 
     RuntimeAttr default_attr = object {
-                                      mem_gb: ceil(base_mem_gb),
-                                      disk_gb: ceil(base_disk_gb + input_size * 2.0),
+                                      mem_gb: base_mem_gb,
+                                      disk_gb: ceil(10 + input_size * 2.0),
                                       cpu: 1,
                                       preemptible: 2,
                                       max_retries: 1,

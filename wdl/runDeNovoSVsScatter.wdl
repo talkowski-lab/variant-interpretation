@@ -95,13 +95,13 @@ task runDeNovo{
         RuntimeAttr? runtime_attr_override
     }
 
-    Float input_size = size(select_all([vcf_input, bed_input, ped_input, disorder_input, raw_proband, raw_parents, exclude_regions, coverage_files, coverage_indeces, batch_bincov_index, sample_batches]), "GB")
-    Float base_disk_gb = 10.0
+    Float input_size = size(select_all([vcf_input, ped_input, disorder_input, raw_proband, raw_parents, exclude_regions, coverage_files, coverage_indeces, batch_bincov_index, sample_batches]), "GB")
+    Float bed_size = size(bed_input, "GB")
     Float base_mem_gb = 3.75
 
     RuntimeAttr default_attr = object {
-                                      mem_gb: ceil(base_mem_gb),
-                                      disk_gb: ceil(base_disk_gb + input_size * 2.0),
+                                      mem_gb: base_mem_gb,
+                                      disk_gb: ceil(10 + input_size + bed_size * 1.5),
                                       cpu: 1,
                                       preemptible: 2,
                                       max_retries: 1,
@@ -166,12 +166,11 @@ task vcfToBed{
     }
 
     Float input_size = size(vcf_file, "GB")
-    Float base_disk_gb = 10.0
     Float base_mem_gb = 3.75
 
     RuntimeAttr default_attr = object {
                                       mem_gb: base_mem_gb,
-                                      disk_gb: ceil(base_disk_gb + input_size * 2.0),
+                                      disk_gb: ceil(base_disk_gb + input_size * 1.5),
                                       cpu: 1,
                                       preemptible: 2,
                                       max_retries: 1,
@@ -212,12 +211,11 @@ task mergeBedFiles{
     }
 
     Float bed_files_size = size(bed_files, "GB")
-    Float base_disk_gb = 10.0
     Float base_mem_gb = 3.75
 
     RuntimeAttr default_attr = object {
                                       mem_gb: base_mem_gb,
-                                      disk_gb: ceil(base_disk_gb + (bed_files_size) * 2.0),
+                                      disk_gb: ceil(10 + (bed_files_size) * 2.0),
                                       cpu: 1,
                                       preemptible: 2,
                                       max_retries: 1,
