@@ -22,6 +22,8 @@ workflow liftoverVCF {
     File new_reference_fasta
     File new_reference_dict
 
+    Int java_mem
+
     Array[String] contigs
 
     String output_name
@@ -52,6 +54,7 @@ workflow liftoverVCF {
         chain_file = chain_file,
         new_reference_fasta = new_reference_fasta,
         new_reference_dict = new_reference_dict,
+        java_mem = java_mem,
         contig = contig,
         docker_path = docker_gatk,
         runtime_attr_override = runtime_attr_liftOver
@@ -125,6 +128,7 @@ task liftover {
     File chain_file
     File new_reference_fasta
     File new_reference_dict
+    Int java_mem
     String contig
     String docker_path
     RuntimeAttr? runtime_attr_override
@@ -148,9 +152,9 @@ task liftover {
   }
 
   command {
-    set -e
+    set -euo pipefail
 
-    gatk LiftoverVcf \
+    gatk --java-options "-Xmx~{java_mem}" LiftoverVcf \
       -I ~{input_vcf} \
       -O ~{contig}.lov.vcf.gz \
       --CHAIN ~{chain_file} \
