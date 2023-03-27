@@ -25,7 +25,8 @@ workflow liftoverVCF {
     Array[String] contigs
 
     String output_name
-    String docker_path
+    String docker_bcftools
+    String docker_gatk
 
     RuntimeAttr? runtime_attr_splitVCF
     RuntimeAttr? runtime_attr_liftOver
@@ -40,7 +41,7 @@ workflow liftoverVCF {
         input_vcf = input_vcf,
         input_vcf_index = input_vcf_index,
         contig = contig,
-        docker_path = docker_path,
+        docker_path = docker_bcftools,
         runtime_attr_override = runtime_attr_splitVCF
       }
 
@@ -52,7 +53,7 @@ workflow liftoverVCF {
         new_reference_fasta = new_reference_fasta,
         new_reference_dict = new_reference_dict,
         contig = contig,
-        docker_path = docker_path,
+        docker_path = docker_gatk,
         runtime_attr_override = runtime_attr_liftOver
       }
   }
@@ -61,7 +62,7 @@ workflow liftoverVCF {
     input:
       shard_vcf_files = liftover.contig_vcf,
       shard_vcf_files_rejected = liftover.contig_vcf,
-      docker_path = docker_path,
+      docker_path = docker_bcftools,
       runtime_attr_override = runtime_attr_mergeVCF
     }
 
