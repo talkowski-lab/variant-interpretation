@@ -24,7 +24,7 @@ workflow VisualizePlots{
         File? empty_track
         String? buffer
         String? buffer_large
-        String? reference
+        File? reference
 
         String sv_base_mini_docker
         String sv_pipeline_rdtest_docker
@@ -69,7 +69,7 @@ workflow VisualizePlots{
         File empty_track_ = select_first([empty_track])
         File buffer_ = select_first([buffer,500])
         File buffer_large_ = select_first([buffer_large,1000])
-        String reference_ = select_first([reference])
+        File reference_ = select_first([reference])
 
         call igv.IGV_all_samples as igv_plots {
             input:

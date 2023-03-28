@@ -22,7 +22,7 @@ workflow IGV {
         Array[String] samples
         Array[String] crams
         Array[String] crais
-        String reference
+        File reference
         String buffer
         String buffer_large
         String igv_docker
@@ -64,7 +64,7 @@ task runIGV_whole_genome{
         File nested_repeats
         File simple_repeats
         File empty_track
-        String reference
+        File reference
         String family
         File ped_file
         Array[String] samples
