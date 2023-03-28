@@ -95,8 +95,8 @@ task runIGV_whole_genome{
             for cram in ~{sep=' ' crams}
             do
                 export GCS_OAUTH_TOKEN=`gcloud auth application-default print-access-token`
-                samtools view -h -o new.$cram $cram -L regions.bed
-                samtools index new.$cram
+                samtools view -h -o new.basename(crams[i]) $cram -L regions.bed
+                samtools index new.basename(crams[i])
             done
             ls new.* > crams.txt
         python /src/makeigvpesr.py -v ~{varfile} -n ~{nested_repeats} -s ~{simple_repeats} -e ~{empty_track} -f ~{fasta} -fam_id ~{family} -samples ~{sep="," samples} -crams crams.txt -p ~{ped_file} -o pe_igv_plots -b ~{buffer} -l ~{buffer_large} -i pe.txt -bam pe.sh
