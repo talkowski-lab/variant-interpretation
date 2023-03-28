@@ -20,8 +20,8 @@ workflow IGV {
         String family
         File ped_file
         Array[String] samples
-        Array[File] crams
-        Array[File] crais
+        Array[String] crams
+        Array[String] crais
         String buffer
         String buffer_large
         String igv_docker
@@ -65,8 +65,8 @@ task runIGV_whole_genome{
         String family
         File ped_file
         Array[String] samples
-        Array[File] crams
-        Array[File] crais
+        Array[String] crams
+        Array[String] crais
         String buffer
         String buffer_large
         String igv_docker
@@ -89,9 +89,18 @@ task runIGV_whole_genome{
 
     command <<<
             set -euo pipefail
-            #export GCS_OAUTH_TOKEN=`gcloud auth application-default print-access-token`
             mkdir pe_igv_plots
-        python /src/makeigvpesr.py -v ~{varfile} -n ~{nested_repeats} -s ~{simple_repeats} -e ~{empty_track} -f ~{fasta} -fam_id ~{family} -samples ~{sep="," samples} -crams ~{sep="," crams} -p ~{ped_file} -o pe_igv_plots -b ~{buffer} -l ~{buffer_large} -i pe.txt -bam pe.sh
+            cat ~{varfile} | cut -f1-3 | grep ^chrom > regions.bed
+            cat ~{varfile} | cut -f1-3 | awk '{$2-=3000}1' OFS='\t' | awk '{$3+=3000}1' OFS='\t' | tail -n+2 >> regions.bed
+            #localize cram files
+            for cram in ~{sep=' ' crams}
+            do
+                export GCS_OAUTH_TOKEN=`gcloud auth application-default print-access-token`
+                samtools view -h -o new.$cram $cram -L regions.bed
+                samtools index new.$cram
+            done
+            ls new.* > crams.txt
+        python /src/makeigvpesr.py -v ~{varfile} -n ~{nested_repeats} -s ~{simple_repeats} -e ~{empty_track} -f ~{fasta} -fam_id ~{family} -samples ~{sep="," samples} -crams crams.txt -p ~{ped_file} -o pe_igv_plots -b ~{buffer} -l ~{buffer_large} -i pe.txt -bam pe.sh
             bash pe.sh
             xvfb-run --server-args="-screen 0, 1920x540x24" bash /IGV_2.4.14/igv.sh -b pe.txt
             tar -czf ~{family}_pe_igv_plots.tar.gz pe_igv_plots

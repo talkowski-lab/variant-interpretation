@@ -173,8 +173,8 @@ task generate_per_family_sample_crai_cram{
 
     output{
         Array[String] per_family_samples = read_lines("samples.txt")
-        Array[File] per_family_crams = read_lines("cram.txt")
-        Array[File] per_family_crais = read_lines("crai.txt")
+        Array[String] per_family_crams = read_lines("cram.txt")
+        Array[String] per_family_crais = read_lines("crai.txt")
     }
 
     runtime {
