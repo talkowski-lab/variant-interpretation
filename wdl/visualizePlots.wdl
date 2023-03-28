@@ -24,6 +24,7 @@ workflow VisualizePlots{
         File? empty_track
         String? buffer
         String? buffer_large
+        String? reference
 
         String sv_base_mini_docker
         String sv_pipeline_rdtest_docker
@@ -68,6 +69,7 @@ workflow VisualizePlots{
         File empty_track_ = select_first([empty_track])
         File buffer_ = select_first([buffer,500])
         File buffer_large_ = select_first([buffer_large,1000])
+        String reference_ = select_first([reference])
 
         call igv.IGV_all_samples as igv_plots {
             input:
@@ -82,6 +84,7 @@ workflow VisualizePlots{
                 Fasta = Fasta_,
                 Fasta_dict = Fasta_dict_,
                 Fasta_idx = Fasta_idx_,
+                reference = reference_,
                 prefix = prefix,
                 sv_base_mini_docker = sv_base_mini_docker,
                 igv_docker = igv_docker,

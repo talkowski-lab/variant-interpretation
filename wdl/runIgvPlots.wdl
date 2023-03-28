@@ -21,6 +21,7 @@ workflow IGV_all_samples {
         File nested_repeats
         File simple_repeats
         File empty_track
+        File reference
         String prefix
         String buffer
         String buffer_large
@@ -79,6 +80,7 @@ workflow IGV_all_samples {
                 crais = generate_per_family_sample_crai_cram.per_family_crais,
                 buffer = buffer,
                 buffer_large = buffer_large,
+                reference = reference,
                 igv_docker = igv_docker,
                 runtime_attr_igv = runtime_attr_igv
         }

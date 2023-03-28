@@ -22,6 +22,7 @@ workflow IGV {
         Array[String] samples
         Array[String] crams
         Array[String] crais
+        String reference
         String buffer
         String buffer_large
         String igv_docker
@@ -44,6 +45,7 @@ workflow IGV {
             crais = crais,
             buffer = buffer,
             buffer_large = buffer_large,
+            reference = reference,
             igv_docker = igv_docker,
             runtime_attr_override = runtime_attr_igv
     }
@@ -62,6 +64,7 @@ task runIGV_whole_genome{
         File nested_repeats
         File simple_repeats
         File empty_track
+        String reference
         String family
         File ped_file
         Array[String] samples
@@ -73,7 +76,7 @@ task runIGV_whole_genome{
         RuntimeAttr? runtime_attr_override
     }
 
-    Float input_size = size(select_all([varfile, fasta, fasta_idx, fasta_dict, nested_repeats, simple_repeats, empty_track, ped_file, crams, crais]), "GB")
+    Float input_size = size(select_all([varfile, fasta, fasta_idx, fasta_dict, nested_repeats, simple_repeats, empty_track, ped_file]), "GB")
     Float base_mem_gb = 3.75
 
     RuntimeAttr default_attr = object {
@@ -90,13 +93,14 @@ task runIGV_whole_genome{
     command <<<
             set -euo pipefail
             mkdir pe_igv_plots
-            cat ~{varfile} | cut -f1-3 | awk '{$2-=3000}1' OFS='\t' | awk '{$3+=3000}1' OFS='\t' > regions.bed
+            cat ~{varfile} | cut -f1-3 | awk '{$2-=3000}1' OFS='\t' | awk '{$3+=3000}1' OFS='\t' | bgzip -c > regions.bed.gz
+            tabix -p bed regions.bed.gz
             #localize cram files
             for cram in ~{sep=' ' crams}
             do
                 name=$(echo $cram|awk -F"/" '{print $NF}'|sed 's/.cram//g')
                 export GCS_OAUTH_TOKEN=`gcloud auth application-default print-access-token`
-                samtools view -h -o new.$name $cram -L regions.bed
+                samtools view -h -C -T ~{reference} -o new.$name $cram -L regions.bed.gz -M
                 samtools index new.$name
             done
             ls new.* > crams.txt
