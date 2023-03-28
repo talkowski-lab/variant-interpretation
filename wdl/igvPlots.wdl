@@ -90,8 +90,7 @@ task runIGV_whole_genome{
     command <<<
             set -euo pipefail
             mkdir pe_igv_plots
-            cat ~{varfile} | cut -f1-3 | grep ^chrom > regions.bed
-            cat ~{varfile} | cut -f1-3 | awk '{$2-=3000}1' OFS='\t' | awk '{$3+=3000}1' OFS='\t' | tail -n+2 >> regions.bed
+            cat ~{varfile} | cut -f1-3 | awk '{$2-=3000}1' OFS='\t' | awk '{$3+=3000}1' OFS='\t' > regions.bed
             #localize cram files
             for cram in ~{sep=' ' crams}
             do
