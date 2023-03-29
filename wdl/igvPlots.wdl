@@ -100,10 +100,10 @@ task runIGV_whole_genome{
             do
                 name=$(echo $cram|awk -F"/" '{print $NF}'|sed 's/.cram//g')
                 export GCS_OAUTH_TOKEN=`gcloud auth application-default print-access-token`
-                samtools view -h -C -T ~{reference} -o new.$name $cram -L regions.bed.gz -M
-                samtools index new.$name
+                samtools view -h -C -T ~{reference} -o new.$name.cram $cram -L regions.bed.gz -M
+                samtools index new.$name.cram
             done
-            ls new.* > crams.txt
+            ls *.cram > crams.txt
         python /src/makeigvpesr.py -v ~{varfile} -n ~{nested_repeats} -s ~{simple_repeats} -e ~{empty_track} -f ~{fasta} -fam_id ~{family} -samples ~{sep="," samples} -crams crams.txt -p ~{ped_file} -o pe_igv_plots -b ~{buffer} -l ~{buffer_large} -i pe.txt -bam pe.sh
             bash pe.sh
             xvfb-run --server-args="-screen 0, 1920x540x24" bash /IGV_2.4.14/igv.sh -b pe.txt
@@ -123,5 +123,6 @@ task runIGV_whole_genome{
     output{
         File pe_plots="~{family}_pe_igv_plots.tar.gz"
         File pe_txt = "pe.txt"
+        Array[File] crams = glob("*.cram")
         }
     }
