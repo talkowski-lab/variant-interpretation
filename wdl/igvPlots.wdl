@@ -106,7 +106,7 @@ task runIGV_whole_genome{
             ls *.cram > crams.txt
         python /src/makeigvpesr.py -v ~{varfile} -n ~{nested_repeats} -s ~{simple_repeats} -e ~{empty_track} -f ~{fasta} -fam_id ~{family} -samples ~{sep="," samples} -crams crams.txt -p ~{ped_file} -o pe_igv_plots -b ~{buffer} -l ~{buffer_large} -i pe.txt -bam pe.sh
             bash pe.sh
-            xvfb-run --server-args="-screen 0, 1920x540x24" bash /IGV_2.16.0/igv.sh -b pe.txt
+            xvfb-run --server-args="-screen 0, 1920x540x24" bash /IGV_Linux_2.16.0/igv.Linux.sh -b pe.txt
             tar -czf ~{family}_pe_igv_plots.tar.gz pe_igv_plots
 
         >>>
