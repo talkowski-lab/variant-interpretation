@@ -124,5 +124,6 @@ task runIGV_whole_genome{
         File pe_plots="~{family}_pe_igv_plots.tar.gz"
         File pe_txt = "pe.txt"
         File pe_sh = "pe.sh"
+        Array[File] crams = glob("*.cram")
         }
     }
