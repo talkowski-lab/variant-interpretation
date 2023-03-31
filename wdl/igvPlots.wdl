@@ -104,9 +104,15 @@ task runIGV_whole_genome{
                 samtools index new.$name.cram
             done
             ls *.cram > crams.txt
-        python /src/makeigvpesr.py -v ~{varfile} -n ~{nested_repeats} -s ~{simple_repeats} -e ~{empty_track} -f ~{fasta} -fam_id ~{family} -samples ~{sep="," samples} -crams crams.txt -p ~{ped_file} -o pe_igv_plots -b ~{buffer} -l ~{buffer_large} -i pe.txt -bam pe.sh
-            bash pe.sh
-            xvfb-run --server-args="-screen 0, 1920x540x24" bash /IGV_Linux_2.16.0/igv.sh -b pe.txt
+            while read -r line
+            i=0
+            do
+                let "i=$i+1"
+                echo "$line" > new.varfile.$i.bed
+                python /src/makeigvpesr.py -v new.varfile.$i.bed -n ~{nested_repeats} -s ~{simple_repeats} -e ~{empty_track} -f ~{fasta} -fam_id ~{family} -samples ~{sep="," samples} -crams crams.txt -p ~{ped_file} -o pe_igv_plots -b ~{buffer} -l ~{buffer_large} -i pe.$i.txt -bam pe.$i.sh
+                bash pe.$i.sh
+                xvfb-run --server-args="-screen 0, 1920x540x24" bash /IGV_Linux_2.16.0/igv.sh -b pe.$i.txt
+            done < ~{varfile}
             tar -czf ~{family}_pe_igv_plots.tar.gz pe_igv_plots
 
         >>>
@@ -122,9 +128,10 @@ task runIGV_whole_genome{
     }
     output{
         File pe_plots="~{family}_pe_igv_plots.tar.gz"
-        File pe_txt = "pe.txt"
-        File pe_sh = "pe.sh"
+        Array[File] pe_txt = glob("pe.*.txt")
+        Array[File] pe_sh = glob("pe.*.sh")
         Array[File] crams = glob("*.cram")
         Array[File] crais = glob("*.crai")
+        Array[File] varfile = glob("new.varfile.*.bed")
         }
     }
