@@ -104,8 +104,9 @@ task runIGV_whole_genome{
                 samtools index new.$name.cram
             done
             ls *.cram > crams.txt
-            while read -r line
+            
             i=0
+            while read -r line
             do
                 let "i=$i+1"
                 echo "$line" > new.varfile.$i.bed
