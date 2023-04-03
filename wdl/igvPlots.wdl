@@ -75,7 +75,7 @@ task runIGV_whole_genome{
     command <<<
             set -euo pipefail
             mkdir pe_igv_plots
-            cat ~{varfile} | cut -f1-3 | awk '{$2-=3000}1' OFS='\t' | awk '{$3+=3000}1' OFS='\t' | awk '{if ($3-$2>=15000) print $1"\t"$2"\t"$2 "\n" $1"\t"$3"\t"$3;else print}'| bgzip -c > regions.bed.gz
+            cat ~{varfile} | cut -f1-3 | awk '{if ($3-$2>=15000) print $1"\t"$2"\t"$2 "\n" $1"\t"$3"\t"$3;else print}'| awk '{$2-=3000}1' OFS='\t' | awk '{$3+=3000}1' OFS='\t' | bgzip -c > regions.bed.gz
             tabix -p bed regions.bed.gz
             #localize cram files
             for cram in ~{sep=' ' crams}
