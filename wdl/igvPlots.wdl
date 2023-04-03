@@ -46,12 +46,6 @@ workflow IGV {
 task runIGV_whole_genome{
     input{
         File varfile
-        File fasta
-        File fasta_idx
-        File fasta_dict
-        File nested_repeats
-        File simple_repeats
-        File empty_track
         File reference
         String family
         File ped_file
