@@ -11,12 +11,6 @@ import "Structs.wdl"
 workflow IGV {
     input{
         File varfile
-        File Fasta
-        File Fasta_idx
-        File Fasta_dict
-        File nested_repeats
-        File simple_repeats
-        File empty_track
         String family
         File ped_file
         Array[String] samples
@@ -32,12 +26,6 @@ workflow IGV {
     call runIGV_whole_genome{
         input:
             varfile = varfile,
-            fasta = Fasta,
-            fasta_dict = Fasta_dict,
-            fasta_idx = Fasta_idx,
-            nested_repeats = nested_repeats,
-            simple_repeats = simple_repeats,
-            empty_track = empty_track,
             family = family,
             ped_file = ped_file,
             samples = samples,
@@ -93,7 +81,7 @@ task runIGV_whole_genome{
     command <<<
             set -euo pipefail
             mkdir pe_igv_plots
-            cat ~{varfile} | cut -f1-3 | awk '{$2-=3000}1' OFS='\t' | awk '{$3+=3000}1' OFS='\t' | bgzip -c > regions.bed.gz
+            cat ~{varfile} | cut -f1-3 | awk '{$2-=3000}1' OFS='\t' | awk '{$3+=3000}1' OFS='\t' | awk '{if ($3-$2>=15000) print $1"\t"$2"\t"$2 "\n" $1"\t"$3"\t"$3;else print}'| bgzip -c > regions.bed.gz
             tabix -p bed regions.bed.gz
             #localize cram files
             for cram in ~{sep=' ' crams}
@@ -104,13 +92,13 @@ task runIGV_whole_genome{
                 samtools index new.$name.cram
             done
             ls *.cram > crams.txt
-            
+
             i=0
             while read -r line
             do
                 let "i=$i+1"
                 echo "$line" > new.varfile.$i.bed
-                python /src/makeigvpesr.py -v new.varfile.$i.bed -n ~{nested_repeats} -s ~{simple_repeats} -e ~{empty_track} -f ~{fasta} -fam_id ~{family} -samples ~{sep="," samples} -crams crams.txt -p ~{ped_file} -o pe_igv_plots -b ~{buffer} -l ~{buffer_large} -i pe.$i.txt -bam pe.$i.sh
+                python /src/makeigvpesr.py -v new.varfile.$i.bed -fam_id ~{family} -samples ~{sep="," samples} -crams crams.txt -p ~{ped_file} -o pe_igv_plots -b ~{buffer} -l ~{buffer_large} -i pe.$i.txt -bam pe.$i.sh
                 bash pe.$i.sh
                 xvfb-run --server-args="-screen 0, 1920x540x24" bash /IGV_Linux_2.16.0/igv.sh -b pe.$i.txt
             done < ~{varfile}

@@ -15,12 +15,6 @@ workflow IGV_all_samples {
         File? fam_ids
         File sample_crai_cram
         File varfile
-        File Fasta
-        File Fasta_dict
-        File Fasta_idx
-        File nested_repeats
-        File simple_repeats
-        File empty_track
         File reference
         String prefix
         String buffer
@@ -67,12 +61,6 @@ workflow IGV_all_samples {
         call igv.IGV as IGV {
             input:
                 varfile = generate_per_family_bed.per_family_varfile,
-                Fasta = Fasta,
-                Fasta_idx = Fasta_idx,
-                Fasta_dict = Fasta_dict,
-                nested_repeats = nested_repeats,
-                simple_repeats = simple_repeats,
-                empty_track = empty_track,
                 family = family,
                 ped_file = ped_file,
                 samples = generate_per_family_sample_crai_cram.per_family_samples,

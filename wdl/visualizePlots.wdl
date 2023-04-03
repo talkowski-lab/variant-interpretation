@@ -7,10 +7,6 @@ import "runIgvPlots.wdl" as igv
 
 workflow VisualizePlots{
     input{
-        File? Fasta
-        File? Fasta_idx
-        File? Fasta_dict
-
         File varfile
         File pedfile
         String prefix
@@ -19,9 +15,6 @@ workflow VisualizePlots{
         Array[File]? medianfile
 
         File? sample_crai_cram
-        File? nested_repeats
-        File? simple_repeats
-        File? empty_track
         String? buffer
         String? buffer_large
         File? reference
@@ -61,12 +54,6 @@ workflow VisualizePlots{
 
     if (run_IGV) {   
         File sample_crai_cram_ = select_first([sample_crai_cram])
-        File Fasta_ = select_first([Fasta])
-        File Fasta_idx_ = select_first([Fasta_idx])
-        File Fasta_dict_ = select_first([Fasta_dict])
-        File nested_repeats_ = select_first([nested_repeats])
-        File simple_repeats_ = select_first([simple_repeats])
-        File empty_track_ = select_first([empty_track])
         File buffer_ = select_first([buffer,500])
         File buffer_large_ = select_first([buffer_large,1000])
         File reference_ = select_first([reference])
@@ -75,15 +62,9 @@ workflow VisualizePlots{
             input:
                 ped_file = pedfile,
                 sample_crai_cram = sample_crai_cram_,
-                nested_repeats = nested_repeats_,
-                simple_repeats = simple_repeats_,
-                empty_track = empty_track_,
                 buffer = buffer_,
                 buffer_large = buffer_large_,
                 varfile = varfile,
-                Fasta = Fasta_,
-                Fasta_dict = Fasta_dict_,
-                Fasta_idx = Fasta_idx_,
                 reference = reference_,
                 prefix = prefix,
                 sv_base_mini_docker = sv_base_mini_docker,
