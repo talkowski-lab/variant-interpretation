@@ -16,6 +16,7 @@ workflow IGV_all_samples {
         File sample_crai_cram
         File varfile
         File reference
+        File reference_index
         String prefix
         String buffer
         String buffer_large
@@ -69,6 +70,7 @@ workflow IGV_all_samples {
                 buffer = buffer,
                 buffer_large = buffer_large,
                 reference = reference,
+                reference_index = reference_index,
                 igv_docker = igv_docker,
                 runtime_attr_igv = runtime_attr_igv
         }

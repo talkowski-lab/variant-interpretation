@@ -18,6 +18,7 @@ workflow VisualizePlots{
         String? buffer
         String? buffer_large
         File? reference
+        File? reference_index
 
         String sv_base_mini_docker
         String sv_pipeline_rdtest_docker
@@ -57,6 +58,7 @@ workflow VisualizePlots{
         File buffer_ = select_first([buffer,500])
         File buffer_large_ = select_first([buffer_large,1000])
         File reference_ = select_first([reference])
+        File reference_index_ = select_first([reference_index])
 
         call igv.IGV_all_samples as igv_plots {
             input:
@@ -66,6 +68,7 @@ workflow VisualizePlots{
                 buffer_large = buffer_large_,
                 varfile = varfile,
                 reference = reference_,
+                reference_index = reference_index_,
                 prefix = prefix,
                 sv_base_mini_docker = sv_base_mini_docker,
                 igv_docker = igv_docker,

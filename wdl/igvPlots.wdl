@@ -17,6 +17,7 @@ workflow IGV {
         Array[String] crams
         Array[String] crais
         File reference
+        File reference_index
         String buffer
         String buffer_large
         String igv_docker
@@ -34,6 +35,7 @@ workflow IGV {
             buffer = buffer,
             buffer_large = buffer_large,
             reference = reference,
+            reference_index = reference_index,
             igv_docker = igv_docker,
             runtime_attr_override = runtime_attr_igv
     }
@@ -47,6 +49,7 @@ task runIGV_whole_genome{
     input{
         File varfile
         File reference
+        File reference_index
         String family
         File ped_file
         Array[String] samples
