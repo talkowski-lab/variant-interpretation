@@ -161,6 +161,7 @@ workflow deNovoSV {
 
     output {
     
+        File cleaned_ped = cleanPed.cleaned_ped
         File denovo_output = callOutliers.final_denovo_output
         File denovo_outliers_output = callOutliers.final_denovo_outliers_output
         File denovo_output_plots = plot_createPlots.output_plots
