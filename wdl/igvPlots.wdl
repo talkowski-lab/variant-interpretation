@@ -159,12 +159,11 @@ task runIGV_whole_genome{
             RuntimeAttr? runtime_attr_override
         }
 
-    Float input_size = size(select_all([varfile, reference, ped_file]), "GB")
     Float base_mem_gb = 3.75
 
     RuntimeAttr default_attr = object {
                                       mem_gb: base_mem_gb,
-                                      disk_gb: ceil(10 + input_size),
+                                      disk_gb: 12,
                                       cpu: 1,
                                       preemptible: 2,
                                       max_retries: 1,
