@@ -19,7 +19,6 @@ workflow VisualizePlots{
         String? buffer_large
         File? reference
         File? reference_index
-        Boolean? cram_localization
 
         String sv_base_mini_docker
         String sv_pipeline_rdtest_docker
@@ -60,7 +59,7 @@ workflow VisualizePlots{
         File buffer_large_ = select_first([buffer_large,1000])
         File reference_ = select_first([reference])
         File reference_index_ = select_first([reference_index])
-        Boolean cram_localization_ = if defined(cram_localization) then select_first([cram_localization]) else false
+
         call igv.IGV_all_samples as igv_plots {
             input:
                 ped_file = pedfile,
@@ -70,7 +69,6 @@ workflow VisualizePlots{
                 varfile = varfile,
                 reference = reference_,
                 reference_index = reference_index_,
-                cram_localization = cram_localization_,
                 prefix = prefix,
                 sv_base_mini_docker = sv_base_mini_docker,
                 igv_docker = igv_docker,
