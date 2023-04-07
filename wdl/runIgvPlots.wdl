@@ -19,7 +19,7 @@ workflow IGV_all_samples {
         File reference_index
         String prefix
         String buffer
-        Boolean? cram_localization
+        Boolean cram_localization
         String buffer_large
         String sv_base_mini_docker
         String igv_docker
