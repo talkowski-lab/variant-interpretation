@@ -62,7 +62,7 @@ workflow IGV {
     }
 
     output{
-        File tar_gz_pe = runIGV_whole_genome.pe_plots
+        File tar_gz_pe = select_first([runIGV_whole_genome.pe_plots, runIGV_whole_genome_cram_localization.pe_plots])
     }
 }
 
