@@ -253,7 +253,7 @@ task generate_per_family_bed{
 
 task integrate_igv_plots{
     input {
-        Array[File] igv_tar
+        Array[File?] igv_tar
         String prefix
         String sv_base_mini_docker
         RuntimeAttr? runtime_attr_override
