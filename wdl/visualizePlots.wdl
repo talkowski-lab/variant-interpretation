@@ -117,7 +117,7 @@ workflow VisualizePlots{
     }
 
     output{
-        File output_plots = select_first([concatinate_plots.plots, RdTest.Plots, igv_plots.tar_gz_pe])
+        File output_plots = select_first([concatinate_plots.plots, RdTest.Plots, igv_plots_localize.tar_gz_pe, igv_plots_parse.tar_gz_pe])
         
     }
 }
