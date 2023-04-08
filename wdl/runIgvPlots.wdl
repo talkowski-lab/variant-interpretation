@@ -98,9 +98,10 @@ workflow IGV_all_samples {
         }
     }
 
+    Array[File] tar_gz_pe_ = select_first([IGV_parse.tar_gz_pe,IGV_localize.tar_gz_pe])
     call integrate_igv_plots{
         input:
-            igv_tar = select_first([IGV_parse.tar_gz_pe,IGV_localize.tar_gz_pe]),
+            igv_tar = tar_gz_pe_,
             prefix = prefix, 
             sv_base_mini_docker = sv_base_mini_docker,
             runtime_attr_override = runtime_attr_run_igv
