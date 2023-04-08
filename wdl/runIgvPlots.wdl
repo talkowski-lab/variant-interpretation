@@ -6,7 +6,8 @@ version 1.0
 
 ##########################################################################################
 
-import "igvPlots.wdl" as igv
+import "igvPlotsParse.wdl" as igv_plots_parse
+import "igvPlotsLocalize.wdl" as igv_plots_localize
 import "Structs.wdl"
 
 workflow IGV_all_samples {
@@ -20,6 +21,7 @@ workflow IGV_all_samples {
         String prefix
         String buffer
         String buffer_large
+        Boolean cram_localization
         String sv_base_mini_docker
         String igv_docker
         RuntimeAttr? runtime_attr_run_igv
@@ -59,25 +61,46 @@ workflow IGV_all_samples {
                 runtime_attr_override=runtime_attr_run_igv
             }
         
-        call igv.IGV as IGV {
-            input:
-                varfile = generate_per_family_bed.per_family_varfile,
-                family = family,
-                ped_file = ped_file,
-                samples = generate_per_family_sample_crai_cram.per_family_samples,
-                crams = generate_per_family_sample_crai_cram.per_family_crams,
-                crais = generate_per_family_sample_crai_cram.per_family_crais,
-                buffer = buffer,
-                buffer_large = buffer_large,
-                reference = reference,
-                reference_index = reference_index,
-                igv_docker = igv_docker,
-                runtime_attr_igv = runtime_attr_igv
+        if(!(cram_localization)){
+            call igv_plots_parse.IGV as IGV_parse {
+                input:
+                    varfile = generate_per_family_bed.per_family_varfile,
+                    family = family,
+                    ped_file = ped_file,
+                    samples = generate_per_family_sample_crai_cram.per_family_samples,
+                    crams = generate_per_family_sample_crai_cram.per_family_crams,
+                    crais = generate_per_family_sample_crai_cram.per_family_crais,
+                    buffer = buffer,
+                    buffer_large = buffer_large,
+                    reference = reference,
+                    reference_index = reference_index,
+                    igv_docker = igv_docker,
+                    runtime_attr_igv = runtime_attr_igv
+            }
+        }
+
+        if(cram_localization){
+            call igv_plots_localize.IGV as IGV_localize {
+                input:
+                    varfile = generate_per_family_bed.per_family_varfile,
+                    family = family,
+                    ped_file = ped_file,
+                    samples = generate_per_family_sample_crai_cram.per_family_samples,
+                    crams = generate_per_family_sample_crai_cram.per_family_crams_files,
+                    crais = generate_per_family_sample_crai_cram.per_family_crais_files,
+                    buffer = buffer,
+                    buffer_large = buffer_large,
+                    reference = reference,
+                    reference_index = reference_index,
+                    igv_docker = igv_docker,
+                    runtime_attr_igv = runtime_attr_igv
+            }
         }
     }
+
     call integrate_igv_plots{
         input:
-            igv_tar = IGV.tar_gz_pe,
+            igv_tar = select_first([IGV_parse.tar_gz_pe,IGV_localize.tar_gz_pe]),
             prefix = prefix, 
             sv_base_mini_docker = sv_base_mini_docker,
             runtime_attr_override = runtime_attr_run_igv
@@ -167,6 +190,8 @@ task generate_per_family_sample_crai_cram{
         Array[String] per_family_samples = read_lines("samples.txt")
         Array[String] per_family_crams = read_lines("cram.txt")
         Array[String] per_family_crais = read_lines("crai.txt")
+        Array[File] per_family_crams_files = read_lines("cram.txt")
+        Array[File] per_family_crais_files = read_lines("crai.txt")
     }
 
     runtime {
