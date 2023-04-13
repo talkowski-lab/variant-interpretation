@@ -56,10 +56,6 @@ workflow RdTestVisualization{
     }
         output{
             File Plots = integrate_rd_plots.plot_tar
-            File allcovfile = rdtest.allcovfile
-            File median_file = rdtest.median_file
-            File samples_text = rdtest.samples_text
-            File test_bed = rdtest.test_bed
         }
 }
 
