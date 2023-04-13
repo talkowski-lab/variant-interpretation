@@ -20,7 +20,6 @@ workflow IGV_all_samples {
         String prefix
         String buffer
         String buffer_large
-        Boolean cram_localization
         String sv_base_mini_docker
         String igv_docker
         RuntimeAttr? runtime_attr_run_igv
