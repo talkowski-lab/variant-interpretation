@@ -14,6 +14,7 @@ workflow VisualizePlots{
         File? batch_bincov
         File? sample_batches
         Array[File]? medianfile
+        File? fam_ids
 
         File? sample_crai_cram
         String? buffer
@@ -44,6 +45,7 @@ workflow VisualizePlots{
         call rdtest.RdTestVisualization as RdTest{
             input:
                 prefix = prefix,
+                fam_ids = fam_ids,
                 medianfile = medianfile_,
                 pedfile = pedfile,
                 batch_bincov=batch_bincov_,
@@ -69,6 +71,7 @@ workflow VisualizePlots{
                     ped_file = pedfile,
                     sample_crai_cram = sample_crai_cram_,
                     buffer = buffer_,
+                    fam_ids = fam_ids,
                     buffer_large = buffer_large_,
                     varfile = varfile,
                     reference = reference_,
@@ -86,6 +89,7 @@ workflow VisualizePlots{
                 input:
                     ped_file = pedfile,
                     sample_crai_cram = sample_crai_cram_,
+                    fam_ids = fam_ids,
                     buffer = buffer_,
                     buffer_large = buffer_large_,
                     varfile = varfile,
