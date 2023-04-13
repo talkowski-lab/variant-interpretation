@@ -26,7 +26,7 @@ workflow RdTestVisualization{
             input:
                 bed = bed,
                 ped_file = pedfile,
-                sv_base_mini_docker = sv_pipeline_rdtest_docker,
+                sv_pipeline_rdtest_docker = sv_pipeline_rdtest_docker,
                 runtime_attr_override = runtime_attr_rdtest
         }
     }
@@ -46,8 +46,16 @@ workflow RdTestVisualization{
                 runtime_attr_override = runtime_attr_rdtest
         }
     }
+
+    call integrate_rd_plots{
+        input:
+            rd_tar = rdtest.plots,
+            prefix = prefix, 
+            sv_pipeline_rdtest_docker = sv_pipeline_rdtest_docker,
+            runtime_attr_override = runtime_attr_rdtest
+    }
         output{
-            File Plots = rdtest.plots
+            File Plots = integrate_rd_plots.plot_tar
             File allcovfile = rdtest.allcovfile
             File median_file = rdtest.median_file
             File samples_text = rdtest.samples_text
@@ -120,10 +128,11 @@ task rdtest {
         paste covfile.*.bed |tr ' ' '\t' |bgzip >allcovfile.bed.gz 
         tabix allcovfile.bed.gz
         rm covfile.*.bed
+        mkdir rd_plots
         zcat allcovfile.bed.gz |head -n 1|cut -f 4-|tr '\t' '\n'>samples.txt
         Rscript /opt/RdTest/Rd.R \
             -b test.bed \
-            -n ~{prefix} \
+            -n ~{family} \
             -c allcovfile.bed.gz \
             -m medianfile.txt \
             -f ~{pedfile} \
@@ -131,13 +140,11 @@ task rdtest {
             -d TRUE \
             -w samples.txt \
             -s 10000000
-        mkdir ~{prefix}_rd_plots
-        mv *jpg ~{prefix}_rd_plots
-        tar -czvf ~{prefix}_rd_plots.tar.gz ~{prefix}_rd_plots/
+        tar -czvf ~{family}_rd_plots.tar.gz rd_plots
     >>>
     
     output {
-        File plots = "~{prefix}_rd_plots.tar.gz"
+        File plots = "~{family}_rd_plots.tar.gz"
         File allcovfile = "allcovfile.bed.gz"
         File median_file = "medianfile.txt"
         File test_bed = "test.bed"
@@ -159,7 +166,7 @@ task generate_families{
     input {
         File bed
         File ped_file
-        String sv_base_mini_docker
+        String sv_pipeline_rdtest_docker
         RuntimeAttr? runtime_attr_override
     }
     Float input_size = size(select_all([bed, ped_file]), "GB")
@@ -196,5 +203,50 @@ task generate_families{
         maxRetries: select_first([runtime_attr.max_retries, default_attr.max_retries])
         docker: sv_base_mini_docker
     }
+
+}
+
+task integrate_rd_plots{
+    input {
+        Array[File] rd_tar
+        String prefix
+        String sv_pipeline_rdtest_docker
+        RuntimeAttr? runtime_attr_override
+    }
+    Float input_size = size(rd_tar, "GB")
+    Float base_mem_gb = 3.75
+
+    RuntimeAttr default_attr = object {
+                                      mem_gb: base_mem_gb,
+                                      disk_gb: ceil(10 + input_size),
+                                      cpu: 1,
+                                      preemptible: 2,
+                                      max_retries: 1,
+                                      boot_disk_gb: 8
+                                  }
+
+    RuntimeAttr runtime_attr = select_first([runtime_attr_override, default_attr])
+    command <<<
+        mkdir ~{prefix}_rd_plots
+        while read file; do
+            tar -zxf ${file}
+            mv pe_rd_plots/*  ~{prefix}_rd_plots/
+        done < ~{write_lines(rd_tar)};
+        tar -czf ~{prefix}_rd_plots.tar.gz ~{prefix}_rd_plots
+    >>>
+
+    output{
+        File plot_tar = "~{prefix}_igv_plots.tar.gz"
+    }
+
+    runtime {
+        cpu: select_first([runtime_attr.cpu, default_attr.cpu])
+        memory: select_first([runtime_attr.mem_gb, default_attr.mem_gb]) + " GiB"
+        disks: "local-disk " + select_first([runtime_attr.disk_gb, default_attr.disk_gb]) + " HDD"
+        bootDiskSizeGb: select_first([runtime_attr.boot_disk_gb, default_attr.boot_disk_gb])
+        docker: sv_base_mini_docker
+        preemptible: select_first([runtime_attr.preemptible, default_attr.preemptible])
+        maxRetries: select_first([runtime_attr.max_retries, default_attr.max_retries])
+  }
 
 }
