@@ -6,6 +6,7 @@ import "Structs.wdl"
 workflow RdTestVisualization{
     input{
         String prefix
+        File? fam_ids
         Array[File] medianfile
         File pedfile
         File sample_batches
@@ -14,9 +15,28 @@ workflow RdTestVisualization{
         String sv_pipeline_rdtest_docker
         RuntimeAttr? runtime_attr_rdtest
     }
+
+    if (defined(fam_ids)) {
+        File fam_ids_ = select_first([fam_ids])
+        Array[String] family_ids = transpose(read_tsv(fam_ids_))[0]
+    }
+
+    if (!(defined(fam_ids))) {
+        call generate_families{
+            input:
+                bed = bed,
+                ped_file = pedfile,
+                sv_base_mini_docker = sv_pipeline_rdtest_docker,
+                runtime_attr_override = runtime_attr_rdtest
+        }
+    }
+
+    scatter (family in select_first([family_ids, generate_families.families])){
         call rdtest{
             input:
                 bed=bed,
+                family = family,
+                ped_file = pedfile,
                 medianfile=medianfile,
                 pedfile=pedfile,
                 sample_batches=sample_batches,
@@ -25,6 +45,7 @@ workflow RdTestVisualization{
                 sv_pipeline_rdtest_docker=sv_pipeline_rdtest_docker,
                 runtime_attr_override = runtime_attr_rdtest
         }
+    }
         output{
             File Plots = rdtest.plots
             File allcovfile = rdtest.allcovfile
@@ -39,6 +60,8 @@ workflow RdTestVisualization{
 task rdtest {
     input{
         File bed
+        String family
+        File ped_file
         File sample_batches # samples, batches
         File batch_bincov # batch, bincov, index
         Array[File] medianfile
@@ -64,13 +87,17 @@ task rdtest {
 
     command <<<
         set -ex
-        cat ~{bed} | gunzip | cut -f6 > sample.bed
-        cat ~{bed} | gunzip | cut -f1-4 > start.bed
-        cat ~{bed} | gunzip | cut -f5 > svtype.bed
+        cat ~{ped_file} | grep -w ~{family} | cut -f2 | sort -u > samples_in_family.txt
+        cat ~{bed} | gunzip | cut -f1-6 | grep -w -f samples_in_family.txt > per_family_bed.bed
+        cat per_family_bed.bed | gunzip | cut -f6 > sample.bed
+        cat per_family_bed.bed | gunzip | cut -f1-4 > start.bed
+        cat per_family_bed.bed | gunzip | cut -f5 > svtype.bed
         paste start.bed sample.bed svtype.bed > final.bed
         cat final.bed |egrep "DEL|DUP" | sort -k1,1 -k2,2n> test.bed
         cut -f5 test.bed |sed 's/\,/\n/g'|sort -u > samples.txt
-        fgrep -wf samples.txt ~{sample_batches} |awk '{print $2}' |sort -u >existing_batches.txt
+        cat ~{ped_file} | grep -w -f samples.txt | cut -f1 | sort -u > families.txt
+        cat ~{ped_file} | grep -w -f families.txt | cut -f2 | sort -u > all_samples.txt
+        fgrep -wf all_samples.txt ~{sample_batches} |awk '{print $2}' |sort -u >existing_batches.txt
         fgrep -f existing_batches.txt ~{batch_bincov} > bincovlist.txt
         paste ~{sep=" " medianfile} > medianfile.txt
 
@@ -126,4 +153,48 @@ task rdtest {
         preemptible: select_first([runtime_attr.preemptible, default_attr.preemptible])
         maxRetries: select_first([runtime_attr.max_retries, default_attr.max_retries])
     }
+}
+
+task generate_families{
+    input {
+        File bed
+        File ped_file
+        String sv_base_mini_docker
+        RuntimeAttr? runtime_attr_override
+    }
+    Float input_size = size(select_all([bed, ped_file]), "GB")
+    Float base_mem_gb = 3.75
+
+    RuntimeAttr default_attr = object {
+                                      mem_gb: base_mem_gb,
+                                      disk_gb: ceil(10 + input_size),
+                                      cpu: 1,
+                                      preemptible: 2,
+                                      max_retries: 1,
+                                      boot_disk_gb: 8
+                                  }
+
+    RuntimeAttr runtime_attr = select_first([runtime_attr_override, default_attr])
+
+
+    command <<<
+        set -euo pipefail
+        cat ~{bed} | gunzip | tail -n+2 | cut -f6 | tr ',' '\n' | sort -u > samples.txt #must have header line
+        grep -w -f samples.txt ~{ped_file} | cut -f1 | sort -u  > families.txt
+        >>>
+
+    output{
+        Array[String] families = read_lines("families.txt")
+    }
+
+    runtime {
+        cpu: select_first([runtime_attr.cpu, default_attr.cpu])
+        memory: "~{select_first([runtime_attr.mem_gb, default_attr.mem_gb])} GB"
+        disks: "local-disk ~{select_first([runtime_attr.disk_gb, default_attr.disk_gb])} HDD"
+        bootDiskSizeGb: select_first([runtime_attr.boot_disk_gb, default_attr.boot_disk_gb])
+        preemptible: select_first([runtime_attr.preemptible, default_attr.preemptible])
+        maxRetries: select_first([runtime_attr.max_retries, default_attr.max_retries])
+        docker: sv_base_mini_docker
+    }
+
 }
