@@ -93,9 +93,9 @@ task rdtest {
         set -ex
         cat ~{ped_file} | grep -w ~{family} | cut -f2 | sort -u > samples_in_family.txt
         cat ~{bed} | gunzip | cut -f1-6 | grep -w -f samples_in_family.txt > per_family_bed.bed
-        cat per_family_bed.bed | gunzip | cut -f6 > sample.bed
-        cat per_family_bed.bed | gunzip | cut -f1-4 > start.bed
-        cat per_family_bed.bed | gunzip | cut -f5 > svtype.bed
+        cat per_family_bed.bed | cut -f6 > sample.bed
+        cat per_family_bed.bed | cut -f1-4 > start.bed
+        cat per_family_bed.bed | cut -f5 > svtype.bed
         paste start.bed sample.bed svtype.bed > final.bed
         cat final.bed |egrep "DEL|DUP" | sort -k1,1 -k2,2n> test.bed
         cut -f5 test.bed |sed 's/\,/\n/g'|sort -u > samples.txt
