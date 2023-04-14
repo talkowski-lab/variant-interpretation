@@ -136,6 +136,7 @@ task rdtest {
             -d TRUE \
             -w samples.txt \
             -s 10000000
+        mv *jpg ~{family}_rd_plots
         tar -czvf ~{family}_rd_plots.tar.gz rd_plots
     >>>
     
@@ -226,7 +227,7 @@ task integrate_rd_plots{
         mkdir ~{prefix}_rd_plots
         while read file; do
             tar -zxf ${file}
-            mv pe_rd_plots/*  ~{prefix}_rd_plots/
+            mv rd_plots/*  ~{prefix}_rd_plots/
         done < ~{write_lines(rd_tar)};
         tar -czf ~{prefix}_rd_plots.tar.gz ~{prefix}_rd_plots
     >>>
