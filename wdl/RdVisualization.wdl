@@ -124,11 +124,10 @@ task rdtest {
         paste covfile.*.bed |tr ' ' '\t' |bgzip >allcovfile.bed.gz 
         tabix allcovfile.bed.gz
         rm covfile.*.bed
-        mkdir rd_plots
         zcat allcovfile.bed.gz |head -n 1|cut -f 4-|tr '\t' '\n'>samples.txt
         Rscript /opt/RdTest/Rd.R \
             -b test.bed \
-            -n ~{family} \
+            -n ~{prefix} \
             -c allcovfile.bed.gz \
             -m medianfile.txt \
             -f ~{pedfile} \
@@ -136,12 +135,13 @@ task rdtest {
             -d TRUE \
             -w samples.txt \
             -s 10000000
-        mv *jpg ~{family}_rd_plots
-        tar -czvf ~{family}_rd_plots.tar.gz rd_plots
+        mkdir rd_plots
+        mv *jpg rd_plots
+        tar -czvf rd_plots.tar.gz rd_plots/
     >>>
     
     output {
-        File plots = "~{family}_rd_plots.tar.gz"
+        File plots = "rd_plots.tar.gz"
         File allcovfile = "allcovfile.bed.gz"
         File median_file = "medianfile.txt"
         File test_bed = "test.bed"
@@ -229,11 +229,12 @@ task integrate_rd_plots{
             tar -zxf ${file}
             mv rd_plots/*  ~{prefix}_rd_plots/
         done < ~{write_lines(rd_tar)};
+        
         tar -czf ~{prefix}_rd_plots.tar.gz ~{prefix}_rd_plots
     >>>
 
     output{
-        File plot_tar = "~{prefix}_igv_plots.tar.gz"
+        File plot_tar = "~{prefix}_rd_plots.tar.gz"
     }
 
     runtime {
