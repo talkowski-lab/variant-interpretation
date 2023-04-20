@@ -7,6 +7,7 @@ workflow RdTestVisualization{
     input{
         String prefix
         File? fam_ids
+        File samples
         Array[File] medianfile
         File ped_file
         File sample_batches
