@@ -15,7 +15,6 @@ workflow VisualizePlots{
         File? sample_batches
         Array[File]? medianfile
         File? fam_ids
-        File samples
 
         File? sample_crai_cram
         String? buffer
@@ -47,7 +46,6 @@ workflow VisualizePlots{
             input:
                 prefix = prefix,
                 ped_file = pedfile,
-                samples = samples,
                 fam_ids = fam_ids,
                 medianfile = medianfile_,
                 batch_bincov=batch_bincov_,
