@@ -48,6 +48,7 @@ workflow RdTestVisualization{
                 family = family,
                 ped_file = ped_file,
                 medianfile=medianfile,
+                samples = samples,
                 sample_batches=sample_batches,
                 batch_bincov=batch_bincov,
                 prefix=prefix,
@@ -125,6 +126,7 @@ task rdtest {
         File bed
         String family
         File ped_file
+        File samples
         File sample_batches # samples, batches
         File batch_bincov # batch, bincov, index
         Array[File] medianfile
@@ -185,7 +187,7 @@ task rdtest {
             -f ~{ped_file} \
             -a TRUE \
             -d TRUE \
-            -w samples.txt \
+            -w ~{samples} \
             -s 10000000
         mkdir rd_plots
         mv *jpg rd_plots
