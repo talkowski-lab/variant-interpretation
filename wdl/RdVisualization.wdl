@@ -92,7 +92,9 @@ task rdtest {
     command <<<
         set -ex
         cat ~{ped_file} | grep -w ~{family} | cut -f2 | sort -u > samples_in_family.txt
-        cat ~{bed} | gunzip | cut -f1-6 | grep -w -f samples_in_family.txt > per_family_bed.bed
+        cat ~{bed} | gunzip | cut -f1-6 | bgzip -c > first_six.bed.gz
+        Rscript /opt/RdTest/reformatSingleSampleBed.R first_six.bed.gz
+        cat single_sample.bed | grep -w -f samples_in_family.txt > per_family_bed.bed
         cat per_family_bed.bed | cut -f6 > sample.bed
         cat per_family_bed.bed | cut -f1-4 > start.bed
         cat per_family_bed.bed | cut -f5 > svtype.bed
