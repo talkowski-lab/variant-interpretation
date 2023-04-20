@@ -45,6 +45,7 @@ workflow VisualizePlots{
         call rdtest.RdTestVisualization as RdTest{
             input:
                 prefix = prefix,
+                ped_file = pedfile,
                 fam_ids = fam_ids,
                 medianfile = medianfile_,
                 batch_bincov=batch_bincov_,
