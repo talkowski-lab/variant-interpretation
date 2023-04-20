@@ -15,6 +15,7 @@ workflow RdTestVisualization{
         String sv_pipeline_rdtest_docker
         String variant_interpretation_docker
         RuntimeAttr? runtime_attr_rdtest
+        RuntimeAttr? runtime_attr_create_bed
     }
 
     if (defined(fam_ids)) {
@@ -33,18 +34,24 @@ workflow RdTestVisualization{
     }
 
     scatter (family in select_first([family_ids, generate_families.families])){
-        call rdtest{
+        call createBed{
             input:
                 bed=bed,
                 family = family,
                 ped_file = pedfile,
+                variant_interpretation_docker = variant_interpretation_docker,
+                runtime_attr_override = runtime_attr_create_bed
+        }
+        call rdtest{
+            input:
+                bed=createBed.bed,
+                family = family,
+                ped_file = pedfile,
                 medianfile=medianfile,
-                pedfile=pedfile,
                 sample_batches=sample_batches,
                 batch_bincov=batch_bincov,
                 prefix=prefix,
                 sv_pipeline_rdtest_docker=sv_pipeline_rdtest_docker,
-                variant_interpretation_docker = variant_interpretation_docker,
                 runtime_attr_override = runtime_attr_rdtest
         }
     }
@@ -61,23 +68,15 @@ workflow RdTestVisualization{
         }
 }
 
-
-# Run rdtest
-task rdtest {
+task createBed {
     input{
         File bed
         String family
         File ped_file
-        File sample_batches # samples, batches
-        File batch_bincov # batch, bincov, index
-        Array[File] medianfile
-        File pedfile
-        String prefix
-        String sv_pipeline_rdtest_docker
         String variant_interpretation_docker
         RuntimeAttr? runtime_attr_override
     }
-    Float input_size = size(select_all([bed, sample_batches, batch_bincov, medianfile, pedfile]), "GB")
+    Float input_size = size(select_all([bed, ped_file]), "GB")
     Float base_disk_gb = 10.0
     Float base_mem_gb = 3.75
 
@@ -102,7 +101,55 @@ task rdtest {
         cat per_family_bed.bed | cut -f1-4 > start.bed
         cat per_family_bed.bed | cut -f5 > svtype.bed
         paste start.bed sample.bed svtype.bed > final.bed
-        cat final.bed |egrep "DEL|DUP" | sort -k1,1 -k2,2n> test.bed
+    >>>
+    
+    output {
+        File bed = "final.bed"
+    }
+    
+    runtime {
+        cpu: select_first([runtime_attr.cpu, default_attr.cpu])
+        memory: select_first([runtime_attr.mem_gb, default_attr.mem_gb]) + " GiB"
+        disks: "local-disk " + select_first([runtime_attr.disk_gb, default_attr.disk_gb]) + " HDD"
+        bootDiskSizeGb: select_first([runtime_attr.boot_disk_gb, default_attr.boot_disk_gb])
+        docker: variant_interpretation_docker
+        preemptible: select_first([runtime_attr.preemptible, default_attr.preemptible])
+        maxRetries: select_first([runtime_attr.max_retries, default_attr.max_retries])
+    }
+}
+
+# Run rdtest
+task rdtest {
+    input{
+        File bed
+        String family
+        File ped_file
+        File sample_batches # samples, batches
+        File batch_bincov # batch, bincov, index
+        Array[File] medianfile
+        File pedfile
+        String prefix
+        String sv_pipeline_rdtest_docker
+        RuntimeAttr? runtime_attr_override
+    }
+    Float input_size = size(select_all([bed, sample_batches, batch_bincov, medianfile, pedfile]), "GB")
+    Float base_disk_gb = 10.0
+    Float base_mem_gb = 3.75
+
+    RuntimeAttr default_attr = object {
+                                      mem_gb: base_mem_gb,
+                                      disk_gb: ceil(base_disk_gb + input_size),
+                                      cpu: 1,
+                                      preemptible: 2,
+                                      max_retries: 1,
+                                      boot_disk_gb: 8
+                                  }
+
+    RuntimeAttr runtime_attr = select_first([runtime_attr_override, default_attr])
+
+    command <<<
+        set -ex
+        cat ~{bed} |egrep "DEL|DUP" | sort -k1,1 -k2,2n> test.bed
         cut -f5 test.bed |sed 's/\,/\n/g'|sort -u > samples.txt
         cat ~{ped_file} | grep -w -f samples.txt | cut -f1 | sort -u > families.txt
         cat ~{ped_file} | grep -w -f families.txt | cut -f2 | sort -u > all_samples.txt
@@ -158,7 +205,7 @@ task rdtest {
         memory: select_first([runtime_attr.mem_gb, default_attr.mem_gb]) + " GiB"
         disks: "local-disk " + select_first([runtime_attr.disk_gb, default_attr.disk_gb]) + " HDD"
         bootDiskSizeGb: select_first([runtime_attr.boot_disk_gb, default_attr.boot_disk_gb])
-        docker: variant_interpretation_docker
+        docker: sv_pipeline_rdtest_docker
         preemptible: select_first([runtime_attr.preemptible, default_attr.preemptible])
         maxRetries: select_first([runtime_attr.max_retries, default_attr.max_retries])
     }
