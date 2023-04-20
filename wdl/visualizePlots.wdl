@@ -2,7 +2,7 @@
 version 1.0
 
 import "Structs.wdl"
-import "RdVisualization.wdl" as rd_test
+import "RdVisualization.wdl" as rdtest
 import "runIgvPlotsParse.wdl" as igv_parse
 import "runIgvPlotsLocalize.wdl" as igv_localize
 
@@ -42,12 +42,11 @@ workflow VisualizePlots{
         File batch_bincov_ = select_first([batch_bincov])
         File sample_batches_ = select_first([sample_batches])
 
-        call rd_test.RdTestVisualization as RdTest{
+        call rdtest.RdTestVisualization as RdTest{
             input:
                 prefix = prefix,
                 fam_ids = fam_ids,
                 medianfile = medianfile_,
-                ped_file = pedfile,
                 batch_bincov=batch_bincov_,
                 bed = varfile,
                 sv_pipeline_rdtest_docker=sv_pipeline_rdtest_docker,
