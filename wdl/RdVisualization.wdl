@@ -132,7 +132,7 @@ task rdtest {
         String sv_pipeline_rdtest_docker
         RuntimeAttr? runtime_attr_override
     }
-    Float input_size = size(select_all([bed, sample_batches, batch_bincov, medianfile, pedfile]), "GB")
+    Float input_size = size(select_all([bed, sample_batches, batch_bincov, medianfile, ped_file]), "GB")
     Float base_disk_gb = 10.0
     Float base_mem_gb = 3.75
 
@@ -182,7 +182,7 @@ task rdtest {
             -n ~{prefix} \
             -c allcovfile.bed.gz \
             -m medianfile.txt \
-            -f ~{pedfile} \
+            -f ~{ped_file} \
             -a TRUE \
             -d TRUE \
             -w samples.txt \
