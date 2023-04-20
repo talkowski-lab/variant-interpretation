@@ -46,7 +46,7 @@ workflow RdTestVisualization{
             input:
                 bed=generatePerFamilyBed.bed_file,
                 family = family,
-                pedfile = ped_file,
+                ped_file = ped_file,
                 medianfile=medianfile,
                 sample_batches=sample_batches,
                 batch_bincov=batch_bincov,
@@ -128,7 +128,6 @@ task rdtest {
         File sample_batches # samples, batches
         File batch_bincov # batch, bincov, index
         Array[File] medianfile
-        File pedfile
         String prefix
         String sv_pipeline_rdtest_docker
         RuntimeAttr? runtime_attr_override
