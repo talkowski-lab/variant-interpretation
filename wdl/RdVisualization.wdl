@@ -13,6 +13,7 @@ workflow RdTestVisualization{
         File batch_bincov
         File bed
         String sv_pipeline_rdtest_docker
+        String variant_interpretation_docker
         RuntimeAttr? runtime_attr_rdtest
     }
 
@@ -43,6 +44,7 @@ workflow RdTestVisualization{
                 batch_bincov=batch_bincov,
                 prefix=prefix,
                 sv_pipeline_rdtest_docker=sv_pipeline_rdtest_docker,
+                variant_interpretation_docker = variant_interpretation_docker,
                 runtime_attr_override = runtime_attr_rdtest
         }
     }
@@ -72,6 +74,7 @@ task rdtest {
         File pedfile
         String prefix
         String sv_pipeline_rdtest_docker
+        String variant_interpretation_docker
         RuntimeAttr? runtime_attr_override
     }
     Float input_size = size(select_all([bed, sample_batches, batch_bincov, medianfile, pedfile]), "GB")
@@ -93,7 +96,7 @@ task rdtest {
         set -ex
         cat ~{ped_file} | grep -w ~{family} | cut -f2 | sort -u > samples_in_family.txt
         cat ~{bed} | gunzip | cut -f1-6 | bgzip -c > first_six.bed.gz
-        Rscript /opt/RdTest/reformatSingleSampleBed.R first_six.bed.gz
+        Rscript /src/variant-interpretation/scripts/reformatSingleSampleBed.R first_six.bed.gz
         cat single_sample.bed | grep -w -f samples_in_family.txt > per_family_bed.bed
         cat per_family_bed.bed | cut -f6 > sample.bed
         cat per_family_bed.bed | cut -f1-4 > start.bed
@@ -155,7 +158,7 @@ task rdtest {
         memory: select_first([runtime_attr.mem_gb, default_attr.mem_gb]) + " GiB"
         disks: "local-disk " + select_first([runtime_attr.disk_gb, default_attr.disk_gb]) + " HDD"
         bootDiskSizeGb: select_first([runtime_attr.boot_disk_gb, default_attr.boot_disk_gb])
-        docker: sv_pipeline_rdtest_docker
+        docker: variant_interpretation_docker
         preemptible: select_first([runtime_attr.preemptible, default_attr.preemptible])
         maxRetries: select_first([runtime_attr.max_retries, default_attr.max_retries])
     }
