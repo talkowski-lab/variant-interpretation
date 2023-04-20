@@ -8,7 +8,7 @@ workflow RdTestVisualization{
         String prefix
         File? fam_ids
         Array[File] medianfile
-        File pedfile
+        File ped_file
         File sample_batches
         File batch_bincov
         File bed
@@ -27,7 +27,7 @@ workflow RdTestVisualization{
         call generate_families{
             input:
                 bed = bed,
-                ped_file = pedfile,
+                ped_file = ped_file,
                 sv_pipeline_rdtest_docker = sv_pipeline_rdtest_docker,
                 runtime_attr_override = runtime_attr_rdtest
         }
@@ -38,7 +38,7 @@ workflow RdTestVisualization{
             input:
                 bed=bed,
                 family = family,
-                ped_file = pedfile,
+                ped_file = ped_file,
                 variant_interpretation_docker = variant_interpretation_docker,
                 runtime_attr_override = runtime_attr_create_bed
         }
@@ -46,7 +46,7 @@ workflow RdTestVisualization{
             input:
                 bed=generatePerFamilyBed.bed_file,
                 family = family,
-                ped_file = pedfile,
+                ped_file = ped_file,
                 medianfile=medianfile,
                 sample_batches=sample_batches,
                 batch_bincov=batch_bincov,
