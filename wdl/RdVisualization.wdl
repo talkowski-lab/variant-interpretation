@@ -34,7 +34,7 @@ workflow RdTestVisualization{
     }
 
     scatter (family in select_first([family_ids, generate_families.families])){
-        call createBed{
+        call generatePerFamilyBed{
             input:
                 bed=bed,
                 family = family,
@@ -44,7 +44,7 @@ workflow RdTestVisualization{
         }
         call rdtest{
             input:
-                bed=createBed.bed,
+                bed=generatePerFamilyBed.bed,
                 family = family,
                 ped_file = pedfile,
                 medianfile=medianfile,
@@ -68,7 +68,7 @@ workflow RdTestVisualization{
         }
 }
 
-task createBed {
+task generatePerFamilyBed {
     input{
         File bed
         String family
@@ -76,6 +76,7 @@ task createBed {
         String variant_interpretation_docker
         RuntimeAttr? runtime_attr_override
     }
+
     Float input_size = size(select_all([bed, ped_file]), "GB")
     Float base_disk_gb = 10.0
     Float base_mem_gb = 3.75
