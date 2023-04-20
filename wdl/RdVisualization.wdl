@@ -44,7 +44,7 @@ workflow RdTestVisualization{
         }
         call rdtest{
             input:
-                bed=generatePerFamilyBed.bed,
+                bed=generatePerFamilyBed.bed_file,
                 family = family,
                 ped_file = pedfile,
                 medianfile=medianfile,
@@ -105,7 +105,7 @@ task generatePerFamilyBed {
     >>>
     
     output {
-        File bed = "final.bed"
+        File bed_file = "final.bed"
     }
     
     runtime {
