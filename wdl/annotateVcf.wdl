@@ -100,7 +100,7 @@ task merge{
         RuntimeAttr? runtime_attr_override
     }
 
-    Float input_size = size(fam_ids, "GB")
+    Float input_size = size(vcf_files, "GB")
     Float base_mem_gb = 3.75
 
     RuntimeAttr default_attr = object {
