@@ -15,7 +15,7 @@ workflow annotateVcf {
         String sv_pipeline_updates_docker
         RuntimeAttr? runtime_attr_annotate
         RuntimeAttr? runtime_override_shard_vcf
-        RuntimeAttr? runtime_override_merge
+        RuntimeAttr? runtime_attr_merge
     }
 
     call MiniTasks.ScatterVcf as SplitVcf {
