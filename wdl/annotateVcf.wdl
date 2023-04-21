@@ -27,7 +27,7 @@ workflow annotateVcf {
             runtime_attr_override=runtime_override_shard_vcf
     }
 
-    scatter (shard in shard_string) {
+    scatter (shard in SplitVcf.shard_string) {
         call annotate{
             input:
                 vcf_file = shard,
