@@ -8,7 +8,6 @@ workflow annotateVcf {
 
     input {
         File vcf_file
-        File fam_ids
         String prefix
         Int records_per_shard
         String variant_interpretation_docker
