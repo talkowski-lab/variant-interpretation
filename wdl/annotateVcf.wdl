@@ -76,6 +76,7 @@ task annotate{
         set -euo pipefail
 
         export GCS_OAUTH_TOKEN=`gcloud auth application-default print-access-token`
+        tabix -p vcf ${vcf_file}
         bcftools annotate -c INFO/COHORT_AC:=INFO/AC,INFO/COHORT_AF:=INFO/AF,INFO/COHORT_AN:=INFO/AN -a ${vcf_file} ${vcf_file} -O z -o annotated.vcf.gz
 
 
