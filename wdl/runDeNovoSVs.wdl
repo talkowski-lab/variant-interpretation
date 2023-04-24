@@ -43,11 +43,12 @@ workflow deNovoSV {
 
     if (defined(fam_ids)){
         File fam_ids_ = select_first([fam_ids])
+        String vcf = "~{vcf_file}"
         call getBatchedFiles{
             input:
                 batch_raw_file = batch_raw_file,
                 batch_depth_raw_file = batch_depth_raw_file,
-                vcf_file = vcf_file,
+                vcf_file = vcf,
                 ped_input = ped_input,
                 fam_ids = fam_ids_,
                 sample_batches = sample_batches,
@@ -473,7 +474,7 @@ task getBatchedFiles{
         File batch_raw_file
         File batch_depth_raw_file
         File fam_ids
-        File vcf_file
+        String vcf_file
         File ped_input
         File sample_batches
         File batch_bincov_index
@@ -482,12 +483,11 @@ task getBatchedFiles{
     }
 
     Float input_size = size(select_all([batch_raw_file, batch_depth_raw_file, ped_input, sample_batches, batch_bincov_index, fam_ids]), "GB")
-    Float vcf_size = size(vcf_file, "GB")
     Float base_mem_gb = 3.75
 
     RuntimeAttr default_attr = object {
                                       mem_gb: base_mem_gb,
-                                      disk_gb: ceil(10 + input_size + vcf_size * 1.5),
+                                      disk_gb: ceil(10 + input_size * 1.5),
                                       cpu: 1,
                                       preemptible: 2,
                                       max_retries: 1,
@@ -511,6 +511,8 @@ task getBatchedFiles{
         grep -w -f batches.txt ${batch_bincov_index} > batch_bincov_index.txt
         grep -w -f batches.txt ${batch_raw_file} > batch_raw_files_list.txt
         grep -w -f batches.txt ${batch_depth_raw_file} > batch_depth_raw_files_list.txt
+
+        export GCS_OAUTH_TOKEN=`gcloud auth application-default print-access-token`
         bcftools view -S samples.txt ${vcf_file} -O z -o filtered.vcf.gz
     }
 
