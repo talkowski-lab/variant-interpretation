@@ -12,7 +12,7 @@ workflow getBatchedVcf {
         Int records_per_shard
         String variant_interpretation_docker
         String sv_pipeline_updates_docker
-        RuntimeAttr? runtime_attr_annotate
+        RuntimeAttr? runtime_attr_batch_vcf
         RuntimeAttr? runtime_override_shard_vcf
         RuntimeAttr? runtime_attr_merge
     }
@@ -32,7 +32,7 @@ workflow getBatchedVcf {
                 vcf_file = shard,
                 samples = getBatchedFiles.samples,
                 variant_interpretation_docker=variant_interpretation_docker,
-                runtime_attr_override = runtime_attr_get_batched_files
+                runtime_attr_override = runtime_attr_batch_vcf
         }
     }
 
