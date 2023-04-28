@@ -594,7 +594,7 @@ task getBatchedFiles{
         grep -w -f batches.txt ${batch_depth_raw_file} > batch_depth_raw_files_list.txt
 
         export GCS_OAUTH_TOKEN=`gcloud auth application-default print-access-token`
-        bcftools view -I -S samples.txt${vcf_file} -O z -o filtered.vcf.gz
+        bcftools view -I -S samples.txt ${vcf_file} -O z -o filtered.vcf.gz
     }
 
     runtime {
