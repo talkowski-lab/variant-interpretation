@@ -127,7 +127,7 @@ workflow deNovoSV {
             input:
                 ped_input=cleanPed.cleaned_ped,
                 vcf_files=SplitVcf.shards,
-                disorder_input=getGenomicDisorders.gd_output_for_denovo,
+                disorder_input=getGenomicDisorders.gd_output_for_denovo[i],
                 chromosome=contigs[i],
                 raw_proband=reformatRawFiles.reformatted_proband_raw_files[i],
                 raw_parents=reformatRawFiles.reformatted_parents_raw_files[i],
