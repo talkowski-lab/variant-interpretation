@@ -96,6 +96,8 @@ workflow deNovoSV {
         input:
             genomic_disorder_input=genomic_disorder_input,
             vcf_file = select_first([getBatchedFiles.subset_vcf, vcf_file]),
+            depth_raw_file = reformatDepthRawFiles.reformatted_proband_raw_files,
+            depth_raw_file_parents = reformatDepthRawFiles.reformatted_parents_raw_files,
             variant_interpretation_docker=variant_interpretation_docker,
             runtime_attr_override = runtime_attr_gd
     }
@@ -122,7 +124,7 @@ workflow deNovoSV {
             input:
                 ped_input=cleanPed.cleaned_ped,
                 vcf_files=SplitVcf.shards,
-                disorder_input=getGenomicDisorders.gd_output,
+                disorder_input=getGenomicDisorders.gd_output_for_denovo,
                 chromosome=contigs[i],
                 raw_proband=reformatRawFiles.reformatted_proband_raw_files[i],
                 raw_parents=reformatRawFiles.reformatted_parents_raw_files[i],
@@ -176,6 +178,8 @@ workflow deNovoSV {
         File evidence_plot = plot_createPlots.evidence_plot
         File annotation_plot = plot_createPlots.annotation_plot
         File per_type_plot = plot_createPlots.per_type_plot
+        File gd_depth = getGenomicDisorders.gd_output_from_depth_raw_files
+        File gd_vcf = getGenomicDisorders.gd_output_from_final_vcf
         Array[Array[File]] filtered_out = getDeNovo.filtered_out
         Array[Array[File]] size_file_out = getDeNovo.size_file_out
         Array[Array[File]] coverage_file_out = getDeNovo.coverage_output_file
@@ -235,6 +239,8 @@ task subsetVcf{
 task getGenomicDisorders{
     input{
         File vcf_file
+        File depth_raw_file_proband
+        File depth_raw_file_parents
         File genomic_disorder_input
         String variant_interpretation_docker
         RuntimeAttr? runtime_attr_override
@@ -255,13 +261,35 @@ task getGenomicDisorders{
     RuntimeAttr runtime_attr = select_first([runtime_attr_override, default_attr])
 
     output{
-        File gd_output = "annotated.gd.variants.names.txt"
+        File gd_output_from_final_vcf = "gd.variants.from.final.vcf.txt"
+        File gd_output_from_depth_raw_files = "gd.variants.in.depth.raw.files.txt"
+        File gd_output_for_denovo = "annotated.gd.variants.names.txt"
     }
 
     command <<<
         set -euo pipefail
 
-        bedtools intersect -wa -wb -f 0.3 -r -a ~{vcf_file} -b ~{genomic_disorder_input} | cut -f 3 |sort -u> annotated.gd.variants.names.txt
+        bedtools intersect -wa -wb -f 0.3 -r -a ~{vcf_file} -b ~{genomic_disorder_input} | cut -f 3 |sort -u > annotated.gd.variants.names.txt
+        bedtools intersect -wa -wb -f 0.3 -r -a ~{genomic_disorder_input} -b ~{vcf_file} > gd.variants.from.final.vcf.txt
+    
+        Rscript src/variant-interpretation/scripts/create_per_sample_bed.R ~{genomic_disorder_input} gd.per.sample.txt
+        bedtools intersect -wa -wb -f 0.3 -r -a gd.per.sample.txt -b ~{depth_raw_file_proband} > gd.variants.in.depth.raw.file.proband.txt
+        bedtools intersect -wa -wb -f 0.3 -r -a gd.per.sample.txt -b ~{depth_raw_file_parents} > gd.variants.in.depth.raw.file.parents.txt
+        
+        bedtools coverage -wa -wb -a gd.per.sample.txt -b ~{depth_raw_file_parents} | awk '{if ($NF>=0.30) print }' > coverage.parents.txt
+        bedtools coverage -wa -wb -a gd.per.sample.txt -b ~{depth_raw_file_proband} | awk '{if ($NF>=0.30) print }' > coverage.proband.txt
+
+        cat coverage.parents.txt coverage.proband.txt > coverage.txt
+
+        bedtools intersect -wa -wb -f 0.3 -a gd.per.sample.txt -b ~{depth_raw_file_proband} | cut -f 9 |sort -u > gd.variants.in.depth.raw.file.proband.no.r.txt
+        bedtools intersect -wa -wb -f 0.3 -a gd.per.sample.txt -b ~{depth_raw_file_parents} | cut -f 9 |sort -u > gd.variants.in.depth.raw.file.parents.no.r.txt
+
+        cat gd.variants.in.depth.raw.file.proband.no.r.txt gd.variants.in.depth.raw.file.parents.no.r.txt > remove.txt
+
+        grep -w -v -f remove.txt coverage.txt > kept.coverage.txt
+
+        cat gd.variants.in.depth.raw.file.proband.txt gd.variants.in.depth.raw.file.parents.txt kept.coverage.txt > gd.variants.in.depth.raw.files.txt
+        
     >>>
 
     runtime {
@@ -513,7 +541,7 @@ task getBatchedFiles{
         grep -w -f batches.txt ${batch_depth_raw_file} > batch_depth_raw_files_list.txt
 
         export GCS_OAUTH_TOKEN=`gcloud auth application-default print-access-token`
-        bcftools view -S samples.txt ${vcf_file} -O z -o filtered.vcf.gz
+        bcftools view -I -S samples.txt${vcf_file} -O z -o filtered.vcf.gz
     }
 
     runtime {
