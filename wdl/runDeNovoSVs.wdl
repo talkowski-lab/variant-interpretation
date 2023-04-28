@@ -38,6 +38,7 @@ workflow deNovoSV {
         RuntimeAttr? runtime_attr_clean_ped
         RuntimeAttr? runtime_attr_call_outliers
         RuntimeAttr? runtime_attr_get_batched_files
+        RuntimeAttr? runtime_attr_merge_gd
     
     }
 
@@ -105,13 +106,6 @@ workflow deNovoSV {
                 runtime_attr_override = runtime_attr_gd
         }
 
-        call mergeGenomicDisorders{
-            input:
-                genomic_disorder_input=getGenomicDisorders.gd_output_from_depth_raw_files,
-                variant_interpretation_docker=variant_interpretation_docker,
-                runtime_attr_override = runtime_attr_gd
-        }
-
         call subsetVcf {
             input:
                 vcf_file = select_first([getBatchedFiles.subset_vcf, vcf_file]),
@@ -133,7 +127,7 @@ workflow deNovoSV {
             input:
                 ped_input=cleanPed.cleaned_ped,
                 vcf_files=SplitVcf.shards,
-                disorder_input=getGenomicDisorders.gd_output_for_denovo[i],
+                disorder_input=getGenomicDisorders.gd_output_for_denovo,
                 chromosome=contigs[i],
                 raw_proband=reformatRawFiles.reformatted_proband_raw_files[i],
                 raw_parents=reformatRawFiles.reformatted_parents_raw_files[i],
@@ -172,6 +166,13 @@ workflow deNovoSV {
             runtime_attr_override = runtime_attr_create_plots
     }
 
+    call mergeGenomicDisorders{
+        input:
+            genomic_disorder_input=getGenomicDisorders.gd_output_from_depth_raw_files,
+            variant_interpretation_docker=variant_interpretation_docker,
+            runtime_attr_override = runtime_attr_merge_gd
+    }
+
     output {
     
         File cleaned_ped = cleanPed.cleaned_ped
@@ -188,7 +189,7 @@ workflow deNovoSV {
         File annotation_plot = plot_createPlots.annotation_plot
         File per_type_plot = plot_createPlots.per_type_plot
         File gd_depth = mergeGenomicDisorders.gd_output_from_depth
-        File gd_vcf = getGenomicDisorders.gd_output_from_final_vcf
+        File gd_vcf = getGenomicDisorders.gd_output_from_final_vcf[1]
         Array[Array[File]] filtered_out = getDeNovo.filtered_out
         Array[Array[File]] size_file_out = getDeNovo.size_file_out
         Array[Array[File]] coverage_file_out = getDeNovo.coverage_output_file
