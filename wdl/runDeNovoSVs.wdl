@@ -595,7 +595,6 @@ task getBatchedFiles{
         File batch_raw_files_list = "batch_raw_files_list.txt"
         File batch_depth_raw_files_list = "batch_depth_raw_files_list.txt"
         File batch_bincov_index_subset = "batch_bincov_index.txt"
-        File subset_vcf = "filtered.vcf.gz"
         File samples = "samples.txt"
     }
 
