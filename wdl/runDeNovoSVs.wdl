@@ -4,6 +4,7 @@ import "Structs.wdl"
 import "reformatRawFiles.wdl" as raw
 import "TasksMakeCohortVcf.wdl" as MiniTasks
 import "runDeNovoSVsScatter.wdl" as runDeNovo
+import "splitVcf.wdl" as getBatchedVcf
 
 workflow deNovoSV {
 
@@ -44,12 +45,10 @@ workflow deNovoSV {
 
     if (defined(fam_ids)){
         File fam_ids_ = select_first([fam_ids])
-        String vcf = "~{vcf_file}"
         call getBatchedFiles{
             input:
                 batch_raw_file = batch_raw_file,
                 batch_depth_raw_file = batch_depth_raw_file,
-                vcf_file = vcf,
                 ped_input = ped_input,
                 fam_ids = fam_ids_,
                 sample_batches = sample_batches,
@@ -57,12 +56,24 @@ workflow deNovoSV {
                 variant_interpretation_docker=variant_interpretation_docker,
                 runtime_attr_override = runtime_attr_get_batched_files
         }
+
+        call getBatchedVcf.getBatchedVcf as getBatchedVcf {
+            input:
+                vcf_file = vcf_file,
+                prefix = prefix,
+                records_per_shard = 10000,
+                variant_interpretation_docker = variant_interpretation_docker,
+                sv_pipeline_updates_docker = sv_pipeline_docker,
+                runtime_attr_annotate = runtime_attr_annotate,
+                runtime_override_shard_vcf = runtime_override_shard_vcf,
+                runtime_attr_merge = runtime_attr_merge
+        }
     }
 
     call cleanPed{
         input:
             ped_input = ped_input,
-            vcf_input = select_first([getBatchedFiles.subset_vcf, vcf_file]),
+            vcf_input = select_first([getBatchedVcf.split_vcf, vcf_file]),
             variant_interpretation_docker=variant_interpretation_docker,
             runtime_attr_override = runtime_attr_clean_ped
     }
@@ -98,7 +109,7 @@ workflow deNovoSV {
         call getGenomicDisorders{
             input:
                 genomic_disorder_input=genomic_disorder_input,
-                vcf_file = select_first([getBatchedFiles.subset_vcf, vcf_file]),
+                vcf_file = select_first([getBatchedVcf.split_vcf, vcf_file]),
                 depth_raw_file_proband = reformatDepthRawFiles.reformatted_proband_raw_files[i],
                 depth_raw_file_parents = reformatDepthRawFiles.reformatted_parents_raw_files[i],
                 chromosome=contigs[i],
@@ -108,7 +119,7 @@ workflow deNovoSV {
 
         call subsetVcf {
             input:
-                vcf_file = select_first([getBatchedFiles.subset_vcf, vcf_file]),
+                vcf_file = select_first([getBatchedVcf.split_vcf, vcf_file]),
                 chromosome=contigs[i],
                 variant_interpretation_docker=variant_interpretation_docker,
                 runtime_attr_override = runtime_attr_subset_vcf
@@ -555,7 +566,6 @@ task getBatchedFiles{
         File batch_raw_file
         File batch_depth_raw_file
         File fam_ids
-        String vcf_file
         File ped_input
         File sample_batches
         File batch_bincov_index
@@ -568,7 +578,7 @@ task getBatchedFiles{
 
     RuntimeAttr default_attr = object {
                                       mem_gb: base_mem_gb,
-                                      disk_gb: ceil(10 + input_size * 1.5),
+                                      disk_gb: ceil(10 + input_size),
                                       cpu: 1,
                                       preemptible: 2,
                                       max_retries: 1,
@@ -592,9 +602,6 @@ task getBatchedFiles{
         grep -w -f batches.txt ${batch_bincov_index} > batch_bincov_index.txt
         grep -w -f batches.txt ${batch_raw_file} > batch_raw_files_list.txt
         grep -w -f batches.txt ${batch_depth_raw_file} > batch_depth_raw_files_list.txt
-
-        export GCS_OAUTH_TOKEN=`gcloud auth application-default print-access-token`
-        bcftools view -I -S samples.txt ${vcf_file} -O z -o filtered.vcf.gz
     }
 
     runtime {
