@@ -91,18 +91,27 @@ workflow deNovoSV {
             runtime_attr_divide_by_chrom = runtime_attr_raw_divide_by_chrom,
             runtime_attr_reformat_bed = runtime_attr_raw_reformat_bed
     }
-      
-    call getGenomicDisorders{
-        input:
-            genomic_disorder_input=genomic_disorder_input,
-            vcf_file = select_first([getBatchedFiles.subset_vcf, vcf_file]),
-            depth_raw_file_proband = reformatDepthRawFiles.reformatted_proband_raw_files,
-            depth_raw_file_parents = reformatDepthRawFiles.reformatted_parents_raw_files,
-            variant_interpretation_docker=variant_interpretation_docker,
-            runtime_attr_override = runtime_attr_gd
-    }
     
     scatter (i in range(length(contigs))){
+
+        call getGenomicDisorders{
+            input:
+                genomic_disorder_input=genomic_disorder_input,
+                vcf_file = select_first([getBatchedFiles.subset_vcf, vcf_file]),
+                depth_raw_file_proband = reformatDepthRawFiles.reformatted_proband_raw_files[i],
+                depth_raw_file_parents = reformatDepthRawFiles.reformatted_parents_raw_files[i],
+                chromosome=contigs[i],
+                variant_interpretation_docker=variant_interpretation_docker,
+                runtime_attr_override = runtime_attr_gd
+        }
+
+        call mergeGenomicDisorders{
+            input:
+                genomic_disorder_input=getGenomicDisorders.gd_output_from_depth_raw_files,
+                variant_interpretation_docker=variant_interpretation_docker,
+                runtime_attr_override = runtime_attr_gd
+        }
+
         call subsetVcf {
             input:
                 vcf_file = select_first([getBatchedFiles.subset_vcf, vcf_file]),
@@ -178,7 +187,7 @@ workflow deNovoSV {
         File evidence_plot = plot_createPlots.evidence_plot
         File annotation_plot = plot_createPlots.annotation_plot
         File per_type_plot = plot_createPlots.per_type_plot
-        File gd_depth = getGenomicDisorders.gd_output_from_depth_raw_files
+        File gd_depth = mergeGenomicDisorders.gd_output_from_depth
         File gd_vcf = getGenomicDisorders.gd_output_from_final_vcf
         Array[Array[File]] filtered_out = getDeNovo.filtered_out
         Array[Array[File]] size_file_out = getDeNovo.size_file_out
@@ -241,12 +250,13 @@ task getGenomicDisorders{
         File vcf_file
         File depth_raw_file_proband
         File depth_raw_file_parents
+        String chromosome
         File genomic_disorder_input
         String variant_interpretation_docker
         RuntimeAttr? runtime_attr_override
     }
 
-    Float input_size = size(vcf_file, "GB")
+    Float input_size = size(select_all([vcf_file, genomic_disorder_input, depth_raw_file_parents, depth_raw_file_proband]), "GB")
     Float base_mem_gb = 3.75
 
     RuntimeAttr default_attr = object {
@@ -262,7 +272,7 @@ task getGenomicDisorders{
 
     output{
         File gd_output_from_final_vcf = "gd.variants.from.final.vcf.txt"
-        File gd_output_from_depth_raw_files = "gd.variants.in.depth.raw.files.txt"
+        File gd_output_from_depth_raw_files = "~{chromosome}.gd.variants.in.depth.raw.files.txt"
         File gd_output_for_denovo = "annotated.gd.variants.names.txt"
     }
 
@@ -272,24 +282,66 @@ task getGenomicDisorders{
         bedtools intersect -wa -wb -f 0.3 -r -a ~{vcf_file} -b ~{genomic_disorder_input} | cut -f 3 |sort -u > annotated.gd.variants.names.txt
         bedtools intersect -wa -wb -f 0.3 -r -a ~{genomic_disorder_input} -b ~{vcf_file} > gd.variants.from.final.vcf.txt
     
-        Rscript src/variant-interpretation/scripts/create_per_sample_bed.R ~{genomic_disorder_input} gd.per.sample.txt
-        bedtools intersect -wa -wb -f 0.3 -r -a gd.per.sample.txt -b ~{depth_raw_file_proband} > gd.variants.in.depth.raw.file.proband.txt
-        bedtools intersect -wa -wb -f 0.3 -r -a gd.per.sample.txt -b ~{depth_raw_file_parents} > gd.variants.in.depth.raw.file.parents.txt
+        Rscript src/variant-interpretation/scripts/create_per_sample_bed.R ~{genomic_disorder_input} ~{chromosome}.gd.per.sample.txt
+        bedtools intersect -wa -wb -f 0.3 -r -a gd.per.sample.txt -b ~{depth_raw_file_proband} > ~{chromosome}.gd.variants.in.depth.raw.file.proband.txt
+        bedtools intersect -wa -wb -f 0.3 -r -a gd.per.sample.txt -b ~{depth_raw_file_parents} > ~{chromosome}.gd.variants.in.depth.raw.file.parents.txt
         
-        bedtools coverage -wa -wb -a gd.per.sample.txt -b ~{depth_raw_file_parents} | awk '{if ($NF>=0.30) print }' > coverage.parents.txt
-        bedtools coverage -wa -wb -a gd.per.sample.txt -b ~{depth_raw_file_proband} | awk '{if ($NF>=0.30) print }' > coverage.proband.txt
+        bedtools coverage -wa -wb -a gd.per.sample.txt -b ~{depth_raw_file_parents} | awk '{if ($NF>=0.30) print }' > ~{chromosome}.coverage.parents.txt
+        bedtools coverage -wa -wb -a gd.per.sample.txt -b ~{depth_raw_file_proband} | awk '{if ($NF>=0.30) print }' > ~{chromosome}.coverage.proband.txt
 
-        cat coverage.parents.txt coverage.proband.txt > coverage.txt
+        cat ~{chromosome}.coverage.parents.txt ~{chromosome}.coverage.proband.txt > ~{chromosome}.coverage.txt
 
-        bedtools intersect -wa -wb -f 0.3 -a gd.per.sample.txt -b ~{depth_raw_file_proband} | cut -f 9 |sort -u > gd.variants.in.depth.raw.file.proband.no.r.txt
-        bedtools intersect -wa -wb -f 0.3 -a gd.per.sample.txt -b ~{depth_raw_file_parents} | cut -f 9 |sort -u > gd.variants.in.depth.raw.file.parents.no.r.txt
+        bedtools intersect -wa -wb -f 0.3 -a gd.per.sample.txt -b ~{depth_raw_file_proband} | cut -f 9 |sort -u > ~{chromosome}.gd.variants.in.depth.raw.file.proband.no.r.txt
+        bedtools intersect -wa -wb -f 0.3 -a gd.per.sample.txt -b ~{depth_raw_file_parents} | cut -f 9 |sort -u > ~{chromosome}.gd.variants.in.depth.raw.file.parents.no.r.txt
 
-        cat gd.variants.in.depth.raw.file.proband.no.r.txt gd.variants.in.depth.raw.file.parents.no.r.txt > remove.txt
+        cat ~{chromosome}.gd.variants.in.depth.raw.file.proband.no.r.txt ~{chromosome}.gd.variants.in.depth.raw.file.parents.no.r.txt > ~{chromosome}.remove.txt
 
-        grep -w -v -f remove.txt coverage.txt > kept.coverage.txt
+        grep -w -v -f ~{chromosome}.remove.txt ~{chromosome}.coverage.txt > ~{chromosome}.kept.coverage.txt
 
-        cat gd.variants.in.depth.raw.file.proband.txt gd.variants.in.depth.raw.file.parents.txt kept.coverage.txt > gd.variants.in.depth.raw.files.txt
+        cat ~{chromosome}.gd.variants.in.depth.raw.file.proband.txt ~{chromosome}.gd.variants.in.depth.raw.file.parents.txt ~{chromosome}.kept.coverage.txt > ~{chromosome}.gd.variants.in.depth.raw.files.txt
         
+    >>>
+
+    runtime {
+        cpu: select_first([runtime_attr.cpu, default_attr.cpu])
+        memory: "~{select_first([runtime_attr.mem_gb, default_attr.mem_gb])} GB"
+        disks: "local-disk ~{select_first([runtime_attr.disk_gb, default_attr.disk_gb])} HDD"
+        bootDiskSizeGb: select_first([runtime_attr.boot_disk_gb, default_attr.boot_disk_gb])
+        preemptible: select_first([runtime_attr.preemptible, default_attr.preemptible])
+        maxRetries: select_first([runtime_attr.max_retries, default_attr.max_retries])
+        docker: variant_interpretation_docker
+    }
+}
+
+task mergeGenomicDisorders{
+    input{
+        Array[File] genomic_disorder_input
+        String variant_interpretation_docker
+        RuntimeAttr? runtime_attr_override
+    }
+
+    Float input_size = size(select_all([genomic_disorder_input]), "GB")
+    Float base_mem_gb = 3.75
+
+    RuntimeAttr default_attr = object {
+                                      mem_gb: base_mem_gb,
+                                      disk_gb: ceil(10 + input_size),
+                                      cpu: 1,
+                                      preemptible: 2,
+                                      max_retries: 1,
+                                      boot_disk_gb: 8
+                                  }
+
+    RuntimeAttr runtime_attr = select_first([runtime_attr_override, default_attr])
+
+    output{
+        File gd_output_from_depth = "gd.raw.files.output.txt"
+    }
+
+    command <<<
+        set -euo pipefail
+
+        cat ${sep=" " genomic_disorder_input} > gd.raw.files.output.txt
     >>>
 
     runtime {
