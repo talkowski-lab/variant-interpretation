@@ -67,7 +67,7 @@ workflow deNovoSV {
                 samples = getBatchedFiles.samples,
                 records_per_shard = 10000,
                 variant_interpretation_docker = variant_interpretation_docker,
-                sv_pipeline_updates_docker = sv_pipeline_docker,
+                sv_pipeline_updates_docker = sv_pipeline_updates_docker,
                 runtime_attr_annotate = runtime_attr_annotate,
                 runtime_override_shard_vcf = runtime_override_shard_vcf,
                 runtime_attr_merge = runtime_attr_merge
