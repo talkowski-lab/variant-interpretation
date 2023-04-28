@@ -40,6 +40,9 @@ workflow deNovoSV {
         RuntimeAttr? runtime_attr_call_outliers
         RuntimeAttr? runtime_attr_get_batched_files
         RuntimeAttr? runtime_attr_merge_gd
+        RuntimeAttr? runtime_attr_annotate
+        RuntimeAttr? runtime_override_shard_vcf
+        RuntimeAttr? runtime_attr_merge
     
     }
 
