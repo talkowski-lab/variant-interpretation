@@ -315,7 +315,7 @@ task getGenomicDisorders{
 
 task mergeGenomicDisorders{
     input{
-        Array[File] genomic_disorder_input
+        File genomic_disorder_input
         String variant_interpretation_docker
         RuntimeAttr? runtime_attr_override
     }
