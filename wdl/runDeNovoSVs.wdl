@@ -96,7 +96,7 @@ workflow deNovoSV {
         input:
             genomic_disorder_input=genomic_disorder_input,
             vcf_file = select_first([getBatchedFiles.subset_vcf, vcf_file]),
-            depth_raw_file = reformatDepthRawFiles.reformatted_proband_raw_files,
+            depth_raw_file_proband = reformatDepthRawFiles.reformatted_proband_raw_files,
             depth_raw_file_parents = reformatDepthRawFiles.reformatted_parents_raw_files,
             variant_interpretation_docker=variant_interpretation_docker,
             runtime_attr_override = runtime_attr_gd
