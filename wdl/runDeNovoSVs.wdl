@@ -61,6 +61,7 @@ workflow deNovoSV {
             input:
                 vcf_file = vcf_file,
                 prefix = prefix,
+                samples = getBatchedFiles.samples,
                 records_per_shard = 10000,
                 variant_interpretation_docker = variant_interpretation_docker,
                 sv_pipeline_updates_docker = sv_pipeline_docker,

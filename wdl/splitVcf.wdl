@@ -9,6 +9,7 @@ workflow getBatchedVcf {
     input {
         File vcf_file
         String prefix
+        File samples
         Int records_per_shard
         String variant_interpretation_docker
         String sv_pipeline_updates_docker
@@ -30,7 +31,7 @@ workflow getBatchedVcf {
         call batchVcf{
             input:
                 vcf_file = shard,
-                samples = getBatchedFiles.samples,
+                samples = samples,
                 variant_interpretation_docker=variant_interpretation_docker,
                 runtime_attr_override = runtime_attr_batch_vcf
         }
