@@ -18,7 +18,7 @@ workflow shardVcf {
 
     call MiniTasks.ScatterVcf as SplitVcf {
         input:
-            vcf=subsetVcf.vcf_output,
+            vcf=vcf_file,
             prefix=prefix,
             records_per_shard=records_per_shard,
             sv_pipeline_docker=sv_pipeline_updates_docker,
