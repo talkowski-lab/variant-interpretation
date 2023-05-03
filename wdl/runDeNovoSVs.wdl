@@ -113,6 +113,7 @@ workflow deNovoSV {
         call getGenomicDisorders{
             input:
                 genomic_disorder_input=genomic_disorder_input,
+                ped = ped_input,
                 vcf_file = select_first([getBatchedVcf.split_vcf, vcf_file]),
                 depth_raw_file_proband = reformatDepthRawFiles.reformatted_proband_raw_files[i],
                 depth_raw_file_parents = reformatDepthRawFiles.reformatted_parents_raw_files[i],
@@ -264,6 +265,7 @@ task subsetVcf{
 task getGenomicDisorders{
     input{
         File vcf_file
+        File ped
         File depth_raw_file_proband
         File depth_raw_file_parents
         String chromosome
@@ -272,7 +274,7 @@ task getGenomicDisorders{
         RuntimeAttr? runtime_attr_override
     }
 
-    Float input_size = size(select_all([vcf_file, genomic_disorder_input, depth_raw_file_parents, depth_raw_file_proband]), "GB")
+    Float input_size = size(select_all([vcf_file, ped, genomic_disorder_input, depth_raw_file_parents, depth_raw_file_proband]), "GB")
     Float base_mem_gb = 3.75
 
     RuntimeAttr default_attr = object {
@@ -298,7 +300,7 @@ task getGenomicDisorders{
         bedtools intersect -wa -wb -f 0.3 -r -a ~{vcf_file} -b ~{genomic_disorder_input} | cut -f 3 |sort -u > annotated.gd.variants.names.txt
         bedtools intersect -wa -wb -f 0.3 -r -a ~{genomic_disorder_input} -b ~{vcf_file} > gd.variants.from.final.vcf.txt
     
-        Rscript src/variant-interpretation/scripts/create_per_sample_bed.R ~{genomic_disorder_input} ~{chromosome}.gd.per.sample.txt
+        Rscript src/variant-interpretation/scripts/create_per_sample_bed.R ~{genomic_disorder_input} gd.per.sample.txt ~{ped}
         bedtools intersect -wa -wb -f 0.3 -r -a gd.per.sample.txt -b ~{depth_raw_file_proband} > ~{chromosome}.gd.variants.in.depth.raw.file.proband.txt
         bedtools intersect -wa -wb -f 0.3 -r -a gd.per.sample.txt -b ~{depth_raw_file_parents} > ~{chromosome}.gd.variants.in.depth.raw.file.parents.txt
         
