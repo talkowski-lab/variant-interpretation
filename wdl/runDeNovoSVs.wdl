@@ -299,25 +299,43 @@ task getGenomicDisorders{
 
         bedtools intersect -wa -wb -f 0.3 -r -a ~{vcf_file} -b ~{genomic_disorder_input} | cut -f 3 |sort -u > annotated.gd.variants.names.txt
         bedtools intersect -wa -wb -f 0.3 -r -a ~{genomic_disorder_input} -b ~{vcf_file} > gd.variants.from.final.vcf.txt
-    
+
+        echo "Done with GD from vcf"
+        
         Rscript src/variant-interpretation/scripts/create_per_sample_bed.R ~{genomic_disorder_input} gd.per.sample.txt ~{ped}
+
+        echo "Done with R script"
+
         bedtools intersect -wa -wb -f 0.3 -r -a gd.per.sample.txt -b ~{depth_raw_file_proband} > ~{chromosome}.gd.variants.in.depth.raw.file.proband.txt
         bedtools intersect -wa -wb -f 0.3 -r -a gd.per.sample.txt -b ~{depth_raw_file_parents} > ~{chromosome}.gd.variants.in.depth.raw.file.parents.txt
         
+        echo "done with intersect in depth variants"
+
         bedtools coverage -wa -wb -a gd.per.sample.txt -b ~{depth_raw_file_parents} | awk '{if ($NF>=0.30) print }' > ~{chromosome}.coverage.parents.txt
         bedtools coverage -wa -wb -a gd.per.sample.txt -b ~{depth_raw_file_proband} | awk '{if ($NF>=0.30) print }' > ~{chromosome}.coverage.proband.txt
 
+        echo "done with coverage in depth variants"
+
         cat ~{chromosome}.coverage.parents.txt ~{chromosome}.coverage.proband.txt > ~{chromosome}.coverage.txt
+
+        echo "done with cat"
 
         bedtools intersect -wa -wb -f 0.3 -a gd.per.sample.txt -b ~{depth_raw_file_proband} | cut -f 9 |sort -u > ~{chromosome}.gd.variants.in.depth.raw.file.proband.no.r.txt
         bedtools intersect -wa -wb -f 0.3 -a gd.per.sample.txt -b ~{depth_raw_file_parents} | cut -f 9 |sort -u > ~{chromosome}.gd.variants.in.depth.raw.file.parents.no.r.txt
 
+        echo "done with intersect no -r"
+
         cat ~{chromosome}.gd.variants.in.depth.raw.file.proband.no.r.txt ~{chromosome}.gd.variants.in.depth.raw.file.parents.no.r.txt > ~{chromosome}.remove.txt
+
+        echo "done with cat"
 
         grep -w -v -f ~{chromosome}.remove.txt ~{chromosome}.coverage.txt > ~{chromosome}.kept.coverage.txt
 
+        echo "done with grep"
+
         cat ~{chromosome}.gd.variants.in.depth.raw.file.proband.txt ~{chromosome}.gd.variants.in.depth.raw.file.parents.txt ~{chromosome}.kept.coverage.txt > ~{chromosome}.gd.variants.in.depth.raw.files.txt
         
+        echo "done with cat"
     >>>
 
     runtime {
