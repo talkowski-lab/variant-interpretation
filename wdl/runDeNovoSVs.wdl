@@ -302,17 +302,21 @@ task getGenomicDisorders{
 
         echo "Done with GD from vcf"
         
-        Rscript src/variant-interpretation/scripts/create_per_sample_bed.R ~{genomic_disorder_input} gd.per.sample.txt ~{ped}
+        Rscript src/variant-interpretation/scripts/create_per_sample_bed.R ~{genomic_disorder_input} unsorted.gd.per.sample.txt unsorted.gd.per.family.txt ~{ped} ~{chromosome}
+        sort -k1,1 -k2,2n unsorted.gd.per.sample.txt > gd.per.sample.txt
+        sort -k1,1 -k2,2n unsorted.gd.per.family.txt > gd.per.family.txt
+        cat ~{depth_raw_file_parents} | gunzip | sort -k1,1 -k2,2n | bgzip -c > sorted.depth.parents.bed.gz
+        cat ~{depth_raw_file_proband} | gunzip | sort -k1,1 -k2,2n | bgzip -c > sorted.depth.proband.bed.gz
 
         echo "Done with R script"
 
-        bedtools intersect -wa -wb -f 0.3 -r -a gd.per.sample.txt -b ~{depth_raw_file_proband} > ~{chromosome}.gd.variants.in.depth.raw.file.proband.txt
-        bedtools intersect -wa -wb -f 0.3 -r -a gd.per.sample.txt -b ~{depth_raw_file_parents} > ~{chromosome}.gd.variants.in.depth.raw.file.parents.txt
+        bedtools intersect -wa -wb -f 0.3 -r -sorted -a gd.per.sample.txt -b sorted.depth.proband.bed.gz > ~{chromosome}.gd.variants.in.depth.raw.file.proband.txt
+        bedtools intersect -wa -wb -f 0.3 -r -sorted -a gd.per.family.txt -b sorted.depth.parents.bed.gz > ~{chromosome}.gd.variants.in.depth.raw.file.parents.txt
         
         echo "done with intersect in depth variants"
 
-        bedtools coverage -wa -wb -a gd.per.sample.txt -b ~{depth_raw_file_parents} | awk '{if ($NF>=0.30) print }' > ~{chromosome}.coverage.parents.txt
-        bedtools coverage -wa -wb -a gd.per.sample.txt -b ~{depth_raw_file_proband} | awk '{if ($NF>=0.30) print }' > ~{chromosome}.coverage.proband.txt
+        bedtools coverage -wa -wb -sorted -a gd.per.family.txt -b sorted.depth.parents.bed.gz | awk '{if ($NF>=0.30) print }' > ~{chromosome}.coverage.parents.txt
+        bedtools coverage -wa -wb -sorted -a gd.per.sample.txt -b sorted.depth.proband.bed.gz | awk '{if ($NF>=0.30) print }' > ~{chromosome}.coverage.proband.txt
 
         echo "done with coverage in depth variants"
 
@@ -320,8 +324,8 @@ task getGenomicDisorders{
 
         echo "done with cat"
 
-        bedtools intersect -wa -wb -f 0.3 -a gd.per.sample.txt -b ~{depth_raw_file_proband} | cut -f 9 |sort -u > ~{chromosome}.gd.variants.in.depth.raw.file.proband.no.r.txt
-        bedtools intersect -wa -wb -f 0.3 -a gd.per.sample.txt -b ~{depth_raw_file_parents} | cut -f 9 |sort -u > ~{chromosome}.gd.variants.in.depth.raw.file.parents.no.r.txt
+        bedtools intersect -wa -wb -f 0.3 -sorted -a gd.per.sample.txt -b sorted.depth.proband.bed.gz > ~{chromosome}.gd.variants.in.depth.raw.file.proband.no.r.txt
+        bedtools intersect -wa -wb -f 0.3 -sorted -a gd.per.family.txt -b sorted.depth.parents.bed.gz > ~{chromosome}.gd.variants.in.depth.raw.file.parents.no.r.txt
 
         echo "done with intersect no -r"
 
@@ -329,7 +333,7 @@ task getGenomicDisorders{
 
         echo "done with cat"
 
-        grep -w -v -f ~{chromosome}.remove.txt ~{chromosome}.coverage.txt > ~{chromosome}.kept.coverage.txt
+        bedtools intersect -v -wb -b ~{chromosome}.remove.txt -a ~{chromosome}.coverage.txt > ~{chromosome}.kept.coverage.txt
 
         echo "done with grep"
 
