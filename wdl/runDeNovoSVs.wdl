@@ -295,7 +295,7 @@ task getGenomicDisorders{
     }
 
     command <<<
-        set -euo pipefail
+        set -euxo pipefail
 
         bedtools intersect -wa -wb -f 0.3 -r -a ~{vcf_file} -b ~{genomic_disorder_input} | cut -f 3 |sort -u > annotated.gd.variants.names.txt
         bedtools intersect -wa -wb -f 0.3 -r -a ~{genomic_disorder_input} -b ~{vcf_file} > gd.variants.from.final.vcf.txt
