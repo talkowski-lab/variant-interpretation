@@ -297,9 +297,13 @@ task getGenomicDisorders{
     command <<<
         set -euxo pipefail
 
-        bedtools intersect -wa -wb -f 0.3 -r -a ~{vcf_file} -b ~{genomic_disorder_input} | cut -f 3 |sort -u > annotated.gd.variants.names.txt
-        bedtools intersect -wa -wb -f 0.3 -r -a ~{genomic_disorder_input} -b ~{vcf_file} > gd.variants.from.final.vcf.txt
+        sort -k1,1 -k2,2n ~{genomic_disorder_input} > sorted.genomic.txt
+        bedtools intersect -wa -wb -f 0.3 -r -sorted -a ~{vcf_file} -b sorted.genomic.txt | cut -f 3 |sort -u > annotated.gd.variants.names.txt
+        
+        echo "Done with first line"
 
+        bedtools intersect -wa -wb -f 0.3 -r -sorted -a ~{vcf_file} -b sorted.genomic.txt > gd.variants.from.final.vcf.txt
+        
         echo "Done with GD from vcf"
         
         Rscript src/variant-interpretation/scripts/create_per_sample_bed.R ~{genomic_disorder_input} unsorted.gd.per.sample.txt unsorted.gd.per.family.txt ~{ped} ~{chromosome}
