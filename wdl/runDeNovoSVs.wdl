@@ -307,7 +307,7 @@ task getGenomicDisorders{
         
         echo "Done with GD from vcf"
         
-        Rscript src/variant-interpretation/scripts/create_per_sample_bed.R ~{genomic_disorder_input} unsorted.gd.per.sample.txt unsorted.gd.per.family.txt ~{ped} ~{chromosome}
+        Rscript /src/variant-interpretation/scripts/create_per_sample_bed.R ~{genomic_disorder_input} unsorted.gd.per.sample.txt unsorted.gd.per.family.txt ~{ped} ~{chromosome}
         sort -k1,1 -k2,2n unsorted.gd.per.sample.txt > gd.per.sample.txt
         sort -k1,1 -k2,2n unsorted.gd.per.family.txt > gd.per.family.txt
         cat ~{depth_raw_file_parents} | gunzip | sort -k1,1 -k2,2n | bgzip -c > sorted.depth.parents.bed.gz
