@@ -72,6 +72,7 @@ workflow deNovoSV {
                 runtime_override_shard_vcf = runtime_override_shard_vcf,
                 runtime_attr_merge = runtime_attr_merge
         }
+
     }
 
     call cleanPed{
@@ -298,11 +299,11 @@ task getGenomicDisorders{
         set -euxo pipefail
 
         sort -k1,1 -k2,2n ~{genomic_disorder_input} > sorted.genomic.txt
-        bedtools intersect -wa -wb -f 0.3 -r -sorted -a ~{vcf_file} -b sorted.genomic.txt | cut -f 3 |sort -u > annotated.gd.variants.names.txt
+        bedtools intersect -wa -wb -f 0.3 -r -a ~{vcf_file} -b ~{genomic_disorder_input} | cut -f 3 |sort -u > annotated.gd.variants.names.txt
         
         echo "Done with first line"
 
-        bedtools intersect -wa -wb -f 0.3 -r -sorted -a ~{vcf_file} -b sorted.genomic.txt > gd.variants.from.final.vcf.txt
+        bedtools intersect -wa -wb -f 0.3 -r -a ~{vcf_file} -b ~{genomic_disorder_input} > gd.variants.from.final.vcf.txt
         
         echo "Done with GD from vcf"
         
