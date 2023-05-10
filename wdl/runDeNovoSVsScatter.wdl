@@ -116,9 +116,12 @@ task runDeNovo{
 
     String basename = basename(vcf_input, ".vcf.gz")
     command <<<
-            set -euxo pipefail
+            echo "Before bcftools step"
             bcftools view ~{vcf_input} | grep -v ^## | bgzip -c > ~{basename}.noheader.vcf.gz
+            echo "Done with bcftools step"
+            ls -lrt ~{basename}.noheader.vcf.gz
             export GCS_OAUTH_TOKEN=`gcloud auth application-default print-access-token`
+            echo "Done with GCS_OAUTH_TOKEN step"
             python3.9 /src/variant-interpretation/scripts/deNovoSVs.py \
                 --bed ~{bed_input} \
                 --ped ~{ped_input} \
@@ -138,7 +141,9 @@ task runDeNovo{
                 --sample_batches ~{sample_batches} \
                 --verbose True
             
+            echo "Done with python step"
             bgzip ~{basename}.denovo.bed
+            echo "Done with bgzip step"
     >>>
 
     runtime {
