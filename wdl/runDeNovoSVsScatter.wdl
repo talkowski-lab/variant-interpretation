@@ -116,9 +116,8 @@ task runDeNovo{
 
     String basename = basename(vcf_input, ".vcf.gz")
     command <<<
-
+    
             bcftools view ~{vcf_input} | grep -v ^## | bgzip -c > ~{basename}.noheader.vcf.gz
-            export GCS_OAUTH_TOKEN=`gcloud auth application-default print-access-token`
             python3.9 /src/variant-interpretation/scripts/deNovoSVs.py \
                 --bed ~{bed_input} \
                 --ped ~{ped_input} \
