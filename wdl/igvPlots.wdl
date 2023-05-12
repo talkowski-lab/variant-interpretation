@@ -14,6 +14,7 @@ workflow IGV {
         String family
         File ped_file
         Array[String] samples
+        Boolean cram_localization
         Array[File]? crams_localize
         Array[File]? crais_localize
         File reference
@@ -27,7 +28,7 @@ workflow IGV {
         
     }
 
-    if (exists(crams_localize)) {
+    if (cram_localization) {
         call runIGV_whole_genome_localize{
             input:
                 varfile = varfile,
@@ -45,7 +46,7 @@ workflow IGV {
         }
     }
 
-    if (exists(crams_parse)) {
+    if (!(cram_localization)) {
         call runIGV_whole_genome_parse{
             input:
                 varfile = varfile,
