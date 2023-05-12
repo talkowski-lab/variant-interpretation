@@ -45,7 +45,7 @@ workflow IGV {
         }
     }
 
-    if exists(crams_parse) {
+    if (exists(crams_parse)) {
         call runIGV_whole_genome_parse{
             input:
                 varfile = varfile,
