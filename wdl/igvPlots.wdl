@@ -29,14 +29,16 @@ workflow IGV {
     }
 
     if (cram_localization) {
+        Array[File] crams_localize_ = select_first([crams_localize])
+        Array[File] crais_localize_ = select_first([crais_localize])
         call runIGV_whole_genome_localize{
             input:
                 varfile = varfile,
                 family = family,
                 ped_file = ped_file,
                 samples = samples,
-                crams = crams_localize,
-                crais = crais_localize,
+                crams = crams_localize_,
+                crais = crais_localize_,
                 buffer = buffer,
                 buffer_large = buffer_large,
                 reference = reference,
@@ -47,6 +49,8 @@ workflow IGV {
     }
 
     if (!(cram_localization)) {
+        Array[File] crams_parse_ = select_first([crams_parse])
+        Array[File] crais_parse_ = select_first([crais_parse])
         call runIGV_whole_genome_parse{
             input:
                 varfile = varfile,
