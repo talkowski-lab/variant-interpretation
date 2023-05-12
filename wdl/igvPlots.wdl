@@ -49,8 +49,8 @@ workflow IGV {
     }
 
     if (!(cram_localization)) {
-        Array[File] crams_parse_ = select_first([crams_parse])
-        Array[File] crais_parse_ = select_first([crais_parse])
+        Array[String] crams_parse_ = select_first([crams_parse])
+        Array[String] crais_parse_ = select_first([crais_parse])
         call runIGV_whole_genome_parse{
             input:
                 varfile = varfile,
