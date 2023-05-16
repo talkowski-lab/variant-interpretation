@@ -185,7 +185,7 @@ workflow deNovoSV {
 
     call mergeGenomicDisorders{
         input:
-            genomic_disorder_input=flatten(getGenomicDisorders.gd_output_from_depth_raw_files),
+            genomic_disorder_input=getGenomicDisorders.gd_output_from_depth_raw_files,
             variant_interpretation_docker=variant_interpretation_docker,
             runtime_attr_override = runtime_attr_merge_gd
     }
@@ -365,7 +365,7 @@ task mergeGenomicDisorders{
         RuntimeAttr? runtime_attr_override
     }
 
-    Float input_size = size(select_all([genomic_disorder_input]), "GB")
+    Float input_size = size(genomic_disorder_input, "GB")
     Float base_mem_gb = 3.75
 
     RuntimeAttr default_attr = object {
