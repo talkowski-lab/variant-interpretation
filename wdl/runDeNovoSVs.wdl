@@ -185,7 +185,7 @@ workflow deNovoSV {
 
     call mergeGenomicDisorders{
         input:
-            genomic_disorder_input=getGenomicDisorders.gd_output_from_depth_raw_files,
+            genomic_disorder_input=flatten(getGenomicDisorders.gd_output_from_depth_raw_files),
             variant_interpretation_docker=variant_interpretation_docker,
             runtime_attr_override = runtime_attr_merge_gd
     }
