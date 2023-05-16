@@ -3,8 +3,7 @@ version 1.0
 
 import "Structs.wdl"
 import "RdVisualization.wdl" as rdtest
-import "runIgvPlotsParse.wdl" as igv_parse
-import "runIgvPlotsLocalize.wdl" as igv_localize
+import "runIgvPlots.wdl" as igv
 
 workflow VisualizePlots{
     input{
@@ -65,47 +64,28 @@ workflow VisualizePlots{
         File reference_index_ = select_first([reference_index])
         Boolean cram_localization_ = if defined(cram_localization) then select_first([cram_localization]) else false
 
-        if (cram_localization_){
-            call igv_localize.IGV_all_samples as igv_plots_localize {
-                input:
-                    ped_file = pedfile,
-                    sample_crai_cram = sample_crai_cram_,
-                    buffer = buffer_,
-                    fam_ids = fam_ids,
-                    buffer_large = buffer_large_,
-                    varfile = varfile,
-                    reference = reference_,
-                    reference_index = reference_index_,
-                    prefix = prefix,
-                    sv_base_mini_docker = sv_base_mini_docker,
-                    igv_docker = igv_docker,
-                    runtime_attr_run_igv = runtime_attr_run_igv,
-                    runtime_attr_igv = runtime_attr_igv
-           }
-        }
 
-        if (!(cram_localization_)){
-            call igv_parse.IGV_all_samples as igv_plots_parse {
-                input:
-                    ped_file = pedfile,
-                    sample_crai_cram = sample_crai_cram_,
-                    fam_ids = fam_ids,
-                    buffer = buffer_,
-                    buffer_large = buffer_large_,
-                    varfile = varfile,
-                    reference = reference_,
-                    reference_index = reference_index_,
-                    prefix = prefix,
-                    sv_base_mini_docker = sv_base_mini_docker,
-                    igv_docker = igv_docker,
-                    runtime_attr_run_igv = runtime_attr_run_igv,
-                    runtime_attr_igv = runtime_attr_igv
+        call igv.IGV_all_samples as igv_plots {
+            input:
+                ped_file = pedfile,
+                sample_crai_cram = sample_crai_cram_,
+                buffer = buffer_,
+                fam_ids = fam_ids,
+                buffer_large = buffer_large_,
+                varfile = varfile,
+                reference = reference_,
+                cram_localization = cram_localization_,
+                reference_index = reference_index_,
+                prefix = prefix,
+                sv_base_mini_docker = sv_base_mini_docker,
+                igv_docker = igv_docker,
+                runtime_attr_run_igv = runtime_attr_run_igv,
+                runtime_attr_igv = runtime_attr_igv
            }
         }
-    }
 
     if (run_RD && run_IGV) {
-        File igv_plots_tar_gz_pe_ = select_first([igv_plots_parse.tar_gz_pe, igv_plots_localize.tar_gz_pe])
+        File igv_plots_tar_gz_pe_ = select_first([igv_plots.tar_gz_pe])
         File RdTest_Plots_ = select_first([RdTest.Plots])
 
         call concatinate_plots{
@@ -121,7 +101,7 @@ workflow VisualizePlots{
     }
 
     output{
-        File output_plots = select_first([concatinate_plots.plots, RdTest.Plots, igv_plots_localize.tar_gz_pe, igv_plots_parse.tar_gz_pe])
+        File output_plots = select_first([concatinate_plots.plots, RdTest.Plots, igv_plots.tar_gz_pe])
         
     }
 }
