@@ -383,11 +383,11 @@ task mergeGenomicDisorders{
         File gd_output_from_depth = "gd.raw.files.output.txt"
     }
 
-    command <<<
+    command {
         set -euo pipefail
 
         cat ${sep=" " genomic_disorder_input} > gd.raw.files.output.txt
-    >>>
+    }
 
     runtime {
         cpu: select_first([runtime_attr.cpu, default_attr.cpu])
