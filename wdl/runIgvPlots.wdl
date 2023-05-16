@@ -101,7 +101,7 @@ workflow IGV_all_samples {
     
     call integrate_igv_plots{
         input:
-            igv_tar = select_first([IGV_localize.tar_gz_pe,IGV_parse.tar_gz_pe]),
+            igv_tar = select_first([select_all(IGV_localize.tar_gz_pe),select_all(IGV_parse.tar_gz_pe)]),
             prefix = prefix, 
             sv_base_mini_docker = sv_base_mini_docker,
             runtime_attr_override = runtime_attr_run_igv
