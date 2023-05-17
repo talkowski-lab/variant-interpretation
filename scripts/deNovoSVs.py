@@ -14,6 +14,8 @@ import pandas as pd
 import pybedtools
 import tabix
 import collections
+import os
+import time
 from subprocess import Popen, PIPE
 pd.options.mode.chained_assignment = None  # default='warn'
 
@@ -96,8 +98,8 @@ def getFamilyID(row,ped):
 def getBincovMatrixUrl(sample,sample_batches,batch_bincov):
     batch = sample_batches.loc[sample_batches['sample'] == sample]['batch'].iloc[0]
     bincov_gs = batch_bincov.loc[batch_bincov['batch'] == batch]['bincov'].iloc[0]
-    bincov = bincov_gs.replace('gs://', '/cromwell_root/')
-    return(bincov)
+    #bincov = bincov_gs.replace('gs://', '/cromwell_root/')
+    return(bincov_gs)
 
 def writeToFilterFile(file,header,original_df,filtered_df):
     file.write(header)
@@ -143,6 +145,8 @@ def convertToBedtool(df,cols_to_keep=None,sort=True):
 
 def tabix_query(filename, chrom, start, end):
     #Call tabix and generate an array of strings for each line it returns.
+        process1 = Popen(['gcloud', 'auth', 'application-default', 'print-access-token'], stdout=PIPE)
+        os.environ['GCS_OAUTH_TOKEN'] = process1.stdout.read().decode()
         query = '{}:{}-{}'.format(chrom, start, end)
         process = Popen(['tabix', '-h', filename, query], stdout=PIPE)
         for line in process.stdout:
@@ -150,8 +154,12 @@ def tabix_query(filename, chrom, start, end):
 
 def getPerSampleMatrix(row,ped,sample_batches,batch_bincov,family_member):
     chrom = row['chrom']
+    svtype = row['svtype']
     start = int(row['start'])
     end = int(row['end'])
+    if svtype == 'INS':
+        start = start - 100
+        end = end + 100
     proband = row['sample']
     proband_matrix = getBincovMatrixUrl(proband,sample_batches,batch_bincov)
     mom = getParents(proband,ped)[0][0]
@@ -169,54 +177,70 @@ def findCoverage(row,ped,sample_batches,batch_bincov,family_member):
     chrom = row['chrom']
     start = int(row['start'])
     end = int(row['end'])
+    svtype = row['svtype']
+    if svtype == 'INS':
+        start = start - 100
+        end = end + 100
     #if family_member == 'proband':
         #matrix = getPerSampleMatrix(row,ped,sample_batches,batch_bincov,family_member='proband')[1]
-    if family_member == 'mother':
-        matrix = getPerSampleMatrix(row,ped,sample_batches,batch_bincov,family_member='mother')[1]
-    if family_member == 'father':
-        matrix = getPerSampleMatrix(row,ped,sample_batches,batch_bincov,family_member='father')[1]
-    chunks = tabix_query(matrix, chrom, start, end)
-    cov = []
-    for chunk in chunks:
-        cov.append(chunk)
-    cov_matrix = pd.DataFrame(cov) #coverage matrix of only that region
-    header = cov_matrix.iloc[0].to_list() #grab the first row for the header
-    new_header = []
-    for x in header:
-        x = x.decode()
-        new_header.append(x)
-    cov_matrix = cov_matrix[1:] #take the data less the header row
-    cov_matrix.columns = new_header
-    #if family_member == 'proband':
-        #indv = getPerSampleMatrix(row,ped,sample_batches,batch_bincov,family_member='proband')[0]
-    if family_member == 'mother':
-        indv = getPerSampleMatrix(row,ped,sample_batches,batch_bincov,family_member='mother')[0]
-    if family_member == 'father':
-        indv = getPerSampleMatrix(row,ped,sample_batches,batch_bincov,family_member='father')[0]
-    sample_cov_matrix = cov_matrix[indv].tolist()
-    sample_cov_matrix_decoded = []
-    for x in sample_cov_matrix:
-        x = x.decode()
-        sample_cov_matrix_decoded.append(x)
-    return(sample_cov_matrix_decoded)
+    if (svtype == 'DEL' or svtype == 'DUP' or svtype == 'INS'):
+        if family_member == 'mother':
+            matrix = getPerSampleMatrix(row,ped,sample_batches,batch_bincov,family_member='mother')[1]
+        if family_member == 'father':
+            matrix = getPerSampleMatrix(row,ped,sample_batches,batch_bincov,family_member='father')[1]
+        chunks = tabix_query(matrix, chrom, start, end)
+        cov = []
+        for chunk in chunks:
+            cov.append(chunk)
+        cov_matrix = pd.DataFrame(cov) #coverage matrix of only that region
+        header = cov_matrix.iloc[0].to_list() #grab the first row for the header
+        new_header = []
+        for x in header:
+            x = x.decode()
+            new_header.append(x)
+        cov_matrix = cov_matrix[1:] #take the data less the header row
+        cov_matrix.columns = new_header
+        #if family_member == 'proband':
+            #indv = getPerSampleMatrix(row,ped,sample_batches,batch_bincov,family_member='proband')[0]
+        if family_member == 'mother':
+            indv = getPerSampleMatrix(row,ped,sample_batches,batch_bincov,family_member='mother')[0]
+        if family_member == 'father':
+            indv = getPerSampleMatrix(row,ped,sample_batches,batch_bincov,family_member='father')[0]
+        sample_cov_matrix = cov_matrix[indv].tolist()
+        sample_cov_matrix_decoded = []
+        for x in sample_cov_matrix:
+            x = x.decode()
+            sample_cov_matrix_decoded.append(x)
+        return(sample_cov_matrix_decoded)
+    else:
+        return('NA')
 
 def getMedianCoverage(mom_matrix,dad_matrix,coverage_cutoff):
     mom_coverage = mom_matrix
     dad_coverage = dad_matrix
 
-    coverage_d = {
-    'Mother' : mom_coverage,
-    'Father': dad_coverage
-    }
-
-    coverage_df = pd.DataFrame(coverage_d)
-    median = coverage_df.median()
-    median_list = median.tolist()
-    median_filtered = [x for x in median_list if x < coverage_cutoff]
-    if len(median_filtered) > 0:
-        return('Remove')
-    else:
+    if (mom_coverage == 'NA' and dad_coverage == 'NA'):
         return('Keep')
+
+    if (mom_coverage != 'NA' and dad_coverage != 'NA'):
+        coverage_d = {
+        'Mother' : mom_coverage,
+        'Father': dad_coverage
+        }
+
+        coverage_df = pd.DataFrame(coverage_d)
+        '''
+        if coverage_df.empty:
+            print('Coverage df is empty!')
+            exit()
+        '''
+        median = coverage_df.median()
+        median_list = median.tolist()
+        median_filtered = [x for x in median_list if x < coverage_cutoff]
+        if len(median_filtered) > 0:
+            return('Remove')
+        else:
+            return('Keep')
 
 def getCnvIntersectionDepth(bed,raw,overlap):
     intersect = bed.coverage(raw).to_dataframe(disable_auto_names=True, header=None)
@@ -326,8 +350,9 @@ vcf_metrics    """
     filtered_out_file = open(filtered_out, "w")
     size_file = open(size, "w")
 
-    # Get parents and children ids
+   # Get parents and children ids
     verbosePrint('Getting parents/children/affected/unaffected IDs', verbose)
+    start = time.time()
     list_of_trios = [item for item, count in collections.Counter(ped["FamID"]).items() if count == 3]
     families = ped[(ped['FamID'].isin(list_of_trios)) &
                    (ped['FatherID'] != "0") &
@@ -335,38 +360,65 @@ vcf_metrics    """
     trios = ped[(ped['FamID'].isin(families))]
     parents = trios[(trios['FatherID'] == "0") & (trios['MotherID'] == "0")]['IndividualID'].values
     children = trios[(trios['FatherID'] != "0") & (trios['MotherID'] != "0")]['IndividualID'].values
+    end = time.time()
+    delta = end - start
+    print("Took %f seconds to process" % delta)
 
     # Get counts at cohort level and number of parents/children
     verbosePrint('Getting counts', verbose)
+    start = time.time()
     bed['num_children'] = bed.apply(lambda r: getCount(r, children), axis=1)
     bed['num_parents'] = bed.apply(lambda r: getCount(r, parents), axis=1)
     bed['AF_parents'] = bed.apply(lambda r: getParentsFrequency(r, parents), axis=1)
+    end = time.time()
+    delta = end - start
+    print("Took %f seconds to process" % delta)
 
     # Remove mCNVs, BNDs and SVs in sex chromosomes
+    start = time.time()
     verbosePrint('Remove BND and mCNV', verbose)
     bed = bed[(~bed['svtype'].isin(['BND', 'CNV']))]
     # bed = bed[(~bed['svtype'].isin(['BND', 'CNV']) & (~bed['chrom'].isin(["chrY", "chrX"])))]
+    end = time.time()
+    delta = end - start
+    print("Took %f seconds to process" % delta)
 
     # Flag if small or large CNV based on large_cnv_size cutoff and flag for removal based on size for depth only calls
     verbosePrint('Flagging calls depending on size', verbose)
+    start = time.time()
     bed['is_large_cnv'] = (bed['SVLEN'] >= large_cnv_size) & ((bed['svtype'] == 'DEL') | (bed['svtype'] == 'DUP'))
     bed['is_small_cnv'] = (bed['SVLEN'] < large_cnv_size) & ((bed['svtype'] == 'DEL') | (bed['svtype'] == 'DUP'))
     bed['is_depth_only'] = (bed['EVIDENCE'] == "RD")
     bed['is_depth_only_small'] = (bed['svtype'] == "DUP") & (bed['ALGORITHMS'] == "depth") & (bed['SVLEN'] <= depth_only_size)
+    end = time.time()
+    delta = end - start
+    print("Took %f seconds to process" % delta)
 
     # Split into one row per sample
     verbosePrint('Split into one row per sample', verbose)
+    start = time.time()
     bed_split = bed.assign(sample=bed.samples.str.split(",")).explode('sample')
+    end = time.time()
+    delta = end - start
+    print("Took %f seconds to process" % delta)
 
     # Sepparate variants in children and parents
     verbosePrint('Sepparate variants in children and parents', verbose)
+    start = time.time()
     bed_child = bed_split[bed_split['sample'].str.contains("|".join(children))]
     bed_parents = bed_split[bed_split['sample'].str.contains("|".join(parents))]
     writeToSizeFile(size_file,"Size of bed_child: ",bed_child)
+    end = time.time()
+    delta = end - start
+    print("Took %f seconds to process" % delta)
 
     # Flag variants in genomic disorder (GD) regions
     verbosePrint('Flagging variants in GD', verbose)
+    start = time.time()
     bed_child['in_gd'] = bed_child['name'].isin(disorder[0])
+    end = time.time()
+    delta = end - start
+    print("Took %f seconds to process" % delta)
 
     # Annotate family information for filtering
     bed_child['family_id'] = bed_child.apply(lambda r: getFamilyID(r,ped), axis=1)
@@ -374,6 +426,7 @@ vcf_metrics    """
 
     # Filter out by frequency - AF gnomad < 0.01 OR inGD
     verbosePrint('Filtering by frequency', verbose)
+    start = time.time()
     bed_child["AF"] = pd.to_numeric(bed_child["AF"])
     try:
         bed_child[gnomad_col] = pd.to_numeric(bed_child[gnomad_col])
@@ -386,12 +439,17 @@ vcf_metrics    """
                            ((bed_child[alt_gnomad_col].isnull() )  & (bed_child['AF'] <= cohort_AF)) |
                           (bed_child['in_gd'] == True) )]
 
+
     writeToFilterFile(filtered_out_file,"Removed after filtering by frequency: ",bed_child,bed_child_tmp)
     bed_child = bed_child_tmp
     writeToSizeFile(size_file,"Size of bed_child after filtering by frequency: ",bed_child)
+    end = time.time()
+    delta = end - start
+    print("Took %f seconds to process" % delta)
 
     # Get counts within family and remove if SV in parents
     verbosePrint('Keep variants in children only', verbose)
+    start = time.time()
     try:
         parents_SC = int(config['parents_SC'])
     except KeyError:
@@ -405,9 +463,13 @@ vcf_metrics    """
         writeToFilterFile(filtered_out_file,"Removed because of cohort wide parental support: ",bed_child,bed_child_tmp)
         bed_child = bed_child_tmp
         writeToSizeFile(size_file,"Size of bed_child after removing because of cohort wide parental support: ",bed_child)
+    end = time.time()
+    delta = end - start
+    print("Took %f seconds to process" % delta)
 
     # Extract info from the VCF file
     verbosePrint('Appending FILTER information', verbose)
+    start = time.time()
     if (len(bed_child.index) > 0):
         bed_child['GT']    = bed_child.apply(lambda r: variantInfo(r, 'GT', vcf), axis=1)
         bed_child['EV']    = bed_child.apply(lambda r: variantInfo(r, 'EV', vcf), axis=1)
@@ -428,13 +490,20 @@ vcf_metrics    """
         bed_child['PE_GT'] = 'NA'
         bed_child['SR_GQ'] = 'NA'
         bed_child['SR_GT'] = 'NA'
+    end = time.time()
+    delta = end - start
+    print("Took %f seconds to process" % delta)
 
     # Remove WHAM only and GT = 1
     verbosePrint('Remove wham only and GT=1 calls', verbose)
+    start = time.time()
     bed_child_tmp = bed_child[~((bed_child['ALGORITHMS'] == "wham") & (bed_child['GQ'] == '1'))]
     writeToFilterFile(filtered_out_file,"Removed wham only and GT=1 calls: ",bed_child,bed_child_tmp)
     bed_child = bed_child_tmp
     writeToSizeFile(size_file,"Size of bed_child after removing wham only and GT=1 calls: ",bed_child)
+    end = time.time()
+    delta = end - start
+    print("Took %f seconds to process" % delta)
 
    # Annotate parental information
     if (len(bed_child.index) > 0):
@@ -458,14 +527,19 @@ vcf_metrics    """
 
     # LARGE CNV: Check for false negative in parents: check depth in parents, independently of the calls
     verbosePrint('Large CNVs check', verbose)
+    start = time.time()
     # 1. Strip out if same CN in parents and proband if not in chrX
     bed_child_tmp = bed_child.loc[((bed_child['SVLEN'] <= 5000) | ((bed_child['RD_CN'] != bed_child['maternal_rdcn']) & (bed_child['RD_CN'] != bed_child['paternal_rdcn']))) | (bed_child['chrom'] == 'chrX')]
     writeToFilterFile(filtered_out_file,"Removed if RD_CN field is same as parent and not in chrX: ",bed_child,bed_child_tmp)
     bed_child = bed_child_tmp
     writeToSizeFile(size_file,"Size of bed_child after removing if RD_CN field is same as parent and not in chrX: ",bed_child)
+    end = time.time()
+    delta = end - start
+    print("Took %f seconds to process" % delta)
 
     # 2. Check if call in parents with bedtools coverage (332)
     verbosePrint('CNV present in parents check', verbose)
+    start = time.time()
     cols_keep = ['family_chrom', 'start', 'end', 'name', 'svtype', 'sample']
     bed_child_large = bed_child[(bed_child['is_large_cnv'] == True)]
     bed_parents_large = bed_parents[(bed_parents['is_large_cnv'] == True)]
@@ -482,6 +556,9 @@ vcf_metrics    """
         names_overlap = bed_overlap[(bed_overlap[9] >= parents_overlap)][3].to_list()
     else:
         names_overlap = ['']
+    end = time.time()
+    delta = end - start
+    print("Took %f seconds to process" % delta)
 
     # Add if overlap to bed child table
     bed_child['overlap_parent'] = (bed_child['name'].isin(names_overlap))
@@ -489,6 +566,7 @@ vcf_metrics    """
     # Small calls:
     # If RD,SR and < large_cnv_size, treat RD,SR as SR
     verbosePrint('Small CNVs check', verbose)
+    start = time.time()
     bed_child['EVIDENCE_FIX'] = bed_child['EVIDENCE']
     bed_child[(bed_child['SVLEN'] <= large_cnv_size) & \
                     (bed_child['EVIDENCE'] == "RD,SR") & \
@@ -496,6 +574,9 @@ vcf_metrics    """
 
     # Add if variant contains RD evidence
     bed_child['contains_RD'] = bed_child.EVIDENCE_FIX.str.contains('RD')
+    end = time.time()
+    delta = end - start
+    print("Took %f seconds to process" % delta)
 
     ###################
     ##RAW FILES CHECK##
@@ -522,6 +603,7 @@ vcf_metrics    """
 
     ##INSERTIONS:
     verbosePrint('Checking insertions in raw files', verbose)
+    start = time.time()
     bed_filt_ins = bed_child[bed_child['SVTYPE'] == 'INS']
     if (len(bed_filt_ins.index) > 0):
         verbosePrint('Checking if insertion in proband is in raw files', verbose)
@@ -537,9 +619,13 @@ vcf_metrics    """
         ins_names_overlap = [x for x in ins_names_overlap_proband if x not in ins_names_overlap_parent]
     else:
         ins_names_overlap = ['']
+    end = time.time()
+    delta = end - start
+    print("Took %f seconds to process" % delta)
 
     ## Large CNVS: Reciprocal overlap large_raw_overlap
     verbosePrint('Checking large cnvs in raw files', verbose)
+    start = time.time()
     large_bed_filt_cnv_depth = bed_child[(bed_child['is_large_cnv'] == True) & (bed_child['SVLEN'] >= 5000)]
     large_bed_filt_cnv_other = bed_child[(bed_child['is_large_cnv'] == True) & (bed_child['SVLEN'] < 5000)]
     if (len(large_bed_filt_cnv_other.index) > 0):
@@ -571,9 +657,13 @@ vcf_metrics    """
     else:
         large_cnv_names_overlap_depth = ['']
     large_cnv_names_overlap = large_cnv_names_overlap_other + large_cnv_names_overlap_depth
+    end = time.time()
+    delta = end - start
+    print("Took %f seconds to process" % delta)
 
     ## Small CNVs - Reciprocal overlap small_raw_overlap
     verbosePrint('Checking small cnvs in raw files', verbose)
+    start = time.time()
     #small_bed_filt_cnv = bed_child[bed_child['is_small_cnv'] == True]
     #small_bed_filt_cnv_depth = bed_child[(bed_child['is_small_cnv'] == True) & (bed_child['ALGORITHMS'] == "depth") & (bed['SVLEN'] >= 5000)]
     small_bed_filt_cnv = bed_child[(bed_child['is_small_cnv'] == True)] # we do not want to check against raw depth files if CNV <= 5kb
@@ -594,7 +684,9 @@ vcf_metrics    """
 
     bed_child = bed_child[(~bed_child['SVTYPE'].isin(['DEL', 'DUP', 'INS'])) | (bed_child['name_famid'].isin(ins_names_overlap + large_cnv_names_overlap + small_cnv_names_overlap))]
     writeToSizeFile(size_file,"Size of bed_child after checking raw files: ",bed_child)
-
+    end = time.time()
+    delta = end - start
+    print("Took %f seconds to process" % delta)
 
     ###############
     ## FILTERING ##
@@ -605,6 +697,8 @@ vcf_metrics    """
     keep_gd = bed_child[(bed_child['in_gd'] == True)]['name_famid'].to_list()
 
     # Filter out calls in exclude regions
+    verbosePrint('Filtering out calls in exclude regions', verbose)
+    start = time.time()
     # Reformat exclude_regions to bedtool
     exclue_regions_bt = convertToBedtool(exclude_regions,sort=True)
     # convert bed_final to bedtool
@@ -620,6 +714,9 @@ vcf_metrics    """
             remove_regions = ['']
     else:
         remove_regions = ['']
+    end = time.time()
+    delta = end - start
+    print("Took %f seconds to process" % delta)
 
     # 2. Filter by type
     # Keep any SV type that is not a DEL, DUP, or INS
@@ -628,30 +725,52 @@ vcf_metrics    """
     # 3. Filter on DELs, DUPs, and INS
     # Filter by size
     # Filter out if large CNVs have parents overlap
+    verbosePrint('Filtering out large CNVs with parents overlap', verbose)
+    start = time.time()
     remove_large = bed_child[(bed_child['is_large_cnv'] == True) &
                             (bed_child['overlap_parent'] == True)]['name_famid'].to_list()
     bed_child_tmp = bed_child[~(bed_child['name_famid'].isin(remove_large))]
     writeToFilterFile(filtered_out_file,"Removed if large CNV that has parents overlap: ",bed_child,bed_child_tmp)
+    end = time.time()
+    delta = end - start
+    print("Took %f seconds to process" % delta)
 
     # Filter out if small cnvs that are SR-only don't have BOTHSIDES_SUPPORT
+    verbosePrint('Filtering out small CNVs that are SR-only and dont have BOTHSIDES_SUPPORT', verbose)
+    start = time.time()
     remove_small = bed_child[(bed_child['is_small_cnv'] == True) &
                              (bed_child['EVIDENCE_FIX'] == 'SR') &
                              ~(bed_child.FILTER.str.contains('BOTHSIDES_SUPPORT'))]['name_famid'].to_list()
     bed_child_tmp = bed_child[~(bed_child['name_famid'].isin(remove_small))]
     writeToFilterFile(filtered_out_file,"Removed if small cnv that is SR-only and does not have BOTHSIDES_SUPPORT: ",bed_child,bed_child_tmp)
+    end = time.time()
+    delta = end - start
+    print("Took %f seconds to process" % delta)
 
     # Filter out calls that are depth only and < depth_only_size
+    verbosePrint('Filtering out calls that are depth only and < depth_only_size', verbose)
+    start = time.time()
     remove_depth_small = bed_child[ (bed_child['is_depth_only_small'] == True) ]['name_famid'].to_list()
     bed_child_tmp = bed_child[~(bed_child['name_famid'].isin(remove_depth_small))]
     writeToFilterFile(filtered_out_file,"Removed if depth only and < 10kb \n",bed_child,bed_child_tmp)
+    end = time.time()
+    delta = end - start
+    print("Took %f seconds to process" % delta)
 
     # Filter out DELs that are >500bp and RD_CN=2 and PE only envidence
+    verbosePrint('Filtering out DELs that are RD_CN=2 and PE only evidence', verbose)
+    start = time.time()
     remove_dels = bed_child[(bed_child['SVTYPE'] == 'DEL') & ((bed_child['RD_CN'] == '2') | (bed_child['RD_CN'] == '3')) & (bed_child['EVIDENCE'] == 'PE')]['name_famid'].to_list()
     bed_child_tmp = bed_child[~(bed_child['name_famid'].isin(remove_dels))]
     writeToFilterFile(filtered_out_file,"Removed if DEL with RD_CN >= 2 and PE only evidence: ",bed_child,bed_child_tmp)
+    end = time.time()
+    delta = end - start
+    print("Took %f seconds to process" % delta)
 
     # 4. Filter by quality
     # Filter out if parents GQ is <= gq_min
+    verbosePrint('Filtering if parents GQ <= min_gq', verbose)
+    start = time.time()
     if (len(bed_child.index) > 0):
         bed_child['keep_gq'] = bed_child.apply(lambda r: minGQ(r, gq_min), axis=1)
         remove_gq = bed_child[bed_child['keep_gq'] == 'Remove']['name_famid'].to_list()
@@ -659,13 +778,22 @@ vcf_metrics    """
         writeToFilterFile(filtered_out_file,"Removed if minimum parental GQ is <= gq_min: ",bed_child,bed_child_tmp)
     else:
         remove_gq = ['']
+    end = time.time()
+    delta = end - start
+    print("Took %f seconds to process" % delta)
 
     # Filter out INS that are manta or melt only and are SR only, have GQ=0, and FILTER contains 'HIGH_SR_BACKGROUND'
+    verbosePrint('Filtering out INS that are manta or melt only and SR only, with GQ=0 and FILTER contains HIGH_SR_BACKGROUND', verbose)
+    start = time.time()
     remove_ins = bed_child[(bed_child['SVTYPE'] == 'INS') & ((bed_child['ALGORITHMS'] == 'manta') | (bed_child['ALGORITHMS'] == 'melt')) & (bed_child['EVIDENCE_FIX'] == 'SR') & ((bed_child['GQ'] == '0') | (bed_child.FILTER.str.contains('HIGH_SR_BACKGROUND')))]['name_famid'].to_list()
     bed_child_tmp = bed_child[~(bed_child['name_famid'].isin(remove_ins))]
     writeToFilterFile(filtered_out_file,"Removed if INS that are manta or melt only and are SR only, have GQ=0, and FILTER contains 'HIGH_SR_BACKGROUND': ",bed_child,bed_child_tmp)
+    end = time.time()
+    delta = end - start
+    print("Took %f seconds to process" % delta)
 
     # Remove if low coverage in parents
+    start = time.time()
     if (len(bed_child.index) > 0):
         bed_child['median_coverage'] = bed_child.apply(lambda r: getMedianCoverage(findCoverage(r, ped, sample_batches, bincov, family_member='mother'),findCoverage(r, ped, sample_batches, bincov, family_member='father'), coverage_cutoff), axis=1)
         remove_coverage = bed_child[bed_child['median_coverage'] == 'Remove']['name_famid'].to_list()
@@ -677,6 +805,10 @@ vcf_metrics    """
         remove_coverage = ['']
         low_coverage = bed_child[(bed_child['name_famid'].isin(remove_coverage))]
         low_coverage.to_csv(path_or_buf=coverage_output, mode='a', index=False, sep='\t', header=True)
+    end = time.time()
+    delta = end - start
+    print("Took %f seconds to process" % delta)
+
     # 5. Clean up and remove duplicated CPX SV
     # Remove duplicated CPX events that come from vcf output of module 18
     bed_child['is_cpx'] = (bed_child['SVTYPE'] == "CPX")
@@ -687,7 +819,7 @@ vcf_metrics    """
 
     # Join lists to remove and keep unique values
     keep_names = list(set(keep_gd + keep_other_sv))
-    remove_names = list(set(remove_regions + remove_large + remove_small + remove_depth_small + remove_dels + remove_gq + remove_coverage))
+    remove_names = list(set(remove_regions + remove_large + remove_small + remove_depth_small + remove_dels + remove_gq+ remove_coverage))
     final_remove_names = [x for x in remove_names if x not in keep_names]
 
     # Subset table
