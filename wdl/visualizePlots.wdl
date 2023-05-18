@@ -37,7 +37,7 @@ workflow VisualizePlots{
     
 
     if(run_RD) {
-        Array[File] medianfile_ = select_first([medianfile])
+        File medianfile_ = select_first([medianfile])
         File batch_bincov_ = select_first([batch_bincov])
         File sample_batches_ = select_first([sample_batches])
 
