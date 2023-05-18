@@ -116,7 +116,7 @@ task runDeNovo{
 
     String basename = basename(vcf_input, ".vcf.gz")
     command <<<
-    
+            set -euo pipefail
             bcftools view ~{vcf_input} | grep -v ^## | bgzip -c > ~{basename}.noheader.vcf.gz
             python3.9 /src/variant-interpretation/scripts/deNovoSVs.py \
                 --bed ~{bed_input} \
