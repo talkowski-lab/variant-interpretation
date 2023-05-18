@@ -7,7 +7,7 @@ workflow RdTestVisualization{
     input{
         String prefix
         File? fam_ids
-        Array[File] medianfile
+        File medianfile
         File ped_file
         File sample_batches
         File batch_bincov
@@ -17,6 +17,8 @@ workflow RdTestVisualization{
         RuntimeAttr? runtime_attr_rdtest
         RuntimeAttr? runtime_attr_create_bed
     }
+
+    Array[File] medianfile_ = transpose(read_tsv(medianfile))[0]
 
     if (defined(fam_ids)) {
         File fam_ids_ = select_first([fam_ids])
@@ -47,7 +49,7 @@ workflow RdTestVisualization{
                 bed=generatePerFamilyBed.bed_file,
                 family = family,
                 ped_file = ped_file,
-                medianfile=medianfile,
+                medianfile=medianfile_,
                 sample_batches=sample_batches,
                 batch_bincov=batch_bincov,
                 prefix=prefix,
