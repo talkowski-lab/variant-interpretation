@@ -49,7 +49,7 @@ workflow RdTestVisualization{
                 bed=generatePerFamilyBed.bed_file,
                 family = family,
                 ped_file = ped_file,
-                medianfile=medianfile_,
+                medianfile = medianfile_,
                 sample_batches=sample_batches,
                 batch_bincov=batch_bincov,
                 prefix=prefix,
