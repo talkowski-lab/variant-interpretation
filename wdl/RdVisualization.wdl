@@ -18,7 +18,7 @@ workflow RdTestVisualization{
         RuntimeAttr? runtime_attr_create_bed
     }
 
-    Array[File] medianfile_ = transpose(read_tsv(medianfile))[0]
+    Array[String] medianfile_ = transpose(read_tsv(medianfile))[0]
 
     if (defined(fam_ids)) {
         File fam_ids_ = select_first([fam_ids])
