@@ -12,7 +12,7 @@ workflow VisualizePlots{
         String prefix
         File? batch_bincov
         File? sample_batches
-        Array[File]? medianfile
+        File? medianfile
         File? fam_ids
 
         File? sample_crai_cram
