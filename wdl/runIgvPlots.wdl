@@ -79,7 +79,6 @@ workflow IGV_all_samples {
                     igv_docker = igv_docker,
                     runtime_attr_igv = runtime_attr_igv
             }
-        Array[File] localize_output = IGV_localize.tar_gz_pe
         }
 
         if (!(cram_localization)){
@@ -100,9 +99,16 @@ workflow IGV_all_samples {
                     igv_docker = igv_docker,
                     runtime_attr_igv = runtime_attr_igv
             }
-        Array[File] parse_output = IGV_parse.tar_gz_pe
         }
     }
+
+    if (!(cram_localization)){
+        Array[File] parse_output = IGV_parse.tar_gz_pe
+    }
+    if (cram_localization){
+        Array[File] localize_output = IGV_localize.tar_gz_pe
+    }
+    
     
     call integrate_igv_plots{
         input:
