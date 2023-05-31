@@ -101,18 +101,10 @@ workflow IGV_all_samples {
             }
         }
     }
-
-    if (!(cram_localization)){
-        Array[File] parse_output = select_all([IGV_parse.tar_gz_pe])
-    }
-    if (cram_localization){
-        Array[File] localize_output = select_all([IGV_localize.tar_gz_pe])
-    }
-    
     
     call integrate_igv_plots{
         input:
-            igv_tar = select_first([parse_output, localize_output]),
+            igv_tar = select_first(IGV_localize.tar_gz_pe,IGV_parse.tar_gz_pe]),
             prefix = prefix, 
             sv_base_mini_docker = sv_base_mini_docker,
             runtime_attr_override = runtime_attr_run_igv
