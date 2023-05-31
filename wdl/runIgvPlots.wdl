@@ -18,7 +18,7 @@ workflow IGV_all_samples {
         File reference
         File reference_index
         Boolean cram_localization
-        Boolean requestor_pays
+        Boolean requester_pays
         String prefix
         String buffer
         String buffer_large
