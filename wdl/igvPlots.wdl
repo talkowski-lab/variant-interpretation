@@ -15,6 +15,7 @@ workflow IGV {
         File ped_file
         Array[String] samples
         Boolean cram_localization
+        Boolean requester_pays
         Array[File]? crams_localize
         Array[File]? crais_localize
         File reference
@@ -23,6 +24,7 @@ workflow IGV {
         String buffer_large
         String igv_docker
         RuntimeAttr? runtime_attr_igv
+        RuntimeAttr? runtime_attr_localize_reads
         Array[String]? crams_parse
         Array[String]? crais_parse
         
@@ -31,14 +33,27 @@ workflow IGV {
     if (cram_localization) {
         Array[File] crams_localize_ = select_first([crams_localize])
         Array[File] crais_localize_ = select_first([crais_localize])
+
+        if (requester_pays){
+        # move the reads nearby -- handles requester_pays and makes cross-region transfers just once
+            scatter(i in range(length(crams_localize_))) {
+                call LocalizeReads {
+                    input:
+                        reads_path = crams_localize_[i],
+                        reads_index = crais_localize_[i],
+                        runtime_attr_override = runtime_attr_localize_reads
+                }
+            }
+        }
+
         call runIGV_whole_genome_localize{
             input:
                 varfile = varfile,
                 family = family,
                 ped_file = ped_file,
                 samples = samples,
-                crams = crams_localize_,
-                crais = crais_localize_,
+                crams = select_first([crams_localize_, LocalizeReads.output_file]),
+                crais = select_first([crais_localize_, LocalizeReads.output_index]),
                 buffer = buffer,
                 buffer_large = buffer_large,
                 reference = reference,
@@ -51,14 +66,27 @@ workflow IGV {
     if (!(cram_localization)) {
         Array[String] crams_parse_ = select_first([crams_parse])
         Array[String] crais_parse_ = select_first([crais_parse])
+
+        if (requester_pays){
+        # move the reads nearby -- handles requester_pays and makes cross-region transfers just once
+            scatter(i in range(length(crams_parse_))) {
+                call LocalizeReads {
+                    input:
+                        reads_path = crams_parse_[i],
+                        reads_index = crais_parse_[i],
+                        runtime_attr_override = runtime_attr_localize_reads
+                }
+            }
+        } 
+
         call runIGV_whole_genome_parse{
             input:
                 varfile = varfile,
                 family = family,
                 ped_file = ped_file,
                 samples = samples,
-                crams = crams_parse_,
-                crais = crais_parse_,
+                crams = select_first([crams_parse_, LocalizeReads.output_file]),
+                crais = select_first([crais_parse_, LocalizeReads.output_index]),
                 buffer = buffer,
                 buffer_large = buffer_large,
                 reference = reference,
@@ -212,3 +240,42 @@ task runIGV_whole_genome_parse{
         Array[File] varfile = glob("new.varfile.*.bed")
         }
     }
+
+task LocalizeReads {
+  input {
+    File reads_path
+    File reads_index
+    RuntimeAttr? runtime_attr_override
+  }
+
+  Float input_size = size(reads_path, "GB")
+  RuntimeAttr runtime_default = object {
+                                  mem_gb: 3.75,
+                                  disk_gb: ceil(50.0 + input_size),
+                                  cpu_cores: 2,
+                                  preemptible_tries: 3,
+                                  max_retries: 1,
+                                  boot_disk_gb: 10
+                                }
+  RuntimeAttr runtime_override = select_first([runtime_attr_override, runtime_default])
+  runtime {
+    memory: "~{select_first([runtime_override.mem_gb, runtime_default.mem_gb])} GB"
+    disks: "local-disk ~{select_first([runtime_override.disk_gb, runtime_default.disk_gb])} HDD"
+    cpu: select_first([runtime_override.cpu_cores, runtime_default.cpu_cores])
+    preemptible: select_first([runtime_override.preemptible_tries, runtime_default.preemptible_tries])
+    maxRetries: select_first([runtime_override.max_retries, runtime_default.max_retries])
+    docker: "ubuntu:18.04"
+    bootDiskSizeGb: select_first([runtime_override.boot_disk_gb, runtime_default.boot_disk_gb])
+  }
+
+  Int disk_size = ceil(50 + size(reads_path, "GB"))
+
+  command {
+    ln -s ~{reads_path}
+    ln -s ~{reads_index}
+  }
+  output {
+    File output_file = basename(reads_path)
+    File output_index = basename(reads_index)
+  }
+}

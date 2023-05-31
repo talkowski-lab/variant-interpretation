@@ -18,6 +18,7 @@ workflow IGV_all_samples {
         File reference
         File reference_index
         Boolean cram_localization
+        Boolean requestor_pays
         String prefix
         String buffer
         String buffer_large
@@ -68,6 +69,7 @@ workflow IGV_all_samples {
                     ped_file = ped_file,
                     samples = generate_per_family_sample_crai_cram.per_family_samples,
                     cram_localization = cram_localization,
+                    requester_pays = requester_pays,
                     crams_localize = generate_per_family_sample_crai_cram.per_family_crams_files,
                     crais_localize = generate_per_family_sample_crai_cram.per_family_crais_files,
                     buffer = buffer,
@@ -86,6 +88,7 @@ workflow IGV_all_samples {
                     family = family,
                     ped_file = ped_file,
                     cram_localization = cram_localization,
+                    requester_pays = requester_pays,
                     samples = generate_per_family_sample_crai_cram.per_family_samples,
                     crams_parse = generate_per_family_sample_crai_cram.per_family_crams_strings,
                     crais_parse = generate_per_family_sample_crai_cram.per_family_crais_strings,
