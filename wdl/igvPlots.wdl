@@ -37,7 +37,7 @@ workflow IGV {
         if (requester_pays){
         # move the reads nearby -- handles requester_pays and makes cross-region transfers just once
             scatter(i in range(length(crams_localize_))) {
-                call LocalizeReads {
+                call LocalizeReads as LocalizeReadsLocalize{
                     input:
                         reads_path = crams_localize_[i],
                         reads_index = crais_localize_[i],
@@ -52,8 +52,8 @@ workflow IGV {
                 family = family,
                 ped_file = ped_file,
                 samples = samples,
-                crams = select_first([LocalizeReads.output_file, crams_localize_]),
-                crais = select_first([LocalizeReads.output_index, crais_localize_]),
+                crams = select_first([LocalizeReadsLocalize.output_file, crams_localize_]),
+                crais = select_first([LocalizeReadsLocalize.output_index, crais_localize_]),
                 buffer = buffer,
                 buffer_large = buffer_large,
                 reference = reference,
@@ -70,7 +70,7 @@ workflow IGV {
         if (requester_pays){
         # move the reads nearby -- handles requester_pays and makes cross-region transfers just once
             scatter(i in range(length(crams_parse_))) {
-                call LocalizeReads {
+                call LocalizeReads as LocalizeReadsParse {
                     input:
                         reads_path = crams_parse_[i],
                         reads_index = crais_parse_[i],
@@ -85,8 +85,8 @@ workflow IGV {
                 family = family,
                 ped_file = ped_file,
                 samples = samples,
-                crams = select_first([LocalizeReads.output_file, crams_parse_]),
-                crais = select_first([LocalizeReads.output_index, crais_parse_]),
+                crams = select_first([LocalizeReadsParse.output_file, crams_parse_]),
+                crais = select_first([LocalizeReadsParse.output_index, crais_parse_]),
                 buffer = buffer,
                 buffer_large = buffer_large,
                 reference = reference,
