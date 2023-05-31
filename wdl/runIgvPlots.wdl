@@ -103,10 +103,10 @@ workflow IGV_all_samples {
     }
 
     if (!(cram_localization)){
-        Array[File] parse_output = IGV_parse.tar_gz_pe
+        Array[File] parse_output = select_all([IGV_parse.tar_gz_pe])
     }
     if (cram_localization){
-        Array[File] localize_output = IGV_localize.tar_gz_pe
+        Array[File] localize_output = select_all([IGV_localize.tar_gz_pe])
     }
     
     
