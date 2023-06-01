@@ -123,7 +123,7 @@ workflow IGV_all_samples {
     } 
 
     output{
-        File tar_gz_pe = select_first([integrate_igv_plots_parse.plot_tar, integrate_igv_plots_localize.plots_tar])
+        File tar_gz_pe = select_first([integrate_igv_plots_parse.plot_tar, integrate_igv_plots_localize.plot_tar])
     }
 }
 
