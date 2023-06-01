@@ -102,28 +102,16 @@ workflow IGV_all_samples {
         }
     }
     
-    if (!(cram_localization)){
-        call integrate_igv_plots as integrate_igv_plots_parse{
-            input:
-                igv_tar = IGV_parse.tar_gz_pe,
-                prefix = prefix, 
-                sv_base_mini_docker = sv_base_mini_docker,
-                runtime_attr_override = runtime_attr_run_igv
-        }
-    } 
-
-    if (cram_localization){
-        call integrate_igv_plots as integrate_igv_plots_localize{
-            input:
-                igv_tar = IGV_localize.tar_gz_pe,
-                prefix = prefix, 
-                sv_base_mini_docker = sv_base_mini_docker,
-                runtime_attr_override = runtime_attr_run_igv
-        }
-    } 
+    call integrate_igv_plots{
+        input:
+            igv_tar = select_all(flatten([IGV_localize.tar_gz_pe, IGV_parse.tar_gz_pe])),
+            prefix = prefix, 
+            sv_base_mini_docker = sv_base_mini_docker,
+            runtime_attr_override = runtime_attr_run_igv
+    }
 
     output{
-        File tar_gz_pe = select_first([integrate_igv_plots_parse.plot_tar, integrate_igv_plots_localize.plot_tar])
+        File tar_gz_pe = integrate_igv_plots.plot_tar
     }
 }
 
@@ -269,7 +257,7 @@ task generate_per_family_bed{
 
 task integrate_igv_plots{
     input {
-        Array[File?] igv_tar
+        Array[File] igv_tar
         String prefix
         String sv_base_mini_docker
         RuntimeAttr? runtime_attr_override
