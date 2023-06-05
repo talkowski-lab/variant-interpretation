@@ -29,11 +29,11 @@ Filters <i>de novo</i> SV obtained from [GATK-SV](https://github.com/broadinstit
 
 ### Input data:
 * VCF file: annotated with [GATK-SV AnnotateVcf](https://github.com/broadinstitute/gatk-sv#annotatevcf-in-development).
-* PED file: with columns `FamID, IndividualID, FatherID, MotherID, Gender, Affected`.
+* PED file: with columns `FamID, IndividualID, FatherID, MotherID, Gender, Affected`
 * Disorder input: bed file of SV sites that are genomic disorder regions
 * Directory with raw calls from [GATK-SV GatherBatchEvidence](https://github.com/broadinstitute/gatk-sv#gatherbatchevidence) module with the following columns: `chrom, start, end, svtype`
-* Raw files: txt file with first column as the batches and second column as the raw files generated from [GATK-SV ClusterBatch] (https://github.com/broadinstitute/gatk-sv/blob/main/wdl/ClusterBatch.wdl). This list must contain the raw files from all callers except for depth.
-* Depth raw files: txt file with first column as the batches and second column as the depth raw files generated from [GATK-SV ClusterBatch](https://github.com/broadinstitute/gatk-sv/blob/main/wdl/ClusterBatch.wdl). This list must contain the raw files from only the depth caller.
+* Raw files: txt file with first column as the batches and second column as the raw files generated from [GATK-SV ClusterBatch] (https://github.com/broadinstitute/gatk-sv/blob/main/wdl/ClusterBatch.wdl). This list must contain the raw files from all callers except for depth
+* Depth raw files: txt file with first column as the batches and second column as the depth raw files generated from [GATK-SV ClusterBatch](https://github.com/broadinstitute/gatk-sv/blob/main/wdl/ClusterBatch.wdl). This list must contain the raw files from only the depth caller
 * Blacklist regions: bed file with a list of regions you want to exclude from the de novo analysis with the following columns: `chrom, start, end`
 * Coverage matrices: txt file with first column as batch name, the second column as coverage matrix generated from [GATK-SV GatherBatchEvidence](https://github.com/broadinstitute/gatk-sv/blob/main/wdl/GatherBatchEvidence.wdl), and third column as coverage matrix index file generated from [GATK-SV GatherBatchEvidence](https://github.com/broadinstitute/gatk-sv/blob/main/wdl/GatherBatchEvidence.wdl)
 * Sample and batch input: txt file with samples in first column and their repsective batches in second column
