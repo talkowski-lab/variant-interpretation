@@ -331,7 +331,6 @@ vcf_metrics    """
     bed = pd.read_csv(bed_file, sep='\t').replace(np.nan, '', regex=True)
     bed = bed[(bed['samples'] != "")]
     bed.rename(columns={'#chrom': 'chrom'}, inplace=True)
-    #vcf = pd.read_csv(vcf_file, sep='\t', comment='#', names=('#CHROM', 'POS', 'ID', 'REF', 'ALT', 'QUAL', 'FILTER', 'INFO', 'FORMAT'))
     vcf = pd.read_csv(vcf_file, sep='\t')
     ped = pd.read_csv(ped_file, sep='\t')
     disorder = pd.read_csv(disorder_file, sep='\t', header=None)
@@ -350,6 +349,9 @@ vcf_metrics    """
     filtered_out_file = open(filtered_out, "w")
     size_file = open(size, "w")
 
+    ###########################
+    ## REFORMAT AND ANNOTATE ##
+    ###########################
    # Get parents and children ids
     verbosePrint('Getting parents/children/affected/unaffected IDs', verbose)
     start = time.time()
@@ -438,8 +440,6 @@ vcf_metrics    """
         bed_child_tmp = bed_child[( ((bed_child[alt_gnomad_col] <= gnomad_AF) & (bed_child['AF'] <= cohort_AF)) |
                            ((bed_child[alt_gnomad_col].isnull() )  & (bed_child['AF'] <= cohort_AF)) |
                           (bed_child['in_gd'] == True) )]
-
-
     writeToFilterFile(filtered_out_file,"Removed after filtering by frequency: ",bed_child,bed_child_tmp)
     bed_child = bed_child_tmp
     writeToSizeFile(size_file,"Size of bed_child after filtering by frequency: ",bed_child)
@@ -664,8 +664,6 @@ vcf_metrics    """
     ## Small CNVs - Reciprocal overlap small_raw_overlap
     verbosePrint('Checking small cnvs in raw files', verbose)
     start = time.time()
-    #small_bed_filt_cnv = bed_child[bed_child['is_small_cnv'] == True]
-    #small_bed_filt_cnv_depth = bed_child[(bed_child['is_small_cnv'] == True) & (bed_child['ALGORITHMS'] == "depth") & (bed['SVLEN'] >= 5000)]
     small_bed_filt_cnv = bed_child[(bed_child['is_small_cnv'] == True)] # we do not want to check against raw depth files if CNV <= 5kb
     if (len(small_bed_filt_cnv.index) > 0):
         verbosePrint('Checking if small cnv in proband is in raw files', verbose)
@@ -837,10 +835,6 @@ vcf_metrics    """
     # Close out files
     filtered_out_file.close()
     size_file.close()
-
-    # TO DO
-    # Go back to BND and mCNV and chrY
-    # When complex, test the segments of the calls?
 
     # Write output
     output.to_csv(path_or_buf=out_file, mode='a', index=False, sep='\t', header=True)
