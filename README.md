@@ -11,7 +11,8 @@ This repository contains utilities for consolidating, annotating and filtering s
 ### Deployment and execution:
 * A [Google Cloud](https://cloud.google.com/) account.
 * A workflow execution system supporting the [Workflow Description Language](https://openwdl.org/) (WDL), such as [Cromwell](https://github.com/broadinstitute/cromwell) (v36 or higher). A dedicated server is highly recommended.
-* [cromshell](https://github.com/broadinstitute/cromshell) for interacting with a dedicated Cromwell server.
+* [cromshell](https://github.com/broadinstitute/cromshell) for interacting with a dedicated Cromwell server or a Terra account
+* A vcf file output from the [GATK-SV pipeline](https://github.com/broadinstitute/gatk-sv)
  
 ## <a name="denovo">De novo SV discovery</a>
 Filters <i>de novo</i> SV obtained from [GATK-SV](https://github.com/broadinstitute/gatk-sv) to improve specificity of <i>de novo</i> SV calls. The filtering is based on a combination of site-specific and sample-specific metrics:
@@ -28,14 +29,18 @@ Filters <i>de novo</i> SV obtained from [GATK-SV](https://github.com/broadinstit
 
 ### Input data:
 * VCF file: annotated with [GATK-SV AnnotateVcf](https://github.com/broadinstitute/gatk-sv#annotatevcf-in-development).
-* BED file: obtained from the main VCF GATK-SV file and converted with `svtk vcf2bed --i all --include-filters vcf bed`. 
-* PED file: with columns `family_id, subject_id, paternal_id, maternal_id, sex, affected, family_size`.
-* Disorder calls: list of SV names that overlap with genomic disorder regions. Example: `bedtools intersect -wa -wb -f 0.5 -a GD_segments_hg38.sort.bed -b input.bed.gz | cut -f10 > gd.calls.txt`
-* Directory with raw calls from [GATK-SV GatherBatchEvidence](https://github.com/broadinstitute/gatk-sv#gatherbatchevidence) module with the following columns: `chrom, start, end, svtype, sample`
-  * The `chrom` column corresponds to a string formed by `chrom_svtype_sample` so the overlap can be performed at a sample and SV type level.
+* PED file: with columns `FamID, IndividualID, FatherID, MotherID, Gender, Affected`.
+* Disorder input: bed file of SV sites that are genomic disorder regions
+* Directory with raw calls from [GATK-SV GatherBatchEvidence](https://github.com/broadinstitute/gatk-sv#gatherbatchevidence) module with the following columns: `chrom, start, end, svtype`
+* Raw files: txt file with first column as the batches and second column as the raw files generated from [GATK-SV ClusterBatch] (https://github.com/broadinstitute/gatk-sv/blob/main/wdl/ClusterBatch.wdl). This list must contain the raw files from all callers except for depth.
+* Depth raw files: txt file with first column as the batches and second column as the depth raw files generated from [GATK-SV ClusterBatch](https://github.com/broadinstitute/gatk-sv/blob/main/wdl/ClusterBatch.wdl). This list must contain the raw files from only the depth caller.
+* Blacklist regions: bed file with a list of regions you want to exclude from the de novo analysis with the following columns: `chrom, start, end`
+* Coverage matrices: txt file with first column as batch name, the second column as coverage matrix generated from [GATK-SV GatherBatchEvidence](https://github.com/broadinstitute/gatk-sv/blob/main/wdl/GatherBatchEvidence.wdl), and third column as coverage matrix index file generated from [GATK-SV GatherBatchEvidence](https://github.com/broadinstitute/gatk-sv/blob/main/wdl/GatherBatchEvidence.wdl)
+* Sample and batch input: txt file with samples in first column and their repsective batches in second column
+* Python config file: a python file defining input parameters
 
 ### Execution
-The main scripts to run this analysis is `runDeNovoSVs.wdl`.
+The main scripts to run this analysis is `runDeNovoSVs.wdl`, which can be run on Terra or with Cromshell with the following commands:
 ```
 > git clone https://github.com/talkowski-lab/variant-interpretation.git
 > cd variant-interpretation/wdl
@@ -45,6 +50,6 @@ The main scripts to run this analysis is `runDeNovoSVs.wdl`.
 
 ## <a name="contact">Contact and credits</a>
 Copyright (c) 2022 Talkowski Lab and The Broad Institute of M.I.T. and Harvard  
-Contact: [Alba Sanchis-Juan](mailto:asanchis-juan@mgh.harvard.edu)
+Contact: [Alba Sanchis-Juan](mailto:asanchis-juan@mgh.harvard.edu) and [Nicole Calamari](mailto:ncalamari@mgh.harvard.edu)
 
 Variant interpretation team: Alba Sanchis-Juan, Harrison Brand, Emma Pierce-Hoffman, Mark Walker, Chelsea Lowther, Elise Valkanas.
