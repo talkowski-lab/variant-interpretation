@@ -5,32 +5,42 @@ import PIL
 from PIL import ImageFont
 from PIL import ImageDraw
 import argparse
+import cv2
+
 #Image helper function
 #stack two or more images vertically
-def vstack(lst,outname):
-    # given a list of image files, stack them vertically then save as
-    list_im = lst   # list of image files
-    imgs    = [ Image.open(i) for i in list_im ]
-    # pick the image which is the smallest, and resize the others to match it (can be arbitrary image shape here)
-    min_shape = sorted( [(np.sum(i.size), i.size ) for i in imgs])[0][1][0]
-    imgs_comb = np.vstack([np.asarray( i.resize((min_shape,int(i.size[1]/i.size[0]*min_shape))) ) for i in imgs ] )
-    # save that beautiful picture
-    imgs_comb = Image.fromarray( imgs_comb,"RGB")
-    imgs_comb.save( outname )
+def vconcat_resize(img_list, interpolation 
+                   = cv2.INTER_CUBIC):
+      # take minimum width
+    w_min = min(img.shape[1] 
+                for img in img_list)
+      
+    # resizing images
+    im_list_resize = [cv2.resize(img,
+                      (w_min, int(img.shape[0] * w_min / img.shape[1])),
+                                 interpolation = interpolation)
+                      for img in img_list]
+    # return final image
+    return cv2.vconcat(im_list_resize)
+  
 # combine two images side by side
-def hstack(f1,f2,name):
-    # given two images, put them side by side, then save to name
-    list_im = [f1,f2]
-    imgs    = [ Image.open(i) for i in list_im ]
-    # pick the image which is the smallest, and resize the others to match it (can be arbitrary image shape here)
-    min_shape = sorted( [(np.sum(i.size), i.size ) for i in imgs])[0][1]
-#     print(min_shape)
-    imgs_comb = np.hstack( [np.asarray( i.resize((min_shape))) for i in imgs ])
-
-    # save that beautiful picture
-    imgs_comb = Image.fromarray( imgs_comb,"RGB")
-    imgs_comb.save( name )
-
+def hconcat_resize(img_list, 
+                   interpolation 
+                   = cv2.INTER_CUBIC):
+    # take minimum hights
+    h_min = min(img.shape[0] 
+                for img in img_list)
+      
+    # image resizing 
+    im_list_resize = [cv2.resize(img,
+                       (int(img.shape[1] * h_min / img.shape[0]),
+                        h_min), interpolation
+                                 = interpolation) 
+                      for img in img_list]
+      
+    # return final image
+    return cv2.hconcat(im_list_resize)
+    
 def words(STR1,STR2,outfile,n=100):
     #font = ImageFont.truetype("arial.ttf", 70)
     font = ImageFont.load_default()
@@ -42,10 +52,6 @@ def words(STR1,STR2,outfile,n=100):
     draw = ImageDraw.Draw(img)
     img.save(outfile)
 
-##########
-# class Rdplotprefix():
-  # def __init__(self,variantfile,GetVariantFunc=GetVariants,pedfile,prefixfile,pesrdir,rddir):
-    # self.variants=GetVariantFunc(inputfile,pedfile,prefixfile).variants
 class Variant():
   def __init__(self,chr,start,end,name,type,samples,varname,prefix,family_id):
     self.chr=chr
@@ -60,18 +66,15 @@ class Variant():
     self.samples=samples.split(",")
     self.family_id=family_id
   def pesrplotname(self,dir):
-    #print((dir+self.varname+".png"))
-    #print(dir+self.family_id+"_"+self.name+".png")
-    #exit()
-    #print('igv')
-    #print(dir+self.family_id+"_"+self.name+".left.png",dir+self.family_id+"_"+self.name+".png")
     if os.path.isfile(dir+self.family_id+"_"+self.name+".png"):
       return dir+self.family_id+"_"+self.name+".png"
     elif os.path.isfile(dir+self.family_id+"_"+self.name+".left.png") and os.path.isfile(dir+self.family_id+"_"+self.name+".right.png"):
-      hstack(dir+self.family_id+"_"+self.name+".left.png",dir+self.family_id+"_"+self.name+".right.png",dir+self.family_id+"_"+self.name+".png")
+      left = cv2.imread(dir+self.family_id+"_"+self.name+".left.png")
+      right = cv2.imread(dir+self.family_id+"_"+self.name+".right.png")
+      horizontal_combined = hconcat_resize([left,right])
+      cv2.imwrite(dir+self.family_id+"_"+self.name+".png", horizontal_combined)
       return dir+self.family_id+"_"+self.name+".png"
     else:
-      #raise Exception(dir+self.varname+".png"+" PESR files not found")
       return 'Error'
   def rdplotname(self,dir,maxcutoff=float("inf")):
     if int(self.end)-int(self.start)>maxcutoff:
@@ -81,16 +84,11 @@ class Variant():
     else:
       newstart=self.start
       newend=self.end
-    #print('rd')
-    #print(dir+self.chr+"_"+newstart+"_"+newend+"_"+self.samples[0]+"_"+self.name+"_"+self.prefix+"_"+self.samples[0]+".jpg")
-    #print(self.samples[0].split('__')[1])
-    #print((dir+self.chr+"_"+newstart+"_"+newend+"_"+self.samples[0]+"_"+self.name+"_"+self.prefix+"_"+self.samples[0].split('__')[1]+".jpg"))
     if os.path.isfile(dir+self.chr+"_"+newstart+"_"+newend+"_"+self.samples[0]+"_"+self.name+"_"+self.prefix+"_"+self.samples[0]+".jpg"):
       return dir+self.chr+"_"+newstart+"_"+newend+"_"+self.samples[0]+"_"+self.name+"_"+self.prefix+"_"+self.samples[0]+".jpg"
     elif os.path.isfile(dir+self.chr+"_"+newstart+"_"+newend+"_"+self.samples[0]+"_"+self.name+"_"+self.prefix+"_"+self.family_id+".jpg"):
       return dir+self.chr+"_"+newstart+"_"+newend+"_"+self.samples[0]+"_"+self.name+"_"+self.prefix+"_"+self.family_id+".jpg"
     else:
-      #raise Exception(dir+self.chr+"_"+newstart+"_"+newend+"_"+self.samples[0]+"_"+self.name+"_"+self.prefix+".jpg"+" Rdplot not found")
       return 'Error'
   def makeplot(self,pedir,rddir,outdir,flank,build="hg38"):
     if ((self.type!="INS") | (self.type!="snv") | (self.type!="indel") | (self.type!="INS:ME:SVA") |  (self.type!="INS:ME:LINE1") | (self.type!="INS:ME:ALU")):
@@ -100,23 +98,35 @@ class Variant():
           STR2=self.varname+" "+str(int((int(self.end)-int(self.start))/1000))+'kb'
     else:
       STR2=self.varname
+    # get name of igv plot
     pesrplot=self.pesrplotname(pedir)
+    # get name of rd plot
     rdplot=self.rdplotname(rddir, flank)
-    #print(rdplot)
     if pesrplot!='Error' and rdplot!='Error':
-        img = Image.open(rdplot) #rd plot
+        # vstack them
+        igv = cv2.imread(pesrplot)
+        # resize the IGV image which has white space at the bottom
+        y1=0
+        x1=0
+        h1=3000
+        w1=800
+        resized_igv = igv[x1:w1, y1:h1] # get rid of white space at bottom of igv plot
+        img = Image.open(rdplot) # rd plot
         img2 = img.crop((0, 230, img.size[0], img.size[1])) # crop out original RD plot annotations
-        img2.save("croprd.jpg")
+        img2.save("croprd.jpg") # Harolds cropping
+        rd = cv2.imread("croprd.jpg") # read it in cv2 for stacking command
         # get new annotation
         STR1=self.chr+":"+'{0:,}'.format(int(self.start))+'-'+'{0:,}'.format(int(self.end))+" (+"+build+")"
         outfile='info.jpg'
         words(STR1,STR2,outfile,100) # new Rd plot
-        vstack([pesrplot,'info.jpg',"croprd.jpg"],outdir+self.varname+"_denovo.png") # combine rd pe and sr together
+        img_v_resize = vconcat_resize([resized_igv,rd]) # combine rd pe and sr together
+        cv2.imwrite(outdir+self.varname+"_denovo.png", img_v_resize)
     elif pesrplot!='Error' and rdplot=='Error':
+        igv = cv2.imread(pesrplot)
         STR1=self.chr+":"+'{0:,}'.format(int(self.start))+'-'+'{0:,}'.format(int(self.end))+" (hg38)"
         outfile='info.jpg'
         words(STR1,STR2,outfile,50)
-        vstack(['info.jpg',pesrplot],outdir+self.varname+"_denovo.png")
+        cv2.imwrite(outdir+self.varname+"_denovo.png", igv)
 
 class VariantInfo():
   def __init__(self,pedfile,prefix):
@@ -151,10 +161,6 @@ class VariantInfo():
     self.famdct=famdct
     self.reversedct=reversedct
     self.reversedctfam=reversedctfam
-    ## QC
-    # if self.prefixdir!={}:
-      # if set(self.samplelist)!=set(self.prefixdir.keys()):
-        # raise Exception("prefix file and ped file has samples mismatch")
 
   def getprefix(self,sample):
     if self.prefixdir=={}:
