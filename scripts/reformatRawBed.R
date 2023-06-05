@@ -19,19 +19,13 @@ out_parents <- args[4]
 bed <- fread(input_bed)
 ped <- fread(input_ped)
 
-
 #adding back column names
 colnames(bed) <- c("CHROM", "start", "end", "name", "svtype", "samples", "SVTYPE")
-
-
-#print(bed)
 
 #Split into one sample per row
 bed %>%
   subset(select = c(CHROM, start, end, SVTYPE, samples)) %>%
   separate_rows(samples, sep = ",", convert = T) -> bed_split
-
-#print(bed)
 
 #split into parents and probands
 bed_probands <- bed_split
@@ -46,17 +40,12 @@ colnames(ped_subset) <- c('FamID', 'samples')
 
 bed_parents <- merge(bed_parents,ped_subset, by="samples", all.x = TRUE)
 
-
 #Reformat chromosome column
 bed_probands$CHROM <- paste0(bed_probands$CHROM, "_", bed_probands$SVTYPE, "_", bed_probands$samples)
-
 bed_parents$CHROM <- paste0(bed_parents$CHROM, "_", bed_parents$SVTYPE, "_", bed_parents$FamID)
 
 #reorder the columns of bed_parents
 bed_parents2 <- bed_parents[, c(2,3,4,5,1)]
-
-#Select specific samples
-#bed_subset <- subset(bed_split, select = c(CHROM, start, end, SVTYPE, samples))
 
 #Write output file
 write.table(bed_probands, out_probands, sep = "\t", quote = F, row.names = F, col.names = F)
