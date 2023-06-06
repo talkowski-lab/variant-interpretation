@@ -46,6 +46,7 @@ workflow deNovoSV {
     
     }
 
+    #if the fam_ids input is given, subset all other input files to only include the necessary batches
     if (defined(fam_ids)){
         File fam_ids_ = select_first([fam_ids])
         call getBatchedFiles{
@@ -75,6 +76,7 @@ workflow deNovoSV {
 
     }
 
+    #makes a ped file of singletons, duos, and trios for input into the de novo script (only including families of interest)
     call cleanPed{
         input:
             ped_input = ped_input,
@@ -83,6 +85,7 @@ workflow deNovoSV {
             runtime_attr_override = runtime_attr_clean_ped
     }
 
+    #splits raw files into probands and parents and reformats to have chrom_svtype_sample as the first column for probands and chrom_svtype_famid as the first column for parents
     call raw.reformatRawFiles as reformatRawFiles {
         input:
             contigs = contigs,
@@ -96,6 +99,7 @@ workflow deNovoSV {
             runtime_attr_reformat_bed = runtime_attr_raw_reformat_bed
     }
 
+    #splits raw files into probands and parents and reformats to have chrom_svtype_sample as the first column for probands and chrom_svtype_famid as the first column for parents
     call raw.reformatRawFiles as reformatDepthRawFiles {
         input:
             contigs = contigs,
@@ -110,7 +114,7 @@ workflow deNovoSV {
     }
     
     scatter (i in range(length(contigs))){
-
+        #generates a list of genomic disorder regions in the vcf input as well as in the depth raw files
         call getGenomicDisorders{
             input:
                 genomic_disorder_input=genomic_disorder_input,
@@ -123,6 +127,7 @@ workflow deNovoSV {
                 runtime_attr_override = runtime_attr_gd
         }
 
+        #splits vcf by chromosome
         call subsetVcf {
             input:
                 vcf_file = select_first([getBatchedVcf.split_vcf, vcf_file]),
@@ -131,6 +136,7 @@ workflow deNovoSV {
                 runtime_attr_override = runtime_attr_subset_vcf
         }
 
+        #shards vcf
         call MiniTasks.ScatterVcf as SplitVcf {
             input:
                 vcf=subsetVcf.vcf_output,
@@ -140,6 +146,7 @@ workflow deNovoSV {
                 runtime_attr_override=runtime_override_shard_vcf
         }
     
+        #runs the de novo calling python script on each shard and outputs a per chromosome list of de novo SVs
         call runDeNovo.deNovoSVsScatter as getDeNovo {
             input:
                 ped_input=cleanPed.cleaned_ped,
@@ -160,6 +167,7 @@ workflow deNovoSV {
         }
     }
 
+    #merges the per chromosome de novo SV outputs
     call plot_mergeFinalBedFiles{
         input:
             bed_files = getDeNovo.merged_denovo_output_file,
@@ -167,6 +175,7 @@ workflow deNovoSV {
             runtime_attr_override = runtime_attr_merge_final_bed_files
     }
 
+    #outputs a final callset of de novo SVs as well as outlier de novo SV calls
     call callOutliers {
         input:
             bed_file = plot_mergeFinalBedFiles.merged_output,
@@ -174,6 +183,7 @@ workflow deNovoSV {
             runtime_attr_override = runtime_attr_call_outliers
     }
 
+    #generates plots for QC
     call plot_createPlots{
         input:
             bed_file = callOutliers.final_denovo_output,
@@ -183,6 +193,7 @@ workflow deNovoSV {
             runtime_attr_override = runtime_attr_create_plots
     }
 
+    #merges the genomic disorder region output from each chromosome to compile a list of genomic disorder regions
     call mergeGenomicDisorders{
         input:
             genomic_disorder_input=getGenomicDisorders.gd_output_from_depth_raw_files,
@@ -191,7 +202,6 @@ workflow deNovoSV {
     }
 
     output {
-    
         File cleaned_ped = cleanPed.cleaned_ped
         File denovo_output = callOutliers.final_denovo_output
         File denovo_outliers_output = callOutliers.final_denovo_outliers_output

@@ -36,7 +36,7 @@ workflow VisualizePlots{
         RuntimeAttr? runtime_attr_rdtest
     }
     
-
+    #creates RD plots for DELs and DUPs
     if(run_RD) {
         File medianfile_ = select_first([medianfile])
         File batch_bincov_ = select_first([batch_bincov])
@@ -57,6 +57,7 @@ workflow VisualizePlots{
         }
     }
 
+    #creates IGV plots for all variants (proband will be the top plot if it has affected status = 2 in ped file)
     if (run_IGV) {   
         File sample_crai_cram_ = select_first([sample_crai_cram])
         File buffer_ = select_first([buffer,500])
@@ -86,6 +87,7 @@ workflow VisualizePlots{
            }
         }
 
+    #creates a concatinated image with the IGV plot as the top pane and the RD plot as the bottom pane
     if (run_RD && run_IGV) {
         File igv_plots_tar_gz_pe_ = select_first([igv_plots.tar_gz_pe])
         File RdTest_Plots_ = select_first([RdTest.Plots])
