@@ -12,7 +12,7 @@ workflow VisualizePlots{
         String prefix
         File? batch_bincov
         File? sample_batches
-        File? medianfile
+        File? batch_medianfile
         File? fam_ids
 
         File? sample_crai_cram
@@ -38,7 +38,7 @@ workflow VisualizePlots{
     
     #creates RD plots for DELs and DUPs
     if(run_RD) {
-        File medianfile_ = select_first([medianfile])
+        File batch_medianfile_ = select_first([batch_medianfile])
         File batch_bincov_ = select_first([batch_bincov])
         File sample_batches_ = select_first([sample_batches])
 
@@ -47,7 +47,7 @@ workflow VisualizePlots{
                 prefix = prefix,
                 ped_file = pedfile,
                 fam_ids = fam_ids,
-                medianfile = medianfile_,
+                medianfile = batch_medianfile_,
                 batch_bincov=batch_bincov_,
                 bed = varfile,
                 sv_pipeline_rdtest_docker=sv_pipeline_rdtest_docker,

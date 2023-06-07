@@ -7,7 +7,7 @@ workflow RdTestVisualization{
     input{
         String prefix
         File? fam_ids
-        File medianfile
+        File batch_medianfile
         File ped_file
         File sample_batches
         File batch_bincov
@@ -17,8 +17,6 @@ workflow RdTestVisualization{
         RuntimeAttr? runtime_attr_rdtest
         RuntimeAttr? runtime_attr_create_bed
     }
-
-    Array[String] medianfile_ = transpose(read_tsv(medianfile))[0]
 
     if (defined(fam_ids)) {
         File fam_ids_ = select_first([fam_ids])
@@ -49,7 +47,7 @@ workflow RdTestVisualization{
                 bed=generatePerFamilyBed.bed_file,
                 family = family,
                 ped_file = ped_file,
-                medianfile = medianfile_,
+                medianfile = batch_medianfile,
                 sample_batches=sample_batches,
                 batch_bincov=batch_bincov,
                 prefix=prefix,
@@ -129,7 +127,7 @@ task rdtest {
         File ped_file
         File sample_batches # samples, batches
         File batch_bincov # batch, bincov, index
-        Array[File] medianfile
+        File medianfile
         String prefix
         String sv_pipeline_rdtest_docker
         RuntimeAttr? runtime_attr_override
@@ -157,7 +155,7 @@ task rdtest {
         cat ~{ped_file} | grep -w -f families.txt | cut -f2 | sort -u > all_samples.txt
         fgrep -wf all_samples.txt ~{sample_batches} |awk '{print $2}' |sort -u >existing_batches.txt
         fgrep -f existing_batches.txt ~{batch_bincov} > bincovlist.txt
-        paste ~{sep=" " medianfile} > medianfile.txt
+        fgrep -f existing_batches.txt ~{batch_medianfile} > medianfile.txt
 
         i=0
         bedtools merge -i test.bed > test.merged.bed
