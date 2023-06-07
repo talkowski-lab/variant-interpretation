@@ -38,6 +38,8 @@ workflow RdTestVisualization{
             input:
                 bed=bed,
                 family = family,
+                batch_medianfile = batch_medianfile,
+                sample_batches = sample_batches,
                 ped_file = ped_file,
                 variant_interpretation_docker = variant_interpretation_docker,
                 runtime_attr_override = runtime_attr_create_bed
@@ -47,7 +49,7 @@ workflow RdTestVisualization{
                 bed=generatePerFamilyBed.bed_file,
                 family = family,
                 ped_file = ped_file,
-                batch_medianfile = batch_medianfile,
+                medianfile = generatePerFamilyBed.medianfile,
                 sample_batches=sample_batches,
                 batch_bincov=batch_bincov,
                 prefix=prefix,
@@ -73,11 +75,13 @@ task generatePerFamilyBed {
         File bed
         String family
         File ped_file
+        File batch_medianfile
+        File sample_batches
         String variant_interpretation_docker
         RuntimeAttr? runtime_attr_override
     }
 
-    Float input_size = size(select_all([bed, ped_file]), "GB")
+    Float input_size = size(select_all([bed, ped_file, batch_medianfile, sample_batches]), "GB")
     Float base_disk_gb = 10.0
     Float base_mem_gb = 3.75
 
@@ -102,10 +106,13 @@ task generatePerFamilyBed {
         cat per_family_bed.bed | cut -f1-4 > start.bed
         cat per_family_bed.bed | cut -f5 > svtype.bed
         paste start.bed sample.bed svtype.bed > final.bed
+        grep -wf samples_in_family.txt ~{sample_batches} |awk '{print $2}' |sort -u >existing_batches.txt
+        grep -f existing_batches.txt ~{batch_medianfile} | cut -f2 > medianfile.txt
     >>>
     
     output {
         File bed_file = "final.bed"
+        Array[File] medianfile = read_lines("medianfile.txt")
     }
     
     runtime {
@@ -127,12 +134,12 @@ task rdtest {
         File ped_file
         File sample_batches # samples, batches
         File batch_bincov # batch, bincov, index
-        File batch_medianfile
+        Array[File] medianfile
         String prefix
         String sv_pipeline_rdtest_docker
         RuntimeAttr? runtime_attr_override
     }
-    Float input_size = size(select_all([bed, sample_batches, batch_bincov, batch_medianfile, ped_file]), "GB")
+    Float input_size = size(select_all([bed, sample_batches, batch_bincov, medianfile, ped_file]), "GB")
     Float base_disk_gb = 10.0
     Float base_mem_gb = 3.75
 
@@ -155,7 +162,7 @@ task rdtest {
         cat ~{ped_file} | grep -w -f families.txt | cut -f2 | sort -u > all_samples.txt
         fgrep -wf all_samples.txt ~{sample_batches} |awk '{print $2}' |sort -u >existing_batches.txt
         fgrep -f existing_batches.txt ~{batch_bincov} > bincovlist.txt
-        fgrep -f existing_batches.txt ~{batch_medianfile} > medianfile.txt
+        paste ~{sep=" " medianfile} > medianfile.txt
 
         i=0
         bedtools merge -i test.bed > test.merged.bed
