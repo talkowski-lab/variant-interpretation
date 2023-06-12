@@ -65,61 +65,67 @@ get_sv_gt <- function(col) {
 	})
 }
 
-get_comphet_other <- function(row, variants) {
+get_comphet_other <- function(row, variants, gene_cols) {
 	rgenes <- unlist(strsplit(unlist(row[gene_cols],use.names = FALSE), ","))
-	df <- with(variants, variants[grepl(paste(rgenes[!is.na(rgenes)], collapse="|"), get(gene_cols)),])
+    rgenes_all <- paste(rgenes[!is.na(rgenes)], collapse="|")
 
-    if(nrow(df) > 1){
-	#ogenes <- unlist(strsplit(unlist(vars_aff_rare_gt[vars_aff_rare_gt$name != row['name'], ..gene_cols], use.names = FALSE), ","))
-	#compHet <- any(rgenes[!is.na(rgenes)] %in% ogenes[!is.na(ogenes)])
-		IS_COMPHET <- TRUE
-		COMPHET_ID <- paste0(df$name, collapse = ",")
-	}else{
-		IS_COMPHET <- FALSE
-		COMPHET_ID <- NA
-	}
+    if(rgenes_all != ""){
+        df <- variants[Reduce("|", lapply(variants[,..gene_cols], function(x) grepl(rgenes_all, x))),]
 
-	data.table("MULT_HIT" = IS_COMPHET, "MULT_HIT_ID" = COMPHET_ID)
+        if(nrow(df) > 1){
+        #ogenes <- unlist(strsplit(unlist(vars_aff_rare_gt[vars_aff_rare_gt$name != row['name'], ..gene_cols], use.names = FALSE), ","))
+        #compHet <- any(rgenes[!is.na(rgenes)] %in% ogenes[!is.na(ogenes)])
+            IS_COMPHET <- TRUE
+            COMPHET_ID <- paste0(df$name, collapse = ",")
+        }else{
+            IS_COMPHET <- FALSE
+            COMPHET_ID <- NA
+        }
 
+        data.table("MULT_HIT" = IS_COMPHET, "MULT_HIT_ID" = COMPHET_ID)
+
+    }else{
+    data.table("MULT_HIT" = FALSE, "MULT_HIT_ID" = NA)
+    }
 }
 
-get_comphet_trio <- function(row, variants) {
-	rgenes <- unlist(strsplit(unlist(row[gene_cols],use.names = FALSE), ","))
-	rgenes_all <- paste(rgenes[!is.na(rgenes)], collapse="|")
+get_comphet_trio <- function(row, variants, gene_cols) {
+    rgenes <- unlist(strsplit(unlist(row[gene_cols],use.names = FALSE), ","))
+    rgenes_all <- paste(rgenes[!is.na(rgenes)], collapse="|")
 
-	if(rgenes_all != ""){
+    if(rgenes_all != ""){
 
-    	df <- with(variants, variants[grepl(paste(rgenes[!is.na(rgenes)], collapse="|"), get(gene_cols)),])
+        df <- variants[Reduce("|", lapply(variants[,..gene_cols], function(x) grepl(rgenes_all, x))),]
 
-			if(nrow(df) > 1){
-				#df$affectedMask <- df[,..affected] == "0/1"
-				df$affectedMask <- apply(df, 1, function(r) all(r[affected] == "0/1"))
-				#df$unaffectedMask <- df[,unaffected] == "0/1"
-				df$fatherMask <- df[,..father] == "0/1"
-				df$motherMask <- df[,..mother] == "0/1"
+        if(nrow(df) > 1){
 
-				df$compHetFatherMask <- df$affectedMask & !df$motherMask & df$fatherMask
-				df$compHetMotherMask <- df$affectedMask & df$motherMask & !df$fatherMask
-				df$compHetDenovoMask <- df$FILT_ABSENT_UNAFF
+            #df$affectedMask <- df[,..affected] == "0/1"
+            df$affectedMask <- apply(df, 1, function(r) all(r[affected] == "0/1"))
+            #df$unaffectedMask <- df[,unaffected] == "0/1"
+            df$fatherMask <- df[,..father] == "0/1"
+            df$motherMask <- df[,..mother] == "0/1"
 
-				IS_COMPHET <- any(df$compHetFatherMask) & any(df$compHetDenovoMask) | 
-							  any(df$compHetMotherMask) & any(df$compHetDenovoMask) | 
-					 		 any(df$compHetFatherMask) & any(df$compHetMotherMask)
+            df$compHetFatherMask <- df$affectedMask & !df$motherMask & df$fatherMask
+            df$compHetMotherMask <- df$affectedMask & df$motherMask & !df$fatherMask
+            df$compHetDenovoMask <- df$FILT_ABSENT_UNAFF
 
-				if(IS_COMPHET) {
-					COMPHET_ID <- paste0(df$name, collapse = ",")
-				}else{
-					COMPHET_ID <- NA
-				}
+            IS_COMPHET <- any(df$compHetFatherMask) & any(df$compHetDenovoMask) |
+                any(df$compHetMotherMask) & any(df$compHetDenovoMask) |
+                any(df$compHetFatherMask) & any(df$compHetMotherMask)
 
-				data.table("MULT_HIT" = IS_COMPHET, "MULT_HIT_ID" = COMPHET_ID)
-			}else{
+            if(IS_COMPHET) {
+                COMPHET_ID <- paste0(df$name, collapse = ",")
+            }else{
+                COMPHET_ID <- NA
+            }
 
-				data.table("MULT_HIT" = FALSE, "MULT_HIT_ID" = NA)
-			}
-	}else{
+            data.table("MULT_HIT" = IS_COMPHET, "MULT_HIT_ID" = COMPHET_ID)
 
-	data.table("MULT_HIT" = FALSE, "MULT_HIT_ID" = NA)
+        }else{
+            data.table("MULT_HIT" = FALSE, "MULT_HIT_ID" = NA)
+        }
 
-	}
+    }else{
+          data.table("MULT_HIT" = FALSE, "MULT_HIT_ID" = NA)
+    }
 }

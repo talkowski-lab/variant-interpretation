@@ -140,8 +140,8 @@ vars_aff_rare_gt <- merge(vars_aff_rare, gt_info, by = "name", all.x = T, all.y 
 
 #Define columns that have gene annotations
 # gene_cols <- as.vector(names(vars_aff_rare_gt)[c(19:34,37,39)])
-gene_cols <- grep("LINC|CODING", names(vars_aff_rare_gt), value = T)
-gene_cols <- gene_cols[gene_cols %ni% c("NONCODING_SPAN", "NONCODING_BREAKPOINT", "PROTEIN_CODING__INTERGENIC")]
+gene_cols <- grep("PREDICTED_", names(vars_aff_rare_gt), value = T)
+gene_cols <- gene_cols[gene_cols %ni% c("PREDICTED_NONCODING_SPAN", "PREDICTED_NONCODING_BREAKPOINT", "PREDICTED_INTERGENIC")]
 
 verbose("Annotating sample counts")
 
@@ -240,7 +240,7 @@ tmp_vars_aff_rare_gt <- vars_aff_rare_gt
 if(fam_struct %in% c("trio", "quad")){
 	vars_aff_rare_gt <- cbind(tmp_vars_aff_rare_gt, 
 						do.call(rbind, apply(tmp_vars_aff_rare_gt, 1, function(row) 
-							get_comphet_trio(row, tmp_vars_aff_rare_gt)
+							get_comphet_trio(row, tmp_vars_aff_rare_gt, gene_cols)
 						)))
 
 	#vars_aff_rare_gt$FILT_MULT_HIT <- apply(vars_aff_rare_gt, 1, function(row, vars_aff_rare_gt) 
@@ -250,7 +250,7 @@ if(fam_struct %in% c("trio", "quad")){
 		#get_comphet_singleton(row) )
     vars_aff_rare_gt <- cbind(tmp_vars_aff_rare_gt,
                         do.call(rbind, apply(tmp_vars_aff_rare_gt, 1, function(row)
-                            get_comphet_other(row, tmp_vars_aff_rare_gt)
+                            get_comphet_other(row, tmp_vars_aff_rare_gt, gene_cols)
                         )))
 }
 
