@@ -215,6 +215,8 @@ workflow deNovoSV {
         File evidence_plot = plot_createPlots.evidence_plot
         File annotation_plot = plot_createPlots.annotation_plot
         File per_type_plot = plot_createPlots.per_type_plot
+        File per_sample_boxplot = plot_createPlots.per_sample_boxplot
+        File per_type_boxplot = plot_createPlots.per_type_boxplot
         File gd_depth = mergeGenomicDisorders.gd_output_from_depth
         File gd_vcf = getGenomicDisorders.gd_output_from_final_vcf[1]
         Array[Array[File]] filtered_out = getDeNovo.filtered_out
@@ -533,6 +535,8 @@ task plot_createPlots{
         File evidence_plot = "evidence.png"
         File annotation_plot = "annotation.png"
         File per_type_plot = "per_type.png"
+        File per_sample_boxplot = "sample_boxplot.png"
+        File per_type_boxplot = "type_boxplot.png"
 
     }
 

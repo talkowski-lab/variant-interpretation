@@ -29,9 +29,6 @@ ped <- fread(input_ped)
 denovo <- as.data.frame(read.table(input_bed,header = TRUE, sep="\t",stringsAsFactors=FALSE, quote=""))
 outliers <- as.data.frame(read.table(input_outliers,header = TRUE, sep="\t",stringsAsFactors=FALSE, quote=""))
 
-denovo %>%  na.omit()
-denovo<- subset(denovo, chrom!= 'chrom')
-
 denovo$SVTYPE <- factor(denovo$SVTYPE, levels = rev(c("DEL", "DUP", "INS", "INV", "CPX", "CTX")))
 
 denovo_ins <- subset(denovo, SVTYPE == "INS")
@@ -41,24 +38,6 @@ denovo_inv <- subset(denovo, SVTYPE == "INV")
 denovo_cpx <- subset(denovo, SVTYPE == "CPX")
 denovo_ctx <- subset(denovo, SVTYPE == "CTX")
 
-##Get some numbers
-length(unique(denovo$name)) #of unique denovos
-length(unique(denovo$sample)) #number of samples with denovos
-
-length(unique(outliers$name))
-length(unique(outliers$sample))
-outliers_in_gd <- subset(outliers, select= c(name, in_gd))
-
-denovo %>%
-  # subset(chrom != "chrX") %>%
-  select(sample, name) %>%
-  group_by(sample) %>%
-  tally() -> sample_count
-
-sample_count %>%
-  ggplot(aes(y = n)) +
-  geom_boxplot() -> boxplot
-
 ##Define colors
 del_col <- "#D43925"
 dup_col <- "#2376B2"
@@ -66,6 +45,57 @@ ins_col <- "#D474E0"
 inv_col <- "#FA9627"
 ctx_col <- "#638E6C"
 cpx_col <- "#4DA1A9"
+
+##Get some numbers
+length(unique(denovo$name)) #of unique denovos
+length(unique(denovo$sample)) #number of samples with denovos
+
+#length(unique(outliers$name))
+#length(unique(outliers$sample))
+#outliers_in_gd <- subset(outliers, select= c(name, in_gd))
+
+denovo %>%
+  # subset(chrom != "chrX") %>%
+  select(sample, name) %>%
+  group_by(sample) %>%
+  tally() -> sample_count
+
+denovo %>% 
+  count(sample, SVTYPE, name= "svtype_per_sample") -> type
+
+type_boxplot <- ggplot(type, aes(x=SVTYPE, fill = SVTYPE, y=svtype_per_sample)) + 
+  geom_jitter(position = position_jitter(seed = 1, width = 0.2), color = 'grey') + geom_boxplot(outlier.shape=NA) + labs(title = "Number of De Novo SVs per Type", y = "Number of de novo SVs", x = "SV Type") + scale_fill_manual(values = rev(c("DEL"=del_col, "DUP"=dup_col, "INS"=ins_col, "INV"=inv_col, "CPX"=cpx_col, "CTX"=ctx_col))) + 
+  theme_classic() +
+  theme(
+    legend.position = "right",
+    axis.text = element_text(size = 50),
+    axis.title = element_text(size = 50),
+    plot.title = element_text(size=50),
+    axis.text.x = element_text(angle = 45, hjust = 1),
+    panel.border = element_blank(),
+    axis.line = element_line(colour = "black"),
+    legend.title = element_text(size=30),
+    legend.text = element_text(size=25))
+ggsave("type_boxplot.png", type_boxplot, width = 15, height = 20) 
+
+sample_boxplot <- ggplot(sample_count, aes(x=factor(0), y=n)) + 
+  geom_jitter(position = position_jitter(seed = 1, width = 0.2), color = 'grey') + geom_boxplot(outlier.shape=NA) + labs(title = "Number of de Novo SVs per Sample", y = "Number of de novo SVs", x = "Samples") + scale_fill_manual(values = rev(c("DEL"=del_col, "DUP"=dup_col, "INS"=ins_col, "INV"=inv_col, "CPX"=cpx_col, "CTX"=ctx_col))) + 
+  theme_classic() +
+  theme(
+    legend.position = "right",
+    axis.text = element_text(size = 50),
+    axis.title = element_text(size = 50),
+    plot.title = element_text(size=50),
+    axis.text.x = element_text(angle = 45, hjust = 1),
+    panel.border = element_blank(),
+    axis.line = element_line(colour = "black"),
+    legend.title = element_text(size=30),
+    legend.text = element_text(size=25))
+ggsave("sample_boxplot.png", sample_boxplot, width = 15, height = 20) 
+
+sample_count %>%
+  ggplot(aes(y = n)) +
+  geom_boxplot() -> boxplot
 
 ##Make plots
 denovo$chrom <- factor(denovo$chrom, levels = c("chr1", "chr2", "chr3", "chr4", "chr5", "chr6", "chr7", "chr8", "chr9", "chr10", "chr11", "chr12", "chr13", "chr14", "chr15", "chr16", "chr17", "chr18", "chr19", "chr20", "chr21", "chr22", "chrX"))
@@ -144,7 +174,7 @@ max_AF_str <- toString(round(max(denovo$AF), digits=3))
 # denovo$AF_interv <- cut(denovo$AF, breaks = c(0, ac_1_freq, 0.001, 0.01, 0.03, max(denovo$AF)),
 #                         labels = c("AC=1", "AC 1 - AF<=0.001", "AF 0.001-0.01", "AF 0.01-0.03", "AF>0.03"))
 denovo$AF_interv <- cut(denovo$AF, breaks = c(0, ac_1_freq, 0.001, max(denovo$AF)),
-                        labels = c("AC=1", paste("AC 1 - AF<=", max_AF_str), paste("AF >", max_AF_str)))
+                        labels = c("AC=1", "AC 1-0.001", "AF>0.001"))
 
 denovo %>%
   select(AF_interv, name, SVTYPE) %>%
@@ -421,13 +451,16 @@ ggsave("annotation.png", grob_annotation_upset_plot, width = 30, height = 20)
 
 
 #Creating a panel of plots
-lay <- rbind(c(1,1,2,2,2,2,2,2),
-             c(1,1,3,3,3,3,3,3),
-             c(4,4,NA,5,5,NA,6,6),
-             c(7,7,7,7,8,8,8,8),
-             c(9,9,9,9,9,9,NA,NA))
+lay <- rbind(c(1,1,2,2,2,3,3,3),
+             c(1,1,2,2,2,3,3,3),
+             c(4,4,4,4,4,4,4,4),
+             c(4,4,4,4,4,4,4,4),
+             c(5,5,NA,6,6,NA,7,7),
+             c(5,5,NA,6,6,NA,7,7),
+             c(8,8,8,8,9,9,9,9),
+             c(8,8,8,8,9,9,9,9),
+             c(10,10,10,10,10,10,NA,NA),
+             c(10,10,10,10,10,10,NA,NA))
 
-ml <- grid.arrange(p, p_type_count, p_chr_count, p_af_count, p_af_count_in_gd, p_af_count_not_in_gd, p_size_count, p_evidence, grob_annotation_upset_plot, layout_matrix = lay, top=textGrob("De Novo SV Data", gp=gpar(fontsize=50)))
-ggsave(out_file, ml, width = 70, height = 65, limitsize = FALSE)
-
-
+ml <- grid.arrange(sample_boxplot, type_boxplot, p_type_count, p_chr_count, p_af_count, p_af_count_in_gd, p_af_count_not_in_gd, p_size_count, p_evidence, grob_annotation_upset_plot, layout_matrix = lay, top=textGrob("De Novo SV Data", gp=gpar(fontsize=50)))
+ggsave(out_file, ml, width = 80, height = 150, limitsize = FALSE)
