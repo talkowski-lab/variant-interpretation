@@ -161,7 +161,7 @@ task rdtest {
         cat ~{ped_file} | grep -w -f samples.txt | cut -f1 | sort -u > families.txt
         cat ~{ped_file} | grep -w -f families.txt | cut -f2 | sort -u > all_samples.txt
         fgrep -wf all_samples.txt ~{sample_batches} |awk '{print $2}' |sort -u >existing_batches.txt
-        fgrep -f existing_batches.txt ~{batch_bincov} > bincovlist.txt
+        grep -w -f existing_batches.txt ~{batch_bincov} > bincovlist.txt
         paste ~{sep=" " medianfile} > medianfile.txt
 
         i=0
