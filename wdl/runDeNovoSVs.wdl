@@ -1,10 +1,10 @@
 version 1.0
     
 import "Structs.wdl"
-import "reformatRawFiles.wdl" as raw
+import "ReformatRawFiles.wdl" as raw
 import "TasksMakeCohortVcf.wdl" as MiniTasks
-import "runDeNovoSVsScatter.wdl" as runDeNovo
-import "splitVcf.wdl" as getBatchedVcf
+import "DeNovoSVsScatter.wdl" as runDeNovo
+import "SplitVcf.wdl" as getBatchedVcf
 
 workflow deNovoSV {
 
