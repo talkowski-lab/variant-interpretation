@@ -9,7 +9,6 @@ import "SplitVcf.wdl" as getBatchedVcf
 workflow deNovoSV {
 
     input {
-
         File ped_input
         File python_config
         File vcf_file
@@ -43,7 +42,6 @@ workflow deNovoSV {
         RuntimeAttr? runtime_attr_batch_vcf
         RuntimeAttr? runtime_override_shard_vcf
         RuntimeAttr? runtime_attr_merge
-    
     }
 
     #if the fam_ids input is given, subset all other input files to only include the necessary batches
