@@ -3,7 +3,7 @@ version 1.0
 
 import "Structs.wdl"
 import "RdVisualization.wdl" as rdtest
-import "runIgvPlots.wdl" as igv
+import "CreateIgvPlots.wdl" as igv
 
 workflow VisualizePlots{
     input{
