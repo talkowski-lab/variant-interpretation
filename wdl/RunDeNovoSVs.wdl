@@ -437,7 +437,7 @@ task plot_mergeFinalBedFiles{
 
     command {
 
-        zcat ${bed_files[1]} | head -n+1 > merged.bed
+        zcat ${bed_files[0]} | head -n+1 > merged.bed
         zcat ${sep=" " bed_files} | grep -v ^chrom >> merged.bed
         bgzip merged.bed
     }
@@ -584,7 +584,6 @@ task cleanPed{
     }
 
     command {
-        set -euo pipefail
 
         Rscript /src/variant-interpretation/scripts/cleanPed.R ${ped_input}
         cut -f2 cleaned_ped.txt | tail -n+2 > all_samples.txt
