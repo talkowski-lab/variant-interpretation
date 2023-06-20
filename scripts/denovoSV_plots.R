@@ -68,30 +68,30 @@ type_boxplot <- ggplot(type, aes(x=SVTYPE, fill = SVTYPE, y=svtype_per_sample)) 
   theme_classic() +
   theme(
     legend.position = "right",
-    axis.text = element_text(size = 50),
-    axis.title = element_text(size = 50),
-    plot.title = element_text(size=50),
+    axis.text = element_text(size = 70),
+    axis.title = element_text(size = 70),
+    plot.title = element_text(size=70),
     axis.text.x = element_text(angle = 45, hjust = 1),
     panel.border = element_blank(),
     axis.line = element_line(colour = "black"),
     legend.title = element_text(size=30),
     legend.text = element_text(size=25))
-ggsave("type_boxplot.png", type_boxplot, width = 15, height = 20) 
+ggsave("type_boxplot.png", type_boxplot, width = 30, height = 40, limitsize = FALSE) 
 
 sample_boxplot <- ggplot(sample_count, aes(x=factor(0), y=n)) + 
-  geom_jitter(position = position_jitter(seed = 1, width = 0.2), color = 'grey') + geom_boxplot(outlier.shape=NA) + labs(title = "Number of de Novo SVs per Sample", y = "Number of de novo SVs", x = "Samples") + scale_fill_manual(values = rev(c("DEL"=del_col, "DUP"=dup_col, "INS"=ins_col, "INV"=inv_col, "CPX"=cpx_col, "CTX"=ctx_col))) + 
+  geom_jitter(position = position_jitter(seed = 1, width = 0.2), color = 'gray47') + geom_boxplot(outlier.shape=NA) + labs(title = "Number of de Novo SVs per Sample", y = "Number of de novo SVs", x = "Samples") + scale_fill_manual(values = rev(c("DEL"=del_col, "DUP"=dup_col, "INS"=ins_col, "INV"=inv_col, "CPX"=cpx_col, "CTX"=ctx_col))) + 
   theme_classic() +
   theme(
     legend.position = "right",
-    axis.text = element_text(size = 50),
-    axis.title = element_text(size = 50),
-    plot.title = element_text(size=50),
+    axis.text = element_text(size = 70),
+    axis.title = element_text(size = 70),
+    plot.title = element_text(size=70),
     axis.text.x = element_text(angle = 45, hjust = 1),
     panel.border = element_blank(),
     axis.line = element_line(colour = "black"),
     legend.title = element_text(size=30),
     legend.text = element_text(size=25))
-ggsave("sample_boxplot.png", sample_boxplot, width = 15, height = 20) 
+ggsave("sample_boxplot.png", sample_boxplot, width = 30, height = 35, limitsize = FALSE) 
 
 sample_count %>%
   ggplot(aes(y = n)) +
@@ -112,9 +112,9 @@ denovo %>%
   scale_x_discrete(limits = rev(levels(denovo$SVTYPE))) +
   theme(
     legend.position = "right",
-    axis.text = element_text(size = 50),
-    axis.title = element_text(size = 50),
-    plot.title = element_text(size=50),
+    axis.text = element_text(size = 70),
+    axis.title = element_text(size = 70),
+    plot.title = element_text(size=70),
     axis.text.x = element_text(angle = 45, hjust = 1),
     panel.border = element_blank(),
     axis.line = element_line(colour = "black"),
@@ -122,7 +122,7 @@ denovo %>%
     legend.text = element_text(size=25)) -> p_type_count
 p_type_count
 
-ggsave("per_type.png", p_type_count, width = 20, height = 15)
+ggsave("per_type.png", p_type_count, width = 30, height = 35, limitsize = FALSE)
 
 ##Count by chromosome
 denovo %>%
@@ -135,9 +135,9 @@ denovo %>%
   theme_classic() +
   theme(
     legend.position = "right",
-    axis.text = element_text(size = 50),
-    axis.title = element_text(size = 50),
-    plot.title = element_text(size=50),
+    axis.text = element_text(size = 70),
+    axis.title = element_text(size = 70),
+    plot.title = element_text(size=70),
     axis.text.x = element_text(angle = 45, hjust = 1),
     panel.border = element_blank(),
     axis.line = element_line(colour = "black"),
@@ -145,7 +145,7 @@ denovo %>%
     legend.text = element_text(size=25)) -> p_chr_count
 p_chr_count
 
-ggsave("per_chrom.png", p_chr_count, width = 30, height = 15)
+ggsave("per_chrom.png", p_chr_count, width = 30, height = 45, limitsize = FALSE)
 
 ##Count by sample
 df <- as.data.frame(table(denovo$sample))
@@ -156,15 +156,15 @@ df$samples <- as.factor(df$samples)
 p <- ggplot(df, aes(y=num_of_denovos)) + geom_boxplot() + labs(title = "Number of de novo SVs per sample", y = "Number of de novos", x = "Samples") + theme_classic() +
   theme(
     legend.position = "right",
-    axis.text = element_text(size = 50),
-    axis.title = element_text(size = 50),
-    plot.title = element_text(size=50),
+    axis.text = element_text(size = 70),
+    axis.title = element_text(size = 70),
+    plot.title = element_text(size=70),
     axis.text.x = element_text(angle = 45, hjust = 1),
     panel.border = element_blank(),
     axis.line = element_line(colour = "black"),
     legend.title = element_text(size=30),
     legend.text = element_text(size=25))
-ggsave("per_sample.png", p, width = 15, height = 20)
+ggsave("per_sample.png", p, width = 30, height = 35, limitsize = FALSE)
 
 ##De novo count by allele frequency
 denovo$AF <- as.numeric(denovo$AF)  
@@ -187,15 +187,15 @@ denovo %>%
   theme_classic() +
   theme(
     legend.position = "right",
-    axis.text = element_text(size = 50),
-    axis.title = element_text(size = 50),
-    plot.title = element_text(size=50),
+    axis.text = element_text(size = 70),
+    axis.title = element_text(size = 70),
+    plot.title = element_text(size=70),
     axis.text.x = element_text(angle = 45, hjust = 1),
     panel.border = element_blank(),
     axis.line = element_line(colour = "black"),
     legend.title = element_text(size=30),
     legend.text = element_text(size=25)) -> p_af_count
-ggsave("per_freq.png", p_af_count, width = 15, height = 20)
+ggsave("per_freq.png", p_af_count, width = 30, height = 35, limitsize = FALSE)
 
 denovo_in_gd <- subset(denovo, in_gd == "True")
 denovo_not_in_gd <- subset(denovo, in_gd == "False")
@@ -211,15 +211,15 @@ denovo_in_gd %>%
   theme_classic() +
   theme(
     legend.position = "right",
-    axis.text = element_text(size = 50),
-    axis.title = element_text(size = 50),
-    plot.title = element_text(size=50),
+    axis.text = element_text(size = 70),
+    axis.title = element_text(size = 70),
+    plot.title = element_text(size=70),
     axis.text.x = element_text(angle = 45, hjust = 1),
     panel.border = element_blank(),
     axis.line = element_line(colour = "black"),
     legend.title = element_text(size=30),
     legend.text = element_text(size=25)) -> p_af_count_in_gd
-ggsave("per_freq_gd.png", p_af_count_in_gd, width = 15, height = 20)
+ggsave("per_freq_gd.png", p_af_count_in_gd, width = 30, height = 35, limitsize = FALSE)
 
 denovo_not_in_gd %>%
   select(AF_interv, name, SVTYPE) %>%
@@ -232,15 +232,15 @@ denovo_not_in_gd %>%
   theme_classic() +
   theme(
     legend.position = "right",
-    axis.text = element_text(size = 50),
-    axis.title = element_text(size = 50),
-    plot.title = element_text(size=50),
+    axis.text = element_text(size = 70),
+    axis.title = element_text(size = 70),
+    plot.title = element_text(size=70),
     axis.text.x = element_text(angle = 45, hjust = 1),
     panel.border = element_blank(),
     axis.line = element_line(colour = "black"),
     legend.title = element_text(size=30),
     legend.text = element_text(size=25)) -> p_af_count_not_in_gd
-ggsave("per_freq_not_gd.png", p_af_count_not_in_gd, width = 15, height = 20) 
+ggsave("per_freq_not_gd.png", p_af_count_not_in_gd, width = 30, height = 35, limitsize = FALSE) 
 
 ##De novo count by size
 denovo$SVLEN <- as.numeric(denovo$SVLEN)  
@@ -258,9 +258,9 @@ denovo %>%
   theme_classic() +
   theme(
     legend.position = "right",
-    axis.text = element_text(size = 50),
-    axis.title = element_text(size = 50),
-    plot.title = element_text(size=50),
+    axis.text = element_text(size = 70),
+    axis.title = element_text(size = 70),
+    plot.title = element_text(size=70),
     axis.text.x = element_text(angle = 45, hjust = 1),
     panel.border = element_blank(),
     axis.line = element_line(colour = "black"),
@@ -283,9 +283,9 @@ denovo %>%
   theme_classic() +
   theme(
     legend.position = "right",
-    axis.text = element_text(size = 50),
-    axis.title = element_text(size = 50),
-    plot.title = element_text(size=50),
+    axis.text = element_text(size = 70),
+    axis.title = element_text(size = 70),
+    plot.title = element_text(size=70),
     axis.text.x = element_text(angle = 45, hjust = 1),
     panel.border = element_blank(),
     axis.line = element_line(colour = "black"),
@@ -451,16 +451,16 @@ ggsave("annotation.png", grob_annotation_upset_plot, width = 30, height = 20)
 
 
 #Creating a panel of plots
-lay <- rbind(c(1,1,2,2,2,3,3,3),
-             c(1,1,2,2,2,3,3,3),
-             c(4,4,4,4,4,4,4,4),
-             c(4,4,4,4,4,4,4,4),
-             c(5,5,NA,6,6,NA,7,7),
-             c(5,5,NA,6,6,NA,7,7),
-             c(8,8,8,8,9,9,9,9),
-             c(8,8,8,8,9,9,9,9),
-             c(10,10,10,10,10,10,NA,NA),
-             c(10,10,10,10,10,10,NA,NA))
+lay <- rbind(c(1,1,1,2,2,2,3,3,3),
+             c(1,1,1,2,2,2,3,3,3),
+             c(4,4,4,4,4,4,4,4,4),
+             c(4,4,4,4,4,4,4,4,4),
+             c(5,5,NA,6,6,NA,7,7,NA),
+             c(5,5,NA,6,6,NA,7,7,NA),
+             c(8,8,8,8,NA,9,9,9,9),
+             c(8,8,8,8,NA,9,9,9,9),
+             c(10,10,10,10,10,10,NA,NA,NA),
+             c(10,10,10,10,10,10,NA,NA,NA))
 
-ml <- grid.arrange(sample_boxplot, type_boxplot, p_type_count, p_chr_count, p_af_count, p_af_count_in_gd, p_af_count_not_in_gd, p_size_count, p_evidence, grob_annotation_upset_plot, layout_matrix = lay, top=textGrob("De Novo SV Data", gp=gpar(fontsize=50)))
+ml <- grid.arrange(sample_boxplot, type_boxplot, p_type_count, p_chr_count, p_af_count, p_af_count_in_gd, p_af_count_not_in_gd, p_size_count, p_evidence, grob_annotation_upset_plot, layout_matrix = lay, top=textGrob("De Novo SV Data", gp=gpar(fontsize=75)))
 ggsave(out_file, ml, width = 80, height = 150, limitsize = FALSE)
