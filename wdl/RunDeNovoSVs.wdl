@@ -203,6 +203,7 @@ workflow deNovoSV {
         File cleaned_ped = cleanPed.cleaned_ped
         File denovo_output = callOutliers.final_denovo_output
         File denovo_outliers_output = callOutliers.final_denovo_outliers_output
+        File annotated_output = callOutliers.final_annotation_output
         File denovo_output_plots = plot_createPlots.output_plots
         File per_chrom_plot = plot_createPlots.per_chrom_plot
         File per_sample_plot = plot_createPlots.per_sample_plot
@@ -217,9 +218,7 @@ workflow deNovoSV {
         File per_type_boxplot = plot_createPlots.per_type_boxplot
         File gd_depth = mergeGenomicDisorders.gd_output_from_depth
         File gd_vcf = getGenomicDisorders.gd_output_from_final_vcf[1]
-        Array[Array[File]] filtered_out = getDeNovo.filtered_out
-        Array[Array[File]] size_file_out = getDeNovo.size_file_out
-        Array[Array[File]] coverage_file_out = getDeNovo.coverage_output_file
+        
     }
 }
 
