@@ -57,7 +57,7 @@ workflow deNovoSVsScatter {
 
     call mergeBedFiles{
         input:
-            bed_files = runDeNovo.denovo_output,
+            bed_files = runDeNovo.annotation_output,
             chromosome = chromosome,
             variant_interpretation_docker = variant_interpretation_docker,
             runtime_attr_override = runtime_attr_merge_bed
@@ -65,10 +65,8 @@ workflow deNovoSVsScatter {
 
     output {
         Array[File] per_shard_de_novo_output = runDeNovo.denovo_output
-        Array[File] filtered_out = runDeNovo.filtered_out
-        Array[File] size_file_out = runDeNovo.size_file_out
-        Array[File] coverage_output_file = runDeNovo.coverage_output_file
-        File merged_denovo_output_file = mergeBedFiles.per_chromosome_denovo_output
+        Array[File] per_shard_annotation_output = runDeNovo.annotation_output
+        File merged_annotation_output_file = mergeBedFiles.per_chromosome_denovo_output
     }
 }
 
@@ -109,9 +107,7 @@ task runDeNovo{
 
     output{
         File denovo_output = "~{basename}.denovo.bed.gz"
-        File filtered_out = "~{basename}.filtered.txt"
-        File size_file_out = "~{basename}.size.txt"
-        File coverage_output_file = "~{basename}.coverage.txt"
+        File annotation_output = "~{basename}.annotation.bed.gz"
     }
 
     String basename = basename(vcf_input, ".vcf.gz")
@@ -123,21 +119,20 @@ task runDeNovo{
                 --ped ~{ped_input} \
                 --vcf ~{basename}.noheader.vcf.gz \
                 --disorder ~{disorder_input} \
-                --out ~{basename}.denovo.bed \
+                --out ~{basename}.annotation.bed \
+                --out_de_novo ~{basename}.denovo.bed \
                 --raw_proband ~{raw_proband} \
                 --raw_parents ~{raw_parents} \
                 --raw_depth_proband ~{raw_depth_proband} \
                 --raw_depth_parents ~{raw_depth_parents} \
                 --config ~{python_config} \
-                --filtered ~{basename}.filtered.txt \
-                --size_file ~{basename}.size.txt \
-                --coverage_output_file ~{basename}.coverage.txt \
                 --exclude_regions ~{exclude_regions} \
                 --coverage ~{batch_bincov_index} \
                 --sample_batches ~{sample_batches} \
                 --verbose True
             
             bgzip ~{basename}.denovo.bed
+            bgzip ~{basename}.annotation.bed
     >>>
 
     runtime {

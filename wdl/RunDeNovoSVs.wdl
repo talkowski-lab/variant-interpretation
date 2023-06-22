@@ -168,7 +168,7 @@ workflow deNovoSV {
     #merges the per chromosome de novo SV outputs
     call plot_mergeFinalBedFiles{
         input:
-            bed_files = getDeNovo.merged_denovo_output_file,
+            bed_files = getDeNovo.merged_annotation_output_file,
             variant_interpretation_docker=variant_interpretation_docker,
             runtime_attr_override = runtime_attr_merge_final_bed_files
     }
@@ -477,6 +477,7 @@ task callOutliers{
     output{
         File final_denovo_output = "final.denovo.merged.bed.gz"
         File final_denovo_outliers_output = "final.denovo.merged.outliers.bed.gz"
+        File final_annotation_output = "de_novo_annotated_output.bed.gz"
     }
 
     command {
@@ -485,6 +486,7 @@ task callOutliers{
         python3.9 /src/variant-interpretation/scripts/deNovoOutliers.py --bed ~{bed_file}
         bgzip final.denovo.merged.bed
         bgzip final.denovo.merged.outliers.bed
+        bgzip de_novo_annotated_output.bed
 
     }
 

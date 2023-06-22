@@ -10,11 +10,12 @@ args = parser.parse_args()
 
 bed_file = args.bed
 
-bed = pd.read_csv(bed_file, sep='\t', index_col=False).replace(np.nan, '', regex=True)
+bed_original = pd.read_csv(bed_file, sep='\t', index_col=False).replace(np.nan, '', regex=True)
 
 #####################
 ## REMOVE OUTLIERS ##
 #####################
+bed = bed_original[bed_original['is_de_novo'] == True]
 sample_counts = bed['sample'].value_counts()
 q3, q1 = np.percentile(sample_counts.tolist(), [75, 25])
 iqr = q3 - q1
@@ -26,6 +27,9 @@ samples_keep = sample_counts2[(sample_counts2['count'] <= count_threshold)]['sam
 output = bed[(bed['sample'].isin(samples_keep))]
 output_outliers = bed[(~bed['sample'].isin(samples_keep))]
 
+bed_original.loc[~(bed_original['sample'].isin(samples_keep)) & bed_original['is_de_novo'] == True, 'filter_flag'] = 'de_novo_outlier'
+print(bed_original)
 # Write output
 output.to_csv(path_or_buf='final.denovo.merged.bed', mode='a', index=False, sep='\t', header=True)
 output_outliers.to_csv(path_or_buf='final.denovo.merged.outliers.bed', mode='a', index=False, sep='\t', header=True)
+bed_original.to_csv(path_or_buf='de_novo_annotated_output.bed', mode='a', index=False, sep='\t', header=True)
