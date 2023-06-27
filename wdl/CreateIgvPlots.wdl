@@ -15,7 +15,6 @@ workflow IGV_all_samples {
         File? fam_ids
         File sample_crai_cram
         File varfile
-        File vcf
         File reference
         File reference_index
         Boolean cram_localization
