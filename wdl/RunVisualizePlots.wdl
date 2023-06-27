@@ -53,6 +53,7 @@ workflow VisualizePlots{
                 batch_bincov=batch_bincov_,
                 bed = varfile,
                 sv_pipeline_rdtest_docker=sv_pipeline_rdtest_docker,
+                variant_interpretation_docker = variant_interpretation_docker,
                 sample_batches = sample_batches_,
                 runtime_attr_rdtest=runtime_attr_rdtest
 
