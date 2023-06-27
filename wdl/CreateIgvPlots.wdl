@@ -224,7 +224,7 @@ task generate_per_family_sample_crai_cram{
         memory: select_first([runtime_attr.mem_gb, default_attr.mem_gb]) + " GiB"
         disks: "local-disk " + select_first([runtime_attr.disk_gb, default_attr.disk_gb]) + " HDD"
         bootDiskSizeGb: select_first([runtime_attr.boot_disk_gb, default_attr.boot_disk_gb])
-        docker: variant_interpretation_docker
+        docker: sv_base_mini_docker
         preemptible: select_first([runtime_attr.preemptible, default_attr.preemptible])
         maxRetries: select_first([runtime_attr.max_retries, default_attr.max_retries])
   }
@@ -236,7 +236,7 @@ task update_sample_crai_cram{
         String family
         File ped_file
         File sample_crai_cram
-        String sv_base_mini_docker
+        String variant_interpretation_docker
         RuntimeAttr? runtime_attr_override
     }
     Float input_size = size(select_all([sample_crai_cram, ped_file]), "GB")
@@ -275,7 +275,7 @@ task update_sample_crai_cram{
         memory: select_first([runtime_attr.mem_gb, default_attr.mem_gb]) + " GiB"
         disks: "local-disk " + select_first([runtime_attr.disk_gb, default_attr.disk_gb]) + " HDD"
         bootDiskSizeGb: select_first([runtime_attr.boot_disk_gb, default_attr.boot_disk_gb])
-        docker: sv_base_mini_docker
+        docker: variant_interpretation_docker
         preemptible: select_first([runtime_attr.preemptible, default_attr.preemptible])
         maxRetries: select_first([runtime_attr.max_retries, default_attr.max_retries])
   }
