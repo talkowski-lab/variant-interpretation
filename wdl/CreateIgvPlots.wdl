@@ -253,8 +253,8 @@ task update_sample_crai_cram{
     RuntimeAttr runtime_attr = select_first([runtime_attr_override, default_attr])
 
     command <<<
-        
-        grep -w ~{family} ~{ped_file} > family_ped.txt
+        head -n+1 ~{family} > family_ped.txt
+        grep -w ~{family} ~{ped_file} >> family_ped.txt
         python3.9 /src/variant-interpretation/scripts/renameCrams.py --ped family_ped.txt --scc ~{sample_crai_cram}
         cut -f1 changed_sample_crai_cram.txt > samples.txt
         cut -f5 changed_sample_crai_cram.txt > crai.txt
