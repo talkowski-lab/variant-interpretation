@@ -26,12 +26,14 @@ workflow VisualizePlots{
         String sv_base_mini_docker
         String sv_pipeline_rdtest_docker
         String igv_docker
+        String variant_interpretation_docker
 
         Boolean run_RD 
         Boolean run_IGV
 
         RuntimeAttr? runtime_attr_run_igv
         RuntimeAttr? runtime_attr_igv
+        RuntimeAttr? runtime_attr_cpx
         RuntimeAttr? runtime_attr_concatinate
         RuntimeAttr? runtime_attr_rdtest
     }
@@ -82,8 +84,10 @@ workflow VisualizePlots{
                 prefix = prefix,
                 sv_base_mini_docker = sv_base_mini_docker,
                 igv_docker = igv_docker,
+                variant_interpretation_docker = variant_interpretation_docker,
                 runtime_attr_run_igv = runtime_attr_run_igv,
-                runtime_attr_igv = runtime_attr_igv
+                runtime_attr_igv = runtime_attr_igv,
+                runtime_attr_cpx = runtime_attr_cpx
            }
         }
 

@@ -15,6 +15,7 @@ workflow IGV_all_samples {
         File? fam_ids
         File sample_crai_cram
         File varfile
+        File vcf
         File reference
         File reference_index
         Boolean cram_localization
@@ -24,8 +25,10 @@ workflow IGV_all_samples {
         String buffer_large
         String sv_base_mini_docker
         String igv_docker
+        String variant_interpretation_docker
         RuntimeAttr? runtime_attr_run_igv
         RuntimeAttr? runtime_attr_igv
+        RuntimeAttr? runtime_attr_cpx
     }
 
     if (defined(fam_ids)) {
@@ -33,10 +36,17 @@ workflow IGV_all_samples {
         Array[String] family_ids = transpose(read_tsv(fam_ids_))[0]
     }
 
+    call updateCpxBed{
+        input:
+            varfile = varfile,
+            variant_interpretation_docker = variant_interpretation_docker,
+            runtime_attr_override = runtime_attr_cpx
+    }
+
     if (!(defined(fam_ids))) {
         call generate_families{
             input:
-                varfile = varfile,
+                varfile = updateCpxBed.bed_output,
                 ped_file = ped_file,
                 sv_base_mini_docker = sv_base_mini_docker,
                 runtime_attr_override = runtime_attr_run_igv
@@ -51,10 +61,20 @@ workflow IGV_all_samples {
                 sv_base_mini_docker = sv_base_mini_docker,
                 runtime_attr_override = runtime_attr_run_igv
             }
+
+        call update_sample_crai_cram{
+            input:
+                family = family,
+                ped_file = ped_file,
+                sample_crai_cram = generate_per_family_sample_crai_cram.subset_sample_crai_cram,
+                variant_interpretation_docker = variant_interpretation_docker,
+                runtime_attr_override = runtime_attr_run_igv
+        }
+
         call generate_per_family_bed{
             input:
-                varfile = varfile,
-                samples = generate_per_family_sample_crai_cram.per_family_samples,
+                varfile = updateCpxBed.bed_output,
+                samples = update_sample_crai_cram.per_family_samples,
                 family = family,
                 ped_file = ped_file,
                 sv_base_mini_docker=sv_base_mini_docker,
@@ -67,11 +87,11 @@ workflow IGV_all_samples {
                     varfile = generate_per_family_bed.per_family_varfile,
                     family = family,
                     ped_file = ped_file,
-                    samples = generate_per_family_sample_crai_cram.per_family_samples,
+                    samples = update_sample_crai_cram.per_family_samples,
                     cram_localization = cram_localization,
                     requester_pays = requester_pays,
-                    crams_localize = generate_per_family_sample_crai_cram.per_family_crams_files,
-                    crais_localize = generate_per_family_sample_crai_cram.per_family_crais_files,
+                    crams_localize = update_sample_crai_cram.per_family_crams_files,
+                    crais_localize = update_sample_crai_cram.per_family_crais_files,
                     buffer = buffer,
                     buffer_large = buffer_large,
                     reference = reference,
@@ -89,9 +109,9 @@ workflow IGV_all_samples {
                     ped_file = ped_file,
                     cram_localization = cram_localization,
                     requester_pays = requester_pays,
-                    samples = generate_per_family_sample_crai_cram.per_family_samples,
-                    crams_parse = generate_per_family_sample_crai_cram.per_family_crams_strings,
-                    crais_parse = generate_per_family_sample_crai_cram.per_family_crais_strings,
+                    samples = update_sample_crai_cram.per_family_samples,
+                    crams_parse = update_sample_crai_cram.per_family_crams_strings,
+                    crais_parse = update_sample_crai_cram.per_family_crais_strings,
                     buffer = buffer,
                     buffer_large = buffer_large,
                     reference = reference,
@@ -188,6 +208,58 @@ task generate_per_family_sample_crai_cram{
         cut -f1 subset_sample_crai_cram.txt > samples.txt
         cut -f2 subset_sample_crai_cram.txt > crai.txt
         cut -f3 subset_sample_crai_cram.txt > cram.txt
+        >>>
+
+    output{
+        Array[String] per_family_samples = read_lines("samples.txt")
+        Array[File] per_family_crams_files = read_lines("cram.txt")
+        Array[File] per_family_crais_files = read_lines("crai.txt")
+        Array[String] per_family_crams_strings = read_lines("cram.txt")
+        Array[String] per_family_crais_strings = read_lines("crai.txt")
+        File subset_sample_crai_cram = "subset_sample_crai_cram.txt"
+    }
+
+    runtime {
+        cpu: select_first([runtime_attr.cpu, default_attr.cpu])
+        memory: select_first([runtime_attr.mem_gb, default_attr.mem_gb]) + " GiB"
+        disks: "local-disk " + select_first([runtime_attr.disk_gb, default_attr.disk_gb]) + " HDD"
+        bootDiskSizeGb: select_first([runtime_attr.boot_disk_gb, default_attr.boot_disk_gb])
+        docker: variant_interpretation_docker
+        preemptible: select_first([runtime_attr.preemptible, default_attr.preemptible])
+        maxRetries: select_first([runtime_attr.max_retries, default_attr.max_retries])
+  }
+
+}
+
+task update_sample_crai_cram{
+    input {
+        String family
+        File ped_file
+        File sample_crai_cram
+        String sv_base_mini_docker
+        RuntimeAttr? runtime_attr_override
+    }
+    Float input_size = size(select_all([sample_crai_cram, ped_file]), "GB")
+    Float base_mem_gb = 3.75
+
+    RuntimeAttr default_attr = object {
+                                      mem_gb: base_mem_gb,
+                                      disk_gb: ceil(10 + input_size),
+                                      cpu: 1,
+                                      preemptible: 2,
+                                      max_retries: 1,
+                                      boot_disk_gb: 8
+                                  }
+
+    RuntimeAttr runtime_attr = select_first([runtime_attr_override, default_attr])
+
+    command <<<
+        
+        grep -w ~{family} ~{ped_file} > family_ped.txt
+        python3.9 /src/variant-interpretation/scripts/renameCrams.py --ped family_ped.txt -scc ~{sample_crai_cram}
+        cut -f1 changed_sample_crai_cram.txt > samples.txt
+        cut -f5 changed_sample_crai_cram.txt > crai.txt
+        cut -f4 changed_sample_crai_cram.txt > cram.txt
         >>>
 
     output{
@@ -298,4 +370,48 @@ task integrate_igv_plots{
         maxRetries: select_first([runtime_attr.max_retries, default_attr.max_retries])
   }
 
+}
+
+task updateCpxBed{
+    input{
+        File varfile
+        String variant_interpretation_docker
+        RuntimeAttr? runtime_attr_override
+    }
+
+    Float input_size = size(varfile, "GB")
+    Float base_mem_gb = 3.75
+
+    RuntimeAttr default_attr = object {
+                                      mem_gb: base_mem_gb,
+                                      disk_gb: ceil(10 + input_size * 1.5),
+                                      cpu: 1,
+                                      preemptible: 2,
+                                      max_retries: 1,
+                                      boot_disk_gb: 8
+                                  }
+    
+    RuntimeAttr runtime_attr = select_first([runtime_attr_override, default_attr])
+
+    output{
+        File bed_output = "final.denovo.merged.cpx_split.bed.gz"
+    }
+
+    String basename = basename(vcf_file, ".vcf.gz")
+    command <<<
+        set -euo pipefail
+        
+        Rscript /src/variant-interpretation/scripts/updateCpx.R ~{varfile}
+        bgzip final.denovo.merged.cpx_split.bed
+    >>>
+
+    runtime {
+        cpu: select_first([runtime_attr.cpu, default_attr.cpu])
+        memory: "~{select_first([runtime_attr.mem_gb, default_attr.mem_gb])} GB"
+        disks: "local-disk ~{select_first([runtime_attr.disk_gb, default_attr.disk_gb])} HDD"
+        bootDiskSizeGb: select_first([runtime_attr.boot_disk_gb, default_attr.boot_disk_gb])
+        preemptible: select_first([runtime_attr.preemptible, default_attr.preemptible])
+        maxRetries: select_first([runtime_attr.max_retries, default_attr.max_retries])
+        docker: variant_interpretation_docker
+    }
 }
