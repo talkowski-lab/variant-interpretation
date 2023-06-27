@@ -397,7 +397,6 @@ task updateCpxBed{
         File bed_output = "final.denovo.merged.cpx_split.bed.gz"
     }
 
-    String basename = basename(vcf_file, ".vcf.gz")
     command <<<
         set -euo pipefail
         
