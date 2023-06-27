@@ -302,7 +302,6 @@ vcf_metrics    """
     raw_file_depth_parent = args.raw_depth_parents
     verbose = args.verbose
     config_file = args.config
-    coverage_output = args.coverage_output_file
     exclude_regions = args.exclude_regions
     coverage = args.coverage
     batches = args.sample_batches
@@ -422,6 +421,8 @@ vcf_metrics    """
     # Annotate family information for filtering
     bed_child['family_id'] = bed_child.apply(lambda r: getFamilyID(r,ped), axis=1)
     bed_child['name_famid'] = bed_child['name'] + "_" + bed_child['family_id'].astype(str).str.strip("[]")
+    bed_parents['family_id'] = bed_parents.apply(lambda r: getFamilyID(r,ped), axis=1)
+    bed_parents['name_famid'] = bed_parents['name'] + "_" + bed_parents['family_id'].astype(str).str.strip("[]")
 
     # Filter out by frequency - AF gnomad < 0.01 OR inGD
     verbosePrint('Filtering by frequency', verbose)
@@ -536,7 +537,7 @@ vcf_metrics    """
     # 2. Check if call in parents with bedtools coverage (332)
     verbosePrint('CNV present in parents check', verbose)
     start = time.time()
-    cols_keep = ['family_chrom', 'start', 'end', 'name', 'svtype', 'sample']
+    cols_keep = ['family_chrom', 'start', 'end', 'name', 'svtype', 'sample', 'name_famid']
     bed_child_large = bed_child[(bed_child['is_large_cnv'] == True)]
     bed_parents_large = bed_parents[(bed_parents['is_large_cnv'] == True)]
     if ((len(bed_child_large.index) > 0) & (len(bed_parents_large.index) > 0)):
@@ -549,7 +550,7 @@ vcf_metrics    """
         bed_parents_large = pybedtools.BedTool(bed_parents_large, from_string=True).sort()
 
         bed_overlap = bed_child_large.coverage(bed_parents_large).to_dataframe(disable_auto_names=True, header=None)
-        names_overlap = bed_overlap[(bed_overlap[9] >= parents_overlap)][3].to_list()
+        names_overlap = bed_overlap[(bed_overlap[9] >= parents_overlap)][6].to_list()
     else:
         names_overlap = ['']
     end = time.time()
@@ -557,7 +558,7 @@ vcf_metrics    """
     print("Took %f seconds to process" % delta)
 
     # Add if overlap to bed child table
-    bed_child['overlap_parent'] = (bed_child['name'].isin(names_overlap))
+    bed_child['overlap_parent'] = (bed_child['name_famid'].isin(names_overlap))
 
     # Small calls:
     # If RD,SR and < large_cnv_size, treat RD,SR as SR
@@ -780,13 +781,10 @@ vcf_metrics    """
 
     # Remove if low coverage in parents
     start = time.time()
-    if (len(bed_child.index) > 0):
-        bed_child['median_coverage'] = bed_child.apply(lambda r: getMedianCoverage(findCoverage(r, ped, sample_batches, bincov, family_member='mother'),findCoverage(r, ped, sample_batches, bincov, family_member='father'), coverage_cutoff), axis=1)
-        remove_coverage = bed_child[bed_child['median_coverage'] == 'Remove']['name_famid'].to_list()
-        bed_child.loc[bed_child['name_famid'].isin(remove_coverage), 'is_de_novo'] = False
-        bed_child.loc[bed_child['name_famid'].isin(remove_coverage), 'filter_flag'] = 'low_coverage_in_parents'
-        low_coverage = bed_child[(bed_child['name_famid'].isin(remove_coverage))]
-        low_coverage.to_csv(path_or_buf=coverage_output, mode='a', index=False, sep='\t', header=True)
+    bed_child_coverage = bed_child[bed_child['is_de_novo'] == True]
+    if (len(bed_child_coverage.index) > 0):
+        bed_child_coverage['median_coverage'] = bed_child_coverage.apply(lambda r: getMedianCoverage(findCoverage(r, ped, sample_batches, bincov, family_member='mother'),findCoverage(r, ped, sample_batches, bincov, family_member='father'), coverage_cutoff), axis=1)
+        remove_coverage = bed_child_coverage[bed_child_coverage['median_coverage'] == 'Remove']['name_famid'].to_list()
     else:
         remove_coverage = ['']
         bed_child.loc[bed_child['name_famid'].isin(remove_coverage) & bed_child['is_de_novo'] == True, 'filter_flag'] = 'low_coverage_in_parents'
