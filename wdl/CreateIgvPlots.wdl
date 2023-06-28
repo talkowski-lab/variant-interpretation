@@ -66,8 +66,8 @@ workflow IGV_all_samples {
                 family = family,
                 ped_file = ped_file,
                 sample_crai_cram = generate_per_family_sample_crai_cram.subset_sample_crai_cram,
-                per_family_crais_files = generate_per_family_sample_crai_cram.per_family_crais_files,
-                per_family_crams_files = generate_per_family_sample_crai_cram.per_family_crams_files,
+                crais_files = generate_per_family_sample_crai_cram.per_family_crais_files,
+                crams_files = generate_per_family_sample_crai_cram.per_family_crams_files,
                 variant_interpretation_docker = variant_interpretation_docker,
                 runtime_attr_override = runtime_attr_run_igv
         }
@@ -237,8 +237,8 @@ task update_sample_crai_cram{
         String family
         File ped_file
         File sample_crai_cram
-        Array[File] per_family_crams_files
-        Array[File] per_family_crais_files
+        Array[File] crams_files
+        Array[File] crais_files
         String variant_interpretation_docker
         RuntimeAttr? runtime_attr_override
     }
