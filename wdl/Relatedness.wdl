@@ -67,7 +67,7 @@ task subsetVCF{
 
     RuntimeAttr runtime_attr = select_first([runtime_attr_override, default_attr])
 
-    output_name = basename(vcf_input, "vcf.gz") + "5kpurcell.vcf.gz"
+    String output_name = basename(vcf_input, "vcf.gz") + "5kpurcell.vcf.gz"
 
     output{
         File vcf_output = output_name
