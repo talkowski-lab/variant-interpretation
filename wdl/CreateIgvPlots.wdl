@@ -238,8 +238,8 @@ task update_sample_crai_cram{
         String family
         File ped_file
         File sample_crai_cram
-        Array[File] crams_files
-        Array[File] crais_files
+        Array[String] crams_files
+        Array[String] crais_files
         String variant_interpretation_docker
         RuntimeAttr? runtime_attr_override
     }
