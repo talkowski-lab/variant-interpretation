@@ -91,7 +91,7 @@ task subsetVCF{
 
 task mergeVCF{
     input{
-        Array[File] input_vcfs
+        File input_vcfs
         String docker
         RuntimeAttr? runtime_attr_override
     }
