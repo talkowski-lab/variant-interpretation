@@ -205,7 +205,7 @@ task runIGV_whole_genome_parse{
                 export GCS_OAUTH_TOKEN=`gcloud auth application-default print-access-token`
                 samtools view -h -C -T ~{reference} -o $name.cram $cram -L regions.bed.gz -M
                 samtools index $name.cram
-            done
+            done<~{updated_sample_crai_cram}
             ls *.cram > crams.txt
 
             i=0
