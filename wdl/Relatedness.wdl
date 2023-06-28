@@ -43,6 +43,8 @@ workflow relatedness {
     output{
         File kin = runPlink.kin
         File kin0 = runPlink.kin0
+        File smiss = runPlink.smissing
+        File vmiss = runPlink.vmissing
     }
 }
 
