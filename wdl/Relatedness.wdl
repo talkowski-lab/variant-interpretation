@@ -72,7 +72,7 @@ task subsetVCF{
     String output_name = basename(vcf_input, "vcf.gz") + "5kpurcell.vcf.gz"
 
     output{
-        Array [File] vcf_output = output_name
+        File vcf_output = output_name
     }
 
     command <<<
