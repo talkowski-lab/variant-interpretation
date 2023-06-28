@@ -37,6 +37,7 @@ workflow relatedness {
     call runPlink{
         input:
             input_vcf = mergeVCF.merged_vcf,
+            ped_file = ped_file,
             docker = relatedness_docker,
             runtime_attr_override = runtime_attr_override_plink
     }
@@ -164,6 +165,9 @@ task runPlink{
 
         ##Check missing rate
         plink --bfile output.plink --missing --out missing_output.plink
+
+        ##Change pedigree file to fam file
+        mv ~{ped_file} output.plink.fam
 
         ##Run king
         king -b output.plink.bed --kinship --degree 2
