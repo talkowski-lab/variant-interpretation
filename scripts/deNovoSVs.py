@@ -550,7 +550,7 @@ vcf_metrics    """
         bed_parents_large = pybedtools.BedTool(bed_parents_large, from_string=True).sort()
 
         bed_overlap = bed_child_large.coverage(bed_parents_large).to_dataframe(disable_auto_names=True, header=None)
-        names_overlap = bed_overlap[(bed_overlap[9] >= parents_overlap)][6].to_list()
+        names_overlap = bed_overlap[(bed_overlap[10] >= parents_overlap)][6].to_list()
     else:
         names_overlap = ['']
     end = time.time()
