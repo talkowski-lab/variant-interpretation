@@ -27,8 +27,8 @@ workflow IGV {
         RuntimeAttr? runtime_attr_localize_reads
         Array[String]? crams_parse
         Array[String]? crais_parse
-        File updated_sample_crai_cram
-        File sample_crai_cram
+        File? updated_sample_crai_cram
+        File? sample_crai_cram
         
     }
 
@@ -56,7 +56,7 @@ workflow IGV {
                 samples = samples,
                 crams = select_first([LocalizeReadsLocalize.output_file, crams_localize_]),
                 crais = select_first([LocalizeReadsLocalize.output_index, crais_localize_]),
-                updated_sample_crai_cram = updated_sample_crai_cram,
+                sample_crai_cram = sample_crai_cram,
                 buffer = buffer,
                 buffer_large = buffer_large,
                 reference = reference,
