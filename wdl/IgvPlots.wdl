@@ -172,8 +172,7 @@ task runIGV_whole_genome_parse{
         String family
         File ped_file
         Array[String] samples
-        Array[String] crams
-        Array[String] crais
+        File updated_sample_crai_cram
         String buffer
         String buffer_large
         String igv_docker
@@ -200,12 +199,12 @@ task runIGV_whole_genome_parse{
             cat ~{varfile} | cut -f1-3 | awk '{if ($3-$2>=15000) print $1"\t"$2"\t"$2 "\n" $1"\t"$3"\t"$3;else print}' | awk '{$2-=3000}1' OFS='\t' | awk '{$3+=3000}1' OFS='\t' | sort -k1,1 -k2,2n | bgzip -c > regions.bed.gz
             tabix -p bed regions.bed.gz
             #localize cram files
-            for cram in ~{sep=' ' crams}
+            while read sample crai cram new_cram new_crai
             do
-                name=$(echo $cram|awk -F"/" '{print $NF}'|sed 's/.cram//g')
+                name=$(echo $new_cram|awk -F"/" '{print $NF}'|sed 's/.cram//g')
                 export GCS_OAUTH_TOKEN=`gcloud auth application-default print-access-token`
-                samtools view -h -C -T ~{reference} -o new.$name.cram $cram -L regions.bed.gz -M
-                samtools index new.$name.cram
+                samtools view -h -C -T ~{reference} -o $name.cram $cram -L regions.bed.gz -M
+                samtools index $name.cram
             done
             ls *.cram > crams.txt
 

@@ -16,11 +16,11 @@ ped_file = args.ped
 sample_cc = args.scc
 
 
-def mv(file, output):
-	process1 = Popen(['gcloud', 'auth', 'application-default', 'print-access-token'], stdout=PIPE)
-	os.environ['GCS_OAUTH_TOKEN'] = process1.stdout.read().decode()
-	result = subprocess.run(["mv", file, output])
-	print(result.stderr)
+#def mv(file, output):
+	#process1 = Popen(['gcloud', 'auth', 'application-default', 'print-access-token'], stdout=PIPE)
+	#os.environ['GCS_OAUTH_TOKEN'] = process1.stdout.read().decode()
+	#result = subprocess.run(["mv", file, output])
+	#print(result.stderr)
 
 #find number of trios in ped file
 ped=pd.read_csv(ped_file,sep='\t')
@@ -45,8 +45,8 @@ cram_file_mom_suffix = cram_file_mom.split('/')[-1]
 crai_file_mom_suffix = crai_file_mom.split('/')[-1]
 cram_file_mom_prefix = cram_file_mom.split(cram_file_mom_suffix)[0]
 crai_file_mom_prefix = crai_file_mom.split(crai_file_mom_suffix)[0]
-mv(cram_file_mom, 'mother.cram')
-mv(crai_file_mom, 'mother.cram.crai')
+#mv(cram_file_mom, 'mother.cram')
+#mv(crai_file_mom, 'mother.cram.crai')
 cram.loc[cram['sample'].isin(maternal_list), 'new_cram'] = cram_file_mom_prefix + 'MOTHER.' + str(cram_file_mom_suffix)
 cram.loc[cram['sample'].isin(maternal_list), 'new_crai'] = crai_file_mom_prefix + 'MOTHER.' + str(crai_file_mom_suffix)
 
@@ -59,8 +59,8 @@ cram_file_dad_suffix = cram_file_dad.split('/')[-1]
 crai_file_dad_suffix = crai_file_dad.split('/')[-1]
 cram_file_dad_prefix = cram_file_dad.split(cram_file_dad_suffix)[0]
 crai_file_dad_prefix = crai_file_dad.split(crai_file_dad_suffix)[0]
-mv(cram_file_dad, 'father.cram')
-mv(crai_file_dad, 'father.cram.crai')
+#mv(cram_file_dad, 'father.cram')
+#mv(crai_file_dad, 'father.cram.crai')
 cram.loc[cram['sample'].isin(paternal_list), 'new_cram'] = cram_file_dad_prefix + 'FATHER.' + str(cram_file_dad_suffix)
 cram.loc[cram['sample'].isin(paternal_list), 'new_crai'] = crai_file_dad_prefix + 'FATHER.' + str(crai_file_dad_suffix)
 
@@ -86,8 +86,8 @@ cram_file_p_suffix = cram_file_p.split('/')[-1]
 crai_file_p_suffix = crai_file_p.split('/')[-1]
 cram_file_p_prefix = cram_file_p.split(cram_file_p_suffix)[0]
 crai_file_p_prefix = crai_file_p.split(crai_file_p_suffix)[0]
-mv(cram_file_p, 'proband.' + str(cram_file_p))
-mv(crai_file_p, 'proband.' + str(crai_file_p))
+#mv(cram_file_p, 'proband.' + str(cram_file_p))
+#mv(crai_file_p, 'proband.' + str(crai_file_p))
 cram.loc[cram['sample'].isin(affected_list_proband), 'new_cram'] = cram_file_p_prefix + 'PROBAND.' + str(cram_file_p_suffix)
 cram.loc[cram['sample'].isin(affected_list_proband), 'new_crai'] = crai_file_p_prefix + 'PROBAND.' + str(crai_file_p_suffix)
 
@@ -101,8 +101,8 @@ cram_file_sib_suffix = cram_file_sib.split('/')[-1]
 crai_file_sib_suffix = crai_file_sib.split('/')[-1]
 cram_file_sib_prefix = cram_file_sib.split(cram_file_sib_suffix)[0]
 crai_file_sib_prefix = crai_file_sib.split(crai_file_sib_suffix)[0]
-mv(cram_file_sib, 'sibling.cram')
-mv(crai_file_sib, 'sibling.cram.crai')
+#mv(cram_file_sib, 'sibling.cram')
+#mv(crai_file_sib, 'sibling.cram.crai')
 cram.loc[cram['sample'].isin(sibling_list), 'new_cram'] = cram_file_sib_prefix + 'SIBLING.' + str(cram_file_sib_suffix)
 cram.loc[cram['sample'].isin(sibling_list), 'new_crai'] = cram_file_sib_prefix + 'SIBLING.' + str(crai_file_sib_suffix)
 
