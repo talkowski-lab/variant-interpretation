@@ -11,7 +11,7 @@ workflow relatedness {
         String relatedness_docker
 
         RuntimeAttr? runtime_attr_override_subset
-        RuntimeAttr? runtime_attr_override_relatedness
+        RuntimeAttr? runtime_attr_override_merge
         RuntimeAttr? runtime_attr_override_plink
     }
 
@@ -30,7 +30,7 @@ workflow relatedness {
             input:
                 input_vcfs=subsetVCF.vcf_output,
                 docker = relatedness_docker,
-                runtime_attr_override = runtime_attr_override_subset
+                runtime_attr_override = runtime_attr_override_merge
         }
     }
 
@@ -40,6 +40,7 @@ workflow relatedness {
             docker = relatedness_docker,
             runtime_attr_override = runtime_attr_override_plink
     }
+
     output{
         File kin = runPlink.kin
         File kin0 = runPlink.kin0
@@ -84,7 +85,7 @@ task subsetVCF{
         bootDiskSizeGb: select_first([runtime_attr.boot_disk_gb, default_attr.boot_disk_gb])
         preemptible: select_first([runtime_attr.preemptible, default_attr.preemptible])
         maxRetries: select_first([runtime_attr.max_retries, default_attr.max_retries])
-        docker: variant_interpretation_docker
+        docker: docker
     }
 }
 
@@ -121,7 +122,7 @@ task mergeVCF{
         bootDiskSizeGb: select_first([runtime_attr.boot_disk_gb, default_attr.boot_disk_gb])
         preemptible: select_first([runtime_attr.preemptible, default_attr.preemptible])
         maxRetries: select_first([runtime_attr.max_retries, default_attr.max_retries])
-        docker: variant_interpretation_docker
+        docker: docker
     }
 }
 
@@ -175,6 +176,6 @@ task runPlink{
         bootDiskSizeGb: select_first([runtime_attr.boot_disk_gb, default_attr.boot_disk_gb])
         preemptible: select_first([runtime_attr.preemptible, default_attr.preemptible])
         maxRetries: select_first([runtime_attr.max_retries, default_attr.max_retries])
-        docker: variant_interpretation_docker
+        docker: docker
     }
 }
