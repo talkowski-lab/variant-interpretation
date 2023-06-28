@@ -25,6 +25,7 @@ def mv(file, output):
 ped=pd.read_csv(ped_file,sep='\t')
 colnames = colnames=['sample', 'crai', 'cram']
 cram=pd.read_csv(sample_cc,sep='\t',names=colnames)
+pd.options.display.max_colwidth = 500
 
 #change to cromwell root so they can be moved
 cram['cram'] = cram['cram'].str.replace('gs://', '/cromwell_root/')
