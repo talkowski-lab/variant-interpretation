@@ -69,6 +69,7 @@ workflow IGV {
     if (!(cram_localization)) {
         Array[String] crams_parse_ = select_first([crams_parse])
         Array[String] crais_parse_ = select_first([crais_parse])
+        File updated_sample_crai_cram_ = select_first([updated_sample_crai_cram])
 
         if (requester_pays){
         # move the reads nearby -- handles requester_pays and makes cross-region transfers just once
@@ -88,7 +89,7 @@ workflow IGV {
                 family = family,
                 ped_file = ped_file,
                 samples = samples,
-                updated_sample_crai_cram = updated_sample_crai_cram,
+                updated_sample_crai_cram = updated_sample_crai_cram_,
                 buffer = buffer,
                 buffer_large = buffer_large,
                 reference = reference,
