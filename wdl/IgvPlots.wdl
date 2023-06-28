@@ -55,6 +55,7 @@ workflow IGV {
                 samples = samples,
                 crams = select_first([LocalizeReadsLocalize.output_file, crams_localize_]),
                 crais = select_first([LocalizeReadsLocalize.output_index, crais_localize_]),
+                updated_sample_crai_cram = updated_sample_crai_cram,
                 buffer = buffer,
                 buffer_large = buffer_large,
                 reference = reference,
@@ -111,6 +112,7 @@ task runIGV_whole_genome_localize{
             Array[String] samples
             Array[File] crams
             Array[File] crais
+            File updated_sample_crai_cram
             String buffer
             String buffer_large
             String igv_docker
