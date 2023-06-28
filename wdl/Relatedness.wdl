@@ -36,7 +36,7 @@ workflow relatedness {
 
     call runPlink{
         input:
-            input_vcf=mergeVCF.merged_vcf,
+            input_vcf = mergeVCF.merged_vcf,
             docker = relatedness_docker,
             runtime_attr_override = runtime_attr_override_plink
     }
@@ -71,7 +71,7 @@ task subsetVCF{
     String output_name = basename(vcf_input, "vcf.gz") + "5kpurcell.vcf.gz"
 
     output{
-        File vcf_output = output_name
+        Array [File] vcf_output = output_name
     }
 
     command <<<
