@@ -35,6 +35,7 @@ workflow IGV {
     if (cram_localization) {
         Array[File] crams_localize_ = select_first([crams_localize])
         Array[File] crais_localize_ = select_first([crais_localize])
+        File sample_crai_cram_ = select_first([sample_crai_cram])
 
         if (requester_pays){
         # move the reads nearby -- handles requester_pays and makes cross-region transfers just once
@@ -56,7 +57,7 @@ workflow IGV {
                 samples = samples,
                 crams = select_first([LocalizeReadsLocalize.output_file, crams_localize_]),
                 crais = select_first([LocalizeReadsLocalize.output_index, crais_localize_]),
-                sample_crai_cram = sample_crai_cram,
+                sample_crai_cram = sample_crai_cram_,
                 buffer = buffer,
                 buffer_large = buffer_large,
                 reference = reference,
