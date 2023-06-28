@@ -67,8 +67,8 @@ workflow IGV_all_samples {
                 family = family,
                 ped_file = ped_file,
                 sample_crai_cram = generate_per_family_sample_crai_cram.subset_sample_crai_cram,
-                crais_files = generate_per_family_sample_crai_cram.per_family_crais_files,
-                crams_files = generate_per_family_sample_crai_cram.per_family_crams_files,
+                crais_files = generate_per_family_sample_crai_cram.per_family_crais_strings,
+                crams_files = generate_per_family_sample_crai_cram.per_family_crams_strings,
                 variant_interpretation_docker = variant_interpretation_docker,
                 runtime_attr_override = runtime_attr_update_scc
         }
