@@ -25,13 +25,13 @@ workflow relatedness {
                 docker = relatedness_docker,
                 runtime_attr_override = runtime_attr_override_subset
         }
+    }
 
-        call mergeVCF{
-            input:
-                input_vcfs=subsetVCF.vcf_output,
-                docker = relatedness_docker,
-                runtime_attr_override = runtime_attr_override_merge
-        }
+    call mergeVCF{
+        input:
+            input_vcfs=subsetVCF.vcf_output,
+            docker = relatedness_docker,
+            runtime_attr_override = runtime_attr_override_merge
     }
 
     call runPlink{
