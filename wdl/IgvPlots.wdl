@@ -28,6 +28,7 @@ workflow IGV {
         Array[String]? crams_parse
         Array[String]? crais_parse
         File updated_sample_crai_cram
+        File sample_crai_cram
         
     }
 
@@ -112,7 +113,7 @@ task runIGV_whole_genome_localize{
             Array[String] samples
             Array[File] crams
             Array[File] crais
-            File updated_sample_crai_cram
+            File sample_crai_cram
             String buffer
             String buffer_large
             String igv_docker
@@ -136,12 +137,15 @@ task runIGV_whole_genome_localize{
     command <<<
             set -euo pipefail
             mkdir pe_igv_plots
+            head -n+1 ~{ped_file} > family_ped.txt
+            grep -w ~{family} ~{ped_file} >> family_ped.txt
+            python3.9 /src/variant-interpretation/scripts/renameCramsLocalize.py --ped family_ped.txt --scc ~{sample_crai_cram}
             i=0
             while read -r line
             do
                 let "i=$i+1"
                 echo "$line" > new.varfile.$i.bed
-                python /src/makeigvpesr.py -v new.varfile.$i.bed -fam_id ~{family} -samples ~{sep="," samples} -crams ${write_lines(crams)} -p ~{ped_file} -o pe_igv_plots -b ~{buffer} -l ~{buffer_large} -i pe.$i.txt -bam pe.$i.sh
+                python /src/makeigvpesr.py -v new.varfile.$i.bed -fam_id ~{family} -samples ~{sep="," samples} -crams crams.txt -p ~{ped_file} -o pe_igv_plots -b ~{buffer} -l ~{buffer_large} -i pe.$i.txt -bam pe.$i.sh
                 bash pe.$i.sh
                 xvfb-run --server-args="-screen 0, 1920x540x24" bash /IGV_Linux_2.16.0/igv.sh -b pe.$i.txt
             done < ~{varfile}
