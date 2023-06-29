@@ -23,7 +23,7 @@ workflow relatedness {
     }
 
     ##Split chromosome
-    if (contigs){
+    if (defined(contigs)){
 
         File vcf_file = read_lines(vcf_list)[0]
         File vcf_file_index = vcf_file + ".tbi"
