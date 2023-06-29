@@ -15,7 +15,7 @@ workflow relatedness {
         Boolean split_by_chr
         String relatedness_docker
 
-        Array[String] ?contigs
+        Array[String]? contigs
 
         RuntimeAttr? runtime_attr_override_subset
         RuntimeAttr? runtime_attr_override_merge
