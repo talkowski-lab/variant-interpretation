@@ -23,6 +23,7 @@ workflow IGV {
         String buffer
         String buffer_large
         String igv_docker
+        String variant_interpretation_docker
         RuntimeAttr? runtime_attr_igv
         RuntimeAttr? runtime_attr_localize_reads
         Array[String]? crams_parse
@@ -62,7 +63,7 @@ workflow IGV {
                 buffer_large = buffer_large,
                 reference = reference,
                 reference_index = reference_index,
-                igv_docker = igv_docker,
+                variant_interpretation_docker = variant_interpretation_docker,
                 runtime_attr_override = runtime_attr_igv
         }
     }
@@ -118,7 +119,7 @@ task runIGV_whole_genome_localize{
             File sample_crai_cram
             String buffer
             String buffer_large
-            String igv_docker
+            String variant_interpretation_docker
             RuntimeAttr? runtime_attr_override
         }
 
@@ -163,7 +164,7 @@ task runIGV_whole_genome_localize{
         bootDiskSizeGb: select_first([runtime_attr.boot_disk_gb, default_attr.boot_disk_gb])
         preemptible: select_first([runtime_attr.preemptible, default_attr.preemptible])
         maxRetries: select_first([runtime_attr.max_retries, default_attr.max_retries])
-        docker: igv_docker
+        docker: variant_interpretation_docker
     }
     output{
         File pe_plots="~{family}_pe_igv_plots.tar.gz"

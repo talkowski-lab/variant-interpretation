@@ -100,6 +100,7 @@ workflow IGV_all_samples {
                     reference = reference,
                     reference_index = reference_index,
                     igv_docker = igv_docker,
+                    variant_interpretation_docker = variant_interpretation_docker,
                     runtime_attr_igv = runtime_attr_igv
             }
         }
@@ -121,6 +122,7 @@ workflow IGV_all_samples {
                     reference = reference,
                     reference_index = reference_index,
                     igv_docker = igv_docker,
+                    variant_interpretation_docker = variant_interpretation_docker,
                     runtime_attr_igv = runtime_attr_igv
             }
         }
