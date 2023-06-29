@@ -46,6 +46,8 @@ workflow relatedness {
 
     scatter (vcf in vcf_files) {
 
+        File vcf_index = vcf + ".tbi"
+
         call subsetVCF{
             input:
                 vcf_input=vcf,
@@ -53,6 +55,7 @@ workflow relatedness {
                 docker = relatedness_docker,
                 runtime_attr_override = runtime_attr_override_subset
         }
+
     }
 
     call mergeVCF{
@@ -124,7 +127,6 @@ task splitVCF{
 task subsetVCF{
     input{
         File vcf_input
-        File vcf_file_index
         String contig
         String docker
         RuntimeAttr? runtime_attr_override
