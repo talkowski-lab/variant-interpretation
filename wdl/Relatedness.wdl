@@ -12,7 +12,6 @@ workflow relatedness {
         File ped_file
         File positions
 
-        Boolean split_by_chr
         String relatedness_docker
 
         Array[String]? contigs
@@ -24,7 +23,7 @@ workflow relatedness {
     }
 
     ##Split chromosome
-    if (split_by_chr){
+    if (contigs){
 
         File vcf_file = read_lines(vcf_list)[0]
         File vcf_file_index = vcf_file + ".tbi"
