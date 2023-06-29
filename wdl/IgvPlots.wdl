@@ -63,7 +63,7 @@ workflow IGV {
                 buffer_large = buffer_large,
                 reference = reference,
                 reference_index = reference_index,
-                variant_interpretation_docker = variant_interpretation_docker,
+                igv_docker = igv_docker,
                 runtime_attr_override = runtime_attr_igv
         }
     }
@@ -119,7 +119,7 @@ task runIGV_whole_genome_localize{
             File sample_crai_cram
             String buffer
             String buffer_large
-            String variant_interpretation_docker
+            String igv_docker
             RuntimeAttr? runtime_attr_override
         }
 
@@ -142,7 +142,7 @@ task runIGV_whole_genome_localize{
             mkdir pe_igv_plots
             head -n+1 ~{ped_file} > family_ped.txt
             grep -w ~{family} ~{ped_file} >> family_ped.txt
-            python3.9 /src/variant-interpretation/scripts/renameCramsLocalize.py --ped family_ped.txt --scc ~{sample_crai_cram}
+            python3.6 /src/renameCramsLocalize.py --ped family_ped.txt --scc ~{sample_crai_cram}
             cut -f4 changed_sample_crai_cram.txt > crams.txt
             i=0
             while read -r line
@@ -164,7 +164,7 @@ task runIGV_whole_genome_localize{
         bootDiskSizeGb: select_first([runtime_attr.boot_disk_gb, default_attr.boot_disk_gb])
         preemptible: select_first([runtime_attr.preemptible, default_attr.preemptible])
         maxRetries: select_first([runtime_attr.max_retries, default_attr.max_retries])
-        docker: variant_interpretation_docker
+        docker: igv_docker
     }
     output{
         File pe_plots="~{family}_pe_igv_plots.tar.gz"
