@@ -1,10 +1,9 @@
+#Author: Alba Sanchis-Juan <asanchis@broadinstitute.org>
+#This script runs king relatedness on a VCF given a pedigree file
+
 version 1.0
 
 import "Structs.wdl"
-
-"""
-This script runs relatedness
-"""
 
 workflow relatedness {
 
