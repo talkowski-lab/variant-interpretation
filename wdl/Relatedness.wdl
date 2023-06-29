@@ -38,7 +38,7 @@ workflow relatedness {
                     docker = relatedness_docker,
                     runtime_attr_override = runtime_attr_override_split_by_chr
             }
-      }
+        }
     }
 
     ##If split by chr is set to false, just use the list of sharded VCFs
