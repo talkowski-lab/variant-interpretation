@@ -76,6 +76,7 @@ task subsetVCF{
     }
 
     command <<<
+        tabix -p vcf ~{vcf_input}
         bcftools view -R ~{positions} ~{vcf_input} -O z -o ~{output_name}
     >>>
 
