@@ -299,8 +299,8 @@ task getGenomicDisorders{
     RuntimeAttr runtime_attr = select_first([runtime_attr_override, default_attr])
 
     output{
-        File gd_output_from_final_vcf = "gd.variants.from.final.vcf.txt"
-        File gd_output_from_depth_raw_files = "~{chromosome}.gd.variants.in.depth.raw.files.txt"
+        File gd_output_from_final_vcf = "gd.variants.from.final.vcf.txt.gz"
+        File gd_output_from_depth_raw_files = "~{chromosome}.gd.variants.in.depth.raw.files.txt.gz"
         File gd_output_for_denovo = "annotated.gd.variants.names.txt"
     }
 
@@ -313,7 +313,8 @@ task getGenomicDisorders{
         echo "Done with first line"
 
         bedtools intersect -wa -wb -f 0.3 -r -a ~{vcf_file} -b ~{genomic_disorder_input} > gd.variants.from.final.vcf.txt
-        
+        bgzip gd.variants.from.final.vcf.txt
+
         echo "Done with GD from vcf"
         
         Rscript /src/variant-interpretation/scripts/create_per_sample_bed.R ~{genomic_disorder_input} unsorted.gd.per.sample.txt unsorted.gd.per.family.txt ~{ped} ~{chromosome}
@@ -352,7 +353,7 @@ task getGenomicDisorders{
         echo "done with grep"
 
         cat ~{chromosome}.gd.variants.in.depth.raw.file.proband.txt ~{chromosome}.gd.variants.in.depth.raw.file.parents.txt ~{chromosome}.kept.coverage.txt > ~{chromosome}.gd.variants.in.depth.raw.files.txt
-        
+        bgzip ~{chromosome}.gd.variants.in.depth.raw.files.txt
         echo "done with cat"
     >>>
 
@@ -389,13 +390,14 @@ task mergeGenomicDisorders{
     RuntimeAttr runtime_attr = select_first([runtime_attr_override, default_attr])
 
     output{
-        File gd_output_from_depth = "gd.raw.files.output.txt"
+        File gd_output_from_depth = "gd.raw.files.output.txt.gz"
     }
 
     command {
         set -euo pipefail
 
-        cat ${sep=" " genomic_disorder_input} > gd.raw.files.output.txt
+        zcat ${sep=" " genomic_disorder_input} > gd.raw.files.output.txt
+        bgzip gd.raw.files.output.txt
     }
 
     runtime {
