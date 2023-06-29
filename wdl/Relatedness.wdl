@@ -11,7 +11,7 @@ workflow relatedness {
         File vcf_list
         File ped_file
         File positions
-
+        Boolean split_by_chr
         String relatedness_docker
 
         Array[String] contigs
@@ -23,7 +23,7 @@ workflow relatedness {
     }
 
     ##Split chromosome
-    if (defined(contigs)){
+    if (split_by_chr){
 
         File vcf_file = read_lines(vcf_list)[0]
         File vcf_file_index = vcf_file + ".tbi"
@@ -48,7 +48,7 @@ workflow relatedness {
 
         File vcf_index = vcf + ".tbi"
 
-        call subsetVCF{
+        call subsetPositionsVCF{
             input:
                 vcf_input=vcf,
                 positions=positions,
@@ -124,10 +124,10 @@ task splitVCF{
     }
 }
 
-task subsetVCF{
+task subsetPositionsVCF{
     input{
         File vcf_input
-        String contig
+        File positions
         String docker
         RuntimeAttr? runtime_attr_override
     }
@@ -151,7 +151,7 @@ task subsetVCF{
 
     command <<<
         tabix -p vcf ~{vcf_input}
-        bcftools view -R ~{contig} ~{vcf_input} -O z -o ~{output_name}
+        bcftools view -R ~{positions} ~{vcf_input} -O z -o ~{output_name}
     >>>
 
     runtime {
