@@ -2,22 +2,52 @@ version 1.0
 
 import "Structs.wdl"
 
+"""
+This script runs relatedness
+"""
+
 workflow relatedness {
 
     input {
         File vcf_list
         File ped_file
         File positions
+
+        Boolean split_by_chr
         String relatedness_docker
+
+        Array[String]? contigs
 
         RuntimeAttr? runtime_attr_override_subset
         RuntimeAttr? runtime_attr_override_merge
         RuntimeAttr? runtime_attr_override_plink
+        RuntimeAttr? runtime_attr_override_split_by_chr
     }
 
-    Array[File] vcf_files = read_lines(vcf_list)
+    ##Split chromosome
+    if (split_by_chr){
+
+        File vcf_file = read_lines(vcf_list)[0]
+        File vcf_file_index = vcf_file + ".tbi"
+
+        scatter (contig in contigs) {
+
+            call splitVCF{
+                input:
+                    input_vcf = vcf_file,
+                    input_vcf_index = vcf_file_index,
+                    contig = contig,
+                    docker = relatedness_docker,
+                    runtime_attr_override = runtime_attr_override_split_by_chr
+            }
+      }
+    }
+
+    ##If split by chr is set to false, just use the list of sharded VCFs
+    Array[File] vcf_files = select_first([splitVCF.vcf_output, read_lines(vcf_list)])
 
     scatter (vcf in vcf_files) {
+
         call subsetVCF{
             input:
                 vcf_input=vcf,
@@ -50,10 +80,54 @@ workflow relatedness {
     }
 }
 
+
+task splitVCF{
+    input{
+        File input_vcf
+        File input_vcf_index
+        String contig
+        String docker
+        RuntimeAttr? runtime_attr_override
+    }
+
+    RuntimeAttr default_attr = object {
+        cpu: 1,
+        mem_gb: 12,
+        disk_gb: 4,
+        boot_disk_gb: 8,
+        preemptible: 3,
+        max_retries: 1
+    }
+
+    RuntimeAttr runtime_attr = select_first([runtime_attr_override, default_attr])
+
+    String output_name = contig + "_" + vcf_input
+
+    output{
+        File vcf_output = output_name
+    }
+
+    command <<<
+        tabix -p vcf ~{vcf_input}
+        bcftools view -R ~{chrom} ~{vcf_input} -O z -o ~{output_name}
+    >>>
+
+    runtime {
+        cpu: select_first([runtime_attr.cpu, default_attr.cpu])
+        memory: select_first([runtime_attr.mem_gb, default_attr.mem_gb]) + " GiB"
+        disks: "local-disk " + select_first([runtime_attr.disk_gb, default_attr.disk_gb]) + " HDD"
+        bootDiskSizeGb: select_first([runtime_attr.boot_disk_gb, default_attr.boot_disk_gb])
+        preemptible: select_first([runtime_attr.preemptible, default_attr.preemptible])
+        maxRetries: select_first([runtime_attr.max_retries, default_attr.max_retries])
+        docker: docker
+    }
+}
+
 task subsetVCF{
     input{
         File vcf_input
-        File positions
+        File vcf_file_index
+        String contig
         String docker
         RuntimeAttr? runtime_attr_override
     }
@@ -77,7 +151,7 @@ task subsetVCF{
 
     command <<<
         tabix -p vcf ~{vcf_input}
-        bcftools view -R ~{positions} ~{vcf_input} -O z -o ~{output_name}
+        bcftools view -R ~{contig} ~{vcf_input} -O z -o ~{output_name}
     >>>
 
     runtime {
