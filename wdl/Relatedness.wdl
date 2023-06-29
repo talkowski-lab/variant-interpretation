@@ -102,7 +102,7 @@ task splitVCF{
 
     RuntimeAttr runtime_attr = select_first([runtime_attr_override, default_attr])
 
-    String output_name = contig + "_" + input_vcf
+    String output_name = basename(input_vcf, "vcf.gz") + contig + ".vcf.gz"
 
     output{
         File vcf_output = output_name
@@ -110,7 +110,7 @@ task splitVCF{
 
     command <<<
         tabix -p vcf ~{input_vcf}
-        bcftools view -R ~{contig} ~{input_vcf} -O z -o ~{output_name}
+        bcftools view -r ~{contig} ~{input_vcf} -O z -o ~{output_name}
     >>>
 
     runtime {
