@@ -14,7 +14,7 @@ workflow relatedness {
 
         String relatedness_docker
 
-        Array[String]? contigs
+        Array[String] contigs
 
         RuntimeAttr? runtime_attr_override_subset
         RuntimeAttr? runtime_attr_override_merge
