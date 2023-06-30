@@ -242,7 +242,7 @@ task generate_families{
 
     command <<<
         set -euo pipefail
-        cat ~{bed} | gunzip | tail -n+2 | cut -f6 | tr ',' '\n' | sort -u > samples.txt #must have header line
+        cat ~{bed} | gunzip | tail -n+2 | cut -f 1-6 | grep 'DEL\|DUP' | cut -f6 | tr ',' '\n' | sort -u > samples.txt #must have header line
         grep -w -f samples.txt ~{ped_file} | cut -f1 | sort -u  > families.txt
         >>>
 
