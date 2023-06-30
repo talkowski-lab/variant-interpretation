@@ -147,8 +147,8 @@ task runIGV_whole_genome_localize{
             
             while read sample crai cram new_cram new_crai
             do
-                mv cram new_cram
-                mv crai new_crai
+                mv $cram $new_cram
+                mv $crai $new_crai
             done<changed_sample_crai_cram.txt
 
             i=0
