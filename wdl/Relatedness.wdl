@@ -61,6 +61,7 @@ workflow relatedness {
     call mergeVCF{
         input:
             input_vcfs=subsetPositionsVCF.vcf_output,
+            input_vcfs_index=subsetPositionsVCF.vcf_output_index,
             docker = relatedness_docker,
             runtime_attr_override = runtime_attr_override_merge
     }
@@ -147,11 +148,13 @@ task subsetPositionsVCF{
 
     output{
         File vcf_output = output_name
+        File vcf_output_index = output_name + ".tbi"
     }
 
     command <<<
         tabix -p vcf ~{vcf_input}
         bcftools view -R ~{positions} ~{vcf_input} -O z -o ~{output_name}
+        tabix -p vcf ~{output_name}
     >>>
 
     runtime {
@@ -168,6 +171,7 @@ task subsetPositionsVCF{
 task mergeVCF{
     input{
         Array [File] input_vcfs
+        Array [File] input_vcfs_index
         String docker
         RuntimeAttr? runtime_attr_override
     }
@@ -188,7 +192,6 @@ task mergeVCF{
     }
 
     command <<<
-        tabix -p vcf ~{sep=' ' input_vcfs}
         bcftools merge ~{sep=' ' input_vcfs} -Oz -o merged.5kpurcell.vcf.gz
     >>>
 
