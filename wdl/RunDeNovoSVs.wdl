@@ -168,7 +168,7 @@ workflow deNovoSV {
     #merges the per chromosome de novo SV outputs
     call plot_mergeFinalBedFiles{
         input:
-            bed_files = getDeNovo.merged_denovo_output_file,
+            bed_files = getDeNovo.merged_annotation_output_file,
             variant_interpretation_docker=variant_interpretation_docker,
             runtime_attr_override = runtime_attr_merge_final_bed_files
     }
@@ -203,6 +203,7 @@ workflow deNovoSV {
         File cleaned_ped = cleanPed.cleaned_ped
         File denovo_output = callOutliers.final_denovo_output
         File denovo_outliers_output = callOutliers.final_denovo_outliers_output
+        File annotated_output = callOutliers.final_annotation_output
         File denovo_output_plots = plot_createPlots.output_plots
         File per_chrom_plot = plot_createPlots.per_chrom_plot
         File per_sample_plot = plot_createPlots.per_sample_plot
@@ -217,9 +218,7 @@ workflow deNovoSV {
         File per_type_boxplot = plot_createPlots.per_type_boxplot
         File gd_depth = mergeGenomicDisorders.gd_output_from_depth
         File gd_vcf = getGenomicDisorders.gd_output_from_final_vcf[1]
-        Array[Array[File]] filtered_out = getDeNovo.filtered_out
-        Array[Array[File]] size_file_out = getDeNovo.size_file_out
-        Array[Array[File]] coverage_file_out = getDeNovo.coverage_output_file
+        
     }
 }
 
@@ -300,8 +299,8 @@ task getGenomicDisorders{
     RuntimeAttr runtime_attr = select_first([runtime_attr_override, default_attr])
 
     output{
-        File gd_output_from_final_vcf = "gd.variants.from.final.vcf.txt"
-        File gd_output_from_depth_raw_files = "~{chromosome}.gd.variants.in.depth.raw.files.txt"
+        File gd_output_from_final_vcf = "gd.variants.from.final.vcf.txt.gz"
+        File gd_output_from_depth_raw_files = "~{chromosome}.gd.variants.in.depth.raw.files.txt.gz"
         File gd_output_for_denovo = "annotated.gd.variants.names.txt"
     }
 
@@ -314,7 +313,8 @@ task getGenomicDisorders{
         echo "Done with first line"
 
         bedtools intersect -wa -wb -f 0.3 -r -a ~{vcf_file} -b ~{genomic_disorder_input} > gd.variants.from.final.vcf.txt
-        
+        bgzip gd.variants.from.final.vcf.txt
+
         echo "Done with GD from vcf"
         
         Rscript /src/variant-interpretation/scripts/create_per_sample_bed.R ~{genomic_disorder_input} unsorted.gd.per.sample.txt unsorted.gd.per.family.txt ~{ped} ~{chromosome}
@@ -353,7 +353,7 @@ task getGenomicDisorders{
         echo "done with grep"
 
         cat ~{chromosome}.gd.variants.in.depth.raw.file.proband.txt ~{chromosome}.gd.variants.in.depth.raw.file.parents.txt ~{chromosome}.kept.coverage.txt > ~{chromosome}.gd.variants.in.depth.raw.files.txt
-        
+        bgzip ~{chromosome}.gd.variants.in.depth.raw.files.txt
         echo "done with cat"
     >>>
 
@@ -390,13 +390,14 @@ task mergeGenomicDisorders{
     RuntimeAttr runtime_attr = select_first([runtime_attr_override, default_attr])
 
     output{
-        File gd_output_from_depth = "gd.raw.files.output.txt"
+        File gd_output_from_depth = "gd.raw.files.output.txt.gz"
     }
 
     command {
         set -euo pipefail
 
-        cat ${sep=" " genomic_disorder_input} > gd.raw.files.output.txt
+        zcat ${sep=" " genomic_disorder_input} > gd.raw.files.output.txt
+        bgzip gd.raw.files.output.txt
     }
 
     runtime {
@@ -477,6 +478,7 @@ task callOutliers{
     output{
         File final_denovo_output = "final.denovo.merged.bed.gz"
         File final_denovo_outliers_output = "final.denovo.merged.outliers.bed.gz"
+        File final_annotation_output = "de_novo_annotated_output.bed.gz"
     }
 
     command {
@@ -485,6 +487,7 @@ task callOutliers{
         python3.9 /src/variant-interpretation/scripts/deNovoOutliers.py --bed ~{bed_file}
         bgzip final.denovo.merged.bed
         bgzip final.denovo.merged.outliers.bed
+        bgzip de_novo_annotated_output.bed
 
     }
 

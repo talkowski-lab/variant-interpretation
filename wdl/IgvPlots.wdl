@@ -23,16 +23,20 @@ workflow IGV {
         String buffer
         String buffer_large
         String igv_docker
+        String variant_interpretation_docker
         RuntimeAttr? runtime_attr_igv
         RuntimeAttr? runtime_attr_localize_reads
         Array[String]? crams_parse
         Array[String]? crais_parse
+        File? updated_sample_crai_cram
+        File? sample_crai_cram
         
     }
 
     if (cram_localization) {
         Array[File] crams_localize_ = select_first([crams_localize])
         Array[File] crais_localize_ = select_first([crais_localize])
+        File sample_crai_cram_ = select_first([sample_crai_cram])
 
         if (requester_pays){
         # move the reads nearby -- handles requester_pays and makes cross-region transfers just once
@@ -54,6 +58,7 @@ workflow IGV {
                 samples = samples,
                 crams = select_first([LocalizeReadsLocalize.output_file, crams_localize_]),
                 crais = select_first([LocalizeReadsLocalize.output_index, crais_localize_]),
+                sample_crai_cram = sample_crai_cram_,
                 buffer = buffer,
                 buffer_large = buffer_large,
                 reference = reference,
@@ -66,6 +71,7 @@ workflow IGV {
     if (!(cram_localization)) {
         Array[String] crams_parse_ = select_first([crams_parse])
         Array[String] crais_parse_ = select_first([crais_parse])
+        File updated_sample_crai_cram_ = select_first([updated_sample_crai_cram])
 
         if (requester_pays){
         # move the reads nearby -- handles requester_pays and makes cross-region transfers just once
@@ -85,8 +91,7 @@ workflow IGV {
                 family = family,
                 ped_file = ped_file,
                 samples = samples,
-                crams = select_first([LocalizeReadsParse.output_file, crams_parse_]),
-                crais = select_first([LocalizeReadsParse.output_index, crais_parse_]),
+                updated_sample_crai_cram = updated_sample_crai_cram_,
                 buffer = buffer,
                 buffer_large = buffer_large,
                 reference = reference,
@@ -111,6 +116,7 @@ task runIGV_whole_genome_localize{
             Array[String] samples
             Array[File] crams
             Array[File] crais
+            File sample_crai_cram
             String buffer
             String buffer_large
             String igv_docker
@@ -134,12 +140,23 @@ task runIGV_whole_genome_localize{
     command <<<
             set -euo pipefail
             mkdir pe_igv_plots
+            head -n+1 ~{ped_file} > family_ped.txt
+            grep -w ~{family} ~{ped_file} >> family_ped.txt
+            python3.6 /src/renameCramsLocalize.py --ped family_ped.txt --scc ~{sample_crai_cram}
+            cut -f4 changed_sample_crai_cram.txt > crams.txt
+            
+            while read sample crai cram new_cram new_crai
+            do
+                mv $cram $new_cram
+                mv $crai $new_crai
+            done<changed_sample_crai_cram.txt
+
             i=0
             while read -r line
             do
                 let "i=$i+1"
                 echo "$line" > new.varfile.$i.bed
-                python /src/makeigvpesr.py -v new.varfile.$i.bed -fam_id ~{family} -samples ~{sep="," samples} -crams ${write_lines(crams)} -p ~{ped_file} -o pe_igv_plots -b ~{buffer} -l ~{buffer_large} -i pe.$i.txt -bam pe.$i.sh
+                python /src/makeigvpesr.py -v new.varfile.$i.bed -fam_id ~{family} -samples ~{sep="," samples} -crams crams.txt -p ~{ped_file} -o pe_igv_plots -b ~{buffer} -l ~{buffer_large} -i pe.$i.txt -bam pe.$i.sh
                 bash pe.$i.sh
                 xvfb-run --server-args="-screen 0, 1920x540x24" bash /IGV_Linux_2.16.0/igv.sh -b pe.$i.txt
             done < ~{varfile}
@@ -172,8 +189,7 @@ task runIGV_whole_genome_parse{
         String family
         File ped_file
         Array[String] samples
-        Array[String] crams
-        Array[String] crais
+        File updated_sample_crai_cram
         String buffer
         String buffer_large
         String igv_docker
@@ -200,13 +216,13 @@ task runIGV_whole_genome_parse{
             cat ~{varfile} | cut -f1-3 | awk '{if ($3-$2>=15000) print $1"\t"$2"\t"$2 "\n" $1"\t"$3"\t"$3;else print}' | awk '{$2-=3000}1' OFS='\t' | awk '{$3+=3000}1' OFS='\t' | sort -k1,1 -k2,2n | bgzip -c > regions.bed.gz
             tabix -p bed regions.bed.gz
             #localize cram files
-            for cram in ~{sep=' ' crams}
+            while read sample crai cram new_cram new_crai
             do
-                name=$(echo $cram|awk -F"/" '{print $NF}'|sed 's/.cram//g')
+                name=$(echo $new_cram|awk -F"/" '{print $NF}'|sed 's/.cram//g')
                 export GCS_OAUTH_TOKEN=`gcloud auth application-default print-access-token`
-                samtools view -h -C -T ~{reference} -o new.$name.cram $cram -L regions.bed.gz -M
-                samtools index new.$name.cram
-            done
+                samtools view -h -C -T ~{reference} -o $name.cram $cram -L regions.bed.gz -M
+                samtools index $name.cram
+            done<~{updated_sample_crai_cram}
             ls *.cram > crams.txt
 
             i=0
