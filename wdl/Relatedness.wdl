@@ -188,6 +188,7 @@ task mergeVCF{
     }
 
     command <<<
+        tabix -p vcf ~{sep=' ' input_vcfs}
         bcftools merge ~{sep=' ' input_vcfs} -Oz -o merged.5kpurcell.vcf.gz
     >>>
 
