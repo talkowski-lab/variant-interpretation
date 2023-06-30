@@ -94,7 +94,7 @@ workflow IGV_all_samples {
                     requester_pays = requester_pays,
                     crams_localize = generate_per_family_sample_crai_cram.per_family_crams_files,
                     crais_localize = generate_per_family_sample_crai_cram.per_family_crais_files,
-                    sample_crai_cram = sample_crai_cram,
+                    sample_crai_cram = generate_per_family_sample_crai_cram.subset_sample_crai_cram,
                     buffer = buffer,
                     buffer_large = buffer_large,
                     reference = reference,
