@@ -10,11 +10,7 @@ workflow relatedness {
     input {
         File vcf_list
         File positions
-        File exclude_input
-
         Boolean split_by_chr
-        Boolean is_snv_indel
-
         String relatedness_docker
 
         Array[String] contigs
@@ -51,41 +47,20 @@ workflow relatedness {
 
         File vcf_index = vcf + ".tbi"
 
-        if (is_snv_indel) {
-            call subsetPositionsVCF{
-                input:
-                    vcf_input=vcf,
-                    positions=positions,
-                    docker = relatedness_docker,
-                    runtime_attr_override = runtime_attr_override_subset
-            }
+        call subsetPositionsVCF{
+            input:
+                vcf_input=vcf,
+                positions=positions,
+                docker = relatedness_docker,
+                runtime_attr_override = runtime_attr_override_subset
         }
 
-        if (!is_snv_indel) {
-            call subsetSVs{
-                input:
-                    vcf_input=vcf,
-                    docker = relatedness_docker,
-                    runtime_attr_override = runtime_attr_override_subset
-            }
-
-            call excludeSVregions{
-                input:
-                    vcf_input=vcf,
-                    exclude_input=exclude_input,
-                    docker = relatedness_docker,
-                    runtime_attr_override = runtime_attr_override_subset
-                }
-            }
-        }
-
-    Array[File] subset_files = select_first([subsetPositionsVCF.vcf_output, excludeSVregions.vcf_output])
-    Array[File] subset_files_index = select_first([subsetPositionsVCF.vcf_output_index, excludeSVregions.vcf_output_index])
+    }
 
     call mergeVCF{
         input:
-            input_vcfs=subset_files,
-            input_vcfs_index=subset_files_index,
+            input_vcfs=subsetPositionsVCF.vcf_output,
+            input_vcfs_index=subsetPositionsVCF.vcf_output_index,
             docker = relatedness_docker,
             runtime_attr_override = runtime_attr_override_merge
     }
@@ -164,7 +139,7 @@ task subsetPositionsVCF{
 
     RuntimeAttr runtime_attr = select_first([runtime_attr_override, default_attr])
 
-    String output_name = basename(vcf_input, "vcf.gz") + "subset.vcf.gz"
+    String output_name = basename(vcf_input, "vcf.gz") + "5kpurcell.vcf.gz"
 
     output{
         File vcf_output = output_name
@@ -174,98 +149,6 @@ task subsetPositionsVCF{
     command <<<
         tabix -p vcf ~{vcf_input}
         bcftools view -R ~{positions} ~{vcf_input} -O z -o ~{output_name}
-        tabix -p vcf ~{output_name}
-    >>>
-
-    runtime {
-        cpu: select_first([runtime_attr.cpu, default_attr.cpu])
-        memory: select_first([runtime_attr.mem_gb, default_attr.mem_gb]) + " GiB"
-        disks: "local-disk " + select_first([runtime_attr.disk_gb, default_attr.disk_gb]) + " HDD"
-        bootDiskSizeGb: select_first([runtime_attr.boot_disk_gb, default_attr.boot_disk_gb])
-        preemptible: select_first([runtime_attr.preemptible, default_attr.preemptible])
-        maxRetries: select_first([runtime_attr.max_retries, default_attr.max_retries])
-        docker: docker
-    }
-}
-
-task subsetSVs{
-    input{
-        File vcf_input
-        String docker
-        RuntimeAttr? runtime_attr_override
-    }
-
-    RuntimeAttr default_attr = object {
-        cpu: 1,
-        mem_gb: 12,
-        disk_gb: 4,
-        boot_disk_gb: 8,
-        preemptible: 3,
-        max_retries: 1
-    }
-
-    RuntimeAttr runtime_attr = select_first([runtime_attr_override, default_attr])
-
-    String output_name = basename(vcf_input, "vcf.gz") + "subset.vcf.gz"
-
-    output{
-        File vcf_output = output_name
-        File vcf_output_index = output_name + ".tbi"
-    }
-
-    command <<<
-        tabix -p vcf ~{vcf_input}
-        bcftools view ~{vcf_input} | grep -E "^#|DEL|DUP|INS" | \
-            bcftools view -i 'INFO/gnomad_v2.1_sv_AF>0.05' | \
-            bcftools view -i 'AF>0.05' | \
-            bcftools view -e 'AF>0.9' | \
-            grep -vE "^chrX|^chrY" | \
-            grep -v "HIGH_SR_BACKGROUND" | \
-            grep -v "ALGORITHMS=wham;" | bgzip -c > ~{output_name}
-        tabix -p vcf ~{output_name}
-    >>>
-
-    runtime {
-        cpu: select_first([runtime_attr.cpu, default_attr.cpu])
-        memory: select_first([runtime_attr.mem_gb, default_attr.mem_gb]) + " GiB"
-        disks: "local-disk " + select_first([runtime_attr.disk_gb, default_attr.disk_gb]) + " HDD"
-        bootDiskSizeGb: select_first([runtime_attr.boot_disk_gb, default_attr.boot_disk_gb])
-        preemptible: select_first([runtime_attr.preemptible, default_attr.preemptible])
-        maxRetries: select_first([runtime_attr.max_retries, default_attr.max_retries])
-        docker: docker
-    }
-}
-
-task excludeSVregions{
-    input{
-        File vcf_input
-        File exclude_input
-        String docker
-        RuntimeAttr? runtime_attr_override
-    }
-
-    RuntimeAttr default_attr = object {
-        cpu: 1,
-        mem_gb: 12,
-        disk_gb: 4,
-        boot_disk_gb: 8,
-        preemptible: 3,
-        max_retries: 1
-    }
-
-    RuntimeAttr runtime_attr = select_first([runtime_attr_override, default_attr])
-
-    String output_name = basename(vcf_input, "vcf.gz") + "exclude.vcf.gz"
-
-    output{
-        File vcf_output = output_name
-        File vcf_output_index = output_name + ".tbi"
-    }
-
-    command <<<
-        bcftools view -h ~{vcf_input} > tmp.vcf
-        bedtools intersect -a ~{vcf_input} -b ~{exclude_input} -v -f 0.5 -r | bgzip -c >> tmp.vcf
-        mv tmp.vcf ~{output_name}
         tabix -p vcf ~{output_name}
     >>>
 
@@ -300,10 +183,10 @@ task mergeVCF{
     RuntimeAttr runtime_attr = select_first([runtime_attr_override, default_attr])
 
     output{
-        File merged_vcf = "merged.subset.vcf.gz"
+        File merged_vcf = "merged.5kpurcell.vcf.gz"
     }
     command <<<
-        bcftools concat ~{sep=' ' input_vcfs} -Oz -o merged.subset.vcf.gz
+        bcftools concat ~{sep=' ' input_vcfs} -Oz -o merged.5kpurcell.vcf.gz
     >>>
 
     runtime {
