@@ -18,7 +18,6 @@ workflow relatedness {
 
         RuntimeAttr? runtime_attr_override_subset
         RuntimeAttr? runtime_attr_override_merge
-        RuntimeAttr? runtime_attr_override_plink
         RuntimeAttr? runtime_attr_override_vcftools
         RuntimeAttr? runtime_attr_override_split_by_chr
     }
