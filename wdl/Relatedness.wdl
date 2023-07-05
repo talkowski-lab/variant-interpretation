@@ -69,7 +69,7 @@ workflow relatedness {
                     runtime_attr_override = runtime_attr_override_subset
             }
 
-            if defined(exclude_input){
+            if (defined(exclude_input)){
                 call excludeSVregions{
                     input:
                         vcf_input=vcf,
