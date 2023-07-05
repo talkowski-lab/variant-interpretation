@@ -11,6 +11,7 @@ workflow relatedness {
         File vcf_list
         File positions
         Boolean split_by_chr
+        Boolean is_snv_indel
         String relatedness_docker
 
         Array[String] contigs
@@ -47,20 +48,31 @@ workflow relatedness {
 
         File vcf_index = vcf + ".tbi"
 
-        call subsetPositionsVCF{
-            input:
-                vcf_input=vcf,
-                positions=positions,
-                docker = relatedness_docker,
-                runtime_attr_override = runtime_attr_override_subset
+        if(is_snv_indel == true){
+            call subsetPositionsVCF{
+                input:
+                    vcf_input=vcf,
+                    positions=positions,
+                    docker = relatedness_docker,
+                    runtime_attr_override = runtime_attr_override_subset
+            }
+        } else {
+            call subsetSVs{
+                input:
+                    vcf_input=vcf,
+                    docker = relatedness_docker,
+                    runtime_attr_override = runtime_attr_override_subset
+            }
         }
-
     }
+
+    Array[File] subset_files = select_first([subsetPositionsVCF.vcf_output, subsetSVs.vcf_output])
+    Array[File] subset_files_index = select_first([subsetPositionsVCF.vcf_output_index, subsetSVs.vcf_output_index])
 
     call mergeVCF{
         input:
-            input_vcfs=subsetPositionsVCF.vcf_output,
-            input_vcfs_index=subsetPositionsVCF.vcf_output_index,
+            input_vcfs=subset_files,
+            input_vcfs_index=subset_files_index,
             docker = relatedness_docker,
             runtime_attr_override = runtime_attr_override_merge
     }
@@ -150,6 +162,47 @@ task subsetPositionsVCF{
         tabix -p vcf ~{vcf_input}
         bcftools view -R ~{positions} ~{vcf_input} -O z -o ~{output_name}
         tabix -p vcf ~{output_name}
+    >>>
+
+    runtime {
+        cpu: select_first([runtime_attr.cpu, default_attr.cpu])
+        memory: select_first([runtime_attr.mem_gb, default_attr.mem_gb]) + " GiB"
+        disks: "local-disk " + select_first([runtime_attr.disk_gb, default_attr.disk_gb]) + " HDD"
+        bootDiskSizeGb: select_first([runtime_attr.boot_disk_gb, default_attr.boot_disk_gb])
+        preemptible: select_first([runtime_attr.preemptible, default_attr.preemptible])
+        maxRetries: select_first([runtime_attr.max_retries, default_attr.max_retries])
+        docker: docker
+    }
+}
+
+task subsetSVs{
+    input{
+        File vcf_input
+        String docker
+        RuntimeAttr? runtime_attr_override
+    }
+
+    RuntimeAttr default_attr = object {
+        cpu: 1,
+        mem_gb: 12,
+        disk_gb: 4,
+        boot_disk_gb: 8,
+        preemptible: 3,
+        max_retries: 1
+    }
+
+    RuntimeAttr runtime_attr = select_first([runtime_attr_override, default_attr])
+
+    String output_name = basename(vcf_input, "vcf.gz") + "subset.vcf.gz"
+
+    output{
+        File vcf_output = output_name
+        File vcf_output_index = output_name + ".tbi"
+    }
+
+    command <<<
+        tabix -p vcf ~{vcf_input}
+        ###PENDING
     >>>
 
     runtime {
