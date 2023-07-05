@@ -75,8 +75,8 @@ workflow relatedness {
     }
 
     output{
-        File output_relatedness = runPlink.out_relatedness
-        File output_log = runPlink.out_log
+        File output_relatedness = runVCFTools.out_relatedness
+        File output_log = runVCFTools.out_log
     }
 }
 
