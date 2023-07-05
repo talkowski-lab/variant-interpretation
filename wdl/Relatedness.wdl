@@ -10,6 +10,7 @@ workflow relatedness {
     input {
         File vcf_list
         File positions
+        File? exclude_input
         Boolean split_by_chr
         Boolean is_snv_indel
         String relatedness_docker
@@ -66,18 +67,20 @@ workflow relatedness {
                     runtime_attr_override = runtime_attr_override_subset
             }
 
-            call excludeSVregions{
-                input:
-                    vcf_input=vcf,
-                    exclude_input=exclude_input,
-                    docker = relatedness_docker,
-                    runtime_attr_override = runtime_attr_override_subset
+            if(exclude_input){
+                call excludeSVregions{
+                    input:
+                        vcf_input=vcf,
+                        exclude_input=exclude_input,
+                        docker = relatedness_docker,
+                        runtime_attr_override = runtime_attr_override_subset
+                }
             }
         }
     }
 
-    Array[File] subset_files = select_first([subsetPositionsVCF.vcf_output, excludeSVregions.vcf_output])
-    Array[File] subset_files_index = select_first([subsetPositionsVCF.vcf_output_index, excludeSVregions.vcf_output_index])
+    Array[File] subset_files = select_first([subsetPositionsVCF.vcf_output, excludeSVregions.vcf_output, subsetSVs.vcf_output])
+    Array[File] subset_files_index = select_first([subsetPositionsVCF.vcf_output_index, excludeSVregions.vcf_output_index, , subsetSVs.vcf_output_index])
 
     call mergeVCF{
         input:
