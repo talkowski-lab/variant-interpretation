@@ -11,8 +11,10 @@ workflow relatedness {
         File vcf_list
         File positions
         File? exclude_input
+
         Boolean split_by_chr
         Boolean is_snv_indel
+
         String relatedness_docker
 
         Array[String] contigs
@@ -239,7 +241,7 @@ task subsetSVs{
 task excludeSVregions{
     input{
         File vcf_input
-        File exclude_input
+        File? exclude_input
         String docker
         RuntimeAttr? runtime_attr_override
     }
