@@ -19,6 +19,7 @@ workflow relatedness {
         RuntimeAttr? runtime_attr_override_subset
         RuntimeAttr? runtime_attr_override_merge
         RuntimeAttr? runtime_attr_override_plink
+        RuntimeAttr? runtime_attr_override_vcftools
         RuntimeAttr? runtime_attr_override_split_by_chr
     }
 
@@ -66,19 +67,16 @@ workflow relatedness {
             runtime_attr_override = runtime_attr_override_merge
     }
 
-    call runPlink{
+    call runVCFTools{
         input:
             input_vcf = mergeVCF.merged_vcf,
-            ped_file = ped_file,
             docker = relatedness_docker,
-            runtime_attr_override = runtime_attr_override_plink
+            runtime_attr_override = runtime_attr_override_vcftools
     }
 
     output{
-        File kin = runPlink.kin
-        File kin0 = runPlink.kin0
-        File smiss = runPlink.smissing
-        File vmiss = runPlink.vmissing
+        File output_relatedness = runPlink.out_relatedness
+        File output_log = runPlink.out_log
     }
 }
 
@@ -192,6 +190,45 @@ task mergeVCF{
     }
     command <<<
         bcftools concat ~{sep=' ' input_vcfs} -Oz -o merged.5kpurcell.vcf.gz
+    >>>
+
+    runtime {
+        cpu: select_first([runtime_attr.cpu, default_attr.cpu])
+        memory: select_first([runtime_attr.mem_gb, default_attr.mem_gb]) + " GiB"
+        disks: "local-disk " + select_first([runtime_attr.disk_gb, default_attr.disk_gb]) + " HDD"
+        bootDiskSizeGb: select_first([runtime_attr.boot_disk_gb, default_attr.boot_disk_gb])
+        preemptible: select_first([runtime_attr.preemptible, default_attr.preemptible])
+        maxRetries: select_first([runtime_attr.max_retries, default_attr.max_retries])
+        docker: docker
+    }
+}
+
+task runVCFTools{
+    input{
+        File input_vcf
+        String docker
+        RuntimeAttr? runtime_attr_override
+    }
+
+    RuntimeAttr default_attr = object {
+        cpu: 1,
+        mem_gb: 8,
+        disk_gb: 4,
+        boot_disk_gb: 4,
+        preemptible: 3,
+        max_retries: 1
+    }
+
+    RuntimeAttr runtime_attr = select_first([runtime_attr_override, default_attr])
+
+    output{
+        File out_relatedness = "out.relatedness2"
+        File out_log = "out.log"
+    }
+
+    command <<<
+        ##Run VCFtools
+        vcftools --gzvcf ~{input_vcf} --relatedness2
     >>>
 
     runtime {
