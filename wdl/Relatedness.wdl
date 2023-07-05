@@ -78,7 +78,6 @@ workflow relatedness {
                 }
             }
         }
-    }
 
     Array[File] subset_files = select_first([subsetPositionsVCF.vcf_output, excludeSVregions.vcf_output, subsetSVs.vcf_output])
     Array[File] subset_files_index = select_first([subsetPositionsVCF.vcf_output_index, excludeSVregions.vcf_output_index, subsetSVs.vcf_output_index])
