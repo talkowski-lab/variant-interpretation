@@ -56,7 +56,9 @@ workflow relatedness {
                     docker = relatedness_docker,
                     runtime_attr_override = runtime_attr_override_subset
             }
-        }else{
+        }
+
+        if (!is_snv_indel) {
             call subsetSVs{
                 input:
                     vcf_input=vcf,
