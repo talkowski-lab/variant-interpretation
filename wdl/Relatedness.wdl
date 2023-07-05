@@ -9,7 +9,6 @@ workflow relatedness {
 
     input {
         File vcf_list
-        File ped_file
         File positions
         Boolean split_by_chr
         String relatedness_docker
