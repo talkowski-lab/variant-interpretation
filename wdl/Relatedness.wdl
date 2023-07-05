@@ -69,13 +69,12 @@ workflow relatedness {
                     runtime_attr_override = runtime_attr_override_subset
             }
 
-            if (defined(exclude_input)){
-                call excludeSVregions{
-                    input:
-                        vcf_input=vcf,
-                        exclude_input=exclude_input,
-                        docker = relatedness_docker,
-                        runtime_attr_override = runtime_attr_override_subset
+            call excludeSVregions{
+                input:
+                    vcf_input=vcf,
+                    exclude_input=exclude_input,
+                    docker = relatedness_docker,
+                    runtime_attr_override = runtime_attr_override_subset
                 }
             }
         }
