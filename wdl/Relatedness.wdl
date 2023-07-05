@@ -48,7 +48,7 @@ workflow relatedness {
 
         File vcf_index = vcf + ".tbi"
 
-        if is_snv_indel == true then
+        if (is_snv_indel) {
             call subsetPositionsVCF{
                 input:
                     vcf_input=vcf,
@@ -56,7 +56,7 @@ workflow relatedness {
                     docker = relatedness_docker,
                     runtime_attr_override = runtime_attr_override_subset
             }
-        else
+        }else{
             call subsetSVs{
                 input:
                     vcf_input=vcf,
