@@ -69,7 +69,7 @@ workflow relatedness {
                     runtime_attr_override = runtime_attr_override_subset
             }
 
-            if(exclude_input){
+            if defined(exclude_input){
                 call excludeSVregions{
                     input:
                         vcf_input=vcf,
@@ -241,7 +241,7 @@ task subsetSVs{
 task excludeSVregions{
     input{
         File vcf_input
-        File? exclude_input
+        File exclude_input
         String docker
         RuntimeAttr? runtime_attr_override
     }
