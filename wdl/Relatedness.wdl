@@ -241,7 +241,7 @@ task subsetSVs{
 task excludeSVregions{
     input{
         File vcf_input
-        File exclude_input
+        File? exclude_input
         String docker
         RuntimeAttr? runtime_attr_override
     }
