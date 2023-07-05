@@ -10,7 +10,7 @@ workflow relatedness {
     input {
         File vcf_list
         File positions
-        File? exclude_input
+        File exclude_input
 
         Boolean split_by_chr
         Boolean is_snv_indel
