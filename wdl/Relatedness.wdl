@@ -75,7 +75,6 @@ workflow relatedness {
 
     output{
         File output_relatedness = runVCFTools.out_relatedness
-        File output_log = runVCFTools.out_log
     }
 }
 
@@ -222,7 +221,6 @@ task runVCFTools{
 
     output{
         File out_relatedness = "out.relatedness2"
-        File out_log = "out.log"
     }
 
     command <<<
