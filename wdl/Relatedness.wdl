@@ -186,7 +186,9 @@ task mergeVCF{
         File merged_vcf = "merged.5kpurcell.vcf.gz"
     }
     command <<<
-        bcftools concat ~{sep=' ' input_vcfs} -Oz -o merged.5kpurcell.vcf.gz
+        bcftools concat -a ~{sep=' ' input_vcfs} | bcftools sort | \
+            bcftools view - -Oz -o merged.5kpurcell.vcf.gz
+
     >>>
 
     runtime {
