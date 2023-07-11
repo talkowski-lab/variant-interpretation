@@ -8,6 +8,7 @@ version 1.0
 
 import "IgvPlots.wdl" as igv_plots
 import "Structs.wdl"
+import "EvidencePlots.wdl" as evidence
 
 workflow IGV_all_samples {
     input {
@@ -63,11 +64,22 @@ workflow IGV_all_samples {
         call generate_per_family_bed{
             input:
                 varfile = updateCpxBed.bed_output,
-                samples = update_sample_pe_sr.per_family_samples,
+                samples = generate_per_family_sample_pe_sr.per_family_samples,
                 family = family,
                 ped_file = ped_file,
                 sv_base_mini_docker=sv_base_mini_docker,
                 runtime_attr_override=runtime_attr_run_igv
+        }
+
+        call evidence.IGV_evidence as IGV_evidence{
+            input:
+                varfile = generate_per_family_bed.per_family_varfile,
+                samples = generate_per_family_sample_pe_sr.per_family_samples,
+                disc_files = generate_per_family_sample_pe_sr.per_family_pe_files,
+                split_files = generate_per_family_sample_pe_sr.per_family_sr_files,
+                variant_interpretation_docker = variant_interpretation_docker,
+                runtime_attr_reformat_pe = runtime_attr_reformat_pe,
+                runtime_attr_reformat_sr = runtime_attr_reformat_sr
         }
         
         call igv_plots.IGV as IGV {
@@ -75,11 +87,11 @@ workflow IGV_all_samples {
                 varfile = generate_per_family_bed.per_family_varfile,
                 family = family,
                 ped_file = ped_file,
-                samples = update_sample_crai_cram.per_family_samples,
+                samples = generate_per_family_sample_pe_sr.per_family_samples,
                 cram_localization = cram_localization,
                 requester_pays = requester_pays,
-                pe = generate_per_family_sample_pe_sr.per_family_pe_files,
-                sr = generate_per_family_sample_pe_sr.per_family_sr_files,
+                pe = IGV_evidence.pe_files,
+                sr = IGV_evidence.sr_files,
                 sample_pe_sr = generate_per_family_sample_crai_cram.subset_sample_pe_sr,
                 buffer = buffer,
                 buffer_large = buffer_large,
