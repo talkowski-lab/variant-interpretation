@@ -13,12 +13,10 @@ workflow IGV_all_samples {
     input {
         File ped_file
         File? fam_ids
-        File sample_crai_cram
+        File sample_pe_sr
         File varfile
         File reference
         File reference_index
-        Boolean cram_localization
-        Boolean requester_pays
         String prefix
         String buffer
         String buffer_large
@@ -53,84 +51,49 @@ workflow IGV_all_samples {
         }
     }
     scatter (family in select_first([family_ids, generate_families.families])){
-        call generate_per_family_sample_crai_cram{
+        call generate_per_family_sample_pe_sr{
             input:
                 family = family,
                 ped_file = ped_file,
-                sample_crai_cram = sample_crai_cram,
+                sample_crai_cram = sample_pe_sr,
                 sv_base_mini_docker = sv_base_mini_docker,
                 runtime_attr_override = runtime_attr_run_igv
             }
 
-        call update_sample_crai_cram{
-            input:
-                family = family,
-                ped_file = ped_file,
-                sample_crai_cram = generate_per_family_sample_crai_cram.subset_sample_crai_cram,
-                crais_files = generate_per_family_sample_crai_cram.per_family_crais_strings,
-                crams_files = generate_per_family_sample_crai_cram.per_family_crams_strings,
-                variant_interpretation_docker = variant_interpretation_docker,
-                runtime_attr_override = runtime_attr_update_scc
-        }
-
         call generate_per_family_bed{
             input:
                 varfile = updateCpxBed.bed_output,
-                samples = update_sample_crai_cram.per_family_samples,
+                samples = update_sample_pe_sr.per_family_samples,
                 family = family,
                 ped_file = ped_file,
                 sv_base_mini_docker=sv_base_mini_docker,
                 runtime_attr_override=runtime_attr_run_igv
         }
         
-        if (cram_localization){
-            call igv_plots.IGV as IGV_localize {
-                input:
-                    varfile = generate_per_family_bed.per_family_varfile,
-                    family = family,
-                    ped_file = ped_file,
-                    samples = update_sample_crai_cram.per_family_samples,
-                    cram_localization = cram_localization,
-                    requester_pays = requester_pays,
-                    crams_localize = generate_per_family_sample_crai_cram.per_family_crams_files,
-                    crais_localize = generate_per_family_sample_crai_cram.per_family_crais_files,
-                    sample_crai_cram = generate_per_family_sample_crai_cram.subset_sample_crai_cram,
-                    buffer = buffer,
-                    buffer_large = buffer_large,
-                    reference = reference,
-                    reference_index = reference_index,
-                    igv_docker = igv_docker,
-                    variant_interpretation_docker = variant_interpretation_docker,
-                    runtime_attr_igv = runtime_attr_igv
-            }
-        }
-
-        if (!(cram_localization)){
-            call igv_plots.IGV as IGV_parse {
-                input:
-                    varfile = generate_per_family_bed.per_family_varfile,
-                    family = family,
-                    ped_file = ped_file,
-                    cram_localization = cram_localization,
-                    requester_pays = requester_pays,
-                    crams_parse = generate_per_family_sample_crai_cram.per_family_crams_files,
-                    crais_parse = generate_per_family_sample_crai_cram.per_family_crais_files,
-                    samples = update_sample_crai_cram.per_family_samples,
-                    updated_sample_crai_cram = update_sample_crai_cram.changed_sample_crai_cram,
-                    buffer = buffer,
-                    buffer_large = buffer_large,
-                    reference = reference,
-                    reference_index = reference_index,
-                    igv_docker = igv_docker,
-                    variant_interpretation_docker = variant_interpretation_docker,
-                    runtime_attr_igv = runtime_attr_igv
-            }
+        call igv_plots.IGV as IGV {
+            input:
+                varfile = generate_per_family_bed.per_family_varfile,
+                family = family,
+                ped_file = ped_file,
+                samples = update_sample_crai_cram.per_family_samples,
+                cram_localization = cram_localization,
+                requester_pays = requester_pays,
+                pe = generate_per_family_sample_pe_sr.per_family_pe_files,
+                sr = generate_per_family_sample_pe_sr.per_family_sr_files,
+                sample_pe_sr = generate_per_family_sample_crai_cram.subset_sample_pe_sr,
+                buffer = buffer,
+                buffer_large = buffer_large,
+                reference = reference,
+                reference_index = reference_index,
+                igv_docker = igv_docker,
+                variant_interpretation_docker = variant_interpretation_docker,
+                runtime_attr_igv = runtime_attr_igv
         }
     }
     
     call integrate_igv_plots{
         input:
-            igv_tar = select_all(flatten([IGV_localize.tar_gz_pe, IGV_parse.tar_gz_pe])),
+            igv_tar = select_all(flatten(IGV_localize.tar_gz_pe)),
             prefix = prefix, 
             sv_base_mini_docker = sv_base_mini_docker,
             runtime_attr_override = runtime_attr_run_igv
@@ -185,15 +148,15 @@ task generate_families{
 
 }
 
-task generate_per_family_sample_crai_cram{
+task generate_per_family_sample_pe_sr{
     input {
         String family
         File ped_file
-        File sample_crai_cram
+        File sample_pe_sr
         String sv_base_mini_docker
         RuntimeAttr? runtime_attr_override
     }
-    Float input_size = size(select_all([sample_crai_cram, ped_file]), "GB")
+    Float input_size = size(select_all([sample_pe_sr, ped_file]), "GB")
     Float base_mem_gb = 3.75
 
     RuntimeAttr default_attr = object {
@@ -210,19 +173,17 @@ task generate_per_family_sample_crai_cram{
     command <<<
         set -euo pipefail
         grep -w ~{family} ~{ped_file} | cut -f2 > samples_list.txt
-        grep -f samples_list.txt ~{sample_crai_cram} > subset_sample_crai_cram.txt
-        cut -f1 subset_sample_crai_cram.txt > samples.txt
-        cut -f2 subset_sample_crai_cram.txt > crai.txt
-        cut -f3 subset_sample_crai_cram.txt > cram.txt
+        grep -f samples_list.txt ~{sample_pe_sr} > subset_sample_pe_sr.txt
+        cut -f1 subset_sample_pe_sr.txt > samples.txt
+        cut -f2 subset_sample_pe_sr.txt > pe.txt
+        cut -f3 subset_sample_pe_sr.txt > sr.txt
         >>>
 
     output{
         Array[String] per_family_samples = read_lines("samples.txt")
-        Array[File] per_family_crams_files = read_lines("cram.txt")
-        Array[File] per_family_crais_files = read_lines("crai.txt")
-        Array[String] per_family_crams_strings = read_lines("cram.txt")
-        Array[String] per_family_crais_strings = read_lines("crai.txt")
-        File subset_sample_crai_cram = "subset_sample_crai_cram.txt"
+        Array[File] per_family_pe_files = read_lines("pe.txt")
+        Array[File] per_family_sr_files = read_lines("sr.txt")
+        File subset_sample_pe_sr = "subset_sample_pe_sr.txt"
     }
 
     runtime {
