@@ -34,6 +34,9 @@ workflow VisualizePlots{
         RuntimeAttr? runtime_attr_cpx
         RuntimeAttr? runtime_attr_concatinate
         RuntimeAttr? runtime_attr_rdtest
+        RuntimeAttr? runtime_attr_reformat_pe
+        RuntimeAttr? runtime_attr_reformat_sr
+        RuntimeAttr? runtime_attr_update_pe_sr
     }
     
     #creates RD plots for DELs and DUPs
@@ -81,7 +84,10 @@ workflow VisualizePlots{
                 variant_interpretation_docker = variant_interpretation_docker,
                 runtime_attr_run_igv = runtime_attr_run_igv,
                 runtime_attr_igv = runtime_attr_igv,
-                runtime_attr_cpx = runtime_attr_cpx
+                runtime_attr_cpx = runtime_attr_cpx,
+                runtime_attr_reformat_pe = runtime_attr_reformat_pe,
+                runtime_attr_reformat_sr = runtime_attr_reformat_sr
+                runtime_attr_update_pe_sr = runtime_attr_update_pe_sr   
            }
         }
 

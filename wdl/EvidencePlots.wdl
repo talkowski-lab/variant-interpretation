@@ -16,6 +16,7 @@ workflow IGV_evidence {
         String variant_interpretation_docker
         RuntimeAttr? runtime_attr_reformat_pe
         RuntimeAttr? runtime_attr_reformat_sr
+        RuntimeAttr? runtime_attr_update_pe_sr
     }
 
     scatter (i in length(samples)){
@@ -36,13 +37,24 @@ workflow IGV_evidence {
                 split_files=split_files[i],
                 variant_interpretation_docker=variant_interpretation_docker,
                 runtime_attr_override=runtime_attr_reformat_sr
-
         }
     }
 
+    call update_sample_pe_sr{
+        input:
+            pe = IGV_evidence.pe_strings,
+            sr = IGV_evidence.sr_strings,
+            samples = samples,
+            variant_interpretation_docker = variant_interpretation_docker,
+            runtime_attr_override = runtime_attr_update_pe_sr
+        }
+
     output{
         Array[File] pe_files = reformatPE.pe_reformat
-        Array[File] sr_files = reformatSR.sr_reformat   
+        Array[File] sr_files = reformatSR.sr_reformat
+        Array[String] pe_strings = reformatPE.pe_reformat_string
+        Array[String] sr_strings = reformatSR.sr_reformat_string
+        File updated_sample_pe_sr = update_sample_pe_sr.changed_sample_pe_sr   
     }
 }
 
@@ -96,6 +108,7 @@ task reformatPE{
     }
     output{
         File pe_reformat="~{sample}.pe_roi.junctions.bed"
+        String pe_reformat_string="~{sample}.pe_roi.junctions.bed"
     }
 }
 
@@ -151,5 +164,52 @@ task reformatSR{
     }
     output{
         File sr_reformat="~{sample}.sr_roi.junctions.bed"
-        }
+        String sr_reformat_string="~{sample}.sr_roi.junctions.bed"
+    }
+}
+
+task update_sample_pe_sr{
+    input {
+        Array[String] pe
+        Array[String] sr
+        Array[String] samples
+        String variant_interpretation_docker
+        RuntimeAttr? runtime_attr_override
+    }
+    
+    Float base_mem_gb = 3.75
+
+    RuntimeAttr default_attr = object {
+                                      mem_gb: base_mem_gb,
+                                      disk_gb: ceil(10),
+                                      cpu: 1,
+                                      preemptible: 2,
+                                      max_retries: 1,
+                                      boot_disk_gb: 8
+                                  }
+
+    RuntimeAttr runtime_attr = select_first([runtime_attr_override, default_attr])
+
+    command <<<
+           pe = ~{write_lines(pe)}
+           sr = ~{write_lines(sr)}
+           samples = ~{write_lines(samples)}
+           paste samples pe sr > updated_samples_pe_sr.txt
+
+        >>>
+
+    output{
+        File changed_sample_pe_sr = "updated_samples_pe_sr.txt"
+    }
+
+    runtime {
+        cpu: select_first([runtime_attr.cpu, default_attr.cpu])
+        memory: select_first([runtime_attr.mem_gb, default_attr.mem_gb]) + " GiB"
+        disks: "local-disk " + select_first([runtime_attr.disk_gb, default_attr.disk_gb]) + " HDD"
+        bootDiskSizeGb: select_first([runtime_attr.boot_disk_gb, default_attr.boot_disk_gb])
+        docker: variant_interpretation_docker
+        preemptible: select_first([runtime_attr.preemptible, default_attr.preemptible])
+        maxRetries: select_first([runtime_attr.max_retries, default_attr.max_retries])
+  }
+
 }
