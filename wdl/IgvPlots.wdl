@@ -46,7 +46,7 @@ workflow IGV {
     }
 
     output{
-        File tar_gz_pe = select_first([runIGV_whole_genome_localize.pe_plots, runIGV_whole_genome_parse.pe_plots])
+        File tar_gz_pe = runIGV_whole_genome.pe_plots
     }
 }
 
@@ -86,9 +86,9 @@ task runIGV_whole_genome{
             mkdir pe_igv_plots
             head -n+1 ~{ped_file} > family_ped.txt
             grep -w ~{family} ~{ped_file} >> family_ped.txt
-            python3.6 /src/renamePESR.py --ped family_ped.txt --scc ~{sample_pe_sr}
+            python3.6 /src/renamePESRLocalize.py --ped family_ped.txt --pesr ~{sample_pe_sr}
             cut -f4 changed_sample_pe_sr.txt > sr.txt
-            cut -f5 changed_sample_pe_sr.txt > pe.txt
+            cut -f5 changed_sample_pe_sr.txt > discordant.txt
             
             while read sample pe sr new_sr new_pe
             do
@@ -101,7 +101,7 @@ task runIGV_whole_genome{
             do
                 let "i=$i+1"
                 echo "$line" > new.varfile.$i.bed
-                python /src/makeigvpesr.py -v new.varfile.$i.bed -fam_id ~{family} -samples ~{sep="," samples} -crams crams.txt -p ~{ped_file} -o pe_igv_plots -b ~{buffer} -l ~{buffer_large} -i pe.$i.txt -bam pe.$i.sh
+                python /src/makeigvpe_sr.py -v new.varfile.$i.bed -fam_id ~{family} -samples ~{sep="," samples} -pe discordant.txt -sr sr.txt -p ~{ped_file} -o pe_igv_plots -b ~{buffer} -l ~{buffer_large} -i pe.$i.txt -bam pe.$i.sh
                 bash pe.$i.sh
                 xvfb-run --server-args="-screen 0, 1920x540x24" bash /IGV_Linux_2.16.0/igv.sh -b pe.$i.txt
             done < ~{varfile}

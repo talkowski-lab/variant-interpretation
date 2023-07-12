@@ -13,7 +13,8 @@ parser.add_argument('-fam_id','--fam_id', type=str, help='family to plot')
 parser.add_argument('-p', '--ped', type=str, help='ped file')
 #parser.add_argument('cram_list', type=str, help='comma separated list of all cram files to run igv on')
 parser.add_argument('-samples', '--samples', type=str, help='List of all samples to run igv on')
-parser.add_argument('-crams', '--crams', type=str, help='File of all cram files to run igv on')
+parser.add_argument('-pe', '--pe', type=str, help='File of all pe files to run igv on')
+parser.add_argument('-sr', '--sr', type=str, help='File of all sr files to run igv on')
 parser.add_argument('-o', '--outdir', type=str, help = 'output folder')
 parser.add_argument('-b', '--buff', type=str, help='length of buffer to add around variants', default=500)
 parser.add_argument('-l', '--large_buff', type=str, help='length of buffer for large regions to add around variants', default=500)
@@ -68,9 +69,13 @@ def cram_info_readin(cram_file):
 #cram_info = cram_info_readin(args.cram_list)
 
 #If file inputs
-cram_colnames = colnames=[ 'cram'] 
-cram = pd.read_csv(args.crams, sep='\t', names= cram_colnames, header=None).replace(np.nan, '', regex=True)
-cram_list = cram['cram'].tolist()
+pe_colnames = colnames=[ 'pe'] 
+pe = pd.read_csv(args.pe, sep='\t', names= pe_colnames, header=None).replace(np.nan, '', regex=True)
+pe_list = pe['pe'].tolist()
+
+sr_colnames = colnames=[ 'sr'] 
+sr = pd.read_csv(args.sr, sep='\t', names= sr_colnames, header=None).replace(np.nan, '', regex=True)
+sr_list = sr['sr'].tolist()
 #cram_list = [c.replace('gs://', '/cromwell_root/') for c in cram_list_]
 
 #sample_colnames = colnames=[ 'samples'] 
@@ -79,6 +84,7 @@ cram_list = cram['cram'].tolist()
 
 samples_list = args.samples.split(',')
 #cram_list=args.crams.split(',')
+'''
 mydict = {key:value for key, value in zip(samples_list,cram_list)}
 ped = pd.read_csv(pedigree, sep='\t', header=0).replace(np.nan, '', regex=True)
 ped['FatherID'] = ped['FatherID'].astype(str)
@@ -96,6 +102,7 @@ for sample_id in samples_list:
 			cram_list.remove(affected_cram_file)
 			cram_list.insert(1, affected_cram_file)
 print(cram_list)
+'''
 
 with open(bamfiscript,'w') as h:
     h.write("#!/bin/bash\n")
@@ -115,8 +122,10 @@ with open(bamfiscript,'w') as h:
                 Start=str(int(dat[1]))
                 End=str(int(dat[2]))
                 ID=dat[3]
-                for cram in cram_list:
-                        g.write('load '+cram+'\n')
+                for pe in pe_list:
+                        g.write('load '+pe+'\n')
+                for sr in sr_list:
+                        g.write('load '+sr+'\n')
                 if int(End)-int(Start)<10000:
                     g.write('goto '+Chr+":"+Start_Buff+'-'+End_Buff+'\n')
                     g.write('region '+Chr+":"+Start+'-'+End+'\n')

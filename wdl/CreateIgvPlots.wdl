@@ -23,6 +23,7 @@ workflow IGV_all_samples {
         String buffer_large
         String sv_base_mini_docker
         String igv_docker
+        Boolean run_snv_indel
         String variant_interpretation_docker
         RuntimeAttr? runtime_attr_run_igv
         RuntimeAttr? runtime_attr_igv
@@ -37,17 +38,19 @@ workflow IGV_all_samples {
         Array[String] family_ids = transpose(read_tsv(fam_ids_))[0]
     }
 
-    call updateCpxBed{
-        input:
-            varfile = varfile,
-            variant_interpretation_docker = variant_interpretation_docker,
-            runtime_attr_override = runtime_attr_cpx
+    if (!(run_snv_indel)){
+        call updateCpxBed{
+            input:
+                varfile = varfile,
+                variant_interpretation_docker = variant_interpretation_docker,
+                runtime_attr_override = runtime_attr_cpx
+        }
     }
 
     if (!(defined(fam_ids))) {
         call generate_families{
             input:
-                varfile = updateCpxBed.bed_output,
+                varfile = select_first([updateCpxBed.bed_output, varfile]),
                 ped_file = ped_file,
                 sv_base_mini_docker = sv_base_mini_docker,
                 runtime_attr_override = runtime_attr_run_igv
@@ -65,7 +68,7 @@ workflow IGV_all_samples {
 
         call generate_per_family_bed{
             input:
-                varfile = updateCpxBed.bed_output,
+                varfile = select_first([updateCpxBed.bed_output, varfile]),
                 samples = generate_per_family_sample_pe_sr.per_family_samples,
                 family = family,
                 ped_file = ped_file,
@@ -106,7 +109,7 @@ workflow IGV_all_samples {
     
     call integrate_igv_plots{
         input:
-            igv_tar = select_all(flatten(IGV_localize.tar_gz_pe)),
+            igv_tar = select_all(flatten(IGV.tar_gz_pe)),
             prefix = prefix, 
             sv_base_mini_docker = sv_base_mini_docker,
             runtime_attr_override = runtime_attr_run_igv
