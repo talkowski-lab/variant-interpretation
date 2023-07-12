@@ -24,7 +24,7 @@ workflow IGV_evidence {
             input:
                 varfile=varfile,
                 sample = samples[i],
-                disc_files=disc_files[i],
+                disc_file=disc_files[i],
                 variant_interpretation_docker=variant_interpretation_docker,
                 runtime_attr_override=runtime_attr_reformat_pe
 
@@ -34,7 +34,7 @@ workflow IGV_evidence {
             input:
                 varfile=varfile,
                 sample = samples[i],
-                split_files=split_files[i],
+                split_file=split_files[i],
                 variant_interpretation_docker=variant_interpretation_docker,
                 runtime_attr_override=runtime_attr_reformat_sr
         }
@@ -67,7 +67,7 @@ task reformatPE{
         RuntimeAttr? runtime_attr_override
     }
 
-    Float input_size = size(select_all([varfile, disc_files]), "GB")
+    Float input_size = size(select_all([varfile, disc_file]), "GB")
     Float base_mem_gb = 3.75
 
     RuntimeAttr default_attr = object {
@@ -122,7 +122,7 @@ task reformatSR{
         RuntimeAttr? runtime_attr_override
     }
 
-    Float input_size = size(select_all([varfile, split_files]), "GB")
+    Float input_size = size(select_all([varfile, split_file]), "GB")
     Float base_mem_gb = 3.75
 
     RuntimeAttr default_attr = object {
@@ -143,7 +143,7 @@ task reformatSR{
             tabix -p bed regions.bed.gz
 
             ##Reformat split reads
-            zcat ~{file} | awk -F"\t" 'BEGIN { OFS="\t" }{print $1,$2-5,$2+5,$3,$4}' | \
+            zcat ~{split_file} | awk -F"\t" 'BEGIN { OFS="\t" }{print $1,$2-5,$2+5,$3,$4}' | \
                 sed -e 's/left/-/g' | \
                 sed -e 's/right/+/g' | \
                 bgzip -c > tmp.bed.gz
