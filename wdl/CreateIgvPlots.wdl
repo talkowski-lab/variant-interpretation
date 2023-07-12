@@ -84,7 +84,7 @@ workflow IGV_all_samples {
                 split_files = generate_per_family_sample_pe_sr.per_family_sr_files,
                 variant_interpretation_docker = variant_interpretation_docker,
                 runtime_attr_reformat_pe = runtime_attr_reformat_pe,
-                runtime_attr_reformat_sr = runtime_attr_reformat_sr
+                runtime_attr_reformat_sr = runtime_attr_reformat_sr,
                 runtime_attr_update_pe_sr = runtime_attr_update_pe_sr
         }
         
