@@ -42,8 +42,8 @@ workflow IGV_evidence {
 
     call update_sample_pe_sr{
         input:
-            pe = IGV_evidence.pe_strings,
-            sr = IGV_evidence.sr_strings,
+            pe = reformatPE.pe_reformat_string,
+            sr = reformatSR.sr_reformat_string,
             samples = samples,
             variant_interpretation_docker = variant_interpretation_docker,
             runtime_attr_override = runtime_attr_update_pe_sr
