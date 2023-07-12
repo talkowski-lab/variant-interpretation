@@ -19,7 +19,7 @@ workflow IGV_evidence {
         RuntimeAttr? runtime_attr_update_pe_sr
     }
 
-    scatter (i in length(samples)){
+    scatter (i in range(length(samples))){
         call reformatPE{
             input:
                 varfile=varfile,
