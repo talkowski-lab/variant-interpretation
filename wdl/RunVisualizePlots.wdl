@@ -89,7 +89,7 @@ workflow VisualizePlots{
                 runtime_attr_igv = runtime_attr_igv,
                 runtime_attr_cpx = runtime_attr_cpx,
                 runtime_attr_reformat_pe = runtime_attr_reformat_pe,
-                runtime_attr_reformat_sr = runtime_attr_reformat_sr
+                runtime_attr_reformat_sr = runtime_attr_reformat_sr,
                 runtime_attr_update_pe_sr = runtime_attr_update_pe_sr   
            }
         }
