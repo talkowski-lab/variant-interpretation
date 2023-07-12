@@ -23,7 +23,7 @@ workflow IGV_all_samples {
         String buffer_large
         String sv_base_mini_docker
         String igv_docker
-        Boolean run_snv_indel
+        Boolean is_snv_indel
         String variant_interpretation_docker
         RuntimeAttr? runtime_attr_run_igv
         RuntimeAttr? runtime_attr_igv
@@ -38,7 +38,7 @@ workflow IGV_all_samples {
         Array[String] family_ids = transpose(read_tsv(fam_ids_))[0]
     }
 
-    if (!(run_snv_indel)){
+    if (!(is_snv_indel)){
         call updateCpxBed{
             input:
                 varfile = varfile,

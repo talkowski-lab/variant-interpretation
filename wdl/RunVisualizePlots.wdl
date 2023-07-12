@@ -28,7 +28,7 @@ workflow VisualizePlots{
 
         Boolean run_RD 
         Boolean run_IGV
-        Boolean? run_snv_indel
+        Boolean? is_snv_indel
 
         RuntimeAttr? runtime_attr_run_igv
         RuntimeAttr? runtime_attr_igv
@@ -69,7 +69,7 @@ workflow VisualizePlots{
         File buffer_large_ = select_first([buffer_large,1000])
         File reference_ = select_first([reference])
         File reference_index_ = select_first([reference_index])
-        Boolean run_snv_indel_ = if defined(run_snv_indel) then select_first([run_snv_indel]) else false
+        Boolean is_snv_indel_ = if defined(is_snv_indel) then select_first([is_snv_indel]) else false
         call igv.IGV_all_samples as igv_plots {
             input:
                 ped_file = pedfile,
@@ -81,7 +81,7 @@ workflow VisualizePlots{
                 reference = reference_,
                 reference_index = reference_index_,
                 prefix = prefix,
-                run_snv_indel = run_snv_indel_,
+                is_snv_indel = is_snv_indel_,
                 sv_base_mini_docker = sv_base_mini_docker,
                 igv_docker = igv_docker,
                 variant_interpretation_docker = variant_interpretation_docker,
