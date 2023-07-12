@@ -88,6 +88,7 @@ task reformatPE{
 
             ##Reformat disc reads
             zcat ~{disc_file} | \
+                grep -w ~{sample} | \
                 awk '$1 == $4 {print $1"\t"$2"\t"$5"\t.\t1\t"$3"\t255,0,0"}' | \
                 sed -e 's/-\t255,0,0/-\t0,255,0/g' | \
                 bgzip -c >  tmp.bed.gz
@@ -142,14 +143,15 @@ task reformatSR{
             tabix -p bed regions.bed.gz
 
             ##Reformat split reads
-            zcat ~{split_file} | awk -F"\t" 'BEGIN { OFS="\t" }{print $1,$2-5,$2+5,$3,$4}' | \
+            zcat ~{split_file} | grep -w ~{sample} | \
+            awk -F"\t" 'BEGIN { OFS="\t" }{print $1,$2-5,$2+5,$3,$4}' | \
                 sed -e 's/left/-/g' | \
                 sed -e 's/right/+/g' | \
                 bgzip -c > tmp.bed.gz
 
             tabix -p bed tmp.bed.gz
             tabix -R regions.bed.gz tmp.bed.gz | \
-                bgzip -c > ~{sample}.sr_roi.junctions.bed
+                bgzip -c > ~{sample}.sr_roi.bed.gz
             >>>
 
     runtime {
@@ -162,8 +164,8 @@ task reformatSR{
         docker: variant_interpretation_docker
     }
     output{
-        File sr_reformat="~{sample}.sr_roi.junctions.bed"
-        String sr_reformat_string="~{sample}.sr_roi.junctions.bed"
+        File sr_reformat="~{sample}.sr_roi.bed.gz"
+        String sr_reformat_string="~{sample}.sr_roi.bed.gz"
     }
 }
 
