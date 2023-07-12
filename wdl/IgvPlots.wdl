@@ -14,7 +14,6 @@ workflow IGV {
         String family
         File ped_file
         Array[String] samples
-        Boolean requester_pays
         Array[File] pe
         Array[File] sr
         File reference

@@ -9,7 +9,6 @@ import "Structs.wdl"
 workflow IGV_evidence {
     input{
         File varfile
-        String family
         Array[String] samples
         Array[File] disc_files
         Array[File] split_files
