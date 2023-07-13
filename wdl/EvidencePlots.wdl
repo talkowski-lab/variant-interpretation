@@ -192,10 +192,8 @@ task update_sample_pe_sr{
     RuntimeAttr runtime_attr = select_first([runtime_attr_override, default_attr])
 
     command <<<
-           pe = ~{write_lines(pe)}
-           sr = ~{write_lines(sr)}
-           samples = ~{write_lines(samples)}
-           paste samples pe sr > updated_samples_pe_sr.txt
+        
+           paste ~{write_lines(samples)} ~{write_lines(pe)} ~{write_lines(sr)} > updated_samples_pe_sr.txt
 
         >>>
 
