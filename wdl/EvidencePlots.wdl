@@ -41,8 +41,8 @@ workflow IGV_evidence {
 
     call update_sample_pe_sr{
         input:
-            pe = reformatPE.pe_reformat_string,
-            sr = reformatSR.sr_reformat_string,
+            pe = write_lines(reformatPE.pe_reformat_string),
+            sr = write_lines(reformatSR.sr_reformat_string),
             samples = samples,
             variant_interpretation_docker = variant_interpretation_docker,
             runtime_attr_override = runtime_attr_update_pe_sr
@@ -171,8 +171,8 @@ task reformatSR{
 
 task update_sample_pe_sr{
     input {
-        Array[String] pe
-        Array[String] sr
+        File pe
+        File sr
         Array[String] samples
         String variant_interpretation_docker
         RuntimeAttr? runtime_attr_override
@@ -193,7 +193,7 @@ task update_sample_pe_sr{
 
     command <<<
         
-           paste ~{write_lines(samples)} ~{write_lines(pe)} ~{write_lines(sr)} > updated_samples_pe_sr.txt
+           paste ~{write_lines(samples)} ~{pe} ~{sr} > updated_samples_pe_sr.txt
 
         >>>
 
