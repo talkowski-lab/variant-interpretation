@@ -27,7 +27,7 @@ samples_keep = sample_counts2[(sample_counts2['count'] <= count_threshold)]['sam
 output = bed[(bed['sample'].isin(samples_keep))]
 output_outliers = bed[(~bed['sample'].isin(samples_keep))]
 
-bed_original.loc[~(bed_original['sample'].isin(samples_keep)) & bed_original['is_de_novo'] == True, 'filter_flag'] = 'de_novo_outlier'
+bed_original.loc[~(bed_original['sample'].isin(samples_keep)) & bed_original['is_de_novo'] == True, 'filter_flag'] = 'sample_outlier'
 print(bed_original)
 # Write output
 output.to_csv(path_or_buf='final.denovo.merged.bed', mode='a', index=False, sep='\t', header=True)
