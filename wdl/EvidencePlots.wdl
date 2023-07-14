@@ -41,8 +41,8 @@ workflow IGV_evidence {
 
     call update_sample_pe_sr{
         input:
-            pe = write_lines(reformatPE.pe_reformat_string),
-            sr = write_lines(reformatSR.sr_reformat_string),
+            pe = reformatPE.pe_reformat,
+            sr = reformatSR.sr_reformat,
             samples = samples,
             variant_interpretation_docker = variant_interpretation_docker,
             runtime_attr_override = runtime_attr_update_pe_sr
@@ -171,12 +171,22 @@ task reformatSR{
 
 task update_sample_pe_sr{
     input {
-        File pe
-        File sr
+        Array[File] pe
+        Array[File] sr
         Array[String] samples
         String variant_interpretation_docker
         RuntimeAttr? runtime_attr_override
     }
+
+    parameter_meta {
+      pe: {
+        localization_optional: true
+      }
+      sr: {
+        localization_optional: true
+      }
+
+  }
     
     Float base_mem_gb = 3.75
 
@@ -193,7 +203,7 @@ task update_sample_pe_sr{
 
     command <<<
         
-           paste ~{write_lines(samples)} ~{pe} ~{sr} > updated_samples_pe_sr.txt
+           paste ~{write_lines(samples)} ~{write_lines(pe)} ~{write_lines(sr)} > updated_samples_pe_sr.txt
 
         >>>
 
