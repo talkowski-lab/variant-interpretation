@@ -707,7 +707,7 @@ vcf_metrics    """
 
     # 2. Filter by type
     # Keep any SV type that is not a DEL, DUP, or INS
-    keep_other_sv = bed_child[((~bed_child['SVTYPE'].isin(['DEL', 'DUP', 'INS'])) & (~bed_child['filter_flag'] == 'AF') & (~bed_child['filter_flag'] == 'in_parent'))]['name_famid'].to_list()
+    keep_other_sv = bed_child[((~bed_child['SVTYPE'].isin(['DEL', 'DUP', 'INS'])) & (bed_child['filter_flag'] != 'AF') & (bed_child['filter_flag'] != 'in_parent'))]['name_famid'].to_list()
 
     # 3. Filter on DELs, DUPs, and INS
     # Filter by size
