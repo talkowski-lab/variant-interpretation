@@ -19,6 +19,7 @@ workflow IGV_all_samples {
         File reference_index
         Boolean cram_localization
         Boolean requester_pays
+        Boolean is_snv_indel
         String prefix
         String buffer
         String buffer_large
@@ -36,17 +37,19 @@ workflow IGV_all_samples {
         Array[String] family_ids = transpose(read_tsv(fam_ids_))[0]
     }
 
-    call updateCpxBed{
-        input:
-            varfile = varfile,
-            variant_interpretation_docker = variant_interpretation_docker,
-            runtime_attr_override = runtime_attr_cpx
+    if (!(is_snv_indel)){
+        call updateCpxBed{
+            input:
+                varfile = varfile,
+                variant_interpretation_docker = variant_interpretation_docker,
+                runtime_attr_override = runtime_attr_cpx
+        }
     }
 
     if (!(defined(fam_ids))) {
         call generate_families{
             input:
-                varfile = updateCpxBed.bed_output,
+                varfile = select_first([updateCpxBed.bed_output, varfile]),
                 ped_file = ped_file,
                 sv_base_mini_docker = sv_base_mini_docker,
                 runtime_attr_override = runtime_attr_run_igv
@@ -75,7 +78,7 @@ workflow IGV_all_samples {
 
         call generate_per_family_bed{
             input:
-                varfile = updateCpxBed.bed_output,
+                varfile = select_first([updateCpxBed.bed_output, varfile]),
                 samples = update_sample_crai_cram.per_family_samples,
                 family = family,
                 ped_file = ped_file,
@@ -209,7 +212,7 @@ task generate_per_family_sample_crai_cram{
 
     command <<<
         set -euo pipefail
-        grep -w ~{family} ~{ped_file} | cut -f2 > samples_list.txt
+        grep -w ^~{family} ~{ped_file} | cut -f2 > samples_list.txt
         grep -f samples_list.txt ~{sample_crai_cram} > subset_sample_crai_cram.txt
         cut -f1 subset_sample_crai_cram.txt > samples.txt
         cut -f2 subset_sample_crai_cram.txt > crai.txt
@@ -263,7 +266,7 @@ task update_sample_crai_cram{
 
     command <<<
         head -n+1 ~{ped_file} > family_ped.txt
-        grep -w ~{family} ~{ped_file} >> family_ped.txt
+        grep -w ^~{family} ~{ped_file} >> family_ped.txt
         python3.9 /src/variant-interpretation/scripts/renameCrams.py --ped family_ped.txt --scc ~{sample_crai_cram}
         cut -f1 changed_sample_crai_cram.txt > samples.txt
         cut -f5 changed_sample_crai_cram.txt > crai.txt

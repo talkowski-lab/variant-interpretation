@@ -404,8 +404,8 @@ vcf_metrics    """
     # Sepparate variants in children and parents
     verbosePrint('Sepparate variants in children and parents', verbose)
     start = time.time()
-    bed_child = bed_split[bed_split['sample'].str.contains("|".join(children))]
-    bed_parents = bed_split[bed_split['sample'].str.contains("|".join(parents))]
+    bed_child = bed_split[bed_split['sample'].isin(children)]
+    bed_parents = bed_split[bed_split['sample'].isin(parents)]
     end = time.time()
     delta = end - start
     print("Took %f seconds to process" % delta)
@@ -707,7 +707,7 @@ vcf_metrics    """
 
     # 2. Filter by type
     # Keep any SV type that is not a DEL, DUP, or INS
-    keep_other_sv = bed_child[~bed_child['SVTYPE'].isin(['DEL', 'DUP', 'INS'])]['name_famid'].to_list()
+    keep_other_sv = bed_child[((~bed_child['SVTYPE'].isin(['DEL', 'DUP', 'INS'])) & (bed_child['filter_flag'] != 'AF') & (bed_child['filter_flag'] != 'in_parent'))]['name_famid'].to_list()
 
     # 3. Filter on DELs, DUPs, and INS
     # Filter by size
@@ -795,8 +795,8 @@ vcf_metrics    """
 
     # 5. Clean up and remove duplicated CPX SV
     # Keep SVs
-    bed_child.loc[bed_child['name_famid'].isin(keep_gd), 'is_de_novo'] = True
-    bed_child.loc[bed_child['name_famid'].isin(keep_gd), 'filter_flag'] = 'in_gd'
+    #bed_child.loc[bed_child['name_famid'].isin(keep_gd), 'is_de_novo'] = True
+    #bed_child.loc[bed_child['name_famid'].isin(keep_gd), 'filter_flag'] = 'in_gd'
     bed_child.loc[bed_child['name_famid'].isin(keep_other_sv), 'is_de_novo'] = True
     bed_child.loc[bed_child['name_famid'].isin(keep_other_sv), 'filter_flag'] = 'not_del_dup_ins'
 

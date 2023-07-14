@@ -22,6 +22,7 @@ workflow VisualizePlots{
         File? reference_index
         Boolean? cram_localization
         Boolean? requester_pays
+        Boolean? is_snv_indel
 
         String sv_base_mini_docker
         String sv_pipeline_rdtest_docker
@@ -69,6 +70,7 @@ workflow VisualizePlots{
         File reference_index_ = select_first([reference_index])
         Boolean cram_localization_ = if defined(cram_localization) then select_first([cram_localization]) else false
         Boolean requester_pays_ = if defined(requester_pays) then select_first([requester_pays]) else false
+        Boolean is_snv_indel_ = if defined(is_snv_indel) then select_first([is_snv_indel]) else false
 
         call igv.IGV_all_samples as igv_plots {
             input:
@@ -81,6 +83,7 @@ workflow VisualizePlots{
                 reference = reference_,
                 cram_localization = cram_localization_,
                 requester_pays = requester_pays_,
+                is_snv_indel = is_snv_indel_,
                 reference_index = reference_index_,
                 prefix = prefix,
                 sv_base_mini_docker = sv_base_mini_docker,
