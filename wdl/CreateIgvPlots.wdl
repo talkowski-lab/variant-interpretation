@@ -116,8 +116,8 @@ workflow IGV_all_samples {
                     ped_file = ped_file,
                     cram_localization = cram_localization,
                     requester_pays = requester_pays,
-                    crams_parse = generate_per_family_sample_crai_cram.per_family_crams_files,
-                    crais_parse = generate_per_family_sample_crai_cram.per_family_crais_files,
+                    crams_parse = generate_per_family_sample_crai_cram.per_family_crams_strings,
+                    crais_parse = generate_per_family_sample_crai_cram.per_family_crais_strings,
                     samples = update_sample_crai_cram.per_family_samples,
                     updated_sample_crai_cram = update_sample_crai_cram.changed_sample_crai_cram,
                     buffer = buffer,
@@ -275,10 +275,6 @@ task update_sample_crai_cram{
 
     output{
         Array[String] per_family_samples = read_lines("samples.txt")
-        Array[File] per_family_crams_files = read_lines("cram.txt")
-        Array[File] per_family_crais_files = read_lines("crai.txt")
-        Array[String] per_family_crams_strings = read_lines("cram.txt")
-        Array[String] per_family_crais_strings = read_lines("crai.txt")
         File changed_sample_crai_cram = "changed_sample_crai_cram.txt"
     }
 
