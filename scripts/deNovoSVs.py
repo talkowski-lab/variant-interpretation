@@ -404,8 +404,8 @@ vcf_metrics    """
     # Sepparate variants in children and parents
     verbosePrint('Sepparate variants in children and parents', verbose)
     start = time.time()
-    bed_child = bed_split[bed_split['sample'].str.contains("|".join(children))]
-    bed_parents = bed_split[bed_split['sample'].str.contains("|".join(parents))]
+    bed_child = bed_split[bed_split['sample'].isin(children)]
+    bed_parents = bed_split[bed_split['sample'].isin(parents)]
     end = time.time()
     delta = end - start
     print("Took %f seconds to process" % delta)
