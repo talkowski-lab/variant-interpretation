@@ -149,7 +149,7 @@ workflow IGV_all_samples {
                     runtime_attr_override = runtime_attr_update_scc
             }
 
-            call generate_per_family_bed_cram{
+            call generate_per_family_bed as generate_per_family_bed_cram{
                 input:
                     varfile = select_first([updateCpxBed.bed_output, varfile]),
                     samples = update_sample_crai_cram.per_family_samples,
