@@ -3,7 +3,8 @@ version 1.0
 
 import "Structs.wdl"
 import "RdVisualization.wdl" as rdtest
-import "CreateIgvPlots.wdl" as igv
+import "CreateIgvCramPlots.wdl" as igv_cram
+import "CreateIgvEvidencePlots.wdl" as igv_evidence
 
 workflow VisualizePlots{
     input{
@@ -75,38 +76,59 @@ workflow VisualizePlots{
         Boolean cram_localization_ = if defined(cram_localization) then select_first([cram_localization]) else false
         Boolean requester_pays_ = if defined(requester_pays) then select_first([requester_pays]) else false
         Boolean is_snv_indel_ = if defined(is_snv_indel) then select_first([is_snv_indel]) else false
-        call igv.IGV_all_samples as igv_plots {
-            input:
-                ped_file = pedfile,
-                sample_pe_sr = sample_pe_sr,
-                sample_crai_cram = sample_crai_cram,
-                buffer = buffer_,
-                fam_ids = fam_ids,
-                buffer_large = buffer_large_,
-                varfile = varfile,
-                reference = reference_,
-                reference_index = reference_index_,
-                prefix = prefix,
-                is_snv_indel = is_snv_indel_,
-                run_evidence_plots = run_evidence_plots,
-                run_cram_plots = run_cram_plots,
-                sv_base_mini_docker = sv_base_mini_docker,
-                igv_docker = igv_docker,
-                cram_localization = cram_localization_,
-                requester_pays = requester_pays_,
-                variant_interpretation_docker = variant_interpretation_docker,
-                runtime_attr_run_igv = runtime_attr_run_igv,
-                runtime_attr_igv = runtime_attr_igv,
-                runtime_attr_cpx = runtime_attr_cpx,
-                runtime_attr_reformat_pe = runtime_attr_reformat_pe,
-                runtime_attr_reformat_sr = runtime_attr_reformat_sr,
-                runtime_attr_update_pe_sr = runtime_attr_update_pe_sr   
-           }
+        if(run_evidence_plots){
+            call igv_evidence.IGV_all_samples as igv_evidence_plots {
+                input:
+                    ped_file = pedfile,
+                    sample_pe_sr = sample_pe_sr_,
+                    buffer = buffer_,
+                    fam_ids = fam_ids,
+                    buffer_large = buffer_large_,
+                    varfile = varfile,
+                    reference = reference_,
+                    reference_index = reference_index_,
+                    prefix = prefix,
+                    is_snv_indel = is_snv_indel_,
+                    sv_base_mini_docker = sv_base_mini_docker,
+                    igv_docker = igv_docker,
+                    variant_interpretation_docker = variant_interpretation_docker,
+                    runtime_attr_run_igv = runtime_attr_run_igv,
+                    runtime_attr_igv = runtime_attr_igv,
+                    runtime_attr_cpx = runtime_attr_cpx,
+                    runtime_attr_reformat_pe = runtime_attr_reformat_pe,
+                    runtime_attr_reformat_sr = runtime_attr_reformat_sr,
+                    runtime_attr_update_pe_sr = runtime_attr_update_pe_sr   
+            }
         }
+        
+        if(run_cram_plots){
+            call igv_cram.IGV_all_samples as igv_cram_plots {
+                input:
+                    ped_file = pedfile,
+                    sample_crai_cram = sample_crai_cram_,
+                    buffer = buffer_,
+                    fam_ids = fam_ids,
+                    buffer_large = buffer_large_,
+                    varfile = varfile,
+                    reference = reference_,
+                    cram_localization = cram_localization_,
+                    requester_pays = requester_pays_,
+                    is_snv_indel = is_snv_indel_,
+                    reference_index = reference_index_,
+                    prefix = prefix,
+                    sv_base_mini_docker = sv_base_mini_docker,
+                    igv_docker = igv_docker,
+                    variant_interpretation_docker = variant_interpretation_docker,
+                    runtime_attr_run_igv = runtime_attr_run_igv,
+                    runtime_attr_igv = runtime_attr_igv,
+                    runtime_attr_cpx = runtime_attr_cpx
+            }
+        }
+    }
 
     #creates a concatinated image with the IGV plot as the top pane and the RD plot as the bottom pane
     if (run_RD && run_IGV) {
-        File igv_plots_tar_gz_pe_ = select_first([igv_plots.tar_gz_pe])
+        File igv_plots_tar_gz_pe_ = select_first([igv_cram_plots.tar_gz_pe, igv_evidence_plots.tar_gz_pe])
         File RdTest_Plots_ = select_first([RdTest.Plots])
 
         call concatinate_plots{
