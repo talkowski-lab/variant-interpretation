@@ -312,6 +312,112 @@ task generate_per_family_sample_pe_sr{
 
 }
 
+task generate_per_family_sample_crai_cram{
+    input {
+        String family
+        File ped_file
+        File sample_crai_cram
+        String sv_base_mini_docker
+        RuntimeAttr? runtime_attr_override
+    }
+    Float input_size = size(select_all([sample_crai_cram, ped_file]), "GB")
+    Float base_mem_gb = 3.75
+
+    RuntimeAttr default_attr = object {
+                                      mem_gb: base_mem_gb,
+                                      disk_gb: ceil(10 + input_size),
+                                      cpu: 1,
+                                      preemptible: 2,
+                                      max_retries: 1,
+                                      boot_disk_gb: 8
+                                  }
+
+    RuntimeAttr runtime_attr = select_first([runtime_attr_override, default_attr])
+
+    command <<<
+        set -euo pipefail
+        grep -w ^~{family} ~{ped_file} | cut -f2 > samples_list.txt
+        grep -f samples_list.txt ~{sample_crai_cram} > subset_sample_crai_cram.txt
+        cut -f1 subset_sample_crai_cram.txt > samples.txt
+        cut -f2 subset_sample_crai_cram.txt > crai.txt
+        cut -f3 subset_sample_crai_cram.txt > cram.txt
+        >>>
+
+    output{
+        Array[String] per_family_samples = read_lines("samples.txt")
+        Array[File] per_family_crams_files = read_lines("cram.txt")
+        Array[File] per_family_crais_files = read_lines("crai.txt")
+        Array[String] per_family_crams_strings = read_lines("cram.txt")
+        Array[String] per_family_crais_strings = read_lines("crai.txt")
+        File subset_sample_crai_cram = "subset_sample_crai_cram.txt"
+    }
+
+    runtime {
+        cpu: select_first([runtime_attr.cpu, default_attr.cpu])
+        memory: select_first([runtime_attr.mem_gb, default_attr.mem_gb]) + " GiB"
+        disks: "local-disk " + select_first([runtime_attr.disk_gb, default_attr.disk_gb]) + " HDD"
+        bootDiskSizeGb: select_first([runtime_attr.boot_disk_gb, default_attr.boot_disk_gb])
+        docker: sv_base_mini_docker
+        preemptible: select_first([runtime_attr.preemptible, default_attr.preemptible])
+        maxRetries: select_first([runtime_attr.max_retries, default_attr.max_retries])
+  }
+
+}
+
+task update_sample_crai_cram{
+    input {
+        String family
+        File ped_file
+        File sample_crai_cram
+        Array[String] crams_files
+        Array[String] crais_files
+        String variant_interpretation_docker
+        RuntimeAttr? runtime_attr_override
+    }
+    Float input_size = size(select_all([sample_crai_cram, ped_file]), "GB")
+    Float base_mem_gb = 3.75
+
+    RuntimeAttr default_attr = object {
+                                      mem_gb: base_mem_gb,
+                                      disk_gb: ceil(10 + input_size),
+                                      cpu: 1,
+                                      preemptible: 2,
+                                      max_retries: 1,
+                                      boot_disk_gb: 8
+                                  }
+
+    RuntimeAttr runtime_attr = select_first([runtime_attr_override, default_attr])
+
+    command <<<
+        head -n+1 ~{ped_file} > family_ped.txt
+        grep -w ^~{family} ~{ped_file} >> family_ped.txt
+        python3.9 /src/variant-interpretation/scripts/renameCrams.py --ped family_ped.txt --scc ~{sample_crai_cram}
+        cut -f1 changed_sample_crai_cram.txt > samples.txt
+        cut -f5 changed_sample_crai_cram.txt > crai.txt
+        cut -f4 changed_sample_crai_cram.txt > cram.txt
+        >>>
+
+    output{
+        Array[String] per_family_samples = read_lines("samples.txt")
+        Array[File] per_family_crams_files = read_lines("cram.txt")
+        Array[File] per_family_crais_files = read_lines("crai.txt")
+        Array[String] per_family_crams_strings = read_lines("cram.txt")
+        Array[String] per_family_crais_strings = read_lines("crai.txt")
+        File changed_sample_crai_cram = "changed_sample_crai_cram.txt"
+    }
+
+    runtime {
+        cpu: select_first([runtime_attr.cpu, default_attr.cpu])
+        memory: select_first([runtime_attr.mem_gb, default_attr.mem_gb]) + " GiB"
+        disks: "local-disk " + select_first([runtime_attr.disk_gb, default_attr.disk_gb]) + " HDD"
+        bootDiskSizeGb: select_first([runtime_attr.boot_disk_gb, default_attr.boot_disk_gb])
+        docker: variant_interpretation_docker
+        preemptible: select_first([runtime_attr.preemptible, default_attr.preemptible])
+        maxRetries: select_first([runtime_attr.max_retries, default_attr.max_retries])
+  }
+
+}
+
 task generate_per_family_bed{
     input {
         File varfile
