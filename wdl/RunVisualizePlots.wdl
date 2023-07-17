@@ -17,6 +17,7 @@ workflow VisualizePlots{
         File? fam_ids
 
         File? sample_pe_sr
+        File? sample_crai_cram
         String? buffer
         String? buffer_large
         File? reference
