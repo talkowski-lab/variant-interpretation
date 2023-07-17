@@ -76,7 +76,7 @@ workflow IGV_all_samples {
                     runtime_attr_override = runtime_attr_run_igv
                 }
 
-            call generate_per_family_bed{
+            call generate_per_family_bed as generate_per_family_bed_evidence{
                 input:
                     varfile = select_first([updateCpxBed.bed_output, varfile]),
                     samples = generate_per_family_sample_pe_sr.per_family_samples,
@@ -88,7 +88,7 @@ workflow IGV_all_samples {
 
             call evidence.IGV_evidence as IGV_evidence{
                 input:
-                    varfile = generate_per_family_bed.per_family_varfile,
+                    varfile = generate_per_family_bed_evidence.per_family_varfile,
                     samples = generate_per_family_sample_pe_sr.per_family_samples,
                     disc_files = generate_per_family_sample_pe_sr.per_family_pe_files,
                     split_files = generate_per_family_sample_pe_sr.per_family_sr_files,
@@ -100,7 +100,7 @@ workflow IGV_all_samples {
             
             call igv_evidence_plots.IGV as IGV {
                 input:
-                    varfile = generate_per_family_bed.per_family_varfile,
+                    varfile = generate_per_family_bed_evidence.per_family_varfile,
                     family = family,
                     ped_file = ped_file,
                     samples = generate_per_family_sample_pe_sr.per_family_samples,
@@ -149,7 +149,7 @@ workflow IGV_all_samples {
                     runtime_attr_override = runtime_attr_update_scc
             }
 
-            call generate_per_family_bed{
+            call generate_per_family_bed_cram{
                 input:
                     varfile = select_first([updateCpxBed.bed_output, varfile]),
                     samples = update_sample_crai_cram.per_family_samples,
@@ -162,7 +162,7 @@ workflow IGV_all_samples {
             if (cram_localization){
                 call igv_cram_plots.IGV as IGV_localize {
                     input:
-                        varfile = generate_per_family_bed.per_family_varfile,
+                        varfile = generate_per_family_bed_cram.per_family_varfile,
                         family = family,
                         ped_file = ped_file,
                         samples = update_sample_crai_cram.per_family_samples,
