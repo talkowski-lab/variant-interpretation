@@ -73,10 +73,9 @@ workflow VisualizePlots{
         File buffer_large_ = select_first([buffer_large,1000])
         File reference_ = select_first([reference])
         File reference_index_ = select_first([reference_index])
-        Boolean cram_localization_ = if defined(cram_localization) then select_first([cram_localization]) else false
-        Boolean requester_pays_ = if defined(requester_pays) then select_first([requester_pays]) else false
         Boolean is_snv_indel_ = if defined(is_snv_indel) then select_first([is_snv_indel]) else false
         if(run_evidence_plots){
+            File sample_pe_sr_ = select_first([sample_pe_sr])
             call igv_evidence.IGV_all_samples as igv_evidence_plots {
                 input:
                     ped_file = pedfile,
@@ -102,6 +101,9 @@ workflow VisualizePlots{
         }
         
         if(run_cram_plots){
+            File sample_crai_cram_ = select_first([sample_crai_cram])
+            Boolean cram_localization_ = if defined(cram_localization) then select_first([cram_localization]) else false
+            Boolean requester_pays_ = if defined(requester_pays) then select_first([requester_pays]) else false
             call igv_cram.IGV_all_samples as igv_cram_plots {
                 input:
                     ped_file = pedfile,
