@@ -182,7 +182,7 @@ workflow IGV_all_samples {
             }
 
             if (!(cram_localization)){
-                call igv_plots.IGV as IGV_parse {
+                call igv_cram_plots.IGV as IGV_parse {
                     input:
                         varfile = generate_per_family_bed.per_family_varfile,
                         family = family,
