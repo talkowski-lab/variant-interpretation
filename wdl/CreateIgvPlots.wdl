@@ -6,7 +6,8 @@ version 1.0
 
 ##########################################################################################
 
-import "IgvPlots.wdl" as igv_plots
+import "IgvEvidencePlots.wdl" as igv_evidence_plots
+import "IgvCramPlots.wdl" as igv_cram_plots
 import "Structs.wdl"
 import "EvidencePlots.wdl" as evidence
 
@@ -14,7 +15,8 @@ workflow IGV_all_samples {
     input {
         File ped_file
         File? fam_ids
-        File sample_pe_sr
+        File? sample_pe_sr
+        File? sample_crai_cram
         File varfile
         File reference
         File reference_index
@@ -24,6 +26,10 @@ workflow IGV_all_samples {
         String sv_base_mini_docker
         String igv_docker
         Boolean is_snv_indel
+        Boolean cram_localization
+        Boolean requester_pays
+        Boolean run_evidence_plots
+        Boolean run_cram_plots
         String variant_interpretation_docker
         RuntimeAttr? runtime_attr_run_igv
         RuntimeAttr? runtime_attr_igv
@@ -31,6 +37,7 @@ workflow IGV_all_samples {
         RuntimeAttr? runtime_attr_reformat_pe
         RuntimeAttr? runtime_attr_reformat_sr
         RuntimeAttr? runtime_attr_update_pe_sr
+        RuntimeAttr? runtime_attr_update_scc
     }
 
     if (defined(fam_ids)) {
@@ -56,63 +63,154 @@ workflow IGV_all_samples {
                 runtime_attr_override = runtime_attr_run_igv
         }
     }
-    scatter (family in select_first([family_ids, generate_families.families])){
-        call generate_per_family_sample_pe_sr{
-            input:
-                family = family,
-                ped_file = ped_file,
-                sample_pe_sr = sample_pe_sr,
-                sv_base_mini_docker = sv_base_mini_docker,
-                runtime_attr_override = runtime_attr_run_igv
+
+    if (run_evidence_plots){
+        File sample_pe_sr_ = select_first([sample_pe_sr])
+        scatter (family in select_first([family_ids, generate_families.families])){
+            call generate_per_family_sample_pe_sr{
+                input:
+                    family = family,
+                    ped_file = ped_file,
+                    sample_pe_sr = sample_pe_sr_,
+                    sv_base_mini_docker = sv_base_mini_docker,
+                    runtime_attr_override = runtime_attr_run_igv
+                }
+
+            call generate_per_family_bed{
+                input:
+                    varfile = select_first([updateCpxBed.bed_output, varfile]),
+                    samples = generate_per_family_sample_pe_sr.per_family_samples,
+                    family = family,
+                    ped_file = ped_file,
+                    sv_base_mini_docker=sv_base_mini_docker,
+                    runtime_attr_override=runtime_attr_run_igv
             }
 
-        call generate_per_family_bed{
-            input:
-                varfile = select_first([updateCpxBed.bed_output, varfile]),
-                samples = generate_per_family_sample_pe_sr.per_family_samples,
-                family = family,
-                ped_file = ped_file,
-                sv_base_mini_docker=sv_base_mini_docker,
-                runtime_attr_override=runtime_attr_run_igv
-        }
-
-        call evidence.IGV_evidence as IGV_evidence{
-            input:
-                varfile = generate_per_family_bed.per_family_varfile,
-                samples = generate_per_family_sample_pe_sr.per_family_samples,
-                disc_files = generate_per_family_sample_pe_sr.per_family_pe_files,
-                split_files = generate_per_family_sample_pe_sr.per_family_sr_files,
-                variant_interpretation_docker = variant_interpretation_docker,
-                runtime_attr_reformat_pe = runtime_attr_reformat_pe,
-                runtime_attr_reformat_sr = runtime_attr_reformat_sr,
-                runtime_attr_update_pe_sr = runtime_attr_update_pe_sr
+            call evidence.IGV_evidence as IGV_evidence{
+                input:
+                    varfile = generate_per_family_bed.per_family_varfile,
+                    samples = generate_per_family_sample_pe_sr.per_family_samples,
+                    disc_files = generate_per_family_sample_pe_sr.per_family_pe_files,
+                    split_files = generate_per_family_sample_pe_sr.per_family_sr_files,
+                    variant_interpretation_docker = variant_interpretation_docker,
+                    runtime_attr_reformat_pe = runtime_attr_reformat_pe,
+                    runtime_attr_reformat_sr = runtime_attr_reformat_sr,
+                    runtime_attr_update_pe_sr = runtime_attr_update_pe_sr
+            }
+            
+            call igv_evidence_plots.IGV as IGV {
+                input:
+                    varfile = generate_per_family_bed.per_family_varfile,
+                    family = family,
+                    ped_file = ped_file,
+                    samples = generate_per_family_sample_pe_sr.per_family_samples,
+                    pe = IGV_evidence.pe_files,
+                    sr = IGV_evidence.sr_files,
+                    sample_pe_sr = IGV_evidence.updated_sample_pe_sr,
+                    buffer = buffer,
+                    buffer_large = buffer_large,
+                    reference = reference,
+                    reference_index = reference_index,
+                    igv_docker = igv_docker,
+                    variant_interpretation_docker = variant_interpretation_docker,
+                    runtime_attr_igv = runtime_attr_igv
+            }
         }
         
-        call igv_plots.IGV as IGV {
+        call integrate_igv_plots{
             input:
-                varfile = generate_per_family_bed.per_family_varfile,
-                family = family,
-                ped_file = ped_file,
-                samples = generate_per_family_sample_pe_sr.per_family_samples,
-                pe = IGV_evidence.pe_files,
-                sr = IGV_evidence.sr_files,
-                sample_pe_sr = IGV_evidence.updated_sample_pe_sr,
-                buffer = buffer,
-                buffer_large = buffer_large,
-                reference = reference,
-                reference_index = reference_index,
-                igv_docker = igv_docker,
-                variant_interpretation_docker = variant_interpretation_docker,
-                runtime_attr_igv = runtime_attr_igv
+                igv_tar = IGV.tar_gz_pe,
+                prefix = prefix, 
+                sv_base_mini_docker = sv_base_mini_docker,
+                runtime_attr_override = runtime_attr_run_igv
         }
     }
-    
-    call integrate_igv_plots{
-        input:
-            igv_tar = IGV.tar_gz_pe,
-            prefix = prefix, 
-            sv_base_mini_docker = sv_base_mini_docker,
-            runtime_attr_override = runtime_attr_run_igv
+
+    if (run_cram_plots){
+        File sample_crai_cram_ = select_first([sample_crai_cram])
+        scatter (family in select_first([family_ids, generate_families.families])){
+            call generate_per_family_sample_crai_cram{
+                input:
+                    family = family,
+                    ped_file = ped_file,
+                    sample_crai_cram = sample_crai_cram_,
+                    sv_base_mini_docker = sv_base_mini_docker,
+                    runtime_attr_override = runtime_attr_run_igv
+                }
+
+            call update_sample_crai_cram{
+                input:
+                    family = family,
+                    ped_file = ped_file,
+                    sample_crai_cram = generate_per_family_sample_crai_cram.subset_sample_crai_cram,
+                    crais_files = generate_per_family_sample_crai_cram.per_family_crais_strings,
+                    crams_files = generate_per_family_sample_crai_cram.per_family_crams_strings,
+                    variant_interpretation_docker = variant_interpretation_docker,
+                    runtime_attr_override = runtime_attr_update_scc
+            }
+
+            call generate_per_family_bed{
+                input:
+                    varfile = select_first([updateCpxBed.bed_output, varfile]),
+                    samples = update_sample_crai_cram.per_family_samples,
+                    family = family,
+                    ped_file = ped_file,
+                    sv_base_mini_docker=sv_base_mini_docker,
+                    runtime_attr_override=runtime_attr_run_igv
+            }
+            
+            if (cram_localization){
+                call igv_cram_plots.IGV as IGV_localize {
+                    input:
+                        varfile = generate_per_family_bed.per_family_varfile,
+                        family = family,
+                        ped_file = ped_file,
+                        samples = update_sample_crai_cram.per_family_samples,
+                        cram_localization = cram_localization,
+                        requester_pays = requester_pays,
+                        crams_localize = generate_per_family_sample_crai_cram.per_family_crams_files,
+                        crais_localize = generate_per_family_sample_crai_cram.per_family_crais_files,
+                        sample_crai_cram = generate_per_family_sample_crai_cram.subset_sample_crai_cram,
+                        buffer = buffer,
+                        buffer_large = buffer_large,
+                        reference = reference,
+                        reference_index = reference_index,
+                        igv_docker = igv_docker,
+                        variant_interpretation_docker = variant_interpretation_docker,
+                        runtime_attr_igv = runtime_attr_igv
+                }
+            }
+
+            if (!(cram_localization)){
+                call igv_plots.IGV as IGV_parse {
+                    input:
+                        varfile = generate_per_family_bed.per_family_varfile,
+                        family = family,
+                        ped_file = ped_file,
+                        cram_localization = cram_localization,
+                        requester_pays = requester_pays,
+                        crams_parse = generate_per_family_sample_crai_cram.per_family_crams_files,
+                        crais_parse = generate_per_family_sample_crai_cram.per_family_crais_files,
+                        samples = update_sample_crai_cram.per_family_samples,
+                        updated_sample_crai_cram = update_sample_crai_cram.changed_sample_crai_cram,
+                        buffer = buffer,
+                        buffer_large = buffer_large,
+                        reference = reference,
+                        reference_index = reference_index,
+                        igv_docker = igv_docker,
+                        variant_interpretation_docker = variant_interpretation_docker,
+                        runtime_attr_igv = runtime_attr_igv
+                }
+            }
+        }
+        
+        call integrate_igv_plots{
+            input:
+                igv_tar = select_all(flatten([IGV_localize.tar_gz_pe, IGV_parse.tar_gz_pe])),
+                prefix = prefix, 
+                sv_base_mini_docker = sv_base_mini_docker,
+                runtime_attr_override = runtime_attr_run_igv
+        }
     }
 
     output{

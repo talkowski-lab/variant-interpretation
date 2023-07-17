@@ -20,6 +20,8 @@ workflow VisualizePlots{
         String? buffer_large
         File? reference
         File? reference_index
+        Boolean? cram_localization
+        Boolean? requester_pays
 
         String sv_base_mini_docker
         String sv_pipeline_rdtest_docker
@@ -29,6 +31,8 @@ workflow VisualizePlots{
         Boolean run_RD 
         Boolean run_IGV
         Boolean? is_snv_indel
+        Boolean run_evidence_plots
+        Boolean run_cram_plots
 
         RuntimeAttr? runtime_attr_run_igv
         RuntimeAttr? runtime_attr_igv
@@ -64,16 +68,18 @@ workflow VisualizePlots{
 
     #creates IGV plots for all variants (proband will be the top plot if it has affected status = 2 in ped file)
     if (run_IGV) {   
-        File sample_pe_sr_ = select_first([sample_pe_sr])
         File buffer_ = select_first([buffer,500])
         File buffer_large_ = select_first([buffer_large,1000])
         File reference_ = select_first([reference])
         File reference_index_ = select_first([reference_index])
+        Boolean cram_localization_ = if defined(cram_localization) then select_first([cram_localization]) else false
+        Boolean requester_pays_ = if defined(requester_pays) then select_first([requester_pays]) else false
         Boolean is_snv_indel_ = if defined(is_snv_indel) then select_first([is_snv_indel]) else false
         call igv.IGV_all_samples as igv_plots {
             input:
                 ped_file = pedfile,
-                sample_pe_sr = sample_pe_sr_,
+                sample_pe_sr = sample_pe_sr,
+                sample_crai_cram = sample_crai_cram,
                 buffer = buffer_,
                 fam_ids = fam_ids,
                 buffer_large = buffer_large_,
@@ -82,8 +88,12 @@ workflow VisualizePlots{
                 reference_index = reference_index_,
                 prefix = prefix,
                 is_snv_indel = is_snv_indel_,
+                run_evidence_plots = run_evidence_plots,
+                run_cram_plots = run_cram_plots,
                 sv_base_mini_docker = sv_base_mini_docker,
                 igv_docker = igv_docker,
+                cram_localization = cram_localization_,
+                requester_pays = requester_pays_,
                 variant_interpretation_docker = variant_interpretation_docker,
                 runtime_attr_run_igv = runtime_attr_run_igv,
                 runtime_attr_igv = runtime_attr_igv,
