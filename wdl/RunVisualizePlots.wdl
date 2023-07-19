@@ -24,6 +24,7 @@ workflow VisualizePlots{
         File? reference_index
         Boolean? cram_localization
         Boolean? requester_pays
+        Boolean? is_snv_indel
 
         String sv_base_mini_docker
         String sv_pipeline_rdtest_docker
