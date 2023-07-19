@@ -17,7 +17,7 @@ workflow IGV_all_samples {
         File varfile
         File reference
         File reference_index
-        Boolean cram_localization
+        Boolean file_localization
         Boolean requester_pays
         Boolean is_snv_indel
         String prefix
@@ -86,14 +86,14 @@ workflow IGV_all_samples {
                 runtime_attr_override=runtime_attr_run_igv
         }
         
-        if (cram_localization){
+        if (file_localization){
             call igv_plots.IGV as IGV_localize {
                 input:
                     varfile = generate_per_family_bed.per_family_varfile,
                     family = family,
                     ped_file = ped_file,
                     samples = update_sample_crai_cram.per_family_samples,
-                    cram_localization = cram_localization,
+                    file_localization = file_localization,
                     requester_pays = requester_pays,
                     crams_localize = generate_per_family_sample_crai_cram.per_family_crams_files,
                     crais_localize = generate_per_family_sample_crai_cram.per_family_crais_files,
@@ -108,13 +108,13 @@ workflow IGV_all_samples {
             }
         }
 
-        if (!(cram_localization)){
+        if (!(file_localization)){
             call igv_plots.IGV as IGV_parse {
                 input:
                     varfile = generate_per_family_bed.per_family_varfile,
                     family = family,
                     ped_file = ped_file,
-                    cram_localization = cram_localization,
+                    file_localization = file_localization,
                     requester_pays = requester_pays,
                     crams_parse = generate_per_family_sample_crai_cram.per_family_crams_files,
                     crais_parse = generate_per_family_sample_crai_cram.per_family_crais_files,
