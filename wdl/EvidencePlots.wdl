@@ -20,7 +20,7 @@ workflow IGV_evidence {
     }
 
     scatter (i in range(length(samples))){
-        if(!(files_localization)){
+        if(!(file_localization)){
             call reformatPE_parse{
                 input:
                     varfile=varfile,
