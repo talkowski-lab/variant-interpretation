@@ -75,8 +75,8 @@ workflow IGV_evidence {
     output{
         Array[File] pe_files = select_first([reformatPE_parse.pe_reformat, reformatPE_localize.pe_reformat])
         Array[File] sr_files = select_first([reformatSR_parse.sr_reformat, reformatSR_localize.sr_reformat])
-        Array[String] pe_strings = select_first([reformatPE_parse.pe_reformat_string, reformatPE_localize.pe_reformat_string])
-        Array[String] sr_strings = select_first([reformatSR_parse.sr_reformat_string, reformatSR_localize.sr_reformat_string])
+        Array[String] pe_strings = select_all(select_first([reformatPE_parse.pe_reformat_string, reformatPE_localize.pe_reformat_string]))
+        Array[String] sr_strings = select_all(select_first([reformatSR_parse.sr_reformat_string, reformatSR_localize.sr_reformat_string]))
         File updated_sample_pe_sr = update_sample_pe_sr.changed_sample_pe_sr   
     }
 }
