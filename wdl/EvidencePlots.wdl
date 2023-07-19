@@ -65,8 +65,8 @@ workflow IGV_evidence {
 
     call update_sample_pe_sr{
         input:
-            pe = select_first([reformatPE_parse.pe_reformat, reformatPE_localize.pe_reformat]),
-            sr = select_first([reformatSR_parse.sr_reformat, reformatSR_localize.sr_reformat]),
+            pe = select_all(select_first([reformatPE_parse.pe_reformat, reformatPE_localize.pe_reformat])),
+            sr = select_all(select_first([reformatSR_parse.sr_reformat, reformatSR_localize.sr_reformat])),
             samples = samples,
             variant_interpretation_docker = variant_interpretation_docker,
             runtime_attr_override = runtime_attr_update_pe_sr
