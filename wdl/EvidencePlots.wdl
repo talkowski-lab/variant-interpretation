@@ -280,9 +280,9 @@ task reformatSR_localize{
 
             ##Reformat split reads
             zcat ~{split_file} | grep -w ~{sample} | \
-            awk -F"\t" 'BEGIN { OFS="\t" }{print $1,$2-5,$2+5,$3,$4}' | \
-                sed -e 's/left/-/g' | \
-                sed -e 's/right/+/g' | \
+            awk -F"\t" 'BEGIN { OFS="\t" }{print $1,$2-5,$2+5,".",".",".",$2-5,$2+5,$3}' | \
+                sed -e 's/left/0,0,255/g' | \
+                sed -e 's/right/255,0,0/g' | \
                 bgzip -c > tmp.bed.gz
 
             tabix -p bed tmp.bed.gz
