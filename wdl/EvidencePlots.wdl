@@ -170,9 +170,9 @@ task reformatSR_parse{
             tabix -p bed subset_sr.txt.gz
             ##Reformat split reads
             zcat subset_sr.txt.gz | grep -w ~{sample} | \
-            awk -F"\t" 'BEGIN { OFS="\t" }{print $1,$2-5,$2+5,$3,$4}' | \
-                sed -e 's/left/-/g' | \
-                sed -e 's/right/+/g' | \
+            awk -F"\t" 'BEGIN { OFS="\t" }{print $1,$2-5,$2+5,".",".",".",$2-5,$2+5,$3}' | \
+                sed -e 's/left/0,0,255/g' | \
+                sed -e 's/right/255,0,0/g' | \
                 bgzip -c > ~{sample}.sr_roi.bed.gz
 
             tabix -p bed ~{sample}.sr_roi.bed.gz
