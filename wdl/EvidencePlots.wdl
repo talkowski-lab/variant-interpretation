@@ -174,8 +174,6 @@ task reformatSR_parse{
                 sed -e 's/left/0,0,255/g' | \
                 sed -e 's/right/255,0,0/g' | \
                 bgzip -c > ~{sample}.sr_roi.bed.gz
-
-            tabix -p bed ~{sample}.sr_roi.bed.gz
             >>>
 
     runtime {
@@ -231,7 +229,6 @@ task reformatPE_localize{
 
             tabix -p bed tmp.bed.gz
             bedtools intersect -a tmp.bed.gz -b regions.bed.gz -f 0.5 -wa > ~{sample}.pe_roi.junctions.bed
-            tabix -p bed ~{sample}.pe_roi.junctions.bed
             >>>
 
     runtime {
