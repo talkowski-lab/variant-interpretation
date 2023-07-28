@@ -6,15 +6,16 @@ from PIL import ImageFont
 from PIL import ImageDraw
 import argparse
 import cv2
+import img2pdf
 
 #Image helper function
 #stack two or more images vertically
-def vconcat_resize(img_list, interpolation 
+def vconcat_resize(img_list, interpolation
                    = cv2.INTER_CUBIC):
       # take minimum width
-    w_min = min(img.shape[1] 
+    w_min = min(img.shape[1]
                 for img in img_list)
-      
+
     # resizing images
     im_list_resize = [cv2.resize(img,
                       (w_min, int(img.shape[0] * w_min / img.shape[1])),
@@ -22,25 +23,25 @@ def vconcat_resize(img_list, interpolation
                       for img in img_list]
     # return final image
     return cv2.vconcat(im_list_resize)
-  
+
 # combine two images side by side
-def hconcat_resize(img_list, 
-                   interpolation 
+def hconcat_resize(img_list,
+                   interpolation
                    = cv2.INTER_CUBIC):
     # take minimum hights
-    h_min = min(img.shape[0] 
+    h_min = min(img.shape[0]
                 for img in img_list)
-      
-    # image resizing 
+
+    # image resizing
     im_list_resize = [cv2.resize(img,
                        (int(img.shape[1] * h_min / img.shape[0]),
                         h_min), interpolation
-                                 = interpolation) 
+                                 = interpolation)
                       for img in img_list]
-      
+
     # return final image
     return cv2.hconcat(im_list_resize)
-    
+
 def words(STR1,STR2,outfile,n=100):
     #font = ImageFont.truetype("arial.ttf", 70)
     font = ImageFont.load_default()
@@ -120,14 +121,19 @@ class Variant():
         outfile='info.jpg'
         words(STR1,STR2,outfile,100) # new Rd plot
         #img_v_resize = vconcat_resize([resized_igv,rd]) # combine rd pe and sr together
-        img_v_resize = vconcat_resize([igv,rd])
-        cv2.imwrite(outdir+self.varname+"_denovo.png", img_v_resize)
+        #img_v_resize = vconcat_resize([igv,rd])
+        cv2.imwrite(outdir+"rd.png", rd)
+        cv2.imwrite(outdir+"igv.png", igv)
+        with open(outdir+self.varname+"_denovo.png","wb") as f:
+            f.write(img2pdf.convert("igv.png", "rd.png"))
     elif pesrplot!='Error' and rdplot=='Error':
         igv = cv2.imread(pesrplot)
         STR1=self.chr+":"+'{0:,}'.format(int(self.start))+'-'+'{0:,}'.format(int(self.end))+" (hg38)"
         outfile='info.jpg'
         words(STR1,STR2,outfile,50)
-        cv2.imwrite(outdir+self.varname+"_denovo.png", igv)
+        #cv2.imwrite(outdir+self.varname+"_denovo.png", igv)
+        with open(outdir+self.varname+"_denovo.png","wb") as f:
+            f.write(img2pdf.convert("igv.png"))
 
 class VariantInfo():
   def __init__(self,pedfile,prefix):
