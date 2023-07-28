@@ -231,6 +231,7 @@ task reformatPE_localize{
 
             tabix -p bed tmp.bed.gz
             bedtools intersect -a tmp.bed.gz -b regions.bed.gz -f 0.5 -wa > ~{sample}.pe_roi.junctions.bed
+            tabix -p bed ~{sample}.pe_roi.junctions.bed
             >>>
 
     runtime {
@@ -288,6 +289,7 @@ task reformatSR_localize{
             tabix -p bed tmp.bed.gz
             tabix -R regions.bed.gz tmp.bed.gz | \
                 bgzip -c > ~{sample}.sr_roi.bed.gz
+            tabix -p bed ~{sample}.sr_roi.bed.gz
             >>>
 
     runtime {
