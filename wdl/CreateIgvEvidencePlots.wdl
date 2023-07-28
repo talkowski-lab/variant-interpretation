@@ -24,6 +24,7 @@ workflow IGV_all_samples {
         String sv_base_mini_docker
         String igv_docker
         Boolean is_snv_indel
+        Boolean file_localization
         String variant_interpretation_docker
         RuntimeAttr? runtime_attr_run_igv
         RuntimeAttr? runtime_attr_igv
@@ -82,6 +83,7 @@ workflow IGV_all_samples {
                 samples = generate_per_family_sample_pe_sr.per_family_samples,
                 disc_files = generate_per_family_sample_pe_sr.per_family_pe_files,
                 split_files = generate_per_family_sample_pe_sr.per_family_sr_files,
+                file_localization = file_localization,
                 variant_interpretation_docker = variant_interpretation_docker,
                 runtime_attr_reformat_pe = runtime_attr_reformat_pe,
                 runtime_attr_reformat_sr = runtime_attr_reformat_sr,

@@ -64,7 +64,7 @@ denovo %>%
   count(sample, SVTYPE, name= "svtype_per_sample") -> type
 
 type_boxplot <- ggplot(type, aes(x=SVTYPE, fill = SVTYPE, y=svtype_per_sample)) + 
-  geom_jitter(position = position_jitter(seed = 1, width = 0.2), color = 'grey') + geom_boxplot(outlier.shape=NA) + labs(title = "Number of De Novo SVs per Type", y = "Number of de novo SVs", x = "SV Type") + scale_fill_manual(values = rev(c("DEL"=del_col, "DUP"=dup_col, "INS"=ins_col, "INV"=inv_col, "CPX"=cpx_col, "CTX"=ctx_col))) + 
+  geom_jitter(position = position_jitter(seed = 1, width = 0.2), color = 'grey', size = 4.0) + geom_boxplot(outlier.shape=NA) + labs(title = "Number of De Novo SVs per Type", y = "Number of de novo SVs", x = "SV Type") + scale_fill_manual(values = rev(c("DEL"=del_col, "DUP"=dup_col, "INS"=ins_col, "INV"=inv_col, "CPX"=cpx_col, "CTX"=ctx_col))) + 
   theme_classic() +
   theme(
     legend.position = "right",
@@ -79,7 +79,7 @@ type_boxplot <- ggplot(type, aes(x=SVTYPE, fill = SVTYPE, y=svtype_per_sample)) 
 ggsave("type_boxplot.png", type_boxplot, width = 30, height = 40, limitsize = FALSE) 
 
 sample_boxplot <- ggplot(sample_count, aes(x=factor(0), y=n)) + 
-  geom_jitter(position = position_jitter(seed = 1, width = 0.2), color = 'gray47') + geom_boxplot(outlier.shape=NA) + labs(title = "Number of de Novo SVs per Sample", y = "Number of de novo SVs", x = "Samples") + scale_fill_manual(values = rev(c("DEL"=del_col, "DUP"=dup_col, "INS"=ins_col, "INV"=inv_col, "CPX"=cpx_col, "CTX"=ctx_col))) + 
+  geom_jitter(position = position_jitter(seed = 1, width = 0.2), color = 'gray47', size = 4.0) + geom_boxplot(outlier.shape=NA) + labs(title = "Number of de Novo SVs per Sample", y = "Number of de novo SVs", x = "Samples") + scale_fill_manual(values = rev(c("DEL"=del_col, "DUP"=dup_col, "INS"=ins_col, "INV"=inv_col, "CPX"=cpx_col, "CTX"=ctx_col))) + 
   theme_classic() +
   theme(
     legend.position = "right",

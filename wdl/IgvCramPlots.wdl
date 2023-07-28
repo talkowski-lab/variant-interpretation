@@ -14,7 +14,7 @@ workflow IGV {
         String family
         File ped_file
         Array[String] samples
-        Boolean cram_localization
+        Boolean file_localization
         Boolean requester_pays
         Array[File]? crams_localize
         Array[File]? crais_localize
@@ -33,7 +33,7 @@ workflow IGV {
         
     }
 
-    if (cram_localization) {
+    if (file_localization) {
         Array[File] crams_localize_ = select_first([crams_localize])
         Array[File] crais_localize_ = select_first([crais_localize])
         File sample_crai_cram_ = select_first([sample_crai_cram])
@@ -68,22 +68,10 @@ workflow IGV {
         }
     }
 
-    if (!(cram_localization)) {
+    if (!(file_localization)) {
         Array[String] crams_parse_ = select_first([crams_parse])
         Array[String] crais_parse_ = select_first([crais_parse])
         File updated_sample_crai_cram_ = select_first([updated_sample_crai_cram])
-
-        if (requester_pays){
-        # move the reads nearby -- handles requester_pays and makes cross-region transfers just once
-            scatter(i in range(length(crams_parse_))) {
-                call LocalizeReads as LocalizeReadsParse {
-                    input:
-                        reads_path = crams_parse_[i],
-                        reads_index = crais_parse_[i],
-                        runtime_attr_override = runtime_attr_localize_reads
-                }
-            }
-        } 
 
         call runIGV_whole_genome_parse{
             input:

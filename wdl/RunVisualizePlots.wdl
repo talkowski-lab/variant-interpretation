@@ -22,7 +22,7 @@ workflow VisualizePlots{
         String? buffer_large
         File? reference
         File? reference_index
-        Boolean? cram_localization
+        Boolean? file_localization
         Boolean? requester_pays
         Boolean? is_snv_indel
 
@@ -75,6 +75,7 @@ workflow VisualizePlots{
         File buffer_large_ = select_first([buffer_large,1000])
         File reference_ = select_first([reference])
         File reference_index_ = select_first([reference_index])
+        Boolean file_localization_ = if defined(file_localization) then select_first([file_localization]) else false
         Boolean is_snv_indel_ = if defined(is_snv_indel) then select_first([is_snv_indel]) else false
         if(run_evidence_plots){
             File sample_pe_sr_ = select_first([sample_pe_sr])
@@ -90,6 +91,7 @@ workflow VisualizePlots{
                     reference_index = reference_index_,
                     prefix = prefix,
                     is_snv_indel = is_snv_indel_,
+                    file_localization = file_localization_,
                     sv_base_mini_docker = sv_base_mini_docker,
                     igv_docker = igv_docker,
                     variant_interpretation_docker = variant_interpretation_docker,
@@ -104,7 +106,6 @@ workflow VisualizePlots{
         
         if(run_cram_plots){
             File sample_crai_cram_ = select_first([sample_crai_cram])
-            Boolean cram_localization_ = if defined(cram_localization) then select_first([cram_localization]) else false
             Boolean requester_pays_ = if defined(requester_pays) then select_first([requester_pays]) else false
             call igv_cram.IGV_all_samples as igv_cram_plots {
                 input:
@@ -115,7 +116,7 @@ workflow VisualizePlots{
                     buffer_large = buffer_large_,
                     varfile = varfile,
                     reference = reference_,
-                    cram_localization = cram_localization_,
+                    file_localization = file_localization_,
                     requester_pays = requester_pays_,
                     is_snv_indel = is_snv_indel_,
                     reference_index = reference_index_,
