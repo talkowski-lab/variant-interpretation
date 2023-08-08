@@ -166,7 +166,7 @@ workflow deNovoSV {
     }
 
     #merges the per chromosome de novo SV outputs
-    call plot_mergeFinalBedFiles{
+    call mergeFinalBedFiles{
         input:
             bed_files = getDeNovo.merged_annotation_output_file,
             variant_interpretation_docker=variant_interpretation_docker,
@@ -176,13 +176,13 @@ workflow deNovoSV {
     #outputs a final callset of de novo SVs as well as outlier de novo SV calls
     call callOutliers {
         input:
-            bed_file = plot_mergeFinalBedFiles.merged_output,
+            bed_file = mergeFinalBedFiles.merged_output,
             variant_interpretation_docker=variant_interpretation_docker,
             runtime_attr_override = runtime_attr_call_outliers
     }
 
     #generates plots for QC
-    call plot_createPlots{
+    call createPlots{
         input:
             bed_file = callOutliers.final_denovo_output,
             outliers_file = callOutliers.final_denovo_outliers_output,
@@ -204,18 +204,18 @@ workflow deNovoSV {
         File denovo_output = callOutliers.final_denovo_output
         File denovo_outliers_output = callOutliers.final_denovo_outliers_output
         File annotated_output = callOutliers.final_annotation_output
-        File denovo_output_plots = plot_createPlots.output_plots
-        File per_chrom_plot = plot_createPlots.per_chrom_plot
-        File per_sample_plot = plot_createPlots.per_sample_plot
-        File per_freq_plot = plot_createPlots.per_freq_plot
-        File per_freq_gd_plot = plot_createPlots.per_freq_gd_plot
-        File per_freq_not_gd = plot_createPlots.per_freq_not_gd
-        File size_plot = plot_createPlots.size_plot
-        File evidence_plot = plot_createPlots.evidence_plot
-        File annotation_plot = plot_createPlots.annotation_plot
-        File per_type_plot = plot_createPlots.per_type_plot
-        File per_sample_boxplot = plot_createPlots.per_sample_boxplot
-        File per_type_boxplot = plot_createPlots.per_type_boxplot
+        File denovo_output_plots = createPlots.output_plots
+        File per_chrom_plot = createPlots.per_chrom_plot
+        File per_sample_plot = createPlots.per_sample_plot
+        File per_freq_plot = createPlots.per_freq_plot
+        File per_freq_gd_plot = createPlots.per_freq_gd_plot
+        File per_freq_not_gd = createPlots.per_freq_not_gd
+        File size_plot = createPlots.size_plot
+        File evidence_plot = createPlots.evidence_plot
+        File annotation_plot = createPlots.annotation_plot
+        File per_type_plot = createPlots.per_type_plot
+        File per_sample_boxplot = createPlots.per_sample_boxplot
+        File per_type_boxplot = createPlots.per_type_boxplot
         File gd_depth = mergeGenomicDisorders.gd_output_from_depth
         File gd_vcf = getGenomicDisorders.gd_output_from_final_vcf[1]
         
@@ -411,7 +411,7 @@ task mergeGenomicDisorders{
     }
 }
 
-task plot_mergeFinalBedFiles{
+task mergeFinalBedFiles{
     input{
         Array[File] bed_files
         String variant_interpretation_docker
@@ -502,7 +502,7 @@ task callOutliers{
     }
 }
 
-task plot_createPlots{
+task createPlots{
     input{
         File bed_file
         File outliers_file
