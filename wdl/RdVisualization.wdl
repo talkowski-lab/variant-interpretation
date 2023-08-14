@@ -186,7 +186,8 @@ task rdtest {
         zcat allcovfile.bed.gz |head -n 1|cut -f 4-|tr '\t' '\n'>samples.txt
 
         ##Pass only subset ped file
-        grep -wf families.txt ~{ped_file} > subset_families.ped
+        head -n+1 ~{ped_file} > subset_families.ped
+        grep -wf families.txt ~{ped_file} >> subset_families.ped
 
         ##Run RD test script
         Rscript /opt/RdTest/Rd.R \
