@@ -184,12 +184,17 @@ task rdtest {
         tabix allcovfile.bed.gz
         rm covfile.*.bed
         zcat allcovfile.bed.gz |head -n 1|cut -f 4-|tr '\t' '\n'>samples.txt
+
+        ##Pass only subset ped file
+        grep -wf families.txt ~{ped_file} > subset_families.ped
+
+        ##Run RD test script
         Rscript /opt/RdTest/Rd.R \
             -b test.bed \
             -n ~{prefix} \
             -c allcovfile.bed.gz \
             -m medianfile.txt \
-            -f ~{ped_file} \
+            -f subset_families.ped \
             -a TRUE \
             -d TRUE \
             -w samples.txt \
