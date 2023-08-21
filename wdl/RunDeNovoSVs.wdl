@@ -177,7 +177,7 @@ workflow deNovoSV {
     #merges the per chromosome final de novo SV outputs
     call mergeFinalBedFiles{
         input:
-            bed_files = getDeNovo.denovo_output,
+            bed_files = getDeNovo.per_shard_de_novo_output,
             variant_interpretation_docker=variant_interpretation_docker,
             runtime_attr_override = runtime_attr_merge_final_bed_files
     }
@@ -205,8 +205,8 @@ workflow deNovoSV {
         File denovo_output_merged = mergeFinalBedFiles.final_denovo_output
 #        File denovo_outliers_output = callOutliers.final_denovo_outliers_output
 #        File annotated_output = callOutliers.final_annotation_output
-        Array [File] annotated_output = getDeNovo.annotation_output
-        Array [File] denovo_output_per_chr = getDeNovo.denovo_output
+        Array [File] annotated_output = getDeNovo.per_shard_annotation_output
+#        Array [File] denovo_output_per_chr = getDeNovo.denovo_output
         File denovo_output_plots = createPlots.output_plots
 #        File per_chrom_plot = createPlots.per_chrom_plot
 #        File per_sample_plot = createPlots.per_sample_plot
