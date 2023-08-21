@@ -202,11 +202,11 @@ workflow deNovoSV {
 
     output {
         File cleaned_ped = cleanPed.cleaned_ped
-        File denovo_output = mergeFinalBedFiles.final_denovo_output
+        File denovo_output_merged = mergeFinalBedFiles.final_denovo_output
 #        File denovo_outliers_output = callOutliers.final_denovo_outliers_output
 #        File annotated_output = callOutliers.final_annotation_output
         Array [File] annotated_output = getDeNovo.annotation_output
-#        File denovo_output = getDeNovo.denovo_output
+        Array [File] denovo_output = getDeNovo.denovo_output
         File denovo_output_plots = createPlots.output_plots
 #        File per_chrom_plot = createPlots.per_chrom_plot
 #        File per_sample_plot = createPlots.per_sample_plot
