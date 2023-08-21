@@ -74,8 +74,8 @@ workflow deNovoSVsScatter {
     output {
 #        Array[File] per_shard_de_novo_output = runDeNovo.denovo_output
 #        Array[File] per_shard_annotation_output = runDeNovo.annotation_output
-        File merged_annotation_output_file = mergeBedFilesAnnotated.per_chromosome_denovo_output
-        File merged_final_output_file = mergeBedFilesFinal.per_chromosome_denovo_output
+        File per_chromosome_annotation_output_file = mergeBedFilesAnnotated.per_chromosome_denovo_output
+        File per_chromosome_final_output_file = mergeBedFilesFinal.per_chromosome_denovo_output
     }
 }
 
