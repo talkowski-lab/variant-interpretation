@@ -177,7 +177,7 @@ workflow deNovoSV {
     #merges the per chromosome final de novo SV outputs
     call mergeFinalBedFiles{
         input:
-            bed_files = getDeNovo.per_shard_de_novo_output,
+            bed_files = getDeNovo.merged_final_output_file,
             variant_interpretation_docker=variant_interpretation_docker,
             runtime_attr_override = runtime_attr_merge_final_bed_files
     }
