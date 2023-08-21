@@ -20,14 +20,17 @@ library(dplyr)
 args = commandArgs(trailingOnly=TRUE)
 
 input_bed <- args[1]
-input_outliers <-args [2]
-input_ped <- args[3]
-out_file <- args[4]
+input_ped <- args[2]
+out_file <- args[3]
+
+#input_outliers <-args [2]
+#input_ped <- args[3]
+#out_file <- args[4]
 
 ped <- fread(input_ped)
 
 denovo <- as.data.frame(read.table(input_bed,header = TRUE, sep="\t",stringsAsFactors=FALSE, quote=""))
-outliers <- as.data.frame(read.table(input_outliers,header = TRUE, sep="\t",stringsAsFactors=FALSE, quote=""))
+#outliers <- as.data.frame(read.table(input_outliers,header = TRUE, sep="\t",stringsAsFactors=FALSE, quote=""))
 
 denovo$SVTYPE <- factor(denovo$SVTYPE, levels = rev(c("DEL", "DUP", "INS", "INV", "CPX", "CTX")))
 
