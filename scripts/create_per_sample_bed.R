@@ -63,3 +63,4 @@ if (exists('df2')) {
   df3 <- data.frame()
   write.table(df3, proband_gd, sep = "\t", quote = F, row.names = F, col.names = F)
   write.table(df3, parents_gd, sep = "\t", quote = F, row.names = F, col.names = F)
+}
