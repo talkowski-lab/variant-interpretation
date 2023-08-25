@@ -361,7 +361,7 @@ sv_cols <- list(
 
 denovo_cons_type %>% 
   upset(sets = grep("is_", names(denovo_cons_type), value = T),
-        queries = sv_cols,
+        #queries = sv_cols,
         order.by = "freq", 
         set_size.show = TRUE,
         # set_size.scale_max = 15000, 
