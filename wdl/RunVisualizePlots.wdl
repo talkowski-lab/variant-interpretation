@@ -16,6 +16,7 @@ workflow VisualizePlots{
         File? batch_medianfile
         File? fam_ids
 
+        File? rd_outliers
         File? sample_pe_sr
         File? sample_crai_cram
         String? buffer
@@ -63,6 +64,7 @@ workflow VisualizePlots{
                 bed = varfile,
                 sv_pipeline_rdtest_docker=sv_pipeline_rdtest_docker,
                 variant_interpretation_docker = variant_interpretation_docker,
+                outlier_samples = rd_outliers,
                 sample_batches = sample_batches_,
                 runtime_attr_rdtest=runtime_attr_rdtest
 

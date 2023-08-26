@@ -10,6 +10,7 @@ workflow RdTestVisualization{
         File batch_medianfile
         File ped_file
         File sample_batches
+        File outlier_samples
         File batch_bincov
         File bed
         String sv_pipeline_rdtest_docker
@@ -51,6 +52,7 @@ workflow RdTestVisualization{
                 ped_file = ped_file,
                 medianfile = generatePerFamilyBed.medianfile,
                 sample_batches=sample_batches,
+                outlier_samples=outlier_samples,
                 batch_bincov=batch_bincov,
                 prefix=prefix,
                 sv_pipeline_rdtest_docker=sv_pipeline_rdtest_docker,
@@ -134,6 +136,7 @@ task rdtest {
         File ped_file
         File sample_batches # samples, batches
         File batch_bincov # batch, bincov, index
+        File outlier_samples
         Array[File] medianfile
         String prefix
         String sv_pipeline_rdtest_docker
@@ -185,6 +188,9 @@ task rdtest {
         rm covfile.*.bed
         zcat allcovfile.bed.gz |head -n 1|cut -f 4-|tr '\t' '\n'>samples.txt
 
+        ##Remove outliers from RD plot except
+        grep -vf ~{outlier_samples} samples.txt > samples_noOutliers.txt
+
         ##Pass only subset ped file
         head -n+1 ~{ped_file} > subset_families.ped
         grep -wf families.txt ~{ped_file} >> subset_families.ped
@@ -198,7 +204,7 @@ task rdtest {
             -f subset_families.ped \
             -a TRUE \
             -d TRUE \
-            -w samples.txt \
+            -w samples_noOutliers.txt \
             -s 10000000
         mkdir rd_plots
         mv *jpg rd_plots
@@ -210,7 +216,7 @@ task rdtest {
         File allcovfile = "allcovfile.bed.gz"
         File median_file = "medianfile.txt"
         File test_bed = "test.bed"
-        File samples_text = "samples.txt"
+        File samples_text = "samples_noOutliers.txt"
     }
     
     runtime {
