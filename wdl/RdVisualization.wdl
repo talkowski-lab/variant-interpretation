@@ -188,12 +188,14 @@ task rdtest {
         rm covfile.*.bed
         zcat allcovfile.bed.gz |head -n 1|cut -f 4-|tr '\t' '\n'>samples.txt
 
-        ##Remove outliers from RD plot except
-        grep -vf ~{outlier_samples} samples.txt > samples_noOutliers.txt
-
         ##Pass only subset ped file
         head -n+1 ~{ped_file} > subset_families.ped
         grep -wf families.txt ~{ped_file} >> subset_families.ped
+        cut -f2 subset_families.ped | sort -u > subset_samples.txt
+
+        ##Remove outliers from RD plot except samples from this family
+        grep -vf subset_samples.txt ~{outlier_samples} > outliers_keepFams.txt
+        grep -vf outliers_keepFams.txt samples.txt > samples_noOutliers.txt
 
         ##Run RD test script
         Rscript /opt/RdTest/Rd.R \
