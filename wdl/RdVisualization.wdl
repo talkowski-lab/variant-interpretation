@@ -207,8 +207,7 @@ task rdtest {
             -a TRUE \
             -d TRUE \
             -w samples_noOutliers.txt \
-            -s 10000000 \
-            -n matrixfile.txt
+            -s 10000000
 
         mkdir rd_plots
         mv *jpg rd_plots
@@ -221,7 +220,7 @@ task rdtest {
         File median_file = "medianfile.txt"
         File test_bed = "test.bed"
         File samples_text = "samples_noOutliers.txt"
-        File matrix_file = "matrixfile.txt"
+        File matrix_file = "~{prefix}"
     }
     
     runtime {
