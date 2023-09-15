@@ -220,7 +220,7 @@ task rdtest {
         File median_file = "medianfile.txt"
         File test_bed = "test.bed"
         File samples_text = "samples_noOutliers.txt"
-        File matrix_file = "~{prefix}"
+        File matrix_file = "~{prefix}.metrics"
     }
     
     runtime {
