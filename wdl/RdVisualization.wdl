@@ -201,6 +201,7 @@ task rdtest {
         Rscript /opt/RdTest/Rd.R \
             -b test.bed \
             -n ~{prefix} \
+            -d ./ \
             -c allcovfile.bed.gz \
             -m medianfile.txt \
             -f subset_families.ped \
