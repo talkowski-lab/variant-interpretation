@@ -16,7 +16,7 @@ workflow VisualizePlots{
         File? batch_medianfile
         File? fam_ids
 
-        File rd_outliers
+        File? rd_outliers
         File? sample_pe_sr
         File? sample_crai_cram
         String? buffer
@@ -54,6 +54,7 @@ workflow VisualizePlots{
         File batch_medianfile_ = select_first([batch_medianfile])
         File batch_bincov_ = select_first([batch_bincov])
         File sample_batches_ = select_first([sample_batches])
+        File rd_outliers_ = select_first([rd_outliers])
         File regeno_file_ = select_first([regeno_file])
 
         call rdtest.RdTestVisualization as RdTest{
@@ -67,7 +68,7 @@ workflow VisualizePlots{
                 regeno=regeno_file_,
                 sv_pipeline_rdtest_docker=sv_pipeline_rdtest_docker,
                 variant_interpretation_docker = variant_interpretation_docker,
-                outlier_samples = rd_outliers,
+                outlier_samples = rd_outliers_,
                 sample_batches = sample_batches_,
                 runtime_attr_rdtest=runtime_attr_rdtest
 
