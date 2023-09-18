@@ -26,6 +26,7 @@ workflow VisualizePlots{
         Boolean? file_localization
         Boolean? requester_pays
         Boolean? is_snv_indel
+        File? regeno_file
 
         String sv_base_mini_docker
         String sv_pipeline_rdtest_docker
@@ -62,6 +63,7 @@ workflow VisualizePlots{
                 batch_medianfile = batch_medianfile_,
                 batch_bincov=batch_bincov_,
                 bed = varfile,
+                regeno=regeno_file,
                 sv_pipeline_rdtest_docker=sv_pipeline_rdtest_docker,
                 variant_interpretation_docker = variant_interpretation_docker,
                 outlier_samples = rd_outliers,

@@ -13,6 +13,7 @@ workflow RdTestVisualization{
         File outlier_samples
         File batch_bincov
         File bed
+        File regeno
         String sv_pipeline_rdtest_docker
         String variant_interpretation_docker
         RuntimeAttr? runtime_attr_rdtest
@@ -53,6 +54,7 @@ workflow RdTestVisualization{
                 medianfile = generatePerFamilyBed.medianfile,
                 sample_batches=sample_batches,
                 outlier_samples=outlier_samples,
+                regeno = regeno_file,
                 batch_bincov=batch_bincov,
                 prefix=prefix,
                 sv_pipeline_rdtest_docker=sv_pipeline_rdtest_docker,
@@ -137,6 +139,7 @@ task rdtest {
         File sample_batches # samples, batches
         File batch_bincov # batch, bincov, index
         File outlier_samples
+        File regeno
         Array[File] medianfile
         String prefix
         String sv_pipeline_rdtest_docker
@@ -201,14 +204,15 @@ task rdtest {
         Rscript /opt/RdTest/Rd.R \
             -b test.bed \
             -n ~{prefix} \
-            -d ./ \
             -c allcovfile.bed.gz \
             -m medianfile.txt \
             -f subset_families.ped \
             -a TRUE \
             -d TRUE \
             -w samples_noOutliers.txt \
-            -s 10000000
+            -s 10000000 \
+            -g TRUE \
+            -r ~{regeno}
 
         mkdir rd_plots
         mv *jpg rd_plots
@@ -221,7 +225,11 @@ task rdtest {
         File median_file = "medianfile.txt"
         File test_bed = "test.bed"
         File samples_text = "samples_noOutliers.txt"
-        File matrix_file = "~{prefix}.median_geno"
+        File rd_median_geno = "~{prefix}.median_geno"
+        File rd_denovo = "~{prefix}.denovo"
+        File rd_geno = "~{prefix}.geno"
+        File rd_gq = "~{prefix}.gq"
+        File rd_vargq = "~{prefix}.vargq"
     }
     
     runtime {
