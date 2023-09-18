@@ -63,7 +63,7 @@ workflow VisualizePlots{
                 batch_medianfile = batch_medianfile_,
                 batch_bincov=batch_bincov_,
                 bed = varfile,
-                regeno=regeno_file,
+                regeno=regeno_file_,
                 sv_pipeline_rdtest_docker=sv_pipeline_rdtest_docker,
                 variant_interpretation_docker = variant_interpretation_docker,
                 outlier_samples = rd_outliers,
