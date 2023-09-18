@@ -54,7 +54,7 @@ workflow RdTestVisualization{
                 medianfile = generatePerFamilyBed.medianfile,
                 sample_batches=sample_batches,
                 outlier_samples=outlier_samples,
-                regeno = regeno_file,
+                regeno = regeno,
                 batch_bincov=batch_bincov,
                 prefix=prefix,
                 sv_pipeline_rdtest_docker=sv_pipeline_rdtest_docker,
