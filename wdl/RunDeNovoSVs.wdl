@@ -163,15 +163,15 @@ workflow deNovoSV {
                 runtime_attr_denovo = runtime_attr_denovo,
                 runtime_attr_vcf_to_bed = runtime_attr_vcf_to_bed
         }
-
-        #merges the per chromosome final de novo SV outputs
-        call mergeDenovoBedFiles{
-            input:
-                bed_files = getDeNovo.per_chromosome_final_output_file,
-                variant_interpretation_docker=variant_interpretation_docker,
-                runtime_attr_override = runtime_attr_merge_final_bed_files
-        }
     }
+    #merges the per chromosome final de novo SV outputs
+    call mergeDenovoBedFiles{
+        input:
+            bed_files = getDeNovo.per_chromosome_final_output_file,
+            variant_interpretation_docker=variant_interpretation_docker,
+            runtime_attr_override = runtime_attr_merge_final_bed_files
+    }
+#    }
 
     #outputs a final callset of de novo SVs as well as outlier de novo SV calls
     call callOutliers {
