@@ -679,11 +679,8 @@ vcf_metrics    """
     ## FILTERING ##
     ###############
     verbosePrint('Filtering out calls', verbose)
-    # 1. Filter by region
-    #  Keep if in GD region
-    keep_gd = bed_child[(bed_child['in_gd'] == True)]['name_famid'].to_list()
 
-    # Filter out calls in exclude regions
+    # 1. Filter out calls in exclude regions
     verbosePrint('Filtering out calls in exclude regions', verbose)
     start = time.time()
     # Reformat exclude_regions to bedtool
@@ -800,8 +797,6 @@ vcf_metrics    """
 
     # 5. Clean up and remove duplicated CPX SV
     # Keep SVs
-    #bed_child.loc[bed_child['name_famid'].isin(keep_gd), 'is_de_novo'] = True
-    #bed_child.loc[bed_child['name_famid'].isin(keep_gd), 'filter_flag'] = 'in_gd'
     bed_child.loc[bed_child['name_famid'].isin(keep_other_sv), 'is_de_novo'] = True
     bed_child.loc[bed_child['name_famid'].isin(keep_other_sv), 'filter_flag'] = 'not_del_dup_ins'
 
