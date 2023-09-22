@@ -8,11 +8,11 @@ Description: SV de novo filtering script
 # Import libraries
 import argparse
 import yaml
-import math
+# import math
 import numpy as np
 import pandas as pd
 import pybedtools
-import tabix
+# import tabix
 import collections
 import os
 import time
