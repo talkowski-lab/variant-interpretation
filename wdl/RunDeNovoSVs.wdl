@@ -164,28 +164,28 @@ workflow deNovoSV {
                 runtime_attr_vcf_to_bed = runtime_attr_vcf_to_bed
         }
 
-        #outputs a final callset of de novo SVs as well as outlier de novo SV calls
-#        call callOutliers {
-#            input:
-#                bed_file = getDeNovo.merged_annotation_output_file,
-#                chromosome = contigs[i],
-#                variant_interpretation_docker=variant_interpretation_docker,
-#                runtime_attr_override = runtime_attr_call_outliers
-#        }
+        #merges the per chromosome final de novo SV outputs
+        call mergeDenovoBedFiles{
+            input:
+                bed_files = getDeNovo.per_chromosome_final_output_file,
+                variant_interpretation_docker=variant_interpretation_docker,
+                runtime_attr_override = runtime_attr_merge_final_bed_files
+        }
     }
 
-    #merges the per chromosome final de novo SV outputs
-    call mergeFinalBedFiles{
+    #outputs a final callset of de novo SVs as well as outlier de novo SV calls
+    call callOutliers {
         input:
-            bed_files = getDeNovo.per_chromosome_final_output_file,
+            bed_file = mergeDenovoBedFiles.merged_denovo_output,
             variant_interpretation_docker=variant_interpretation_docker,
-            runtime_attr_override = runtime_attr_merge_final_bed_files
+            runtime_attr_override = runtime_attr_call_outliers
     }
+
 
     #generates plots for QC
     call createPlots{
         input:
-            bed_file = mergeFinalBedFiles.final_denovo_output,
+            bed_file = callOutliers.final_denovo_output,
 #            outliers_file = callOutliers.final_denovo_outliers_output,
             ped_input = ped_input,
             variant_interpretation_docker=variant_interpretation_docker,
@@ -202,7 +202,7 @@ workflow deNovoSV {
 
     output {
         File cleaned_ped = cleanPed.cleaned_ped
-        File denovo_output_merged = mergeFinalBedFiles.final_denovo_output
+        File denovo_output_merged = mergeDenovoBedFiles.merged_denovo_output
 #        File denovo_outliers_output = callOutliers.final_denovo_outliers_output
 #        File annotated_output = callOutliers.final_annotation_output
         Array [File] annotated_output = getDeNovo.per_chromosome_annotation_output_file
@@ -414,7 +414,7 @@ task mergeGenomicDisorders{
     }
 }
 
-task mergeFinalBedFiles{
+task mergeDenovoBedFiles{
     input{
         Array[File] bed_files
         String variant_interpretation_docker
@@ -436,14 +436,14 @@ task mergeFinalBedFiles{
     RuntimeAttr runtime_attr = select_first([runtime_attr_override, default_attr])
 
     output{
-        File final_denovo_output = "final.denovo.merged.bed.gz"
+        File merged_denovo_output = "denovo.merged.bed.gz"
     }
 
     command {
 
-        zcat ${bed_files[0]} | head -n+1 > final.denovo.merged.bed
-        zcat ${sep=" " bed_files} | grep -v ^chrom >> final.denovo.merged.bed
-        bgzip final.denovo.merged.bed
+        zcat ${bed_files[0]} | head -n+1 > denovo.merged.bed
+        zcat ${sep=" " bed_files} | grep -v ^chrom >> denovo.merged.bed
+        bgzip denovo.merged.bed
     }
 
     runtime {
@@ -460,7 +460,6 @@ task mergeFinalBedFiles{
 task callOutliers{
     input{
         File bed_file
-        String chromosome
         String variant_interpretation_docker
         RuntimeAttr? runtime_attr_override
     }
@@ -480,16 +479,15 @@ task callOutliers{
     RuntimeAttr runtime_attr = select_first([runtime_attr_override, default_attr])
 
     output{
-#        File final_denovo_output = "final.denovo.merged.bed.gz"
-#        File final_denovo_outliers_output = "final.denovo.merged.outliers.bed.gz"
-        File final_annotation_output = "~{chromosome}_de_novo_annotated_output.bed.gz"
+        File final_denovo_output = "final.denovo.merged.bed.gz"
+        File final_denovo_outliers_output = "final.denovo.merged.outliers.bed.gz"
+        File final_annotation_output = "de_novo_annotated_output.bed.gz"
     }
 
     command {
         set -euo pipefail
 
-        python3.9 /src/variant-interpretation/scripts/deNovoOutliers.py --bed ~{bed_file} \
-            --out ~{chromosome}_de_novo_annotated_output.bed.gz
+        python3.9 /src/variant-interpretation/scripts/deNovoOutliers.py --bed ~{bed_file}
 
         bgzip final.denovo.merged.bed
         bgzip final.denovo.merged.outliers.bed
