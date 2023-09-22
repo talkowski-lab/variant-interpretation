@@ -788,8 +788,10 @@ vcf_metrics    """
         remove_coverage = bed_child_coverage[bed_child_coverage['median_coverage'] == 'Remove']['name_famid'].to_list()
     else:
         remove_coverage = ['']
-        bed_child.loc[bed_child['name_famid'].isin(remove_coverage) & bed_child['is_de_novo'] == True, 'filter_flag'] = 'low_coverage_in_parents'
-        bed_child.loc[bed_child['name_famid'].isin(remove_coverage) & bed_child['is_de_novo'] == True, 'is_de_novo'] = False
+
+    bed_child.loc[bed_child['name_famid'].isin(remove_coverage) & bed_child['is_de_novo'] == True, 'filter_flag'] = 'low_coverage_in_parents'
+    bed_child.loc[bed_child['name_famid'].isin(remove_coverage) & bed_child['is_de_novo'] == True, 'is_de_novo'] = False
+
     end = time.time()
     delta = end - start
     print("Took %f seconds to process" % delta)
