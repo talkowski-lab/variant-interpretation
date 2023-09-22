@@ -330,14 +330,14 @@ vcf_metrics    """
     vcf = pd.read_csv(vcf_file, sep='\t')
     ped = pd.read_csv(ped_file, sep='\t')
     disorder = pd.read_csv(disorder_file, sep='\t', header=None)
-    raw_bed_colnames = colnames=['ID', 'start', 'end', 'svtype', 'sample']
+    raw_bed_colnames = ['ID', 'start', 'end', 'svtype', 'sample']
     raw_bed_child = pd.read_csv(raw_file_proband, sep='\t', names= raw_bed_colnames, header=None).replace(np.nan, '', regex=True)
     raw_bed_parent = pd.read_csv(raw_file_parent, sep='\t', names= raw_bed_colnames, header=None).replace(np.nan, '', regex=True)
     raw_bed_depth_child = pd.read_csv(raw_file_depth_proband, sep='\t', names= raw_bed_colnames, header=None).replace(np.nan, '', regex=True)
     raw_bed_depth_parent = pd.read_csv(raw_file_depth_parent, sep='\t', names= raw_bed_colnames, header=None).replace(np.nan, '', regex=True)
     exclude_regions = pd.read_csv(exclude_regions, sep='\t').replace(np.nan, '', regex=True)
-    bincov_colnames = colnames=['batch', 'bincov', 'index']
-    sample_batches_colnames = colnames=['sample', 'batch']
+    bincov_colnames = ['batch', 'bincov', 'index']
+    sample_batches_colnames = ['sample', 'batch']
     bincov = pd.read_csv(coverage, sep='\t', names= bincov_colnames, header=None).replace(np.nan, '', regex=True)
     sample_batches = pd.read_csv(batches, sep='\t', names= sample_batches_colnames, header=None).replace(np.nan, '', regex=True)
 
