@@ -695,12 +695,14 @@ vcf_metrics    """
         exclude_regions_intersect = bed_child_bt.coverage(exclue_regions_bt).to_dataframe(disable_auto_names=True, header=None) #HB said to use bedtools coverage, -f and -F give the same SVs to be removed
         if (len(exclude_regions_intersect) != 0):
             remove_regions = exclude_regions_intersect[exclude_regions_intersect[10] > 0.5][6].to_list()
-            bed_child.loc[bed_child['name_famid'].isin(remove_regions) & bed_child['is_de_novo'] == True, 'filter_flag'] = 'in_blacklist_region'
-            bed_child.loc[bed_child['name_famid'].isin(remove_regions) & bed_child['is_de_novo'] == True, 'is_de_novo'] = False
         else:
             remove_regions = ['']
     else:
         remove_regions = ['']
+
+    bed_child.loc[ bed_child[ 'name_famid' ].isin(remove_regions) & bed_child['is_de_novo' ] == True, 'filter_flag' ] = 'in_blacklist_region'
+    bed_child.loc[bed_child[ 'name_famid' ].isin(remove_regions) & bed_child[ 'is_de_novo' ] == True, 'is_de_novo' ] = False
+
     end = time.time()
     delta = end - start
     print("Took %f seconds to process" % delta)
@@ -817,7 +819,7 @@ vcf_metrics    """
 
     # Define output files
     output = bed_final
-    de_novo = bed_final[(bed_final['is_de_novo'] == True) | (bed_final['filter_flag'] == 'ins_filter')]
+    de_novo = bed_final[(bed_final['is_de_novo'] == True) | (bed_final['filter_flag'] == 'ins_filter') | (bed_final['in_gd'] == True)]
 
     # Write output
     output.to_csv(path_or_buf=out_file, mode='a', index=False, sep='\t', header=True)
