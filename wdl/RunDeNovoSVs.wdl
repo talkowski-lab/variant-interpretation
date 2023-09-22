@@ -164,6 +164,7 @@ workflow deNovoSV {
                 runtime_attr_vcf_to_bed = runtime_attr_vcf_to_bed
         }
     }
+
     #merges the per chromosome final de novo SV outputs
     call mergeDenovoBedFiles{
         input:
@@ -171,7 +172,6 @@ workflow deNovoSV {
             variant_interpretation_docker=variant_interpretation_docker,
             runtime_attr_override = runtime_attr_merge_final_bed_files
     }
-#    }
 
     #outputs a final callset of de novo SVs as well as outlier de novo SV calls
     call callOutliers {
@@ -180,7 +180,6 @@ workflow deNovoSV {
             variant_interpretation_docker=variant_interpretation_docker,
             runtime_attr_override = runtime_attr_call_outliers
     }
-
 
     #generates plots for QC
     call createPlots{
@@ -204,21 +203,8 @@ workflow deNovoSV {
         File cleaned_ped = cleanPed.cleaned_ped
         File denovo_output_merged = mergeDenovoBedFiles.merged_denovo_output
 #        File denovo_outliers_output = callOutliers.final_denovo_outliers_output
-#        File annotated_output = callOutliers.final_annotation_output
         Array [File] annotated_output = getDeNovo.per_chromosome_annotation_output_file
-#        Array [File] denovo_output_per_chr = getDeNovo.denovo_output
         File denovo_output_plots = createPlots.output_plots
-#        File per_chrom_plot = createPlots.per_chrom_plot
-#        File per_sample_plot = createPlots.per_sample_plot
-#        File per_freq_plot = createPlots.per_freq_plot
-#        File per_freq_gd_plot = createPlots.per_freq_gd_plot
-#        File per_freq_not_gd = createPlots.per_freq_not_gd
-#        File size_plot = createPlots.size_plot
-#        File evidence_plot = createPlots.evidence_plot
-#        File annotation_plot = createPlots.annotation_plot
-#        File per_type_plot = createPlots.per_type_plot
-#        File per_sample_boxplot = createPlots.per_sample_boxplot
-#        File per_type_boxplot = createPlots.per_type_boxplot
         File gd_depth = mergeGenomicDisorders.gd_output_from_depth
         File gd_vcf = getGenomicDisorders.gd_output_from_final_vcf[1]
         
