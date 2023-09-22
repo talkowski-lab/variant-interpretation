@@ -782,6 +782,7 @@ vcf_metrics    """
     # Remove if low coverage in parents
     start = time.time()
     bed_child_coverage = bed_child[bed_child['is_de_novo'] == True]
+    verbosePrint('Removing calls if there is low coverage evidence in parents', verbose)
     if (len(bed_child_coverage.index) > 0):
         bed_child_coverage['median_coverage'] = bed_child_coverage.apply(lambda r: getMedianCoverage(findCoverage(r, ped, sample_batches, bincov, family_member='mother'),findCoverage(r, ped, sample_batches, bincov, family_member='father'), coverage_cutoff), axis=1)
         remove_coverage = bed_child_coverage[bed_child_coverage['median_coverage'] == 'Remove']['name_famid'].to_list()
