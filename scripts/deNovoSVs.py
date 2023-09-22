@@ -622,8 +622,10 @@ vcf_metrics    """
     ## Large CNVS: Reciprocal overlap large_raw_overlap
     verbosePrint('Checking large cnvs in raw files', verbose)
     start = time.time()
+
     large_bed_filt_cnv_depth = bed_child_de_novo[(bed_child_de_novo['is_large_cnv'] == True) & (bed_child_de_novo['SVLEN'] >= 5000)]
     large_bed_filt_cnv_other = bed_child_de_novo[(bed_child_de_novo['is_large_cnv'] == True) & (bed_child_de_novo['SVLEN'] < 5000)]
+
     if (len(large_bed_filt_cnv_other.index) > 0):
         verbosePrint('Checking if intermediate cnv in proband is in raw files', verbose)
         bed_filt_cnv_proband_other = convertToBedtool(large_bed_filt_cnv_other, cols_to_keep=cols_keep_child,sort=True)
@@ -638,19 +640,22 @@ vcf_metrics    """
         large_cnv_names_overlap_other = [x for x in large_cnv_names_overlap_proband_other if x not in large_cnv_names_overlap_parent_other]
     else:
         large_cnv_names_overlap_other = ['']
+
     if (len(large_bed_filt_cnv_depth.index) > 0):
         verbosePrint('Checking if large cnv in proband is in raw files', verbose)
         bed_filt_cnv_proband_depth = convertToBedtool(large_bed_filt_cnv_depth, cols_to_keep=cols_keep_child,sort=True)
         large_cnv_names_overlap_proband_depth = getCnvIntersectionDepth(bed_filt_cnv_proband_depth,raw_bed_ref_depth_child,large_raw_overlap)
-        large_bed_filt_cnv_tmp_depth = large_bed_filt_cnv_depth[large_bed_filt_cnv_depth['name_famid'].isin(large_cnv_names_overlap_proband_depth)]
+        # large_bed_filt_cnv_tmp_depth = large_bed_filt_cnv_depth[large_bed_filt_cnv_depth['name_famid'].isin(large_cnv_names_overlap_proband_depth)]
         verbosePrint('Checking if large cnv in proband are also in raw files for the parents', verbose)
         bed_filt_cnv_fam_depth = convertToBedtool(large_bed_filt_cnv_depth, cols_to_keep=cols_keep_parent,sort=True)
         large_cnv_names_overlap_parent_depth = getCnvIntersectionDepth(bed_filt_cnv_fam_depth,raw_bed_ref_depth_parent,large_raw_overlap)
-        large_bed_filt_cnv_tmp_depth = large_bed_filt_cnv_depth[~(large_bed_filt_cnv_depth['name_famid'].isin(large_cnv_names_overlap_parent_depth))]
+        # large_bed_filt_cnv_tmp_depth = large_bed_filt_cnv_depth[~(large_bed_filt_cnv_depth['name_famid'].isin(large_cnv_names_overlap_parent_depth))]
         large_cnv_names_overlap_depth = [x for x in large_cnv_names_overlap_proband_depth if x not in large_cnv_names_overlap_parent_depth]
     else:
         large_cnv_names_overlap_depth = ['']
+
     large_cnv_names_overlap = large_cnv_names_overlap_other + large_cnv_names_overlap_depth
+
     end = time.time()
     delta = end - start
     print("Took %f seconds to process" % delta)
