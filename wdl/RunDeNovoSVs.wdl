@@ -467,7 +467,7 @@ task callOutliers{
     output{
         File final_denovo_output = "final.denovo.merged.bed.gz"
         File final_denovo_outliers_output = "final.denovo.merged.outliers.bed.gz"
-        File final_annotation_output = "de_novo_annotated_output.bed.gz"
+        File final_annotation_output = "final.denovo.merged.allSamples.bed.gz"
     }
 
     command {
@@ -477,7 +477,7 @@ task callOutliers{
 
         bgzip final.denovo.merged.bed
         bgzip final.denovo.merged.outliers.bed
-        bgzip de_novo_annotated_output.bed
+        bgzip final.denovo.merged.allSamples.bed
 
     }
 

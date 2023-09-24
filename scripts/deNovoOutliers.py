@@ -35,4 +35,4 @@ bed_original.loc[~(bed_original['sample'].isin(samples_keep)) & bed_original['is
 output.to_csv(path_or_buf='final.denovo.merged.bed', mode='a', index=False, sep='\t', header=True)
 output_outliers.to_csv(path_or_buf='final.denovo.merged.outliers.bed', mode='a', index=False, sep='\t', header=True)
 
-bed_original.to_csv(path_or_buf='de_novo_annotated_output.bed', mode='a', index=False, sep='\t', header=True)
+bed_original.to_csv(path_or_buf='final.denovo.merged.allSamples.bed', mode='a', index=False, sep='\t', header=True)
