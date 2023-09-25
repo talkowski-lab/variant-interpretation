@@ -184,7 +184,7 @@ workflow deNovoSV {
     #generates plots for QC
     call createPlots{
         input:
-            bed_file = callOutliers.final_denovo_output,
+            bed_file = callOutliers.final_denovo_nonOutliers_output,
 #            outliers_file = callOutliers.final_denovo_outliers_output,
             ped_input = ped_input,
             variant_interpretation_docker=variant_interpretation_docker,
