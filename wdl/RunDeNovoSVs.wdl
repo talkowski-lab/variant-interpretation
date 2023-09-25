@@ -201,10 +201,10 @@ workflow deNovoSV {
 
     output {
         File cleaned_ped = cleanPed.cleaned_ped
-        File denovo_output_merged = mergeDenovoBedFiles.merged_denovo_output
-#        File denovo_outliers_output = callOutliers.final_denovo_outliers_output
-        Array [File] annotated_output = getDeNovo.per_chromosome_annotation_output_file
-        File denovo_output_plots = createPlots.output_plots
+        File final_denovo_nonOutliers = callOutliers.final_denovo_nonOutliers_output
+        File final_denovo_outliers = callOutliers.final_denovo_outliers_output
+        File final_denovo_nonOutliers_plots = createPlots.output_plots
+        Array [File] denovo_output_annotated = getDeNovo.per_chromosome_annotation_output_file
         File gd_depth = mergeGenomicDisorders.gd_output_from_depth
         File gd_vcf = getGenomicDisorders.gd_output_from_final_vcf[1]
         
@@ -465,9 +465,9 @@ task callOutliers{
     RuntimeAttr runtime_attr = select_first([runtime_attr_override, default_attr])
 
     output{
-        File final_denovo_output = "final.denovo.merged.bed.gz"
+        File final_denovo_nonOutliers_output = "final.denovo.merged.bed.gz"
         File final_denovo_outliers_output = "final.denovo.merged.outliers.bed.gz"
-        File final_annotation_output = "final.denovo.merged.allSamples.bed.gz"
+        File final_denovo_allSamples_output = "final.denovo.merged.allSamples.bed.gz"
     }
 
     command {
