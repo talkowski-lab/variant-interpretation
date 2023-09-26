@@ -113,7 +113,7 @@ workflow VisualizePlots{
         
         if(run_cram_plots){
             File sample_crai_cram_ = select_first([sample_crai_cram])
-            Int igv_max_window_ = select_first([igv_max_window])
+            Int igv_max_window_ = if defined(igv_max_window) then select_first([igv_max_window]) else 150000
             Boolean requester_pays_ = if defined(requester_pays) then select_first([requester_pays]) else false
             call igv_cram.IGV_all_samples as igv_cram_plots {
                 input:

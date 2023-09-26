@@ -17,6 +17,7 @@ workflow IGV_all_samples {
         File varfile
         File reference
         File reference_index
+        Int igv_max_window
         Boolean file_localization
         Boolean requester_pays
         Boolean is_snv_indel
@@ -116,6 +117,7 @@ workflow IGV_all_samples {
                     ped_file = ped_file,
                     file_localization = file_localization,
                     requester_pays = requester_pays,
+                    igv_max_window = igv_max_window,
                     crams_parse = generate_per_family_sample_crai_cram.per_family_crams_strings,
                     crais_parse = generate_per_family_sample_crai_cram.per_family_crais_strings,
                     samples = update_sample_crai_cram.per_family_samples,
