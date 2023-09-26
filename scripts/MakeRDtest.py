@@ -112,7 +112,8 @@ class Variant():
         w1=800
         resized_igv = igv[x1:w1, y1:h1] # get rid of white space at bottom of igv plot
         img = Image.open(rdplot) # rd plot
-        img2 = img.crop((0, 230, img.size[0], img.size[1])) # crop out original RD plot annotations
+        # img2 = img.crop((0, 230, img.size[0], img.size[1])) # crop out original RD plot annotations
+        img2=img #comment out RD cropping to keep size and extra info
         img2.save("croprd.jpg") # Harolds cropping
         rd = cv2.imread("croprd.jpg") # read it in cv2 for stacking command
         # get new annotation

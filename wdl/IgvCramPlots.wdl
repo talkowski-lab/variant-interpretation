@@ -20,6 +20,7 @@ workflow IGV {
         Array[File]? crais_localize
         File reference
         File reference_index
+        Int igv_max_window
         String buffer
         String buffer_large
         String igv_docker
@@ -84,6 +85,7 @@ workflow IGV {
                 buffer_large = buffer_large,
                 reference = reference,
                 reference_index = reference_index,
+                igv_max_window = igv_max_window,
                 igv_docker = igv_docker,
                 runtime_attr_override = runtime_attr_igv
         }
@@ -174,6 +176,7 @@ task runIGV_whole_genome_parse{
         File varfile
         File reference
         File reference_index
+        Int igv_max_window
         String family
         File ped_file
         Array[String] samples
@@ -201,7 +204,7 @@ task runIGV_whole_genome_parse{
     command <<<
             set -euo pipefail
             mkdir pe_igv_plots
-            cat ~{varfile} | cut -f1-3 | awk '{if ($3-$2>=15000) print $1"\t"$2"\t"$2 "\n" $1"\t"$3"\t"$3;else print}' | awk '{$2-=3000}1' OFS='\t' | awk '{$3+=3000}1' OFS='\t' | sort -k1,1 -k2,2n | bgzip -c > regions.bed.gz
+            cat ~{varfile} | cut -f1-3 | awk '{if ($3-$2>=~{igv_max_window}) print $1"\t"$2"\t"$2 "\n" $1"\t"$3"\t"$3;else print}' | awk '{$2-=3000}1' OFS='\t' | awk '{$3+=3000}1' OFS='\t' | sort -k1,1 -k2,2n | bgzip -c > regions.bed.gz
             tabix -p bed regions.bed.gz
             #localize cram files
             while read sample crai cram new_cram new_crai

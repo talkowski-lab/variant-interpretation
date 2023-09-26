@@ -16,6 +16,7 @@ workflow VisualizePlots{
         File? batch_medianfile
         File? fam_ids
 
+        Int ?igv_max_window
         File? rd_outliers
         File? sample_pe_sr
         File? sample_crai_cram
@@ -112,6 +113,7 @@ workflow VisualizePlots{
         
         if(run_cram_plots){
             File sample_crai_cram_ = select_first([sample_crai_cram])
+            Int igv_max_window_ = select_first([igv_max_window])
             Boolean requester_pays_ = if defined(requester_pays) then select_first([requester_pays]) else false
             call igv_cram.IGV_all_samples as igv_cram_plots {
                 input:
@@ -121,6 +123,7 @@ workflow VisualizePlots{
                     fam_ids = fam_ids,
                     buffer_large = buffer_large_,
                     varfile = varfile,
+                    igv_max_window = igv_max_window_,
                     reference = reference_,
                     file_localization = file_localization_,
                     requester_pays = requester_pays_,
