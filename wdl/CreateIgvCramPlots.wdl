@@ -96,6 +96,7 @@ workflow IGV_all_samples {
                     samples = update_sample_crai_cram.per_family_samples,
                     file_localization = file_localization,
                     requester_pays = requester_pays,
+                    igv_max_window = igv_max_window,
                     crams_localize = generate_per_family_sample_crai_cram.per_family_crams_files,
                     crais_localize = generate_per_family_sample_crai_cram.per_family_crais_files,
                     sample_crai_cram = generate_per_family_sample_crai_cram.subset_sample_crai_cram,
