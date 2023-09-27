@@ -119,16 +119,17 @@ with open(bamfiscript,'w') as h:
                 Chr=dat[0]
                 if not chromosome=='all':
                     if not Chr == chromosome: continue
-                Start_Buff=str(int(dat[1])-buff)
-                End_Buff=str(int(dat[2])+buff)
                 Start=str(int(dat[1]))
                 End=str(int(dat[2]))
                 ID=dat[3]
+                Length=int(dat[2]) - int(dat[1])
                 for pe in pe_list:
                         g.write('load '+pe+'\n')
                 for sr in sr_list:
                         g.write('load '+sr+'\n')
                 if int(End)-int(Start)<int(igv_max_window):
+                    Start_Buff = str(int(dat[ 1 ]) - Length)
+                    End_Buff = str(int(dat[ 2 ]) + Length)
                     g.write('goto '+Chr+":"+Start_Buff+'-'+End_Buff+'\n')
                     g.write('region '+Chr+":"+Start+'-'+End+'\n')
                     g.write('sort base\n')
@@ -140,6 +141,8 @@ with open(bamfiscript,'w') as h:
                     g.write('snapshotDirectory '+outdir+'\n')
                     g.write('snapshot '+fam_id+'_'+ID+'.png\n' )
                 else:
+                    Start_Buff = str(int(dat[ 1 ]) - buff)
+                    End_Buff = str(int(dat[ 2 ]) + buff)
                     g.write('goto '+Chr+":"+Start_Buff+'-'+str(int(Start_Buff)+large_buff)+'\n') # Extra 1kb buffer if variant large
                     g.write('region '+Chr+":"+Start+'-'+str(int(Start))+'\n') 
                     g.write('sort base\n')
