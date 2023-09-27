@@ -21,6 +21,7 @@ parser.add_argument('-l', '--large_buff', type=str, help='length of buffer for l
 parser.add_argument('-c', '--chromosome', type=str, help='name of chromosome to make igv on', default='all')
 parser.add_argument('-i', '--igvfile', type=str, help='name of chromosome to make igv on', default='all')
 parser.add_argument('-bam', '--bamfiscript', type=str, help='name of chromosome to make igv on', default='all')
+parser.add_argument('-m', '--igvmaxwindow', type=str, help='max length of SV to appear in IGV', default='all')
 
 args = parser.parse_args()
 
@@ -126,7 +127,7 @@ with open(bamfiscript,'w') as h:
                         g.write('load '+pe+'\n')
                 for sr in sr_list:
                         g.write('load '+sr+'\n')
-                if int(End)-int(Start)<10000:
+                if int(End)-int(Start)<igvmaxwindow:
                     g.write('goto '+Chr+":"+Start_Buff+'-'+End_Buff+'\n')
                     g.write('region '+Chr+":"+Start+'-'+End+'\n')
                     g.write('sort base\n')
