@@ -31,7 +31,7 @@ large_buff = int(args.large_buff)
 varfile = args.varfile
 pedigree = args.ped
 fam_id = args.fam_id
-igv_max_window = igvmaxwindow
+igv_max_window = args.igvmaxwindow
 
 outstring=os.path.basename(varfile)[0:-4]
 bamdir="pe_bam"
