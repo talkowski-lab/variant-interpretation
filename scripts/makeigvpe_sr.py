@@ -31,6 +31,7 @@ large_buff = int(args.large_buff)
 varfile = args.varfile
 pedigree = args.ped
 fam_id = args.fam_id
+igv_max_window = igvmaxwindow
 
 outstring=os.path.basename(varfile)[0:-4]
 bamdir="pe_bam"
@@ -127,7 +128,7 @@ with open(bamfiscript,'w') as h:
                         g.write('load '+pe+'\n')
                 for sr in sr_list:
                         g.write('load '+sr+'\n')
-                if int(End)-int(Start)<igvmaxwindow:
+                if int(End)-int(Start)<int(igv_max_window):
                     g.write('goto '+Chr+":"+Start_Buff+'-'+End_Buff+'\n')
                     g.write('region '+Chr+":"+Start+'-'+End+'\n')
                     g.write('sort base\n')
