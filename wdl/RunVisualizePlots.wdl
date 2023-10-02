@@ -21,7 +21,6 @@ workflow VisualizePlots{
         File? sample_pe_sr
         File? sample_crai_cram
         String? buffer
-        String? buffer_large
         File? reference
         File? reference_index
         Boolean? file_localization
@@ -121,7 +120,6 @@ workflow VisualizePlots{
                     sample_crai_cram = sample_crai_cram_,
                     buffer = buffer_,
                     fam_ids = fam_ids,
-                    buffer_large = buffer_large_,
                     varfile = varfile,
                     igv_max_window = igv_max_window_,
                     reference = reference_,

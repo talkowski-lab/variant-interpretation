@@ -23,7 +23,6 @@ workflow IGV_all_samples {
         Boolean is_snv_indel
         String prefix
         String buffer
-        String buffer_large
         String sv_base_mini_docker
         String igv_docker
         String variant_interpretation_docker
@@ -101,7 +100,6 @@ workflow IGV_all_samples {
                     crais_localize = generate_per_family_sample_crai_cram.per_family_crais_files,
                     sample_crai_cram = generate_per_family_sample_crai_cram.subset_sample_crai_cram,
                     buffer = buffer,
-                    buffer_large = buffer_large,
                     reference = reference,
                     reference_index = reference_index,
                     igv_docker = igv_docker,
@@ -124,7 +122,6 @@ workflow IGV_all_samples {
                     samples = update_sample_crai_cram.per_family_samples,
                     updated_sample_crai_cram = update_sample_crai_cram.changed_sample_crai_cram,
                     buffer = buffer,
-                    buffer_large = buffer_large,
                     reference = reference,
                     reference_index = reference_index,
                     igv_docker = igv_docker,
