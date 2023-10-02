@@ -119,19 +119,19 @@ with open(bamfiscript,'w') as h:
                 Chr=dat[0]
                 if not chromosome=='all':
                     if not Chr == chromosome: continue
-                Start=str(int(dat[1]))
-                End=str(int(dat[2]))
+                Start=int(dat[1])
+                End=int(dat[2])
                 ID=dat[3]
-                Length=int(dat[2]) - int(dat[1])
+                Length=End - Start
                 for pe in pe_list:
                         g.write('load '+pe+'\n')
                 for sr in sr_list:
                         g.write('load '+sr+'\n')
-                if int(End)-int(Start)<int(igv_max_window):
-                    Start_Buff = str(int(dat[ 1 ]) - Length)
-                    End_Buff = str(int(dat[ 2 ]) + Length)
-                    g.write('goto '+Chr+":"+Start_Buff+'-'+End_Buff+'\n')
-                    g.write('region '+Chr+":"+Start+'-'+End+'\n')
+                if End-Start < int(igv_max_window): #if variant is below window, make 1 plot
+                    Start_Buff = Start - (Length/2)
+                    End_Buff = End + (Length/2)
+                    g.write('goto '+Chr+":"+str(Start_Buff)+'-'+str(End_Buff)+'\n')
+                    g.write('region '+Chr+":"+str(Start)+'-'+str(End)+'\n')
                     g.write('sort base\n')
                     g.write('viewaspairs\n')
                     #g.write('squish\n')
@@ -140,11 +140,12 @@ with open(bamfiscript,'w') as h:
                     g.write('squish '+sr+'\n')
                     g.write('snapshotDirectory '+outdir+'\n')
                     g.write('snapshot '+fam_id+'_'+ID+'.png\n' )
-                else:
-                    Start_Buff = str(int(dat[ 1 ]) - buff)
-                    End_Buff = str(int(dat[ 2 ]) + buff)
-                    g.write('goto '+Chr+":"+Start_Buff+'-'+str(int(Start_Buff)+large_buff)+'\n') # Extra 1kb buffer if variant large
-                    g.write('region '+Chr+":"+Start+'-'+str(int(Start))+'\n') 
+                else: #if variant above window, make plot for start and end separately
+                    # Start_Buff = str(int(dat[ 1 ]) - buff)
+                    # End_Buff = str(int(dat[ 2 ]) + buff)
+                    # g.write('goto '+Chr+":"+Start_Buff+'-'+str(int(Start_Buff)+large_buff)+'\n') # Extra 1kb buffer if variant large
+                    g.write('goto ' + Chr + ":" + str(int(Start - buff)) + '-' + str(int(Start + buff)) + '\n')  # Extra buffer start
+                    g.write('region '+Chr+":"+str(Start)+'-'+str(Start)+'\n')
                     g.write('sort base\n')
                     g.write('viewaspairs\n')
                     #g.write('squish\n')
@@ -153,8 +154,9 @@ with open(bamfiscript,'w') as h:
                     g.write('squish '+sr+'\n')
                     g.write('snapshotDirectory '+outdir+'\n')
                     g.write('snapshot '+fam_id+'_'+ID+'.left.png\n' )
-                    g.write('goto '+Chr+":"+str(int(End)-large_buff)+'-'+End_Buff+'\n')
-                    g.write('region '+Chr+":"+str(int(End))+'-'+End+'\n')
+                    # g.write('goto '+Chr+":"+str(int(End)-large_buff)+'-'+End_Buff+'\n')
+                    g.write('goto ' + Chr + ":" + str(int(End - buff)) + '-' + str(int(End + buff)) + '\n')  # Extra buffer start
+                    g.write('region '+Chr+":"+str(End)+'-'+str(End)+'\n')
                     g.write('sort base\n')
                     g.write('viewaspairs\n')
                     #g.write('squish\n')
