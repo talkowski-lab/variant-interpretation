@@ -78,7 +78,6 @@ workflow VisualizePlots{
     #creates IGV plots for all variants (proband will be the top plot if it has affected status = 2 in ped file)
     if (run_IGV) {   
         File buffer_ = select_first([buffer,500])
-        File buffer_large_ = select_first([buffer_large,1000])
         File reference_ = select_first([reference])
         File reference_index_ = select_first([reference_index])
         Boolean file_localization_ = if defined(file_localization) then select_first([file_localization]) else false
@@ -91,7 +90,6 @@ workflow VisualizePlots{
                     sample_pe_sr = sample_pe_sr_,
                     buffer = buffer_,
                     fam_ids = fam_ids,
-                    buffer_large = buffer_large_,
                     varfile = varfile,
                     reference = reference_,
                     reference_index = reference_index_,
