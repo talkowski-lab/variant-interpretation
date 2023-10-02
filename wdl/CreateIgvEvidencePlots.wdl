@@ -20,7 +20,6 @@ workflow IGV_all_samples {
         File reference_index
         String prefix
         String buffer
-        String buffer_large
         String sv_base_mini_docker
         String igv_docker
         Boolean is_snv_indel
@@ -100,7 +99,6 @@ workflow IGV_all_samples {
                 sr = IGV_evidence.sr_files,
                 sample_pe_sr = IGV_evidence.updated_sample_pe_sr,
                 buffer = buffer,
-                buffer_large = buffer_large,
                 reference = reference,
                 reference_index = reference_index,
                 igv_docker = igv_docker,

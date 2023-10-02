@@ -19,7 +19,6 @@ workflow IGV {
         File reference
         File reference_index
         String buffer
-        String buffer_large
         String igv_docker
         String variant_interpretation_docker
         RuntimeAttr? runtime_attr_igv
@@ -37,7 +36,6 @@ workflow IGV {
             sr = sr,
             sample_pe_sr = sample_pe_sr,
             buffer = buffer,
-            buffer_large = buffer_large,
             reference = reference,
             reference_index = reference_index,
             igv_docker = igv_docker,
@@ -61,7 +59,6 @@ task runIGV_whole_genome{
             Array[File] sr
             File sample_pe_sr
             String buffer
-            String buffer_large
             String igv_docker
             RuntimeAttr? runtime_attr_override
         }
@@ -100,7 +97,7 @@ task runIGV_whole_genome{
             do
                 let "i=$i+1"
                 echo "$line" > new.varfile.$i.bed
-                python /src/makeigvpe_sr.py -v new.varfile.$i.bed -fam_id ~{family} -samples ~{sep="," samples} -pe discordant.txt -sr sr.txt -p ~{ped_file} -o pe_igv_plots -b ~{buffer} -l ~{buffer_large} -i pe.$i.txt -bam pe.$i.sh
+                python /src/makeigvpe_sr.py -v new.varfile.$i.bed -fam_id ~{family} -samples ~{sep="," samples} -pe discordant.txt -sr sr.txt -p ~{ped_file} -o pe_igv_plots -b ~{buffer} -i pe.$i.txt -bam pe.$i.sh
                 bash pe.$i.sh
                 xvfb-run --server-args="-screen 0, 1920x540x24" bash /IGV_Linux_2.16.0/igv.sh -b pe.$i.txt
             done < ~{varfile}
