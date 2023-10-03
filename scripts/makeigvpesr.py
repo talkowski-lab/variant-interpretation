@@ -133,8 +133,8 @@ with open(bamfiscript,'w') as h:
 
                 if Length_total<int(igv_max_window):
                     if Length_total<1000:
-                        Start_Buff=int(Start-buff)
-                        End_Buff=int(End+buff)
+                        Start_Buff=int(Start-500)
+                        End_Buff=int(End+500)
                     else:
                         Start_Buff = int(Start - (Length * 0.25))
                         End_Buff = int(End + (Length * 0.25))
