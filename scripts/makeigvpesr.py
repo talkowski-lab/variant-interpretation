@@ -132,8 +132,12 @@ with open(bamfiscript,'w') as h:
                         g.write('load '+cram+'\n')
 
                 if Length_total<int(igv_max_window):
-                    Start_Buff=int(Start-(Length*0.25))
-                    End_Buff=int(End+(Length*0.25))
+                    if Length_total<1000:
+                        Start_Buff=int(Start-buff)
+                        End_Buff=int(End+buff)
+                    else:
+                        Start_Buff = int(Start - (Length * 0.25))
+                        End_Buff = int(End + (Length * 0.25))
                     g.write('goto '+Chr+":"+str(Start_Buff)+'-'+str(End_Buff)+'\n')
                     g.write('region '+Chr+":"+str(Start)+'-'+str(End)+'\n')
                     g.write('sort base\n')
