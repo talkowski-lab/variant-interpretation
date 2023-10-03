@@ -199,8 +199,8 @@ task runIGV_whole_genome_parse{
     command <<<
             set -euo pipefail
             mkdir pe_igv_plots
-            cat ~{varfile} | cut -f1-3 | awk '{if (($3-$2)+(($3-$2)*1.5)>=~{igv_max_window}) print $1"\t"$2-~{buffer}"\t"$2+~{buffer} "\n" $1"\t"$3-~{buffer}"\t"$3+~{buffer}; \
-                else print $1"\t"$2-(($3-$2)*0.25)"\t"$3+(($3-$2)*0.25)}' | sort -k1,1 -k2,2n | bgzip -c > regions.bed.gz
+            cat ~{varfile} | cut -f1-3 | awk '{if (($3-$2)+int(($3-$2)*1.5)>=~{igv_max_window}) print $1"\t"$2-~{buffer}"\t"$2+~{buffer} "\n" $1"\t"$3-~{buffer}"\t"$3+~{buffer}; \
+                else print $1"\t"$2-int(($3-$2)*0.25)"\t"$3+int(($3-$2)*0.25)}' | sort -k1,1 -k2,2n | bgzip -c > regions.bed.gz
             tabix -p bed regions.bed.gz
             #localize cram files
             while read sample crai cram new_cram new_crai
