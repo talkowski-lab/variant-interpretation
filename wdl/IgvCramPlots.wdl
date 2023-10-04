@@ -240,7 +240,6 @@ task runIGV_whole_genome_parse{
         Array[File] pe_sh = glob("pe.*.sh")
         Array[File] varfile = glob("new.varfile.*.bed")
         Array[File] cramfiles = glob("*cram")
-        Array[File] regionsfile = "regions.bed.gz"
         }
     }
 
