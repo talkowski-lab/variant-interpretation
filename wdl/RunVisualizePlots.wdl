@@ -60,7 +60,7 @@ workflow VisualizePlots{
                 prefix = prefix,
                 ped_file = pedfile,
                 fam_ids = fam_ids,
-                batch_medianfile = batch_medianfile_,
+                medianfile = batch_medianfile_,
                 batch_bincov=batch_bincov_,
                 bed = varfile,
                 sv_pipeline_rdtest_docker=sv_pipeline_rdtest_docker,
