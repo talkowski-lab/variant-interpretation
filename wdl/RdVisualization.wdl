@@ -13,7 +13,7 @@ workflow RdTestVisualization{
         File outlier_samples
         File batch_bincov
         File bed
-        File regeno
+        #File regeno
         String sv_pipeline_rdtest_docker
         String variant_interpretation_docker
         RuntimeAttr? runtime_attr_rdtest
@@ -54,7 +54,7 @@ workflow RdTestVisualization{
                 medianfile = generatePerFamilyBed.medianfile,
                 sample_batches=sample_batches,
                 outlier_samples=outlier_samples,
-                regeno = regeno,
+                #regeno = regeno,
                 batch_bincov=batch_bincov,
                 prefix=prefix,
                 sv_pipeline_rdtest_docker=sv_pipeline_rdtest_docker,
@@ -139,7 +139,7 @@ task rdtest {
         File sample_batches # samples, batches
         File batch_bincov # batch, bincov, index
         File outlier_samples
-        File regeno
+        #File regeno
         Array[File] medianfile
         String prefix
         String sv_pipeline_rdtest_docker
@@ -211,8 +211,8 @@ task rdtest {
             -d TRUE \
             -w samples_noOutliers.txt \
             -s 10000000 \
-            -g TRUE \
-            -r ~{regeno}
+            -g TRUE
+            #-r ~{regeno} #Remove output of regeno info for now - no need as RD outlier removal does not work
 
         mkdir rd_plots
         mv *jpg rd_plots
