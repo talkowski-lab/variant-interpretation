@@ -212,7 +212,7 @@ task rdtest {
             -w samples_noOutliers.txt \
             -s 10000000 \
             -g TRUE
-            #-r ~{regeno} #Remove output of regeno info for now - no need as RD outlier removal does not work
+            ###-r {regeno} #Remove output of regeno info for now - no need as RD outlier removal does not work
 
         mkdir rd_plots
         mv *jpg rd_plots
