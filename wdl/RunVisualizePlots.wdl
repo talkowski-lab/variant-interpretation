@@ -26,7 +26,6 @@ workflow VisualizePlots{
         Boolean? file_localization
         Boolean? requester_pays
         Boolean? is_snv_indel
-        #File? regeno_file
 
         String sv_base_mini_docker
         String sv_pipeline_rdtest_docker
@@ -55,7 +54,6 @@ workflow VisualizePlots{
         File batch_bincov_ = select_first([batch_bincov])
         File sample_batches_ = select_first([sample_batches])
         File rd_outliers_ = select_first([rd_outliers])
-        #File regeno_file_ = select_first([regeno_file])
 
         call rdtest.RdTestVisualization as RdTest{
             input:
@@ -65,7 +63,6 @@ workflow VisualizePlots{
                 batch_medianfile = batch_medianfile_,
                 batch_bincov=batch_bincov_,
                 bed = varfile,
-                #regeno=regeno_file_,
                 sv_pipeline_rdtest_docker=sv_pipeline_rdtest_docker,
                 variant_interpretation_docker = variant_interpretation_docker,
                 outlier_samples = rd_outliers_,
