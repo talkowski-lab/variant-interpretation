@@ -52,7 +52,7 @@ workflow VisualizePlots{
 #    Boolean is_snv_indel_ = select_first([is_snv_indel])
 
     #Update complex bed file
-    if ((is_snv_indel == false)){
+    if (!(is_snv_indel_)){
         call updateCpxBed{
             input:
                 varfile = varfile,
