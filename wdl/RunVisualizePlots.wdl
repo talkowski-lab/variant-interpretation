@@ -35,7 +35,6 @@ workflow VisualizePlots{
 
         Boolean run_RD 
         Boolean run_IGV
-        Boolean? is_snv_indel
         Boolean run_evidence_plots
         Boolean run_cram_plots
 
@@ -48,6 +47,8 @@ workflow VisualizePlots{
         RuntimeAttr? runtime_attr_reformat_sr
         RuntimeAttr? runtime_attr_update_pe_sr
     }
+
+    Boolean is_snv_indel_ = if defined(is_snv_indel) then select_first([is_snv_indel]) else false
 
     #Update complex bed file
     if (!(is_snv_indel)){
@@ -91,7 +92,6 @@ workflow VisualizePlots{
         File reference_ = select_first([reference])
         File reference_index_ = select_first([reference_index])
         Boolean file_localization_ = if defined(file_localization) then select_first([file_localization]) else false
-        Boolean is_snv_indel_ = if defined(is_snv_indel) then select_first([is_snv_indel]) else false
         if(run_evidence_plots){
             File sample_pe_sr_ = select_first([sample_pe_sr])
             call igv_evidence.IGV_all_samples as igv_evidence_plots {
