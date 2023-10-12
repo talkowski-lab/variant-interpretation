@@ -172,7 +172,7 @@ task rdtest {
 
         i=0
         bedtools merge -i test.bed > test.merged.bed
-        while read batch bincov
+        while read batch bincov index
         do
             let "i=$i+1"
             if [ $i -gt 1 ]
