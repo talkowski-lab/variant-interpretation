@@ -48,7 +48,8 @@ workflow VisualizePlots{
         RuntimeAttr? runtime_attr_update_pe_sr
     }
 
-    Boolean is_snv_indel_ = if defined(is_snv_indel) then select_first([is_snv_indel]) else false
+#    Boolean is_snv_indel_ = if defined(is_snv_indel) then select_first([is_snv_indel]) else false
+    Boolean is_snv_indel_ = select_first([is_snv_indel])
 
     #Update complex bed file
     if (!(is_snv_indel)){
