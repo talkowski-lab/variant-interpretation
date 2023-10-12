@@ -20,7 +20,7 @@ workflow IGV_all_samples {
         Int igv_max_window
         Boolean file_localization
         Boolean requester_pays
-#        Boolean is_snv_indel
+        Boolean is_snv_indel
         String prefix
         String buffer
         String sv_base_mini_docker
