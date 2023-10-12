@@ -24,7 +24,7 @@ workflow RdTestVisualization{
         File fam_ids_ = select_first([fam_ids])
         Array[String] family_ids = transpose(read_tsv(fam_ids_))[0]
     }
-
+    #TO FIX: Currently, if defined families, rd fails is a family does not have DEL/DUP
     if (!(defined(fam_ids))) {
         call generate_families{
             input:
