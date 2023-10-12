@@ -78,7 +78,8 @@ workflow IGV_all_samples {
 
         call generate_per_family_bed{
             input:
-                varfile = select_first([updateCpxBed.bed_output, varfile]),
+#                varfile = select_first([updateCpxBed.bed_output, varfile]),
+                varfile = varfile,
                 samples = update_sample_crai_cram.per_family_samples,
                 family = family,
                 ped_file = ped_file,
