@@ -48,7 +48,17 @@ workflow VisualizePlots{
         RuntimeAttr? runtime_attr_reformat_sr
         RuntimeAttr? runtime_attr_update_pe_sr
     }
-    
+
+    #Update complex bed file
+    if (!(is_snv_indel)){
+        call updateCpxBed{
+            input:
+                varfile = varfile,
+                variant_interpretation_docker = variant_interpretation_docker,
+                runtime_attr_override = runtime_attr_cpx
+        }
+    }
+
     #creates RD plots for DELs and DUPs
     if(run_RD) {
         File batch_medianfile_ = select_first([batch_medianfile])
@@ -64,7 +74,7 @@ workflow VisualizePlots{
                 fam_ids = fam_ids,
                 batch_medianfile = batch_medianfile_,
                 batch_bincov=batch_bincov_,
-                bed = varfile,
+                bed = select_first([updateCpxBed.bed_output, varfile]),
                 regeno=regeno_file_,
                 sv_pipeline_rdtest_docker=sv_pipeline_rdtest_docker,
                 variant_interpretation_docker = variant_interpretation_docker,
@@ -90,7 +100,7 @@ workflow VisualizePlots{
                     sample_pe_sr = sample_pe_sr_,
                     buffer = buffer_,
                     fam_ids = fam_ids,
-                    varfile = varfile,
+                    varfile = select_first([updateCpxBed.bed_output, varfile]),
                     reference = reference_,
                     reference_index = reference_index_,
                     prefix = prefix,
@@ -118,7 +128,7 @@ workflow VisualizePlots{
                     sample_crai_cram = sample_crai_cram_,
                     buffer = buffer_,
                     fam_ids = fam_ids,
-                    varfile = varfile,
+                    varfile = select_first([updateCpxBed.bed_output, varfile]),
                     igv_max_window = igv_max_window_,
                     reference = reference_,
                     file_localization = file_localization_,
@@ -146,7 +156,7 @@ workflow VisualizePlots{
                 rd_plots = RdTest_Plots_,
                 igv_plots = igv_plots_tar_gz_pe_,
                 prefix = prefix,
-                varfile = varfile,
+                varfile = select_first([updateCpxBed.bed_output, varfile]),
                 pedfile = pedfile,
                 igv_docker = igv_docker,
                 runtime_attr_concatinate = runtime_attr_concatinate
@@ -221,4 +231,47 @@ task concatinate_plots{
     }
 
 
+}
+
+task updateCpxBed{
+    input{
+        File varfile
+        String variant_interpretation_docker
+        RuntimeAttr? runtime_attr_override
+    }
+
+    Float input_size = size(varfile, "GB")
+    Float base_mem_gb = 3.75
+
+    RuntimeAttr default_attr = object {
+                                      mem_gb: base_mem_gb,
+                                      disk_gb: ceil(10 + input_size * 1.5),
+                                      cpu: 1,
+                                      preemptible: 2,
+                                      max_retries: 1,
+                                      boot_disk_gb: 8
+                                  }
+
+    RuntimeAttr runtime_attr = select_first([runtime_attr_override, default_attr])
+
+    output{
+        File bed_output = "final.denovo.merged.cpx_split.bed.gz"
+    }
+
+    command <<<
+        set -euo pipefail
+
+        Rscript /src/variant-interpretation/scripts/updateCpx.R ~{varfile}
+        bgzip final.denovo.merged.cpx_split.bed
+    >>>
+
+    runtime {
+        cpu: select_first([runtime_attr.cpu, default_attr.cpu])
+        memory: "~{select_first([runtime_attr.mem_gb, default_attr.mem_gb])} GB"
+        disks: "local-disk ~{select_first([runtime_attr.disk_gb, default_attr.disk_gb])} HDD"
+        bootDiskSizeGb: select_first([runtime_attr.boot_disk_gb, default_attr.boot_disk_gb])
+        preemptible: select_first([runtime_attr.preemptible, default_attr.preemptible])
+        maxRetries: select_first([runtime_attr.max_retries, default_attr.max_retries])
+        docker: variant_interpretation_docker
+    }
 }
