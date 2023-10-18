@@ -23,7 +23,7 @@ workflow RdTestVisualization{
         File fam_ids_ = select_first([fam_ids])
         Array[String] family_ids = transpose(read_tsv(fam_ids_))[0]
     }
-
+    #TO FIX: Currently, if defined families, rd fails is a family does not have DEL/DUP
     if (!(defined(fam_ids))) {
         call generate_families{
             input:
@@ -169,7 +169,7 @@ task rdtest {
 
         i=0
         bedtools merge -i test.bed > test.merged.bed
-        while read batch bincov
+        while read batch bincov index
         do
             let "i=$i+1"
             if [ $i -gt 1 ]
