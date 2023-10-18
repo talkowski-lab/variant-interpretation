@@ -4,6 +4,7 @@ This repository contains utilities for consolidating, annotating and filtering s
 
 ## Table of Contents
 * [Requirements](#requirements)
+* [Family filtering](#familyfiltering)
 * [De novo SV discovery](#denovo)
 * [Contact and credits](#contact)
 
@@ -14,6 +15,24 @@ This repository contains utilities for consolidating, annotating and filtering s
 * [cromshell](https://github.com/broadinstitute/cromshell) for interacting with a dedicated Cromwell server or a Terra account
 * A vcf file output from the [GATK-SV pipeline](https://github.com/broadinstitute/gatk-sv)
  
+## <a name="familyfiltering">Annotation and Filtering of Possible Clinically Relevant SVs</a>
+Additional annotations and filtering are performed for each family given a input pedigree file. The input is a joint-genotyped VCF obtained from [GATK-SV](https://github.com/broadinstitute/gatk-sv) and the output is a reformated BED file.
+
+### Filtering
+* AF <= 0.3 and gnomAD_V2_AF <= 0.01 OR SV overlaps a genomic disorder region (explained below).
+
+### Annotation
+* Genomic disorders: all SVs overlapping a list of genomic disorders regions are flagged in the final output. Currenly it requires a minimum reciprocarl overlap with the GD of 30%.
+* Constraint: extra columns are added for SVs involving genes that are constrained for LoF or missense variantsion (using pLI, pRec and EO metrics).
+* Gene list: a colum that determines if each SV involves a gene present in the gene list provided is included (Note: this is currently using HGNC Symbols).
+* OMIM: a colum that determines if each SV involves a gene present in OMIM is included (Note: this is currently using HGNC Symbols).
+* Mode of Inheritance:
+    * Absent in unaffected: a variant is flagged if it's present in unaffected individuals, and present only in affected. This is particularly relevant for trios and other family structures to identify <i>de novo</i> variants or inherited from affected parents (Column name: `FILT_ABSENT_UNAFF`)
+    * Multiple SVs in same gene: a variant is flagged if there are multiple variants in the same gene for the same individual. If trio is available, it only returns if they are in trans (Column name: `MULT_HIT`)
+    * Autosomal recessive: a variant is flagged if genotype for affected individual/s is `1/1` and is not for unaffected (Column name: `FILT_AR`)
+    * X-linked: a variant is flagged as `FILT_XLR` column if they are in male affected individual/s and they are `1/1` or `1` genotypes.
+    * Inherited: possible intereting inherited variants from unaffected parents are flagged in the `FILT_INHERITED` column if they are in the input gene list AND the cohort allele count <= 10 AND the number of unaffected indivuals in the cohort is <= 5.
+
 ## <a name="denovo">De novo SV discovery</a>
 Filters <i>de novo</i> SV obtained from [GATK-SV](https://github.com/broadinstitute/gatk-sv) to improve specificity of <i>de novo</i> SV calls. The filtering is based on a combination of site-specific and sample-specific metrics:
 * Frequency filter
