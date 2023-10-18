@@ -69,6 +69,6 @@ The main scripts to run this analysis is `runDeNovoSVs.wdl`, which can be run on
 
 ## <a name="contact">Contact and credits</a>
 Copyright (c) 2022 Talkowski Lab and The Broad Institute of M.I.T. and Harvard  
-Contact: [Alba Sanchis-Juan](mailto:asanchis-juan@mgh.harvard.edu) and [Nicole Calamari](mailto:ncalamari@mgh.harvard.edu)
+Contact: [Alba Sanchis-Juan](mailto:asanchis-juan@mgh.harvard.edu)
 
-Variant interpretation team: Alba Sanchis-Juan, Harrison Brand, Emma Pierce-Hoffman, Mark Walker, Chelsea Lowther, Elise Valkanas.
+Variant interpretation team: Alba Sanchis-Juan, Harrison Brand, Nicole Calamari, Emma Pierce-Hoffman, Mark Walker, Chelsea Lowther, Elise Valkanas.
