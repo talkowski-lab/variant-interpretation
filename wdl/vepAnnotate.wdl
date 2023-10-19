@@ -29,7 +29,7 @@ workflow vepAnnotate {
         RuntimeAttr? runtime_attr_add_genotypes
     }
 
-    filename = basename(file)
+    String filename = basename(file)
 
     # if file is vcf.gz (just one file)
     if (sub(filename, ".vcf.gz", "") != filename) {
@@ -58,7 +58,7 @@ workflow vepAnnotate {
                 runtime_attr_add_genotypes=runtime_attr_add_genotypes
         }
     }
-    
+
     output {
         Array[Array[File]] vep_annotated_final_vcf = vepAnnotateSingle.vep_annotated_final_vcf
         Array[Array[File]] vep_annotated_final_vcf_idx = vepAnnotateSingle.vep_annotated_final_vcf_idx
