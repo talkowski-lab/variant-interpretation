@@ -44,7 +44,7 @@ workflow vepAnnotate {
     }
 
     #split by chr, vep annotate with Loftee and merge
-    if (records_per_shard) {
+    if (defined(records_per_shard)) {
         call ScatterVcf {
             input:
                 vcf_file=normalizeVCF.vcf_no_genotype,
