@@ -77,6 +77,9 @@ workflow vepAnnotate {
         }
     }
 
+    Array[File] vep_annotated_final_vcf = addGenotypes.combined_vcf_file
+    Array[File] vep_annotated_final_vcf_idx = addGenotypes.combined_vcf_idx
+
     if (merge_annotated_vcfs) {
         call mergeVCFs {
             input:
@@ -84,17 +87,14 @@ workflow vepAnnotate {
                 sv_base_mini_docker=sv_base_mini_docker,
                 cohort_prefix=cohort_prefix,
                 runtime_attr_override=runtime_attr_vep_annotate
-        }        
+        }      
+        Array[File] vep_annotated_final_vcf = mergeVCFs.merged_vcf_file
+        Array[File] vep_annotated_final_vcf_idx = mergeVCFs.merged_vcf_idx  
     }
 
     output {   
-        if (merge_annotated_vcfs) {
-            Array[File] vep_annotated_final_vcf = mergeVCFs.merged_vcf_file
-            Array[File] vep_annotated_final_vcf_idx = mergeVCFs.merged_vcf_idx
-        } else {    
-            File vep_annotated_final_vcf = addGenotypes.combined_vcf_file
-            File vep_annotated_final_vcf_idx = addGenotypes.combined_vcf_idx
-        }
+        Array[File] vep_annotated_final_vcf = vep_annotated_final_vcf
+        Array[File] vep_annotated_final_vcf_idx = vep_annotated_final_vcf_idx
     }
 }   
 
