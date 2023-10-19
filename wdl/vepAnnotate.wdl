@@ -60,7 +60,7 @@ workflow vepAnnotate {
         Array[Array[File]] vep_annotated_final_vcf = vepAnnotateSingle.vep_annotated_final_vcf
         Array[Array[File]] vep_annotated_final_vcf_idx = vepAnnotateSingle.vep_annotated_final_vcf_idx
     }
-}
+
 
 task vepAnnotateSingle {
 
@@ -148,7 +148,7 @@ task vepAnnotateSingle {
 }   
 
 task addGenotypes{
-    input{
+    input {
         File vep_annotated_vcf
         File normalized_vcf
         File normalized_vcf_idx
@@ -211,7 +211,7 @@ task addGenotypes{
 
 
 task mergeVCFs{
-    input{
+    input {
         Array[File] vcf_contigs
         String sv_base_mini_docker
         String cohort_prefix
@@ -265,7 +265,7 @@ task mergeVCFs{
 }
 
 task normalizeVCF{
-    input{
+    input {
         File vcf_file
         String sv_base_mini_docker
         File hg38_fasta
@@ -391,7 +391,7 @@ task scatterVCF {
 }
 
 task vepAnnotate{
-    input{
+    input {
         File vcf_file
         File top_level_fa
         File human_ancestor_fa
