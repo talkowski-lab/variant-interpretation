@@ -10,9 +10,64 @@ struct RuntimeAttr {
 }
 
 workflow vepAnnotate {
+    input {
+        # file can be a list of vcf files or just one vcf file
+        File file
+        String vep_docker
+        String sv_base_mini_docker
+        File hg38_fasta
+        File hg38_fasta_fai
+        File human_ancestor_fa
+        File human_ancestor_fa_fai
+        File top_level_fa
+        Boolean merge_annotated_vcfs=true
+        Int? records_per_shard
+        RuntimeAttr? runtime_attr_normalize
+        RuntimeAttr? runtime_attr_split_vcf
+        RuntimeAttr? runtime_attr_vep_annotate
+        RuntimeAttr? runtime_attr_merge_vcfs
+        RuntimeAttr? runtime_attr_add_genotypes
+    }
+
+    filename = basename(file)
+
+    # if file is vcf.gz (just one file)
+    if (sub(filename, ".vcf.gz", "") != filename) {
+        Array[File] vcf_files = [file]
+    } else {
+        Array[File] vcf_files = read_lines(file)
+    }
+    scatter (vcf_file in vcf_files) {
+        call vepAnnotateSingle {
+            input:
+                vcf_file=vcf_file,
+                vep_docker=vep_docker,
+                sv_base_mini_docker=sv_base_mini_docker,
+                hg38_fasta=hg38_fasta,
+                hg38_fasta_fai=hg38_fasta_fai,
+                human_ancestor_fa=human_ancestor_fa,
+                human_ancestor_fa_fai=human_ancestor_fa_fai,
+                top_level_fa=top_level_fa, 
+                cohort_prefix=basename(vcf_file, ".vcf.gz"),
+                merge_annotated_vcfs=merge_annotated_vcfs,
+                records_per_shard=records_per_shard,
+                runtime_attr_normalize=runtime_attr_normalize,
+                runtime_attr_split_vcf=runtime_attr_split_vcf,
+                runtime_attr_vep_annotate=runtime_attr_vep_annotate,
+                runtime_attr_merge_vcfs=runtime_attr_merge_vcfs,
+                runtime_attr_add_genotypes=runtime_attr_add_genotypes
+        }
+    }
+    
+    output {
+        Array[Array[File]] vep_annotated_final_vcf = vepAnnotateSingle.vep_annotated_final_vcf
+        Array[Array[File]] vep_annotated_final_vcf_idx = vepAnnotateSingle.vep_annotated_final_vcf_idx
+    }
+}
+
+task vepAnnotateSingle {
 
     input {
-
         File vcf_file
         String vep_docker
         String sv_base_mini_docker
@@ -29,11 +84,9 @@ workflow vepAnnotate {
         RuntimeAttr? runtime_attr_vep_annotate
         RuntimeAttr? runtime_attr_merge_vcfs
         RuntimeAttr? runtime_attr_add_genotypes
-
-    
     }
 
-    #split by shard, vep annotate with Loftee 
+    # split by shard, vep annotate with Loftee 
     if (defined(records_per_shard)) {
         
         call scatterVCF {
@@ -46,7 +99,7 @@ workflow vepAnnotate {
         }
 
         scatter (shard in scatterVCF.shards) {
-            #normalize vcf file
+            # normalize vcf file
             call normalizeVCF {
                 input:
                     vcf_file=shard,
@@ -107,7 +160,7 @@ task addGenotypes{
         Int? thread_num_override
     }
 
-    # CleanVcf5.FindRedundantMultiallelics
+    #  CleanVcf5.FindRedundantMultiallelics
     Float vep_annotate_sizes = size(vep_annotated_vcf, "GB") 
     Float norm_vcf_sizes = size(normalized_vcf, "GB")
     Float base_disk_gb = 10.0
@@ -168,9 +221,9 @@ task mergeVCFs{
         RuntimeAttr? runtime_attr_override
     }
 
-    # generally assume working disk size is ~2 * inputs, and outputs are ~2 *inputs, and inputs are not removed
-    # generally assume working memory is ~3 * inputs
-    # CleanVcf5.FindRedundantMultiallelics
+    #  generally assume working disk size is ~2 * inputs, and outputs are ~2 *inputs, and inputs are not removed
+    #  generally assume working memory is ~3 * inputs
+    #  CleanVcf5.FindRedundantMultiallelics
     Float input_size = size(vcf_contigs, "GB")
     Float base_disk_gb = 10.0
     Float base_mem_gb = 2.0
@@ -223,9 +276,9 @@ task normalizeVCF{
         RuntimeAttr? runtime_attr_override
     }
 
-    # generally assume working disk size is ~2 * inputs, and outputs are ~2 *inputs, and inputs are not removed
-    # generally assume working memory is ~3 * inputs
-    # from task FinalCleanup in CleanVcfChromosome.wdl
+    #  generally assume working disk size is ~2 * inputs, and outputs are ~2 *inputs, and inputs are not removed
+    #  generally assume working memory is ~3 * inputs
+    #  from task FinalCleanup in CleanVcfChromosome.wdl
     Float input_size = size(vcf_file, "GB")
     Float base_disk_gb = 10.0
     Float base_mem_gb = 2.0
@@ -322,7 +375,7 @@ task scatterVCF {
 
     command <<<
         set -euo pipefail
-        # in case the file is empty create an empty shard
+        #  in case the file is empty create an empty shard
         bcftools view -h ~{vcf_file} | bgzip -c > "~{prefix}.0.vcf.gz"
         bcftools +scatter ~{vcf_file} -o . -O z -p "~{prefix}". --threads ~{thread_num} -n ~{records_per_shard} ~{"-r " + contig}
 
@@ -353,9 +406,9 @@ task vepAnnotate{
     String prefix = basename(vcf_file, ".vcf.gz")
     String vep_annotated_vcf_name = "~{prefix}.vep.loftee.vcf.gz"
 
-    # generally assume working disk size is ~2 * inputs, and outputs are ~2 *inputs, and inputs are not removed
-    # generally assume working memory is ~3 * inputs
-    # from task FinalCleanup in CleanVcfChromosome.wdl
+    #  generally assume working disk size is ~2 * inputs, and outputs are ~2 *inputs, and inputs are not removed
+    #  generally assume working memory is ~3 * inputs
+    #  from task FinalCleanup in CleanVcfChromosome.wdl
     Float input_size = size(vcf_file, "GB")
     Float base_disk_gb = 10.0
     Float base_mem_gb = 2.0
