@@ -82,7 +82,7 @@ workflow vepAnnotate {
     if (merge_annotated_vcfs) {
         call mergeVCFs {
             input:
-                vcf_contigs=addGenotypes.merged_vcf_file,
+                vcf_contigs=select_first([addGenotypes.merged_vcf_file]),
                 sv_base_mini_docker=sv_base_mini_docker,
                 cohort_prefix=cohort_prefix,
                 runtime_attr_override=runtime_attr_vep_annotate
