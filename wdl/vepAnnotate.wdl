@@ -32,9 +32,10 @@ workflow vepAnnotate {
     String filename = basename(file)
 
     # if file is vcf.gz (just one file)
-    Array[File] vcf_files = if (sub(filename, ".vcf.gz", "") != filename) then [file] else read_lines(file)
+    Array[String] vcf_files = if (sub(filename, ".vcf.gz", "") != filename) then [file] else read_lines(file)
 
     scatter (vcf_file in vcf_files) {
+        File vcf_file = vcf_file
         call vepAnnotateSingle {
             input:
                 vcf_file=vcf_file,
@@ -60,7 +61,7 @@ workflow vepAnnotate {
         Array[Array[File]] vep_annotated_final_vcf = vepAnnotateSingle.vep_annotated_final_vcf
         Array[Array[File]] vep_annotated_final_vcf_idx = vepAnnotateSingle.vep_annotated_final_vcf_idx
     }
-
+}
 
 task vepAnnotateSingle {
 
@@ -126,6 +127,7 @@ task vepAnnotateSingle {
             }
         }
     }
+
     Array[File] merged_vcf_file = select_first([addGenotypes.merged_vcf_file])
     Array[File] merged_vcf_idx = select_first([addGenotypes.merged_vcf_idx])
 
@@ -390,7 +392,7 @@ task scatterVCF {
     }
 }
 
-task vepAnnotate{
+task vepAnnotate {
     input {
         File vcf_file
         File top_level_fa
@@ -433,7 +435,7 @@ task vepAnnotate{
     
     RuntimeAttr runtime_attr = select_first([runtime_attr_override, runtime_default])
 
-    output{
+    output {
         File vep_vcf_file = vep_annotated_vcf_name
     }
 
