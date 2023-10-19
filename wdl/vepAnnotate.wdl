@@ -153,8 +153,8 @@ task addGenotypes{
     >>>
 
     output {
-        Array[File] merged_vcf_file = combined_vcf_name
-        Array[File] merged_vcf_idx = combined_vcf_name + ".tbi"
+        File merged_vcf_file = combined_vcf_name
+        File merged_vcf_idx = combined_vcf_name + ".tbi"
     }
 
 }
