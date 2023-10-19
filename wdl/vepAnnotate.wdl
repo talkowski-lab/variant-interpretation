@@ -281,6 +281,7 @@ task ScatterVcf {
         Int records_per_shard
         String? contig
         String sv_base_mini_docker
+        Int? thread_num_override
         RuntimeAttr? runtime_attr_override
     }
 
@@ -289,6 +290,7 @@ task ScatterVcf {
     Float base_mem_gb = 2.0
     Float input_mem_scale = 3.0
     Float input_disk_scale = 5.0
+    Int thread_num = select_first([thread_num_override,1])
 
     RuntimeAttr runtime_default = object {
         mem_gb: base_mem_gb + input_size * input_mem_scale,
@@ -316,7 +318,7 @@ task ScatterVcf {
         set -euo pipefail
         # in case the file is empty create an empty shard
         bcftools view -h ~{vcf_file} | bgzip -c > "~{prefix}.0.vcf.gz"
-        bcftools +scatter ~{vcf_file} -o . -O z -p "~{prefix}". --threads ~{threads} -n ~{records_per_shard} ~{"-r " + contig}
+        bcftools +scatter ~{vcf_file} -o . -O z -p "~{prefix}". --threads ~{thread_num} -n ~{records_per_shard} ~{"-r " + contig}
 
         ls "~{prefix}".*.vcf.gz | sort -k1,1V > vcfs.list
         i=0
