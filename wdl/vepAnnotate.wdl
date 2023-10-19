@@ -34,12 +34,8 @@ workflow vepAnnotate {
     String filename = basename(file)
 
     # if file is vcf.gz (just one file)
-    if (sub(filename, ".vcf.gz", "") != filename) {
-        Array[String] vcf_files = [file]    
-    }
-    if (sub(filename, ".vcf.gz", "") == filename) {
-        Array[String] vcf_files = read_lines(file)
-    }
+
+    Array[String] vcf_files = if (sub(filename, ".vcf.gz", "") != filename) then [file] else read_lines(file)
 
     scatter (vcf_file in vcf_files) {
         File vcf_file = vcf_file
