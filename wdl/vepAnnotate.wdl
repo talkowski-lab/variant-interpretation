@@ -51,10 +51,8 @@ workflow vepAnnotate {
                 vcf_idx_file=normalizeVCF.vcf_no_genotype_idx,
                 sv_base_mini_docker=sv_base_mini_docker,
                 runtime_attr_override = runtime_attr_split_vcf,
-                prefix=prefix,
                 records_per_shard=records_per_shard,
-                sv_base_mini_docker=sv_base_mini_docker,
-                runtime_attr_override = runtime_attr_split_vcf
+                sv_base_mini_docker=sv_base_mini_docker
         }
         scatter (shard in ScatterVcf.shards) {
             call vepAnnotate {
@@ -277,7 +275,6 @@ task ScatterVcf {
     input {
         File vcf_file
         File vcf_idx_file
-        String prefix
         Int records_per_shard
         String? contig
         String sv_base_mini_docker
@@ -291,6 +288,7 @@ task ScatterVcf {
     Float input_mem_scale = 3.0
     Float input_disk_scale = 5.0
     Int thread_num = select_first([thread_num_override,1])
+    String prefix = basename(vcf_file, ".vcf.gz")
 
     RuntimeAttr runtime_default = object {
         mem_gb: base_mem_gb + input_size * input_mem_scale,
