@@ -66,7 +66,7 @@ workflow vepAnnotate {
                     runtime_attr_override=runtime_attr_vep_annotate
             }
 
-            call addGenotypes { 
+            call addGenotypes as finalRun { 
                 input:
                 vep_annotated_vcf=select_first([vepAnnotate.vep_vcf_file]),
                 normalized_vcf=normalizeVCF.vcf_normalized_file_with_genotype,
@@ -77,24 +77,19 @@ workflow vepAnnotate {
         }
     }
 
-    Array[File] vep_annotated_final_vcf = addGenotypes.combined_vcf_file
-    Array[File] vep_annotated_final_vcf_idx = addGenotypes.combined_vcf_idx
-
     if (merge_annotated_vcfs) {
-        call mergeVCFs {
+        call mergeVCFs as finalRun {
             input:
-                vcf_contigs=addGenotypes.combined_vcf_file,
+                vcf_contigs=finalRun.combined_vcf_file,
                 sv_base_mini_docker=sv_base_mini_docker,
                 cohort_prefix=cohort_prefix,
                 runtime_attr_override=runtime_attr_vep_annotate
-        }      
-        Array[File] vep_annotated_final_vcf = mergeVCFs.merged_vcf_file
-        Array[File] vep_annotated_final_vcf_idx = mergeVCFs.merged_vcf_idx  
+        }       
     }
 
     output {   
-        Array[File] vep_annotated_final_vcf = vep_annotated_final_vcf
-        Array[File] vep_annotated_final_vcf_idx = vep_annotated_final_vcf_idx
+        Array[File] vep_annotated_final_vcf = finalRun.merged_vcf_file
+        Array[File] vep_annotated_final_vcf_idx = finalRun.merged_vcf_file_idx
     }
 }   
 
@@ -154,8 +149,8 @@ task addGenotypes{
     >>>
 
     output {
-        File combined_vcf_file = combined_vcf_name
-        File combined_vcf_idx = combined_vcf_name + ".tbi"
+        File merged_vcf_file = combined_vcf_name
+        File merged_vcf_idx = combined_vcf_name + ".tbi"
     }
 
 }
