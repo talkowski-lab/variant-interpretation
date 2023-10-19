@@ -153,8 +153,8 @@ task addGenotypes{
     >>>
 
     output {
-        File merged_vcf_file = combined_vcf_name
-        File merged_vcf_idx = combined_vcf_name + ".tbi"
+        Array[File] merged_vcf_file = combined_vcf_name
+        Array[File] merged_vcf_idx = combined_vcf_name + ".tbi"
     }
 
 }
@@ -209,8 +209,8 @@ task mergeVCFs{
     >>>
 
     output {
-        File merged_vcf_file=merged_vcf_name
-        File merged_vcf_idx=merged_vcf_name + ".tbi"
+        Array[File] merged_vcf_file=merged_vcf_name
+        Array[File] merged_vcf_idx=merged_vcf_name + ".tbi"
     }
 }
 
