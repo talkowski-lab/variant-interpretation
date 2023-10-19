@@ -275,7 +275,7 @@ task ScatterVcf {
     input {
         File vcf_file
         File vcf_idx_file
-        Int records_per_shard
+        Int? records_per_shard
         String? contig
         String sv_base_mini_docker
         Int? thread_num_override
