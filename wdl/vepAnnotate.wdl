@@ -22,7 +22,6 @@ workflow vepAnnotate {
         File human_ancestor_fa_fai
         File top_level_fa
         String cohort_prefix
-        Array[String]? contigs
         Int? records_per_shard
         RuntimeAttr? runtime_attr_normalize
         RuntimeAttr? runtime_attr_split_vcf
@@ -45,7 +44,7 @@ workflow vepAnnotate {
 
     #split by chr, vep annotate with Loftee and merge
     if (defined(records_per_shard)) {
-        call ScatterVcf {
+        call scatterVCF {
             input:
                 vcf_file=normalizeVCF.vcf_no_genotype,
                 vcf_idx_file=normalizeVCF.vcf_no_genotype_idx,
@@ -54,7 +53,7 @@ workflow vepAnnotate {
                 records_per_shard=select_first([records_per_shard]),
                 sv_base_mini_docker=sv_base_mini_docker
         }
-        scatter (shard in ScatterVcf.shards) {
+        scatter (shard in scatterVCF.shards) {
             call vepAnnotate {
                 input:
                     vcf_file=shard,
@@ -271,7 +270,7 @@ task normalizeVCF{
 
 }
 
-task ScatterVcf {
+task scatterVCF {
     input {
         File vcf_file
         File vcf_idx_file
@@ -330,58 +329,6 @@ task ScatterVcf {
         Array[File] shards = glob("~{prefix}.shard_*.vcf.gz")
         Array[String] shards_string = glob("~{prefix}.shard_*.vcf.gz")
     }
-}
-
-task splitVCF{
-    input{
-        File vcf_file
-        File vcf_idx_file
-        String chromosome
-        String sv_base_mini_docker
-        RuntimeAttr? runtime_attr_override
-    }
-
-    # generally assume working disk size is ~2 * inputs, and outputs are ~2 *inputs, and inputs are not removed
-    # generally assume working memory is ~3 * inputs
-    # from task FinalCleanup in CleanVcfChromosome.wdl
-    Float input_size = size(vcf_file, "GB")
-    Float base_disk_gb = 10.0
-    Float base_mem_gb = 2.0
-    Float input_mem_scale = 3.0
-    Float input_disk_scale = 5.0
-    
-    RuntimeAttr runtime_default = object {
-        mem_gb: base_mem_gb + input_size * input_mem_scale,
-        disk_gb: ceil(base_disk_gb + input_size * input_disk_scale),
-        cpu_cores: 1,
-        preemptible_tries: 3,
-        max_retries: 1,
-        boot_disk_gb: 10
-    }
-
-    RuntimeAttr runtime_override = select_first([runtime_attr_override, runtime_default])
-    runtime {
-        memory: "~{select_first([runtime_override.mem_gb, runtime_default.mem_gb])} GB"
-        disks: "local-disk ~{select_first([runtime_override.disk_gb, runtime_default.disk_gb])} HDD"
-        cpu: select_first([runtime_override.cpu_cores, runtime_default.cpu_cores])
-        preemptible: select_first([runtime_override.preemptible_tries, runtime_default.preemptible_tries])
-        maxRetries: select_first([runtime_override.max_retries, runtime_default.max_retries])
-        docker: sv_base_mini_docker
-        bootDiskSizeGb: select_first([runtime_override.boot_disk_gb, runtime_default.boot_disk_gb])
-    }
-    
-    RuntimeAttr runtime_attr = select_first([runtime_attr_override, runtime_default])
-
-    output{
-        File vcf_output = "~{chromosome}.vcf.gz"
-    }
-
-    command <<<
-        set -euo pipefail  
-
-        bcftools view ~{vcf_file} --regions ~{chromosome} -Oz -o ~{chromosome}.vcf.gz
-    
-    >>>
 }
 
 task vepAnnotate{
