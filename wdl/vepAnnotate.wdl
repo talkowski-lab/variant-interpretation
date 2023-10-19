@@ -76,8 +76,8 @@ workflow vepAnnotate {
             }
         }
     }
-    Array[File] merged_vcf_file = addGenotypes.merged_vcf_file
-    Array[File] merged_vcf_idx = addGenotypes.merged_vcf_idx
+    Array[File] merged_vcf_file = select_first([addGenotypes.merged_vcf_file])
+    Array[File] merged_vcf_idx = select_first([addGenotypes.merged_vcf_file_idx])
 
     if (merge_annotated_vcfs) {
         call mergeVCFs {
