@@ -33,7 +33,7 @@ workflow vepAnnotate {
 
     # if file is vcf.gz (just one file)
     if (sub(filename, ".vcf.gz", "") != filename) {
-        Array[String] vcf_files = [String file]    
+        Array[String] vcf_files = [file]    
     }
     if (sub(filename, ".vcf.gz", "") == filename) {
         Array[String] vcf_files = read_lines(file)
