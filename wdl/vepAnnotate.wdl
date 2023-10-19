@@ -77,7 +77,7 @@ workflow vepAnnotate {
         }
     }
     Array[File] merged_vcf_file = addGenotypes.merged_vcf_file
-    Array[File] merged_vcf_file_idx = addGenotypes.merged_vcf_file_idx
+    Array[File] merged_vcf_idx = addGenotypes.merged_vcf_idx
 
     if (merge_annotated_vcfs) {
         call mergeVCFs {
@@ -88,12 +88,12 @@ workflow vepAnnotate {
                 runtime_attr_override=runtime_attr_vep_annotate
         }       
         Array[File] merged_vcf_file = mergeVCFs.merged_vcf_file
-        Array[File] merged_vcf_file_idx = mergeVCFs.merged_vcf_file_idx
+        Array[File] merged_vcf_idx = mergeVCFs.merged_vcf_idx
     }
 
     output {   
         Array[File] vep_annotated_final_vcf = merged_vcf_file
-        Array[File] vep_annotated_final_vcf_idx = merged_vcf_file_idx
+        Array[File] vep_annotated_final_vcf_idx = merged_vcf_idx
     }
 }   
 
