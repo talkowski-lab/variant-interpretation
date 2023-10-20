@@ -39,7 +39,7 @@ workflow vepAnnotate {
 
     scatter (vcf_file in vcf_files) {
         File vcf_file = vcf_file
-        call vepAnnotateSingle.vepAnnotateSingle {
+        call vepAnnotateSingle.vepAnnotateSingle as vepAnnotateSingleCall {
             input:
                 vcf_file=vcf_file,
                 vep_docker=vep_docker,
@@ -61,7 +61,7 @@ workflow vepAnnotate {
     }
 
     output {
-        Array[Array[File]] vep_annotated_final_vcf = vepAnnotateSingle.vep_annotated_final_vcf
-        Array[Array[File]] vep_annotated_final_vcf_idx = vepAnnotateSingle.vep_annotated_final_vcf_idx
+        Array[Array[File]] vep_annotated_final_vcf = vepAnnotateSingleCall.vep_annotated_final_vcf
+        Array[Array[File]] vep_annotated_final_vcf_idx = vepAnnotateSingleCall.vep_annotated_final_vcf_idx
     }
 }
