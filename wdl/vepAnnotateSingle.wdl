@@ -85,8 +85,8 @@ workflow vepAnnotateSingle {
                 cohort_prefix=cohort_prefix,
                 runtime_attr_override=runtime_attr_vep_annotate
         }       
-        Array[File] merged_vcf_file = mergeVCFs.merged_vcf_file
-        Array[File] merged_vcf_idx = mergeVCFs.merged_vcf_idx
+        Array[File] merged_vcf_file = select_first([mergeVCFs.merged_vcf_file])
+        Array[File] merged_vcf_idx = select_first([mergeVCFs.merged_vcf_idx])
     }
 
     output {   
