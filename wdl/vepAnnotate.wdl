@@ -37,8 +37,8 @@ workflow vepAnnotate {
 
     Array[String] vcf_files = if (sub(filename, ".vcf.gz", "") != filename) then [file] else read_lines(file)
 
-    scatter (vcf_file in vcf_files) {
-        File vcf_file = vcf_file
+    scatter (f in vcf_files) {
+        File vcf_file = f
         call vepAnnotateSingle.vepAnnotateSingle as vepAnnotateSingleCall {
             input:
                 vcf_file=vcf_file,
