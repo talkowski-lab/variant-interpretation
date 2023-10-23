@@ -48,7 +48,7 @@ workflow RdTestVisualization{
         }
 
         if(defined(regeno)){
-            call rdtest{
+            call rdtest_regeno{
                 input:
                     bed=generatePerFamilyBed.bed_file,
                     family = family,
@@ -64,7 +64,7 @@ workflow RdTestVisualization{
             }}
 
         if(!defined(regeno)){
-            call rdtest_regeno{
+            call rdtest{
                 input:
                     bed=generatePerFamilyBed.bed_file,
                     family = family,
