@@ -74,7 +74,7 @@ workflow VisualizePlots{
 
             File regeno_file_ = select_first([regeno_file])
 
-            call rdtest.RdTestVisualization as RdTest{
+            call rdtest_regeno.RdTestVisualization as RdTest_regeno{
                 input:
                     prefix = prefix,
                     ped_file = pedfile,
@@ -93,7 +93,7 @@ workflow VisualizePlots{
         }
 
         if (!defined(regeno_file)){
-            call rdtest_regeno.RdTestVisualization as RdTest_regeno{
+            call rdtest.RdTestVisualization as RdTest{
                 input:
                     prefix = prefix,
                     ped_file = pedfile,
