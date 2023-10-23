@@ -413,7 +413,7 @@ task generate_families{
 
 task integrate_rd_plots{
     input {
-        Array[File] rd_tar
+        Array[File]? rd_tar
         String prefix
         String sv_pipeline_rdtest_docker
         RuntimeAttr? runtime_attr_override
