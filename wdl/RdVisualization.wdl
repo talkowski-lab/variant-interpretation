@@ -222,11 +222,11 @@ task rdtest {
         File median_file = "medianfile.txt"
         File test_bed = "test.bed"
         File samples_text = "samples_noOutliers.txt"
-        File rd_median_geno = "~{prefix}.median_geno"
-        File rd_denovo = "~{prefix}.denovo"
-        File rd_geno = "~{prefix}.geno"
-        File rd_gq = "~{prefix}.gq"
-        File rd_vargq = "~{prefix}.vargq"
+#        File rd_median_geno = "~{prefix}.median_geno"
+#        File rd_denovo = "~{prefix}.denovo"
+#        File rd_geno = "~{prefix}.geno"
+#        File rd_gq = "~{prefix}.gq"
+#        File rd_vargq = "~{prefix}.vargq"
     }
     
     runtime {
