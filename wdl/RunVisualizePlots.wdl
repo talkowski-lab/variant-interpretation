@@ -70,7 +70,7 @@ workflow VisualizePlots{
         File rd_outliers_ = select_first([rd_outliers])
 
 
-        if (defined(regeno_file) == true){
+        if (defined(regeno_file)){
 
             File regeno_file_ = select_first([regeno_file])
 
@@ -90,7 +90,9 @@ workflow VisualizePlots{
                     runtime_attr_rdtest=runtime_attr_rdtest
 
             }
-        } else {
+        }
+
+        if (!defined(regeno_file)){
             call rdtest_regeno.RdTestVisualization as RdTest_regeno{
                 input:
                     prefix = prefix,
