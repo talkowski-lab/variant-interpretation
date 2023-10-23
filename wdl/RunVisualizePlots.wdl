@@ -26,6 +26,7 @@ workflow VisualizePlots{
         Boolean? file_localization
         Boolean? requester_pays
         Boolean? is_snv_indel
+
         File? regeno_file
 
         String sv_base_mini_docker
@@ -67,23 +68,44 @@ workflow VisualizePlots{
         File batch_bincov_ = select_first([batch_bincov])
         File sample_batches_ = select_first([sample_batches])
         File rd_outliers_ = select_first([rd_outliers])
-        File regeno_file_ = select_first([regeno_file])
 
-        call rdtest.RdTestVisualization as RdTest{
-            input:
-                prefix = prefix,
-                ped_file = pedfile,
-                fam_ids = fam_ids,
-                batch_medianfile = batch_medianfile_,
-                batch_bincov=batch_bincov_,
-                bed = select_first([updateCpxBed.bed_output, varfile]),
-                regeno=regeno_file_,
-                sv_pipeline_rdtest_docker=sv_pipeline_rdtest_docker,
-                variant_interpretation_docker = variant_interpretation_docker,
-                outlier_samples = rd_outliers_,
-                sample_batches = sample_batches_,
-                runtime_attr_rdtest=runtime_attr_rdtest
 
+        if (defined(regeno_file)){
+
+            File regeno_file_ = select_first([regeno_file])
+
+            call rdtest.RdTestVisualization as RdTest{
+                input:
+                    prefix = prefix,
+                    ped_file = pedfile,
+                    fam_ids = fam_ids,
+                    batch_medianfile = batch_medianfile_,
+                    batch_bincov=batch_bincov_,
+                    bed = select_first([updateCpxBed.bed_output, varfile]),
+                    regeno=regeno_file_,
+                    sv_pipeline_rdtest_docker=sv_pipeline_rdtest_docker,
+                    variant_interpretation_docker = variant_interpretation_docker,
+                    outlier_samples = rd_outliers_,
+                    sample_batches = sample_batches_,
+                    runtime_attr_rdtest=runtime_attr_rdtest
+
+            }
+        } else {
+            call rdtest_regeno.RdTestVisualization as RdTest_regeno{
+                input:
+                    prefix = prefix,
+                    ped_file = pedfile,
+                    fam_ids = fam_ids,
+                    batch_medianfile = batch_medianfile_,
+                    batch_bincov=batch_bincov_,
+                    bed = select_first([updateCpxBed.bed_output, varfile]),
+                    sv_pipeline_rdtest_docker=sv_pipeline_rdtest_docker,
+                    variant_interpretation_docker = variant_interpretation_docker,
+                    outlier_samples = rd_outliers_,
+                    sample_batches = sample_batches_,
+                    runtime_attr_rdtest=runtime_attr_rdtest
+
+            }
         }
     }
 
@@ -150,7 +172,7 @@ workflow VisualizePlots{
     #creates a concatinated image with the IGV plot as the top pane and the RD plot as the bottom pane
     if (run_RD && run_IGV) {
         File igv_plots_tar_gz_pe_ = select_first([igv_cram_plots.tar_gz_pe, igv_evidence_plots.tar_gz_pe])
-        File RdTest_Plots_ = select_first([RdTest.Plots])
+        File RdTest_Plots_ = select_first([RdTest.Plots, RdTest_regeno.Plots])
 
         call concatinate_plots{
             input:
