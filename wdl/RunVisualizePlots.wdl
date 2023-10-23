@@ -70,7 +70,7 @@ workflow VisualizePlots{
         File rd_outliers_ = select_first([rd_outliers])
 
 
-        if (defined(regeno_file)){
+        if (defined(regeno_file) == true){
 
             File regeno_file_ = select_first([regeno_file])
 
