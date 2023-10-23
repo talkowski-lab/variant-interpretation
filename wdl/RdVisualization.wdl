@@ -13,7 +13,7 @@ workflow RdTestVisualization{
         File outlier_samples
         File batch_bincov
         File bed
-        File? regeno
+#        File? regeno
         String sv_pipeline_rdtest_docker
         String variant_interpretation_docker
         RuntimeAttr? runtime_attr_rdtest
@@ -47,41 +47,25 @@ workflow RdTestVisualization{
                 runtime_attr_override = runtime_attr_create_bed
         }
 
-        if(defined(regeno)){
-            call rdtest_regeno{
-                input:
-                    bed=generatePerFamilyBed.bed_file,
-                    family = family,
-                    ped_file = ped_file,
-                    medianfile = generatePerFamilyBed.medianfile,
-                    sample_batches=sample_batches,
-                    outlier_samples=outlier_samples,
-                    regeno = regeno,
-                    batch_bincov=batch_bincov,
-                    prefix=prefix,
-                    sv_pipeline_rdtest_docker=sv_pipeline_rdtest_docker,
-                    runtime_attr_override = runtime_attr_rdtest
-            }}
-
-        if(!defined(regeno)){
-            call rdtest{
-                input:
-                    bed=generatePerFamilyBed.bed_file,
-                    family = family,
-                    ped_file = ped_file,
-                    medianfile = generatePerFamilyBed.medianfile,
-                    sample_batches=sample_batches,
-                    outlier_samples=outlier_samples,
-                    batch_bincov=batch_bincov,
-                    prefix=prefix,
-                    sv_pipeline_rdtest_docker=sv_pipeline_rdtest_docker,
-                    runtime_attr_override = runtime_attr_rdtest
-            }}
+        call rdtest{
+            input:
+                bed=generatePerFamilyBed.bed_file,
+                family = family,
+                ped_file = ped_file,
+                medianfile = generatePerFamilyBed.medianfile,
+                sample_batches=sample_batches,
+                outlier_samples=outlier_samples,
+#                regeno = regeno,
+                batch_bincov=batch_bincov,
+                prefix=prefix,
+                sv_pipeline_rdtest_docker=sv_pipeline_rdtest_docker,
+                runtime_attr_override = runtime_attr_rdtest
+            }
     }
 
     call integrate_rd_plots{
         input:
-            rd_tar = select_first([rdtest.plots, rdtest_regeno.plots]),
+            rd_tar = rdtest.plots,
             prefix = prefix, 
             sv_pipeline_rdtest_docker = sv_pipeline_rdtest_docker,
             runtime_attr_override = runtime_attr_rdtest
@@ -349,11 +333,11 @@ task rdtest_regeno {
         File median_file = "medianfile.txt"
         File test_bed = "test.bed"
         File samples_text = "samples_noOutliers.txt"
-#        File rd_median_geno = "~{prefix}.median_geno"
-#        File rd_denovo = "~{prefix}.denovo"
-#        File rd_geno = "~{prefix}.geno"
-#        File rd_gq = "~{prefix}.gq"
-#        File rd_vargq = "~{prefix}.vargq"
+        File rd_median_geno = "~{prefix}.median_geno"
+        File rd_denovo = "~{prefix}.denovo"
+        File rd_geno = "~{prefix}.geno"
+        File rd_gq = "~{prefix}.gq"
+        File rd_vargq = "~{prefix}.vargq"
     }
     
     runtime {
