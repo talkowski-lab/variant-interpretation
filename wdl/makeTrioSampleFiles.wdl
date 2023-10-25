@@ -35,7 +35,7 @@ task makeTrioSampleFilesTask {
 
 	command <<<
 	# python3 ${python_script} ${ped_uri}
-	python3 <<< CODE
+	python3 <<CODE
 		import pandas as pd
 		import gcsfs
 		import os
@@ -59,6 +59,5 @@ task makeTrioSampleFilesTask {
 		sample_data.to_csv(f"{cohort_prefix}_sample_list.txt", sep='\t', index=False)
 
 		CODE
-		>>>
 	>>>
 }
