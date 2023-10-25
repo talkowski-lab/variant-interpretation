@@ -90,8 +90,8 @@ workflow vepAnnotateSingle {
     }
 
     output {   
-        Array[File] vep_annotated_final_vcf = merged_vcf_file
-        Array[File] vep_annotated_final_vcf_idx = merged_vcf_idx
+        Array[File] vep_annotated_final_vcf = select_first([merged_vcf_file])
+        Array[File] vep_annotated_final_vcf_idx = select_first([merged_vcf_idx])
     }
 }   
 
