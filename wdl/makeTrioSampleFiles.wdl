@@ -9,11 +9,10 @@ String hail_docker
 }
 
 call makeTrioSampleFilesTask {
-	input {
+	input:
 		ped_uri=ped_uri,
 		cohort_prefix=cohort_prefix,
 		hail_docker=hail_docker
-	}
 }
 
 output {
