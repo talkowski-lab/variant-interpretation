@@ -211,8 +211,7 @@ task rdtest {
             -a TRUE \
             -d TRUE \
             -w samples_noOutliers.txt \
-            -s 10000000 \
-            -g TRUE
+            -s 10000000
 
         mkdir rd_plots
         mv *jpg rd_plots
