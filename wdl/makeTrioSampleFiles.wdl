@@ -7,14 +7,14 @@ workflow makeTrioSampleFiles {
 		String cohort_prefix
 		String hail_docker
 	}
+	
+	runtime {
+		docker: hail_docker
+	}
 
 	output {
 		File meta_file = "${cohort_prefix}_sample_list.txt"
 		File trio_file = "${cohort_prefix}_trio_list.txt"
-	}
-
-	runtime {
-		docker: hail_docker
 	}
 
 	command <<<
