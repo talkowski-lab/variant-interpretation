@@ -35,7 +35,7 @@ task makeTrioSampleFilesTask {
 
 	command <<<
 	# python3 ${python_script} ${ped_uri}
-	python3 <<CODE
+	python3 <<< CODE
 		import pandas as pd
 		import gcsfs
 		import os
