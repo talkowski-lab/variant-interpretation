@@ -9,8 +9,8 @@ workflow makeTrioSampleFiles {
 	}
 
 	output {
-		meta_file = File "${cohort_prefix}_sample_list.txt"
-		trio_file = File "${cohort_prefix}_trio_list.txt"
+		File meta_file = "${cohort_prefix}_sample_list.txt"
+		File trio_file = "${cohort_prefix}_trio_list.txt"
 	}
 
 	runtime {
