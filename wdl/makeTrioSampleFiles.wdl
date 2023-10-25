@@ -58,6 +58,6 @@ task makeTrioSampleFilesTask {
 		sample_data = sample_data.replace({'SampleID': 'child', 'MotherID': 'mother', 'FatherID': 'father'})
 		sample_data.to_csv(f"{cohort_prefix}_sample_list.txt", sep='\t', index=False)
 
-		CODE
+	CODE
 	>>>
 }
