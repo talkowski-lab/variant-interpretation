@@ -1,22 +1,8 @@
 version 1.0
 
-workflow makeTrioSampleFiles {
-input {
-# File python_script
-File ped_uri
-String cohort_prefix
-String hail_docker
-}
 
-call makeTrioSampleFilesTask
 
-output {
-File meta_file = "${cohort_prefix}_sample_list.txt"
-File trio_file = "${cohort_prefix}_trio_list.txt"
-}
-}
-
-task makeTrioSampleFilesTask {
+workflow makeTrioSampleFilesTask {
 input {
 # File python_script
 File ped_uri
