@@ -2,7 +2,7 @@ version 1.0
 
 workflow makeTrioSampleFiles {
 	input {
-		# File python_script
+		File python_script
 		File ped_uri
 		String cohort_prefix
 		String hail_docker
