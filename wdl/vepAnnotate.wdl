@@ -15,6 +15,7 @@ workflow vepAnnotate {
     input {
         # file can be a list of vcf files or just one vcf file
         File file
+        String cohort_prefix
         String vep_docker
         String sv_base_mini_docker
         File hg38_fasta
@@ -48,7 +49,7 @@ workflow vepAnnotate {
                 human_ancestor_fa=human_ancestor_fa,
                 human_ancestor_fa_fai=human_ancestor_fa_fai,
                 top_level_fa=top_level_fa, 
-                cohort_prefix=basename(vcf_file, ".vcf.gz"),
+                cohort_prefix=cohort_prefix,
                 merge_annotated_vcfs=merge_annotated_vcfs,
                 records_per_shard=select_first([records_per_shard]),
                 runtime_attr_normalize=runtime_attr_normalize,
