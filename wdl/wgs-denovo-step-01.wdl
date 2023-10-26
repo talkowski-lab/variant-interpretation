@@ -22,7 +22,7 @@ workflow step1 {
 				hail_docker=hail_docker
 		}
 	}
-	File meta_uri = select_first([meta_uri], makeTrioSampleFiles.meta_uri_out)
+	File meta_uri = select_first([meta_uri, makeTrioSampleFiles.meta_uri_out])
 	File trio_uri = select_first([trio_uri, makeTrioSampleFiles.trio_uri_out])
 
 	scatter (vcf_uri_sublist in vcf_uri_list) {
