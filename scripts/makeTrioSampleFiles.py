@@ -1,17 +1,11 @@
 import pandas as pd
-import gcsfs
 import os
 import sys
-from google.cloud import storage
 
-ped_uri = sys.argv[1]
+ped_uri = sys.argv[1].split('/')[-1]
 cohort_prefix = sys.argv[2]
-print(os.getcwd())
-print(ped_uri)
 
-fs = gcsfs.GCSFileSystem(project='talkowski-sv-gnomad')
-with fs.open(ped_uri) as f:
-	ped = pd.read_csv(f, sep='\t')
+ped = pd.read_csv(ped_uri, sep='\t')
 trio = ped[(ped.FatherID != '0') & (ped.MotherID != '0')].iloc[:, :4]
 trio['TrioID'] = trio['FamID'] + '-' + trio['IndividualID']
 trio.rename(columns={'IndividualID': 'SampleID'}, inplace=True)
