@@ -6,7 +6,7 @@ workflow step1 {
 		File python_preprocess_script
 		File lcr_uri
 		File ped_uri
-		Array[File] vcf_uri_list
+		Array[Array[File]] vcf_uri_list
 		File? meta_uri
 		File? trio_uri
 		String cohort_prefix
@@ -27,19 +27,22 @@ workflow step1 {
 	File meta_uri = select_first[meta_uri]
 	File trio_uri = select_first[trio_uri]
 
-	scatter (vcf_uri in vcf_uri_list) {
-		call preprocessVCF {
-			input:
-				python_preprocess_script=python_preprocess_script,
-				lcf_uri=lcf_uri,
-				ped_uri=ped_uri,
-				vcf_uri=vcf_uri,
-				meta_uri=meta_uri,
-				trio_uri=trio_uri,
-				hail_docker=hail_docker
+	scatter (vcf_uri_sublist in vcf_uri_list) {
+		scatter (vcf_uri in vcf_uri_sublist) {
+			call preprocessVCF {
+				input:
+					python_preprocess_script=python_preprocess_script,
+					lcf_uri=lcf_uri,
+					ped_uri=ped_uri,
+					vcf_uri=vcf_uri,
+					meta_uri=meta_uri,
+					trio_uri=trio_uri,
+					hail_docker=hail_docker
+			}
 		}
 	}
 	output {
+		Array[Array[File]] preprocessed_vcf_list = preprocessVCF.preprocessed_vcf
 	}
 }
 
