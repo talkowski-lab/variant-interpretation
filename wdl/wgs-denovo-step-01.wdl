@@ -54,12 +54,12 @@ task makeTrioSampleFiles {
 	}
 
 	command <<<
-	python3 ${python_trio_sample_script} ${ped_uri} ${cohort_prefix}
+	python3 ~{python_trio_sample_script} ~{ped_uri} ~{cohort_prefix}
 	>>>
 	
 	output {
-		File meta_uri_out = "${cohort_prefix}_sample_list.txt"
-		File trio_uri_out = "${cohort_prefix}_trio_list.txt"
+		File meta_uri_out = "~{cohort_prefix}_sample_list.txt"
+		File trio_uri_out = "~{cohort_prefix}_trio_list.txt"
 	}
 }
 
@@ -79,7 +79,7 @@ task preprocessVCF {
 	}
 
 	command <<<
-	python3 ${python_preprocess_script} ${lcr_uri} ${ped_uri} ${meta_uri} ${trio_uri} ${vcf_uri}
+	python3 ~{python_preprocess_script} ~{lcr_uri} ~{ped_uri} ~{meta_uri} ~{trio_uri} ~{vcf_uri}
 	>>>
 
 	output {

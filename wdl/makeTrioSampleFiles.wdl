@@ -17,8 +17,8 @@ workflow makeTrioSampleFiles {
 	}
 
 	output {
-		File meta_file = "${cohort_prefix}_sample_list.txt"
-		File trio_file = "${cohort_prefix}_trio_list.txt"
+		File meta_file = makeTrioSampleFilesTask.meta_file
+		File trio_file = makeTrioSampleFilesTask.trio_file
 	}
 }
 
@@ -35,11 +35,11 @@ task makeTrioSampleFilesTask {
 	}
 
 	output {
-		File meta_file = "${cohort_prefix}_sample_list.txt"
-		File trio_file = "${cohort_prefix}_trio_list.txt"
+		File meta_file = meta_file
+		File trio_file = trio_file
 	}
 
 	command <<<
-	python3 ${python_script} ${ped_uri} ${cohort_prefix}
+	python3 ~{python_script} ~{ped_uri} ~{cohort_prefix} --out1=trio_file --out2=meta_file
 	>>>
 }

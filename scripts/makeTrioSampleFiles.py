@@ -27,3 +27,7 @@ sample_data = sample_data.replace({'SampleID': 'child', 'MotherID': 'mother', 'F
 # sample_data.to_csv(f"{cohort_prefix}_sample_list.txt", sep='\t', index=False)
 bucket.blob(f"{cohort_prefix}_sample_list.txt").upload_from_string(sample_data.to_csv(sep='\t', index=False), 'text/csv')
 print('Metadata csv saved')
+
+trio_uri = f"{ped_uri.split('/')[0]}/{cohort_prefix}_trio_list.txt"
+meta_uri = f"{ped_uri.split('/')[0]}/{cohort_prefix}_sample_list.txt"
+return (trio_uri, meta_uri)
