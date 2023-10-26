@@ -44,7 +44,7 @@ workflow vepAnnotateSingle {
 
         scatter (shard in scatterVCF.shards) {
             # normalize vcf file
-            call normalizeVCF {
+            call normalizeVCF as normalizeVCF_sharded {
                 input:
                     vcf_file=shard,
                     sv_base_mini_docker=sv_base_mini_docker,
@@ -53,9 +53,9 @@ workflow vepAnnotateSingle {
                     runtime_attr_override=runtime_attr_normalize
             }
 
-            call vepAnnotate {
+            call vepAnnotate as vepAnnotate_sharded {
                 input:
-                    vcf_file=normalizeVCF.vcf_no_genotype,
+                    vcf_file=normalizeVCF_sharded.vcf_no_genotype,
                     top_level_fa=top_level_fa,
                     human_ancestor_fa=human_ancestor_fa,
                     human_ancestor_fa_fai=human_ancestor_fa_fai,
@@ -63,11 +63,11 @@ workflow vepAnnotateSingle {
                     runtime_attr_override=runtime_attr_vep_annotate
             }
 
-            call addGenotypes { 
+            call addGenotypes as addGenotypes_sharded { 
                 input:
-                vep_annotated_vcf=select_first([vepAnnotate.vep_vcf_file]),
-                normalized_vcf=normalizeVCF.vcf_normalized_file_with_genotype,
-                normalized_vcf_idx=normalizeVCF.vcf_normalized_file_with_genotype_idx,
+                vep_annotated_vcf=select_first([vepAnnotate_sharded.vep_vcf_file]),
+                normalized_vcf=normalizeVCF_sharded.vcf_normalized_file_with_genotype,
+                normalized_vcf_idx=normalizeVCF_sharded.vcf_normalized_file_with_genotype_idx,
                 sv_base_mini_docker=sv_base_mini_docker,
                 runtime_attr_override=runtime_attr_add_genotypes
             }
@@ -102,13 +102,13 @@ workflow vepAnnotateSingle {
         }
     }
 
-    Array[File] merged_vcf_file = select_first([addGenotypes.merged_vcf_file])
-    Array[File] merged_vcf_idx = select_first([addGenotypes.merged_vcf_idx])
+    Array[File] genotyped_vcf_file = select_first([addGenotypes_sharded.merged_vcf_file, addGenotypes.merged_vcf_file])
+    Array[File] genotyped_vcf_idx = select_first([addGenotypes_sharded.merged_vcf_idx, addGenotypes.merged_vcf_idx])
 
     if (merge_annotated_vcfs) {
         call mergeVCFs {
             input:
-                vcf_contigs=select_first([addGenotypes.merged_vcf_file]),
+                vcf_contigs=genotyped_vcf_file,
                 sv_base_mini_docker=sv_base_mini_docker,
                 cohort_prefix=cohort_prefix,
                 runtime_attr_override=runtime_attr_vep_annotate
@@ -118,8 +118,8 @@ workflow vepAnnotateSingle {
     }
 
     output {   
-        Array[File] vep_annotated_final_vcf = select_first([merged_vcf_file])
-        Array[File] vep_annotated_final_vcf_idx = select_first([merged_vcf_idx])
+        Array[File] vep_annotated_final_vcf = select_first([merged_vcf_file, genotyped_vcf_file])
+        Array[File] vep_annotated_final_vcf_idx = select_first([merged_vcf_idx, genotyped_vcf_idx])
     }
 }   
 
