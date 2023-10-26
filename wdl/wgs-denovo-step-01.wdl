@@ -2,33 +2,50 @@ version 1.0
 
 workflow step1 {
 	input {
-		# File python_script
+		File python_trio_sample_script
+		File python_preprocess_script
+		File lcr_uri
 		File ped_uri
-		File? meta_file
-		File? trio_file
+		Array[File] vcf_uri_list
+		File? meta_uri
+		File? trio_uri
 		String cohort_prefix
 		String hail_docker
 	}
 
-	if (!defined(meta_file)) {
+	if (!defined(meta_uri)) {
 		call makeTrioSampleFiles {
 			input:
+				python_trio_sample_script=python_trio_sample_script,
 				ped_uri=ped_uri,
 				cohort_prefix=cohort_prefix,
 				hail_docker=hail_docker
 		}
-		File meta_file = makeTrioSampleFiles.meta_file
-		File trio_file = makeTrioSampleFiles.trio_file
+		File meta_uri = makeTrioSampleFiles.meta_uri
+		File trio_uri = makeTrioSampleFiles.trio_uri
 	}
-	File meta_file = select_first[meta_file]
-	File trio_file = select_first[trio_file]
+	File meta_uri = select_first[meta_uri]
+	File trio_uri = select_first[trio_uri]
 
+	scatter (vcf_uri in vcf_uri_list) {
+		call preprocessVCF {
+			input:
+				python_preprocess_script=python_preprocess_script,
+				lcf_uri=lcf_uri,
+				ped_uri=ped_uri,
+				vcf_uri=vcf_uri,
+				meta_uri=meta_uri,
+				trio_uri=trio_uri,
+				hail_docker=hail_docker
+		}
+	}
 	output {
 	}
 }
 
 task makeTrioSampleFiles {
 	input {
+		File python_trio_sample_script
 		File ped_uri
 		String cohort_prefix
 		String hail_docker
@@ -39,37 +56,35 @@ task makeTrioSampleFiles {
 	}
 
 	output {
-		File meta_file = "${cohort_prefix}_sample_list.txt"
-		File trio_file = "${cohort_prefix}_trio_list.txt"
+		File meta_uri = "${cohort_prefix}_sample_list.txt"
+		File trio_uri = "${cohort_prefix}_trio_list.txt"
 	}
 
 	command <<<
-	# python3 ${python_script} ${ped_uri}
-	python3 <<CODE
-	import pandas as pd
-	import gcsfs
-	import os
-	import sys
-	from google.cloud import storage
+	python3 ${python_trio_sample_script} ${ped_uri} ${cohort_prefix}
+	>>>
+}
 
-	ped_uri = "~{ped_uri}"
-	cohort_prefix = "~{cohort_prefix}"
-	fs = gcsfs.GCSFileSystem(project='talkowski-sv-gnomad')
-	with fs.open(ped_uri) as f:
-		ped = pd.read_csv(f, sep='\t')
-	trio = ped[(ped.FatherID != '0') & (ped.MotherID != '0')].iloc[:, :4]
-	trio['TrioID'] = trio['FamID'] + '-' + trio['IndividualID']
-	trio.rename(columns={'IndividualID': 'SampleID'}, inplace=True)
-	trio.to_csv(f"{cohort_prefix}_trio_list.txt", sep='\t', index=False)
+task preprocessVCF {
+	input {
+		File python_preprocess_script
+		File lcf_uri
+		File ped_uri
+		File vcf_uri
+		File meta_uri
+		File trio_uri
+		String hail_docker
+	}
 
-	trio.columns.name = 'Role'
-	trio.index = trio.FamID
+	runtime {
+		docker: hail_docker
+	}
 
-	sample_data = trio.iloc[:, 1:-1].stack().reset_index()
-	sample_data.columns = ['FamID', 'Role', 'SampleID']
-	sample_data = sample_data.replace({'SampleID': 'child', 'MotherID': 'mother', 'FatherID': 'father'})
-	sample_data.to_csv(f"{cohort_prefix}_sample_list.txt", sep='\t', index=False)
+	output {
+		File preprocessed_vcf = basename(vcf_uri, '.vcf.gz') + '.filtered.vcf.gz'
+	}
 
-	CODE
+	command <<<
+	python3 ${python_preprocess_script} ${lcr_uri} ${ped_uri} ${meta_uri} ${trio_uri} ${vcf_uri}
 	>>>
 }

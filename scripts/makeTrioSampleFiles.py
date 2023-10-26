@@ -6,7 +6,9 @@
 
 	ped_uri = sys.argv[1]
 	cohort_prefix = sys.argv[2]
-
+	print(os.getcwd())
+	print(ped_uri)
+	
 	fs = gcsfs.GCSFileSystem(project='talkowski-sv-gnomad')
 	with fs.open(ped_uri) as f:
 		ped = pd.read_csv(f, sep='\t')
