@@ -40,6 +40,6 @@ task makeTrioSampleFilesTask {
 	}
 
 	command <<<
-	python3 ${python_script} ${ped_uri} ${cohort_prefix} &> python_logs.txt
+	python3 ${python_script} ${ped_uri} ${cohort_prefix}
 	>>>
 }
