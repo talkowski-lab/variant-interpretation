@@ -74,6 +74,34 @@ workflow vepAnnotateSingle {
         }
     }
 
+    if (!defined(records_per_shard)) {
+        call normalizeVCF {
+            input:
+                vcf_file=vcf_file,
+                sv_base_mini_docker=sv_base_mini_docker,
+                hg38_fasta=hg38_fasta,
+                hg38_fasta_fai=hg38_fasta_fai,
+                runtime_attr_override=runtime_attr_normalize
+        }
+        call vepAnnotate {
+            input:
+                vcf_file=normalizeVCF.vcf_no_genotype,
+                top_level_fa=top_level_fa,
+                human_ancestor_fa=human_ancestor_fa,
+                human_ancestor_fa_fai=human_ancestor_fa_fai,
+                vep_docker=vep_docker,
+                runtime_attr_override=runtime_attr_vep_annotate
+        }
+        call addGenotypes { 
+            input:
+            vep_annotated_vcf=select_first([vepAnnotate.vep_vcf_file]),
+            normalized_vcf=normalizeVCF.vcf_normalized_file_with_genotype,
+            normalized_vcf_idx=normalizeVCF.vcf_normalized_file_with_genotype_idx,
+            sv_base_mini_docker=sv_base_mini_docker,
+            runtime_attr_override=runtime_attr_add_genotypes
+        }
+    }
+
     Array[File] merged_vcf_file = select_first([addGenotypes.merged_vcf_file])
     Array[File] merged_vcf_idx = select_first([addGenotypes.merged_vcf_idx])
 
