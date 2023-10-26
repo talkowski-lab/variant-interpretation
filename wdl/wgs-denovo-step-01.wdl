@@ -20,8 +20,11 @@ workflow step1 {
 			cohort_prefix=cohort_prefix,
 			hail_docker=hail_docker
 	}
-	File meta_uri = makeTrioSampleFiles.meta_uri
-	File trio_uri = makeTrioSampleFiles.trio_uri
+	# File meta_uri = makeTrioSampleFiles.meta_uri
+	# File trio_uri = makeTrioSampleFiles.trio_uri
+	
+	File meta_uri = "~{bucket_id}/resources/metadata/~{cohort_prefix}_sample_list.txt"
+	File trio_uri = "~{bucket_id}/resources/metadata/~{cohort_prefix}_trio_list.txt"
 
 	scatter (vcf_uri_sublist in vcf_uri_list) {
 		scatter (vcf_uri in vcf_uri_sublist) {
@@ -61,8 +64,8 @@ task makeTrioSampleFiles {
 	>>>
 	
 	output {
-		File meta_uri = "~{bucket_id}/resources/metadata/~{cohort_prefix}_sample_list.txt"
-		File trio_uri = "~{bucket_id}/resources/metadata/~{cohort_prefix}_trio_list.txt"
+		# File meta_uri = "~{bucket_id}/resources/metadata/~{cohort_prefix}_sample_list.txt"
+		# File trio_uri = "~{bucket_id}/resources/metadata/~{cohort_prefix}_trio_list.txt"
 	}
 }
 
