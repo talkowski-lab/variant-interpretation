@@ -32,7 +32,7 @@ workflow step1 {
 			call preprocessVCF {
 				input:
 					python_preprocess_script=python_preprocess_script,
-					lcf_uri=lcf_uri,
+					lcr_uri=lcr_uri,
 					ped_uri=ped_uri,
 					vcf_uri=vcf_uri,
 					meta_uri=meta_uri,
@@ -71,7 +71,7 @@ task makeTrioSampleFiles {
 task preprocessVCF {
 	input {
 		File python_preprocess_script
-		File lcf_uri
+		File lcr_uri
 		File ped_uri
 		File vcf_uri
 		File meta_uri
