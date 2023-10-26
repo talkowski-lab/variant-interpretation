@@ -7,23 +7,19 @@ workflow step1 {
 		File lcr_uri
 		File ped_uri
 		Array[Array[File]] vcf_uri_list
-		File? meta_uri
-		File? trio_uri
 		String cohort_prefix
 		String hail_docker
 	}
 
-	if (!defined(meta_uri)) {
-		call makeTrioSampleFilesNew {
-			input:
-				python_trio_sample_script=python_trio_sample_script,
-				ped_uri=ped_uri,
-				cohort_prefix=cohort_prefix,
-				hail_docker=hail_docker
-		}
-		File meta_uri = select_first([makeTrioSampleFiles.meta_uri_out])
-		File trio_uri = select_first([makeTrioSampleFiles.trio_uri_out])
+	call makeTrioSampleFiles {
+		input:
+			python_trio_sample_script=python_trio_sample_script,
+			ped_uri=ped_uri,
+			cohort_prefix=cohort_prefix,
+			hail_docker=hail_docker
 	}
+	File meta_uri = makeTrioSampleFiles.meta_uri_out
+	File trio_uri = makeTrioSampleFiles.trio_uri_out
 
 	scatter (vcf_uri_sublist in vcf_uri_list) {
 		scatter (vcf_uri in vcf_uri_sublist) {
@@ -45,7 +41,7 @@ workflow step1 {
 	}
 }
 
-task makeTrioSampleFilesNew {
+task makeTrioSampleFiles {
 	input {
 		File python_trio_sample_script
 		File ped_uri
@@ -57,14 +53,14 @@ task makeTrioSampleFilesNew {
 		docker: hail_docker
 	}
 
+	command <<<
+	python3 ${python_trio_sample_script} ${ped_uri} ${cohort_prefix}
+	>>>
+	
 	output {
 		File meta_uri_out = "${cohort_prefix}_sample_list.txt"
 		File trio_uri_out = "${cohort_prefix}_trio_list.txt"
 	}
-
-	command <<<
-	python3 ${python_trio_sample_script} ${ped_uri} ${cohort_prefix}
-	>>>
 }
 
 task preprocessVCF {
@@ -82,11 +78,11 @@ task preprocessVCF {
 		docker: hail_docker
 	}
 
-	output {
-		File preprocessed_vcf = basename(vcf_uri, '.vcf.gz') + '.filtered.vcf.gz'
-	}
-
 	command <<<
 	python3 ${python_preprocess_script} ${lcr_uri} ${ped_uri} ${meta_uri} ${trio_uri} ${vcf_uri}
 	>>>
+
+	output {
+		File preprocessed_vcf = basename(vcf_uri, '.vcf.gz') + '.filtered.vcf.gz'
+	}
 }
