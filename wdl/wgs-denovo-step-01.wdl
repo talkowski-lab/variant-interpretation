@@ -14,7 +14,7 @@ workflow step1 {
 	}
 
 	if (!defined(meta_uri)) {
-		call makeTrioSampleFiles {
+		call makeTrioSampleFilesNew {
 			input:
 				python_trio_sample_script=python_trio_sample_script,
 				ped_uri=ped_uri,
@@ -39,12 +39,13 @@ workflow step1 {
 			}
 		}
 	}
+
 	output {
 		Array[Array[File]] preprocessed_vcf_list = preprocessVCF.preprocessed_vcf
 	}
 }
 
-task makeTrioSampleFiles {
+task makeTrioSampleFilesNew {
 	input {
 		File python_trio_sample_script
 		File ped_uri
