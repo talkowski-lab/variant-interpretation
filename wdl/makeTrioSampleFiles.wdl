@@ -10,6 +10,7 @@ workflow makeTrioSampleFiles {
 
 	call makeTrioSampleFilesTask {
 		input:
+			python_script=python_script,
 			ped_uri=ped_uri,
 			cohort_prefix=cohort_prefix,
 			hail_docker=hail_docker
