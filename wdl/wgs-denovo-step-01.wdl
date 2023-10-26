@@ -24,8 +24,8 @@ workflow step1 {
 		File meta_uri = makeTrioSampleFiles.meta_uri_out
 		File trio_uri = makeTrioSampleFiles.trio_uri_out
 	}
-	File meta_uri = select_first[meta_uri]
-	File trio_uri = select_first[trio_uri]
+	File meta_uri = select_first([meta_uri])
+	File trio_uri = select_first([trio_uri])
 
 	scatter (vcf_uri_sublist in vcf_uri_list) {
 		scatter (vcf_uri in vcf_uri_sublist) {
