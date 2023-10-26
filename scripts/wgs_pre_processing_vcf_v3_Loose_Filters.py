@@ -12,10 +12,8 @@ hailctl dataproc submit your-dataproc wgs_pre_processing_vcf.py --zone=us-east4-
 import hail as hl
 
 import pandas as pd
-import gcsfs
 import os
 import sys
-from google.cloud import storage
 
 hl.init(spark_conf={'spark.speculation': 'true'})
 
