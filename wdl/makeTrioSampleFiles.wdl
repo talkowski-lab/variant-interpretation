@@ -35,11 +35,11 @@ task makeTrioSampleFilesTask {
 	}
 
 	output {
-		File meta_file = meta_file
-		File trio_file = trio_file
+		File meta_file = sub(ped_uri, basename(ped_uri), "") + "~{cohort_prefix}_sample_list.txt"
+		File trio_file = sub(ped_uri, basename(ped_uri), "") + "~{cohort_prefix}_trio_list.txt"
 	}
 
 	command <<<
-	python3 ~{python_script} ~{ped_uri} ~{cohort_prefix} --out1=trio_file --out2=meta_file
+	python3 ~{python_script} ~{ped_uri} ~{cohort_prefix}
 	>>>
 }
