@@ -19,8 +19,8 @@ workflow makeTrioSampleFiles {
 	}
 
 	output {
-		File meta_file = makeTrioSampleFilesTask.meta_file
-		File trio_file = makeTrioSampleFilesTask.trio_file
+		# File meta_file = makeTrioSampleFilesTask.meta_file
+		# File trio_file = makeTrioSampleFilesTask.trio_file
 	}
 }
 
@@ -38,8 +38,8 @@ task makeTrioSampleFilesTask {
 	}
 
 	output {
-		File meta_file = "~{bucket_id}/resources/metadata/~{cohort_prefix}_sample_list.txt"
-		File trio_file = "~{bucket_id}/resources/metadata/~{cohort_prefix}_trio_list.txt"
+		# File meta_file = "~{bucket_id}/resources/metadata/~{cohort_prefix}_sample_list.txt"
+		# File trio_file = "~{bucket_id}/resources/metadata/~{cohort_prefix}_trio_list.txt"
 	}
 
 	command <<<
