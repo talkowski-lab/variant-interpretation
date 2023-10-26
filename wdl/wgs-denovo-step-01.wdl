@@ -16,6 +16,7 @@ workflow step1 {
 		input:
 			python_trio_sample_script=python_trio_sample_script,
 			ped_uri=ped_uri,
+			bucket_id=bucket_id,
 			cohort_prefix=cohort_prefix,
 			hail_docker=hail_docker
 	}
@@ -46,6 +47,7 @@ task makeTrioSampleFiles {
 	input {
 		File python_trio_sample_script
 		File ped_uri
+		String bucket_id
 		String cohort_prefix
 		String hail_docker
 	}

@@ -13,6 +13,7 @@ workflow makeTrioSampleFiles {
 		input:
 			python_script=python_script,
 			ped_uri=ped_uri,
+			bucket_id=bucket_id,
 			cohort_prefix=cohort_prefix,
 			hail_docker=hail_docker
 	}
@@ -27,6 +28,7 @@ task makeTrioSampleFilesTask {
 	input {
 		File python_script
 		File ped_uri
+		String bucket_id
 		String cohort_prefix
 		String hail_docker
 	}
