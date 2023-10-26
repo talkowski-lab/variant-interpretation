@@ -4,6 +4,7 @@ workflow makeTrioSampleFiles {
 	input {
 		File python_script
 		File ped_uri
+		String bucket_id
 		String cohort_prefix
 		String hail_docker
 	}
@@ -35,8 +36,8 @@ task makeTrioSampleFilesTask {
 	}
 
 	output {
-		File meta_file = sub(ped_uri, basename(ped_uri), "") + "~{cohort_prefix}_sample_list.txt"
-		File trio_file = sub(ped_uri, basename(ped_uri), "") + "~{cohort_prefix}_trio_list.txt"
+		File meta_file = "~{bucket_id}/resources/metadata/~{cohort_prefix}_sample_list.txt"
+		File trio_file = "~{bucket_id}/resources/metadata/~{cohort_prefix}_trio_list.txt"
 	}
 
 	command <<<
