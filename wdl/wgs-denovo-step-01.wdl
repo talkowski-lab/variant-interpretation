@@ -58,8 +58,8 @@ workflow step1 {
 	}
 
 	output {
-		Array[File] preprocessed_vcf_files = mergeVCFs.merged_vcf_file
-		Array[File] preprocessed_vcf_idx = mergeVCFs.merged_vcf_idx
+		Array[File] merged_preprocessed_vcf_files = mergeVCFs.merged_vcf_file
+		Array[File] merged_preprocessed_vcf_idx = mergeVCFs.merged_vcf_idx
 	}
 }
 
@@ -106,7 +106,7 @@ task preprocessVCF {
 	>>>
 
 	output {
-		File preprocessed_vcf = basename(vcf_uri, '.vcf.gz') + '.filtered.vcf.gz'
+		File preprocessed_vcf = basename(vcf_uri, '.vcf.gz') + '.preprocessed.vcf.gz'
 	}
 }
 
