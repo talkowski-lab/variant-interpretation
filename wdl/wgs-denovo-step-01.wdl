@@ -51,6 +51,7 @@ workflow step1 {
 		}
 		call mergeVCFs {
 			input:
+				vcf_uri=vcf_uri,
 				vcf_contigs=preprocessVCF.preprocessed_vcf,
 				sv_base_mini_docker=sv_base_mini_docker,
 				cohort_prefix=cohort_prefix
@@ -112,6 +113,7 @@ task preprocessVCF {
 
 task mergeVCFs{
     input {
+		String vcf_uri
         Array[File] vcf_contigs
         String sv_base_mini_docker
         String cohort_prefix
@@ -148,7 +150,7 @@ task mergeVCFs{
         bootDiskSizeGb: select_first([runtime_override.boot_disk_gb, runtime_default.boot_disk_gb])
     }
 
-    String merged_vcf_name="~{cohort_prefix}.vep.merged.vcf.gz"
+    String merged_vcf_name="~{basename(vcf_uri, '.vcf.gz')}.vep.merged.vcf.gz"
 
     command <<<
         set -euo pipefail
