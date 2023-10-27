@@ -11,6 +11,8 @@ struct RuntimeAttr {
 
 workflow step1 {
 	input {
+		# file can be a list of vcf files or just one vcf file
+        File file
 		File python_trio_sample_script
 		File python_preprocess_script
 		File lcr_uri
@@ -30,13 +32,19 @@ workflow step1 {
 			cohort_prefix=cohort_prefix,
 			hail_docker=hail_docker
 	}
-	# File meta_uri = makeTrioSampleFiles.meta_uri
-	# File trio_uri = makeTrioSampleFiles.trio_uri
+
+    String filename = basename(file)
+    # if file is vcf.gz (just one file)
+    Array[File] vcf_files = if (sub(filename, ".vcf.gz", "") != filename) then [file] else read_lines(file)
 	
 	File meta_uri = "~{bucket_id}/resources/metadata/~{cohort_prefix}_sample_list.txt"
 	File trio_uri = "~{bucket_id}/resources/metadata/~{cohort_prefix}_trio_list.txt"
 
-	scatter (vcf_uri_sublist in vcf_uri_list) {
+	Array[Pair[File, Array[File]]] vcf_list_paired = zip(vcf_files, vcf_uri_list)
+
+	scatter (pair in vcf_list_paired) {
+		File og_vcf_file = pair.left 
+		Array[File] vcf_uri_sublist = pair.right
 		scatter (vcf_uri in vcf_uri_sublist) {
 			call preprocessVCF {
 				input:
@@ -51,7 +59,7 @@ workflow step1 {
 		}
 		call mergeVCFs {
 			input:
-				vcf_uri=vcf_uri,
+				og_vcf_uri=og_vcf_file,
 				vcf_contigs=preprocessVCF.preprocessed_vcf,
 				sv_base_mini_docker=sv_base_mini_docker,
 				cohort_prefix=cohort_prefix
@@ -113,7 +121,7 @@ task preprocessVCF {
 
 task mergeVCFs{
     input {
-		String vcf_uri
+		String og_vcf_uri
         Array[File] vcf_contigs
         String sv_base_mini_docker
         String cohort_prefix
@@ -150,7 +158,7 @@ task mergeVCFs{
         bootDiskSizeGb: select_first([runtime_override.boot_disk_gb, runtime_default.boot_disk_gb])
     }
 
-    String merged_vcf_name="~{basename(vcf_uri, '.vcf.gz')}.vep.merged.vcf.gz"
+    String merged_vcf_name="~{basename(og_vcf_uri, '.vcf.gz')}.vep.merged.vcf.gz"
 
     command <<<
         set -euo pipefail
