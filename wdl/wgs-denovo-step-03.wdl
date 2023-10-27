@@ -6,6 +6,7 @@ workflow step3 {
         Array[File] merged_preprocessed_vcf_files
         String hail_docker
         File uberSplit_v3_py
+        Int batch_size
     }
 
     scatter (vcf_file in merged_preprocessed_vcf_files) {
@@ -18,7 +19,8 @@ workflow step3 {
                 hail_docker=hail_docker,
                 cohort_prefix=cohort_prefix,
                 stats_file=stats_file,
-                uberSplit_v3_py=uberSplit_v3_py
+                uberSplit_v3_py=uberSplit_v3_py,
+                batch_size=batch_size
         }
     }
 
@@ -35,7 +37,8 @@ task uberSplit_v3 {
         String hail_docker
         String cohort_prefix
         String stats_file
-        File uberSplit_v3_py        
+        File uberSplit_v3_py       
+        Int batch_size
     }
 
     runtime {
@@ -43,7 +46,7 @@ task uberSplit_v3 {
     }
 
     command {
-        python3 ~{uberSplit_v3_py} ~{ped_uri} ~{vcf_file} ~{cohort_prefix} ~{stats_file}
+        python3 ~{uberSplit_v3_py} ~{ped_uri} ~{vcf_file} ~{cohort_prefix} ~{stats_file} ~{batch_size}
     }
 
     output {
