@@ -82,7 +82,7 @@ task subset_sample_roi {
 
   command {
     set -e
-    grep -w ~{sample} ~{regions} > ~{sample}.bed.gz
+    grep -w ~{sample} ~{regions} | bgzip -c > ~{sample}.bed.gz
   }
 
   runtime {
