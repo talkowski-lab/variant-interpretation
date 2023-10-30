@@ -24,12 +24,11 @@ workflow PEevidence {
     RuntimeAttr? runtime_attr_subset_sample_roi
     RuntimeAttr? runtime_attr_subset_pe_evidence
 
-
   }
 
     Array[String] samples = transpose(read_tsv(regions))[4]
 
-    scatter (sample in unique(samples)){
+    scatter (sample in uniq(samples)){
 
     call subset_sample_roi{
       input:
