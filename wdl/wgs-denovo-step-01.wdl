@@ -162,10 +162,10 @@ task mergeVCFs {
 
     command <<<
         set -euo pipefail
-        VCFS="~{write_lines(vcf_contigs)}"
-        cat $VCFS | awk -F '/' '{print $NF"\t"$0}' | sort -k1,1V | awk '{print $2}' > vcfs_sorted.list
+        # VCFS="~{write_lines(vcf_contigs)}"
+        # cat $VCFS | awk -F '/' '{print $NF"\t"$0}' | sort -k1,1V | awk '{print $2}' > vcfs_sorted.list
         # bcftools concat -n --no-version -Oz --file-list vcfs_sorted.list --output ~{merged_vcf_name}
-        java -jar /usr/picard/picard.jar GatherVcfs I=vcfs_sorted.list O=~{merged_vcf_name}
+        java -jar /usr/picard/picard.jar GatherVcfs -I ~{sep=' -I ' vcf_contigs} -O ~{merged_vcf_name}
         bcftools index -t ~{merged_vcf_name}
     >>>
 
