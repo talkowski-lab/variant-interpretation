@@ -27,7 +27,7 @@ workflow PEevidence {
 
   }
 
-    Array[String] samples = transpose(read_tsv(sample_list))
+    Array[String] samples = transpose(read_tsv(sample_list))[0]
 
     scatter (sample in samples){
 
