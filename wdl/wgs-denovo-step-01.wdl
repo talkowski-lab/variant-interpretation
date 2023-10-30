@@ -18,7 +18,7 @@ workflow step1 {
 		File lcr_uri
 		File ped_uri
 		Array[Array[File]] vcf_uri_list
-		String sv_base_mini_docker
+		String picard_docker
 		String bucket_id
 		String cohort_prefix
 		String hail_docker
@@ -61,7 +61,7 @@ workflow step1 {
 			input:
 				og_vcf_uri=og_vcf_file,
 				vcf_contigs=preprocessVCF.preprocessed_vcf,
-				sv_base_mini_docker=sv_base_mini_docker,
+				picard_docker=picard_docker,
 				cohort_prefix=cohort_prefix
 		}
 	}
@@ -123,7 +123,7 @@ task mergeVCFs{
     input {
 		String og_vcf_uri
         Array[File] vcf_contigs
-        String sv_base_mini_docker
+        String picard_docker
         String cohort_prefix
         RuntimeAttr? runtime_attr_override
     }
@@ -154,7 +154,7 @@ task mergeVCFs{
         cpu: select_first([runtime_override.cpu_cores, runtime_default.cpu_cores])
         preemptible: select_first([runtime_override.preemptible_tries, runtime_default.preemptible_tries])
         maxRetries: select_first([runtime_override.max_retries, runtime_default.max_retries])
-        docker: sv_base_mini_docker
+        docker: picard_docker
         bootDiskSizeGb: select_first([runtime_override.boot_disk_gb, runtime_default.boot_disk_gb])
     }
 
@@ -164,7 +164,8 @@ task mergeVCFs{
         set -euo pipefail
         VCFS="~{write_lines(vcf_contigs)}"
         cat $VCFS | awk -F '/' '{print $NF"\t"$0}' | sort -k1,1V | awk '{print $2}' > vcfs_sorted.list
-        bcftools concat -n --no-version -Oz --file-list vcfs_sorted.list --output ~{merged_vcf_name}
+        # bcftools concat -n --no-version -Oz --file-list vcfs_sorted.list --output ~{merged_vcf_name}
+		java -jar /usr/picard/picard.jar GatherVcfs I=vcfs_sorted.list O=~{merged_vcf_name}
         bcftools index -t ~{merged_vcf_name}
     >>>
 
