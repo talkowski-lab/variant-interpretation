@@ -48,7 +48,8 @@ def trim_vcf(vcf_uri, lcr_uri, ped_uri, meta_uri, trio_uri, vcf_out_uri, build):
         lcr = hl.import_bed(lcr_uri, reference_genome=build, force_bgz=True)
     mt = mt.filter_rows(hl.is_defined(lcr[mt.locus]), keep=False)
     # select samples after qc
-    meta = hl.import_table(meta_uri, key='SampleID')
+    meta = hl.import_table(meta_uri, types={'SampleID': hl.tstr, 'FamID': hl.tstr, 'Role': hl.tstr})
+    meta = meta.annotate(s=meta.SampleID).key_by('s')
     mt = mt.annotate_cols(pheno=meta[mt.s])
     mt = mt.filter_cols(mt.pheno.Role != '', keep = True)
     # only keep mendelian errors 
