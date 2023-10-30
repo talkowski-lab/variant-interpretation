@@ -119,7 +119,7 @@ task preprocessVCF {
 	}
 }
 
-task mergeVCFs{
+task mergeVCFs {
     input {
 		String og_vcf_uri
         Array[File] vcf_contigs
