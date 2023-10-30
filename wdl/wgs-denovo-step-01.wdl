@@ -115,7 +115,7 @@ task preprocessVCF {
     >>>
 
     output {
-        File preprocessed_vcf = basename(vcf_uri, '.vcf.gz') + '.preprocessed.vcf.gz'
+        File preprocessed_vcf = basename(vcf_uri, '.vcf.gz') + '.preprocessed.vcf.bgz'
     }
 }
 

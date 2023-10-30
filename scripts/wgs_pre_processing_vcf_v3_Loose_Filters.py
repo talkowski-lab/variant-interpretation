@@ -125,6 +125,6 @@ vcf_uri = sys.argv[5]
 
 build = "GRCh38"
 
-vcf_out_uri = os.path.basename(vcf_uri).split('.vcf.gz')[0] + '.preprocessed.vcf.gz'
+vcf_out_uri = os.path.basename(vcf_uri).split('.vcf.gz')[0] + '.preprocessed.vcf.bgz'
 trim_vcf(vcf_uri, lcr_uri, ped_uri, meta_uri, trio_uri, vcf_out_uri, build)
 
