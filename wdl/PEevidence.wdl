@@ -28,7 +28,7 @@ workflow PEevidence {
 
     Array[String] samples = transpose(read_tsv(regions))[4]
 
-    scatter (sample in uniq(samples)){
+    scatter (sample in samples){
 
     call subset_sample_roi{
       input:
