@@ -17,6 +17,7 @@ workflow PEevidence {
   input {
     File batches_pe
     File sample_batch
+    File sample_list
     File regions
 
     String docker_pe_evidence
@@ -26,8 +27,7 @@ workflow PEevidence {
 
   }
 
-    Array[String] samples = transpose(read_tsv(regions))[4]
-    ##need to make samples unique
+    Array[String] samples = transpose(read_tsv(sample_list))
 
     scatter (sample in samples){
 
