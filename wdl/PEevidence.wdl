@@ -77,12 +77,12 @@ task subset_sample_roi {
   RuntimeAttr runtime_attr = select_first([runtime_attr_override, default_attr])
 
   output{
-    File sample_roi = "~{sample}.bed.gz"
+    File sample_roi = "~{sample}.bed"
   }
 
   command {
     set -e
-    grep -w ~{sample} ~{regions} | bgzip -c > ~{sample}.bed.gz
+    grep -w ~{sample} ~{regions} > ~{sample}.bed
   }
 
   runtime {
