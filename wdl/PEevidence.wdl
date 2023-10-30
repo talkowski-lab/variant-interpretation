@@ -27,6 +27,7 @@ workflow PEevidence {
   }
 
     Array[String] samples = transpose(read_tsv(regions))[4]
+    ##need to make samples unique
 
     scatter (sample in samples){
 
