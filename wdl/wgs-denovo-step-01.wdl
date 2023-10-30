@@ -10,118 +10,118 @@ struct RuntimeAttr {
 }
 
 workflow step1 {
-	input {
-		# file can be a list of vcf files or just one vcf file
+    input {
+        # file can be a list of vcf files or just one vcf file
         File file
-		File python_trio_sample_script
-		File python_preprocess_script
-		File lcr_uri
-		File ped_uri
-		Array[Array[File]] vcf_uri_list
-		String picard_docker
-		String bucket_id
-		String cohort_prefix
-		String hail_docker
-	}
+        File python_trio_sample_script
+        File python_preprocess_script
+        File lcr_uri
+        File ped_uri
+        Array[Array[File]] vcf_uri_list
+        String picard_docker
+        String bucket_id
+        String cohort_prefix
+        String hail_docker
+    }
 
-	call makeTrioSampleFiles {
-		input:
-			python_trio_sample_script=python_trio_sample_script,
-			ped_uri=ped_uri,
-			bucket_id=bucket_id,
-			cohort_prefix=cohort_prefix,
-			hail_docker=hail_docker
-	}
+    call makeTrioSampleFiles {
+        input:
+            python_trio_sample_script=python_trio_sample_script,
+            ped_uri=ped_uri,
+            bucket_id=bucket_id,
+            cohort_prefix=cohort_prefix,
+            hail_docker=hail_docker
+    }
 
     String filename = basename(file)
     # if file is vcf.gz (just one file)
     Array[File] vcf_files = if (sub(filename, ".vcf.gz", "") != filename) then [file] else read_lines(file)
-	
-	File meta_uri = "~{bucket_id}/resources/metadata/~{cohort_prefix}_sample_list.txt"
-	File trio_uri = "~{bucket_id}/resources/metadata/~{cohort_prefix}_trio_list.txt"
+    
+    File meta_uri = "~{bucket_id}/resources/metadata/~{cohort_prefix}_sample_list.txt"
+    File trio_uri = "~{bucket_id}/resources/metadata/~{cohort_prefix}_trio_list.txt"
 
-	Array[Pair[File, Array[File]]] vcf_list_paired = zip(vcf_files, vcf_uri_list)
+    Array[Pair[File, Array[File]]] vcf_list_paired = zip(vcf_files, vcf_uri_list)
 
-	scatter (pair in vcf_list_paired) {
-		File og_vcf_file = pair.left 
-		Array[File] vcf_uri_sublist = pair.right
-		scatter (vcf_uri in vcf_uri_sublist) {
-			call preprocessVCF {
-				input:
-					python_preprocess_script=python_preprocess_script,
-					lcr_uri=lcr_uri,
-					ped_uri=ped_uri,
-					vcf_uri=vcf_uri,
-					meta_uri=meta_uri,
-					trio_uri=trio_uri,
-					hail_docker=hail_docker
-			}
-		}
-		call mergeVCFs {
-			input:
-				og_vcf_uri=og_vcf_file,
-				vcf_contigs=preprocessVCF.preprocessed_vcf,
-				picard_docker=picard_docker,
-				cohort_prefix=cohort_prefix
-		}
-	}
+    scatter (pair in vcf_list_paired) {
+        File og_vcf_file = pair.left 
+        Array[File] vcf_uri_sublist = pair.right
+        scatter (vcf_uri in vcf_uri_sublist) {
+            call preprocessVCF {
+                input:
+                    python_preprocess_script=python_preprocess_script,
+                    lcr_uri=lcr_uri,
+                    ped_uri=ped_uri,
+                    vcf_uri=vcf_uri,
+                    meta_uri=meta_uri,
+                    trio_uri=trio_uri,
+                    hail_docker=hail_docker
+            }
+        }
+        call mergeVCFs {
+            input:
+                og_vcf_uri=og_vcf_file,
+                vcf_contigs=preprocessVCF.preprocessed_vcf,
+                picard_docker=picard_docker,
+                cohort_prefix=cohort_prefix
+        }
+    }
 
-	output {
-		Array[File] merged_preprocessed_vcf_files = mergeVCFs.merged_vcf_file
-		Array[File] merged_preprocessed_vcf_idx = mergeVCFs.merged_vcf_idx
-	}
+    output {
+        Array[File] merged_preprocessed_vcf_files = mergeVCFs.merged_vcf_file
+        Array[File] merged_preprocessed_vcf_idx = mergeVCFs.merged_vcf_idx
+    }
 }
 
 task makeTrioSampleFiles {
-	input {
-		File python_trio_sample_script
-		File ped_uri
-		String bucket_id
-		String cohort_prefix
-		String hail_docker
-	}
+    input {
+        File python_trio_sample_script
+        File ped_uri
+        String bucket_id
+        String cohort_prefix
+        String hail_docker
+    }
 
-	runtime {
-		docker: hail_docker
-	}
+    runtime {
+        docker: hail_docker
+    }
 
-	command <<<
-	python3 ~{python_trio_sample_script} ~{ped_uri} ~{cohort_prefix}
-	>>>
-	
-	output {
-		# File meta_uri = "~{bucket_id}/resources/metadata/~{cohort_prefix}_sample_list.txt"
-		# File trio_uri = "~{bucket_id}/resources/metadata/~{cohort_prefix}_trio_list.txt"
-	}
+    command <<<
+    python3 ~{python_trio_sample_script} ~{ped_uri} ~{cohort_prefix}
+    >>>
+    
+    output {
+        # File meta_uri = "~{bucket_id}/resources/metadata/~{cohort_prefix}_sample_list.txt"
+        # File trio_uri = "~{bucket_id}/resources/metadata/~{cohort_prefix}_trio_list.txt"
+    }
 }
 
 task preprocessVCF {
-	input {
-		File python_preprocess_script
-		File lcr_uri
-		File ped_uri
-		File vcf_uri
-		File meta_uri
-		File trio_uri
-		String hail_docker
-	}
+    input {
+        File python_preprocess_script
+        File lcr_uri
+        File ped_uri
+        File vcf_uri
+        File meta_uri
+        File trio_uri
+        String hail_docker
+    }
 
-	runtime {
-		docker: hail_docker
-	}
+    runtime {
+        docker: hail_docker
+    }
 
-	command <<<
-	python3 ~{python_preprocess_script} ~{lcr_uri} ~{ped_uri} ~{meta_uri} ~{trio_uri} ~{vcf_uri}
-	>>>
+    command <<<
+    python3 ~{python_preprocess_script} ~{lcr_uri} ~{ped_uri} ~{meta_uri} ~{trio_uri} ~{vcf_uri}
+    >>>
 
-	output {
-		File preprocessed_vcf = basename(vcf_uri, '.vcf.gz') + '.preprocessed.vcf.gz'
-	}
+    output {
+        File preprocessed_vcf = basename(vcf_uri, '.vcf.gz') + '.preprocessed.vcf.gz'
+    }
 }
 
 task mergeVCFs {
     input {
-		String og_vcf_uri
+        String og_vcf_uri
         Array[File] vcf_contigs
         String picard_docker
         String cohort_prefix
@@ -165,7 +165,7 @@ task mergeVCFs {
         VCFS="~{write_lines(vcf_contigs)}"
         cat $VCFS | awk -F '/' '{print $NF"\t"$0}' | sort -k1,1V | awk '{print $2}' > vcfs_sorted.list
         # bcftools concat -n --no-version -Oz --file-list vcfs_sorted.list --output ~{merged_vcf_name}
-		java -jar /usr/picard/picard.jar GatherVcfs I=vcfs_sorted.list O=~{merged_vcf_name}
+        java -jar /usr/picard/picard.jar GatherVcfs I=vcfs_sorted.list O=~{merged_vcf_name}
         bcftools index -t ~{merged_vcf_name}
     >>>
 
