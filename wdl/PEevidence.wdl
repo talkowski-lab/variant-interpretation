@@ -134,7 +134,8 @@ task subset_pe_evidence {
           pos1_win=$(($pos1-1000))
           pos2_win=$(($pos1+1000))
           coords="chr1:$pos1_win-$pos2_win"
-          tabix $batchfile $coords | grep -w $chr2 | bgzip -c > "~{sample}.pe.bed.gz"
+          echo "Getting PE evidence for sample $sample, coordinates: $coords"
+          tabix $batchfile $coords | fgrep $chr2 | bgzip -c > "~{sample}.pe.bed.gz"
       fi
     done < ~{sample_bed}
 
