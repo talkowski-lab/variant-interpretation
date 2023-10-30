@@ -27,8 +27,9 @@ workflow PEevidence {
 
   }
 
-  #read file and get list of samples, then:
-  scatter (sample in samples) {
+    Array[String] samples = unique(transpose(read_tsv(regions))[4])
+
+    scatter (sample in samples){
 
     call subset_sample_roi{
       input:
@@ -52,6 +53,7 @@ workflow PEevidence {
   output {
     Array [File] subset_sample_pe = subset_pe_evidence.sample_pe
     }
+
 }
 
 # TASK DEFINITIONS
@@ -122,20 +124,21 @@ task subset_pe_evidence {
   command {
     set -euo pipefail
 
-    export GCS_OAUTH_TOKEN=`gcloud auth application-default print-access-token`
-    #bash automotize_PE.sh ~{sample_bed} ~{sample_batch} ~{batches_pe} > ~{sample}.pe.bed.gz
-
-    BP1=$(awk -v OFS="\t" -v var="$n" 'NR==var {print $1":"$2}' ~{sample_bed})
-    BP1_int=$(awk -v OFS="\t" -v var="$n" 'NR==var {print $1":"$2-1000"-"$2+1000}' ~{sample_bed})
-    CHR2=$(awk -v OFS="\t" -v var="$n" 'NR==var {print $3}' ~{sample_bed})
-    BP2=$(awk -v OFS="\t" -v var="$n" 'NR==var {print $3":"$4}' ~{sample_bed})
-        # batchid=$(zcat ~{sample_batch} | awk -v OFS="\t" -v var="$i" '{if($2 == var) print $(NF)}')
-        # this version is used once we don't know the exact sampleId
-    batchid=$(cat ~{sample_batch} | fgrep -w $i | awk -v OFS="\t" '{print $(NF)}')
-    batchfile=$(cat ~{batches_pe} | fgrep -w $batchid | awk '{print $9}')
-
-    printf '%s\t%s\t%s\t%s\t%s\t%s\t%s\t%s\n' Sample_id $i batchid $batchid batchfile $batchfile $BP1 $BP2 > ~{sample}.pe.bed.gz
-    tabix $batchfile $BP1_int | fgrep $CHR2 >> ~{sample}.pe.bed.gz
+    i=0
+    while read chr1 pos1 chr2 pos2 sample carriers svname; do
+      ((i++))
+      if [ "$i" -gt 1 ]; then
+        export GCS_OAUTH_TOKEN=$(gcloud auth application-default print-access-token)
+          batchname=$(grep -w $sample ~{sample_batch} | cut -f1)
+          batchfile=$(grep -w $batchname ~{batches_pe} | cut -f2)
+          pos1_win=$(($pos1-1000))
+          pos2_win=$(($pos1+1000))
+          coords="chr1:$pos1_win-$pos2_win"
+          tabix $batchfile $coords | grep -w $chr2 | bgzip -c > "~{sample}.pe.bed.gz"
+      else
+        print("Regions for sample $sample missing")
+      fi
+    done < ~{sample_bed}
 
   }
 
