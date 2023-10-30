@@ -13,7 +13,7 @@ ped = pd.read_csv(ped_uri, sep='\t')
 ped['IndividualID'] = ped['IndividualID'].str.split('__').str[1].str.upper()
 ped['FatherID'] = ped['FatherID'].str.split('__').str[1].str.upper().fillna(0)
 ped['MotherID'] = ped['MotherID'].str.split('__').str[1].str.upper().fillna(0)
-bucket.blob(f"resources/metadata/{ped_uri.split('/')[-1]}").upload_from_string(ped.to_csv(sep='\t', index=False), 'text/csv')
+bucket.blob(f"resources/pedigrees/{ped_uri.split('/')[-1]}").upload_from_string(ped.to_csv(sep='\t', index=False), 'text/csv')
 print('Updated pedigree csv saved')
 
 trio = ped[(ped.FatherID != '0') & (ped.MotherID != '0')].iloc[:, :4]
