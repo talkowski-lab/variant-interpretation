@@ -125,23 +125,17 @@ task subset_pe_evidence {
     export GCS_OAUTH_TOKEN=`gcloud auth application-default print-access-token`
     #bash automotize_PE.sh ~{sample_bed} ~{sample_batch} ~{batches_pe} > ~{sample}.pe.bed.gz
 
-    n=0
-    for i in `awk -v OFS="\t" '{print $5}' ~{sample_bed}`
-    do
-      n=$((n+1))
-      BP1=$(awk -v OFS="\t" -v var="$n" 'NR==var {print $1":"$2}' ~{sample_bed})
-      BP1_int=$(awk -v OFS="\t" -v var="$n" 'NR==var {print $1":"$2-1000"-"$2+1000}' ~{sample_bed})
-      CHR2=$(awk -v OFS="\t" -v var="$n" 'NR==var {print $3}' ~{sample_bed})
-      BP2=$(awk -v OFS="\t" -v var="$n" 'NR==var {print $3":"$4}' ~{sample_bed})
+    BP1=$(awk -v OFS="\t" -v var="$n" 'NR==var {print $1":"$2}' ~{sample_bed})
+    BP1_int=$(awk -v OFS="\t" -v var="$n" 'NR==var {print $1":"$2-1000"-"$2+1000}' ~{sample_bed})
+    CHR2=$(awk -v OFS="\t" -v var="$n" 'NR==var {print $3}' ~{sample_bed})
+    BP2=$(awk -v OFS="\t" -v var="$n" 'NR==var {print $3":"$4}' ~{sample_bed})
         # batchid=$(zcat ~{sample_batch} | awk -v OFS="\t" -v var="$i" '{if($2 == var) print $(NF)}')
         # this version is used once we don't know the exact sampleId
-        # batchid=$(zcat ~{sample_batch} | fgrep -w $i | awk -v OFS="\t" '{print $(NF)}')
-      batchid=$(cat ~{sample_batch} | fgrep -w $i | awk -v OFS="\t" '{print $(NF)}')
-      batchfile=$(cat ~{batches_pe} | fgrep -w $batchid | awk '{print $9}')
-      tabix $batchfile $BP1_int | fgrep $CHR2 > PE_metrics
-      printf '%s\t%s\t%s\t%s\t%s\t%s\t%s\t%s\n' Sample_id $i batchid $batchid batchfile $batchfile $BP1 $BP2
-      cat PE_metrics
-    done > ~{sample}.pe.bed.gz
+    batchid=$(cat ~{sample_batch} | fgrep -w $i | awk -v OFS="\t" '{print $(NF)}')
+    batchfile=$(cat ~{batches_pe} | fgrep -w $batchid | awk '{print $9}')
+
+    printf '%s\t%s\t%s\t%s\t%s\t%s\t%s\t%s\n' Sample_id $i batchid $batchid batchfile $batchfile $BP1 $BP2 > ~{sample}.pe.bed.gz
+    tabix $batchfile $BP1_int | fgrep $CHR2 >> ~{sample}.pe.bed.gz
 
   }
 
