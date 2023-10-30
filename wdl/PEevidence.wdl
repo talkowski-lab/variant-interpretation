@@ -135,8 +135,6 @@ task subset_pe_evidence {
           pos2_win=$(($pos1+1000))
           coords="chr1:$pos1_win-$pos2_win"
           tabix $batchfile $coords | grep -w $chr2 | bgzip -c > "~{sample}.pe.bed.gz"
-      else
-        print("Regions for sample $sample missing")
       fi
     done < ~{sample_bed}
 
