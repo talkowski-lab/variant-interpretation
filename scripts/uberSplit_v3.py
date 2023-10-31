@@ -77,6 +77,11 @@ def main():
             father = item[2]
             mother = item[3]
 
+            try:
+                pheno = int(item[-1])
+            except Exception as e:
+                continue
+
             #
             # TODO: emit per-trio pedigrees here and can avoid the duplicate work I created.
             #
