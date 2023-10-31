@@ -122,7 +122,7 @@ task subset_pe_evidence {
   }
 
   command {
-    set -euo pipefail
+    set -ex
 
     i=0
     while read chr1 pos1 chr2 pos2 sample carriers svname; do
