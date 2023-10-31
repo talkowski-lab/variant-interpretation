@@ -124,7 +124,7 @@ def main():
     #
     # Main. For each Batch..
     #
-    # ensures out`put dir exists before attempting to write files within
+    # ensures output dir exists before attempting to write files within
     # if not os.path.exists(outPrefix):
     print(f"creating directory {outPrefix}")
     os.makedirs(outPrefix, exist_ok=True)   

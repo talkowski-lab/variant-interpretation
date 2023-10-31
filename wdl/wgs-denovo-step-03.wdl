@@ -51,7 +51,8 @@ task uberSplit_v3 {
     }
 
     output {
-        Array[File] split_trio_vcfs = read_lines("trio_vcf_files.txt")
+        Array[File] = glob(cohort_prefix + "/*")
+        # Array[File] split_trio_vcfs = read_lines("trio_vcf_files.txt")
         File stats_file_out = stats_file
     }
 }
