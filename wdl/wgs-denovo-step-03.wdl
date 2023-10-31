@@ -46,6 +46,7 @@ task uberSplit_v3 {
     }
 
     command {
+        mkdir -p ~{cohort_prefix}
         python3 ~{uberSplit_v3_py} ~{ped_uri} ~{vcf_file} ~{cohort_prefix} ~{stats_file} ~{batch_size}
     }
 

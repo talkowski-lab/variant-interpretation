@@ -124,6 +124,11 @@ def main():
     #
     # Main. For each Batch..
     #
+    # ensures out`put dir exists before attempting to write files within
+    # if not os.path.exists(outPrefix):
+    print(f"creating directory {outPrefix}")
+    os.makedirs(outPrefix, exist_ok=True)   
+
     for batch in range(1, batchesNeeded + 1):
         print('Doing batch: '+str(batch)+' of '+str(batchesNeeded))
         # sys.stdout.flush()
@@ -133,14 +138,12 @@ def main():
 
             #
             # 1. Open a file for each trio
-            #
+            #      
+
             famToFh = {}
             for famCount,fam in enumerate(famList):
                 samp, father, mother = famList[fam].split('|')
-                if famCount >= safeFhCount * (batch - 1) and famCount <= safeFhCount * batch:
-                    # ensures output dir exists before attempting to write files within
-                    if not os.path.exists(outPrefix):
-                        os.makedirs(outPrefix)                    
+                if famCount >= safeFhCount * (batch - 1) and famCount <= safeFhCount * batch:           
                     # make this dir/file entry
                     newFileName = '{}/{}.vcf'.format(outPrefix,fam)
                     famToFh[fam] = open(newFileName, 'w')
