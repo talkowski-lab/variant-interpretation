@@ -37,11 +37,10 @@ task trio_denovo {
     }
 
     command {
-        echo "hello"
         /src/wgs_denovo/triodenovo/triodenovo-fix/src/triodenovo --ped ~{ped_uri} --in_vcf ~{vcf_file} --out_vcf ~{basename(vcf_file, '.vcf') + '_trio_denovo.vcf'}
     }
 
     output {
-        File trio_denovo_vcf = out_vcf
+        File trio_denovo_vcf = basename(vcf_file, '.vcf') + '_trio_denovo.vcf'
     }
 }
