@@ -124,20 +124,18 @@ task subset_pe_evidence {
   command {
     set -ex
 
-    i=0
-    while read chr1 pos1 chr2 pos2 sample carriers svname; do
-      ((i++))
-      if [ "$i" -gt 1 ]; then
+    if [[ $(wc -l <~{sample_bed}) -ge 1 ]]; then
+      while read chr1 pos1 chr2 pos2 sample carriers svname; do
         export GCS_OAUTH_TOKEN=$(gcloud auth application-default print-access-token)
-          batchname=$(grep -w $sample ~{sample_batch} | cut -f1)
-          batchfile=$(grep -w $batchname ~{batches_pe} | cut -f2)
-          pos1_win=$(($pos1-1000))
-          pos2_win=$(($pos1+1000))
-          coords="chr1:$pos1_win-$pos2_win"
-          echo "Getting PE evidence for sample $sample, coordinates: $coords"
-          tabix $batchfile $coords | fgrep $chr2 | bgzip -c > "~{sample}.pe.bed.gz"
-      fi
-    done < ~{sample_bed}
+        batchname=$(grep -w $sample ~{sample_batch} | cut -f1)
+        batchfile=$(grep -w $batchname ~{batches_pe} | cut -f2)
+        pos1_win=$(($pos1-1000))
+        pos2_win=$(($pos1+1000))
+        coords="chr1:$pos1_win-$pos2_win"
+        echo "Getting PE evidence for sample $sample, coordinates: $coords, using file $batchfile"
+        tabix $batchfile $coords | grep -w $chr2 | bgzip -c > "~{sample}.pe.bed.gz"
+      done < ~{sample_bed}
+    fi
 
   }
 
