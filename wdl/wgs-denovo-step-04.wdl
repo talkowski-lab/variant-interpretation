@@ -3,7 +3,7 @@ version 1.0
 workflow step4 {
     input {
         File ped_uri
-        Array[Array[[File]] split_trio_vcfs
+        Array[Array[File]] split_trio_vcfs
         String trio_denovo_docker
     }
     scatter (vcf_files in split_trio_vcfs) {
