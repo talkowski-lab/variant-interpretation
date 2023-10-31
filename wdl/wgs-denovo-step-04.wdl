@@ -8,13 +8,13 @@ workflow step4 {
     }
     scatter (vcf_files in split_trio_vcfs) {
         scatter (vcf_file in vcf_files) {
-            String out_vcf = basename(vcf_file, '.vcf') + '_trio_denovo.vcf'
+            # String out_vcf = basename(vcf_file, '.vcf') + '_trio_denovo.vcf'
             call trio_denovo {
                 input:
                     ped_uri=ped_uri,
                     vcf_file=vcf_file,
-                    trio_denovo_docker=trio_denovo_docker,
-                    out_vcf=out_vcf
+                    trio_denovo_docker=trio_denovo_docker
+                    # out_vcf=out_vcf
             }
         }
     }
@@ -29,7 +29,7 @@ task trio_denovo {
         File ped_uri
         File vcf_file
         String trio_denovo_docker
-        File out_vcf
+        # File out_vcf
     }
 
     runtime {
@@ -38,7 +38,7 @@ task trio_denovo {
 
     command {
         echo "hello"
-        /src/wgs_denovo/triodenovo/triodenovo-fix/src/triodenovo --ped ~{ped_uri} --in_vcf ~{vcf_file} --out_vcf ~{out_vcf}
+        /src/wgs_denovo/triodenovo/triodenovo-fix/src/triodenovo --ped ~{ped_uri} --in_vcf ~{vcf_file} --out_vcf ~{basename(vcf_file, '.vcf') + '_trio_denovo.vcf'}
     }
 
     output {
