@@ -8,7 +8,7 @@ workflow step4 {
     }
     scatter (vcf_files in split_trio_vcfs) {
         scatter (vcf_file in vcf_files) {
-            String out_vcf = basename(vcf_file, '.vcf') + '_trio_denovo.vcf'
+            String out_vcf = './' + basename(vcf_file, '.vcf') + '_trio_denovo.vcf'
             call trio_denovo {
                 input:
                     ped_uri=ped_uri,
