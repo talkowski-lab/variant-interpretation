@@ -60,7 +60,7 @@ task combineOutputVCFs {
 
     command {
         mkdir -p tmp_out_vcfs
-        mv ~{sep=" ", out_vcfs} tmp_out_vcfs/
+        mv ${sep=" ", out_vcfs} tmp_out_vcfs/
     }
 
     output {
