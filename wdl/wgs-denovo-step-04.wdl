@@ -52,6 +52,10 @@ task combineOutputVCFs {
         Array[File] out_vcfs
     }
 
+    runtime {
+        docker: trio_denovo_docker
+    }
+    
     command {
         mkdir -p tmp_out_vcfs
         mv ~{out_vcfs} tmp_out_vcfs/
