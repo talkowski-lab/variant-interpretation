@@ -17,7 +17,8 @@ workflow step4 {
         }
         call combineOutputVCFs {
             input:
-                out_vcfs=trio_denovo.out_vcf
+                out_vcfs=trio_denovo.out_vcf,
+                trio_denovo_docker=trio_denovo_docker
         }
     }
 
@@ -50,12 +51,13 @@ task trio_denovo {
 task combineOutputVCFs {
     input {
         Array[File] out_vcfs
+        String trio_denovo_docker
     }
 
     runtime {
         docker: trio_denovo_docker
     }
-    
+
     command {
         mkdir -p tmp_out_vcfs
         mv ~{out_vcfs} tmp_out_vcfs/
