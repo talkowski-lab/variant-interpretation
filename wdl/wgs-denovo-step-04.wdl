@@ -39,12 +39,12 @@ task trio_denovo {
     }
 
     command {
-        /src/wgs_denovo/triodenovo/triodenovo-fix/src/triodenovo --ped ~{ped_uri} --in_vcf ~{vcf_file} --out_vcf ~{basename(vcf_file, '.vcf') + 'denovos.vcf'}
-        gzip ~{basename(vcf_file, '.vcf') + 'denovos.vcf'}
+        /src/wgs_denovo/triodenovo/triodenovo-fix/src/triodenovo --ped ~{ped_uri} --in_vcf ~{vcf_file} --out_vcf ~{basename(vcf_file, '.vcf') + '.denovos.vcf'}
+        gzip ~{basename(vcf_file, '.vcf') + '.denovos.vcf'}
     }
 
     output {
-        File out_vcf = basename(vcf_file, '.vcf') + 'denovos.vcf.gz'
+        File out_vcf = basename(vcf_file, '.vcf') + '.denovos.vcf.gz'
     }
 }
 
