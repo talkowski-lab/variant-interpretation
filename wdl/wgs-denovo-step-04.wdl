@@ -8,19 +8,21 @@ workflow step4 {
     }
     scatter (vcf_files in split_trio_vcfs) {
         scatter (vcf_file in vcf_files) {
-            # String out_vcf = basename(vcf_file, '.vcf') + '_trio_denovo.vcf'
             call trio_denovo {
                 input:
                     ped_uri=ped_uri,
                     vcf_file=vcf_file,
                     trio_denovo_docker=trio_denovo_docker
-                    # out_vcf=out_vcf
             }
+        }
+        call combineOutputVCFs {
+            input:
+                out_vcfs=trio_denovo.out_vcf
         }
     }
 
     output {
-        Array[Array[File]] trio_denovo_vcf = trio_denovo.trio_denovo_vcf
+        Array[Array[File]] trio_denovo_vcf = combineOutputVCFs.trio_denovo_vcf
     }
 }
 
@@ -29,7 +31,6 @@ task trio_denovo {
         File ped_uri
         File vcf_file
         String trio_denovo_docker
-        # File out_vcf
     }
 
     runtime {
@@ -38,9 +39,25 @@ task trio_denovo {
 
     command {
         /src/wgs_denovo/triodenovo/triodenovo-fix/src/triodenovo --ped ~{ped_uri} --in_vcf ~{vcf_file} --out_vcf ~{basename(vcf_file, '.vcf') + '_trio_denovo.vcf'}
+        bgzip ~{basename(vcf_file, '.vcf') + '_trio_denovo.vcf'}
     }
 
     output {
-        File trio_denovo_vcf = basename(vcf_file, '.vcf') + '_trio_denovo.vcf'
+        File out_vcf = basename(vcf_file, '.vcf') + '_trio_denovo.vcf.gz'
+    }
+}
+
+task combineOutputVCFs {
+    input {
+        Array[File] out_vcfs
+    }
+
+    command {
+        mkdir -p tmp_out_vcfs
+        mv ~{out_vcfs} tmp_out_vcfs/
+    }
+
+    output {
+        Array[File] trio_denovo_vcf = 'tmp_out_vcfs/' + basename(out_vcfs)
     }
 }

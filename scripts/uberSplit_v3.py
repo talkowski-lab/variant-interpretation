@@ -145,7 +145,7 @@ def main():
                 samp, father, mother = famList[fam].split('|')
                 if famCount >= safeFhCount * (batch - 1) and famCount <= safeFhCount * batch:           
                     # make this dir/file entry
-                    newFileName = '{}/{}.vcf'.format(outPrefix,fam)
+                    newFileName = '{}/{}.vcf.gz'.format(outPrefix,fam)
                     famToFh[fam] = open(newFileName, 'w')
 
             with open(statsFile,'a') as stats_out:
