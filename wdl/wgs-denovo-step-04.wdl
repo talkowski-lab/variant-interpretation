@@ -40,7 +40,7 @@ task trio_denovo {
 
     command {
         /src/wgs_denovo/triodenovo/triodenovo-fix/src/triodenovo --ped ~{ped_uri} --in_vcf ~{vcf_file} --out_vcf ~{basename(vcf_file, '.vcf') + '_trio_denovo.vcf'}
-        bgzip ~{basename(vcf_file, '.vcf') + '_trio_denovo.vcf'}
+        gzip ~{basename(vcf_file, '.vcf') + '_trio_denovo.vcf'}
     }
 
     output {

@@ -15,7 +15,7 @@ Shan Dong 2021-9-9 fix issue with column oder and missing columns in INFO field 
 Shan Dong 2021-9-9 Add "case" and "control" status column (get the pedigree file)
 Shan Dong 2022-1-24 dealing the situation with sampleID or familyID contains "." (complex naming system in MSSNG data)
 """
-
+import gzip
 import os, glob
 import argparse
 import numpy as np
@@ -29,11 +29,11 @@ def main():
     args = parser.parse_args()
     
     # Collect triodenovo input keys (family ID and sample ID)
-    res_vcf_paths = glob.glob(os.path.join(args.res_vcf_dir, '*.vcf'))
+    res_vcf_paths = glob.glob(os.path.join(args.res_vcf_dir, '*.vcf.gz'))
     trio_variant_keys = DefaultDict(list)  # key: familyID-sampleID; value: list of "chr_pos_ref_alt"
     for res_vcf_path in res_vcf_paths:
-        trio_key = os.path.basename(res_vcf_path).replace('.denovos.vcf', '')
-        with open(res_vcf_path, 'r') as vcf_file:
+        trio_key = os.path.basename(res_vcf_path).replace('.denovos.vcf.gz', '')
+        with gzip.open(res_vcf_path, 'rt') as vcf_file:
             for line in vcf_file:
                 if line.startswith('#'):
                     continue
@@ -45,11 +45,11 @@ def main():
     
     # Make output 
     # abnd_columns = ['culprit', 'ExcessHet', 'InbreedingCoeff','MQ0']
-    in_vcf_paths = glob.glob(os.path.join(args.in_vcf_dir, '*.vcf'))
+    in_vcf_paths = glob.glob(os.path.join(args.in_vcf_dir, '*.vcf.gz'))
     out_file = open(args.out_path, 'a')
     conter = 0
     for in_vcf_path in in_vcf_paths:
-        trio_key = os.path.basename(in_vcf_path).replace('.vcf', '')
+        trio_key = os.path.basename(in_vcf_path).replace('.vcf.gz', '')
         sampleID = triokey_to_samp[trio_key]
         print("Processing:" + sampleID)
         variant_df = parse_trio_vcf(in_vcf_path, sample_info, sampleID)
@@ -96,7 +96,7 @@ def parse_trio_vcf(vcf_path: str, sample_info: dict, sampleID: str, abnd_colname
     motherID = sample_info[sampleID]['MotherID']
     
     # Parse the VCF file
-    with open(vcf_path, 'r') as vcf_file:
+    with gzip.open(vcf_path, 'rt') as vcf_file:
         for line in vcf_file:
             if line.startswith('#'):  # The comments
                 if line.startswith('#CHROM'):  # The header
