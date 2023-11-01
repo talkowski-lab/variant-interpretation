@@ -58,6 +58,6 @@ task combineOutputVCFs {
     }
 
     output {
-        Array[File] trio_denovo_vcf = 'tmp_out_vcfs/' + basename(out_vcfs)
+        Array[File] trio_denovo_vcf = glob('tmp_out_vcfs/*')
     }
 }
