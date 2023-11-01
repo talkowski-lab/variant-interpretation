@@ -45,11 +45,11 @@ def main():
     
     # Make output 
     # abnd_columns = ['culprit', 'ExcessHet', 'InbreedingCoeff','MQ0']
-    in_vcf_paths = glob.glob(os.path.join(args.in_vcf_dir, '*.vcf.gz'))
+    in_vcf_paths = glob.glob(os.path.join(args.in_vcf_dir, '*.vcf'))
     out_file = open(args.out_path, 'a')
     conter = 0
     for in_vcf_path in in_vcf_paths:
-        trio_key = os.path.basename(in_vcf_path).replace('.vcf.gz', '')
+        trio_key = os.path.basename(in_vcf_path).replace('.vcf', '')
         sampleID = triokey_to_samp[trio_key]
         print("Processing:" + sampleID)
         variant_df = parse_trio_vcf(in_vcf_path, sample_info, sampleID)
@@ -96,7 +96,7 @@ def parse_trio_vcf(vcf_path: str, sample_info: dict, sampleID: str, abnd_colname
     motherID = sample_info[sampleID]['MotherID']
     
     # Parse the VCF file
-    with gzip.open(vcf_path, 'rt') as vcf_file:
+    with open(vcf_path, 'r') as vcf_file:
         for line in vcf_file:
             if line.startswith('#'):  # The comments
                 if line.startswith('#CHROM'):  # The header
