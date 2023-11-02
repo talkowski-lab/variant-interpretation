@@ -30,6 +30,7 @@ workflow wgs_denovo_full {
             String cohort_prefix
             String sv_base_mini_docker
             String trio_denovo_docker
+            String hail_docker
             Int batch_size
     }
 
@@ -44,14 +45,14 @@ workflow wgs_denovo_full {
             sv_base_mini_docker=sv_base_mini_docker,
             bucket_id=bucket_id,
             cohort_prefix=cohort_prefix,
-            trio_denovo_docker=trio_denovo_docker
+            hail_docker=hail_docker
     }
 
     call step3.step3 as step3 {
         input:
             ped_uri=ped_uri,
             merged_preprocessed_vcf_files=step1and2.merged_preprocessed_vcf_files,
-            trio_denovo_docker=trio_denovo_docker,
+            hail_docker=hail_docker,
             uberSplit_v3_py=uberSplit_v3_py,
             batch_size=batch_size
     }
