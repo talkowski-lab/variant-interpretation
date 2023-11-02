@@ -40,7 +40,7 @@ workflow relatedness {
                 trio_uri=trio_uri,
                 cohort_prefix=cohort_prefix,
                 hail_docker=hail_docker,
-                runtime_attr_override=runtime_attr_normalize
+                runtime_attr_override=runtime_attr_relatedness
         }
     }
 
@@ -64,9 +64,11 @@ task runRelatedness {
         RuntimeAttr? runtime_attr_override       
     }
 
+    Float relatedness_size = size(vcf_uri, "GB") 
+    Float base_disk_gb = 10.0
     RuntimeAttr runtime_default = object {
                                       mem_gb: 16,
-                                      disk_gb: ceil(base_disk_gb + (vep_annotate_sizes + norm_vcf_sizes) * 5.0),
+                                      disk_gb: ceil(base_disk_gb + (relatedness_size) * 5.0),
                                       cpu_cores: 1,
                                       preemptible_tries: 3,
                                       max_retries: 1,
