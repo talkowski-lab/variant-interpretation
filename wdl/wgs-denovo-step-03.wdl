@@ -4,7 +4,7 @@ workflow step3 {
     input {
         File ped_uri
         Array[File] merged_preprocessed_vcf_files
-        String hail_docker
+        String trio_denovo_docker
         File uberSplit_v3_py
         Int batch_size
     }
@@ -16,7 +16,7 @@ workflow step3 {
             input:
                 ped_uri=ped_uri,
                 vcf_file=vcf_file,
-                hail_docker=hail_docker,
+                trio_denovo_docker=trio_denovo_docker,
                 cohort_prefix=cohort_prefix,
                 stats_file=stats_file,
                 uberSplit_v3_py=uberSplit_v3_py,
@@ -34,7 +34,7 @@ task uberSplit_v3 {
     input {
         File ped_uri
         File vcf_file
-        String hail_docker
+        String trio_denovo_docker
         String cohort_prefix
         String stats_file
         File uberSplit_v3_py       
@@ -42,7 +42,7 @@ task uberSplit_v3 {
     }
 
     runtime {
-        docker: hail_docker
+        docker: trio_denovo_docker
     }
 
     command {

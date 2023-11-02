@@ -21,7 +21,7 @@ workflow step1 {
         String sv_base_mini_docker
         String bucket_id
         String cohort_prefix
-        String hail_docker
+        String trio_denovo_docker
     }
 
     call makeTrioSampleFiles {
@@ -30,7 +30,7 @@ workflow step1 {
             ped_uri=ped_uri,
             bucket_id=bucket_id,
             cohort_prefix=cohort_prefix,
-            hail_docker=hail_docker
+            trio_denovo_docker=trio_denovo_docker
     }
 
     String filename = basename(file)
@@ -54,7 +54,7 @@ workflow step1 {
                     vcf_uri=vcf_uri,
                     meta_uri=meta_uri,
                     trio_uri=trio_uri,
-                    hail_docker=hail_docker
+                    trio_denovo_docker=trio_denovo_docker
             }
         }
         call mergeVCFs {
@@ -78,11 +78,11 @@ task makeTrioSampleFiles {
         File ped_uri
         String bucket_id
         String cohort_prefix
-        String hail_docker
+        String trio_denovo_docker
     }
 
     runtime {
-        docker: hail_docker
+        docker: trio_denovo_docker
     }
 
     command <<<
@@ -103,11 +103,11 @@ task preprocessVCF {
         File vcf_uri
         File meta_uri
         File trio_uri
-        String hail_docker
+        String trio_denovo_docker
     }
 
     runtime {
-        docker: hail_docker
+        docker: trio_denovo_docker
     }
 
     command <<<
