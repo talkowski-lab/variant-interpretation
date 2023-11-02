@@ -40,7 +40,7 @@ workflow relatedness {
                 trio_uri=trio_uri,
                 cohort_prefix=cohort_prefix,
                 hail_docker=hail_docker,
-                runtime_attr_relatedness=runtime_attr_normalize
+                runtime_attr_override=runtime_attr_normalize
         }
     }
 
@@ -61,7 +61,7 @@ task runRelatedness {
         File trio_uri
         String cohort_prefix
         String hail_docker 
-        RuntimeAttr? runtime_attr_relatedness       
+        RuntimeAttr? runtime_attr_override       
     }
 
     RuntimeAttr runtime_default = object {
