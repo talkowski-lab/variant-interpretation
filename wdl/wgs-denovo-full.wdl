@@ -28,6 +28,7 @@ workflow wgs_denovo_full {
             Array[Array[File]] vcf_uri_list
             String bucket_id
             String cohort_prefix
+            String cohort_id
             String sv_base_mini_docker
             String trio_denovo_docker
             String hail_docker
@@ -71,7 +72,7 @@ workflow wgs_denovo_full {
             trio_denovo_vcf=step4.trio_denovo_vcf,
             merge_vcf_to_tsv_fullQC_py=merge_vcf_to_tsv_fullQC_py,
             trio_denovo_docker=trio_denovo_docker,
-            cohort_prefix=cohort_prefix
+            cohort_id=cohort_id
     }
 
     output {

@@ -7,7 +7,7 @@ workflow step5 {
         Array[Array[File]] trio_denovo_vcf  # for output directory
         File merge_vcf_to_tsv_fullQC_py
         String trio_denovo_docker
-        String cohort_prefix
+        String cohort_id
 
     }
 
@@ -18,7 +18,7 @@ workflow step5 {
             trio_denovo_vcf=trio_denovo_vcf,
             merge_vcf_to_tsv_fullQC_py=merge_vcf_to_tsv_fullQC_py,
             trio_denovo_docker=trio_denovo_docker,
-            cohort_prefix=cohort_prefix
+            cohort_id=cohort_id
     }
 
     output {
@@ -33,7 +33,7 @@ task merge_vcf_to_tsv_fullQC {
         Array[Array[File]] split_trio_vcfs 
         Array[Array[File]] trio_denovo_vcf
         String trio_denovo_docker
-        String cohort_prefix
+        String cohort_id
     }
 
     runtime {
@@ -43,10 +43,10 @@ task merge_vcf_to_tsv_fullQC {
     command {
         input_dir=$(dirname ~{split_trio_vcfs[0][0]})
         output_dir=$(dirname ~{trio_denovo_vcf[0][0]})
-        python3 ~{merge_vcf_to_tsv_fullQC_py} -d $output_dir -i $input_dir -p ~{ped_uri} -o ~{cohort_prefix}_dnm.tsv
+        python3 ~{merge_vcf_to_tsv_fullQC_py} -d $output_dir -i $input_dir -p ~{ped_uri} -o ~{cohort_id}_dnm.tsv
     }
 
     output {
-        File output_tsv = cohort_prefix + '_dnm.tsv'
+        File output_tsv = cohort_id + '_dnm.tsv'
     }
 }
