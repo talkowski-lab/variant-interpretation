@@ -45,8 +45,8 @@ workflow relatedness {
     }
 
     output {
-        Array[File] imputed_sex_res = runRelatedness.imputed_sex_res
-        Array[File] pc_relate_res = runRelatedness.pc_relate_res
+        # Array[File] imputed_sex_res = runRelatedness.imputed_sex_res
+        # Array[File] pc_relate_res = runRelatedness.pc_relate_res
         Array[File] king_res = runRelatedness.king_res
     }
 }
@@ -90,8 +90,8 @@ task runRelatedness {
     }
 
     output {
-        File imputed_sex_res = basename(vcf_uri, '.vcf.gz') + '_imputed_sex_res.tsv'
-        File pc_relate_res = basename(vcf_uri, '.vcf.gz') + '_relatedness_pc_relate_res.tsv'
+        # File imputed_sex_res = basename(vcf_uri, '.vcf.gz') + '_imputed_sex_res.tsv'
+        # File pc_relate_res = basename(vcf_uri, '.vcf.gz') + '_relatedness_pc_relate_res.tsv'
         File king_res = basename(vcf_uri, '.vcf.gz') + '_relatedness_king_res.tsv'
     }
 }
