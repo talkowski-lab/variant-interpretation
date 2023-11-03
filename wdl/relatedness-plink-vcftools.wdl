@@ -44,16 +44,26 @@ task VCFToolsRelatedness {
         RuntimeAttr? runtime_attr_override  
     }
 
-    RuntimeAttr default_attr = object {
-        cpu_cores: 1,
-        mem_gb: 8,
-        disk_gb: 4,
-        boot_disk_gb: 4,
-        preemptible_tries: 3,
-        max_retries: 1
+    Float relatedness_size = size(vcf_file, "GB") 
+    Float base_disk_gb = 10.0
+    RuntimeAttr runtime_default = object {
+                                      mem_gb: 16,
+                                      disk_gb: ceil(base_disk_gb + (relatedness_size) * 5.0),
+                                      cpu_cores: 1,
+                                      preemptible_tries: 3,
+                                      max_retries: 1,
+                                      boot_disk_gb: 10
+                                  }
+    RuntimeAttr runtime_override = select_first([runtime_attr_override, runtime_default])
+    runtime {
+        memory: "~{select_first([runtime_override.mem_gb, runtime_default.mem_gb])} GB"
+        disks: "local-disk ~{select_first([runtime_override.disk_gb, runtime_default.disk_gb])} HDD"
+        cpu: select_first([runtime_override.cpu_cores, runtime_default.cpu_cores])
+        preemptible: select_first([runtime_override.preemptible_tries, runtime_default.preemptible_tries])
+        maxRetries: select_first([runtime_override.max_retries, runtime_default.max_retries])
+        docker: relatedness_docker
+        bootDiskSizeGb: select_first([runtime_override.boot_disk_gb, runtime_default.boot_disk_gb])
     }
-
-    RuntimeAttr runtime_attr = select_first([runtime_attr_override, default_attr])
 
     output{
         File out_relatedness = "out.relatedness2"
@@ -63,16 +73,6 @@ task VCFToolsRelatedness {
         ##Run VCFtools
         vcftools --gzvcf ~{vcf_file} --relatedness2
     >>>
-
-    runtime {
-        cpu_cores: select_first([runtime_attr.cpu_cores, default_attr.cpu_cores])
-        memory: select_first([runtime_attr.mem_gb, default_attr.mem_gb]) + " GiB"
-        disks: "local-disk " + select_first([runtime_attr.disk_gb, default_attr.disk_gb]) + " HDD"
-        boot_disk_gb: select_first([runtime_attr.boot_disk_gb, default_attr.boot_disk_gb])
-        preemptible_tries: select_first([runtime_attr.preemptible_tries, default_attr.preemptible_tries])
-        max_retries: select_first([runtime_attr.max_retries, default_attr.max_retries])
-        docker: relatedness_docker
-    }
 }
 
 task ImputeSexPLINK {
@@ -82,25 +82,25 @@ task ImputeSexPLINK {
         RuntimeAttr? runtime_attr_override  
     }
 
-    RuntimeAttr default_attr = object {
-        cpu_cores: 1,
-        mem_gb: 8,
-        disk_gb: 4,
-        boot_disk_gb: 4,
-        preemptible_tries: 3,
-        max_retries: 1
-    }
-
-    RuntimeAttr runtime_attr = select_first([runtime_attr_override, default_attr])
-
+    Float relatedness_size = size(vcf_file, "GB") 
+    Float base_disk_gb = 10.0
+    RuntimeAttr runtime_default = object {
+                                      mem_gb: 16,
+                                      disk_gb: ceil(base_disk_gb + (relatedness_size) * 5.0),
+                                      cpu_cores: 1,
+                                      preemptible_tries: 3,
+                                      max_retries: 1,
+                                      boot_disk_gb: 10
+                                  }
+    RuntimeAttr runtime_override = select_first([runtime_attr_override, runtime_default])
     runtime {
-        cpu_cores: select_first([runtime_attr.cpu_cores, default_attr.cpu_cores])
-        memory: select_first([runtime_attr.mem_gb, default_attr.mem_gb]) + " GiB"
-        disks: "local-disk " + select_first([runtime_attr.disk_gb, default_attr.disk_gb]) + " HDD"
-        boot_disk_gb: select_first([runtime_attr.boot_disk_gb, default_attr.boot_disk_gb])
-        preemptible_tries: select_first([runtime_attr.preemptible_tries, default_attr.preemptible_tries])
-        max_retries: select_first([runtime_attr.max_retries, default_attr.max_retries])
+        memory: "~{select_first([runtime_override.mem_gb, runtime_default.mem_gb])} GB"
+        disks: "local-disk ~{select_first([runtime_override.disk_gb, runtime_default.disk_gb])} HDD"
+        cpu: select_first([runtime_override.cpu_cores, runtime_default.cpu_cores])
+        preemptible: select_first([runtime_override.preemptible_tries, runtime_default.preemptible_tries])
+        maxRetries: select_first([runtime_override.max_retries, runtime_default.max_retries])
         docker: relatedness_docker
+        bootDiskSizeGb: select_first([runtime_override.boot_disk_gb, runtime_default.boot_disk_gb])
     }
 
     command {
