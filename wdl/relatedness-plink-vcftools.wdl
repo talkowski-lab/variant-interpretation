@@ -105,7 +105,7 @@ task ImputeSexPLINK {
 
     command {
         plink --vcf ~{vcf_file} --split-x 'hg38' --make-bed --out ~{basename(vcf_file, '.vcf.gz') + '_split_x'}
-        plink --bfile ~{basename(vcf_file, '.vcf.gz') + '_split_x'} --recode vcf bgz
+        plink --bfile ~{basename(vcf_file, '.vcf.gz') + '_split_x'} --recode vcf bgz --out ~{basename(vcf_file, '.vcf.gz') + '_split_x'}
         plink --vcf ~{basename(vcf_file, '.vcf.gz') + '_split_x.vcf.gz'} --check-sex
     }
 
