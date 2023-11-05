@@ -39,7 +39,9 @@ task trio_denovo {
     }
 
     command {
-        /src/wgs_denovo/triodenovo/triodenovo-fix/src/triodenovo --ped ~{ped_uri} --in_vcf ~{vcf_file} --out_vcf ~{basename(vcf_file, '.vcf') + '.denovos.vcf'}
+        fam=$(~{basename(ped_uri)} | cut -d '-' -f1) 
+        awk -v fam="$fam" '$1==fam' ~{ped_uri} > "$fam".ped
+        /src/wgs_denovo/triodenovo/triodenovo-fix/src/triodenovo --ped  "$fam".ped --in_vcf ~{vcf_file} --out_vcf ~{basename(vcf_file, '.vcf') + '.denovos.vcf'}
         bgzip ~{basename(vcf_file, '.vcf') + '.denovos.vcf'}
     }
 
