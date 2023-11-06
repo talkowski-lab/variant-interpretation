@@ -5,6 +5,7 @@ workflow step4 {
         File ped_uri
         Array[Array[File]] split_trio_vcfs
         String trio_denovo_docker
+        Float minDQ
     }
     scatter (vcf_files in split_trio_vcfs) {
         scatter (vcf_file in vcf_files) {
@@ -12,7 +13,8 @@ workflow step4 {
                 input:
                     ped_uri=ped_uri,
                     vcf_file=vcf_file,
-                    trio_denovo_docker=trio_denovo_docker
+                    trio_denovo_docker=trio_denovo_docker,
+                    minDQ=minDQ
             }
         }
         call combineOutputVCFs {
@@ -32,6 +34,7 @@ task trio_denovo {
         File ped_uri
         File vcf_file
         String trio_denovo_docker
+        Float minDQ
     }
 
     runtime {
@@ -41,7 +44,7 @@ task trio_denovo {
     command {
         fam=$(basename ~{vcf_file} | cut -d '-' -f1) 
         awk -v fam="$fam" '$1==fam' ~{ped_uri} > "$fam".ped
-        /src/wgs_denovo/triodenovo/triodenovo-fix/src/triodenovo --ped "$fam".ped --in_vcf ~{vcf_file} --out_vcf ~{basename(vcf_file, '.vcf') + '.denovos.vcf'}
+        /src/wgs_denovo/triodenovo/triodenovo-fix/src/triodenovo --ped "$fam".ped --in_vcf ~{vcf_file} --out_vcf ~{basename(vcf_file, '.vcf') + '.denovos.vcf'} --minDQ ~{minDQ}
         bgzip ~{basename(vcf_file, '.vcf') + '.denovos.vcf'}
     }
 
