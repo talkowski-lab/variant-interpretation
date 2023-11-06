@@ -12,6 +12,7 @@ struct RuntimeAttr {
 workflow relatedness {
     input {
         File vcf_file
+        File purcell5k
         String relatedness_docker
         RuntimeAttr? runtime_attr_relatedness  
         RuntimeAttr? runtime_attr_sex  
@@ -20,26 +21,28 @@ workflow relatedness {
     call VCFToolsRelatedness {
         input:
             vcf_file=vcf_file,
+            purcell5k=purcell5k,
             relatedness_docker=relatedness_docker,
             runtime_attr_override=runtime_attr_relatedness
     }
 
-    call ImputeSexPLINK {
-        input:
-            vcf_file=vcf_file,
-            relatedness_docker=relatedness_docker,
-            runtime_attr_override=runtime_attr_sex
-    }
+    # call ImputeSexPLINK {
+    #     input:
+    #         vcf_file=vcf_file,
+    #         relatedness_docker=relatedness_docker,
+    #         runtime_attr_override=runtime_attr_sex
+    # }
 
     output {
         File out_relatedness = VCFToolsRelatedness.out_relatedness
-        File out_sex = ImputeSexPLINK.out_sex
+        # File out_sex = ImputeSexPLINK.out_sex
     }
 }
 
 task VCFToolsRelatedness {
     input {
         File vcf_file
+        File purcell5k
         String relatedness_docker
         RuntimeAttr? runtime_attr_override  
     }
@@ -71,7 +74,7 @@ task VCFToolsRelatedness {
 
     command <<<
         ##Run VCFtools
-        vcftools --gzvcf ~{vcf_file} --relatedness2
+        vcftools --gzvcf ~{vcf_file} --relatedness2 --positions ~{purcell5k}
     >>>
 }
 
