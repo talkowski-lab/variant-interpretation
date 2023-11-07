@@ -16,6 +16,7 @@ workflow relatedness {
         File python_relatedness_script
         File lcr_uri
         File ped_uri
+        File purcell5k
         String bucket_id
         String cohort_prefix
         String hail_docker        
@@ -38,6 +39,7 @@ workflow relatedness {
                 ped_uri=ped_uri,
                 meta_uri=meta_uri,
                 trio_uri=trio_uri,
+                purcell5k=purcell5k,
                 cohort_prefix=cohort_prefix,
                 hail_docker=hail_docker,
                 runtime_attr_override=runtime_attr_relatedness
@@ -59,6 +61,7 @@ task runRelatedness {
         File ped_uri
         File meta_uri
         File trio_uri
+        File purcell5k
         String cohort_prefix
         String hail_docker 
         RuntimeAttr? runtime_attr_override       
@@ -86,7 +89,9 @@ task runRelatedness {
     }
 
     command {
-        python3 ~{python_relatedness_script} ~{lcr_uri} ~{ped_uri} ~{meta_uri} ~{trio_uri} ~{vcf_uri}
+        bcftools index ~{vcf_uri}
+        bcftools view -R ~{purcell5k} ~{vcf_uri} -Oz -o ~{cohort_prefix}_purcell5k.vcf.gz
+        python3 ~{python_relatedness_script} ~{lcr_uri} ~{ped_uri} ~{meta_uri} ~{trio_uri} ~{cohort_prefix}_purcell5k.vcf.gz
     }
 
     output {

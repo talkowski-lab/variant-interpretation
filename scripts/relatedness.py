@@ -66,10 +66,10 @@ filename = os.path.basename(vcf_uri).split('.vcf.gz')[0]
 
 
 # ## KING
-p5k = hl.import_locus_intervals('gs://fc-71e715ea-2fb8-4a20-8560-15ed867dcc7d/resources/regions/reference_files_purcell5k_grch38_liftover_2021-09-14.interval_list_start-1.bed', 
-                                 reference_genome='GRCh38') #few variants that are likely most useful (PCA and relatedness)
-mt5k = mt.filter_rows(hl.is_defined(p5k[mt.locus]), keep = True)
+# p5k = hl.import_locus_intervals('gs://fc-71e715ea-2fb8-4a20-8560-15ed867dcc7d/resources/regions/reference_files_purcell5k_grch38_liftover_2021-09-14.interval_list_start-1.bed', 
+#                                  reference_genome='GRCh38') #few variants that are likely most useful (PCA and relatedness)
+# mt5k = mt.filter_rows(hl.is_defined(p5k[mt.locus]), keep = True)
 
-kinship = hl.king(mt5k.GT)
+kinship = hl.king(mt.GT)
 
-kinship.flatten().export(f"{filename}_relatedness_king_res.tsv")
+kinship.export(f"{filename}_relatedness_king_res.tsv")
