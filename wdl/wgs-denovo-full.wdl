@@ -33,6 +33,7 @@ workflow wgs_denovo_full {
             String trio_denovo_docker
             String hail_docker
             Int batch_size
+            Float minDQ
     }
 
     call step1and2.step1 as step1and2 {
@@ -62,7 +63,8 @@ workflow wgs_denovo_full {
         input:
             ped_uri=ped_uri_no_header,
             split_trio_vcfs=step3.split_trio_vcfs,
-            trio_denovo_docker=trio_denovo_docker
+            trio_denovo_docker=trio_denovo_docker,
+            minDQ=minDQ
     }
 
     call step5.step5 as step5 {
