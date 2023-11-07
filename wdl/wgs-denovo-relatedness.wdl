@@ -45,6 +45,7 @@ workflow relatedness {
                 python_relatedness_script=python_relatedness_script,
                 vcf_uri=vcf_uri,
                 purcell5k_subset_vcf=subsetVCF.purcell5k_subset_vcf,
+                lcr_uri=lcr_uri,
                 ped_uri=ped_uri,
                 meta_uri=meta_uri,
                 trio_uri=trio_uri,
