@@ -13,6 +13,7 @@ workflow runPeddy {
     input {
         File hg38_fasta
         File file
+        File vcf_idx
         File ped_uri
         String cohort_prefix
         String peddy_docker
@@ -28,6 +29,7 @@ workflow runPeddy {
             input:
                 hg38_fasta=hg38_fasta,
                 vcf_uri=vcf_uri,
+                vcf_idx=vcf_idx,
                 ped_uri=ped_uri,
                 cohort_prefix=cohort_prefix,
                 peddy_docker=peddy_docker,
@@ -46,6 +48,7 @@ task relatedness {
         File hg38_fasta
         File vcf_uri
         File ped_uri
+        File vcf_idx
         String cohort_prefix
         String peddy_docker
         RuntimeAttr? runtime_attr_override
