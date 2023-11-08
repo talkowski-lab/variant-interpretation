@@ -72,7 +72,7 @@ task relatedness {
         bootDiskSizeGb: select_first([runtime_override.boot_disk_gb, runtime_default.boot_disk_gb])
     }
     command {
-        bcftools index ~{vcf_uri}
+        # bcftools index ~{vcf_uri}
         python -m peddy -p 4 --plot --prefix ~{cohort_prefix} --sites hg38 ~{vcf_uri} ~{ped_uri}
     }
 
