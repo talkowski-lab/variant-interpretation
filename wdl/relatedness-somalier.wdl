@@ -77,6 +77,7 @@ task relatedness {
         bootDiskSizeGb: select_first([runtime_override.boot_disk_gb, runtime_default.boot_disk_gb])
     }
     command {
+        bcftools index ~{vcf_uri}
         somalier extract -d extracted/ --sites ~{sites_uri} -f ~{hg38_fasta} ~{vcf_uri}
         somalier relate --infer --ped ~{ped_uri} -o ~{cohort_prefix} extracted/*.somalier
     }
