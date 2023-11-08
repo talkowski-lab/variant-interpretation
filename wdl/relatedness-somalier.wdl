@@ -84,7 +84,7 @@ task relatedness {
 
     output {
         File out_samples = cohort_prefix + ".samples.tsv" # creates a .ped like file with extra QC columns
-        File out_pairs = cohort_prefix + "pairs.tsv" # shows IBS for all possible sample pairs
+        File out_pairs = cohort_prefix + ".pairs.tsv" # shows IBS for all possible sample pairs
         File out_groups = cohort_prefix + ".groups.tsv" # shows pairs of samples above a certain relatedness
         File out_html = cohort_prefix + ".html" # interactive html
     }
