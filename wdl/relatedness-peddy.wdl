@@ -11,7 +11,6 @@ struct RuntimeAttr {
 
 workflow runPeddy {
     input {
-        File sites_uri
         File hg38_fasta
         File file
         File ped_uri
@@ -27,7 +26,6 @@ workflow runPeddy {
     scatter (vcf_uri in vcf_files) {
         call relatedness {
             input:
-                sites_uri=sites_uri,
                 hg38_fasta=hg38_fasta,
                 vcf_uri=vcf_uri,
                 ped_uri=ped_uri,
@@ -45,7 +43,6 @@ workflow runPeddy {
 
 task relatedness {
     input {
-        File sites_uri
         File hg38_fasta
         File vcf_uri
         File ped_uri
