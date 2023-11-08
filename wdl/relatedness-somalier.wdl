@@ -78,7 +78,7 @@ task relatedness {
     }
     command {
         somalier extract -d extracted/ --sites ~{sites_uri} -f ~{hg38_fasta} ~{vcf_uri}
-        somalier relate --ped ~{ped_uri} -o ~{cohort_prefix} extracted/*.somalier
+        somalier relate --infer --ped ~{ped_uri} -o ~{cohort_prefix} extracted/*.somalier
     }
 
     output {
