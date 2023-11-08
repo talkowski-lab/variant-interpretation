@@ -144,6 +144,6 @@ task runRelatedness {
     output {
         # File imputed_sex_res = basename(vcf_uri, '.vcf.gz') + '_imputed_sex_res.tsv'
         # File pc_relate_res = basename(vcf_uri, '.vcf.gz') + '_relatedness_pc_relate_res.tsv'
-        File king_res = basename(vcf_uri, '.vcf.gz') + '_relatedness_king_res.tsv'
+        File king_res = basename(purcell5k_subset_vcf, '.vcf.gz') + '_relatedness_king_res.tsv'
     }
 }

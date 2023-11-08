@@ -71,5 +71,6 @@ filename = os.path.basename(vcf_uri).split('.vcf.gz')[0]
 # mt5k = mt.filter_rows(hl.is_defined(p5k[mt.locus]), keep = True)
 
 kinship = hl.king(mt.GT)
+kinship = kinship.entries().to_pandas()
 
-kinship.export(f"{filename}_relatedness_king_res.tsv")
+kinship.to_csv(f"{filename}_relatedness_king_res.tsv", sep='\t')
