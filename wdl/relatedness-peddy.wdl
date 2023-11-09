@@ -13,7 +13,6 @@ workflow runPeddy {
     input {
         File hg38_fasta
         File file
-        File vcf_idx
         File ped_uri
         String cohort_prefix
         String peddy_docker
@@ -29,7 +28,6 @@ workflow runPeddy {
             input:
                 hg38_fasta=hg38_fasta,
                 vcf_uri=vcf_uri,
-                vcf_idx=vcf_idx,
                 ped_uri=ped_uri,
                 cohort_prefix=cohort_prefix,
                 peddy_docker=peddy_docker,
@@ -48,7 +46,6 @@ task relatedness {
         File hg38_fasta
         File vcf_uri
         File ped_uri
-        File vcf_idx
         String cohort_prefix
         String peddy_docker
         RuntimeAttr? runtime_attr_override
@@ -75,7 +72,7 @@ task relatedness {
         bootDiskSizeGb: select_first([runtime_override.boot_disk_gb, runtime_default.boot_disk_gb])
     }
     command {
-        # bcftools index ~{vcf_uri}
+        bcftools index ~{vcf_uri}
         python -m peddy -p 4 --plot --prefix ~{cohort_prefix} --sites hg38 ~{vcf_uri} ~{ped_uri}
     }
 
