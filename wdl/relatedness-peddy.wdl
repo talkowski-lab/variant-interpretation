@@ -38,6 +38,7 @@ workflow runPeddy {
     output {
         Array[Array[File]] out_csvs = relatedness.out_csvs
         Array[File] out_html = relatedness.out_html
+        Array[File] new_ped = relatedness.new_ped
     }
 }
 
@@ -79,5 +80,6 @@ task relatedness {
     output {
         Array[File] out_csvs = glob('*.csv')
         File out_html = cohort_prefix + ".html" # interactive html
+        File new_ped = cohort_prefix + ".peddy.ped"
     }
 }
