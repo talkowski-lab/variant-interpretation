@@ -25,7 +25,7 @@ workflow wgs_denovo_full {
             File lcr_uri
             File ped_uri
             File ped_uri_no_header
-            Array[Array[File]] vcf_uri_list
+            Array[Array[File]] vep_annotated_final_vcf
             String bucket_id
             String cohort_prefix
             String cohort_id
@@ -43,7 +43,7 @@ workflow wgs_denovo_full {
             python_preprocess_script=python_preprocess_script,
             lcr_uri=lcr_uri,
             ped_uri=ped_uri,
-            vcf_uri_list=vcf_uri_list,
+            vep_annotated_final_vcf=vep_annotated_final_vcf,
             sv_base_mini_docker=sv_base_mini_docker,
             bucket_id=bucket_id,
             cohort_prefix=cohort_prefix,

@@ -17,7 +17,7 @@ workflow step1 {
         File python_preprocess_script
         File lcr_uri
         File ped_uri
-        Array[Array[File]] vcf_uri_list
+        Array[Array[File]] vep_annotated_final_vcf
         String sv_base_mini_docker
         String bucket_id
         String cohort_prefix
@@ -40,7 +40,7 @@ workflow step1 {
     File meta_uri = "~{bucket_id}/resources/metadata/~{cohort_prefix}_sample_list.txt"
     File trio_uri = "~{bucket_id}/resources/metadata/~{cohort_prefix}_trio_list.txt"
 
-    Array[Pair[File, Array[File]]] vcf_list_paired = zip(vcf_files, vcf_uri_list)
+    Array[Pair[File, Array[File]]] vcf_list_paired = zip(vcf_files, vep_annotated_final_vcf)
 
     scatter (pair in vcf_list_paired) {
         File og_vcf_file = pair.left 
@@ -67,6 +67,7 @@ workflow step1 {
     }
 
     output {
+        File ped_uri_no_header = bucket_id + "/resources/pedigrees/" + cohort_prefix + "_no_header.ped"
         Array[File] merged_preprocessed_vcf_files = mergeVCFs.merged_vcf_file
         Array[File] merged_preprocessed_vcf_idx = mergeVCFs.merged_vcf_idx
     }
