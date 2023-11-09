@@ -13,7 +13,7 @@ workflow runPeddy {
     input {
         File hg38_fasta
         File file
-        File ped_uri
+        File ped_uri_no_header
         String cohort_prefix
         String peddy_docker
         RuntimeAttr? runtime_attr_relatedness
@@ -28,7 +28,7 @@ workflow runPeddy {
             input:
                 hg38_fasta=hg38_fasta,
                 vcf_uri=vcf_uri,
-                ped_uri=ped_uri,
+                ped_uri_no_header=ped_uri_no_header,
                 cohort_prefix=cohort_prefix,
                 peddy_docker=peddy_docker,
                 runtime_attr_override=runtime_attr_relatedness
@@ -45,7 +45,7 @@ task relatedness {
     input {
         File hg38_fasta
         File vcf_uri
-        File ped_uri
+        File ped_uri_no_header
         String cohort_prefix
         String peddy_docker
         RuntimeAttr? runtime_attr_override
@@ -73,7 +73,7 @@ task relatedness {
     }
     command {
         bcftools index ~{vcf_uri}
-        python -m peddy -p 4 --plot --prefix ~{cohort_prefix} --sites hg38 ~{vcf_uri} ~{ped_uri}
+        python -m peddy -p 4 --plot --prefix ~{cohort_prefix} --sites hg38 ~{vcf_uri} ~{ped_uri_no_header}
     }
 
     output {
