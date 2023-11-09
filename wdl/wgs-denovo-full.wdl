@@ -24,7 +24,6 @@ workflow wgs_denovo_full {
             File merge_vcf_to_tsv_fullQC_py
             File lcr_uri
             File ped_uri
-            File ped_uri_no_header
             Array[Array[File]] vep_annotated_final_vcf
             String bucket_id
             String cohort_prefix
@@ -61,7 +60,7 @@ workflow wgs_denovo_full {
 
     call step4.step4 as step4 {
         input:
-            ped_uri=ped_uri_no_header,
+            ped_uri=step1and2.ped_uri_no_header,
             split_trio_vcfs=step3.split_trio_vcfs,
             trio_denovo_docker=trio_denovo_docker,
             minDQ=minDQ

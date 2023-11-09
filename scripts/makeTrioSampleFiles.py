@@ -22,7 +22,7 @@ except Exception as e:
     # save ped no header
     bucket.blob(f"resources/pedigrees/{cohort_prefix}_no_header.ped").upload_from_string(ped.to_csv(sep='\t', index=False, header=False), 'text/csv')
 
-if cohort_prefix.starts_with("Gabriel_GMKF_Beaty_OrofacialClefts_Y2_375Samples_VCF"):
+if cohort_prefix.startswith("Gabriel_GMKF_Beaty_OrofacialClefts_Y2_375Samples_VCF"):
     try:
         ped['IndividualID'] = ped['IndividualID'].str.split('__').str[1].str.upper()
         ped['FatherID'] = ped['FatherID'].str.split('__').str[1].str.upper().fillna(0)
