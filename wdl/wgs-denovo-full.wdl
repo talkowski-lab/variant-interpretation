@@ -77,6 +77,7 @@ workflow wgs_denovo_full {
     }
 
     output {
+        File ped_uri_no_header = step1and2.ped_uri_no_header
         Array[File] merged_preprocessed_vcf_files = step1and2.merged_preprocessed_vcf_files
         Array[File] merged_preprocessed_vcf_idx = step1and2.merged_preprocessed_vcf_idx
         Array[Array[File]] split_trio_vcfs = step3.split_trio_vcfs
