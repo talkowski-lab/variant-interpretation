@@ -87,7 +87,7 @@ task makeTrioSampleFiles {
     }
 
     command <<<
-    python3 ~{python_trio_sample_script} ~{ped_uri} ~{cohort_prefix}
+    python3 ~{python_trio_sample_script} ~{ped_uri} ~{cohort_prefix} ~{bucket_id}
     >>>
     
     output {

@@ -5,14 +5,16 @@ from google.cloud import storage
 
 ped_uri = sys.argv[1]
 cohort_prefix = sys.argv[2]
+bucket_id = sys.argv[3]
 
 storage_client = storage.Client(project='talkowski-sv-gnomad')
-bucket = storage_client.get_bucket(ped_uri.split('/')[2])
+# bucket = storage_client.get_bucket(ped_uri.split('/')[2])
+bucket = storage_client.get_bucket(bucket_id.replace('gs://', ''))
 
 ped = pd.read_csv(ped_uri, sep='\t')
 
 try:
-    int(ped.columns[-1])  # no header
+    float(ped.columns[-1])  # no header
     ped = pd.read_csv(ped_uri, sep='\t', header=None)
     bucket.blob(f"resources/pedigrees/{cohort_prefix}_no_header.ped").upload_from_string(ped.to_csv(sep='\t', index=False, header=False), 'text/csv')
     ped.columns = ['FamID', 'IndividualID', 'FatherID', 'MotherID', 'Gender', 'Affected']
