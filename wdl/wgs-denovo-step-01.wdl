@@ -37,9 +37,9 @@ workflow step1 {
     # if file is vcf.gz (just one file)
     Array[File] vcf_files = if (sub(filename, ".vcf.gz", "") != filename) then [file] else read_lines(file)
     
-    File meta_uri = "~{bucket_id}/resources/metadata/~{cohort_prefix}_sample_list.txt"
-    File trio_uri = "~{bucket_id}/resources/metadata/~{cohort_prefix}_trio_list.txt"
-
+    File meta_uri = makeTrioSampleFiles.meta_uri
+    File trio_uri = makeTrioSampleFiles.trio_uri
+    
     Array[Pair[File, Array[File]]] vcf_list_paired = zip(vcf_files, vep_annotated_final_vcf)
 
     scatter (pair in vcf_list_paired) {
@@ -91,8 +91,8 @@ task makeTrioSampleFiles {
     >>>
     
     output {
-        # File meta_uri = "~{bucket_id}/resources/metadata/~{cohort_prefix}_sample_list.txt"
-        # File trio_uri = "~{bucket_id}/resources/metadata/~{cohort_prefix}_trio_list.txt"
+        File meta_uri = "~{bucket_id}/resources/metadata/~{cohort_prefix}_sample_list.txt"
+        File trio_uri = "~{bucket_id}/resources/metadata/~{cohort_prefix}_trio_list.txt"
     }
 }
 
