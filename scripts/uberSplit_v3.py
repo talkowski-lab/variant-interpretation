@@ -93,13 +93,13 @@ def main():
                 pheno = int(item[-1])
                 if pheno == 2: # see https://gatk.broadinstitute.org/hc/en-us/articles/360035531972-PED-Pedigree-format
                     #proband
-                    fam = famBasic + '-' + samp # fam is a uid for the trio (in a case where multiple trios are possible)
+                    fam = famBasic + '_trio_' + samp # fam is a uid for the trio (in a case where multiple trios are possible)
                 elif pheno == 1:
                     #sibling
-                    fam = famBasic + '-' + samp
+                    fam = famBasic + '_trio_' + samp
                 elif pheno == 0:
                     # missing affected status
-                    fam = famBasic + '-' + samp
+                    fam = famBasic + '_trio_' + samp
                 else:
                     raise ValueError('Invalid phenotype {}'.format(pheno))
                 famList[fam] = samp + '|' + father + '|' + mother
