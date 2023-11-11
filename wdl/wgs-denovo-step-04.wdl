@@ -41,12 +41,12 @@ task trio_denovo {
         docker: trio_denovo_docker
     }
 
-    command {
-        fam=$(basename ~{vcf_file} | awk -F "_trio_" '{print $1}') 
+    command <<<
+        fam=$(basename ~{vcf_file} | awk -F "_trio_" "{print $1}") 
         awk -v fam="$fam" '$1==fam' ~{ped_uri} > "$fam".ped
         /src/wgs_denovo/triodenovo/triodenovo-fix/src/triodenovo --ped "$fam".ped --in_vcf ~{vcf_file} --out_vcf ~{basename(vcf_file, '.vcf') + '.denovos.vcf'} --minDQ ~{minDQ}
         bgzip ~{basename(vcf_file, '.vcf') + '.denovos.vcf'}
-    }
+    >>>
 
     output {
         File out_vcf = basename(vcf_file, '.vcf') + '.denovos.vcf.gz'
