@@ -209,7 +209,7 @@ def parse_pedigree(ped_path: str):
                 tabs = line.rstrip('\n').split('\t')
                 # just extract full trio
                 if tabs[2] != '0' and tabs[3] != '0': 
-                    triokey_to_samp[tabs[0] + '-' + tabs[1]] = tabs[1]
+                    triokey_to_samp[tabs[0] + '_trio_' + tabs[1]] = tabs[1]
                     sample_info[tabs[1]]['FamID']= tabs[0] 
                     sample_info[tabs[1]]['FatherID']= tabs[2]
                     sample_info[tabs[1]]['MotherID']= tabs[3] 
