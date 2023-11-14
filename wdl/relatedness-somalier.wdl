@@ -17,7 +17,7 @@ workflow runSomalier {
         File ped_uri
         File ancestry_labels_1kg
         File correct_somalier_ped_python_script
-        String somalier_1kg_dir
+        File somalier_1kg_dir
         String cohort_prefix
         String somalier_docker
         String hail_docker
