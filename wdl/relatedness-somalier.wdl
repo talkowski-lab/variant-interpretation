@@ -20,7 +20,9 @@ workflow runSomalier {
         String somalier_1kg_dir
         String cohort_prefix
         String somalier_docker
+        String hail_docker
         RuntimeAttr? runtime_attr_relatedness
+        RuntimeAttr? runtime_attr_correct
     }
     
     String filename = basename(file)
@@ -35,11 +37,19 @@ workflow runSomalier {
                 vcf_uri=vcf_uri,
                 ped_uri=ped_uri,
                 ancestry_labels_1kg=ancestry_labels_1kg,
-                correct_somalier_ped_python_script=correct_somalier_ped_python_script,
                 somalier_1kg_dir=somalier_1kg_dir,
                 cohort_prefix=cohort_prefix,
                 somalier_docker=somalier_docker,
                 runtime_attr_override=runtime_attr_relatedness
+        }
+
+        call correctPedigree {
+            input:
+            ped_uri=ped_uri,
+            correct_somalier_ped_python_script=correct_somalier_ped_python_script,
+            cohort_prefix=cohort_prefix,
+            hail_docker=hail_docker,
+            runtime_attr_override=runtime_attr_correct
         }
     }
 
@@ -48,6 +58,8 @@ workflow runSomalier {
         Array[File] out_pairs = relatedness.out_pairs
         Array[File] out_groups = relatedness.out_groups
         Array[File] out_html = relatedness.out_html
+        Array[File] ancestry_html = relatedness.ancestry_html
+        Array[File] corrected_ped = correctPedigree.corrected_ped
     }
 }
 
@@ -58,7 +70,6 @@ task relatedness {
         File vcf_uri
         File ped_uri
         File ancestry_labels_1kg
-        File correct_somalier_ped_python_script
         String somalier_1kg_dir
         String cohort_prefix
         String somalier_docker
@@ -85,11 +96,11 @@ task relatedness {
         docker: somalier_docker
         bootDiskSizeGb: select_first([runtime_override.boot_disk_gb, runtime_default.boot_disk_gb])
     }
+
     command {
         bcftools index ~{vcf_uri}
         somalier extract -d extracted/ --sites ~{sites_uri} -f ~{hg38_fasta} ~{vcf_uri}
         somalier relate --infer --ped ~{ped_uri} -o ~{cohort_prefix} extracted/*.somalier
-        python3 ~{correct_somalier_ped_python_script} ~{cohort_prefix}.samples.tsv ~{ped_uri} ~{cohort_prefix}
         somalier ancestry -o ~{cohort_prefix}_ancestry --labels ~{ancestry_labels_1kg} ~{somalier_1kg_dir}/*.somalier ++ extracted/*.somalier
     }
 
@@ -100,6 +111,44 @@ task relatedness {
         File out_html = cohort_prefix + ".html" # interactive html
         File ancestry_html = cohort_prefix + "_ancestry.html"
         File ancestry_out = cohort_prefix + "_ancestry.tsv"
+    }
+}
+
+task correctPedigree {
+    input {
+        File ped_uri
+        File correct_somalier_ped_python_script
+        String cohort_prefix
+        String hail_docker
+        RuntimeAttr? runtime_attr_override    
+    }
+
+    Float relatedness_size = size(ped_uri, "GB") 
+    Float base_disk_gb = 10.0
+    RuntimeAttr runtime_default = object {
+                                      mem_gb: 16,
+                                      disk_gb: ceil(base_disk_gb + (relatedness_size) * 5.0),
+                                      cpu_cores: 1,
+                                      preemptible_tries: 3,
+                                      max_retries: 1,
+                                      boot_disk_gb: 10
+                                  }
+    RuntimeAttr runtime_override = select_first([runtime_attr_override, runtime_default])
+    runtime {
+        memory: "~{select_first([runtime_override.mem_gb, runtime_default.mem_gb])} GB"
+        disks: "local-disk ~{select_first([runtime_override.disk_gb, runtime_default.disk_gb])} HDD"
+        cpu: select_first([runtime_override.cpu_cores, runtime_default.cpu_cores])
+        preemptible: select_first([runtime_override.preemptible_tries, runtime_default.preemptible_tries])
+        maxRetries: select_first([runtime_override.max_retries, runtime_default.max_retries])
+        docker: hail_docker
+        bootDiskSizeGb: select_first([runtime_override.boot_disk_gb, runtime_default.boot_disk_gb])
+    }
+
+    command {
+        python3 ~{correct_somalier_ped_python_script} ~{cohort_prefix}.samples.tsv ~{ped_uri} ~{cohort_prefix}
+    }
+
+    output {
         File corrected_ped = cohort_prefix + "_ped_corrected.ped"
     }
 }
