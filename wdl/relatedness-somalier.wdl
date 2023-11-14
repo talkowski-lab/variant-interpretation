@@ -71,7 +71,7 @@ task relatedness {
         File vcf_uri
         File ped_uri
         File ancestry_labels_1kg
-        String somalier_1kg_dir
+        File somalier_1kg_dir
         String cohort_prefix
         String somalier_docker
         RuntimeAttr? runtime_attr_override
