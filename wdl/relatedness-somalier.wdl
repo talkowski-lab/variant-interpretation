@@ -17,7 +17,7 @@ workflow runSomalier {
         File ped_uri
         File ancestry_labels_1kg
         File correct_somalier_ped_python_script
-        File somalier_1kg_dir
+        File somalier_1kg_tar
         String cohort_prefix
         String somalier_docker
         String hail_docker
@@ -37,7 +37,7 @@ workflow runSomalier {
                 vcf_uri=vcf_uri,
                 ped_uri=ped_uri,
                 ancestry_labels_1kg=ancestry_labels_1kg,
-                somalier_1kg_dir=somalier_1kg_dir,
+                somalier_1kg_tar=somalier_1kg_tar,
                 cohort_prefix=cohort_prefix,
                 somalier_docker=somalier_docker,
                 runtime_attr_override=runtime_attr_relatedness
@@ -71,7 +71,7 @@ task relatedness {
         File vcf_uri
         File ped_uri
         File ancestry_labels_1kg
-        File somalier_1kg_dir
+        File somalier_1kg_tar
         String cohort_prefix
         String somalier_docker
         RuntimeAttr? runtime_attr_override
@@ -102,7 +102,9 @@ task relatedness {
         bcftools index ~{vcf_uri}
         somalier extract -d extracted/ --sites ~{sites_uri} -f ~{hg38_fasta} ~{vcf_uri}
         somalier relate --infer --ped ~{ped_uri} -o ~{cohort_prefix} extracted/*.somalier
-        somalier ancestry -o ~{cohort_prefix}_ancestry --labels ~{ancestry_labels_1kg} ~{somalier_1kg_dir}/*.somalier ++ extracted/*.somalier
+
+        tar -xf ~{somalier_1kg_tar}
+        somalier ancestry -o ~{cohort_prefix}_ancestry --labels ~{ancestry_labels_1kg} 1kg-somalier/*.somalier ++ extracted/*.somalier
     }
 
     output {
