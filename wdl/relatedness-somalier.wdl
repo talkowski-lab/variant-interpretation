@@ -15,6 +15,9 @@ workflow runSomalier {
         File hg38_fasta
         File file
         File ped_uri
+        File ancestry_labels_1kg
+        File correct_somalier_ped_python_script
+        String somalier_1kg_dir
         String cohort_prefix
         String somalier_docker
         RuntimeAttr? runtime_attr_relatedness
@@ -31,6 +34,9 @@ workflow runSomalier {
                 hg38_fasta=hg38_fasta,
                 vcf_uri=vcf_uri,
                 ped_uri=ped_uri,
+                ancestry_labels_1kg=ancestry_labels_1kg,
+                correct_somalier_ped_python_script=correct_somalier_ped_python_script,
+                somalier_1kg_dir=somalier_1kg_dir,
                 cohort_prefix=cohort_prefix,
                 somalier_docker=somalier_docker,
                 runtime_attr_override=runtime_attr_relatedness
@@ -51,6 +57,9 @@ task relatedness {
         File hg38_fasta
         File vcf_uri
         File ped_uri
+        File ancestry_labels_1kg
+        File correct_somalier_ped_python_script
+        String somalier_1kg_dir
         String cohort_prefix
         String somalier_docker
         RuntimeAttr? runtime_attr_override
@@ -80,6 +89,8 @@ task relatedness {
         bcftools index ~{vcf_uri}
         somalier extract -d extracted/ --sites ~{sites_uri} -f ~{hg38_fasta} ~{vcf_uri}
         somalier relate --infer --ped ~{ped_uri} -o ~{cohort_prefix} extracted/*.somalier
+        python3 ~{correct_somalier_ped_python_script} ~{cohort_prefix}.samples.tsv ~{ped_uri} ~{cohort_prefix}
+        somalier ancestry -o ~{cohort_prefix}_ancestry --labels ~{ancestry_labels_1kg} ~{somalier_1kg_dir}/*.somalier ++ extracted/*.somalier
     }
 
     output {
@@ -87,5 +98,8 @@ task relatedness {
         File out_pairs = cohort_prefix + ".pairs.tsv" # shows IBS for all possible sample pairs
         File out_groups = cohort_prefix + ".groups.tsv" # shows pairs of samples above a certain relatedness
         File out_html = cohort_prefix + ".html" # interactive html
+        File ancestry_html = cohort_prefix + "_ancestry.html"
+        File ancestry_out = cohort_prefix + "_ancestry.tsv"
+        File corrected_ped = cohort_prefix + "_ped_corrected.ped"
     }
 }
