@@ -47,6 +47,7 @@ workflow runSomalier {
             input:
             ped_uri=ped_uri,
             correct_somalier_ped_python_script=correct_somalier_ped_python_script,
+            out_samples=relatedness.out_samples,
             cohort_prefix=cohort_prefix,
             hail_docker=hail_docker,
             runtime_attr_override=runtime_attr_correct
@@ -118,6 +119,7 @@ task correctPedigree {
     input {
         File ped_uri
         File correct_somalier_ped_python_script
+        File out_samples
         String cohort_prefix
         String hail_docker
         RuntimeAttr? runtime_attr_override    
@@ -145,7 +147,7 @@ task correctPedigree {
     }
 
     command {
-        python3 ~{correct_somalier_ped_python_script} ~{cohort_prefix}.samples.tsv ~{ped_uri} ~{cohort_prefix}
+        python3 ~{correct_somalier_ped_python_script} ~{out_samples} ~{ped_uri} ~{cohort_prefix}
     }
 
     output {
