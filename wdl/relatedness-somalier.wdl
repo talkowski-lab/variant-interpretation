@@ -149,7 +149,7 @@ task correctPedigree {
     }
 
     command {
-        python3 ~{correct_somalier_ped_python_script} ~{out_samples} ~{ped_uri} ~{cohort_prefix}
+        python3 ~{correct_somalier_ped_python_script} ~{out_samples} ~{ped_uri} ~{cohort_prefix} > stdout
     }
 
     output {

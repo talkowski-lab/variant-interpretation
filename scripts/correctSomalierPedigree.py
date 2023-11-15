@@ -8,10 +8,16 @@ ped_uri = sys.argv[2]
 cohort_prefix = sys.argv[3]
 
 ped = pd.read_csv(ped_uri, sep='\t')
-somalier = pd.read_csv(samples_uri, sep='\t')
+try:
+    float(ped.columns[-1])  # no header
+    ped = pd.read_csv(ped_uri, sep='\t', header=None)
+except Exception as e:
+    pass
+
 ped.columns = ['family_id', 'sample_id', 'paternal_id', 'maternal_id', 'sex', 'phenotype']
 ped.index = ped.sample_id
 
+somalier = pd.read_csv(samples_uri, sep='\t')
 somalier.index = somalier.sample_id
 somalier = somalier.loc[ped.index]
 somalier.columns = somalier.columns.str.replace("#", "")
@@ -35,4 +41,4 @@ for samp in discrepant_samples:
                     somalier = somalier.drop(samp)
                     break
 
-somalier.to_csv(f"{cohort_prefix}_ped_corrected.ped", sep='\t')
+somalier.reset_index(drop=True).sort_values('sample_id').to_csv(f"{cohort_prefix}_ped_corrected.ped", sep='\t')
