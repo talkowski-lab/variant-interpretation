@@ -60,6 +60,7 @@ workflow runSomalier {
         Array[File] out_groups = relatedness.out_groups
         Array[File] out_html = relatedness.out_html
         Array[File] ancestry_html = relatedness.ancestry_html
+        Array[File] ancestry_out = relatedness.ancestry_out
         Array[File] corrected_ped = correctPedigree.corrected_ped
     }
 }

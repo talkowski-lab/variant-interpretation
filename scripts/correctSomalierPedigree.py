@@ -41,4 +41,4 @@ for samp in discrepant_samples:
                     somalier = somalier.drop(samp)
                     break
 
-somalier.reset_index(drop=True).sort_values('sample_id').to_csv(f"{cohort_prefix}_ped_corrected.ped", sep='\t')
+somalier.reset_index(drop=True).sort_values('sample_id').to_csv(f"{cohort_prefix}_ped_corrected.ped", sep='\t', index=False)
