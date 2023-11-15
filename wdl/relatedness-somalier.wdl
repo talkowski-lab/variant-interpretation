@@ -104,7 +104,7 @@ task relatedness {
         somalier relate --infer --ped ~{ped_uri} -o ~{cohort_prefix} extracted/*.somalier
 
         tar -xf ~{somalier_1kg_tar}
-        somalier ancestry -o ~{cohort_prefix}_ancestry --labels ~{ancestry_labels_1kg} 1kg-somalier/*.somalier ++ extracted/*.somalier
+        somalier ancestry -o ~{cohort_prefix} --labels ~{ancestry_labels_1kg} 1kg-somalier/*.somalier ++ extracted/*.somalier
     }
 
     output {
@@ -112,8 +112,8 @@ task relatedness {
         File out_pairs = cohort_prefix + ".pairs.tsv" # shows IBS for all possible sample pairs
         File out_groups = cohort_prefix + ".groups.tsv" # shows pairs of samples above a certain relatedness
         File out_html = cohort_prefix + ".html" # interactive html
-        File ancestry_html = cohort_prefix + "_ancestry.html"
-        File ancestry_out = cohort_prefix + "_ancestry.tsv"
+        File ancestry_html = cohort_prefix + ".somalier-ancestry.html"
+        File ancestry_out = cohort_prefix + ".somalier-ancestry.tsv"
     }
 }
 
