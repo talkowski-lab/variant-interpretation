@@ -119,12 +119,13 @@ task checkKnownVariantsVCF {
         bootDiskSizeGb: select_first([runtime_override.boot_disk_gb, runtime_default.boot_disk_gb])
     }
 
-    command {
+    command <<<
         bgzip -k ~{vcf_file}
-        vcf_file=$(basename ~{vcf_file} '.gz').gz
+        vcf_file=~{vcf_file}
+        vcf_file=$(echo "${vcf_file%.*}").gz
         bcftools index $vcf_file
         bcftools view -R ~{bed_file} $vcf_file -o ~{new_filename}
-    }
+    >>>
 
     output {
         File filtered_vcf=new_filename
