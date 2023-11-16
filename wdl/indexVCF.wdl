@@ -13,7 +13,7 @@ workflow indexVCF {
     input {
         File vcf
         String vcf_dir
-        String sv_base_mini_docker
+        String trio_denovo_docker
         RuntimeAttr? runtime_attr_index
     }
 
@@ -21,7 +21,7 @@ workflow indexVCF {
         input:
             vcf=vcf,
             vcf_dir=vcf_dir,
-            sv_base_mini_docker=sv_base_mini_docker,
+            trio_denovo_docker=trio_denovo_docker,
             runtime_attr_override=runtime_attr_index
     }
 }
@@ -30,7 +30,7 @@ task indexVCF_ {
     input {
         File vcf
         String vcf_dir
-        String sv_base_mini_docker
+        String trio_denovo_docker
         RuntimeAttr? runtime_attr_override
     }
     
@@ -57,7 +57,7 @@ task indexVCF_ {
         cpu: select_first([runtime_override.cpu_cores, runtime_default.cpu_cores])
         preemptible: select_first([runtime_override.preemptible_tries, runtime_default.preemptible_tries])
         maxRetries: select_first([runtime_override.max_retries, runtime_default.max_retries])
-        docker: sv_base_mini_docker
+        docker: trio_denovo_docker
         bootDiskSizeGb: select_first([runtime_override.boot_disk_gb, runtime_default.boot_disk_gb])
     }
 
