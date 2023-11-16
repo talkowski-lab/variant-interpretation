@@ -22,6 +22,7 @@ workflow step1 {
         String bucket_id
         String cohort_prefix
         String hail_docker
+        RuntimeAttr? runtime_attr_merge_vcfs
     }
 
     call makeTrioSampleFiles {
@@ -62,7 +63,8 @@ workflow step1 {
                 og_vcf_uri=og_vcf_file,
                 vcf_contigs=preprocessVCF.preprocessed_vcf,
                 sv_base_mini_docker=sv_base_mini_docker,
-                cohort_prefix=cohort_prefix
+                cohort_prefix=cohort_prefix,
+                runtime_attr_override=runtime_attr_merge_vcfs
         }
     }
 
