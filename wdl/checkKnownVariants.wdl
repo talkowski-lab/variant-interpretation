@@ -120,7 +120,7 @@ task checkKnownVariantsVCF {
     }
 
     command {
-        bgzip ~{vcf_file}
+        bgzip -k ~{vcf_file}
         bcftools index ~{vcf_file}
         bcftools view -R ~{bed_file} ~{vcf_file} -o ~{new_filename}
     }
