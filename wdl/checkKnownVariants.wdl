@@ -121,8 +121,9 @@ task checkKnownVariantsVCF {
 
     command {
         bgzip -k ~{vcf_file}
-        bcftools index ~{vcf_file}
-        bcftools view -R ~{bed_file} ~{vcf_file} -o ~{new_filename}
+        vcf_file=$(basename vcf_file '.gz').gz
+        bcftools index $vcf_file
+        bcftools view -R ~{bed_file} $vcf_file -o ~{new_filename}
     }
 
     output {
