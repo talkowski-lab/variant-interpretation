@@ -38,7 +38,7 @@ workflow checkKnownVariants {
                 input:
                     vcf_contigs=checkVEP.filtered_vcf,
                     sv_base_mini_docker=sv_base_mini_docker, 
-                    cohort_prefix=basename(bed_file, '.bed')+'filtered.vep',
+                    cohort_prefix=basename(bed_file, '.bed')+'.filtered.vep',
                     runtime_attr_override=runtime_attr_merge_vcfs
             }
         }
@@ -71,7 +71,7 @@ workflow checkKnownVariants {
                 input:
                     vcf_contigs=checkStep3.filtered_vcf,
                     sv_base_mini_docker=sv_base_mini_docker, 
-                    cohort_prefix=basename(bed_file, '.bed')+'filtered.step3',
+                    cohort_prefix=basename(bed_file, '.bed')+'.filtered.step3',
                     runtime_attr_override=runtime_attr_merge_vcfs
             }
         }
