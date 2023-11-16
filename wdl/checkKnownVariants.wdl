@@ -14,6 +14,7 @@ workflow checkKnownVariants {
         File bed_file
         Array[Array[File]] vep_annotated_final_vcf  # check VEP
         Array[File] merged_preprocessed_vcf_files  # check step1-2
+        Array[File] merged_preprocessed_vcf_idx  # check step1-2
         Array[Array[File]] split_trio_vcfs  # check step3
         Boolean check_vep 
         Boolean check_step1
@@ -119,6 +120,8 @@ task checkKnownVariantsVCF {
     }
 
     command {
+        bgzip ~{vcf_file}
+        bcftools index ~{vcf_file}
         bcftools view -R ~{bed_file} ~{vcf_file} -o ~{new_filename}
     }
 
