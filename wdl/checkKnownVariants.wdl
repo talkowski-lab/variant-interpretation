@@ -65,7 +65,7 @@ workflow checkKnownVariants {
                         bed_file=bed_file,
                         vcf_file=vcf_file,
                         sv_base_mini_docker=sv_base_mini_docker,
-                        new_filename=basename(vcf_file, '.vcf')+'.filtered.step3.vcf'
+                        new_filename=basename(vcf_file, '.vcf')+'.filtered.step3.vcf.gz'
                 }
             }
             call mergeVCFs as mergeStep3 {
