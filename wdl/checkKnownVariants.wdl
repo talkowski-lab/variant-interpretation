@@ -182,14 +182,7 @@ task mergeVCFs {
         set -euo pipefail
         VCFS="~{write_lines(vcf_contigs)}"
         cat $VCFS | awk -F '/' '{print $NF"\t"$0}' | sort -k1,1V | awk '{print $2}' > vcfs_sorted.list
-        if [[~{merge_or_concat} = 'concat']] 
-        then
-            bcftools concat -n --no-version -Oz --file-list vcfs_sorted.list --output ~{merged_vcf_name}
-        fi
-        if [[~{merge_or_concat} = 'merge']] 
-        then
-            bcftools merge -n --no-version -Oz --file-list vcfs_sorted.list --output ~{merged_vcf_name}
-        fi
+        bcftools ~{merge_or_concat} -n --no-version -Oz --file-list vcfs_sorted.list --output ~{merged_vcf_name}
         bcftools index -t ~{merged_vcf_name}
     >>>
 
