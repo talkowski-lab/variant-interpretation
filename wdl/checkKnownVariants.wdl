@@ -37,6 +37,7 @@ workflow checkKnownVariants {
             call mergeVCFs as mergeVEP {
                 input:
                     vcf_contigs=checkVEP.filtered_vcf,
+                    vcf_contigs_idx=checkVEP.filtered_vcf_idx,
                     sv_base_mini_docker=sv_base_mini_docker, 
                     cohort_prefix=basename(bed_file, '.bed')+'.filtered.vep',
                     merge_or_concat='concat',
@@ -71,6 +72,7 @@ workflow checkKnownVariants {
             call mergeVCFs as mergeStep3 {
                 input:
                     vcf_contigs=checkStep3.filtered_vcf,
+                    vcf_contigs_idx=checkStep3.filtered_vcf_idx,
                     sv_base_mini_docker=sv_base_mini_docker, 
                     cohort_prefix=basename(bed_file, '.bed')+'.filtered.step3',
                     merge_or_concat='merge',
@@ -142,6 +144,7 @@ task checkKnownVariantsVCF {
 task mergeVCFs {
     input {
         Array[File] vcf_contigs
+        Array[File] vcf_contigs_idx
         String sv_base_mini_docker
         String cohort_prefix
         String merge_or_concat
