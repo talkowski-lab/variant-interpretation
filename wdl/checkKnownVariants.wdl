@@ -130,10 +130,12 @@ task checkKnownVariantsVCF {
         fi
         bcftools index $vcf_file
         bcftools view -R ~{bed_file} $vcf_file -o ~{new_filename}
+        bcftools index -t ~{new_filename}
     >>>
 
     output {
         File filtered_vcf=new_filename
+        File filtered_vcf_idx=new_filename+'.tbi'
     }
 }
 
