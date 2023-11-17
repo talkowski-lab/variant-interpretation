@@ -39,6 +39,7 @@ workflow checkKnownVariants {
                     vcf_contigs=checkVEP.filtered_vcf,
                     sv_base_mini_docker=sv_base_mini_docker, 
                     cohort_prefix=basename(bed_file, '.bed')+'.filtered.vep',
+                    merge_or_concat='concat',
                     runtime_attr_override=runtime_attr_merge_vcfs
             }
         }
@@ -72,6 +73,7 @@ workflow checkKnownVariants {
                     vcf_contigs=checkStep3.filtered_vcf,
                     sv_base_mini_docker=sv_base_mini_docker, 
                     cohort_prefix=basename(bed_file, '.bed')+'.filtered.step3',
+                    merge_or_concat='merge',
                     runtime_attr_override=runtime_attr_merge_vcfs
             }
         }
@@ -140,6 +142,7 @@ task mergeVCFs {
         Array[File] vcf_contigs
         String sv_base_mini_docker
         String cohort_prefix
+        String merge_or_concat
         RuntimeAttr? runtime_attr_override
     }
 
@@ -179,7 +182,14 @@ task mergeVCFs {
         set -euo pipefail
         VCFS="~{write_lines(vcf_contigs)}"
         cat $VCFS | awk -F '/' '{print $NF"\t"$0}' | sort -k1,1V | awk '{print $2}' > vcfs_sorted.list
-        bcftools concat -n --no-version -Oz --file-list vcfs_sorted.list --output ~{merged_vcf_name}
+        if [[~{merge_or_concat} = 'concat']] 
+        then
+            bcftools concat -n --no-version -Oz --file-list vcfs_sorted.list --output ~{merged_vcf_name}
+        fi
+        elif [[~{merge_or_concat} = 'merge']] 
+        then
+            bcftools merge -n --no-version -Oz --file-list vcfs_sorted.list --output ~{merged_vcf_name}
+        fi
         bcftools index -t ~{merged_vcf_name}
     >>>
 
