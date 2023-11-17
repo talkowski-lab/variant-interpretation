@@ -186,7 +186,7 @@ task mergeVCFs {
         then
             bcftools concat -n --no-version -Oz --file-list vcfs_sorted.list --output ~{merged_vcf_name}
         fi
-        elif [[~{merge_or_concat} = 'merge']] 
+        if [[~{merge_or_concat} = 'merge']] 
         then
             bcftools merge -n --no-version -Oz --file-list vcfs_sorted.list --output ~{merged_vcf_name}
         fi
