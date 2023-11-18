@@ -22,6 +22,7 @@ workflow wgs_denovo_full {
             File python_preprocess_script
             File uberSplit_v3_py
             File merge_vcf_to_tsv_fullQC_py
+            File get_sample_pedigree_py
             File lcr_uri
             File ped_uri
             Array[Array[File]] vep_annotated_final_vcf
@@ -62,6 +63,7 @@ workflow wgs_denovo_full {
         input:
             ped_uri=step1and2.ped_uri_no_header,
             split_trio_vcfs=step3.split_trio_vcfs,
+            get_sample_pedigree_py=get_sample_pedigree_py,
             trio_denovo_docker=trio_denovo_docker,
             minDQ=minDQ
     }
