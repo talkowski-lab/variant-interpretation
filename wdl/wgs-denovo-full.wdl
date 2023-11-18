@@ -75,7 +75,7 @@ workflow wgs_denovo_full {
             trio_denovo_vcf=step4.trio_denovo_vcf,
             merge_vcf_to_tsv_fullQC_py=merge_vcf_to_tsv_fullQC_py,
             trio_denovo_docker=trio_denovo_docker,
-            cohort_id=cohort_id
+            cohort_prefix=cohort_prefix
     }
 
     output {

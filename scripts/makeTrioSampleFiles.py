@@ -24,18 +24,18 @@ except Exception as e:
     # save ped no header
     bucket.blob(f"resources/pedigrees/{cohort_prefix}_no_header.ped").upload_from_string(ped.to_csv(sep='\t', index=False, header=False), 'text/csv')
 
-if cohort_prefix.startswith("Gabriel_GMKF_Beaty_OrofacialClefts_Y2_375Samples_VCF"):
-    try:
-        ped['IndividualID'] = ped['IndividualID'].str.split('__').str[1].str.upper()
-        ped['FatherID'] = ped['FatherID'].str.split('__').str[1].str.upper().fillna(0)
-        ped['MotherID'] = ped['MotherID'].str.split('__').str[1].str.upper().fillna(0)
-        bucket.blob(f"resources/pedigrees/{ped_uri.split('/')[-1]}").upload_from_string(ped.to_csv(sep='\t', index=False), 'text/csv')
-        print('Updated pedigree csv saved')
-    except Exception as e:
-        pass
+# if cohort_prefix.startswith("Gabriel_GMKF_Beaty_OrofacialClefts_Y2_375Samples_VCF"):
+#     try:
+#         ped['IndividualID'] = ped['IndividualID'].str.split('__').str[1].str.upper()
+#         ped['FatherID'] = ped['FatherID'].str.split('__').str[1].str.upper().fillna(0)
+#         ped['MotherID'] = ped['MotherID'].str.split('__').str[1].str.upper().fillna(0)
+#         bucket.blob(f"resources/pedigrees/{ped_uri.split('/')[-1]}").upload_from_string(ped.to_csv(sep='\t', index=False), 'text/csv')
+#         print('Updated pedigree csv saved')
+#     except Exception as e:
+#         pass
 
 trio = ped[(ped.FatherID != '0') & (ped.MotherID != '0')].iloc[:, :4]
-trio['TrioID'] = trio['FamID'] + '-' + trio['IndividualID']
+trio['TrioID'] = trio['FamID'].astype(str) + '-' + trio['IndividualID'].astype(str)
 trio.rename(columns={'IndividualID': 'SampleID'}, inplace=True)
 bucket.blob(f"resources/metadata/{cohort_prefix}_trio_list.txt").upload_from_string(trio.to_csv(sep='\t', index=False), 'text/csv')
 print('Trio csv saved')
