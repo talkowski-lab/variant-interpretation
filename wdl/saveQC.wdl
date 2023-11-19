@@ -72,6 +72,7 @@ task saveQCtsvs {
 
         bcftools query -H -R ~{bed_file} ~{vcf} -o ~{cohort_prefix}.qc.tsv;
 
-        gsutil -m cp ~{cohort_prefix}.qual.dp.tsv ~{cohort_prefix}.qc.tsv ~{qc_dir}
+        gsutil -m cp ~{cohort_prefix}.qual.dp.tsv ~{qc_dir}
+        gsutil -m cp ~{cohort_prefix}.qc.tsv ~{qc_dir}
     }
 }
