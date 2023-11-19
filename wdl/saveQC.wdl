@@ -68,9 +68,9 @@ task saveQCtsvs {
     }
 
     command {
-        bcftools query -H -R ~{bed_file} ~{vcf} -o ~{cohort_prefix}.qual.dp.tsv &
+        bcftools query -H -R ~{bed_file} -f '%CHROM\t%POS\t%REF\t%ALT[\t%QUAL\t%DP]\n' ~{vcf} -o ~{cohort_prefix}.qual.dp.tsv &
 
-        bcftools query -H -R ~{bed_file} ~{vcf} -o ~{cohort_prefix}.qc.tsv;
+        bcftools query -H -R ~{bed_file} -f '%CHROM\t%POS\t%REF\t%ALT\t%INFO/SOR\t%INFO/ReadPosRankSum\t%INFO/QD\t%INFO/MQ\n' ~{vcf} -o ~{cohort_prefix}.qc.tsv;
 
         gsutil -m cp ~{cohort_prefix}.qual.dp.tsv ~{qc_dir}
         gsutil -m cp ~{cohort_prefix}.qc.tsv ~{qc_dir}
