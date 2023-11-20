@@ -23,6 +23,7 @@ workflow vepAnnotate {
         File human_ancestor_fa
         File human_ancestor_fa_fai
         File top_level_fa
+        Boolean subset_ped=true
         Boolean merge_annotated_vcfs=true
         Int? records_per_shard
         RuntimeAttr? runtime_attr_normalize
@@ -50,6 +51,7 @@ workflow vepAnnotate {
                 human_ancestor_fa_fai=human_ancestor_fa_fai,
                 top_level_fa=top_level_fa, 
                 cohort_prefix=cohort_prefix,
+                subset_ped=subset_ped,
                 merge_annotated_vcfs=merge_annotated_vcfs,
                 records_per_shard=select_first([records_per_shard]),
                 runtime_attr_normalize=runtime_attr_normalize,

@@ -23,6 +23,7 @@ workflow runSomalier {
         String cohort_prefix
         String somalier_docker
         String hail_docker
+        Boolean subset_ped=true
         RuntimeAttr? runtime_attr_relatedness
         RuntimeAttr? runtime_attr_correct
     }
@@ -64,6 +65,7 @@ workflow runSomalier {
             out_samples=relatedness.out_samples,
             cohort_prefix=cohort_prefix,
             hail_docker=hail_docker,
+            subset_ped=subset_ped,
             runtime_attr_override=runtime_attr_correct
         }
     }
@@ -234,6 +236,7 @@ task correctPedigree {
         File out_samples
         String cohort_prefix
         String hail_docker
+        Boolean subset_ped=true
         RuntimeAttr? runtime_attr_override    
     }
 
@@ -259,7 +262,7 @@ task correctPedigree {
     }
 
     command {
-        python3 ~{correct_somalier_ped_python_script} ~{out_samples} ~{ped_uri} ~{cohort_prefix} > stdout
+        python3 ~{correct_somalier_ped_python_script} ~{out_samples} ~{ped_uri} ~{cohort_prefix} ~{subset_ped} > stdout
     }
 
     output {

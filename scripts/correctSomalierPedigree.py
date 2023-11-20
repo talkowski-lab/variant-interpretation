@@ -6,6 +6,7 @@ import sys
 samples_uri = sys.argv[1]
 ped_uri = sys.argv[2]
 cohort_prefix = sys.argv[3]
+subset_ped = bool(sys.argv[4].upper())
 
 ped = pd.read_csv(ped_uri, sep='\t')
 try:
@@ -19,6 +20,10 @@ ped.index = ped.sample_id
 
 somalier = pd.read_csv(samples_uri, sep='\t')
 somalier.index = somalier.sample_id
+
+if subset_ped:
+    ped = ped.loc[somalier.index]
+
 somalier = somalier.loc[ped.index]
 somalier.columns = somalier.columns.str.replace("#", "")
 

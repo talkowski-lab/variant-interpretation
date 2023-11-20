@@ -21,7 +21,8 @@ workflow vepAnnotateSingle {
         File human_ancestor_fa_fai
         File top_level_fa
         String cohort_prefix
-        Boolean merge_annotated_vcfs=true
+        Boolean subset_ped
+        Boolean merge_annotated_vcfs
         Int? records_per_shard
         RuntimeAttr? runtime_attr_normalize
         RuntimeAttr? runtime_attr_split_vcf
