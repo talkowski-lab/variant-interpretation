@@ -12,6 +12,7 @@ struct RuntimeAttr {
 workflow saveQC {
     input {
         File vcf
+        File vcf_idx
         File bed_file
         String qc_dir
         String cohort_prefix
@@ -22,6 +23,7 @@ workflow saveQC {
     call saveQCtsvs {
         input:
             vcf=vcf,
+            vcf_idx=vcf_idx,
             bed_file=bed_file,
             cohort_prefix=cohort_prefix,
             qc_dir=qc_dir,
@@ -33,6 +35,7 @@ workflow saveQC {
 task saveQCtsvs {
     input {
         File vcf
+        File vcf_idx
         File bed_file
         String cohort_prefix
         String qc_dir
