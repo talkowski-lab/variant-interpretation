@@ -33,7 +33,7 @@ workflow runSomalier {
                     bed_file=bed_file,
                     vcf_uri=vcf_uri,
                     somalier_docker=somalier_docker,
-                    runtime_attr_override=runtime_attr_relatedness
+                    runtime_attr_override=select_first([runtime_attr_relatedness])
             }
         }
 
@@ -43,7 +43,7 @@ workflow runSomalier {
                 vcf_files_idx=subsetVCFs.subset_vcf_idx,
                 somalier_docker=somalier_docker,
                 cohort_prefix=cohort_prefix,
-                runtime_attr_override=runtime_attr_relatedness
+                runtime_attr_override=select_first([runtime_attr_relatedness])
         }
 
         call relatedness {
@@ -56,7 +56,7 @@ workflow runSomalier {
                     somalier_1kg_tar=somalier_1kg_tar,
                     cohort_prefix=cohort_prefix,
                     somalier_docker=somalier_docker,
-                    runtime_attr_override=runtime_attr_relatedness
+                    runtime_attr_override=select_first([runtime_attr_relatedness])
         }
 
         call correctPedigree {
@@ -66,7 +66,7 @@ workflow runSomalier {
             out_samples=relatedness.out_samples,
             cohort_prefix=cohort_prefix,
             hail_docker=hail_docker,
-            runtime_attr_override=runtime_attr_correct
+            runtime_attr_override=select_first([runtime_attr_correct])
         }
     }
 
