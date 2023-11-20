@@ -14,7 +14,6 @@ workflow runSomalier {
         File sites_uri
         File hg38_fasta
         Array[Array[File]] vep_annotated_final_vcf
-        Array[Array[File]] vep_annotated_final_vcf_idx
         File ped_uri
         File bed_file
         File ancestry_labels_1kg
@@ -33,6 +32,7 @@ workflow runSomalier {
                 input:
                     bed_file=bed_file,
                     vcf_uri=vcf_uri,
+                    vcf_idx=vcf_uri+'.tbi',
                     somalier_docker=somalier_docker
             }
         }
@@ -84,6 +84,7 @@ workflow runSomalier {
 task subsetVCFs {
     input {
         File vcf_uri
+        File vcf_idx
         File bed_file
         String somalier_docker
         RuntimeAttr? runtime_attr_override
