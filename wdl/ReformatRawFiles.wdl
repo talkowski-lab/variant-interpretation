@@ -191,7 +191,7 @@ task raw_divideByChrom{
         File per_chromosome_bed_output = "${chromosome}.bed.gz"
     }
 
-    command {
+    command <<<
         set -euo pipefail
         
         zcat ${bed_file} | \
@@ -199,7 +199,7 @@ task raw_divideByChrom{
         awk -F"\t" '$6 != "" {print $0}' | \
         bgzip -c > ${chromosome}.bed.gz
 
-    }
+    >>>
 
     runtime {
         cpu: select_first([runtime_attr.cpu, default_attr.cpu])
