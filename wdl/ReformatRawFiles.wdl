@@ -196,6 +196,7 @@ task raw_divideByChrom{
         
         zcat ${bed_file} | \
         grep -w ^${chromosome} | \
+        awk -F"\t" '$6 != "" {print $0}' | \
         bgzip -c > ${chromosome}.bed.gz
 
     }
