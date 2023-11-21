@@ -3,8 +3,8 @@ import "Structs.wdl"
 workflow ConcatinatePlots {
 
     input {
-        Array[File] rd_plots
-        Array[File] igv_plots
+        File rd_plots
+        File igv_plots
         String prefix
         File varfile
         File pedfile
@@ -20,7 +20,7 @@ workflow ConcatinatePlots {
                 varfile = varfile,
                 pedfile = pedfile,
                 igv_docker = igv_docker,
-                runtime_attr_concatinate = runtime_attr_concatinate
+                runtime_attr_override = runtime_attr_concatinate
     }
 
     output {
@@ -37,7 +37,7 @@ task concatinate_plots{
         File varfile
         File pedfile
         String igv_docker
-        RuntimeAttr? runtime_attr_concatinate
+        RuntimeAttr? runtime_attr_override
     }
 
     Float input_size = size(select_all([rd_plots, igv_plots, varfile, pedfile]), "GB")
