@@ -222,12 +222,12 @@ task mergeVCFs {
         VCFS="~{write_lines(vcf_files)}"
         cat $VCFS | awk -F '/' '{print $NF"\t"$0}' | sort -k1,1V | awk '{print $2}' > vcfs_sorted.list
         bcftools concat --no-version -n -Oz --file-list vcfs_sorted.list --output ~{merged_vcf_name}
-        bcftools index -t ~{merged_vcf_name}
+        # bcftools index -t ~{merged_vcf_name}
     >>>
 
     output {
         File merged_vcf_file=merged_vcf_name
-        File merged_vcf_idx=merged_vcf_name + ".tbi"
+        # File merged_vcf_idx=merged_vcf_name + ".tbi"
     }
 }
 
