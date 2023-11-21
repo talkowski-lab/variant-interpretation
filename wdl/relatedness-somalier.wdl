@@ -21,6 +21,7 @@ workflow runSomalier {
         File somalier_1kg_tar
         String cohort_prefix
         String somalier_docker
+        String sv_base_mini_docker
         String hail_docker
         Boolean subset_ped=true
         RuntimeAttr? runtime_attr_relatedness
@@ -41,7 +42,7 @@ workflow runSomalier {
             input:
                 vcf_files=subsetVCFs.subset_vcf,
                 vcf_files_idx=subsetVCFs.subset_vcf_idx,
-                somalier_docker=somalier_docker,
+                sv_base_mini_docker=sv_base_mini_docker,
                 cohort_prefix=cohort_prefix
         }
 
@@ -179,7 +180,7 @@ task mergeVCFs {
     input {
         Array[File] vcf_files
         Array[File] vcf_files_idx
-        String somalier_docker
+        String sv_base_mini_docker
         String cohort_prefix
         RuntimeAttr? runtime_attr_override
     }
@@ -210,7 +211,7 @@ task mergeVCFs {
         cpu: select_first([runtime_override.cpu_cores, runtime_default.cpu_cores])
         preemptible: select_first([runtime_override.preemptible_tries, runtime_default.preemptible_tries])
         maxRetries: select_first([runtime_override.max_retries, runtime_default.max_retries])
-        docker: somalier_docker
+        docker: sv_base_mini_docker
         bootDiskSizeGb: select_first([runtime_override.boot_disk_gb, runtime_default.boot_disk_gb])
     }
 
