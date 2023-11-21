@@ -153,7 +153,7 @@ workflow VisualizePlots{
         File igv_plots_tar_gz_pe_ = select_first([igv_cram_plots.tar_gz_pe, igv_evidence_plots.tar_gz_pe])
         File RdTest_Plots_ = select_first([RdTest.Plots])
 
-        call concat_rd_igv.concatinate_plots{
+        call concat_rd_igv.ConcatinatePlots as concatinate_plots{
             input:
                 rd_plots = RdTest_Plots_,
                 igv_plots = igv_plots_tar_gz_pe_,
