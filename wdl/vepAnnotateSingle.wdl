@@ -113,8 +113,8 @@ workflow vepAnnotateSingle {
                 cohort_prefix=cohort_prefix,
                 runtime_attr_override=runtime_attr_vep_annotate
         }       
-        Array[File] merged_vcf_file = select_first([mergeVCFs.merged_vcf_file])
-        Array[File] merged_vcf_idx = select_first([mergeVCFs.merged_vcf_idx])
+        File merged_vcf_file = select_first([mergeVCFs.merged_vcf_file])
+        File merged_vcf_idx = select_first([mergeVCFs.merged_vcf_idx])
     }
 
     output {   
@@ -186,7 +186,7 @@ task addGenotypes {
 }
 
 
-task mergeVCFs{
+task mergeVCFs {
     input {
         Array[File] vcf_contigs
         String sv_base_mini_docker
@@ -235,8 +235,8 @@ task mergeVCFs{
     >>>
 
     output {
-        Array[File] merged_vcf_file=merged_vcf_name
-        Array[File] merged_vcf_idx=merged_vcf_name + ".tbi"
+        File merged_vcf_file=merged_vcf_name
+        File merged_vcf_idx=merged_vcf_name + ".tbi"
     }
 }
 
