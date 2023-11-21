@@ -21,7 +21,7 @@ workflow ConcatinatePlots {
                 pedfile = pedfile,
                 igv_docker = igv_docker,
                 runtime_attr_concatinate = runtime_attr_concatinate
-
+    }
 
     output {
         File output_plots = concatinate_plots.plots
