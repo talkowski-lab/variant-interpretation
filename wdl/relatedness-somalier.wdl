@@ -38,29 +38,38 @@ workflow runSomalier {
             }
         }
 
-        call mergeVCFs {
+        call mergeVCFs as mergeSharded {
             input:
                 vcf_files=subsetVCFs.subset_vcf,
                 vcf_files_idx=subsetVCFs.subset_vcf_idx,
                 sv_base_mini_docker=sv_base_mini_docker,
                 cohort_prefix=cohort_prefix
         }
+    }
 
-        call relatedness {
-                input:
-                    sites_uri=sites_uri,
-                    hg38_fasta=hg38_fasta,
-                    vcf_uri=mergeVCFs.merged_vcf_file,
-                    ped_uri=ped_uri,
-                    ancestry_labels_1kg=ancestry_labels_1kg,
-                    somalier_1kg_tar=somalier_1kg_tar,
-                    cohort_prefix=cohort_prefix,
-                    somalier_docker=somalier_docker,
-                    runtime_attr_override=runtime_attr_relatedness
-        }
+    call mergeVCFs {
+        input:
+            vcf_files=mergeSharded.merged_vcf_file,
+            vcf_files_idx=mergeSharded.merged_vcf_idx,
+            sv_base_mini_docker=sv_base_mini_docker,
+            cohort_prefix=cohort_prefix
+    }
 
-        call correctPedigree {
-            input:
+    call relatedness {
+        input:
+            sites_uri=sites_uri,
+            hg38_fasta=hg38_fasta,
+            vcf_uri=mergeVCFs.merged_vcf_file,
+            ped_uri=ped_uri,
+            ancestry_labels_1kg=ancestry_labels_1kg,
+            somalier_1kg_tar=somalier_1kg_tar,
+            cohort_prefix=cohort_prefix,
+            somalier_docker=somalier_docker,
+            runtime_attr_override=runtime_attr_relatedness
+    }
+
+    call correctPedigree {
+        input:
             ped_uri=ped_uri,
             correct_somalier_ped_python_script=correct_somalier_ped_python_script,
             out_samples=relatedness.out_samples,
@@ -68,17 +77,16 @@ workflow runSomalier {
             hail_docker=hail_docker,
             subset_ped=subset_ped,
             runtime_attr_override=runtime_attr_correct
-        }
     }
 
     output {
-        Array[File] out_samples = relatedness.out_samples
-        Array[File] out_pairs = relatedness.out_pairs
-        Array[File] out_groups = relatedness.out_groups
-        Array[File] out_html = relatedness.out_html
-        Array[File] ancestry_html = relatedness.ancestry_html
-        Array[File] ancestry_out = relatedness.ancestry_out
-        Array[File] corrected_ped = correctPedigree.corrected_ped
+        File out_samples = relatedness.out_samples
+        File out_pairs = relatedness.out_pairs
+        File out_groups = relatedness.out_groups
+        File out_html = relatedness.out_html
+        File ancestry_html = relatedness.ancestry_html
+        File ancestry_out = relatedness.ancestry_out
+        File corrected_ped = correctPedigree.corrected_ped
     }
 }
 
