@@ -6,7 +6,7 @@ version 1.0
 
 ##########################################################################################
 
-import "IgvPlots.wdl" as igv_plots
+import "IgvCramPlots.wdl" as igv_plots
 import "Structs.wdl"
 
 workflow IGV_all_samples {
@@ -17,12 +17,12 @@ workflow IGV_all_samples {
         File varfile
         File reference
         File reference_index
-        Boolean cram_localization
+        Int igv_max_window
+        Boolean file_localization
         Boolean requester_pays
         Boolean is_snv_indel
         String prefix
         String buffer
-        String buffer_large
         String sv_base_mini_docker
         String igv_docker
         String variant_interpretation_docker
@@ -37,19 +37,19 @@ workflow IGV_all_samples {
         Array[String] family_ids = transpose(read_tsv(fam_ids_))[0]
     }
 
-    if (!(is_snv_indel)){
-        call updateCpxBed{
-            input:
-                varfile = varfile,
-                variant_interpretation_docker = variant_interpretation_docker,
-                runtime_attr_override = runtime_attr_cpx
-        }
-    }
+#    if (!(is_snv_indel)){
+#        call updateCpxBed{
+#            input:
+#                varfile = varfile,
+#                variant_interpretation_docker = variant_interpretation_docker,
+#                runtime_attr_override = runtime_attr_cpx
+#        }
+#    }
 
     if (!(defined(fam_ids))) {
         call generate_families{
             input:
-                varfile = select_first([updateCpxBed.bed_output, varfile]),
+                varfile = varfile,
                 ped_file = ped_file,
                 sv_base_mini_docker = sv_base_mini_docker,
                 runtime_attr_override = runtime_attr_run_igv
@@ -78,7 +78,8 @@ workflow IGV_all_samples {
 
         call generate_per_family_bed{
             input:
-                varfile = select_first([updateCpxBed.bed_output, varfile]),
+#                varfile = select_first([updateCpxBed.bed_output, varfile]),
+                varfile = varfile,
                 samples = update_sample_crai_cram.per_family_samples,
                 family = family,
                 ped_file = ped_file,
@@ -86,20 +87,20 @@ workflow IGV_all_samples {
                 runtime_attr_override=runtime_attr_run_igv
         }
         
-        if (cram_localization){
+        if (file_localization){
             call igv_plots.IGV as IGV_localize {
                 input:
                     varfile = generate_per_family_bed.per_family_varfile,
                     family = family,
                     ped_file = ped_file,
                     samples = update_sample_crai_cram.per_family_samples,
-                    cram_localization = cram_localization,
+                    file_localization = file_localization,
                     requester_pays = requester_pays,
+                    igv_max_window = igv_max_window,
                     crams_localize = generate_per_family_sample_crai_cram.per_family_crams_files,
                     crais_localize = generate_per_family_sample_crai_cram.per_family_crais_files,
                     sample_crai_cram = generate_per_family_sample_crai_cram.subset_sample_crai_cram,
                     buffer = buffer,
-                    buffer_large = buffer_large,
                     reference = reference,
                     reference_index = reference_index,
                     igv_docker = igv_docker,
@@ -108,20 +109,20 @@ workflow IGV_all_samples {
             }
         }
 
-        if (!(cram_localization)){
+        if (!(file_localization)){
             call igv_plots.IGV as IGV_parse {
                 input:
                     varfile = generate_per_family_bed.per_family_varfile,
                     family = family,
                     ped_file = ped_file,
-                    cram_localization = cram_localization,
+                    file_localization = file_localization,
                     requester_pays = requester_pays,
-                    crams_parse = generate_per_family_sample_crai_cram.per_family_crams_files,
-                    crais_parse = generate_per_family_sample_crai_cram.per_family_crais_files,
+                    igv_max_window = igv_max_window,
+                    crams_parse = generate_per_family_sample_crai_cram.per_family_crams_strings,
+                    crais_parse = generate_per_family_sample_crai_cram.per_family_crais_strings,
                     samples = update_sample_crai_cram.per_family_samples,
                     updated_sample_crai_cram = update_sample_crai_cram.changed_sample_crai_cram,
                     buffer = buffer,
-                    buffer_large = buffer_large,
                     reference = reference,
                     reference_index = reference_index,
                     igv_docker = igv_docker,
@@ -213,7 +214,7 @@ task generate_per_family_sample_crai_cram{
     command <<<
         set -euo pipefail
         grep -w ^~{family} ~{ped_file} | cut -f2 > samples_list.txt
-        grep -f samples_list.txt ~{sample_crai_cram} > subset_sample_crai_cram.txt
+        grep -w -f samples_list.txt ~{sample_crai_cram} > subset_sample_crai_cram.txt
         cut -f1 subset_sample_crai_cram.txt > samples.txt
         cut -f2 subset_sample_crai_cram.txt > crai.txt
         cut -f3 subset_sample_crai_cram.txt > cram.txt

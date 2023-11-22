@@ -10,8 +10,10 @@ workflow RdTestVisualization{
         File batch_medianfile
         File ped_file
         File sample_batches
+        File outlier_samples
         File batch_bincov
         File bed
+#        File? regeno
         String sv_pipeline_rdtest_docker
         String variant_interpretation_docker
         RuntimeAttr? runtime_attr_rdtest
@@ -22,7 +24,7 @@ workflow RdTestVisualization{
         File fam_ids_ = select_first([fam_ids])
         Array[String] family_ids = transpose(read_tsv(fam_ids_))[0]
     }
-
+    #TO FIX: Currently, if defined families, rd fails is a family does not have DEL/DUP
     if (!(defined(fam_ids))) {
         call generate_families{
             input:
@@ -44,6 +46,7 @@ workflow RdTestVisualization{
                 variant_interpretation_docker = variant_interpretation_docker,
                 runtime_attr_override = runtime_attr_create_bed
         }
+
         call rdtest{
             input:
                 bed=generatePerFamilyBed.bed_file,
@@ -51,11 +54,13 @@ workflow RdTestVisualization{
                 ped_file = ped_file,
                 medianfile = generatePerFamilyBed.medianfile,
                 sample_batches=sample_batches,
+                outlier_samples=outlier_samples,
+#                regeno = regeno,
                 batch_bincov=batch_bincov,
                 prefix=prefix,
                 sv_pipeline_rdtest_docker=sv_pipeline_rdtest_docker,
                 runtime_attr_override = runtime_attr_rdtest
-        }
+            }
     }
 
     call integrate_rd_plots{
@@ -65,9 +70,10 @@ workflow RdTestVisualization{
             sv_pipeline_rdtest_docker = sv_pipeline_rdtest_docker,
             runtime_attr_override = runtime_attr_rdtest
     }
-        output{
-            File Plots = integrate_rd_plots.plot_tar
-        }
+
+    output{
+        File Plots = integrate_rd_plots.plot_tar
+    }
 }
 
 task generatePerFamilyBed {
@@ -134,6 +140,7 @@ task rdtest {
         File ped_file
         File sample_batches # samples, batches
         File batch_bincov # batch, bincov, index
+        File outlier_samples
         Array[File] medianfile
         String prefix
         String sv_pipeline_rdtest_docker
@@ -166,7 +173,113 @@ task rdtest {
 
         i=0
         bedtools merge -i test.bed > test.merged.bed
-        while read batch bincov
+        while read batch bincov index
+        do
+            let "i=$i+1"
+            if [ $i -gt 1 ]
+            then
+                export GCS_OAUTH_TOKEN=`gcloud auth application-default print-access-token`
+                tabix -h $bincov -R test.merged.bed|cut -f4->covfile.$i.bed
+            else
+                export GCS_OAUTH_TOKEN=`gcloud auth application-default print-access-token`
+                tabix -h $bincov -R test.merged.bed>covfile.$i.bed
+
+        fi
+        done<bincovlist.txt
+
+        paste covfile.*.bed |tr ' ' '\t' |bgzip >allcovfile.bed.gz
+        tabix allcovfile.bed.gz
+        rm covfile.*.bed
+        zcat allcovfile.bed.gz |head -n 1|cut -f 4-|tr '\t' '\n'>samples.txt
+
+        ##Pass only subset ped file
+        head -n+1 ~{ped_file} > subset_families.ped
+        grep -wf families.txt ~{ped_file} >> subset_families.ped
+        cut -f2 subset_families.ped | sort -u > subset_samples.txt
+
+        ##Remove outliers from RD plot except samples from this family
+        grep -vf subset_samples.txt ~{outlier_samples} > outliers_keepFams.txt
+        grep -vf outliers_keepFams.txt samples.txt > samples_noOutliers.txt
+
+        ##Run RD test script
+        Rscript /opt/RdTest/Rd.R \
+            -b test.bed \
+            -n ~{prefix} \
+            -c allcovfile.bed.gz \
+            -m medianfile.txt \
+            -f subset_families.ped \
+            -a TRUE \
+            -d TRUE \
+            -w samples_noOutliers.txt \
+            -s 10000000
+
+        mkdir rd_plots
+        mv *jpg rd_plots
+        tar -czvf rd_plots.tar.gz rd_plots/
+    >>>
+
+    output {
+        File plots = "rd_plots.tar.gz"
+        File allcovfile = "allcovfile.bed.gz"
+        File median_file = "medianfile.txt"
+        File test_bed = "test.bed"
+        File samples_text = "samples_noOutliers.txt"
+    }
+
+    runtime {
+        cpu: select_first([runtime_attr.cpu, default_attr.cpu])
+        memory: select_first([runtime_attr.mem_gb, default_attr.mem_gb]) + " GiB"
+        disks: "local-disk " + select_first([runtime_attr.disk_gb, default_attr.disk_gb]) + " HDD"
+        bootDiskSizeGb: select_first([runtime_attr.boot_disk_gb, default_attr.boot_disk_gb])
+        docker: sv_pipeline_rdtest_docker
+        preemptible: select_first([runtime_attr.preemptible, default_attr.preemptible])
+        maxRetries: select_first([runtime_attr.max_retries, default_attr.max_retries])
+    }
+}
+
+# Run rdtest
+task rdtest_regeno {
+    input{
+        File bed
+        String family
+        File ped_file
+        File sample_batches # samples, batches
+        File batch_bincov # batch, bincov, index
+        File outlier_samples
+        File? regeno
+        Array[File] medianfile
+        String prefix
+        String sv_pipeline_rdtest_docker
+        RuntimeAttr? runtime_attr_override
+    }
+    Float input_size = size(select_all([bed, sample_batches, batch_bincov, medianfile, ped_file, regeno, outlier_samples]), "GB")
+    Float base_disk_gb = 10.0
+    Float base_mem_gb = 3.75
+
+    RuntimeAttr default_attr = object {
+                                      mem_gb: base_mem_gb,
+                                      disk_gb: ceil(base_disk_gb + input_size),
+                                      cpu: 1,
+                                      preemptible: 2,
+                                      max_retries: 1,
+                                      boot_disk_gb: 8
+                                  }
+
+    RuntimeAttr runtime_attr = select_first([runtime_attr_override, default_attr])
+
+    command <<<
+        set -ex
+        cat ~{bed} |egrep "DEL|DUP" | sort -k1,1 -k2,2n> test.bed
+        cut -f5 test.bed |sed 's/\,/\n/g'|sort -u > samples.txt
+        cat ~{ped_file} | grep -w -f samples.txt | cut -f1 | sort -u > families.txt
+        cat ~{ped_file} | grep -w -f families.txt | cut -f2 | sort -u > all_samples.txt
+        fgrep -wf all_samples.txt ~{sample_batches} |awk '{print $2}' |sort -u >existing_batches.txt
+        grep -w -f existing_batches.txt ~{batch_bincov} > bincovlist.txt
+        paste ~{sep=" " medianfile} > medianfile.txt
+
+        i=0
+        bedtools merge -i test.bed > test.merged.bed
+        while read batch bincov index
         do
             let "i=$i+1"
             if [ $i -gt 1 ]
@@ -184,16 +297,30 @@ task rdtest {
         tabix allcovfile.bed.gz
         rm covfile.*.bed
         zcat allcovfile.bed.gz |head -n 1|cut -f 4-|tr '\t' '\n'>samples.txt
+
+        ##Pass only subset ped file
+        head -n+1 ~{ped_file} > subset_families.ped
+        grep -wf families.txt ~{ped_file} >> subset_families.ped
+        cut -f2 subset_families.ped | sort -u > subset_samples.txt
+
+        ##Remove outliers from RD plot except samples from this family
+        grep -vf subset_samples.txt ~{outlier_samples} > outliers_keepFams.txt
+        grep -vf outliers_keepFams.txt samples.txt > samples_noOutliers.txt
+
+        ##Run RD test script
         Rscript /opt/RdTest/Rd.R \
             -b test.bed \
             -n ~{prefix} \
             -c allcovfile.bed.gz \
             -m medianfile.txt \
-            -f ~{ped_file} \
+            -f subset_families.ped \
             -a TRUE \
             -d TRUE \
-            -w samples.txt \
-            -s 10000000
+            -w samples_noOutliers.txt \
+            -s 10000000 \
+            -g TRUE
+            -r {regeno}
+
         mkdir rd_plots
         mv *jpg rd_plots
         tar -czvf rd_plots.tar.gz rd_plots/
@@ -204,7 +331,12 @@ task rdtest {
         File allcovfile = "allcovfile.bed.gz"
         File median_file = "medianfile.txt"
         File test_bed = "test.bed"
-        File samples_text = "samples.txt"
+        File samples_text = "samples_noOutliers.txt"
+        File rd_median_geno = "~{prefix}.median_geno"
+        File rd_denovo = "~{prefix}.denovo"
+        File rd_geno = "~{prefix}.geno"
+        File rd_gq = "~{prefix}.gq"
+        File rd_vargq = "~{prefix}.vargq"
     }
     
     runtime {

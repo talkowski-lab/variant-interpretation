@@ -1036,6 +1036,7 @@ if(gq_var<0) {gq_var<-1}
 ##assign anything without a call as having a gq of 0###
 } else {gq_var<-0}
 ##write out cnv medians for each sample##
+
 if(!file.exists(paste(outFolder,outputname,".median_geno",sep=""))) {
   ##write header##
   write.table(matrix(c("chr","start","end","cnvID",names(cnv_median)),nrow=1),paste(outFolder, outputname, ".median_geno", sep = ""),quote=FALSE,row.names=FALSE,col.names=FALSE,sep= "\t")
@@ -1384,6 +1385,7 @@ if(class(results)=="list") {
 } else {
   results <- t(results)
 }
+
 #write ouputfile##
 if (opt$denovo==FALSE) {
    if(!file.exists(paste(opt$outFolder,opt$outputname,".metrics",sep=""))) {

@@ -172,10 +172,10 @@ workflow deNovoSV {
         }
     }
 
-    #merges the per chromosome de novo SV outputs
-    call plot_mergeFinalBedFiles{
+    #merges the per chromosome final de novo SV outputs
+    call mergeDenovoBedFiles{
         input:
-            bed_files = getDeNovo.merged_annotation_output_file,
+            bed_files = getDeNovo.per_chromosome_final_output_file,
             variant_interpretation_docker=variant_interpretation_docker,
             runtime_attr_override = runtime_attr_merge_final_bed_files
     }
@@ -183,16 +183,16 @@ workflow deNovoSV {
     #outputs a final callset of de novo SVs as well as outlier de novo SV calls
     call callOutliers {
         input:
-            bed_file = plot_mergeFinalBedFiles.merged_output,
+            bed_file = mergeDenovoBedFiles.merged_denovo_output,
             variant_interpretation_docker=variant_interpretation_docker,
             runtime_attr_override = runtime_attr_call_outliers
     }
 
     #generates plots for QC
-    call plot_createPlots{
+    call createPlots{
         input:
-            bed_file = callOutliers.final_denovo_output,
-            outliers_file = callOutliers.final_denovo_outliers_output,
+            bed_file = callOutliers.final_denovo_nonOutliers_output,
+#            outliers_file = callOutliers.final_denovo_outliers_output,
             ped_input = ped_input,
             variant_interpretation_docker=variant_interpretation_docker,
             runtime_attr_override = runtime_attr_create_plots
@@ -208,21 +208,10 @@ workflow deNovoSV {
 
     output {
         File cleaned_ped = cleanPed.cleaned_ped
-        File denovo_output = callOutliers.final_denovo_output
-        File denovo_outliers_output = callOutliers.final_denovo_outliers_output
-        File annotated_output = callOutliers.final_annotation_output
-        File denovo_output_plots = plot_createPlots.output_plots
-        File per_chrom_plot = plot_createPlots.per_chrom_plot
-        File per_sample_plot = plot_createPlots.per_sample_plot
-        File per_freq_plot = plot_createPlots.per_freq_plot
-        File per_freq_gd_plot = plot_createPlots.per_freq_gd_plot
-        File per_freq_not_gd = plot_createPlots.per_freq_not_gd
-        File size_plot = plot_createPlots.size_plot
-        File evidence_plot = plot_createPlots.evidence_plot
-        File annotation_plot = plot_createPlots.annotation_plot
-        File per_type_plot = plot_createPlots.per_type_plot
-        File per_sample_boxplot = plot_createPlots.per_sample_boxplot
-        File per_type_boxplot = plot_createPlots.per_type_boxplot
+        File final_denovo_nonOutliers = callOutliers.final_denovo_nonOutliers_output
+        File final_denovo_outliers = callOutliers.final_denovo_outliers_output
+        File final_denovo_nonOutliers_plots = createPlots.output_plots
+        Array [File] denovo_output_annotated = getDeNovo.per_chromosome_annotation_output_file
         File gd_depth = mergeGenomicDisorders.gd_output_from_depth
         File gd_vcf = getGenomicDisorders.gd_output_from_final_vcf[1]
     }
@@ -417,7 +406,7 @@ task mergeGenomicDisorders{
     }
 }
 
-task plot_mergeFinalBedFiles{
+task mergeDenovoBedFiles{
     input{
         Array[File] bed_files
         String variant_interpretation_docker
@@ -439,14 +428,14 @@ task plot_mergeFinalBedFiles{
     RuntimeAttr runtime_attr = select_first([runtime_attr_override, default_attr])
 
     output{
-        File merged_output = "merged.bed.gz"
+        File merged_denovo_output = "denovo.merged.bed.gz"
     }
 
     command {
 
-        zcat ${bed_files[0]} | head -n+1 > merged.bed
-        zcat ${sep=" " bed_files} | grep -v ^chrom >> merged.bed
-        bgzip merged.bed
+        zcat ${bed_files[0]} | head -n+1 > denovo.merged.bed
+        zcat ${sep=" " bed_files} | grep -v ^chrom >> denovo.merged.bed
+        bgzip denovo.merged.bed
     }
 
     runtime {
@@ -482,9 +471,9 @@ task callOutliers{
     RuntimeAttr runtime_attr = select_first([runtime_attr_override, default_attr])
 
     output{
-        File final_denovo_output = "final.denovo.merged.bed.gz"
+        File final_denovo_nonOutliers_output = "final.denovo.merged.bed.gz"
         File final_denovo_outliers_output = "final.denovo.merged.outliers.bed.gz"
-        File final_annotation_output = "de_novo_annotated_output.bed.gz"
+        File final_denovo_allSamples_output = "final.denovo.merged.allSamples.bed.gz"
     }
 
     command {
@@ -496,7 +485,7 @@ task callOutliers{
 
         bgzip final.denovo.merged.bed
         bgzip final.denovo.merged.outliers.bed
-        bgzip de_novo_annotated_output.bed
+        bgzip final.denovo.merged.allSamples.bed
 
     }
 
@@ -511,16 +500,17 @@ task callOutliers{
     }
 }
 
-task plot_createPlots{
+task createPlots{
     input{
         File bed_file
-        File outliers_file
+#        File outliers_file
         File ped_input
         String variant_interpretation_docker
         RuntimeAttr? runtime_attr_override
     }
 
-    Float input_size = size(select_all([bed_file, outliers_file]), "GB")
+#    Float input_size = size(select_all([bed_file, outliers_file]), "GB")
+    Float input_size = size(select_all([bed_file, ped_input]), "GB")
     Float base_mem_gb = 16
 
     RuntimeAttr default_attr = object {
@@ -536,24 +526,24 @@ task plot_createPlots{
 
     output{
         File output_plots = "output_plots.pdf"
-        File per_chrom_plot = "per_chrom.png"
-        File per_sample_plot = "per_sample.png"
-        File per_freq_plot = "per_freq.png"
-        File per_freq_gd_plot = "per_freq_gd.png"
-        File per_freq_not_gd = "per_freq_not_gd.png"
-        File size_plot = "size.png"
-        File evidence_plot = "evidence.png"
-        File annotation_plot = "annotation.png"
-        File per_type_plot = "per_type.png"
-        File per_sample_boxplot = "sample_boxplot.png"
-        File per_type_boxplot = "type_boxplot.png"
+#        File per_chrom_plot = "per_chrom.png"
+#        File per_sample_plot = "per_sample.png"
+#        File per_freq_plot = "per_freq.png"
+#        File per_freq_gd_plot = "per_freq_gd.png"
+#        File per_freq_not_gd = "per_freq_not_gd.png"
+#        File size_plot = "size.png"
+#        File evidence_plot = "evidence.png"
+#        File annotation_plot = "annotation.png"
+#        File per_type_plot = "per_type.png"
+#        File per_sample_boxplot = "sample_boxplot.png"
+#        File per_type_boxplot = "type_boxplot.png"
 
     }
 
     command {
         set -euo pipefail
 
-        Rscript /src/variant-interpretation/scripts/denovoSV_plots.R ${bed_file} ${outliers_file} ${ped_input} output_plots.pdf
+        Rscript /src/variant-interpretation/scripts/denovoSV_plots.R ${bed_file} ${ped_input} output_plots.pdf
 
     }
 

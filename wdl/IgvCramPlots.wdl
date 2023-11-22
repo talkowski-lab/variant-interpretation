@@ -14,14 +14,14 @@ workflow IGV {
         String family
         File ped_file
         Array[String] samples
-        Boolean cram_localization
+        Boolean file_localization
         Boolean requester_pays
         Array[File]? crams_localize
         Array[File]? crais_localize
         File reference
         File reference_index
+        Int igv_max_window
         String buffer
-        String buffer_large
         String igv_docker
         String variant_interpretation_docker
         RuntimeAttr? runtime_attr_igv
@@ -33,7 +33,7 @@ workflow IGV {
         
     }
 
-    if (cram_localization) {
+    if (file_localization) {
         Array[File] crams_localize_ = select_first([crams_localize])
         Array[File] crais_localize_ = select_first([crais_localize])
         File sample_crai_cram_ = select_first([sample_crai_cram])
@@ -60,7 +60,6 @@ workflow IGV {
                 crais = select_first([LocalizeReadsLocalize.output_index, crais_localize_]),
                 sample_crai_cram = sample_crai_cram_,
                 buffer = buffer,
-                buffer_large = buffer_large,
                 reference = reference,
                 reference_index = reference_index,
                 igv_docker = igv_docker,
@@ -68,22 +67,10 @@ workflow IGV {
         }
     }
 
-    if (!(cram_localization)) {
+    if (!(file_localization)) {
         Array[String] crams_parse_ = select_first([crams_parse])
         Array[String] crais_parse_ = select_first([crais_parse])
         File updated_sample_crai_cram_ = select_first([updated_sample_crai_cram])
-
-        if (requester_pays){
-        # move the reads nearby -- handles requester_pays and makes cross-region transfers just once
-            scatter(i in range(length(crams_parse_))) {
-                call LocalizeReads as LocalizeReadsParse {
-                    input:
-                        reads_path = crams_parse_[i],
-                        reads_index = crais_parse_[i],
-                        runtime_attr_override = runtime_attr_localize_reads
-                }
-            }
-        } 
 
         call runIGV_whole_genome_parse{
             input:
@@ -93,9 +80,9 @@ workflow IGV {
                 samples = samples,
                 updated_sample_crai_cram = updated_sample_crai_cram_,
                 buffer = buffer,
-                buffer_large = buffer_large,
                 reference = reference,
                 reference_index = reference_index,
+                igv_max_window = igv_max_window,
                 igv_docker = igv_docker,
                 runtime_attr_override = runtime_attr_igv
         }
@@ -118,7 +105,6 @@ task runIGV_whole_genome_localize{
             Array[File] crais
             File sample_crai_cram
             String buffer
-            String buffer_large
             String igv_docker
             RuntimeAttr? runtime_attr_override
         }
@@ -156,7 +142,7 @@ task runIGV_whole_genome_localize{
             do
                 let "i=$i+1"
                 echo "$line" > new.varfile.$i.bed
-                python /src/makeigvpesr.py -v new.varfile.$i.bed -fam_id ~{family} -samples ~{sep="," samples} -crams crams.txt -p ~{ped_file} -o pe_igv_plots -b ~{buffer} -l ~{buffer_large} -i pe.$i.txt -bam pe.$i.sh
+                python /src/variant-interpretation/scripts/makeigvpesr.py -v new.varfile.$i.bed -fam_id ~{family} -samples ~{sep="," samples} -crams crams.txt -p ~{ped_file} -o pe_igv_plots -b ~{buffer}  -i pe.$i.txt -bam pe.$i.sh
                 bash pe.$i.sh
                 xvfb-run --server-args="-screen 0, 1920x540x24" bash /IGV_Linux_2.16.0/igv.sh -b pe.$i.txt
             done < ~{varfile}
@@ -186,12 +172,12 @@ task runIGV_whole_genome_parse{
         File varfile
         File reference
         File reference_index
+        Int igv_max_window
         String family
         File ped_file
         Array[String] samples
         File updated_sample_crai_cram
         String buffer
-        String buffer_large
         String igv_docker
         RuntimeAttr? runtime_attr_override
     }
@@ -213,7 +199,8 @@ task runIGV_whole_genome_parse{
     command <<<
             set -euo pipefail
             mkdir pe_igv_plots
-            cat ~{varfile} | cut -f1-3 | awk '{if ($3-$2>=15000) print $1"\t"$2"\t"$2 "\n" $1"\t"$3"\t"$3;else print}' | awk '{$2-=3000}1' OFS='\t' | awk '{$3+=3000}1' OFS='\t' | sort -k1,1 -k2,2n | bgzip -c > regions.bed.gz
+            cat ~{varfile} | cut -f1-3 | awk '{if (($3-$2)+int(($3-$2)*1.5)>=~{igv_max_window}) print $1"\t"$2-~{buffer}"\t"$2+~{buffer} "\n" $1"\t"$3-~{buffer}"\t"$3+~{buffer};
+                else print $1"\t"($2-int(($3-$2)*0.25))-~{buffer}"\t"$3+int(($3-$2)*0.25)+~{buffer}}' | sort -k1,1 -k2,2n | bgzip -c > regions.bed.gz
             tabix -p bed regions.bed.gz
             #localize cram files
             while read sample crai cram new_cram new_crai
@@ -230,7 +217,7 @@ task runIGV_whole_genome_parse{
             do
                 let "i=$i+1"
                 echo "$line" > new.varfile.$i.bed
-                python /src/makeigvpesr.py -v new.varfile.$i.bed -fam_id ~{family} -samples ~{sep="," samples} -crams crams.txt -p ~{ped_file} -o pe_igv_plots -b ~{buffer} -l ~{buffer_large} -i pe.$i.txt -bam pe.$i.sh
+                python /src/variant-interpretation/scripts/makeigvpesr.py -v new.varfile.$i.bed -fam_id ~{family} -samples ~{sep="," samples} -crams crams.txt -p ~{ped_file} -o pe_igv_plots -b ~{buffer} -i pe.$i.txt -bam pe.$i.sh -m ~{igv_max_window}
                 bash pe.$i.sh
                 xvfb-run --server-args="-screen 0, 1920x540x24" bash /IGV_Linux_2.16.0/igv.sh -b pe.$i.txt
             done < ~{varfile}
@@ -252,6 +239,7 @@ task runIGV_whole_genome_parse{
         Array[File] pe_txt = glob("pe.*.txt")
         Array[File] pe_sh = glob("pe.*.sh")
         Array[File] varfile = glob("new.varfile.*.bed")
+        Array[File] cramfiles = glob("*cram")
         }
     }
 

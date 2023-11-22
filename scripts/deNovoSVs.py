@@ -8,11 +8,11 @@ Description: SV de novo filtering script
 # Import libraries
 import argparse
 import yaml
-import math
+# import math
 import numpy as np
 import pandas as pd
 import pybedtools
-import tabix
+# import tabix
 import collections
 import os
 import time
@@ -330,14 +330,14 @@ vcf_metrics    """
     vcf = pd.read_csv(vcf_file, sep='\t')
     ped = pd.read_csv(ped_file, sep='\t')
     disorder = pd.read_csv(disorder_file, sep='\t', header=None)
-    raw_bed_colnames = colnames=['ID', 'start', 'end', 'svtype', 'sample']
+    raw_bed_colnames = ['ID', 'start', 'end', 'svtype', 'sample']
     raw_bed_child = pd.read_csv(raw_file_proband, sep='\t', names= raw_bed_colnames, header=None).replace(np.nan, '', regex=True)
     raw_bed_parent = pd.read_csv(raw_file_parent, sep='\t', names= raw_bed_colnames, header=None).replace(np.nan, '', regex=True)
     raw_bed_depth_child = pd.read_csv(raw_file_depth_proband, sep='\t', names= raw_bed_colnames, header=None).replace(np.nan, '', regex=True)
     raw_bed_depth_parent = pd.read_csv(raw_file_depth_parent, sep='\t', names= raw_bed_colnames, header=None).replace(np.nan, '', regex=True)
     exclude_regions = pd.read_csv(exclude_regions, sep='\t').replace(np.nan, '', regex=True)
-    bincov_colnames = colnames=['batch', 'bincov', 'index']
-    sample_batches_colnames = colnames=['sample', 'batch']
+    bincov_colnames = ['batch', 'bincov', 'index']
+    sample_batches_colnames = ['sample', 'batch']
     bincov = pd.read_csv(coverage, sep='\t', names= bincov_colnames, header=None).replace(np.nan, '', regex=True)
     sample_batches = pd.read_csv(batches, sep='\t', names= sample_batches_colnames, header=None).replace(np.nan, '', regex=True)
 
@@ -622,8 +622,10 @@ vcf_metrics    """
     ## Large CNVS: Reciprocal overlap large_raw_overlap
     verbosePrint('Checking large cnvs in raw files', verbose)
     start = time.time()
+
     large_bed_filt_cnv_depth = bed_child_de_novo[(bed_child_de_novo['is_large_cnv'] == True) & (bed_child_de_novo['SVLEN'] >= 5000)]
     large_bed_filt_cnv_other = bed_child_de_novo[(bed_child_de_novo['is_large_cnv'] == True) & (bed_child_de_novo['SVLEN'] < 5000)]
+
     if (len(large_bed_filt_cnv_other.index) > 0):
         verbosePrint('Checking if intermediate cnv in proband is in raw files', verbose)
         bed_filt_cnv_proband_other = convertToBedtool(large_bed_filt_cnv_other, cols_to_keep=cols_keep_child,sort=True)
@@ -638,19 +640,22 @@ vcf_metrics    """
         large_cnv_names_overlap_other = [x for x in large_cnv_names_overlap_proband_other if x not in large_cnv_names_overlap_parent_other]
     else:
         large_cnv_names_overlap_other = ['']
+
     if (len(large_bed_filt_cnv_depth.index) > 0):
         verbosePrint('Checking if large cnv in proband is in raw files', verbose)
         bed_filt_cnv_proband_depth = convertToBedtool(large_bed_filt_cnv_depth, cols_to_keep=cols_keep_child,sort=True)
         large_cnv_names_overlap_proband_depth = getCnvIntersectionDepth(bed_filt_cnv_proband_depth,raw_bed_ref_depth_child,large_raw_overlap)
-        large_bed_filt_cnv_tmp_depth = large_bed_filt_cnv_depth[large_bed_filt_cnv_depth['name_famid'].isin(large_cnv_names_overlap_proband_depth)]
+        # large_bed_filt_cnv_tmp_depth = large_bed_filt_cnv_depth[large_bed_filt_cnv_depth['name_famid'].isin(large_cnv_names_overlap_proband_depth)]
         verbosePrint('Checking if large cnv in proband are also in raw files for the parents', verbose)
         bed_filt_cnv_fam_depth = convertToBedtool(large_bed_filt_cnv_depth, cols_to_keep=cols_keep_parent,sort=True)
         large_cnv_names_overlap_parent_depth = getCnvIntersectionDepth(bed_filt_cnv_fam_depth,raw_bed_ref_depth_parent,large_raw_overlap)
-        large_bed_filt_cnv_tmp_depth = large_bed_filt_cnv_depth[~(large_bed_filt_cnv_depth['name_famid'].isin(large_cnv_names_overlap_parent_depth))]
+        # large_bed_filt_cnv_tmp_depth = large_bed_filt_cnv_depth[~(large_bed_filt_cnv_depth['name_famid'].isin(large_cnv_names_overlap_parent_depth))]
         large_cnv_names_overlap_depth = [x for x in large_cnv_names_overlap_proband_depth if x not in large_cnv_names_overlap_parent_depth]
     else:
         large_cnv_names_overlap_depth = ['']
+
     large_cnv_names_overlap = large_cnv_names_overlap_other + large_cnv_names_overlap_depth
+
     end = time.time()
     delta = end - start
     print("Took %f seconds to process" % delta)
@@ -679,11 +684,8 @@ vcf_metrics    """
     ## FILTERING ##
     ###############
     verbosePrint('Filtering out calls', verbose)
-    # 1. Filter by region
-    #  Keep if in GD region
-    keep_gd = bed_child[(bed_child['in_gd'] == True)]['name_famid'].to_list()
 
-    # Filter out calls in exclude regions
+    # 1. Filter out calls in exclude regions
     verbosePrint('Filtering out calls in exclude regions', verbose)
     start = time.time()
     # Reformat exclude_regions to bedtool
@@ -695,12 +697,14 @@ vcf_metrics    """
         exclude_regions_intersect = bed_child_bt.coverage(exclue_regions_bt).to_dataframe(disable_auto_names=True, header=None) #HB said to use bedtools coverage, -f and -F give the same SVs to be removed
         if (len(exclude_regions_intersect) != 0):
             remove_regions = exclude_regions_intersect[exclude_regions_intersect[10] > 0.5][6].to_list()
-            bed_child.loc[bed_child['name_famid'].isin(remove_regions) & bed_child['is_de_novo'] == True, 'filter_flag'] = 'in_blacklist_region'
-            bed_child.loc[bed_child['name_famid'].isin(remove_regions) & bed_child['is_de_novo'] == True, 'is_de_novo'] = False
         else:
             remove_regions = ['']
     else:
         remove_regions = ['']
+
+    bed_child.loc[ bed_child[ 'name_famid' ].isin(remove_regions) & bed_child['is_de_novo' ] == True, 'filter_flag' ] = 'in_blacklist_region'
+    bed_child.loc[bed_child[ 'name_famid' ].isin(remove_regions) & bed_child[ 'is_de_novo' ] == True, 'is_de_novo' ] = False
+
     end = time.time()
     delta = end - start
     print("Took %f seconds to process" % delta)
@@ -782,21 +786,22 @@ vcf_metrics    """
     # Remove if low coverage in parents
     start = time.time()
     bed_child_coverage = bed_child[bed_child['is_de_novo'] == True]
+    verbosePrint('Removing calls if there is low coverage evidence in parents', verbose)
     if (len(bed_child_coverage.index) > 0):
         bed_child_coverage['median_coverage'] = bed_child_coverage.apply(lambda r: getMedianCoverage(findCoverage(r, ped, sample_batches, bincov, family_member='mother'),findCoverage(r, ped, sample_batches, bincov, family_member='father'), coverage_cutoff), axis=1)
         remove_coverage = bed_child_coverage[bed_child_coverage['median_coverage'] == 'Remove']['name_famid'].to_list()
     else:
         remove_coverage = ['']
-        bed_child.loc[bed_child['name_famid'].isin(remove_coverage) & bed_child['is_de_novo'] == True, 'filter_flag'] = 'low_coverage_in_parents'
-        bed_child.loc[bed_child['name_famid'].isin(remove_coverage) & bed_child['is_de_novo'] == True, 'is_de_novo'] = False
+
+    bed_child.loc[bed_child['name_famid'].isin(remove_coverage) & bed_child['is_de_novo'] == True, 'filter_flag'] = 'low_coverage_in_parents'
+    bed_child.loc[bed_child['name_famid'].isin(remove_coverage) & bed_child['is_de_novo'] == True, 'is_de_novo'] = False
+
     end = time.time()
     delta = end - start
     print("Took %f seconds to process" % delta)
 
     # 5. Clean up and remove duplicated CPX SV
     # Keep SVs
-    #bed_child.loc[bed_child['name_famid'].isin(keep_gd), 'is_de_novo'] = True
-    #bed_child.loc[bed_child['name_famid'].isin(keep_gd), 'filter_flag'] = 'in_gd'
     bed_child.loc[bed_child['name_famid'].isin(keep_other_sv), 'is_de_novo'] = True
     bed_child.loc[bed_child['name_famid'].isin(keep_other_sv), 'filter_flag'] = 'not_del_dup_ins'
 
@@ -814,7 +819,7 @@ vcf_metrics    """
 
     # Define output files
     output = bed_final
-    de_novo = bed_final[bed_final['is_de_novo'] == True]
+    de_novo = bed_final[(bed_final['is_de_novo'] == True) | (bed_final['filter_flag'] == 'ins_filter') | (bed_final['in_gd'] == True)]
 
     # Write output
     output.to_csv(path_or_buf=out_file, mode='a', index=False, sep='\t', header=True)

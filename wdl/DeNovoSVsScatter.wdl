@@ -55,7 +55,7 @@ workflow deNovoSVsScatter {
         }   
     }
 
-    call mergeBedFiles{
+    call mergeBedFiles as mergeBedFilesAnnotated{
         input:
             bed_files = runDeNovo.annotation_output,
             chromosome = chromosome,
@@ -63,10 +63,19 @@ workflow deNovoSVsScatter {
             runtime_attr_override = runtime_attr_merge_bed
     }
 
+    call mergeBedFiles as mergeBedFilesFinal{
+        input:
+            bed_files = runDeNovo.denovo_output,
+            chromosome = chromosome,
+            variant_interpretation_docker = variant_interpretation_docker,
+            runtime_attr_override = runtime_attr_merge_bed
+    }
+
     output {
-        Array[File] per_shard_de_novo_output = runDeNovo.denovo_output
-        Array[File] per_shard_annotation_output = runDeNovo.annotation_output
-        File merged_annotation_output_file = mergeBedFiles.per_chromosome_denovo_output
+#        Array[File] per_shard_de_novo_output = runDeNovo.denovo_output
+#        Array[File] per_shard_annotation_output = runDeNovo.annotation_output
+        File per_chromosome_annotation_output_file = mergeBedFilesAnnotated.per_chromosome_denovo_output
+        File per_chromosome_final_output_file = mergeBedFilesFinal.per_chromosome_denovo_output
     }
 }
 

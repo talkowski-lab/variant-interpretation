@@ -20,7 +20,7 @@ def vconcat_resize(img_list, interpolation
                       (w_min, int(img.shape[0] * w_min / img.shape[1])),
                                  interpolation = interpolation)
                       for img in img_list]
-    # return final image
+    # return final imageimg_v_resize
     return cv2.vconcat(im_list_resize)
   
 # combine two images side by side
@@ -112,14 +112,16 @@ class Variant():
         w1=800
         resized_igv = igv[x1:w1, y1:h1] # get rid of white space at bottom of igv plot
         img = Image.open(rdplot) # rd plot
-        img2 = img.crop((0, 230, img.size[0], img.size[1])) # crop out original RD plot annotations
+        # img2 = img.crop((0, 230, img.size[0], img.size[1])) # crop out original RD plot annotations
+        img2=img #comment out RD cropping to keep size and extra info
         img2.save("croprd.jpg") # Harolds cropping
         rd = cv2.imread("croprd.jpg") # read it in cv2 for stacking command
         # get new annotation
         STR1=self.chr+":"+'{0:,}'.format(int(self.start))+'-'+'{0:,}'.format(int(self.end))+" (+"+build+")"
         outfile='info.jpg'
         words(STR1,STR2,outfile,100) # new Rd plot
-        img_v_resize = vconcat_resize([resized_igv,rd]) # combine rd pe and sr together
+        #img_v_resize = vconcat_resize([resized_igv,rd]) # combine rd pe and sr together
+        img_v_resize = vconcat_resize([igv,rd])
         cv2.imwrite(outdir+self.varname+"_denovo.png", img_v_resize)
     elif pesrplot!='Error' and rdplot=='Error':
         igv = cv2.imread(pesrplot)

@@ -20,14 +20,17 @@ library(dplyr)
 args = commandArgs(trailingOnly=TRUE)
 
 input_bed <- args[1]
-input_outliers <-args [2]
-input_ped <- args[3]
-out_file <- args[4]
+input_ped <- args[2]
+out_file <- args[3]
+
+#input_outliers <-args [2]
+#input_ped <- args[3]
+#out_file <- args[4]
 
 ped <- fread(input_ped)
 
 denovo <- as.data.frame(read.table(input_bed,header = TRUE, sep="\t",stringsAsFactors=FALSE, quote=""))
-outliers <- as.data.frame(read.table(input_outliers,header = TRUE, sep="\t",stringsAsFactors=FALSE, quote=""))
+#outliers <- as.data.frame(read.table(input_outliers,header = TRUE, sep="\t",stringsAsFactors=FALSE, quote=""))
 
 denovo$SVTYPE <- factor(denovo$SVTYPE, levels = rev(c("DEL", "DUP", "INS", "INV", "CPX", "CTX")))
 
@@ -64,7 +67,7 @@ denovo %>%
   count(sample, SVTYPE, name= "svtype_per_sample") -> type
 
 type_boxplot <- ggplot(type, aes(x=SVTYPE, fill = SVTYPE, y=svtype_per_sample)) + 
-  geom_jitter(position = position_jitter(seed = 1, width = 0.2), color = 'grey') + geom_boxplot(outlier.shape=NA) + labs(title = "Number of De Novo SVs per Type", y = "Number of de novo SVs", x = "SV Type") + scale_fill_manual(values = rev(c("DEL"=del_col, "DUP"=dup_col, "INS"=ins_col, "INV"=inv_col, "CPX"=cpx_col, "CTX"=ctx_col))) + 
+  geom_jitter(position = position_jitter(seed = 1, width = 0.2), color = 'grey', size = 4.0) + geom_boxplot(outlier.shape=NA) + labs(title = "Number of De Novo SVs per Type", y = "Number of de novo SVs", x = "SV Type") + scale_fill_manual(values = rev(c("DEL"=del_col, "DUP"=dup_col, "INS"=ins_col, "INV"=inv_col, "CPX"=cpx_col, "CTX"=ctx_col))) + 
   theme_classic() +
   theme(
     legend.position = "right",
@@ -79,7 +82,7 @@ type_boxplot <- ggplot(type, aes(x=SVTYPE, fill = SVTYPE, y=svtype_per_sample)) 
 ggsave("type_boxplot.png", type_boxplot, width = 30, height = 40, limitsize = FALSE) 
 
 sample_boxplot <- ggplot(sample_count, aes(x=factor(0), y=n)) + 
-  geom_jitter(position = position_jitter(seed = 1, width = 0.2), color = 'gray47') + geom_boxplot(outlier.shape=NA) + labs(title = "Number of de Novo SVs per Sample", y = "Number of de novo SVs", x = "Samples") + scale_fill_manual(values = rev(c("DEL"=del_col, "DUP"=dup_col, "INS"=ins_col, "INV"=inv_col, "CPX"=cpx_col, "CTX"=ctx_col))) + 
+  geom_jitter(position = position_jitter(seed = 1, width = 0.2), color = 'gray47', size = 4.0) + geom_boxplot(outlier.shape=NA) + labs(title = "Number of de Novo SVs per Sample", y = "Number of de novo SVs", x = "Samples") + scale_fill_manual(values = rev(c("DEL"=del_col, "DUP"=dup_col, "INS"=ins_col, "INV"=inv_col, "CPX"=cpx_col, "CTX"=ctx_col))) + 
   theme_classic() +
   theme(
     legend.position = "right",
@@ -358,7 +361,7 @@ sv_cols <- list(
 
 denovo_cons_type %>% 
   upset(sets = grep("is_", names(denovo_cons_type), value = T),
-        queries = sv_cols,
+        #queries = sv_cols,
         order.by = "freq", 
         set_size.show = TRUE,
         # set_size.scale_max = 15000, 
