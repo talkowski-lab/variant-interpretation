@@ -4,26 +4,33 @@ import "Structs.wdl"
 import "ReformatRawFiles.wdl" as raw
 import "TasksMakeCohortVcf.wdl" as MiniTasks
 import "DeNovoSVsScatter.wdl" as runDeNovo
-import "SplitVcf.wdl" as getBatchedVcf
+import "SplitVcf.wdl" as SplitVcf
 
 workflow deNovoSV {
 
     input {
-        File ped_input
-        File python_config
         File vcf_file
-        Array[String] contigs
-        File genomic_disorder_input
+        File ped_input
         File batch_raw_file
         File batch_depth_raw_file
+        File batch_bincov_index
+
+        Array[String] contigs
+        String prefix
+
+        File? family_ids_txt
+
+        File python_config
+        File genomic_disorder_input
+
         File exclude_regions
         File sample_batches
-        File batch_bincov_index
+
         Int records_per_shard
-        String prefix
-        File? fam_ids
+
         String variant_interpretation_docker
         String sv_pipeline_updates_docker
+        String python_docker
         RuntimeAttr? runtime_attr_gd
         RuntimeAttr? runtime_attr_denovo
         RuntimeAttr? runtime_attr_raw_vcf_to_bed
@@ -44,22 +51,23 @@ workflow deNovoSV {
         RuntimeAttr? runtime_attr_merge
     }
 
-    #if the fam_ids input is given, subset all other input files to only include the necessary batches
-    if (defined(fam_ids)){
-        File fam_ids_ = select_first([fam_ids])
+    # family_ids_txt is a text file containg one family id per line.
+    # If this file is given, subset all other input files to only include the necessary batches.
+    if (defined(family_ids_txt)){
+        File family_ids_txt_ = select_first([family_ids_txt])
         call getBatchedFiles{
             input:
                 batch_raw_file = batch_raw_file,
                 batch_depth_raw_file = batch_depth_raw_file,
                 ped_input = ped_input,
-                fam_ids = fam_ids_,
+                family_ids_txt = family_ids_txt_,
                 sample_batches = sample_batches,
                 batch_bincov_index = batch_bincov_index,
-                variant_interpretation_docker=variant_interpretation_docker,
+                python_docker=python_docker,
                 runtime_attr_override = runtime_attr_get_batched_files
         }
 
-        call getBatchedVcf.getBatchedVcf as getBatchedVcf {
+        call SplitVcf.getBatchedVcf as getBatchedVcf {
             input:
                 vcf_file = vcf_file,
                 prefix = prefix,
@@ -71,7 +79,6 @@ workflow deNovoSV {
                 runtime_override_shard_vcf = runtime_override_shard_vcf,
                 runtime_attr_merge = runtime_attr_merge
         }
-
     }
 
     #makes a ped file of singletons, duos, and trios for input into the de novo script (only including families of interest)
@@ -218,7 +225,6 @@ workflow deNovoSV {
         File per_type_boxplot = plot_createPlots.per_type_boxplot
         File gd_depth = mergeGenomicDisorders.gd_output_from_depth
         File gd_vcf = getGenomicDisorders.gd_output_from_final_vcf[1]
-        
     }
 }
 
@@ -462,7 +468,7 @@ task callOutliers{
     }
 
     Float bed_files_size = size(bed_file, "GB")
-    Float base_mem_gb = 3.75
+    Float base_mem_gb = 16
 
     RuntimeAttr default_attr = object {
                                       mem_gb: base_mem_gb,
@@ -482,9 +488,12 @@ task callOutliers{
     }
 
     command {
-        set -euo pipefail
+        set -exuo pipefail
 
         python3.9 /src/variant-interpretation/scripts/deNovoOutliers.py --bed ~{bed_file}
+
+        mv final.denovo.merged.allSamples.bed de_novo_annotated_output.bed
+
         bgzip final.denovo.merged.bed
         bgzip final.denovo.merged.outliers.bed
         bgzip de_novo_annotated_output.bed
@@ -512,7 +521,7 @@ task plot_createPlots{
     }
 
     Float input_size = size(select_all([bed_file, outliers_file]), "GB")
-    Float base_mem_gb = 3.75
+    Float base_mem_gb = 16
 
     RuntimeAttr default_attr = object {
                                       mem_gb: base_mem_gb,
@@ -572,13 +581,13 @@ task cleanPed{
     Float base_mem_gb = 3.75
 
     RuntimeAttr default_attr = object {
-                                      mem_gb: base_mem_gb,
-                                      disk_gb: ceil(10 + vcf_size + ped_size * 1.5),
-                                      cpu: 1,
-                                      preemptible: 2,
-                                      max_retries: 1,
-                                      boot_disk_gb: 8
-                                  }
+        mem_gb: base_mem_gb,
+        disk_gb: ceil(10 + vcf_size + ped_size * 1.5),
+        cpu: 1,
+        preemptible: 2,
+        max_retries: 1,
+        boot_disk_gb: 8
+    }
     
     RuntimeAttr runtime_attr = select_first([runtime_attr_override, default_attr])
 
@@ -612,25 +621,25 @@ task getBatchedFiles{
     input{
         File batch_raw_file
         File batch_depth_raw_file
-        File fam_ids
+        File family_ids_txt
         File ped_input
         File sample_batches
         File batch_bincov_index
-        String variant_interpretation_docker
+        String python_docker
         RuntimeAttr? runtime_attr_override
     }
 
-    Float input_size = size(select_all([batch_raw_file, batch_depth_raw_file, ped_input, sample_batches, batch_bincov_index, fam_ids]), "GB")
+    Float input_size = size(select_all([batch_raw_file, batch_depth_raw_file, ped_input, sample_batches, batch_bincov_index, family_ids_txt]), "GB")
     Float base_mem_gb = 3.75
 
     RuntimeAttr default_attr = object {
-                                      mem_gb: base_mem_gb,
-                                      disk_gb: ceil(10 + input_size),
-                                      cpu: 1,
-                                      preemptible: 2,
-                                      max_retries: 1,
-                                      boot_disk_gb: 8
-                                  }
+        mem_gb: base_mem_gb,
+        disk_gb: ceil(10 + input_size),
+        cpu: 1,
+        preemptible: 2,
+        max_retries: 1,
+        boot_disk_gb: 8
+    }
     
     RuntimeAttr runtime_attr = select_first([runtime_attr_override, default_attr])
 
@@ -643,20 +652,33 @@ task getBatchedFiles{
 
     command {
         set -euo pipefail
-        grep -w -f ${fam_ids} ${ped_input} | cut -f2 | sort -u > samples.txt
-        grep -w -f samples.txt ${sample_batches} | cut -f2 | sort -u > batches.txt
-        grep -w -f batches.txt ${batch_bincov_index} > batch_bincov_index.txt
-        grep -w -f batches.txt ${batch_raw_file} > batch_raw_files_list.txt
-        grep -w -f batches.txt ${batch_depth_raw_file} > batch_depth_raw_files_list.txt
+
+        if grep -q -w -f ~{family_ids_txt} ~{ped_input}; then
+            grep -w -f ~{family_ids_txt} ~{ped_input} | cut -f2 | sort -u > samples.txt
+        else
+            echo "No matching family IDs from family_ids_txt found in ped_input file." >&2
+            exit 1
+        fi
+
+        if grep -q -w -f samples.txt ~{sample_batches}; then
+            grep -w -f samples.txt ~{sample_batches} | cut -f2 | sort -u > batches.txt
+        else
+            echo "No matching individual IDs found in the sample_batches file." >&2
+            exit 1
+        fi
+
+        grep -w -f batches.txt ~{batch_bincov_index} > batch_bincov_index.txt
+        grep -w -f batches.txt ~{batch_raw_file} > batch_raw_files_list.txt
+        grep -w -f batches.txt ~{batch_depth_raw_file} > batch_depth_raw_files_list.txt
     }
 
     runtime {
         cpu: select_first([runtime_attr.cpu, default_attr.cpu])
-        memory: "~{select_first([runtime_attr.mem_gb, default_attr.mem_gb])} GB"
-        disks: "local-disk ~{select_first([runtime_attr.disk_gb, default_attr.disk_gb])} HDD"
+        memory: select_first([runtime_attr.mem_gb, default_attr.mem_gb]) + " GB"
+        disks: "local-disk " + select_first([runtime_attr.disk_gb, default_attr.disk_gb]) + " HDD"
         bootDiskSizeGb: select_first([runtime_attr.boot_disk_gb, default_attr.boot_disk_gb])
         preemptible: select_first([runtime_attr.preemptible, default_attr.preemptible])
         maxRetries: select_first([runtime_attr.max_retries, default_attr.max_retries])
-        docker: variant_interpretation_docker
+        docker: python_docker
     }
 }
