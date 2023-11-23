@@ -4,6 +4,7 @@ import "wgs-denovo-step-01.wdl" as step1and2
 import "wgs-denovo-step-03.wdl" as step3
 import "wgs-denovo-step-04.wdl" as step4
 import "wgs-denovo-step-05.wdl" as step5
+import "annotateHPandVAF.wdl" as annotateHPandVAF
 
 struct RuntimeAttr {
     Float? mem_gb
@@ -25,6 +26,10 @@ workflow wgs_denovo_full {
             File get_sample_pedigree_py
             File lcr_uri
             File ped_uri
+            File vqsr_header
+            File hg38_reference
+            File hg38_reference_fai
+            File hg38_reference_dict
             Array[Array[File]] vep_annotated_final_vcf
             String bucket_id
             String cohort_prefix
@@ -32,6 +37,7 @@ workflow wgs_denovo_full {
             String sv_base_mini_docker
             String trio_denovo_docker
             String hail_docker
+            String jvarkit_docker
             Int batch_size
             Float minDQ
     }
@@ -59,10 +65,20 @@ workflow wgs_denovo_full {
             batch_size=batch_size
     }
 
+    call annotateHPandVAF.annotateHPandVAF as annotateHPandVAF {
+        input:
+            split_trio_vcfs=step3.split_trio_vcfs,
+            vqsr_header=vqsr_header,
+            hg38_reference=hg38_reference,
+            hg38_reference_fai=hg38_reference_fai,
+            hg38_reference_dict=hg38_reference_dict,
+            jvarkit_docker=jvarkit_docker
+    }
+
     call step4.step4 as step4 {
         input:
             ped_uri=step1and2.ped_uri_no_header,
-            split_trio_vcfs=step3.split_trio_vcfs,
+            split_trio_vcfs=annotateHPandVAF.split_trio_annot_vcfs,
             get_sample_pedigree_py=get_sample_pedigree_py,
             trio_denovo_docker=trio_denovo_docker,
             minDQ=minDQ
@@ -71,7 +87,7 @@ workflow wgs_denovo_full {
     call step5.step5 as step5 {
         input:
             ped_uri=ped_uri,
-            split_trio_vcfs=step3.split_trio_vcfs,
+            split_trio_vcfs=annotateHPandVAF.split_trio_annot_vcfs,
             trio_denovo_vcf=step4.trio_denovo_vcf,
             merge_vcf_to_tsv_fullQC_py=merge_vcf_to_tsv_fullQC_py,
             trio_denovo_docker=trio_denovo_docker,
@@ -84,6 +100,7 @@ workflow wgs_denovo_full {
         Array[File] merged_preprocessed_vcf_idx = step1and2.merged_preprocessed_vcf_idx
         Array[Array[File]] split_trio_vcfs = step3.split_trio_vcfs
         Array[File] stats_files = step3.stats_files
+        Array[Array[File]] split_trio_annot_vcfs = annotateHPandVAF.split_trio_annot_vcfs
         Array[Array[File]] trio_denovo_vcf = step4.trio_denovo_vcf
         File vcf_metrics_tsv = step5.vcf_metrics_tsv
     }    
