@@ -76,9 +76,9 @@ task annotateVCF {
         bootDiskSizeGb: select_first([runtime_override.boot_disk_gb, runtime_default.boot_disk_gb])
     }
 
-    File clean_vcf = basename(trio_vcf, '.vcf')+'_clean.vcf'
-    File hp_vcf = basename(trio_vcf, '.vcf')+'_HP.vcf'
-    File out_vcf = basename(trio_vcf, '.vcf')+'_HP_VAF.vcf'
+    String clean_vcf = basename(trio_vcf, '.vcf')+'_clean.vcf'
+    String hp_vcf = basename(trio_vcf, '.vcf')+'_HP.vcf'
+    String out_vcf = basename(trio_vcf, '.vcf')+'_HP_VAF.vcf'
 
     command <<<
         bcftools head ~{trio_vcf} > old_header.txt
