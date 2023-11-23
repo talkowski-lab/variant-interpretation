@@ -80,14 +80,14 @@ task annotateVCF {
     File hp_vcf = basename(trio_vcf, '.vcf')+'_HP.vcf'
     File out_vcf = basename(trio_vcf, '.vcf')+'_HP_VAF.vcf'
 
-    command {
+    command <<<
         bcftools head ~{trio_vcf} > old_header.txt
         head -c -1 -q ~{vqsr_header} old_header.txt > new_header.txt
         bcftools reheader -h new_header.txt ~{trio_vcf} > ~{clean_vcf}
 
         java -jar /opt/jvarkit/dist/jvarkit.jar vcfpolyx -R ~{hg38_reference} -o ~{hp_vcf} ~{clean_vcf}
         bcftools +fill-tags ~{hp_vcf} -Ov -o ~{out_vcf} -- -t VAF 
-    }
+    >>>
 
     output {
         File split_trio_annot_vcfs = out_vcf
