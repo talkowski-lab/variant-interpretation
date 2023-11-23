@@ -22,7 +22,7 @@ somalier = pd.read_csv(samples_uri, sep='\t')
 somalier.index = somalier.sample_id
 
 if subset_ped:
-    ped = ped.loc[somalier.index]
+    ped = ped.loc[np.intersect1d(ped.index, somalier.index)]
 
 somalier = somalier.loc[ped.index]
 somalier.columns = somalier.columns.str.replace("#", "")
