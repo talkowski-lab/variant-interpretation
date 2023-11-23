@@ -64,7 +64,6 @@ workflow wgs_denovo_full {
             uberSplit_v3_py=uberSplit_v3_py,
             batch_size=batch_size
     }
-
     call annotateHPandVAF.annotateHPandVAF as annotateHPandVAF {
         input:
             split_trio_vcfs=step3.split_trio_vcfs,
@@ -78,7 +77,7 @@ workflow wgs_denovo_full {
     call step4.step4 as step4 {
         input:
             ped_uri=step1and2.ped_uri_no_header,
-            split_trio_vcfs=annotateHPandVAF.split_trio_annot_vcfs,
+            split_trio_vcfs=step3.split_trio_vcfs,
             get_sample_pedigree_py=get_sample_pedigree_py,
             trio_denovo_docker=trio_denovo_docker,
             minDQ=minDQ

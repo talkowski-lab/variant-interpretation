@@ -51,11 +51,11 @@ task trio_denovo {
         sample="${sample//_HP_VAF/}"
         python3 ~{get_sample_pedigree_py} ~{ped_uri} $sample
         /src/wgs_denovo/triodenovo/triodenovo-fix/src/triodenovo --ped "$sample".ped --in_vcf ~{vcf_file} --out_vcf ~{basename(vcf_file, '.vcf') + '.denovos.vcf'} --minDQ ~{minDQ}
-        # bgzip ~{basename(vcf_file, '.vcf') + '.denovos.vcf'}
+        bgzip ~{basename(vcf_file, '.vcf') + '.denovos.vcf'}
     >>>
 
     output {
-        File out_vcf = basename(vcf_file, '.vcf') + '.denovos.vcf'
+        File out_vcf = basename(vcf_file, '.vcf') + '.denovos.vcf.gz'
     }
 }
 
