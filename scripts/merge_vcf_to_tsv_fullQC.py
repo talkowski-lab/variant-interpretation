@@ -32,7 +32,7 @@ def main():
     res_vcf_paths = glob.glob(os.path.join(args.res_vcf_dir, '*.vcf.gz'))
     trio_variant_keys = DefaultDict(list)  # key: familyID-sampleID; value: list of "chr_pos_ref_alt"
     for res_vcf_path in res_vcf_paths:
-        trio_key = os.path.basename(res_vcf_path).replace('.denovos.vcf.gz', '')
+        trio_key = os.path.basename(res_vcf_path).replace('.denovos.vcf.gz', '').replace('_HP_VAF', '')
         with gzip.open(res_vcf_path, 'rt') as vcf_file:
             for line in vcf_file:
                 if line.startswith('#'):
@@ -49,7 +49,7 @@ def main():
     out_file = open(args.out_path, 'a')
     conter = 0
     for in_vcf_path in in_vcf_paths:
-        trio_key = os.path.basename(in_vcf_path).replace('.vcf', '')
+        trio_key = os.path.basename(in_vcf_path).replace('.vcf', '').replace('_HP_VAF', '')
         sampleID = triokey_to_samp[trio_key]
         print("Processing:" + sampleID)
         variant_df = parse_trio_vcf(in_vcf_path, sample_info, sampleID)
