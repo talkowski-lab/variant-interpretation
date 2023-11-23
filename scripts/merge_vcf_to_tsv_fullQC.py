@@ -129,7 +129,7 @@ def parse_trio_vcf(vcf_path: str, sample_info: dict, sampleID: str, abnd_colname
     vcf_df['VarKey'] = vcf_df['ID'] + ":" + vcf_df['SAMPLE']
 
     # Parse the INFO field
-    fixed_info_columns = ['AC','AF','AN','BaseQRankSum','ClippingRankSum','DP','FS','MLEAC','MLEAF','MQ','MQRankSum','QD','ReadPosRankSum','SOR','VQSLOD','cohort_AC']
+    fixed_info_columns = ['AC','AF','AN','BaseQRankSum','ClippingRankSum','DP','FS','MLEAC','MLEAF','MQ','MQRankSum','POLYX','QD','ReadPosRankSum','SOR','VQSLOD','cohort_AC']
     info_strs = vcf_df['INFO'].to_numpy()
     info_dicts = list(map(parse_info_str, info_strs))
     info_df = pd.DataFrame(info_dicts)
@@ -137,13 +137,13 @@ def parse_trio_vcf(vcf_path: str, sample_info: dict, sampleID: str, abnd_colname
 
     # Parse FORMAT field with trio info
     # child format columns
-    format_return_columns = ['GT','AB','AD','DP','GQ','PGT','PID','PL']
+    format_return_columns = ['GT','AB','AD','DP','GQ','PGT','PID','PL','VAF']
     format_heads = vcf_df['FORMAT'].to_numpy()
     format_child_dict = list(map(parse_format_str, format_heads, vcf_df[sampleID].to_numpy()))
     format_child_df = pd.DataFrame(format_child_dict)
     format_child_df = format_child_df[format_return_columns].add_suffix('_sample')
     # father format columns
-    format_return_columns = ['GT','AB','AD','DP','GQ']
+    format_return_columns = ['GT','AB','AD','DP','GQ','VAF']
     format_heads = vcf_df['FORMAT'].to_numpy()
     format_father_dict = list(map(parse_format_str, format_heads, vcf_df[fatherID].to_numpy()))
     format_father_df = pd.DataFrame(format_father_dict)

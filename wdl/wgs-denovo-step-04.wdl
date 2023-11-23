@@ -49,6 +49,7 @@ task trio_denovo {
         # awk -v fam="$fam" '$1==fam' ~{ped_uri} > "$fam".ped
         python3 ~{get_sample_pedigree_py} ~{ped_uri} ~{vcf_file}
         sample=$(basename ~{vcf_file} '.vcf' | awk -F "_trio_" '{print $2}') 
+        sample="${sample//_HP_VAF/}"
         /src/wgs_denovo/triodenovo/triodenovo-fix/src/triodenovo --ped "$sample".ped --in_vcf ~{vcf_file} --out_vcf ~{basename(vcf_file, '.vcf') + '.denovos.vcf'} --minDQ ~{minDQ}
         bgzip ~{basename(vcf_file, '.vcf') + '.denovos.vcf'}
     >>>
