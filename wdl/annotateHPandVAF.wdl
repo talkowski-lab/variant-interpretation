@@ -31,10 +31,15 @@ workflow annotateHPandVAF {
                     jvarkit_docker=jvarkit_docker
             }
         }
+        call combineOutputVCFs {
+            input:
+                out_vcfs=annotateVCF.split_trio_annot_vcfs,
+                jvarkit_docker=jvarkit_docker
+        }
     }
 
     output {
-        Array[Array[File]] split_trio_annot_vcfs = annotateVCF.split_trio_annot_vcfs
+        Array[Array[File]] split_trio_annot_vcfs = combineOutputVCFs.split_trio_annot_vcfs
     }
 }
 
@@ -91,5 +96,25 @@ task annotateVCF {
 
     output {
         File split_trio_annot_vcfs = out_vcf
+    }
+}
+
+task combineOutputVCFs {
+    input {
+        Array[File] out_vcfs
+        String jvarkit_docker
+    }
+
+    runtime {
+        docker: jvarkit_docker
+    }
+
+    command {
+        mkdir -p tmp_out_vcfs
+        mv ~{sep=" " out_vcfs} tmp_out_vcfs/
+    }
+
+    output {
+        Array[File] split_trio_annot_vcfs = glob('tmp_out_vcfs/*')
     }
 }
