@@ -481,8 +481,6 @@ task callOutliers{
 
         python3.9 /src/variant-interpretation/scripts/deNovoOutliers.py --bed ~{bed_file}
 
-        mv final.denovo.merged.allSamples.bed de_novo_annotated_output.bed
-
         bgzip final.denovo.merged.bed
         bgzip final.denovo.merged.outliers.bed
         bgzip final.denovo.merged.allSamples.bed
