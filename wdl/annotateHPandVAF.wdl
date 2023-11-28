@@ -12,7 +12,7 @@ struct RuntimeAttr {
 workflow annotateHPandVAF {
     input {
         Array[Array[File]] split_trio_vcfs
-        File vqsr_header
+        Array[File] merged_preprocessed_vcf_files
         File hg38_reference
         File hg38_reference_fai
         File hg38_reference_dict
@@ -24,7 +24,7 @@ workflow annotateHPandVAF {
             call annotateVCF {
                 input:
                     trio_vcf=trio_vcf,
-                    vqsr_header=vqsr_header,
+                    merged_preprocessed_vcf_files=merged_preprocessed_vcf_files,
                     hg38_reference=hg38_reference,
                     hg38_reference_fai=hg38_reference_fai,
                     hg38_reference_dict=hg38_reference_dict,
@@ -46,7 +46,7 @@ workflow annotateHPandVAF {
 task annotateVCF {
     input {
         File trio_vcf
-        File vqsr_header
+        Array[File] merged_preprocessed_vcf_files
         File hg38_reference
         File hg38_reference_fai
         File hg38_reference_dict
@@ -87,7 +87,8 @@ task annotateVCF {
 
     command <<<
         bcftools head ~{trio_vcf} > old_header.txt
-        head -c -1 -q ~{vqsr_header} old_header.txt > new_header.txt
+        bcftools head ~{merged_preprocessed_vcf_files[0]} > og_header.txt
+        head -c -1 -q og_header.txt old_header.txt > new_header.txt
         bcftools reheader -h new_header.txt ~{trio_vcf} > ~{clean_vcf}
 
         java -jar /opt/jvarkit/dist/jvarkit.jar vcfpolyx -R ~{hg38_reference} -o ~{hp_vcf} ~{clean_vcf}
