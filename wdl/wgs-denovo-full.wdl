@@ -26,7 +26,6 @@ workflow wgs_denovo_full {
             File get_sample_pedigree_py
             File lcr_uri
             File ped_uri
-            File merged_preprocessed_vcf_files
             File hg38_reference
             File hg38_reference_fai
             File hg38_reference_dict
@@ -67,7 +66,7 @@ workflow wgs_denovo_full {
     call annotateHPandVAF.annotateHPandVAF as annotateHPandVAF {
         input:
             split_trio_vcfs=step3.split_trio_vcfs,
-            merged_preprocessed_vcf_files=merged_preprocessed_vcf_files,
+            merged_preprocessed_vcf_files=step1and2.merged_preprocessed_vcf_files,
             hg38_reference=hg38_reference,
             hg38_reference_fai=hg38_reference_fai,
             hg38_reference_dict=hg38_reference_dict,
