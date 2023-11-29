@@ -54,7 +54,7 @@ def trim_vcf(vcf_uri, lcr_uri, ped_uri, meta_uri, trio_uri, vcf_out_uri, build):
     mt = mt.filter_cols(mt.pheno.Role != '', keep = True)
     # only keep mendelian errors 
     # mendelian errors code == 2 get parents hom_ref and children het loci
-    pedigree = hl.Pedigree.read(ped_uri)
+    pedigree = hl.Pedigree.read(ped_uri, delimiter='\t')
     all_errors, per_fam, per_sample, per_variant = hl.mendel_errors(mt['GT'], pedigree)
     mt = mt.semi_join_rows(all_errors.filter(all_errors.mendel_code == 2).key_by('locus', 'alleles'))
     # select specific entries for each variant
