@@ -325,7 +325,7 @@ task getGenomicDisorders{
         # -wa -wb is not defined in bedtools coverage. 
         # We should have the same format of bedtools intersect in order to concatanate the files in downstream.
         # The "bedtools coverage" below collect the list of disorders that has hits in depth file limited to coverage fraction. 
-        # The output file doesn't include the list of ssample or family calls which covers 30% of disorder region.
+        # The output file doesn't include the list of sample or family calls which cover 30% of disorder region.
         # Thus, "bedtools intersect" is required to recover the calls.
         bedtools coverage -sorted -a gd.per.family.txt -b sorted.depth.parents.bed.gz |awk '{if ($NF>=0.30) print }' > ~{chromosome}.coverage.parents.list.txt
         bedtools intersect -wa -wb -a ~{chromosome}.coverage.parents.list.txt -b sorted.depth.parents.bed.gz | sort | uniq | awk -v OFS="\t" '{print $1,$2,$3,$4,$9,$10,$11,$12,$13}' > ~{chromosome}.coverage.parents.txt
@@ -333,7 +333,7 @@ task getGenomicDisorders{
         bedtools coverage -sorted -a gd.per.sample.txt -b sorted.depth.proband.bed.gz |awk '{if ($NF>=0.30) print }' > ~{chromosome}.coverage.proband.list.txt
         bedtools intersect -wa -wb -a ~{chromosome}.coverage.proband.list.txt -b sorted.depth.proband.bed.gz | sort | uniq | awk -v OFS="\t" '{print $1,$2,$3,$4,$9,$10,$11,$12,$13}' > ~{chromosome}.coverage.proband.txt
 
-        #"bedtools coverage" throws an error when sorted.depth.proband.bed.gz contains a sample, but the query file "gd.per.sample.txt" (so the ped file) doesn't contain the corresponding sample. 
+        # IMPORTANT "bedtools coverage" throws an error when sorted.depth.proband.bed.gz contains a sample, but the query file "gd.per.sample.txt" (so the ped file) doesn't contain the corresponding sample. 
         echo "done with coverage in depth variants"
 
         cat ~{chromosome}.coverage.parents.txt ~{chromosome}.coverage.proband.txt > ~{chromosome}.coverage.txt
