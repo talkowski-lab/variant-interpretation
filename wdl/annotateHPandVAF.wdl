@@ -87,7 +87,7 @@ task annotateVCF {
 
     command <<<
         bcftools head ~{trio_vcf} > old_header.txt
-        bcftools head ~{merged_preprocessed_vcf_files} > og_header.txt
+        bcftools head ~{merged_preprocessed_vcf_files[0]} > og_header.txt
         head -c -1 -q og_header.txt old_header.txt > new_header.txt
         bcftools reheader -h new_header.txt ~{trio_vcf} > ~{clean_vcf}
 
@@ -96,6 +96,8 @@ task annotateVCF {
     >>>
 
     output {
+        File og_header = "og_header.txt"
+        File new_header = "new_header.txt"
         File split_trio_annot_vcfs = out_vcf
     }
 }
