@@ -12,7 +12,7 @@ struct RuntimeAttr {
 workflow annotateHPandVAF {
     input {
         Array[Array[File]] split_trio_vcfs
-        Array[Array[File]] vep_annotated_final_vcf
+        File vep_annotated_final_vcf_single
         File hg38_reference
         File hg38_reference_fai
         File hg38_reference_dict
@@ -24,7 +24,7 @@ workflow annotateHPandVAF {
             call annotateVCF {
                 input:
                     trio_vcf=trio_vcf,
-                    vep_annotated_final_vcf=vep_annotated_final_vcf,
+                    vep_annotated_final_vcf_single=vep_annotated_final_vcf_single,
                     hg38_reference=hg38_reference,
                     hg38_reference_fai=hg38_reference_fai,
                     hg38_reference_dict=hg38_reference_dict,
@@ -46,7 +46,7 @@ workflow annotateHPandVAF {
 task annotateVCF {
     input {
         File trio_vcf
-        Array[Array[File]] vep_annotated_final_vcf
+        File vep_annotated_final_vcf_single
         File hg38_reference
         File hg38_reference_fai
         File hg38_reference_dict
@@ -86,12 +86,9 @@ task annotateVCF {
     String out_vcf = basename(trio_vcf, '.vcf')+'_HP_VAF.vcf'
 
     command <<<
-        # bcftools head ~{trio_vcf} > old_header.txt
-        bcftools head ~{vep_annotated_final_vcf[0][0]} > og_header.txt
+        bcftools head ~{vep_annotated_final_vcf_single} > og_header.txt
         grep "VQSRTranche" og_header.txt > new_header.txt
         bcftools annotate -h new_header.txt -o ~{clean_vcf} ~{trio_vcf}
-        # head -c -1 -q og_header.txt old_header.txt > new_header.txt
-        # bcftools reheader -h new_header.txt ~{trio_vcf} > ~{clean_vcf}
 
         java -jar /opt/jvarkit/dist/jvarkit.jar vcfpolyx -R ~{hg38_reference} -o ~{hp_vcf} ~{clean_vcf}
         bcftools +fill-tags ~{hp_vcf} -Ov -o ~{out_vcf} -- -t VAF 
