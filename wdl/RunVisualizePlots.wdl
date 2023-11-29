@@ -171,6 +171,7 @@ workflow VisualizePlots{
 }
 
 task concatinate_plots{
+    ##To do: take out as taks in now in ConcatinatePlots.wdl
     input{
         File rd_plots
         File igv_plots
