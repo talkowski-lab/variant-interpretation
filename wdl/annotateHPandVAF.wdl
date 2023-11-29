@@ -87,7 +87,7 @@ task annotateVCF {
 
     command <<<
         bcftools head ~{vep_annotated_final_vcf_single} > og_header.txt
-        grep "VQSRTranche" og_header.txt > new_header.txt
+        grep "FILTER=" og_header.txt > new_header.txt
         bcftools annotate -h new_header.txt -o ~{clean_vcf} ~{trio_vcf}
 
         java -jar /opt/jvarkit/dist/jvarkit.jar vcfpolyx -R ~{hg38_reference} -o ~{hp_vcf} ~{clean_vcf}
