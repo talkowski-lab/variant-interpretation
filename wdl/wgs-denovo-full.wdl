@@ -29,7 +29,6 @@ workflow wgs_denovo_full {
             File hg38_reference
             File hg38_reference_fai
             File hg38_reference_dict
-            File vep_annotated_final_vcf_single
             Array[Array[File]] vep_annotated_final_vcf
             String bucket_id
             String cohort_prefix
@@ -67,7 +66,7 @@ workflow wgs_denovo_full {
     call annotateHPandVAF.annotateHPandVAF as annotateHPandVAF {
         input:
             split_trio_vcfs=step3.split_trio_vcfs,
-            vep_annotated_final_vcf_single=vep_annotated_final_vcf_single,
+            vep_annotated_final_vcf_single=vep_annotated_final_vcf[0][0],
             hg38_reference=hg38_reference,
             hg38_reference_fai=hg38_reference_fai,
             hg38_reference_dict=hg38_reference_dict,
