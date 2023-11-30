@@ -90,7 +90,7 @@ workflow vepAnnotateSingle {
                 human_ancestor_fa=human_ancestor_fa,
                 human_ancestor_fa_fai=human_ancestor_fa_fai,
                 vep_docker=vep_docker,
-                runtime_attr_override=runtime_attr_vep_annotate
+                runtime_attr_override=runtime_attr_merge_vcfs
         }
         call addGenotypes { 
             input:
@@ -111,7 +111,7 @@ workflow vepAnnotateSingle {
                 vcf_contigs=genotyped_vcf_file,
                 sv_base_mini_docker=sv_base_mini_docker,
                 cohort_prefix=cohort_prefix,
-                runtime_attr_override=runtime_attr_vep_annotate
+                runtime_attr_override=runtime_o
         }       
         File merged_vcf_file = select_first([mergeVCFs.merged_vcf_file])
         File merged_vcf_idx = select_first([mergeVCFs.merged_vcf_idx])
