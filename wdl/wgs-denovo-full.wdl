@@ -58,7 +58,7 @@ workflow wgs_denovo_full {
     call step3.step3 as step3 {
         input:
             ped_uri=ped_uri,
-            merged_preprocessed_vcf_files=step1and2.merged_preprocessed_vcf_files,
+            merged_preprocessed_vcf_file=step1and2.merged_preprocessed_vcf_file,
             hail_docker=hail_docker,
             uberSplit_v3_py=uberSplit_v3_py,
             batch_size=batch_size
@@ -94,12 +94,12 @@ workflow wgs_denovo_full {
 
     output {
         File ped_uri_no_header = step1and2.ped_uri_no_header
-        Array[File] merged_preprocessed_vcf_files = step1and2.merged_preprocessed_vcf_files
-        Array[File] merged_preprocessed_vcf_idx = step1and2.merged_preprocessed_vcf_idx
-        Array[Array[File]] split_trio_vcfs = step3.split_trio_vcfs
-        Array[File] stats_files = step3.stats_files
-        Array[Array[File]] split_trio_annot_vcfs = annotateHPandVAF.split_trio_annot_vcfs
-        Array[Array[File]] trio_denovo_vcf = step4.trio_denovo_vcf
+        File merged_preprocessed_vcf_file = step1and2.merged_preprocessed_vcf_file
+        File merged_preprocessed_vcf_idx = step1and2.merged_preprocessed_vcf_idx
+        Array[File] split_trio_vcfs = step3.split_trio_vcfs
+        File stats_files = step3.stats_files
+        Array[File] split_trio_annot_vcfs = annotateHPandVAF.split_trio_annot_vcfs
+        Array[File] trio_denovo_vcf = step4.trio_denovo_vcf
         File vcf_metrics_tsv = step5.vcf_metrics_tsv
     }    
 }

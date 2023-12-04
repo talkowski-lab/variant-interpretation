@@ -68,10 +68,19 @@ workflow step1 {
         }
     }
 
+    call mergeVCFs as mergeAllVCFs {
+        input:
+            og_vcf_uri=cohort_prefix+'.vcf.gz',
+            vcf_contigs=mergeVCFs.merged_vcf_file,
+            sv_base_mini_docker=sv_base_mini_docker,
+            cohort_prefix=cohort_prefix,
+            runtime_attr_override=runtime_attr_merge_vcfs
+    }
+
     output {
         File ped_uri_no_header = bucket_id + "/resources/pedigrees/" + cohort_prefix + "_no_header.ped"
-        Array[File] merged_preprocessed_vcf_files = mergeVCFs.merged_vcf_file
-        Array[File] merged_preprocessed_vcf_idx = mergeVCFs.merged_vcf_idx
+        File merged_preprocessed_vcf_file = mergeAllVCFs.merged_vcf_file
+        File merged_preprocessed_vcf_idx = mergeAllVCFs.merged_vcf_idx
     }
 }
 

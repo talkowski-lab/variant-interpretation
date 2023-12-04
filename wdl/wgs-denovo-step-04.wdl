@@ -3,31 +3,29 @@ version 1.0
 workflow step4 {
     input {
         File ped_uri
-        Array[Array[File]] split_trio_vcfs
+        Array[File] split_trio_vcfs
         File get_sample_pedigree_py
         String trio_denovo_docker
         Float minDQ
     }
-    scatter (vcf_files in split_trio_vcfs) {
-        scatter (vcf_file in vcf_files) {
-            call trio_denovo {
-                input:
-                    ped_uri=ped_uri,
-                    vcf_file=vcf_file,
-                    get_sample_pedigree_py=get_sample_pedigree_py,
-                    trio_denovo_docker=trio_denovo_docker,
-                    minDQ=minDQ
-            }
-        }
-        call combineOutputVCFs {
+    scatter (vcf_file in split_trio_vcfs) {
+        call trio_denovo {
             input:
-                out_vcfs=trio_denovo.out_vcf,
-                trio_denovo_docker=trio_denovo_docker
+                ped_uri=ped_uri,
+                vcf_file=vcf_file,
+                get_sample_pedigree_py=get_sample_pedigree_py,
+                trio_denovo_docker=trio_denovo_docker,
+                minDQ=minDQ
         }
+    }
+    call combineOutputVCFs {
+        input:
+            out_vcfs=trio_denovo.out_vcf,
+            trio_denovo_docker=trio_denovo_docker
     }
 
     output {
-        Array[Array[File]] trio_denovo_vcf = combineOutputVCFs.trio_denovo_vcf
+        Array[File] trio_denovo_vcf = combineOutputVCFs.trio_denovo_vcf
     }
 }
 

@@ -28,20 +28,34 @@ def main():
     parser = create_arg_parser()
     args = parser.parse_args()
     
+    # Collect trio list infor
+    sample_info, triokey_to_samp = parse_pedigree(args.ped_path)
+    
     # Collect triodenovo input keys (family ID and sample ID)
     res_vcf_paths = glob.glob(os.path.join(args.res_vcf_dir, '*.vcf.gz'))
-    trio_variant_keys = DefaultDict(list)  # key: familyID-sampleID; value: list of "chr_pos_ref_alt"
+    trio_variant_keys = DefaultDict(pd.DataFrame)  # key: familyID-sampleID; value: list of "chr_pos_ref_alt"
     for res_vcf_path in res_vcf_paths:
         trio_key = os.path.basename(res_vcf_path).replace('.denovos.vcf.gz', '').replace('_HP_VAF', '')
         with gzip.open(res_vcf_path, 'rt') as vcf_file:
             for line in vcf_file:
+                if line.startswith('#CHROM'):
+                    sample = triokey_to_samp[trio_key]
+                    mother = sample_info[sample]['MotherID']
+                    father = sample_info[sample]['FatherID']
+                    sample_dict = {'DQ_sample': sample, 'DQ_father': father, 'DQ_mother': mother}
+                    sample_order = {k: line.rstrip('\n').split('\t').index(s) for (k, s) in sample_dict.items()}
+                    format_col = line.rstrip('\n').split('\t').index('FORMAT')
                 if line.startswith('#'):
                     continue
                 columns = line.rstrip('\n').split('\t')
-                trio_variant_keys[trio_key].append(':'.join([columns[0], columns[1], columns[3], columns[4]]))
-    
-    # Collect trio list infor
-    sample_info, triokey_to_samp = parse_pedigree(args.ped_path)
+                var_id = ':'.join([columns[0], columns[1], columns[3], columns[4]])
+                try:
+                    dq_idx = columns[format_col].split(':').index('DQ')
+                except Exception as e:
+                    print(trio_key)
+                    print(columns[format_col])
+                for k, idx in sample_order.items():
+                    trio_variant_keys[trio_key].loc[var_id, k] = columns[idx].split(':')[dq_idx]
     
     # Make output 
     # abnd_columns = ['culprit', 'ExcessHet', 'InbreedingCoeff','MQ0']
@@ -53,7 +67,9 @@ def main():
         sampleID = triokey_to_samp[trio_key]
         print("Processing:" + sampleID)
         variant_df = parse_trio_vcf(in_vcf_path, sample_info, sampleID)
-        result_df = variant_df[variant_df['ID'].isin(trio_variant_keys[trio_key])]
+        result_df = variant_df[variant_df['ID'].isin(trio_variant_keys[trio_key].index)]
+        result_df.index = result_df['ID']
+        result_df = pd.concat([result_df, trio_variant_keys[trio_key]], axis=1)
         if conter == 0:
             result_df.to_csv(out_file, sep = '\t', index = False, na_rep = '.')
         else:
@@ -129,7 +145,7 @@ def parse_trio_vcf(vcf_path: str, sample_info: dict, sampleID: str, abnd_colname
     vcf_df['VarKey'] = vcf_df['ID'] + ":" + vcf_df['SAMPLE']
 
     # Parse the INFO field
-    fixed_info_columns = ['AC','AF','AN','BaseQRankSum','ClippingRankSum','DP','FS','MLEAC','MLEAF','MQ','MQRankSum','POLYX','QD','ReadPosRankSum','SOR','VQSLOD','cohort_AC']
+    fixed_info_columns = ['END','AC','AF','AN','BaseQRankSum','ClippingRankSum','DP','FS','MLEAC','MLEAF','MQ','MQRankSum','POLYX','QD','ReadPosRankSum','SOR','VQSLOD','cohort_AC']
     info_strs = vcf_df['INFO'].to_numpy()
     info_dicts = list(map(parse_info_str, info_strs))
     info_df = pd.DataFrame(info_dicts)

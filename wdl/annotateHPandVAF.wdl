@@ -11,7 +11,7 @@ struct RuntimeAttr {
 
 workflow annotateHPandVAF {
     input {
-        Array[Array[File]] split_trio_vcfs
+        Array[File] split_trio_vcfs
         File vep_annotated_final_vcf_single
         File hg38_reference
         File hg38_reference_fai
@@ -19,27 +19,25 @@ workflow annotateHPandVAF {
         String jvarkit_docker
     }
 
-    scatter (trio_vcfs in split_trio_vcfs) {
-        scatter (trio_vcf in trio_vcfs) {
-            call annotateVCF {
-                input:
-                    trio_vcf=trio_vcf,
-                    vep_annotated_final_vcf_single=vep_annotated_final_vcf_single,
-                    hg38_reference=hg38_reference,
-                    hg38_reference_fai=hg38_reference_fai,
-                    hg38_reference_dict=hg38_reference_dict,
-                    jvarkit_docker=jvarkit_docker
-            }
-        }
-        call combineOutputVCFs {
+    scatter (trio_vcf in split_trio_vcfs) {
+        call annotateVCF {
             input:
-                out_vcfs=annotateVCF.split_trio_annot_vcfs,
+                trio_vcf=trio_vcf,
+                vep_annotated_final_vcf_single=vep_annotated_final_vcf_single,
+                hg38_reference=hg38_reference,
+                hg38_reference_fai=hg38_reference_fai,
+                hg38_reference_dict=hg38_reference_dict,
                 jvarkit_docker=jvarkit_docker
         }
     }
+    call combineOutputVCFs {
+        input:
+            out_vcfs=annotateVCF.split_trio_annot_vcfs,
+            jvarkit_docker=jvarkit_docker
+    }
 
     output {
-        Array[Array[File]] split_trio_annot_vcfs = combineOutputVCFs.split_trio_annot_vcfs
+        Array[File] split_trio_annot_vcfs = combineOutputVCFs.split_trio_annot_vcfs
     }
 }
 
