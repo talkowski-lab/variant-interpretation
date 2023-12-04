@@ -2,7 +2,7 @@ version 1.0
     
 import "Structs.wdl"
 
-workflow deNovoSVsScatter {
+workflow DeNovoSVsScatter {
 
     input {
         File ped_input
@@ -27,16 +27,16 @@ workflow deNovoSVsScatter {
 
     # Scatter genotyping over shards
     scatter ( shard in vcf_files ) {
-        call vcfToBed{
+        call VcfToBed{
             input:
             vcf_file=shard,
             variant_interpretation_docker=variant_interpretation_docker,
             runtime_attr_override = runtime_attr_vcf_to_bed
         }
 
-        call runDeNovo{
+        call RunDeNovo{
             input:
-                bed_input=vcfToBed.bed_output,
+                bed_input=VcfToBed.bed_output,
                 ped_input=ped_input,
                 vcf_input=shard,
                 disorder_input=disorder_input,
@@ -55,32 +55,30 @@ workflow deNovoSVsScatter {
         }   
     }
 
-    call mergeBedFiles as mergeBedFilesAnnotated{
+    call MergeBedFiles as MergeBedFilesAnnotated{
         input:
-            bed_files = runDeNovo.annotation_output,
+            bed_files = RunDeNovo.annotation_output,
             chromosome = chromosome,
             variant_interpretation_docker = variant_interpretation_docker,
             runtime_attr_override = runtime_attr_merge_bed
     }
 
-    call mergeBedFiles as mergeBedFilesFinal{
+    call MergeBedFiles as MergeBedFilesFinal{
         input:
-            bed_files = runDeNovo.denovo_output,
+            bed_files = RunDeNovo.denovo_output,
             chromosome = chromosome,
             variant_interpretation_docker = variant_interpretation_docker,
             runtime_attr_override = runtime_attr_merge_bed
     }
 
     output {
-#        Array[File] per_shard_de_novo_output = runDeNovo.denovo_output
-#        Array[File] per_shard_annotation_output = runDeNovo.annotation_output
-        File per_chromosome_annotation_output_file = mergeBedFilesAnnotated.per_chromosome_denovo_output
-        File per_chromosome_final_output_file = mergeBedFilesFinal.per_chromosome_denovo_output
+        File per_chromosome_annotation_output_file = MergeBedFilesAnnotated.per_chromosome_denovo_output
+        File per_chromosome_final_output_file = MergeBedFilesFinal.per_chromosome_denovo_output
     }
 }
 
-task runDeNovo{
-    input{
+task RunDeNovo {
+    input {
         File bed_input
         File ped_input
         File vcf_input
@@ -104,17 +102,17 @@ task runDeNovo{
     Float base_mem_gb = 16 #3.75
 
     RuntimeAttr default_attr = object {
-                                      mem_gb: base_mem_gb,
-                                      disk_gb: ceil(10 + input_size + bed_size * 1.5),
-                                      cpu: 1,
-                                      preemptible: 2,
-                                      max_retries: 1,
-                                      boot_disk_gb: 8
-                                  }
+        mem_gb: base_mem_gb,
+        disk_gb: ceil(10 + input_size + bed_size * 1.5),
+        cpu: 1,
+        preemptible: 2,
+        max_retries: 1,
+        boot_disk_gb: 8
+    }
 
     RuntimeAttr runtime_attr = select_first([runtime_attr_override, default_attr])
 
-    output{
+    output {
         File denovo_output = "~{basename}.denovo.bed.gz"
         File annotation_output = "~{basename}.annotation.bed.gz"
     }
@@ -155,8 +153,8 @@ task runDeNovo{
     }
 }
 
-task vcfToBed{
-    input{
+task VcfToBed {
+    input {
         File vcf_file
         String variant_interpretation_docker
         RuntimeAttr? runtime_attr_override
@@ -166,13 +164,13 @@ task vcfToBed{
     Float base_mem_gb = 3.75
 
     RuntimeAttr default_attr = object {
-                                      mem_gb: base_mem_gb,
-                                      disk_gb: ceil(10 + input_size * 1.5),
-                                      cpu: 1,
-                                      preemptible: 2,
-                                      max_retries: 1,
-                                      boot_disk_gb: 8
-                                  }
+        mem_gb: base_mem_gb,
+        disk_gb: ceil(10 + input_size * 1.5),
+        cpu: 1,
+        preemptible: 2,
+        max_retries: 1,
+        boot_disk_gb: 8
+    }
     
     RuntimeAttr runtime_attr = select_first([runtime_attr_override, default_attr])
 
@@ -199,8 +197,8 @@ task vcfToBed{
     }
 }
 
-task mergeBedFiles{
-    input{
+task MergeBedFiles {
+    input {
         Array[File] bed_files
         String chromosome
         String variant_interpretation_docker
@@ -211,32 +209,30 @@ task mergeBedFiles{
     Float base_mem_gb = 3.75
 
     RuntimeAttr default_attr = object {
-                                      mem_gb: base_mem_gb,
-                                      disk_gb: ceil(10 + (bed_files_size) * 2.0),
-                                      cpu: 1,
-                                      preemptible: 2,
-                                      max_retries: 1,
-                                      boot_disk_gb: 8
-                                  }
+        mem_gb: base_mem_gb,
+        disk_gb: ceil(10 + (bed_files_size) * 2.0),
+        cpu: 1,
+        preemptible: 2,
+        max_retries: 1,
+        boot_disk_gb: 8
+    }
     
     RuntimeAttr runtime_attr = select_first([runtime_attr_override, default_attr])
 
-    output{
+    output {
         File per_chromosome_denovo_output = "~{chromosome}.denovo.merged.bed.gz"
     }
 
     command {
-
-        zcat ${bed_files[0]} | head -n+1 > ~{chromosome}.denovo.merged.bed
-        zcat ${sep=" " bed_files} | grep -v ^chrom >> ~{chromosome}.denovo.merged.bed
+        zcat ~{bed_files[0]} | head -n+1 > ~{chromosome}.denovo.merged.bed
+        zcat ~{sep=" " bed_files} | grep -v ^chrom >> ~{chromosome}.denovo.merged.bed
         bgzip ~{chromosome}.denovo.merged.bed
-
     }
 
     runtime {
         cpu: select_first([runtime_attr.cpu, default_attr.cpu])
-        memory: "~{select_first([runtime_attr.mem_gb, default_attr.mem_gb])} GB"
-        disks: "local-disk ~{select_first([runtime_attr.disk_gb, default_attr.disk_gb])} HDD"
+        memory: select_first([runtime_attr.mem_gb, default_attr.mem_gb]) + " GB"
+        disks: "local-disk " + select_first([runtime_attr.disk_gb, default_attr.disk_gb]) + " HDD"
         bootDiskSizeGb: select_first([runtime_attr.boot_disk_gb, default_attr.boot_disk_gb])
         preemptible: select_first([runtime_attr.preemptible, default_attr.preemptible])
         maxRetries: select_first([runtime_attr.max_retries, default_attr.max_retries])

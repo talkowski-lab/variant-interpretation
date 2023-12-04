@@ -4,7 +4,7 @@ import "Structs.wdl"
 import "TasksMakeCohortVcf.wdl" as MiniTasks
 
 
-workflow getBatchedVcf {
+workflow GetBatchedVcf {
 
     input {
         File vcf_file
@@ -28,7 +28,7 @@ workflow getBatchedVcf {
     }
 
     scatter (shard in SplitVcf.shards_string) {
-        call batchVcf{
+        call BatchVcf{
             input:
                 vcf_file = shard,
                 samples = samples,
@@ -37,20 +37,20 @@ workflow getBatchedVcf {
         }
     }
 
-    call merge {
+    call Merge {
         input:
-            vcf_files = batchVcf.subset_vcf,
+            vcf_files = BatchVcf.subset_vcf,
             variant_interpretation_docker=variant_interpretation_docker,
             runtime_attr_override = runtime_attr_merge
     }
 
     output {
-        File split_vcf = merge.merged_vcf
+        File split_vcf = Merge.merged_vcf
     }
 
 }
 
-task batchVcf{
+task BatchVcf{
     input{
         String vcf_file
         File samples
@@ -93,7 +93,7 @@ task batchVcf{
     }
 }
 
-task merge{
+task Merge{
     input{
         Array[File] vcf_files
         String variant_interpretation_docker
@@ -115,7 +115,7 @@ task merge{
     RuntimeAttr runtime_attr = select_first([runtime_attr_override, default_attr])
 
     output{
-        File merged_vcf = "merged.vcf.gz"
+        File merged_vcf = "Merged.vcf.gz"
     }
 
     command {
@@ -128,7 +128,7 @@ task merge{
         done
 
         export GCS_OAUTH_TOKEN=`gcloud auth application-default print-access-token`
-        bcftools concat ~{sep=' ' vcf_files} -O z -o merged.vcf.gz
+        bcftools concat ~{sep=' ' vcf_files} -O z -o Merged.vcf.gz
         
     }
 

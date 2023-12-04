@@ -2,7 +2,7 @@ version 1.0
     
 import "Structs.wdl"
 
-workflow reformatRawFiles {
+workflow ReformatRawFiles {
 
     input {
         Array[String] contigs
@@ -121,7 +121,6 @@ task raw_VcfToBed{
         docker: variant_interpretation_docker
     }
 }
-
 
 task raw_mergeBed{
     input{

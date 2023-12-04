@@ -2,11 +2,11 @@ version 1.0
     
 import "Structs.wdl"
 import "ReformatRawFiles.wdl" as raw
-import "TasksMakeCohortVcf.wdl" as MiniTasks
+import "TasksMakeCohortVcf.wdl" as miniTasks
 import "DeNovoSVsScatter.wdl" as runDeNovo
-import "SplitVcf.wdl" as SplitVcf
+import "SplitVcf.wdl" as splitVcf
 
-workflow deNovoSV {
+workflow DeNovoSV {
 
     input {
         File vcf_file
@@ -55,7 +55,7 @@ workflow deNovoSV {
     # If this file is given, subset all other input files to only include the necessary batches.
     if (defined(family_ids_txt)){
         File family_ids_txt_ = select_first([family_ids_txt])
-        call getBatchedFiles{
+        call GetBatchedFiles{
             input:
                 batch_raw_file = batch_raw_file,
                 batch_depth_raw_file = batch_depth_raw_file,
@@ -67,11 +67,11 @@ workflow deNovoSV {
                 runtime_attr_override = runtime_attr_get_batched_files
         }
 
-        call SplitVcf.getBatchedVcf as getBatchedVcf {
+        call splitVcf.GetBatchedVcf as GetBatchedVcf {
             input:
                 vcf_file = vcf_file,
                 prefix = prefix,
-                samples = getBatchedFiles.samples,
+                samples = GetBatchedFiles.samples,
                 records_per_shard = 10000,
                 variant_interpretation_docker = variant_interpretation_docker,
                 sv_pipeline_updates_docker = sv_pipeline_updates_docker,
@@ -81,21 +81,21 @@ workflow deNovoSV {
         }
     }
 
-    #makes a ped file of singletons, duos, and trios for input into the de novo script (only including families of interest)
-    call cleanPed{
+    # Makes a ped file of singletons, duos, and trios for input into the de novo script (only including families of interest)
+    call CleanPed{
         input:
             ped_input = ped_input,
-            vcf_input = select_first([getBatchedVcf.split_vcf, vcf_file]),
+            vcf_input = select_first([GetBatchedVcf.split_vcf, vcf_file]),
             variant_interpretation_docker=variant_interpretation_docker,
             runtime_attr_override = runtime_attr_clean_ped
     }
 
-    #splits raw files into probands and parents and reformats to have chrom_svtype_sample as the first column for probands and chrom_svtype_famid as the first column for parents
-    call raw.reformatRawFiles as reformatRawFiles {
+    # Splits raw files into probands and parents and reformats to have chrom_svtype_sample as the first column for probands and chrom_svtype_famid as the first column for parents
+    call raw.ReformatRawFiles as ReformatRawFiles {
         input:
             contigs = contigs,
-            raw_files_list = select_first([getBatchedFiles.batch_raw_files_list, batch_raw_file]),
-            ped_input = cleanPed.cleaned_ped,
+            raw_files_list = select_first([GetBatchedFiles.batch_raw_files_list, batch_raw_file]),
+            ped_input = CleanPed.cleaned_ped,
             depth = false,
             variant_interpretation_docker = variant_interpretation_docker,
             runtime_attr_vcf_to_bed = runtime_attr_raw_vcf_to_bed,
@@ -104,12 +104,12 @@ workflow deNovoSV {
             runtime_attr_reformat_bed = runtime_attr_raw_reformat_bed
     }
 
-    #splits raw files into probands and parents and reformats to have chrom_svtype_sample as the first column for probands and chrom_svtype_famid as the first column for parents
-    call raw.reformatRawFiles as reformatDepthRawFiles {
+    # Splits raw files into probands and parents and reformats to have chrom_svtype_sample as the first column for probands and chrom_svtype_famid as the first column for parents
+    call raw.ReformatRawFiles as ReformatDepthRawFiles {
         input:
             contigs = contigs,
-            raw_files_list = select_first([getBatchedFiles.batch_depth_raw_files_list, batch_depth_raw_file]),
-            ped_input = cleanPed.cleaned_ped,
+            raw_files_list = select_first([GetBatchedFiles.batch_depth_raw_files_list, batch_depth_raw_file]),
+            ped_input = CleanPed.cleaned_ped,
             depth = true,
             variant_interpretation_docker = variant_interpretation_docker,
             runtime_attr_vcf_to_bed = runtime_attr_raw_vcf_to_bed,
@@ -119,52 +119,52 @@ workflow deNovoSV {
     }
     
     scatter (i in range(length(contigs))){
-        #generates a list of genomic disorder regions in the vcf input as well as in the depth raw files
-        call getGenomicDisorders{
+        # Generates a list of genomic disorder regions in the vcf input as well as in the depth raw files
+        call GetGenomicDisorders{
             input:
                 genomic_disorder_input=genomic_disorder_input,
                 ped = ped_input,
-                vcf_file = select_first([getBatchedVcf.split_vcf, vcf_file]),
-                depth_raw_file_proband = reformatDepthRawFiles.reformatted_proband_raw_files[i],
-                depth_raw_file_parents = reformatDepthRawFiles.reformatted_parents_raw_files[i],
+                vcf_file = select_first([GetBatchedVcf.split_vcf, vcf_file]),
+                depth_raw_file_proband = ReformatDepthRawFiles.reformatted_proband_raw_files[i],
+                depth_raw_file_parents = ReformatDepthRawFiles.reformatted_parents_raw_files[i],
                 chromosome=contigs[i],
                 variant_interpretation_docker=variant_interpretation_docker,
                 runtime_attr_override = runtime_attr_gd
         }
 
-        #splits vcf by chromosome
-        call subsetVcf {
+        # Splits vcf by chromosome
+        call SubsetVcf {
             input:
-                vcf_file = select_first([getBatchedVcf.split_vcf, vcf_file]),
+                vcf_file = select_first([GetBatchedVcf.split_vcf, vcf_file]),
                 chromosome=contigs[i],
                 variant_interpretation_docker=variant_interpretation_docker,
                 runtime_attr_override = runtime_attr_subset_vcf
         }
 
-        #shards vcf
-        call MiniTasks.ScatterVcf as SplitVcf {
+        # Shards vcf
+        call miniTasks.ScatterVcf as ScatterVcf {
             input:
-                vcf=subsetVcf.vcf_output,
+                vcf=SubsetVcf.vcf_output,
                 prefix=prefix,
                 records_per_shard=records_per_shard,
                 sv_pipeline_docker=sv_pipeline_updates_docker,
                 runtime_attr_override=runtime_override_shard_vcf
         }
     
-        #runs the de novo calling python script on each shard and outputs a per chromosome list of de novo SVs
-        call runDeNovo.deNovoSVsScatter as getDeNovo {
+        # Runs the de novo calling python script on each shard and outputs a per chromosome list of de novo SVs
+        call runDeNovo.DeNovoSVsScatter as GetDeNovo {
             input:
-                ped_input=cleanPed.cleaned_ped,
-                vcf_files=SplitVcf.shards,
-                disorder_input=getGenomicDisorders.gd_output_for_denovo,
+                ped_input=CleanPed.cleaned_ped,
+                vcf_files=ScatterVcf.shards,
+                disorder_input=GetGenomicDisorders.gd_output_for_denovo,
                 chromosome=contigs[i],
-                raw_proband=reformatRawFiles.reformatted_proband_raw_files[i],
-                raw_parents=reformatRawFiles.reformatted_parents_raw_files[i],
-                raw_depth_proband=reformatDepthRawFiles.reformatted_proband_raw_files[i],
-                raw_depth_parents=reformatDepthRawFiles.reformatted_parents_raw_files[i],
+                raw_proband=ReformatRawFiles.reformatted_proband_raw_files[i],
+                raw_parents=ReformatRawFiles.reformatted_parents_raw_files[i],
+                raw_depth_proband=ReformatDepthRawFiles.reformatted_proband_raw_files[i],
+                raw_depth_parents=ReformatDepthRawFiles.reformatted_parents_raw_files[i],
                 exclude_regions = exclude_regions,
                 sample_batches = sample_batches,
-                batch_bincov_index = select_first([getBatchedFiles.batch_bincov_index_subset, batch_bincov_index]),
+                batch_bincov_index = select_first([GetBatchedFiles.batch_bincov_index_subset, batch_bincov_index]),
                 python_config=python_config,
                 variant_interpretation_docker=variant_interpretation_docker,
                 runtime_attr_denovo = runtime_attr_denovo,
@@ -172,53 +172,52 @@ workflow deNovoSV {
         }
     }
 
-    #merges the per chromosome final de novo SV outputs
-    call mergeDenovoBedFiles{
+    # Merges the per chromosome final de novo SV outputs
+    call MergeDenovoBedFiles{
         input:
-            bed_files = getDeNovo.per_chromosome_final_output_file,
+            bed_files = GetDeNovo.per_chromosome_final_output_file,
             variant_interpretation_docker=variant_interpretation_docker,
             runtime_attr_override = runtime_attr_merge_final_bed_files
     }
 
-    #outputs a final callset of de novo SVs as well as outlier de novo SV calls
-    call callOutliers {
+    # Outputs a final callset of de novo SVs as well as outlier de novo SV calls
+    call CallOutliers {
         input:
-            bed_file = mergeDenovoBedFiles.merged_denovo_output,
+            bed_file = MergeDenovoBedFiles.merged_denovo_output,
             variant_interpretation_docker=variant_interpretation_docker,
             runtime_attr_override = runtime_attr_call_outliers
     }
 
-    #generates plots for QC
-    call createPlots{
+    # Generates plots for QC
+    call CreatePlots{
         input:
-            bed_file = callOutliers.final_denovo_nonOutliers_output,
-#            outliers_file = callOutliers.final_denovo_outliers_output,
+            bed_file = CallOutliers.final_denovo_nonOutliers_output,
             ped_input = ped_input,
             variant_interpretation_docker=variant_interpretation_docker,
             runtime_attr_override = runtime_attr_create_plots
     }
 
-    #merges the genomic disorder region output from each chromosome to compile a list of genomic disorder regions
-    call mergeGenomicDisorders{
+    # Merges the genomic disorder region output from each chromosome to compile a list of genomic disorder regions
+    call MergeGenomicDisorders{
         input:
-            genomic_disorder_input=getGenomicDisorders.gd_output_from_depth_raw_files,
+            genomic_disorder_input=GetGenomicDisorders.gd_output_from_depth_raw_files,
             variant_interpretation_docker=variant_interpretation_docker,
             runtime_attr_override = runtime_attr_merge_gd
     }
 
     output {
-        File cleaned_ped = cleanPed.cleaned_ped
-        File final_denovo_nonOutliers = callOutliers.final_denovo_nonOutliers_output
-        File final_denovo_outliers = callOutliers.final_denovo_outliers_output
-        File final_denovo_nonOutliers_plots = createPlots.output_plots
-        Array [File] denovo_output_annotated = getDeNovo.per_chromosome_annotation_output_file
-        File gd_depth = mergeGenomicDisorders.gd_output_from_depth
-        File gd_vcf = getGenomicDisorders.gd_output_from_final_vcf[1]
+        File cleaned_ped = CleanPed.cleaned_ped
+        File final_denovo_nonOutliers = CallOutliers.final_denovo_nonOutliers_output
+        File final_denovo_outliers = CallOutliers.final_denovo_outliers_output
+        File final_denovo_nonOutliers_plots = CreatePlots.output_plots
+        Array [File] denovo_output_annotated = GetDeNovo.per_chromosome_annotation_output_file
+        File gd_depth = MergeGenomicDisorders.gd_output_from_depth
+        File gd_vcf = GetGenomicDisorders.gd_output_from_final_vcf[1]
     }
 }
 
-task subsetVcf{
-    input{
+task SubsetVcf{
+    input {
         File vcf_file
         String chromosome
         String variant_interpretation_docker
@@ -229,13 +228,13 @@ task subsetVcf{
     Float base_mem_gb = 3.75
 
     RuntimeAttr default_attr = object {
-                                      mem_gb: base_mem_gb,
-                                      disk_gb: ceil(10 + input_size * 1.5),
-                                      cpu: 1,
-                                      preemptible: 2,
-                                      max_retries: 1,
-                                      boot_disk_gb: 8
-                                  }
+        mem_gb: base_mem_gb,
+        disk_gb: ceil(10 + input_size * 1.5),
+        cpu: 1,
+        preemptible: 2,
+        max_retries: 1,
+        boot_disk_gb: 8
+    }
     
     RuntimeAttr runtime_attr = select_first([runtime_attr_override, default_attr])
 
@@ -245,21 +244,17 @@ task subsetVcf{
     }
 
     command <<<
-        set -euo pipefail
+        set -euxo pipefail
 
         bcftools index ~{vcf_file}
-
         bcftools view ~{vcf_file} --regions ~{chromosome} -O z -o  ~{chromosome}.vcf.gz
-
         bcftools view ~{chromosome}.vcf.gz | grep -v ^## | bgzip -c > ~{chromosome}.noheader.vcf.gz
-
-        
     >>>
 
     runtime {
         cpu: select_first([runtime_attr.cpu, default_attr.cpu])
-        memory: "~{select_first([runtime_attr.mem_gb, default_attr.mem_gb])} GB"
-        disks: "local-disk ~{select_first([runtime_attr.disk_gb, default_attr.disk_gb])} HDD"
+        memory: select_first([runtime_attr.mem_gb, default_attr.mem_gb]) + " GB"
+        disks: "local-disk " + select_first([runtime_attr.disk_gb, default_attr.disk_gb]) + " HDD"
         bootDiskSizeGb: select_first([runtime_attr.boot_disk_gb, default_attr.boot_disk_gb])
         preemptible: select_first([runtime_attr.preemptible, default_attr.preemptible])
         maxRetries: select_first([runtime_attr.max_retries, default_attr.max_retries])
@@ -267,7 +262,7 @@ task subsetVcf{
     }
 }
 
-task getGenomicDisorders{
+task GetGenomicDisorders{
     input{
         File vcf_file
         File ped
@@ -283,17 +278,17 @@ task getGenomicDisorders{
     Float base_mem_gb = 3.75
 
     RuntimeAttr default_attr = object {
-                                      mem_gb: base_mem_gb,
-                                      disk_gb: ceil(10 + input_size),
-                                      cpu: 1,
-                                      preemptible: 2,
-                                      max_retries: 1,
-                                      boot_disk_gb: 8
-                                  }
+        mem_gb: base_mem_gb,
+        disk_gb: ceil(10 + input_size),
+        cpu: 1,
+        preemptible: 2,
+        max_retries: 1,
+        boot_disk_gb: 8
+    }
 
     RuntimeAttr runtime_attr = select_first([runtime_attr_override, default_attr])
 
-    output{
+    output {
         File gd_output_from_final_vcf = "gd.variants.from.final.vcf.txt.gz"
         File gd_output_from_depth_raw_files = "~{chromosome}.gd.variants.in.depth.raw.files.txt.gz"
         File gd_output_for_denovo = "annotated.gd.variants.names.txt"
@@ -354,8 +349,8 @@ task getGenomicDisorders{
 
     runtime {
         cpu: select_first([runtime_attr.cpu, default_attr.cpu])
-        memory: "~{select_first([runtime_attr.mem_gb, default_attr.mem_gb])} GB"
-        disks: "local-disk ~{select_first([runtime_attr.disk_gb, default_attr.disk_gb])} HDD"
+        memory: select_first([runtime_attr.mem_gb, default_attr.mem_gb]) + " GB"
+        disks: "local-disk " + select_first([runtime_attr.disk_gb, default_attr.disk_gb]) + " HDD"
         bootDiskSizeGb: select_first([runtime_attr.boot_disk_gb, default_attr.boot_disk_gb])
         preemptible: select_first([runtime_attr.preemptible, default_attr.preemptible])
         maxRetries: select_first([runtime_attr.max_retries, default_attr.max_retries])
@@ -363,8 +358,8 @@ task getGenomicDisorders{
     }
 }
 
-task mergeGenomicDisorders{
-    input{
+task MergeGenomicDisorders{
+    input {
         Array[File] genomic_disorder_input
         String variant_interpretation_docker
         RuntimeAttr? runtime_attr_override
@@ -374,31 +369,31 @@ task mergeGenomicDisorders{
     Float base_mem_gb = 3.75
 
     RuntimeAttr default_attr = object {
-                                      mem_gb: base_mem_gb,
-                                      disk_gb: ceil(10 + input_size),
-                                      cpu: 1,
-                                      preemptible: 2,
-                                      max_retries: 1,
-                                      boot_disk_gb: 8
-                                  }
+        mem_gb: base_mem_gb,
+        disk_gb: ceil(10 + input_size),
+        cpu: 1,
+        preemptible: 2,
+        max_retries: 1,
+        boot_disk_gb: 8
+    }
 
     RuntimeAttr runtime_attr = select_first([runtime_attr_override, default_attr])
 
-    output{
+    output {
         File gd_output_from_depth = "gd.raw.files.output.txt.gz"
     }
 
     command {
         set -euo pipefail
 
-        zcat ${sep=" " genomic_disorder_input} > gd.raw.files.output.txt
+        zcat ~{sep=" " genomic_disorder_input} > gd.raw.files.output.txt
         bgzip gd.raw.files.output.txt
     }
 
     runtime {
         cpu: select_first([runtime_attr.cpu, default_attr.cpu])
-        memory: "~{select_first([runtime_attr.mem_gb, default_attr.mem_gb])} GB"
-        disks: "local-disk ~{select_first([runtime_attr.disk_gb, default_attr.disk_gb])} HDD"
+        memory: select_first([runtime_attr.mem_gb, default_attr.mem_gb]) + " GB"
+        disks: "local-disk " + select_first([runtime_attr.disk_gb, default_attr.disk_gb]) + " HDD"
         bootDiskSizeGb: select_first([runtime_attr.boot_disk_gb, default_attr.boot_disk_gb])
         preemptible: select_first([runtime_attr.preemptible, default_attr.preemptible])
         maxRetries: select_first([runtime_attr.max_retries, default_attr.max_retries])
@@ -406,8 +401,8 @@ task mergeGenomicDisorders{
     }
 }
 
-task mergeDenovoBedFiles{
-    input{
+task MergeDenovoBedFiles {
+    input {
         Array[File] bed_files
         String variant_interpretation_docker
         RuntimeAttr? runtime_attr_override
@@ -417,31 +412,32 @@ task mergeDenovoBedFiles{
     Float base_mem_gb = 3.75
 
     RuntimeAttr default_attr = object {
-                                      mem_gb: base_mem_gb,
-                                      disk_gb: ceil(10 + (bed_files_size) * 2.0),
-                                      cpu: 1,
-                                      preemptible: 2,
-                                      max_retries: 1,
-                                      boot_disk_gb: 8
-                                  }
+        mem_gb: base_mem_gb,
+        disk_gb: ceil(10 + (bed_files_size) * 2.0),
+        cpu: 1,
+        preemptible: 2,
+        max_retries: 1,
+        boot_disk_gb: 8
+    }
     
     RuntimeAttr runtime_attr = select_first([runtime_attr_override, default_attr])
 
-    output{
+    output {
         File merged_denovo_output = "denovo.merged.bed.gz"
     }
 
     command {
+        #set -exuo pipefail
 
-        zcat ${bed_files[0]} | head -n+1 > denovo.merged.bed
-        zcat ${sep=" " bed_files} | grep -v ^chrom >> denovo.merged.bed
+        zcat ~{bed_files[0]} | head -n+1 > denovo.merged.bed
+        zcat ~{sep=" " bed_files} | grep -v ^chrom >> denovo.merged.bed
         bgzip denovo.merged.bed
     }
 
     runtime {
         cpu: select_first([runtime_attr.cpu, default_attr.cpu])
-        memory: "~{select_first([runtime_attr.mem_gb, default_attr.mem_gb])} GB"
-        disks: "local-disk ~{select_first([runtime_attr.disk_gb, default_attr.disk_gb])} HDD"
+        memory: select_first([runtime_attr.mem_gb, default_attr.mem_gb]) + " GB"
+        disks: "local-disk " + select_first([runtime_attr.disk_gb, default_attr.disk_gb]) + " HDD"
         bootDiskSizeGb: select_first([runtime_attr.boot_disk_gb, default_attr.boot_disk_gb])
         preemptible: select_first([runtime_attr.preemptible, default_attr.preemptible])
         maxRetries: select_first([runtime_attr.max_retries, default_attr.max_retries])
@@ -449,8 +445,8 @@ task mergeDenovoBedFiles{
     }
 }
 
-task callOutliers{
-    input{
+task CallOutliers {
+    input {
         File bed_file
         String variant_interpretation_docker
         RuntimeAttr? runtime_attr_override
@@ -460,17 +456,17 @@ task callOutliers{
     Float base_mem_gb = 16
 
     RuntimeAttr default_attr = object {
-                                      mem_gb: base_mem_gb,
-                                      disk_gb: ceil(10 + (bed_files_size) * 2.0),
-                                      cpu: 1,
-                                      preemptible: 2,
-                                      max_retries: 1,
-                                      boot_disk_gb: 8
-                                  }
+        mem_gb: base_mem_gb,
+        disk_gb: ceil(10 + (bed_files_size) * 2.0),
+        cpu: 1,
+        preemptible: 2,
+        max_retries: 1,
+        boot_disk_gb: 8
+    }
     
     RuntimeAttr runtime_attr = select_first([runtime_attr_override, default_attr])
 
-    output{
+    output {
         File final_denovo_nonOutliers_output = "final.denovo.merged.bed.gz"
         File final_denovo_outliers_output = "final.denovo.merged.outliers.bed.gz"
         File final_denovo_allSamples_output = "final.denovo.merged.allSamples.bed.gz"
@@ -484,13 +480,12 @@ task callOutliers{
         bgzip final.denovo.merged.bed
         bgzip final.denovo.merged.outliers.bed
         bgzip final.denovo.merged.allSamples.bed
-
     }
 
     runtime {
         cpu: select_first([runtime_attr.cpu, default_attr.cpu])
-        memory: "~{select_first([runtime_attr.mem_gb, default_attr.mem_gb])} GB"
-        disks: "local-disk ~{select_first([runtime_attr.disk_gb, default_attr.disk_gb])} HDD"
+        memory: select_first([runtime_attr.mem_gb, default_attr.mem_gb]) + " GB"
+        disks: "local-disk " + select_first([runtime_attr.disk_gb, default_attr.disk_gb]) + " HDD"
         bootDiskSizeGb: select_first([runtime_attr.boot_disk_gb, default_attr.boot_disk_gb])
         preemptible: select_first([runtime_attr.preemptible, default_attr.preemptible])
         maxRetries: select_first([runtime_attr.max_retries, default_attr.max_retries])
@@ -498,57 +493,42 @@ task callOutliers{
     }
 }
 
-task createPlots{
-    input{
+task CreatePlots {
+    input {
         File bed_file
-#        File outliers_file
         File ped_input
         String variant_interpretation_docker
         RuntimeAttr? runtime_attr_override
     }
 
-#    Float input_size = size(select_all([bed_file, outliers_file]), "GB")
     Float input_size = size(select_all([bed_file, ped_input]), "GB")
     Float base_mem_gb = 16
 
     RuntimeAttr default_attr = object {
-                                      mem_gb: base_mem_gb,
-                                      disk_gb: ceil(10 + input_size * 1.2),
-                                      cpu: 1,
-                                      preemptible: 2,
-                                      max_retries: 1,
-                                      boot_disk_gb: 8
-                                  }
+        mem_gb: base_mem_gb,
+        disk_gb: ceil(10 + input_size * 1.2),
+        cpu: 1,
+        preemptible: 2,
+        max_retries: 1,
+        boot_disk_gb: 8
+    }
     
     RuntimeAttr runtime_attr = select_first([runtime_attr_override, default_attr])
 
-    output{
+    output {
         File output_plots = "output_plots.pdf"
-#        File per_chrom_plot = "per_chrom.png"
-#        File per_sample_plot = "per_sample.png"
-#        File per_freq_plot = "per_freq.png"
-#        File per_freq_gd_plot = "per_freq_gd.png"
-#        File per_freq_not_gd = "per_freq_not_gd.png"
-#        File size_plot = "size.png"
-#        File evidence_plot = "evidence.png"
-#        File annotation_plot = "annotation.png"
-#        File per_type_plot = "per_type.png"
-#        File per_sample_boxplot = "sample_boxplot.png"
-#        File per_type_boxplot = "type_boxplot.png"
-
     }
 
     command {
-        set -euo pipefail
+        #set -exuo pipefail
 
-        Rscript /src/variant-interpretation/scripts/denovoSV_plots.R ${bed_file} ${ped_input} output_plots.pdf
-
+        Rscript /src/variant-interpretation/scripts/denovoSV_plots.R ~{bed_file} ~{ped_input} output_plots.pdf
     }
 
     runtime {
         cpu: select_first([runtime_attr.cpu, default_attr.cpu])
-        memory: "~{select_first([runtime_attr.mem_gb, default_attr.mem_gb])} GB"
-        disks: "local-disk ~{select_first([runtime_attr.disk_gb, default_attr.disk_gb])} HDD"
+        memory: select_first([runtime_attr.mem_gb, default_attr.mem_gb]) + " GB"
+        disks: "local-disk " + select_first([runtime_attr.disk_gb, default_attr.disk_gb]) + " HDD"
         bootDiskSizeGb: select_first([runtime_attr.boot_disk_gb, default_attr.boot_disk_gb])
         preemptible: select_first([runtime_attr.preemptible, default_attr.preemptible])
         maxRetries: select_first([runtime_attr.max_retries, default_attr.max_retries])
@@ -556,8 +536,8 @@ task createPlots{
     }
 }
 
-task cleanPed{
-    input{
+task CleanPed {
+    input {
         File ped_input
         File vcf_input
         String variant_interpretation_docker
@@ -579,15 +559,15 @@ task cleanPed{
     
     RuntimeAttr runtime_attr = select_first([runtime_attr_override, default_attr])
 
-    output{
+    output {
         File cleaned_ped = "subset_cleaned_ped.txt"
     }
 
     command {
 
-        Rscript /src/variant-interpretation/scripts/cleanPed.R ${ped_input}
+        Rscript /src/variant-interpretation/scripts/cleanPed.R ~{ped_input}
         cut -f2 cleaned_ped.txt | tail -n+2 > all_samples.txt
-        bcftools query -l ${vcf_input} > samples_to_include_in_ped.txt
+        bcftools query -l ~{vcf_input} > samples_to_include_in_ped.txt
         grep -w -v -f samples_to_include_in_ped.txt all_samples.txt > excluded_samples.txt
         grep -w -f excluded_samples.txt cleaned_ped.txt | cut -f1 | sort -u > excluded_families.txt
         grep -w -v -f excluded_families.txt cleaned_ped.txt > subset_cleaned_ped.txt
@@ -596,8 +576,8 @@ task cleanPed{
 
     runtime {
         cpu: select_first([runtime_attr.cpu, default_attr.cpu])
-        memory: "~{select_first([runtime_attr.mem_gb, default_attr.mem_gb])} GB"
-        disks: "local-disk ~{select_first([runtime_attr.disk_gb, default_attr.disk_gb])} HDD"
+        memory: select_first([runtime_attr.mem_gb, default_attr.mem_gb]) + " GB"
+        disks: "local-disk " + select_first([runtime_attr.disk_gb, default_attr.disk_gb]) + " HDD"
         bootDiskSizeGb: select_first([runtime_attr.boot_disk_gb, default_attr.boot_disk_gb])
         preemptible: select_first([runtime_attr.preemptible, default_attr.preemptible])
         maxRetries: select_first([runtime_attr.max_retries, default_attr.max_retries])
@@ -605,8 +585,8 @@ task cleanPed{
     }
 }
 
-task getBatchedFiles{
-    input{
+task GetBatchedFiles {
+    input {
         File batch_raw_file
         File batch_depth_raw_file
         File family_ids_txt
@@ -631,7 +611,7 @@ task getBatchedFiles{
     
     RuntimeAttr runtime_attr = select_first([runtime_attr_override, default_attr])
 
-    output{
+    output {
         File batch_raw_files_list = "batch_raw_files_list.txt"
         File batch_depth_raw_files_list = "batch_depth_raw_files_list.txt"
         File batch_bincov_index_subset = "batch_bincov_index.txt"
@@ -639,7 +619,7 @@ task getBatchedFiles{
     }
 
     command {
-        set -euo pipefail
+        #set -exuo pipefail
 
         if grep -q -w -f ~{family_ids_txt} ~{ped_input}; then
             grep -w -f ~{family_ids_txt} ~{ped_input} | cut -f2 | sort -u > samples.txt
