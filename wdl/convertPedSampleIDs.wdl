@@ -49,7 +49,7 @@ task runConvertPed {
     }
 
     command <<<
-    python3 ~{convert_ped_sampleIDs_python_script} ~{sample_tsv_uri} ~{ped_uri} ~{cohort_prefix} ~{bucket_id}
+    python3 ~{convert_ped_sampleIDs_python_script} ~{sample_tsv_uri} ~{raw_ped} ~{cohort_prefix} ~{bucket_id}
     >>>
 
     output {
