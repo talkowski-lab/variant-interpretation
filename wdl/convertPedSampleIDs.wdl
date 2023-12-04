@@ -13,7 +13,7 @@ workflow convertPedSampleIDs {
     input {
         File sample_tsv_uri
         File raw_ped
-        String convert_ped_sampleIDs_python_script
+        File convert_ped_sampleIDs_python_script
         String cohort_prefix
         String bucket_id
         String hail_docker
@@ -38,7 +38,7 @@ task runConvertPed {
     input {
         File sample_tsv_uri
         File raw_ped
-        String convert_ped_sampleIDs_python_script
+        File convert_ped_sampleIDs_python_script
         String cohort_prefix
         String bucket_id
         String hail_docker
