@@ -37,10 +37,6 @@ workflow step1 {
     String filename = basename(file)
     # if file is vcf.gz (just one file)
     Array[File] vcf_files = if (sub(filename, ".vcf.gz", "") != filename) then [file] else read_lines(file)
-    
-    File meta_uri = makeTrioSampleFiles.meta_uri
-    File trio_uri = makeTrioSampleFiles.trio_uri
-
     Array[Pair[File, Array[File]]] vcf_list_paired = zip(vcf_files, vep_annotated_final_vcf)
 
     scatter (pair in vcf_list_paired) {
@@ -53,8 +49,8 @@ workflow step1 {
                     lcr_uri=lcr_uri,
                     ped_uri=ped_uri,
                     vcf_uri=vcf_uri,
-                    meta_uri=meta_uri,
-                    trio_uri=trio_uri,
+                    meta_uri=makeTrioSampleFiles.meta_uri,
+                    trio_uri=makeTrioSampleFiles.trio_uri,
                     hail_docker=hail_docker
             }
         }
@@ -78,6 +74,8 @@ workflow step1 {
     }
 
     output {
+        File meta_uri = makeTrioSampleFiles.meta_uri
+        File trio_uri = makeTrioSampleFiles.trio_uri
         File ped_uri_no_header = bucket_id + "/resources/pedigrees/" + cohort_prefix + "_no_header.ped"
         File merged_preprocessed_vcf_file = mergeAllVCFs.merged_vcf_file
         File merged_preprocessed_vcf_idx = mergeAllVCFs.merged_vcf_idx

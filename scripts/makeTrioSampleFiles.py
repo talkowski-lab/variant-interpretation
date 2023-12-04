@@ -38,6 +38,7 @@ except Exception as e:
 trio = ped[(ped.FatherID != '0') & (ped.MotherID != '0')].iloc[:, :4]
 trio['TrioID'] = trio['FamID'].astype(str) + '-' + trio['IndividualID'].astype(str)
 trio.rename(columns={'IndividualID': 'SampleID'}, inplace=True)
+trio = trio[["FamID","TrioID","SampleID","FatherID","MotherID"]]
 bucket.blob(f"resources/metadata/{cohort_prefix}_trio_list.txt").upload_from_string(trio.to_csv(sep='\t', index=False), 'text/csv')
 print('Trio csv saved')
 

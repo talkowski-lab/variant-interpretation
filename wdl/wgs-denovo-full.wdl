@@ -93,6 +93,8 @@ workflow wgs_denovo_full {
     }
 
     output {
+        File meta_uri = step1and2.meta_uri
+        File trio_uri = step1and2.trio_uri
         File ped_uri_no_header = step1and2.ped_uri_no_header
         File merged_preprocessed_vcf_file = step1and2.merged_preprocessed_vcf_file
         File merged_preprocessed_vcf_idx = step1and2.merged_preprocessed_vcf_idx
