@@ -32,19 +32,19 @@ workflow getPVR {
         fam_id=fam_id,
         pvr_docker=pvr_docker
     }
-    # call calculatePVR {
-    #   input:
-    #     indel_file=subsetFam.indel_file,
-    #     trio_uri=trio_uri,
-    #     fam_crais=subsetFam.fam_crais,
-    #     fam_crams=subsetFam.fam_crams,
-    #     pvr_docker=pvr_docker
-    # }
+    call calculatePVR {
+      input:
+        indel_file=subsetFam.indel_file,
+        trio_uri=trio_uri,
+        fam_crais=subsetFam.fam_crais,
+        fam_crams=subsetFam.fam_crams,
+        pvr_docker=pvr_docker
+    }
   }    
 
   output {
-    # Array[File] getPVR_out = calculatePVR.getPVR_out
-    # Array[File] getPVR_redo = calculatePVR.redo
+    Array[File] getPVR_out = calculatePVR.getPVR_out
+    Array[File] getPVR_redo = calculatePVR.redo
   }
 }
 
