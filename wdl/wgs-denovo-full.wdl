@@ -101,7 +101,7 @@ workflow wgs_denovo_full {
         File merged_preprocessed_vcf_file = step1and2.merged_preprocessed_vcf_file
         File merged_preprocessed_vcf_idx = step1and2.merged_preprocessed_vcf_idx
         Array[File] split_trio_vcfs = step3.split_trio_vcfs
-        File stats_files = step3.stats_files
+        # File stats_files = step3.stats_files
         Array[File] split_trio_annot_vcfs = annotateHPandVAF.split_trio_annot_vcfs
         Array[File] trio_denovo_vcf = step4.trio_denovo_vcf
         File vcf_metrics_tsv = step5.vcf_metrics_tsv
