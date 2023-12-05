@@ -57,9 +57,11 @@ workflow wgs_denovo_full {
 
     call step3.step3 as step3 {
         input:
+            trio_uri=trio_uri,
             ped_uri=ped_uri,
             merged_preprocessed_vcf_file=step1and2.merged_preprocessed_vcf_file,
             hail_docker=hail_docker,
+            sv_base_mini_docker=sv_base_mini_docker,
             uberSplit_v3_py=uberSplit_v3_py,
             batch_size=batch_size
     }
