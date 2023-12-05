@@ -53,9 +53,9 @@ workflow DeNovoSV {
 
     # family_ids_txt is a text file containg one family id per line.
     # If this file is given, subset all other input files to only include the necessary batches.
-    if (defined(family_ids_txt)){
+    if (defined(family_ids_txt)) {
         File family_ids_txt_ = select_first([family_ids_txt])
-        call GetBatchedFiles{
+        call GetBatchedFiles {
             input:
                 batch_raw_file = batch_raw_file,
                 batch_depth_raw_file = batch_depth_raw_file,
@@ -82,7 +82,7 @@ workflow DeNovoSV {
     }
 
     # Makes a ped file of singletons, duos, and trios for input into the de novo script (only including families of interest)
-    call CleanPed{
+    call CleanPed {
         input:
             ped_input = ped_input,
             vcf_input = select_first([GetBatchedVcf.split_vcf, vcf_file]),
@@ -118,9 +118,9 @@ workflow DeNovoSV {
             runtime_attr_reformat_bed = runtime_attr_raw_reformat_bed
     }
     
-    scatter (i in range(length(contigs))){
+    scatter (i in range(length(contigs))) {
         # Generates a list of genomic disorder regions in the vcf input as well as in the depth raw files
-        call GetGenomicDisorders{
+        call GetGenomicDisorders {
             input:
                 genomic_disorder_input=genomic_disorder_input,
                 ped = ped_input,
@@ -173,7 +173,7 @@ workflow DeNovoSV {
     }
 
     # Merges the per chromosome final de novo SV outputs
-    call MergeDenovoBedFiles{
+    call MergeDenovoBedFiles {
         input:
             bed_files = GetDeNovo.per_chromosome_final_output_file,
             variant_interpretation_docker=variant_interpretation_docker,
@@ -189,7 +189,7 @@ workflow DeNovoSV {
     }
 
     # Generates plots for QC
-    call CreatePlots{
+    call CreatePlots {
         input:
             bed_file = CallOutliers.final_denovo_nonOutliers_output,
             ped_input = ped_input,
@@ -198,7 +198,7 @@ workflow DeNovoSV {
     }
 
     # Merges the genomic disorder region output from each chromosome to compile a list of genomic disorder regions
-    call MergeGenomicDisorders{
+    call MergeGenomicDisorders {
         input:
             genomic_disorder_input=GetGenomicDisorders.gd_output_from_depth_raw_files,
             variant_interpretation_docker=variant_interpretation_docker,
@@ -216,7 +216,7 @@ workflow DeNovoSV {
     }
 }
 
-task SubsetVcf{
+task SubsetVcf {
     input {
         File vcf_file
         String chromosome
@@ -225,10 +225,9 @@ task SubsetVcf{
     }
 
     Float input_size = size(vcf_file, "GB")
-    Float base_mem_gb = 3.75
 
     RuntimeAttr default_attr = object {
-        mem_gb: base_mem_gb,
+        mem_gb: 3.75,
         disk_gb: ceil(10 + input_size * 1.5),
         cpu: 1,
         preemptible: 2,
@@ -238,7 +237,7 @@ task SubsetVcf{
     
     RuntimeAttr runtime_attr = select_first([runtime_attr_override, default_attr])
 
-    output{
+    output {
         File vcf_output = "~{chromosome}.vcf.gz"
         File no_header_vcf_output = "~{chromosome}.noheader.vcf.gz"
     }
@@ -262,8 +261,8 @@ task SubsetVcf{
     }
 }
 
-task GetGenomicDisorders{
-    input{
+task GetGenomicDisorders {
+    input {
         File vcf_file
         File ped
         File depth_raw_file_proband
@@ -275,10 +274,9 @@ task GetGenomicDisorders{
     }
 
     Float input_size = size(select_all([vcf_file, ped, genomic_disorder_input, depth_raw_file_parents, depth_raw_file_proband]), "GB")
-    Float base_mem_gb = 3.75
 
     RuntimeAttr default_attr = object {
-        mem_gb: base_mem_gb,
+        mem_gb: 3.75,
         disk_gb: ceil(10 + input_size),
         cpu: 1,
         preemptible: 2,
@@ -366,10 +364,9 @@ task MergeGenomicDisorders{
     }
 
     Float input_size = size(genomic_disorder_input, "GB")
-    Float base_mem_gb = 3.75
 
     RuntimeAttr default_attr = object {
-        mem_gb: base_mem_gb,
+        mem_gb: 3.75,
         disk_gb: ceil(10 + input_size),
         cpu: 1,
         preemptible: 2,
@@ -409,10 +406,9 @@ task MergeDenovoBedFiles {
     }
 
     Float bed_files_size = size(bed_files, "GB")
-    Float base_mem_gb = 3.75
 
     RuntimeAttr default_attr = object {
-        mem_gb: base_mem_gb,
+        mem_gb: 3.75,
         disk_gb: ceil(10 + (bed_files_size) * 2.0),
         cpu: 1,
         preemptible: 2,
@@ -453,10 +449,9 @@ task CallOutliers {
     }
 
     Float bed_files_size = size(bed_file, "GB")
-    Float base_mem_gb = 16
 
     RuntimeAttr default_attr = object {
-        mem_gb: base_mem_gb,
+        mem_gb: 16, # 3.75
         disk_gb: ceil(10 + (bed_files_size) * 2.0),
         cpu: 1,
         preemptible: 2,
@@ -502,10 +497,9 @@ task CreatePlots {
     }
 
     Float input_size = size(select_all([bed_file, ped_input]), "GB")
-    Float base_mem_gb = 16
 
     RuntimeAttr default_attr = object {
-        mem_gb: base_mem_gb,
+        mem_gb: 16, # 3.75
         disk_gb: ceil(10 + input_size * 1.2),
         cpu: 1,
         preemptible: 2,
@@ -546,10 +540,9 @@ task CleanPed {
 
     Float ped_size = size(ped_input, "GB")
     Float vcf_size = size(vcf_input, "GB")
-    Float base_mem_gb = 3.75
 
     RuntimeAttr default_attr = object {
-        mem_gb: base_mem_gb,
+        mem_gb: 3.75,
         disk_gb: ceil(10 + vcf_size + ped_size * 1.5),
         cpu: 1,
         preemptible: 2,
@@ -571,7 +564,6 @@ task CleanPed {
         grep -w -v -f samples_to_include_in_ped.txt all_samples.txt > excluded_samples.txt
         grep -w -f excluded_samples.txt cleaned_ped.txt | cut -f1 | sort -u > excluded_families.txt
         grep -w -v -f excluded_families.txt cleaned_ped.txt > subset_cleaned_ped.txt
-
     }
 
     runtime {
@@ -598,10 +590,9 @@ task GetBatchedFiles {
     }
 
     Float input_size = size(select_all([batch_raw_file, batch_depth_raw_file, ped_input, sample_batches, batch_bincov_index, family_ids_txt]), "GB")
-    Float base_mem_gb = 3.75
 
     RuntimeAttr default_attr = object {
-        mem_gb: base_mem_gb,
+        mem_gb: 3.75,
         disk_gb: ceil(10 + input_size),
         cpu: 1,
         preemptible: 2,
