@@ -76,7 +76,7 @@ workflow step1 {
     output {
         File meta_uri = makeTrioSampleFiles.meta_uri
         File trio_uri = makeTrioSampleFiles.trio_uri
-        File ped_uri_no_header = bucket_id + "/resources/pedigrees/" + cohort_prefix + "_no_header.ped"
+        File ped_uri_no_header = makeTrioSampleFiles.ped_uri_no_header
         File merged_preprocessed_vcf_file = mergeAllVCFs.merged_vcf_file
         File merged_preprocessed_vcf_idx = mergeAllVCFs.merged_vcf_idx
     }
@@ -102,6 +102,7 @@ task makeTrioSampleFiles {
     output {
         String meta_uri = "~{bucket_id}/resources/metadata/~{cohort_prefix}_sample_list.txt"
         String trio_uri = "~{bucket_id}/resources/metadata/~{cohort_prefix}_trio_list.txt"
+        String ped_uri_no_header = bucket_id + "/resources/pedigrees/" + cohort_prefix + "_no_header.ped"
     }
 }
 
