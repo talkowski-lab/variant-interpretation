@@ -81,14 +81,14 @@ task subsetFam {
   }
 
   command {
-    awk -v fam_id=~{fam_id} '$10==fam_id' ~{vcf_metrics_tsv} > ~{fam_id}.tsv
+    awk -v fam_id=~{fam_id} '$10==fam_id' ~{vcf_metrics_tsv} > ~{fam_id}.txt
     awk -v fam_id=~{fam_id} '$1==fam_id' ~{trio_uri} | cut -f3-5 | tr '\t' '\n' | uniq > samples.txt
     grep -f samples.txt ~{sample_crai_cram} | cut -f2 > crai_files.txt
     grep -f samples.txt ~{sample_crai_cram} | cut -f3 > cram_files.txt
   }
 
   output {
-    File indel_file = fam_id + '.tsv'
+    File indel_file = fam_id + '.txt'
     Array[File] fam_crais = read_lines("crai_files.txt")
     Array[File] fam_crams = read_lines("cram_files.txt")
   }
@@ -130,7 +130,7 @@ task calculatePVR {
   command <<<
     set -euo pipefail
     
-    perl /home/get_pvr_from_crams_wdl.pl -i ~{indel_file} -b ~{sep=';' fam_crams} -m ~{trio_uri}
+    perl /home/get_pvr_from_crams_wdl.pl -i ~{indel_file} -b ${sep=';' fam_crams} -m ~{trio_uri}
 
   >>>
 
