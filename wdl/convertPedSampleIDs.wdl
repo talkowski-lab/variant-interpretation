@@ -53,6 +53,6 @@ task runConvertPed {
     >>>
 
     output {
-        File ped_uri = "~{bucket_id}/resources/pedigrees/~{cohort_prefix}.ped"
+        File ped_uri = cohort_prefix + ".ped"
     }
 }
