@@ -123,9 +123,6 @@ task calculatePVR {
   String fam_id = basename(indel_file, ".txt")
   String pvr_filename = "${fam_id}_with_PVR.txt"
   String pvr_redo = "${fam_id}_redo.txt"
-  
-  String cram_dir = "/cromwell_root/fc-5e80ede2-9204-4178-ba7a-10d58a9fd229/mssng/crams/"
-
     
   command <<<
     set -euo pipefail
