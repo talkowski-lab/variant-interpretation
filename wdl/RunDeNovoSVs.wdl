@@ -356,8 +356,8 @@ task getGenomicDisorders{
         cat ~{chromosome}.gd.variants.in.depth.raw.file.proband.txt \
             ~{chromosome}.gd.variants.in.depth.raw.file.parents.txt \
             ~{chromosome}.kept.coverage.txt |\
-            awk -v OFS="\t" '{sub(/_.*/, "", $1); print}'|\
-            awk -v OFS="\t" '{sub(/_.*/, "", $5); print}' > ~{chromosome}.gd.variants.in.depth.raw.files.txt
+            awk -v OFS="\t" '{sub(/_.*/, "", $1); print}' |\
+            awk -v OFS="\t" '{sub(/_.*/, "", $5); print}' | sort | uniq > ~{chromosome}.gd.variants.in.depth.raw.files.txt
         bgzip ~{chromosome}.gd.variants.in.depth.raw.files.txt
         echo "done with cat"
     >>>
