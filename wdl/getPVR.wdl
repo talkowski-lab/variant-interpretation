@@ -81,7 +81,8 @@ task subsetFam {
   }
 
   command {
-    awk -v fam_id=~{fam_id} '$10==fam_id' ~{vcf_metrics_tsv} > ~{fam_id}.txt
+    head -1 ~{vcf_metrics_tsv} > ~{fam_id}.txt
+    awk -v fam_id=~{fam_id} '$10==fam_id' ~{vcf_metrics_tsv} >> ~{fam_id}.txt
     awk -v fam_id=~{fam_id} '$1==fam_id' ~{trio_uri} | cut -f3-5 | tr '\t' '\n' | uniq > samples.txt
     grep -f samples.txt ~{sample_crai_cram} | cut -f2 > crai_files.txt
     grep -f samples.txt ~{sample_crai_cram} | cut -f3 > cram_files.txt
