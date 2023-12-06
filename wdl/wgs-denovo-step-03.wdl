@@ -57,7 +57,7 @@ task splitTrioVCFs {
     command {
         cat ~{trio_uri} | tail -n +2 | cut -f3-5 | tr '\t' ',' > samples.txt
         cat ~{trio_uri} | tail -n +2 | cut -f2-3 | tr '\t' '_trio_' > filenames.txt
-        paste samples.txt samples.txt filenames.txt | column -s $'\t' -t > trio.list
+        paste samples.txt samples.txt filenames.txt > trio.list
         bcftools +split -S trio.list -Ov -o split_trio_vcfs ~{vcf_file}
     }
 
