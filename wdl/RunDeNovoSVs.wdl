@@ -296,8 +296,6 @@ task getGenomicDisorders{
     command <<<
         set -euxo pipefail
 
-        #sort -k1,1 -k2,2n ~{genomic_disorder_input} > sorted.genomic.txt
-        #the output of this command has not been used.
         bedtools intersect -wa -wb -f 0.3 -r -a ~{vcf_file} -b ~{genomic_disorder_input} | cut -f 3 |sort -u > annotated.gd.variants.names.txt
         
         echo "Done with first line"
@@ -320,9 +318,6 @@ task getGenomicDisorders{
         
         echo "done with intersect in depth variants"
         
-        #bedtools coverage -wa -wb -sorted -a gd.per.family.txt -b sorted.depth.parents.bed.gz | awk '{if ($NF>=0.30) print }' > ~{chromosome}.coverage.parents.txt
-        #bedtools coverage -wa -wb -sorted -a gd.per.sample.txt -b sorted.depth.proband.bed.gz | awk '{if ($NF>=0.30) print }' > ~{chromosome}.coverage.proband.txt
-        # -wa -wb is not defined in bedtools coverage. 
         # We should have the same format of bedtools intersect in order to concatanate the files in downstream.
         # The "bedtools coverage" below collect the list of disorders that has hits in depth file limited to coverage fraction. 
         # The output file doesn't include the list of sample or family calls which cover 30% of disorder region.
@@ -334,7 +329,7 @@ task getGenomicDisorders{
         bedtools intersect -wa -wb -a ~{chromosome}.coverage.proband.list.txt -b sorted.depth.proband.bed.gz | sort | uniq | awk -v OFS="\t" '{print $1,$2,$3,$4,$9,$10,$11,$12,$13}' > ~{chromosome}.coverage.proband.txt
 
         # IMPORTANT "bedtools coverage" throws an error when sorted.depth.proband.bed.gz contains a sample, but the query file "gd.per.sample.txt" (so the ped file) doesn't contain the corresponding sample. 
-        echo "done with coverage in depth variants"
+        echo "done with coverage in depth variants". This error fix should be done in prior steps.
 
         cat ~{chromosome}.coverage.parents.txt ~{chromosome}.coverage.proband.txt > ~{chromosome}.coverage.txt
 
