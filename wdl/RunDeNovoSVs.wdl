@@ -557,14 +557,21 @@ task CleanPed {
     }
 
     command {
-        # set -exuo pipefail
+        set -exuo pipefail
 
+        # TODO: this script should get the name of the output file it generates as an input argument.
+        # The output filename is currently hardcoded to be 'clean_ped.txt'.
         Rscript /src/variant-interpretation/scripts/cleanPed.R ~{ped_input}
         cut -f2 cleaned_ped.txt | awk 'NR > 1' > all_samples.txt
         bcftools query -l ~{vcf_input} > samples_to_include_in_ped.txt
-        grep -w -v -f samples_to_include_in_ped.txt all_samples.txt > excluded_samples.txt
-        grep -w -f excluded_samples.txt cleaned_ped.txt | cut -f1 | sort -u > excluded_families.txt
-        grep -w -v -f excluded_families.txt cleaned_ped.txt > subset_cleaned_ped.txt
+
+        # Note: grep returns a non-success exit code (i.e., other than `0`) when it cannot find the
+        # match in the following scripts. We do not expect it to find a match for every entry.
+        # Hence, to avoid exit with unsuccessful code, we can either drop pipefail from above or use `|| true`.
+
+        grep -w -v -f samples_to_include_in_ped.txt all_samples.txt > excluded_samples.txt || true
+        grep -w -f excluded_samples.txt cleaned_ped.txt | cut -f1 | sort -u > excluded_families.txt || true
+        grep -w -v -f excluded_families.txt cleaned_ped.txt > subset_cleaned_ped.txt || true
     }
 
     runtime {

@@ -27,14 +27,14 @@ workflow DeNovoSVsScatter {
 
     # Scatter genotyping over shards
     scatter (shard in vcf_files) {
-        call VcfToBed{
+        call VcfToBed {
             input:
                 vcf_file=shard,
                 variant_interpretation_docker=variant_interpretation_docker,
                 runtime_attr_override = runtime_attr_vcf_to_bed
         }
 
-        call RunDeNovo{
+        call RunDeNovo {
             input:
                 bed_input=VcfToBed.bed_output,
                 ped_input=ped_input,
@@ -55,7 +55,7 @@ workflow DeNovoSVsScatter {
         }   
     }
 
-    call MergeBedFiles as MergeBedFilesAnnotated{
+    call MergeBedFiles as MergeBedFilesAnnotated {
         input:
             bed_files = RunDeNovo.annotation_output,
             chromosome = chromosome,
@@ -63,7 +63,7 @@ workflow DeNovoSVsScatter {
             runtime_attr_override = runtime_attr_merge_bed
     }
 
-    call MergeBedFiles as MergeBedFilesFinal{
+    call MergeBedFiles as MergeBedFilesFinal {
         input:
             bed_files = RunDeNovo.denovo_output,
             chromosome = chromosome,
@@ -117,30 +117,30 @@ task RunDeNovo {
     }
 
     String basename = basename(vcf_input, ".vcf.gz")
-    command <<<
-            set -exuo pipefail
+    command {
+        set -exuo pipefail
 
-            bcftools view ~{vcf_input} | grep -v ^## | bgzip -c > ~{basename}.noheader.vcf.gz
-            python3.9 /src/variant-interpretation/scripts/deNovoSVs.py \
-                --bed ~{bed_input} \
-                --ped ~{ped_input} \
-                --vcf ~{basename}.noheader.vcf.gz \
-                --disorder ~{disorder_input} \
-                --out ~{basename}.annotation.bed \
-                --out_de_novo ~{basename}.denovo.bed \
-                --raw_proband ~{raw_proband} \
-                --raw_parents ~{raw_parents} \
-                --raw_depth_proband ~{raw_depth_proband} \
-                --raw_depth_parents ~{raw_depth_parents} \
-                --config ~{python_config} \
-                --exclude_regions ~{exclude_regions} \
-                --coverage ~{batch_bincov_index} \
-                --sample_batches ~{sample_batches} \
-                --verbose True
-            
-            bgzip ~{basename}.denovo.bed
-            bgzip ~{basename}.annotation.bed
-    >>>
+        bcftools view ~{vcf_input} | grep -v ^## | bgzip -c > ~{basename}.noheader.vcf.gz
+        python3.9 /src/variant-interpretation/scripts/deNovoSVs.py \
+            --bed ~{bed_input} \
+            --ped ~{ped_input} \
+            --vcf ~{basename}.noheader.vcf.gz \
+            --disorder ~{disorder_input} \
+            --out ~{basename}.annotation.bed \
+            --out_de_novo ~{basename}.denovo.bed \
+            --raw_proband ~{raw_proband} \
+            --raw_parents ~{raw_parents} \
+            --raw_depth_proband ~{raw_depth_proband} \
+            --raw_depth_parents ~{raw_depth_parents} \
+            --config ~{python_config} \
+            --exclude_regions ~{exclude_regions} \
+            --coverage ~{batch_bincov_index} \
+            --sample_batches ~{sample_batches} \
+            --verbose True
+
+        bgzip ~{basename}.denovo.bed
+        bgzip ~{basename}.annotation.bed
+    }
 
     runtime {
         cpu: select_first([runtime_attr.cpu, default_attr.cpu])
@@ -173,17 +173,17 @@ task VcfToBed {
     
     RuntimeAttr runtime_attr = select_first([runtime_attr_override, default_attr])
 
-    output{
+    output {
         File bed_output = "~{basename}.bed.gz"
     }
 
     String basename = basename(vcf_file, ".vcf.gz")
-    command <<<
+    command {
         set -exuo pipefail
 
         svtk vcf2bed ~{vcf_file} --info ALL --include-filters ~{basename}.bed
         bgzip ~{basename}.bed
-    >>>
+    }
 
     runtime {
         cpu: select_first([runtime_attr.cpu, default_attr.cpu])

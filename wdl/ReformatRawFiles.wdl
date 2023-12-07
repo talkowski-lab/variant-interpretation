@@ -3,7 +3,6 @@ version 1.0
 import "Structs.wdl"
 
 workflow ReformatRawFiles {
-
     input {
         Array[String] contigs
         File raw_files_list
@@ -18,8 +17,8 @@ workflow ReformatRawFiles {
 
     Array[String] raw_files = transpose(read_tsv(raw_files_list))[1]
 
-    scatter(raw_file in raw_files){
-        call raw_VcfToBed {
+    scatter(raw_file in raw_files) {
+        call RawVcfToBed {
             input:
                 vcf_file=raw_file,
                 variant_interpretation_docker=variant_interpretation_docker,
@@ -28,26 +27,26 @@ workflow ReformatRawFiles {
         }
     }
 
-    call raw_mergeBed {
+    call RawMergeBed {
             input:
-                bed_files=raw_VcfToBed.bed_output,
+                bed_files=RawVcfToBed.bed_output,
                 variant_interpretation_docker=variant_interpretation_docker,
                 runtime_attr_override = runtime_attr_merge_bed
     }
 
-    scatter (contig in contigs){
-        call raw_divideByChrom {
+    scatter (contig in contigs) {
+        call RawDivideByChrom {
             input:
-                bed_file = raw_mergeBed.concat_bed_output,
+                bed_file = RawMergeBed.concat_bed_output,
                 chromosome = contig,
                 variant_interpretation_docker=variant_interpretation_docker,
                 runtime_attr_override = runtime_attr_divide_by_chrom
         }
 
         if (depth) {
-            call raw_reformatBedDepth{
+            call RawReformatBedDepth {
                 input:
-                    per_chromosome_bed_file = raw_divideByChrom.per_chromosome_bed_output,
+                    per_chromosome_bed_file = RawDivideByChrom.per_chromosome_bed_output,
                     ped_input=ped_input,
                     chromosome=contig,
                     variant_interpretation_docker=variant_interpretation_docker,
@@ -56,17 +55,17 @@ workflow ReformatRawFiles {
         }
 
         if (!(depth)) {
-            call raw_reformatBed{
+            call RawReformatBed {
                 input:
-                    per_chromosome_bed_file = raw_divideByChrom.per_chromosome_bed_output,
+                    per_chromosome_bed_file = RawDivideByChrom.per_chromosome_bed_output,
                     ped_input=ped_input,
                     chromosome=contig,
                     variant_interpretation_docker=variant_interpretation_docker,
                     runtime_attr_override = runtime_attr_reformat_bed
             }
         }
-        File reformatted_parents_output_ = select_first([raw_reformatBed.reformatted_parents_output, raw_reformatBedDepth.reformatted_parents_depth_output])
-        File reformatted_proband_output_ = select_first([raw_reformatBed.reformatted_proband_output, raw_reformatBedDepth.reformatted_proband_depth_output])
+        File reformatted_parents_output_ = select_first([RawReformatBed.reformatted_parents_output, RawReformatBedDepth.reformatted_parents_depth_output])
+        File reformatted_proband_output_ = select_first([RawReformatBed.reformatted_proband_output, RawReformatBedDepth.reformatted_proband_depth_output])
     }
 
 
@@ -76,8 +75,8 @@ workflow ReformatRawFiles {
     }
 }   
 
-task raw_VcfToBed{
-    input{
+task RawVcfToBed {
+    input {
         File vcf_file
         String variant_interpretation_docker
         String prefix
@@ -85,36 +84,34 @@ task raw_VcfToBed{
     }
 
     Float input_size = size(vcf_file, "GB")
-    Float base_mem_gb = 3.75
 
     RuntimeAttr default_attr = object {
-                                      mem_gb: base_mem_gb,
-                                      disk_gb: ceil(10 + input_size * 2.0),
-                                      cpu: 1,
-                                      preemptible: 2,
-                                      max_retries: 1,
-                                      boot_disk_gb: 8
-                                  }
+        mem_gb: 3.75,
+        disk_gb: ceil(10 + input_size * 2.0),
+        cpu: 1,
+        preemptible: 2,
+        max_retries: 1,
+        boot_disk_gb: 8
+    }
     
     RuntimeAttr runtime_attr = select_first([runtime_attr_override, default_attr])
 
-    output{
+    output {
         File bed_output = "${prefix}.bed.gz"
     }
 
     command {
-        set -euo pipefail
+        set -exuo pipefail
 
         #convert from vcf to bed file
-        svtk vcf2bed ~{vcf_file} --info SVTYPE ${prefix}.bed
-        bgzip ${prefix}.bed
-
+        svtk vcf2bed ~{vcf_file} --info SVTYPE ~{prefix}.bed
+        bgzip ~{prefix}.bed
     }
 
     runtime {
         cpu: select_first([runtime_attr.cpu, default_attr.cpu])
-        memory: "~{select_first([runtime_attr.mem_gb, default_attr.mem_gb])} GB"
-        disks: "local-disk ~{select_first([runtime_attr.disk_gb, default_attr.disk_gb])} HDD"
+        memory: select_first([runtime_attr.mem_gb, default_attr.mem_gb]) + " GB"
+        disks: "local-disk " + select_first([runtime_attr.disk_gb, default_attr.disk_gb]) + " HDD"
         bootDiskSizeGb: select_first([runtime_attr.boot_disk_gb, default_attr.boot_disk_gb])
         preemptible: select_first([runtime_attr.preemptible, default_attr.preemptible])
         maxRetries: select_first([runtime_attr.max_retries, default_attr.max_retries])
@@ -122,41 +119,40 @@ task raw_VcfToBed{
     }
 }
 
-task raw_mergeBed{
-    input{
+task RawMergeBed {
+    input {
         Array[File] bed_files
         String variant_interpretation_docker
         RuntimeAttr? runtime_attr_override
     }
 
     Float input_size = size(bed_files, "GB")
-    Float base_mem_gb = 3.75
 
     RuntimeAttr default_attr = object {
-                                      mem_gb: base_mem_gb,
-                                      disk_gb: ceil(10 + input_size * 1.5),
-                                      cpu: 1,
-                                      preemptible: 2,
-                                      max_retries: 1,
-                                      boot_disk_gb: 8
-                                  }
+        cpu: 1,
+        mem_gb: 3.75,
+        disk_gb: ceil(10 + input_size * 1.5),
+        preemptible: 2,
+        max_retries: 1,
+        boot_disk_gb: 8
+    }
     
     RuntimeAttr runtime_attr = select_first([runtime_attr_override, default_attr])
 
-    output{
+    output {
         File concat_bed_output = "concat.bed.gz"
     }
 
     command {
-        set -euo pipefail
-        zcat ${sep=" " bed_files} | bgzip -c > concat.bed.gz
+        set -exuo pipefail
 
+        zcat ~{sep=" " bed_files} | bgzip -c > concat.bed.gz
     }
 
     runtime {
         cpu: select_first([runtime_attr.cpu, default_attr.cpu])
-        memory: "~{select_first([runtime_attr.mem_gb, default_attr.mem_gb])} GB"
-        disks: "local-disk ~{select_first([runtime_attr.disk_gb, default_attr.disk_gb])} HDD"
+        memory: select_first([runtime_attr.mem_gb, default_attr.mem_gb]) + " GB"
+        disks: "local-disk " + select_first([runtime_attr.disk_gb, default_attr.disk_gb]) + " HDD"
         bootDiskSizeGb: select_first([runtime_attr.boot_disk_gb, default_attr.boot_disk_gb])
         preemptible: select_first([runtime_attr.preemptible, default_attr.preemptible])
         maxRetries: select_first([runtime_attr.max_retries, default_attr.max_retries])
@@ -164,8 +160,8 @@ task raw_mergeBed{
     }
 }
 
-task raw_divideByChrom{
-    input{
+task RawDivideByChrom {
+    input {
         File bed_file
         String chromosome
         String variant_interpretation_docker
@@ -176,33 +172,33 @@ task raw_divideByChrom{
     Float base_mem_gb = 3.75
 
     RuntimeAttr default_attr = object {
-                                      mem_gb: base_mem_gb,
-                                      disk_gb: ceil(10 + input_size * 1.3),
-                                      cpu: 1,
-                                      preemptible: 2,
-                                      max_retries: 1,
-                                      boot_disk_gb: 8
-                                  }
+        mem_gb: 3.75,
+        disk_gb: ceil(10 + input_size * 1.3),
+        cpu: 1,
+        preemptible: 2,
+        max_retries: 1,
+        boot_disk_gb: 8
+    }
     
     RuntimeAttr runtime_attr = select_first([runtime_attr_override, default_attr])
 
-    output{
+    output {
         File per_chromosome_bed_output = "${chromosome}.bed.gz"
     }
 
     command {
-        set -euo pipefail
+        set -exuo pipefail
         
-        zcat ${bed_file} | \
-        grep -w ^${chromosome} | \
-        bgzip -c > ${chromosome}.bed.gz
+        zcat ~{bed_file} | \
+        grep -w ^~{chromosome} | \
+        bgzip -c > ~{chromosome}.bed.gz
 
     }
 
     runtime {
         cpu: select_first([runtime_attr.cpu, default_attr.cpu])
-        memory: "~{select_first([runtime_attr.mem_gb, default_attr.mem_gb])} GB"
-        disks: "local-disk ~{select_first([runtime_attr.disk_gb, default_attr.disk_gb])} HDD"
+        memory: select_first([runtime_attr.mem_gb, default_attr.mem_gb]) + " GB"
+        disks: "local-disk " + select_first([runtime_attr.disk_gb, default_attr.disk_gb]) + " HDD"
         bootDiskSizeGb: select_first([runtime_attr.boot_disk_gb, default_attr.boot_disk_gb])
         preemptible: select_first([runtime_attr.preemptible, default_attr.preemptible])
         maxRetries: select_first([runtime_attr.max_retries, default_attr.max_retries])
@@ -210,8 +206,8 @@ task raw_divideByChrom{
     }
 }
 
-task raw_reformatBed{
-    input{
+task RawReformatBed {
+    input {
         File per_chromosome_bed_file
         File ped_input
         String chromosome
@@ -221,38 +217,36 @@ task raw_reformatBed{
 
     Float bed_file_size = size(per_chromosome_bed_file, "GB")
     Float ped_size = size(ped_input, "GB")
-    Float base_mem_gb = 3.75
 
     RuntimeAttr default_attr = object {
-                                      mem_gb: base_mem_gb,
-                                      disk_gb: ceil(10 + ped_size + bed_file_size * 2.0),
-                                      cpu: 1,
-                                      preemptible: 2,
-                                      max_retries: 1,
-                                      boot_disk_gb: 8
-                                  }
+        cpu: 1,
+        mem_gb: 3.75,
+        disk_gb: ceil(10 + ped_size + bed_file_size * 2.0),
+        preemptible: 2,
+        max_retries: 1,
+        boot_disk_gb: 8
+    }
     
     RuntimeAttr runtime_attr = select_first([runtime_attr_override, default_attr])
 
-    output{
+    output {
        File reformatted_proband_output = "${chromosome}.proband.reformatted.sorted.bed.gz"
        File reformatted_parents_output = "${chromosome}.parents.reformatted.sorted.bed.gz"
     }
 
     command {
-        set -euo pipefail
+        set -exuo pipefail
 
-        #reformat bed file
-        Rscript /src/variant-interpretation/scripts/reformatRawBed.R ${per_chromosome_bed_file} ${ped_input} ${chromosome}.proband.reformatted.bed ${chromosome}.parents.reformatted.bed
-        sortBed -i ${chromosome}.proband.reformatted.bed | bgzip -c > ${chromosome}.proband.reformatted.sorted.bed.gz
-        sortBed -i ${chromosome}.parents.reformatted.bed | bgzip -c > ${chromosome}.parents.reformatted.sorted.bed.gz
-
+        # Reformat bed file
+        Rscript /src/variant-interpretation/scripts/reformatRawBed.R ~{per_chromosome_bed_file} ~{ped_input} ~{chromosome}.proband.reformatted.bed ~{chromosome}.parents.reformatted.bed
+        sortBed -i ~{chromosome}.proband.reformatted.bed | bgzip -c > ~{chromosome}.proband.reformatted.sorted.bed.gz
+        sortBed -i ~{chromosome}.parents.reformatted.bed | bgzip -c > ~{chromosome}.parents.reformatted.sorted.bed.gz
     }
 
     runtime {
         cpu: select_first([runtime_attr.cpu, default_attr.cpu])
-        memory: "~{select_first([runtime_attr.mem_gb, default_attr.mem_gb])} GB"
-        disks: "local-disk ~{select_first([runtime_attr.disk_gb, default_attr.disk_gb])} HDD"
+        memory: select_first([runtime_attr.mem_gb, default_attr.mem_gb]) + " GB"
+        disks: "local-disk " + select_first([runtime_attr.disk_gb, default_attr.disk_gb]) + " HDD"
         bootDiskSizeGb: select_first([runtime_attr.boot_disk_gb, default_attr.boot_disk_gb])
         preemptible: select_first([runtime_attr.preemptible, default_attr.preemptible])
         maxRetries: select_first([runtime_attr.max_retries, default_attr.max_retries])
@@ -260,8 +254,8 @@ task raw_reformatBed{
     }
 }   
 
-task raw_reformatBedDepth{
-    input{
+task RawReformatBedDepth {
+    input {
         File per_chromosome_bed_file
         File ped_input
         String chromosome
@@ -269,40 +263,38 @@ task raw_reformatBedDepth{
         RuntimeAttr? runtime_attr_override
     }
 
-     Float bed_file_size = size(per_chromosome_bed_file, "GB")
+    Float bed_file_size = size(per_chromosome_bed_file, "GB")
     Float ped_size = size(ped_input, "GB")
-    Float base_mem_gb = 3.75
 
     RuntimeAttr default_attr = object {
-                                      mem_gb: base_mem_gb,
-                                      disk_gb: ceil(10 + ped_size + bed_file_size * 2.0),
-                                      cpu: 1,
-                                      preemptible: 2,
-                                      max_retries: 1,
-                                      boot_disk_gb: 8
-                                  }
+        cpu: 1,
+        mem_gb: 3.75,
+        disk_gb: ceil(10 + ped_size + bed_file_size * 2.0),
+        preemptible: 2,
+        max_retries: 1,
+        boot_disk_gb: 8
+    }
     
     RuntimeAttr runtime_attr = select_first([runtime_attr_override, default_attr])
 
-    output{
+    output {
        File reformatted_proband_depth_output = "${chromosome}.proband.depth.reformatted.sorted.bed.gz"
        File reformatted_parents_depth_output = "${chromosome}.parents.depth.reformatted.sorted.bed.gz"
     }
 
     command {
-        set -euo pipefail
+        set -exuo pipefail
 
         #reformat bed file
-        Rscript /src/variant-interpretation/scripts/reformatRawBed.R ${per_chromosome_bed_file} ${ped_input} ${chromosome}.proband.reformatted.bed ${chromosome}.parents.reformatted.bed
-        sortBed -i ${chromosome}.proband.reformatted.bed | bgzip -c > ${chromosome}.proband.depth.reformatted.sorted.bed.gz
-        sortBed -i ${chromosome}.parents.reformatted.bed | bgzip -c > ${chromosome}.parents.depth.reformatted.sorted.bed.gz
-
+        Rscript /src/variant-interpretation/scripts/reformatRawBed.R ~{per_chromosome_bed_file} ~{ped_input} ~{chromosome}.proband.reformatted.bed ~{chromosome}.parents.reformatted.bed
+        sortBed -i ~{chromosome}.proband.reformatted.bed | bgzip -c > ~{chromosome}.proband.depth.reformatted.sorted.bed.gz
+        sortBed -i ~{chromosome}.parents.reformatted.bed | bgzip -c > ~{chromosome}.parents.depth.reformatted.sorted.bed.gz
     }
 
     runtime {
         cpu: select_first([runtime_attr.cpu, default_attr.cpu])
-        memory: "~{select_first([runtime_attr.mem_gb, default_attr.mem_gb])} GB"
-        disks: "local-disk ~{select_first([runtime_attr.disk_gb, default_attr.disk_gb])} HDD"
+        memory: select_first([runtime_attr.mem_gb, default_attr.mem_gb]) + " GB"
+        disks: "local-disk " + select_first([runtime_attr.disk_gb, default_attr.disk_gb]) + " HDD"
         bootDiskSizeGb: select_first([runtime_attr.boot_disk_gb, default_attr.boot_disk_gb])
         preemptible: select_first([runtime_attr.preemptible, default_attr.preemptible])
         maxRetries: select_first([runtime_attr.max_retries, default_attr.max_retries])
