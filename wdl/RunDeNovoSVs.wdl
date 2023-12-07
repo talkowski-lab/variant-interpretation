@@ -356,7 +356,7 @@ task GetGenomicDisorders {
     }
 }
 
-task MergeGenomicDisorders{
+task MergeGenomicDisorders {
     input {
         Array[File] genomic_disorder_input
         String variant_interpretation_docker
@@ -381,7 +381,7 @@ task MergeGenomicDisorders{
     }
 
     command {
-        set -euo pipefail
+        set -euxo pipefail
 
         zcat ~{sep=" " genomic_disorder_input} > gd.raw.files.output.txt
         bgzip gd.raw.files.output.txt
@@ -423,9 +423,9 @@ task MergeDenovoBedFiles {
     }
 
     command {
-        #set -exuo pipefail
+        set -exuo pipefail
 
-        zcat ~{bed_files[0]} | head -n+1 > denovo.merged.bed
+        zcat ~{bed_files[0]} | awk 'NR<=1' > denovo.merged.bed
         zcat ~{sep=" " bed_files} | grep -v ^chrom >> denovo.merged.bed
         bgzip denovo.merged.bed
     }
@@ -514,7 +514,7 @@ task CreatePlots {
     }
 
     command {
-        #set -exuo pipefail
+        set -exuo pipefail
 
         Rscript /src/variant-interpretation/scripts/denovoSV_plots.R ~{bed_file} ~{ped_input} output_plots.pdf
     }
@@ -557,9 +557,10 @@ task CleanPed {
     }
 
     command {
+        # set -exuo pipefail
 
         Rscript /src/variant-interpretation/scripts/cleanPed.R ~{ped_input}
-        cut -f2 cleaned_ped.txt | tail -n+2 > all_samples.txt
+        cut -f2 cleaned_ped.txt | awk 'NR > 1' > all_samples.txt
         bcftools query -l ~{vcf_input} > samples_to_include_in_ped.txt
         grep -w -v -f samples_to_include_in_ped.txt all_samples.txt > excluded_samples.txt
         grep -w -f excluded_samples.txt cleaned_ped.txt | cut -f1 | sort -u > excluded_families.txt
@@ -610,7 +611,7 @@ task GetBatchedFiles {
     }
 
     command {
-        #set -exuo pipefail
+        set -exuo pipefail
 
         if grep -q -w -f ~{family_ids_txt} ~{ped_input}; then
             grep -w -f ~{family_ids_txt} ~{ped_input} | cut -f2 | sort -u > samples.txt
