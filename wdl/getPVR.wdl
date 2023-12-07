@@ -125,12 +125,12 @@ task calculatePVR {
   String pvr_filename = "${fam_id}_with_PVR.txt"
   String pvr_redo = "${fam_id}_redo.txt"
     
-  command <<<
+  command {
     set -euo pipefail
     
     perl /home/get_pvr_from_crams_wdl.pl -i ~{indel_file} -b ${sep=';' fam_crams} -m ~{trio_uri}
 
-  >>>
+  }
 
   runtime {
     docker: pvr_docker
