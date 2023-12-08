@@ -111,6 +111,7 @@ workflow deNovoSV {
                 variant_interpretation_docker=variant_interpretation_docker,
                 runtime_attr_override = runtime_attr_gd
         }
+  }
 
     
     
