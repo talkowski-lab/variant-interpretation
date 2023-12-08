@@ -63,7 +63,7 @@ task splitTrioVCFs {
         RuntimeAttr? runtime_attr_override
     }
 
-    Float input_size = size([vcf_file, vep_annotated_final_vcf_single], "GB")
+    Float input_size = size(vcf_file, "GB") + size(vep_annotated_final_vcf_single, "GB")
     Float base_disk_gb = 10.0
     Float base_mem_gb = 2.0
     Float input_mem_scale = 3.0
