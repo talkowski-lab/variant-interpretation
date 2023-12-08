@@ -44,7 +44,8 @@ workflow runSomalier {
                     vcf_files=subsetVCFs.subset_vcf,
                     vcf_files_idx=subsetVCFs.subset_vcf_idx,
                     sv_base_mini_docker=sv_base_mini_docker,
-                    cohort_prefix=cohort_prefix
+                    cohort_prefix=cohort_prefix,
+                    merge_or_concat='concat'
             }
         }
         call mergeVCFs as mergeCohort {
@@ -52,7 +53,8 @@ workflow runSomalier {
             vcf_files=mergeSharded.merged_vcf_file,
             vcf_files_idx=mergeSharded.merged_vcf_idx,
             sv_base_mini_docker=sv_base_mini_docker,
-            cohort_prefix=cohort_prefix
+            cohort_prefix=cohort_prefix,
+            merge_or_concat='concat'
         }
     }
 
@@ -61,7 +63,8 @@ workflow runSomalier {
             vcf_files=mergeCohort.merged_vcf_file,
             vcf_files_idx=mergeCohort.merged_vcf_idx,
             sv_base_mini_docker=sv_base_mini_docker,
-            cohort_prefix=cohort_prefix
+            cohort_prefix=cohort_prefix,
+            merge_or_concat='merge'
     }
 
     call relatedness {
@@ -91,11 +94,12 @@ workflow runSomalier {
     output {
         File out_samples = relatedness.out_samples
         File out_pairs = relatedness.out_pairs
-        File out_groups = relatedness.out_groups
+        # File out_groups = relatedness.out_groups
         File out_html = relatedness.out_html
         File ancestry_html = relatedness.ancestry_html
         File ancestry_out = relatedness.ancestry_out
         File corrected_ped = correctPedigree.corrected_ped
+        File somalier_errors = correctPedigree.somalier_errors
     }
 }
 
@@ -186,7 +190,7 @@ task relatedness {
     output {
         File out_samples = cohort_prefix + ".samples.tsv" # creates a .ped like vep_annotated_final_vcf with extra QC columns
         File out_pairs = cohort_prefix + ".pairs.tsv" # shows IBS for all possible sample pairs
-        File out_groups = cohort_prefix + ".groups.tsv" # shows pairs of samples above a certain relatedness
+        # File out_groups = cohort_prefix + ".groups.tsv" # shows pairs of samples above a certain relatedness
         File out_html = cohort_prefix + ".html" # interactive html
         File ancestry_html = cohort_prefix + ".somalier-ancestry.html"
         File ancestry_out = cohort_prefix + ".somalier-ancestry.tsv"
@@ -199,6 +203,7 @@ task mergeVCFs {
         Array[File] vcf_files_idx
         String sv_base_mini_docker
         String cohort_prefix
+        String merge_or_concat    
         RuntimeAttr? runtime_attr_override
     }
 
@@ -239,7 +244,7 @@ task mergeVCFs {
         set -euo pipefail
         VCFS="~{write_lines(vcf_files)}"
         cat $VCFS | awk -F '/' '{print $NF"\t"$0}' | sort -k1,1V | awk '{print $2}' > vcfs_sorted.list
-        bcftools concat --no-version -n -Oz --file-list vcfs_sorted.list --output ~{merged_vcf_name}
+        bcftools ~{merge_or_concat} --no-version -Oz --file-list vcfs_sorted.list --output ~{merged_vcf_name}
         bcftools sort ~{merged_vcf_name} --output ~{sorted_vcf_name}
         bcftools index -t ~{sorted_vcf_name}
     >>>
@@ -288,5 +293,6 @@ task correctPedigree {
 
     output {
         File corrected_ped = cohort_prefix + "_ped_corrected.ped"
+        File somalier_errors = cohort_prefix + "_somalier_errors.tsv"
     }
 }
