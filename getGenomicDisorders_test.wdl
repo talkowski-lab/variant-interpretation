@@ -181,15 +181,6 @@ workflow deNovoSV {
             runtime_attr_override = runtime_attr_call_outliers
     }
 
-    #generates plots for QC
-    call createPlots{
-        input:
-            bed_file = callOutliers.final_denovo_nonOutliers_output,
-#            outliers_file = callOutliers.final_denovo_outliers_output,
-            ped_input = ped_input,
-            variant_interpretation_docker=variant_interpretation_docker,
-            runtime_attr_override = runtime_attr_create_plots
-    }
 
     #merges the genomic disorder region output from each chromosome to compile a list of genomic disorder regions
     call mergeGenomicDisorders{
