@@ -167,7 +167,7 @@ task getGenomicDisorders{
         File gd_output_for_denovo = "annotated.gd.variants.names.txt"
     }
 
-    command <<<
+    command {
         set -euxo pipefail
 
         bedtools intersect -wa -wb -f 0.3 -r -a ~{vcf_file} -b ~{genomic_disorder_input} | cut -f 3 |sort -u > annotated.gd.variants.names.txt
@@ -228,7 +228,7 @@ task getGenomicDisorders{
             awk -v OFS="\t" '{sub(/_.*/, "", $5); print}' | sort | uniq > ~{chromosome}.gd.variants.in.depth.raw.files.txt
         bgzip ~{chromosome}.gd.variants.in.depth.raw.files.txt
         echo "done with cat"
-    >>>
+    }
 
     runtime {
         cpu: select_first([runtime_attr.cpu, default_attr.cpu])
