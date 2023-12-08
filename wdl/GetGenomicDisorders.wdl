@@ -146,32 +146,6 @@ workflow deNovoSV {
 
     }
 
-    #merges the per chromosome final de novo SV outputs
-    call mergeDenovoBedFiles{
-        input:
-            bed_files = getDeNovo.per_chromosome_final_output_file,
-            variant_interpretation_docker=variant_interpretation_docker,
-            runtime_attr_override = runtime_attr_merge_final_bed_files
-    }
-
-    #outputs a final callset of de novo SVs as well as outlier de novo SV calls
-    call callOutliers {
-        input:
-            bed_file = mergeDenovoBedFiles.merged_denovo_output,
-            variant_interpretation_docker=variant_interpretation_docker,
-            runtime_attr_override = runtime_attr_call_outliers
-    }
-
-    #generates plots for QC
-    call createPlots{
-        input:
-            bed_file = callOutliers.final_denovo_nonOutliers_output,
-#            outliers_file = callOutliers.final_denovo_outliers_output,
-            ped_input = ped_input,
-            variant_interpretation_docker=variant_interpretation_docker,
-            runtime_attr_override = runtime_attr_create_plots
-    }
-
     #merges the genomic disorder region output from each chromosome to compile a list of genomic disorder regions
     call mergeGenomicDisorders{
         input:
