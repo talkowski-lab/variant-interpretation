@@ -5,6 +5,7 @@ workflow step3 {
         File trio_uri
         File ped_uri
         File merged_preprocessed_vcf_file
+        File vep_annotated_final_vcf_single
         String hail_docker
         String sv_base_mini_docker
         File uberSplit_v3_py
@@ -17,6 +18,7 @@ workflow step3 {
     call splitTrioVCFs {
         input:
             trio_uri=trio_uri,
+            vep_annotated_final_vcf_single=vep_annotated_final_vcf_single,
             vcf_file=merged_preprocessed_vcf_file,
             sv_base_mini_docker=sv_base_mini_docker,
             cohort_prefix=cohort_prefix
@@ -46,6 +48,7 @@ task splitTrioVCFs {
     input {
         File trio_uri
         File vcf_file
+        File vep_annotated_final_vcf_single
         String sv_base_mini_docker
         String cohort_prefix
     }
@@ -55,10 +58,14 @@ task splitTrioVCFs {
     }
 
     command {
+        bcftools head ~{vep_annotated_final_vcf_single} > og_header.txt
+        grep "FILTER=" og_header.txt > new_header.txt
+        bcftools annotate -h new_header.txt -Oz -o temp.vcf.gz ~{vcf_file}
+
         cat ~{trio_uri} | tail -n +2 | cut -f3-5 | tr '\t' ',' > samples.txt
         cat ~{trio_uri} | tail -n +2 | cut -f2-3 | tr '\t' '_trio_' > filenames.txt
         paste samples.txt samples.txt filenames.txt > trio.list
-        bcftools +split -S trio.list -Ov -o split_trio_vcfs ~{vcf_file}
+        bcftools +split -S trio.list -Ov -o split_trio_vcfs temp.vcf.gz
     }
 
     output {
