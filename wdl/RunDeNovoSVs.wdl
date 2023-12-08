@@ -116,7 +116,7 @@ workflow deNovoSV {
         call getGenomicDisorders{
             input:
                 genomic_disorder_input=genomic_disorder_input,
-                ped = ped_input,
+                ped = cleanPed.cleaned_ped,
                 vcf_file = select_first([getBatchedVcf.split_vcf, vcf_file]),
                 depth_raw_file_proband = reformatDepthRawFiles.reformatted_proband_raw_files[i],
                 depth_raw_file_parents = reformatDepthRawFiles.reformatted_parents_raw_files[i],
