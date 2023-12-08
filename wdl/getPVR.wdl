@@ -128,7 +128,7 @@ task calculatePVR {
   command {
     set -euo pipefail
     
-    perl /home/get_pvr_from_crams_wdl.pl -i ~{indel_file} -b ${sep=';' fam_crams} -m ~{trio_uri}
+    perl /home/get_pvr_from_crams_wdl.pl -i ~{indel_file} -b ${sep='\;' fam_crams} -m ~{trio_uri}
 
   }
 
