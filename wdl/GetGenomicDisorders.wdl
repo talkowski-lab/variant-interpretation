@@ -143,7 +143,52 @@ workflow deNovoSV {
                 sv_pipeline_docker=sv_pipeline_updates_docker,
                 runtime_attr_override=runtime_override_shard_vcf
         }
+    
+        #runs the de novo calling python script on each shard and outputs a per chromosome list of de novo SVs
+        call runDeNovo.deNovoSVsScatter as getDeNovo {
+            input:
+                ped_input=cleanPed.cleaned_ped,
+                vcf_files=SplitVcf.shards,
+                disorder_input=getGenomicDisorders.gd_output_for_denovo,
+                chromosome=contigs[i],
+                raw_proband=reformatRawFiles.reformatted_proband_raw_files[i],
+                raw_parents=reformatRawFiles.reformatted_parents_raw_files[i],
+                raw_depth_proband=reformatDepthRawFiles.reformatted_proband_raw_files[i],
+                raw_depth_parents=reformatDepthRawFiles.reformatted_parents_raw_files[i],
+                exclude_regions = exclude_regions,
+                sample_batches = sample_batches,
+                batch_bincov_index = select_first([getBatchedFiles.batch_bincov_index_subset, batch_bincov_index]),
+                python_config=python_config,
+                variant_interpretation_docker=variant_interpretation_docker,
+                runtime_attr_denovo = runtime_attr_denovo,
+                runtime_attr_vcf_to_bed = runtime_attr_vcf_to_bed
+        }
+    }
 
+    #merges the per chromosome final de novo SV outputs
+    call mergeDenovoBedFiles{
+        input:
+            bed_files = getDeNovo.per_chromosome_final_output_file,
+            variant_interpretation_docker=variant_interpretation_docker,
+            runtime_attr_override = runtime_attr_merge_final_bed_files
+    }
+
+    #outputs a final callset of de novo SVs as well as outlier de novo SV calls
+    call callOutliers {
+        input:
+            bed_file = mergeDenovoBedFiles.merged_denovo_output,
+            variant_interpretation_docker=variant_interpretation_docker,
+            runtime_attr_override = runtime_attr_call_outliers
+    }
+
+    #generates plots for QC
+    call createPlots{
+        input:
+            bed_file = callOutliers.final_denovo_nonOutliers_output,
+#            outliers_file = callOutliers.final_denovo_outliers_output,
+            ped_input = ped_input,
+            variant_interpretation_docker=variant_interpretation_docker,
+            runtime_attr_override = runtime_attr_create_plots
     }
 
     #merges the genomic disorder region output from each chromosome to compile a list of genomic disorder regions
