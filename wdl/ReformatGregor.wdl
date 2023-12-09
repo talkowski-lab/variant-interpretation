@@ -286,9 +286,8 @@ task fixConcordanceIDs {
 
   command {
     set -e
-    python3 updateConcordanceID.py --input ~{vcf} --output ~{prefix}.concorID.vcf
-    bgzip ~{prefix}.concorID.vcf
-    tabix -p vcf ~{prefix}.concorID.vcf
+    python3 updateConcordanceID.py --input ~{vcf} --output ~{prefix}.concorID.vcf.gz
+    tabix -p vcf ~{prefix}.concorID.vcf.gz
   }
 
   runtime {
