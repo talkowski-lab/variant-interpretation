@@ -17,6 +17,7 @@ workflow ReformatGregor {
   input {
     File vcf
     File pre_concordance_vcf
+    File? pre_concordance_vcf_index
     File regions
     File pedigree
     File non_PAR
