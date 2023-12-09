@@ -7,7 +7,7 @@ This script updates the ID of SVs that are concordant to the ID in the previous 
 
 import argparse
 import sys
-import vcf
+import pysam
 
 def main():
     """
@@ -18,29 +18,25 @@ def main():
     parser.add_argument('--output', dest='vcfout', help='VCF output file')
     args = parser.parse_args()
 
-    vcfin = args.vcfin
-    vcfout = args.vcfout
-
-    if vcfin == '-':
-        vcf_reader = vcf.Reader(sys.stdin)
+    if args.vcfin in '- stdin'.split():
+        vcf = pysam.VariantFile(sys.stdin)
     else:
-        vcf_reader = vcf.Reader(filename=vcfin)
+        vcf = pysam.VariantFile(args.vcfin)
 
-    if vcfout == None:
-        vcf_writer = vcf.Writer(sys.stdout, vcf_reader)
+    if args.vcfout in '- stdout'.split():
+        out = pysam.VariantFile(sys.stdout, 'w', header=vcf.header)
     else:
-        vcf_writer = vcf.Writer(open(vcfout, 'w'), vcf_reader)
+        out = pysam.VariantFile(args.vcfout, 'w', header=vcf.header)
 
     """
     Change ID column
     """
-    for record in vcf_reader:
-
+    for record in vcf:
         try:
-            record.ID = record.INFO["TRUTH_VID"]
-            vcf_writer.write_record(record)
+            record.id = record.info["TRUTH_VID"]
+            out.write(record)
         except:
-            vcf_writer.write_record(record)
+            out.write(record)
 
 if __name__ == '__main__':
     main()
