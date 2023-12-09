@@ -24,6 +24,7 @@ workflow ReformatGregor {
     String prefix
     String docker_gregor
     RuntimeAttr? runtime_attr_gregor
+    RuntimeAttr? runtime_attr_concordance_ids
   }
 
   call fix_chrX_GT{
@@ -66,7 +67,7 @@ workflow ReformatGregor {
         vcf = strvctvre.out_vcf,
         prefix = prefix,
         docker_path = docker_gregor,
-        runtime_attr_override = runtime_attr_gregor
+        runtime_attr_override = runtime_attr_concordance_ids
   }
 
   call annotateFilter{
