@@ -15,10 +15,9 @@ struct RuntimeAttr {
 # WORKFLOW DEFINITION
 workflow ReformatGregor {
   input {
-    File vcf
-    File pre_concordance_vcf
-    File? pre_concordance_vcf_index
-    File regions
+    File concordance_vcf
+    File annotated_vcf
+    File? annotated_vcf_idx
     File pedigree
     File non_PAR
     File new_ids
@@ -29,7 +28,7 @@ workflow ReformatGregor {
 
   call fix_chrX_GT{
       input:
-        vcf = vcf,
+        vcf = concordance_vcf,
         non_PAR = non_PAR,
         prefix = prefix,
         pedigree = pedigree,
@@ -72,8 +71,8 @@ workflow ReformatGregor {
 
   call annotateFilter{
       input:
-        pre_concordance_vcf = pre_concordance_vcf,
-        pre_concordance_vcf_index = pre_concordance_vcf_index,
+        annotated_vcf = annotated_vcf,
+        annotated_vcf_idx = annotated_vcf_idx,
         vcf = fixConcordanceIDs.out_vcf,
         vcf_index = fixConcordanceIDs.out_index,
         prefix = prefix,
@@ -304,8 +303,8 @@ task fixConcordanceIDs {
 
 task annotateFilter {
   input {
-    File pre_concordance_vcf
-    File? pre_concordance_vcf_index
+    File annotated_vcf
+    File? annotated_vcf_idx
     File vcf
     File vcf_index
     File docker_path
@@ -313,7 +312,7 @@ task annotateFilter {
     RuntimeAttr? runtime_attr_override
   }
 
-  File pre_concordance_vcf_index = select_first([pre_concordance_vcf_index, pre_concordance_vcf + ".tbi"])
+  File annotated_vcf_idx = select_first([annotated_vcf_idx, annotated_vcf + ".tbi"])
 
 
   RuntimeAttr default_attr = object {
@@ -334,7 +333,7 @@ task annotateFilter {
 
   command {
     set -e
-    bcftools annotate -c FILTER -a ~{pre_concordance_vcf} -O z -o ~{prefix}.fixFilter.vcf.gz ~{vcf}
+    bcftools annotate -c FILTER -a ~{annotated_vcf} -O z -o ~{prefix}.fixFilter.vcf.gz ~{vcf}
   }
 
   runtime {
