@@ -125,7 +125,7 @@ task fix_chrX_GT {
   command {
     set -e
     bedtools intersect -a ~{vcf} -b ~{non_PAR} -f 0.5 | cut -f3 > chrX_ids.txt
-    python3 fix_GT_chrXmale.py --vcf ~{vcf} --out ~{prefix}.fixChrX.vcf.gz --ped ~{pedigree} --ids chrX_ids.txt
+    python3 ~/variant-interpretation/scripts/fix_GT_chrXmale.py --vcf ~{vcf} --out ~{prefix}.fixChrX.vcf.gz --ped ~{pedigree} --ids chrX_ids.txt
   }
 
   runtime {
@@ -245,7 +245,7 @@ task strvctvre {
 
   command {
     set -e
-    cd ~/StrVCTVRE
+    cd /StrVCTVRE
     python3 StrVCTVRE.py -i ~{vcf} -o ~{prefix}.StrVCTVRE.vcf.gz
   }
 
@@ -286,7 +286,7 @@ task fixConcordanceIDs {
 
   command {
     set -e
-    python3 updateConcordanceID.py --input ~{vcf} --output ~{prefix}.concorID.vcf.gz
+    python3 ~/variant-interpretation/scripts/updateConcordanceID.py --input ~{vcf} --output ~{prefix}.concorID.vcf.gz
     tabix -p vcf ~{prefix}.concorID.vcf.gz
   }
 
