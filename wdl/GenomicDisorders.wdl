@@ -12,7 +12,6 @@ struct RuntimeAttr {
     Int? max_retries
 }
 
-
 # WORKFLOW DEFINITION
 
 workflow GenomicDisorders {
@@ -193,7 +192,7 @@ task raw_reformatVCF{
                                       mem_gb: base_mem_gb,
                                       disk_gb: ceil(10 + input_size * 2.0),
                                       cpu_cores: 1,
-                                      preemptible: 2,
+                                      preemptible_tries: 2,
                                       max_retries: 1,
                                       boot_disk_gb: 8
                                   }
@@ -216,7 +215,7 @@ task raw_reformatVCF{
         memory: "~{select_first([runtime_attr.mem_gb, default_attr.mem_gb])} GB"
         disks: "local-disk ~{select_first([runtime_attr.disk_gb, default_attr.disk_gb])} HDD"
         bootDiskSizeGb: select_first([runtime_attr.boot_disk_gb, default_attr.boot_disk_gb])
-        preemptible: select_first([runtime_attr.preemptible, default_attr.preemptible])
+        preemptible: select_first([runtime_attr.preemptible_tries, default_attr.preemptible_tries])
         maxRetries: select_first([runtime_attr.max_retries, default_attr.max_retries])
         docker: docker_path
     }
@@ -236,7 +235,7 @@ task raw_mergeBed{
                                       mem_gb: base_mem_gb,
                                       disk_gb: ceil(10 + input_size * 1.5),
                                       cpu_cores: 1,
-                                      preemptible: 2,
+                                      preemptible_tries: 2,
                                       max_retries: 1,
                                       boot_disk_gb: 8
                                   }
@@ -258,7 +257,7 @@ task raw_mergeBed{
         memory: "~{select_first([runtime_attr.mem_gb, default_attr.mem_gb])} GB"
         disks: "local-disk ~{select_first([runtime_attr.disk_gb, default_attr.disk_gb])} HDD"
         bootDiskSizeGb: select_first([runtime_attr.boot_disk_gb, default_attr.boot_disk_gb])
-        preemptible: select_first([runtime_attr.preemptible, default_attr.preemptible])
+        preemptible: select_first([runtime_attr.preemptible_tries, default_attr.preemptible_tries])
         maxRetries: select_first([runtime_attr.max_retries, default_attr.max_retries])
         docker: docker_path
     }
@@ -279,7 +278,7 @@ task raw_divideByChrom{
                                       mem_gb: base_mem_gb,
                                       disk_gb: ceil(10 + input_size * 1.3),
                                       cpu_cores: 1,
-                                      preemptible: 2,
+                                      preemptible_tries: 2,
                                       max_retries: 1,
                                       boot_disk_gb: 8
                                   }
@@ -293,7 +292,7 @@ task raw_divideByChrom{
     command {
         set -euo pipefail
 
-        zcat ${bed_file} | \
+        zcat ~{bed_file} | \
         grep -w ^${chromosome} | \
         bgzip -c > ${chromosome}.bed.gz
 
@@ -304,7 +303,7 @@ task raw_divideByChrom{
         memory: "~{select_first([runtime_attr.mem_gb, default_attr.mem_gb])} GB"
         disks: "local-disk ~{select_first([runtime_attr.disk_gb, default_attr.disk_gb])} HDD"
         bootDiskSizeGb: select_first([runtime_attr.boot_disk_gb, default_attr.boot_disk_gb])
-        preemptible: select_first([runtime_attr.preemptible, default_attr.preemptible])
+        preemptible: select_first([runtime_attr.preemptible_tries, default_attr.preemptible_tries])
         maxRetries: select_first([runtime_attr.max_retries, default_attr.max_retries])
         docker: docker_path
     }
@@ -326,7 +325,7 @@ task raw_reformatBedDepth{
                                       mem_gb: base_mem_gb,
                                       disk_gb: ceil(10 + ped_size + bed_file_size * 2.0),
                                       cpu_cores: 1,
-                                      preemptible: 2,
+                                      preemptible_tries: 2,
                                       max_retries: 1,
                                       boot_disk_gb: 8
                                   }
@@ -350,7 +349,7 @@ task raw_reformatBedDepth{
         memory: "~{select_first([runtime_attr.mem_gb, default_attr.mem_gb])} GB"
         disks: "local-disk ~{select_first([runtime_attr.disk_gb, default_attr.disk_gb])} HDD"
         bootDiskSizeGb: select_first([runtime_attr.boot_disk_gb, default_attr.boot_disk_gb])
-        preemptible: select_first([runtime_attr.preemptible, default_attr.preemptible])
+        preemptible: select_first([runtime_attr.preemptible_tries, default_attr.preemptible_tries])
         maxRetries: select_first([runtime_attr.max_retries, default_attr.max_retries])
         docker: docker_path
     }
