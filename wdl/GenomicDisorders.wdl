@@ -81,10 +81,16 @@ workflow GenomicDisorders {
           runtime_attr_override = runtime_attr_gd
       }
     }
+    call raw_mergeBed as raw_mergeBedFinal{
+      input:
+      bed_files = raw_reformatBedDepth.reformatted_output,
+      docker_path = docker_genomic_disorders,
+      runtime_attr_override = runtime_attr_gd
+    }
 
   output {
     File vcf_to_bed = reformatVCF.out_bed
-    File raw_reformatted = raw_reformatBedDepth.reformatted_output
+    File raw_reformatted = raw_mergeBedFinal.concat_bed_output
     }
 
 }
