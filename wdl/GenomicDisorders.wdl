@@ -185,7 +185,7 @@ task raw_reformatVCF{
         RuntimeAttr? runtime_attr_override
     }
 
-    Float input_size = size(vcf_file, "GB")
+    Float input_size = size(vcf, "GB")
     Float base_mem_gb = 3.75
 
     RuntimeAttr default_attr = object {
@@ -207,7 +207,7 @@ task raw_reformatVCF{
         set -euo pipefail
 
         #convert from vcf to bed file
-        svtk vcf2bed ~{vcf_file} --info SVTYPE - | bgzip -c > ${prefix}.bed.gz
+        svtk vcf2bed ~{vcf} --info SVTYPE - | bgzip -c > ${prefix}.bed.gz
     }
 
     runtime {
