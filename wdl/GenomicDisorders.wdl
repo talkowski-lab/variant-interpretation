@@ -18,7 +18,6 @@ workflow GenomicDisorders {
   input {
     File vcf
     File genomic_disorders
-    File raw_depth
     File raw_files_list
     Array[String] contigs
     String prefix
