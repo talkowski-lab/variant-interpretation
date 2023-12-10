@@ -89,7 +89,7 @@ workflow GenomicDisorders {
 
   output {
     File vcf_to_bed = reformatVCF.out_bed
-    File vcf_gd_ovl  getVCFoverlap.out_bed
+    File vcf_gd_ovl = getVCFoverlap.out_bed
     File raw_reformatted = raw_mergeBedFinal.concat_bed_output
     }
 
