@@ -25,6 +25,7 @@ workflow ReformatGregor {
 
     String docker_gregor
 
+    RuntimeAttr? runtime_attr_strvctvre
     RuntimeAttr? runtime_attr_gregor
     RuntimeAttr? runtime_attr_concordance_ids
   }
@@ -61,7 +62,7 @@ workflow ReformatGregor {
         vcf = fixGnomAD.out_vcf,
         prefix = prefix,
         docker_path = docker_gregor,
-        runtime_attr_override = runtime_attr_gregor
+        runtime_attr_override = runtime_attr_strvctvre
   }
 
   call fixConcordanceIDs{
