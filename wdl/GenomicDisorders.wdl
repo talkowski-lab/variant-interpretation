@@ -191,7 +191,7 @@ task raw_reformatVCF{
     RuntimeAttr default_attr = object {
                                       mem_gb: base_mem_gb,
                                       disk_gb: ceil(10 + input_size * 2.0),
-                                      cpu: 1,
+                                      cpu_cores: 1,
                                       preemptible: 2,
                                       max_retries: 1,
                                       boot_disk_gb: 8
@@ -234,7 +234,7 @@ task raw_mergeBed{
     RuntimeAttr default_attr = object {
                                       mem_gb: base_mem_gb,
                                       disk_gb: ceil(10 + input_size * 1.5),
-                                      cpu: 1,
+                                      cpu_cores: 1,
                                       preemptible: 2,
                                       max_retries: 1,
                                       boot_disk_gb: 8
@@ -277,7 +277,7 @@ task raw_divideByChrom{
     RuntimeAttr default_attr = object {
                                       mem_gb: base_mem_gb,
                                       disk_gb: ceil(10 + input_size * 1.3),
-                                      cpu: 1,
+                                      cpu_cores: 1,
                                       preemptible: 2,
                                       max_retries: 1,
                                       boot_disk_gb: 8
@@ -324,7 +324,7 @@ task raw_reformatBedDepth{
     RuntimeAttr default_attr = object {
                                       mem_gb: base_mem_gb,
                                       disk_gb: ceil(10 + ped_size + bed_file_size * 2.0),
-                                      cpu: 1,
+                                      cpu_cores: 1,
                                       preemptible: 2,
                                       max_retries: 1,
                                       boot_disk_gb: 8
