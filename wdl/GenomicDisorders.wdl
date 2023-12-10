@@ -50,7 +50,7 @@ workflow GenomicDisorders {
   scatter(raw_file in raw_files){
     call raw_reformatVCF {
       input:
-        vcf = raw_file,
+        vcf = vcf,
         docker_path = docker_genomic_disorders,
         prefix = basename(raw_file, ".vcf.gz"),
         runtime_attr_override = runtime_attr_gd
