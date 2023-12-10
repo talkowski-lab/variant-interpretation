@@ -12,6 +12,7 @@ struct RuntimeAttr {
     Int? max_retries
 }
 
+
 # WORKFLOW DEFINITION
 
 workflow GenomicDisorders {
