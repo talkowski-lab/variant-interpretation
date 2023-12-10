@@ -22,7 +22,9 @@ workflow ReformatGregor {
     File non_PAR
     File new_ids
     String prefix
+
     String docker_gregor
+
     RuntimeAttr? runtime_attr_gregor
     RuntimeAttr? runtime_attr_concordance_ids
   }
@@ -102,7 +104,7 @@ task fix_chrX_GT {
     File vcf
     File non_PAR
     File pedigree
-    File docker_path
+    String docker_path
     String prefix
     RuntimeAttr? runtime_attr_override
   }
@@ -143,7 +145,7 @@ task change_sampleIDs {
   input {
     File vcf
     File new_ids
-    File docker_path
+    String docker_path
     String prefix
     RuntimeAttr? runtime_attr_override
   }
@@ -182,7 +184,7 @@ task change_sampleIDs {
 task fixGnomAD {
   input {
     File vcf
-    File docker_path
+    String docker_path
     String prefix
     RuntimeAttr? runtime_attr_override
   }
@@ -223,7 +225,7 @@ task fixGnomAD {
 task strvctvre {
   input {
     File vcf
-    File docker_path
+    String docker_path
     String prefix
     RuntimeAttr? runtime_attr_override
   }
@@ -263,7 +265,7 @@ task strvctvre {
 task fixConcordanceIDs {
   input {
     File vcf
-    File docker_path
+    String docker_path
     String prefix
     RuntimeAttr? runtime_attr_override
   }
@@ -307,7 +309,7 @@ task annotateFilter {
     File? annotated_vcf_idx
     File vcf
     File vcf_index
-    File docker_path
+    String docker_path
     String prefix
     RuntimeAttr? runtime_attr_override
   }
@@ -350,7 +352,7 @@ task annotateFilter {
 task cleanHeader {
   input {
     File vcf
-    File docker_path
+    String docker_path
     String prefix
     RuntimeAttr? runtime_attr_override
   }
