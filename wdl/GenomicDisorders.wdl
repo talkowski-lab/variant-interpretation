@@ -318,7 +318,6 @@ task raw_reformatBedDepth{
     }
 
     Float bed_file_size = size(per_chromosome_bed_file, "GB")
-    Float ped_size = size(ped_input, "GB")
     Float base_mem_gb = 3.75
 
     RuntimeAttr default_attr = object {
