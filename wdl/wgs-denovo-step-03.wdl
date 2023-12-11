@@ -19,6 +19,7 @@ workflow step3 {
         String sv_base_mini_docker
         File uberSplit_v3_py
         Int batch_size
+        Boolean subset_ped=true
     }
 
     String cohort_prefix = basename(merged_preprocessed_vcf_file, '.vep.merged.vcf.gz')
@@ -36,9 +37,21 @@ workflow step3 {
     # output {
     #     Array[File] split_trio_vcfs = splitTrioVCFs.split_trio_vcfs
     # }
+
+    if (subset_ped) {
+        call subsetPed {
+            input:
+                ped_uri=ped_uri,
+                vcf_file=merged_preprocessed_vcf_file,
+                sv_base_mini_docker=sv_base_mini_docker
+        }
+    }
+
+    File new_ped_uri = select_first([subsetPed.new_ped_uri, ped_uri])
+
     call uberSplit_v3 {
         input:
-            ped_uri=ped_uri,
+            ped_uri=new_ped_uri,
             vcf_file=merged_preprocessed_vcf_file,
             hail_docker=hail_docker,
             cohort_prefix=cohort_prefix,
@@ -50,6 +63,51 @@ workflow step3 {
     output {
         Array[File] split_trio_vcfs = uberSplit_v3.split_trio_vcfs
         File stats_files = uberSplit_v3.stats_file_out
+    }
+}
+
+task subsetPed {
+    input {
+        File ped_uri
+        File vcf_file
+        String sv_base_mini_docker
+        RuntimeAttr? runtime_attr_override
+    }
+
+    Float input_size = size(vcf_file, "GB") 
+    Float base_disk_gb = 10.0
+    Float base_mem_gb = 2.0
+    Float input_mem_scale = 3.0
+    Float input_disk_scale = 5.0
+    
+    RuntimeAttr runtime_default = object {
+        mem_gb: base_mem_gb + input_size * input_mem_scale,
+        disk_gb: ceil(base_disk_gb + input_size * input_disk_scale),
+        cpu_cores: 1,
+        preemptible_tries: 3,
+        max_retries: 1,
+        boot_disk_gb: 10
+    }
+
+    RuntimeAttr runtime_override = select_first([runtime_attr_override, runtime_default])
+    
+    runtime {
+        memory: "~{select_first([runtime_override.mem_gb, runtime_default.mem_gb])} GB"
+        disks: "local-disk ~{select_first([runtime_override.disk_gb, runtime_default.disk_gb])} HDD"
+        cpu: select_first([runtime_override.cpu_cores, runtime_default.cpu_cores])
+        preemptible: select_first([runtime_override.preemptible_tries, runtime_default.preemptible_tries])
+        maxRetries: select_first([runtime_override.max_retries, runtime_default.max_retries])
+        docker: sv_base_mini_docker
+        bootDiskSizeGb: select_first([runtime_override.boot_disk_gb, runtime_default.boot_disk_gb])
+    }
+
+    command {
+        bcftools query -l ~{vcf_file} > samples.txt
+        grep -f samples.txt ~{ped_uri} > ~{basename(ped_uri, '.ped')+'_subset.ped'}
+    }
+
+    output {
+        File new_ped_uri = basename(ped_uri, '.ped')+'_subset.ped'
     }
 }
 

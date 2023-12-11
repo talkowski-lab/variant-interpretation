@@ -13,7 +13,14 @@ bucket = storage_client.get_bucket(bucket_id.replace('gs://', ''))
 
 sample_table = pd.read_csv(sample_tsv_uri, sep='\t')
 ped = pd.read_csv(ped_uri, sep='\t')
-ped.columns = ['FamID', 'IndividualID', 'FatherID', 'MotherID', 'Gender', 'Affected']
+try:
+    float(ped.columns[-1])  # no header
+    ped = pd.read_csv(ped_uri, sep='\t', header=None)
+    ped.columns = ['FamID', 'IndividualID', 'FatherID', 'MotherID', 'Gender', 'Affected']
+except Exception as e:
+    pass
+
+ped = ped[['FamID', 'IndividualID', 'FatherID', 'MotherID', 'Gender', 'Affected']]
 
 sample_id_dict = sample_table.set_index('entity:sample_id').to_dict()['collaborator_id']
 sample_id_dict['0'] = '0'

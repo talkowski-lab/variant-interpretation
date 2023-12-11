@@ -193,7 +193,7 @@ task mergeVCFs {
         Array[File] vcf_files_idx
         String sv_base_mini_docker
         String cohort_prefix
-        String merge_or_concat    
+        String merge_or_concat   
         RuntimeAttr? runtime_attr_override
     }
 
