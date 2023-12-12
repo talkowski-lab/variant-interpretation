@@ -249,10 +249,11 @@ task strvctvre {
 
   command {
     set -e
+    ori_path=`pwd -P`
     cd /StrVCTVRE
     python3 StrVCTVRE.py -i ~{vcf} -o ~{prefix}.StrVCTVRE.vcf.gz
     tabix -p vcf ~{prefix}.StrVCTVRE.vcf.gz
-    mv ~{prefix}.StrVCTVRE.vcf.gz* /cromwell_root/
+    mv ~{prefix}.StrVCTVRE.vcf.gz* ${ori_path}/
   }
 
   runtime {
