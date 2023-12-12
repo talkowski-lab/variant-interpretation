@@ -247,14 +247,14 @@ task strvctvre {
     File out_vcf_idx = "~{prefix}.StrVCTVRE.vcf.gz.tbi"
   }
 
-  command {
+  command <<<
     set -e
     ori_path=`pwd -P`
     cd /StrVCTVRE
     python3 StrVCTVRE.py -i ~{vcf} -o ~{prefix}.StrVCTVRE.vcf.gz
     tabix -p vcf ~{prefix}.StrVCTVRE.vcf.gz
     mv ~{prefix}.StrVCTVRE.vcf.gz* ${ori_path}/
-  }
+  >>>
 
   runtime {
     cpu: select_first([runtime_attr.cpu_cores, default_attr.cpu_cores])
