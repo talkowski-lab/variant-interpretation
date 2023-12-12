@@ -377,7 +377,7 @@ task splitMergeVCFs {
             shared_samples=$(comm -12 merged_vcf_samples.txt vcf_samples.txt | tr "\n" "," | head -c -1)
             bcftools view -s $shared_samples -Oz -o tmp_merged_shared.vcf.gz $merged_vcf
             bcftools view -s $shared_samples -Oz -o tmp_shared.vcf.gz $cur_vcf
-            bcftools concat -n --no-version -Oz --output tmp_merged.vcf.gz tmp_merged_shared.vcf.gz tmp_shared.vcf.gz 
+            bcftools concat --naive-force --no-version -Oz --output tmp_merged.vcf.gz tmp_merged_shared.vcf.gz tmp_shared.vcf.gz 
 
             bcftools view -s "^$shared_samples" -Oz -o tmp_merged_unique.vcf.gz $merged_vcf
             bcftools view -s "^$shared_samples" -Oz -o tmp_unique.vcf.gz $cur_vcf
