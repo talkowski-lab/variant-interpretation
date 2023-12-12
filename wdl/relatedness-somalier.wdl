@@ -84,7 +84,7 @@ workflow runSomalier {
     output {
         File out_samples = relatedness.out_samples
         File out_pairs = relatedness.out_pairs
-        # File out_groups = relatedness.out_groups
+        File out_groups = relatedness.out_groups
         File out_html = relatedness.out_html
         File ancestry_html = relatedness.ancestry_html
         File ancestry_out = relatedness.ancestry_out
@@ -180,7 +180,7 @@ task relatedness {
     output {
         File out_samples = cohort_prefix + ".samples.tsv" # creates a .ped like vep_annotated_final_vcf with extra QC columns
         File out_pairs = cohort_prefix + ".pairs.tsv" # shows IBS for all possible sample pairs
-        # File out_groups = cohort_prefix + ".groups.tsv" # shows pairs of samples above a certain relatedness
+        File out_groups = cohort_prefix + ".groups.tsv" # shows pairs of samples above a certain relatedness
         File out_html = cohort_prefix + ".html" # interactive html
         File ancestry_html = cohort_prefix + ".somalier-ancestry.html"
         File ancestry_out = cohort_prefix + ".somalier-ancestry.tsv"
