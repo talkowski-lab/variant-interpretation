@@ -244,12 +244,15 @@ task strvctvre {
 
   output{
     File out_vcf = "~{prefix}.StrVCTVRE.vcf.gz"
+    File out_vcf_idx = "~{prefix}.StrVCTVRE.vcf.gz.tbi"
   }
 
   command {
     set -e
     cd /StrVCTVRE
     python3 StrVCTVRE.py -i ~{vcf} -o ~{prefix}.StrVCTVRE.vcf.gz
+    tabix -p vcf ~{prefix}.StrVCTVRE.vcf.gz
+    mv ~{prefix}.StrVCTVRE.vcf.gz* /cromwell_root/
   }
 
   runtime {
