@@ -389,7 +389,7 @@ task splitMergeVCFs {
             bcftools merge --no-version -Oz --output tmp_unique.vcf.gz tmp_merged_unique.vcf.gz tmp_unique.vcf.gz 
             bcftools index -t tmp_merged_unique.vcf.gz
             bcftools merge --no-version -Oz --output $new_merged_vcf tmp_merged.vcf.gz tmp_unique.vcf.gz
-            bcftools index $new_merged_vcf
+            bcftools index -t $new_merged_vcf
             merged_vcf=$new_merged_vcf
         done
 
