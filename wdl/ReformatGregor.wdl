@@ -17,7 +17,6 @@ workflow ReformatGregor {
   input {
     File concordance_vcf
     File annotated_vcf
-    File? annotated_vcf_idx
     File pedigree
     File non_PAR
     File new_ids
@@ -76,7 +75,6 @@ workflow ReformatGregor {
   call annotateFilter{
       input:
         annotated_vcf = annotated_vcf,
-        annotated_vcf_idx = annotated_vcf_idx,
         vcf = fixConcordanceIDs.out_vcf,
         vcf_index = fixConcordanceIDs.out_index,
         prefix = prefix,
@@ -311,16 +309,12 @@ task fixConcordanceIDs {
 task annotateFilter {
   input {
     File annotated_vcf
-    File? annotated_vcf_idx
     File vcf
     File vcf_index
     String docker_path
     String prefix
     RuntimeAttr? runtime_attr_override
   }
-
-  File annotated_vcf_idx = select_first([annotated_vcf_idx, annotated_vcf + ".tbi"])
-
 
   RuntimeAttr default_attr = object {
     cpu_cores: 1,
@@ -334,13 +328,21 @@ task annotateFilter {
   RuntimeAttr runtime_attr = select_first([runtime_attr_override, default_attr])
 
   output{
-    File out_vcf = "~{prefix}.concorID.vcf.gz"
-    File out_index = "~{prefix}.concorID.vcf.gz.tbi"
+    File out_vcf = "~{prefix}.fixFilter.vcf.gz"
+    File out_index = "~{prefix}.fixFilter.vcf.gz.tbi"
   }
 
   command {
     set -e
+
+    ##Index file used as annotation source
+    tabix -p vcf ~{annotated_vcf}
+
+    ##Annotate FILTER field
     bcftools annotate -c FILTER -a ~{annotated_vcf} -O z -o ~{prefix}.fixFilter.vcf.gz ~{vcf}
+
+    ##Index filter output
+    tabix -p vcf ~{prefix}.fixFilter.vcf.gz
   }
 
   runtime {
