@@ -145,7 +145,7 @@ def parse_trio_vcf(vcf_path: str, sample_info: dict, sampleID: str, abnd_colname
     vcf_df['VarKey'] = vcf_df['ID'] + ":" + vcf_df['SAMPLE']
 
     # Parse the INFO field
-    fixed_info_columns = ['END','AC','AF','AN','BaseQRankSum','ClippingRankSum','DP','FS','MLEAC','MLEAF','MQ','MQRankSum','POLYX','QD','ReadPosRankSum','SOR','VQSLOD','cohort_AC']
+    fixed_info_columns = ['END','AC','AF','AN','BaseQRankSum','ClippingRankSum','DP','FS','MLEAC','MLEAF','MQ','MQRankSum','POLYX','QD','ReadPosRankSum','SOR','VQSLOD','cohort_AC','CSQ']
     info_strs = vcf_df['INFO'].to_numpy()
     info_dicts = list(map(parse_info_str, info_strs))
     info_df = pd.DataFrame(info_dicts)

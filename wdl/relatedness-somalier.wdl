@@ -24,6 +24,7 @@ workflow runSomalier {
         String sv_base_mini_docker
         String hail_docker
         Boolean subset_ped=true
+        Boolean infer_ped=true
         RuntimeAttr? runtime_attr_relatedness
         RuntimeAttr? runtime_attr_correct
     }
@@ -67,6 +68,7 @@ workflow runSomalier {
             somalier_1kg_tar=somalier_1kg_tar,
             cohort_prefix=cohort_prefix,
             somalier_docker=somalier_docker,
+            infer_ped=infer_ped,
             runtime_attr_override=runtime_attr_relatedness
     }
 
@@ -144,6 +146,7 @@ task relatedness {
         File somalier_1kg_tar
         String cohort_prefix
         String somalier_docker
+        Boolean infer_ped
         RuntimeAttr? runtime_attr_override
     }
 
@@ -168,10 +171,11 @@ task relatedness {
         bootDiskSizeGb: select_first([runtime_override.boot_disk_gb, runtime_default.boot_disk_gb])
     }
 
+    String infer_string = if infer_ped then "--infer" else ""
     command {
         bcftools index ~{vcf_uri}
         somalier extract -d extracted/ --sites ~{sites_uri} -f ~{hg38_fasta} ~{vcf_uri}
-        somalier relate --infer --ped ~{ped_uri} -o ~{cohort_prefix} extracted/*.somalier
+        somalier relate ~{infer_string} --ped ~{ped_uri} -o ~{cohort_prefix} extracted/*.somalier
 
         tar -xf ~{somalier_1kg_tar}
         somalier ancestry -o ~{cohort_prefix} --labels ~{ancestry_labels_1kg} 1kg-somalier/*.somalier ++ extracted/*.somalier
