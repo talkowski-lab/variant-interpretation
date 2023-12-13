@@ -375,13 +375,13 @@ task splitMergeVCFs {
             bcftools query -l $cur_vcf | sort -u > vcf_samples.txt
 
             shared_samples=$(comm -12 merged_vcf_samples.txt vcf_samples.txt | tr "\n" "," | head -c -1)
-            bcftools view --write-index -s $shared_samples -Oz -o tmp_merged_shared.vcf.gz $merged_vcf
-            bcftools view --write-index -s $shared_samples -Oz -o tmp_shared.vcf.gz $cur_vcf
+            bcftools view -s $shared_samples -Oz -o tmp_merged_shared.vcf.gz $merged_vcf
+            bcftools view -s $shared_samples -Oz -o tmp_shared.vcf.gz $cur_vcf
             bcftools concat --naive-force --no-version -Oz --output tmp_merged.vcf.gz tmp_merged_shared.vcf.gz tmp_shared.vcf.gz 
             bcftools sort --write-index tmp_merged.vcf.gz -o tmp_merged_sorted.vcf.gz
 
-            bcftools view --write-index -s "^$shared_samples" -Oz -o tmp_merged_unique.vcf.gz $merged_vcf
-            bcftools view --write-index -s "^$shared_samples" -Oz -o tmp_unique.vcf.gz $cur_vcf
+            bcftools view -s "^$shared_samples" -Oz -o tmp_merged_unique.vcf.gz $merged_vcf
+            bcftools view -s "^$shared_samples" -Oz -o tmp_unique.vcf.gz $cur_vcf
             bcftools merge --no-version -Oz --output tmp_unique.vcf.gz tmp_merged_unique.vcf.gz tmp_unique.vcf.gz 
             bcftools sort --write-index tmp_unique.vcf.gz -o tmp_unique_sorted.vcf.gz
             bcftools merge --no-version -Oz --output merged.vcf.gz tmp_merged_sorted.vcf.gz tmp_unique_sorted.vcf.gz
