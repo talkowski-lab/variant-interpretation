@@ -24,7 +24,13 @@ workflow GenomicDisorders {
 
     String docker_genomic_disorders
 
-    RuntimeAttr? runtime_attr_gd
+    RuntimeAttr? runtime_attr_reformat_vcf
+    RuntimeAttr? runtime_attr_reformat_raw_vcf
+    RuntimeAttr? runtime_attr_vcf_overlap
+    RuntimeAttr? runtime_attr_merge_bed
+    RuntimeAttr? runtime_attr_divide_chrom
+    RuntimeAttr? runtime_attr_reformat_raw_depth
+    RuntimeAttr? runtime_attr_merge_bed_final
   }
 
   Array[String] raw_files = transpose(read_tsv(raw_files_list))[1]
@@ -34,7 +40,7 @@ workflow GenomicDisorders {
         vcf = vcf,
         prefix = prefix,
         docker_path = docker_genomic_disorders,
-        runtime_attr_override = runtime_attr_gd
+        runtime_attr_override = runtime_attr_reformat_vcf
   }
 
   call getVCFoverlap{
@@ -43,7 +49,7 @@ workflow GenomicDisorders {
       genomic_disorders = genomic_disorders,
       prefix = prefix,
       docker_path = docker_genomic_disorders,
-      runtime_attr_override = runtime_attr_gd
+      runtime_attr_override = runtime_attr_vcf_overlap
   }
 
   scatter(raw_file in raw_files){
@@ -52,7 +58,7 @@ workflow GenomicDisorders {
         vcf = vcf,
         docker_path = docker_genomic_disorders,
         prefix = basename(raw_file, ".vcf.gz"),
-        runtime_attr_override = runtime_attr_gd
+        runtime_attr_override = runtime_attr_reformat_raw_vcf
         }
     }
 
@@ -60,7 +66,7 @@ workflow GenomicDisorders {
       input:
       bed_files = raw_reformatVCF.bed_output,
       docker_path = docker_genomic_disorders,
-      runtime_attr_override = runtime_attr_gd
+      runtime_attr_override = runtime_attr_merge_bed
     }
 
     scatter (contig in contigs){
@@ -69,7 +75,7 @@ workflow GenomicDisorders {
           bed_file = raw_mergeBed.concat_bed_output,
           chromosome = contig,
           docker_path = docker_genomic_disorders,
-          runtime_attr_override = runtime_attr_gd
+          runtime_attr_override = runtime_attr_divide_chrom
       }
 
       call raw_reformatBedDepth{
@@ -77,14 +83,14 @@ workflow GenomicDisorders {
           per_chromosome_bed_file = raw_divideByChrom.per_chromosome_bed_output,
           chromosome=contig,
           docker_path = docker_genomic_disorders,
-          runtime_attr_override = runtime_attr_gd
+          runtime_attr_override = runtime_attr_reformat_raw_depth
       }
     }
     call raw_mergeBed as raw_mergeBedFinal{
       input:
       bed_files = raw_reformatBedDepth.reformatted_output,
       docker_path = docker_genomic_disorders,
-      runtime_attr_override = runtime_attr_gd
+      runtime_attr_override = runtime_attr_merge_bed_final
     }
 
   output {
