@@ -128,7 +128,7 @@ task saveVCFHeader {
         docker: sv_base_mini_docker
     }
 
-    File header_filename = basename(vcf_uri, '.vcf.gz') + '_header.txt'
+    String header_filename = basename(vcf_uri, '.vcf.gz') + '_header.txt'
 
     command <<<
     bcftools head ~{vcf_uri} > ~{header_filename}
