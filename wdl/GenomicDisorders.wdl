@@ -128,12 +128,17 @@ task reformatVCF {
 
   command <<<
     set -e
+    echo "Starting svtk"
     svtk vcf2bed -i ALL --include-filters ~{vcf} - | bgzip -c > ~{prefix}.bed.gz
+    echo "svtk finished"
+
+    echo "Starting reformat of bed file"
     zcat ~{prefix}.bed.gz | \
       grep -E "DEL|DUP" | \
       awk '{print $1"_"$5"\t"$2"\t"$3"\t"$4"\t"$5}' | \
       grep -v ^#chrom | \
       bgzip -c > ~{prefix}.ref.bed.gz
+    echo "Reformat finished"
 
   >>>
 
