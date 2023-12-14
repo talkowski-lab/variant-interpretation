@@ -3,7 +3,7 @@
 # mantatloc_check.sh
 #
 # Script to check raw manta calls## 
-# 
+# This file is edited from "src/sv-pipeline/00_preprocessing/scripts/mantatloccheck.sh"
 
 ##standardized manta vcf##
 std_vcf=$1
