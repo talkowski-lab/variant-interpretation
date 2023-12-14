@@ -29,6 +29,7 @@ workflow wgs_denovo_full {
             File hg38_reference
             File hg38_reference_fai
             File hg38_reference_dict
+            File info_header
             Array[Array[File]] vep_annotated_final_vcf
             String bucket_id
             String cohort_prefix
@@ -37,6 +38,7 @@ workflow wgs_denovo_full {
             String trio_denovo_docker
             String hail_docker
             String jvarkit_docker
+            Boolean bad_header=false
             Int batch_size
             Float minDQ
     }
@@ -48,11 +50,13 @@ workflow wgs_denovo_full {
             python_preprocess_script=python_preprocess_script,
             lcr_uri=lcr_uri,
             ped_uri=ped_uri,
+            info_header=info_header,
             vep_annotated_final_vcf=vep_annotated_final_vcf,
             sv_base_mini_docker=sv_base_mini_docker,
             bucket_id=bucket_id,
             cohort_prefix=cohort_prefix,
-            hail_docker=hail_docker
+            hail_docker=hail_docker,
+            bad_header=bad_header
     }
 
     call step3.step3 as step3 {

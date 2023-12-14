@@ -17,11 +17,13 @@ workflow step1 {
         File python_preprocess_script
         File lcr_uri
         File ped_uri
+        File info_header
         Array[Array[File]] vep_annotated_final_vcf
         String sv_base_mini_docker
         String bucket_id
         String cohort_prefix
         String hail_docker
+        Boolean bad_header
         RuntimeAttr? runtime_attr_merge_vcfs
     }
 
@@ -43,6 +45,13 @@ workflow step1 {
         File og_vcf_file = pair.left 
         Array[File] vcf_uri_sublist = pair.right
         scatter (vcf_uri in vcf_uri_sublist) {
+            call saveVCFHeader {
+                input:
+                    vcf_uri=vcf_uri,
+                    info_header=info_header,
+                    bad_header=bad_header,
+                    sv_base_mini_docker=sv_base_mini_docker
+            }
             call preprocessVCF {
                 input:
                     python_preprocess_script=python_preprocess_script,
@@ -51,7 +60,8 @@ workflow step1 {
                     vcf_uri=vcf_uri,
                     meta_uri=makeTrioSampleFiles.meta_uri,
                     trio_uri=makeTrioSampleFiles.trio_uri,
-                    hail_docker=hail_docker
+                    hail_docker=hail_docker,
+                    header_file=saveVCFHeader.header_file
             }
         }
         call mergeVCFs {
@@ -106,6 +116,33 @@ task makeTrioSampleFiles {
     }
 }
 
+task saveVCFHeader {
+    input {
+        File vcf_uri
+        File info_header
+        String sv_base_mini_docker
+        Boolean bad_header
+    }
+
+    runtime {
+        docker: sv_base_mini_docker
+    }
+
+    File header_filename = basename(vcf_uri, '.vcf.gz') + '_header.txt'
+
+    command <<<
+    bcftools head ~{vcf_uri} > ~{header_filename}
+    if [[ "~{bad_header}" == "true" ]]; then
+        bcftools head ~{vcf_uri} | grep -v "INFO=" > no_info_header.txt
+        cat no_info_header.txt ~{info_header} | sort > ~{header_filename}
+    fi
+    >>>
+
+    output {
+        File header_file = header_filename
+    }
+}
+
 task preprocessVCF {
     input {
         File python_preprocess_script
@@ -114,6 +151,7 @@ task preprocessVCF {
         File vcf_uri
         File meta_uri
         File trio_uri
+        File header_file
         String hail_docker
     }
 
@@ -122,7 +160,7 @@ task preprocessVCF {
     }
 
     command <<<
-    python3 ~{python_preprocess_script} ~{lcr_uri} ~{ped_uri} ~{meta_uri} ~{trio_uri} ~{vcf_uri}
+    python3 ~{python_preprocess_script} ~{lcr_uri} ~{ped_uri} ~{meta_uri} ~{trio_uri} ~{vcf_uri} ~{header_file}
     >>>
 
     output {
