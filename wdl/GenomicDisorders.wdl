@@ -370,3 +370,5 @@ task raw_reformatBedDepth{
         docker: docker_path
     }
 }
+
+##Add task to remove everything in the raw bed that is in the final output
