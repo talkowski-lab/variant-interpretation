@@ -194,7 +194,7 @@ task combinePVR {
   String getPVR_redo_filename = basename(vcf_metrics_tsv, '.tsv') + '_PVR_redo.tsv'
   command {
     cat ~{vcf_metrics_tsv} | head -1 > ~{getPVR_redo_filename}
-    echo $(cat ~{getPVR_redo_filename})"\tChild_tag\tall_count\tref_count\talt_count ref_prop\talt_prop\tsam_real_alt\treal_alt_count\treal_alt_prop complex_count Father_tag\tfa_all_count\tfa_ref_count\tfa_alt_count\tfa_ref_prop fa_alt_prop fa_sam_real_alt fa_real_alt_count fa_real_alt_prop\tfa_complex_count\tMother_tag\tmo_all_count\tmo_ref_count\tmo_alt_count\tmo_ref_prop mo_alt_prop mo_sam_real_alt mo_real_alt_count mo_real_alt_prop\tmo_complex_count" > ~{getPVR_out_filename} 
+    echo -e $(cat ~{getPVR_redo_filename})"\tChild_tag\tall_count\tref_count\talt_count ref_prop\talt_prop\tsam_real_alt\treal_alt_count\treal_alt_prop complex_count Father_tag\tfa_all_count\tfa_ref_count\tfa_alt_count\tfa_ref_prop fa_alt_prop fa_sam_real_alt fa_real_alt_count fa_real_alt_prop\tfa_complex_count\tMother_tag\tmo_all_count\tmo_ref_count\tmo_alt_count\tmo_ref_prop mo_alt_prop mo_sam_real_alt mo_real_alt_count mo_real_alt_prop\tmo_complex_count" > ~{getPVR_out_filename} 
 
     cat ~{sep=' ' getPVR_out} >> ~{getPVR_out_filename}    
     cat ~{sep=' ' getPVR_redo} >> ~{getPVR_redo_filename}
