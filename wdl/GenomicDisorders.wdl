@@ -220,12 +220,14 @@ task raw_reformatVCF{
         File bed_output = "${prefix}.bed.gz"
     }
 
-    command {
+    command <<<
         set -euo pipefail
 
         #convert from vcf to bed file
-        svtk vcf2bed ~{vcf} --info SVTYPE - | bgzip -c > ${prefix}.bed.gz
-    }
+        svtk vcf2bed ~{vcf} --info SVTYPE - | \
+            awk -F'\t' 'BEGIN {OFS = FS} $6 != ""' | \
+            bgzip -c > ${prefix}.bed.gz
+    >>>
 
     runtime {
         cpu: select_first([runtime_attr.cpu_cores, default_attr.cpu_cores])
