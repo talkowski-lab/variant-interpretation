@@ -127,7 +127,7 @@ task reformatVCF {
   }
 
   command <<<
-    set -e
+    set -euo pipefail
     echo "Starting svtk"
     svtk vcf2bed -i ALL --include-filters ~{vcf} - | bgzip -c > ~{prefix}.bed.gz
     echo "svtk finished"
