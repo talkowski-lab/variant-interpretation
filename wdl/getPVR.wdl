@@ -40,11 +40,21 @@ workflow getPVR {
         fam_crams=subsetFam.fam_crams,
         pvr_docker=pvr_docker
     }
-  }    
+  }  
+
+  call combinePVR {
+    input:
+      vcf_metrics_tsv=vcf_metrics_tsv,
+      getPVR_out=calculatePVR.getPVR_out,
+      getPVR_redo=calculatePVR.redo,
+      pvr_docker=pvr_docker
+  }  
 
   output {
     Array[File] getPVR_out = calculatePVR.getPVR_out
     Array[File] getPVR_redo = calculatePVR.redo
+    File final_getPVR_out = combinePVR.final_getPVR_out
+    File final_getPVR_redo = combinePVR.final_getPVR_redo
   }
 }
 
@@ -120,18 +130,6 @@ task calculatePVR {
   }
 
   RuntimeAttr runtime_attr = select_first([runtime_attr_override, default_attr])
-
-  String fam_id = basename(indel_file, ".txt")
-  String pvr_filename = "${fam_id}_with_PVR.txt"
-  String pvr_redo = "${fam_id}_redo.txt"
-    
-  command {
-    set -euo pipefail
-    
-    perl /home/get_pvr_from_crams_wdl.pl -i ~{indel_file} -m ~{trio_uri} -b ${sep="\\;" fam_crams}
-
-  }
-
   runtime {
     docker: pvr_docker
     cpu: select_first([runtime_attr.cpu_cores, default_attr.cpu_cores])
@@ -142,8 +140,68 @@ task calculatePVR {
     maxRetries: select_first([runtime_attr.max_retries, default_attr.max_retries])
   }
 
+  String fam_id = basename(indel_file, ".txt")
+  String pvr_filename = "${fam_id}_with_PVR.txt"
+  String pvr_redo = "${fam_id}_redo.txt"
+
+  command {
+    set -euo pipefail
+    
+    perl /home/get_pvr_from_crams_wdl.pl -i ~{indel_file} -m ~{trio_uri} -b ${sep="\\;" fam_crams}
+
+  }
   output {
     File getPVR_out = pvr_filename
     File redo = pvr_redo
+  }
+}
+
+task combinePVR {
+  input {
+    File vcf_metrics_tsv
+    Array[File] getPVR_out
+    Array[File] getPVR_redo 
+    String pvr_docker
+    RuntimeAttr? runtime_attr_override
+  }
+
+  # Runtime parameters adapted from gatk-sv "CollectCoverage.wdl"
+  Int num_cpu = 4
+  Int mem_size_gb = 16
+  Int vm_disk_size = 300
+
+  RuntimeAttr default_attr = object {
+    cpu_cores: num_cpu,
+    mem_gb: mem_size_gb, 
+    disk_gb: vm_disk_size,
+    boot_disk_gb: 10,
+    preemptible_tries: 3,
+    max_retries: 1
+  }
+
+  RuntimeAttr runtime_attr = select_first([runtime_attr_override, default_attr])
+  runtime {
+    docker: pvr_docker
+    cpu: select_first([runtime_attr.cpu_cores, default_attr.cpu_cores])
+    memory: select_first([runtime_attr.mem_gb, default_attr.mem_gb]) + " GiB"
+    disks: "local-disk " + select_first([runtime_attr.disk_gb, default_attr.disk_gb]) + " HDD"
+    bootDiskSizeGb: select_first([runtime_attr.boot_disk_gb, default_attr.boot_disk_gb])
+    preemptible: select_first([runtime_attr.preemptible_tries, default_attr.preemptible_tries])
+    maxRetries: select_first([runtime_attr.max_retries, default_attr.max_retries])
+  }
+
+  String getPVR_out_filename = basename(vcf_metrics_tsv, '.tsv') + '_with_PVR.tsv'
+  String getPVR_redo_filename = basename(vcf_metrics_tsv, '.tsv') + '_PVR_redo.tsv'
+  command {
+    cat ~{vcf_metrics_tsv} | head -1 > ~{getPVR_redo_filename}
+    echo $(cat ~{getPVR_redo_filename})"\tChild_tag\tall_count\tref_count\talt_count ref_prop\talt_prop\tsam_real_alt\treal_alt_count\treal_alt_prop complex_count Father_tag\tfa_all_count\tfa_ref_count\tfa_alt_count\tfa_ref_prop fa_alt_prop fa_sam_real_alt fa_real_alt_count fa_real_alt_prop\tfa_complex_count\tMother_tag\tmo_all_count\tmo_ref_count\tmo_alt_count\tmo_ref_prop mo_alt_prop mo_sam_real_alt mo_real_alt_count mo_real_alt_prop\tmo_complex_count" > ~{getPVR_out_filename} 
+
+    cat ~{sep=' ' getPVR_out} >> ~{getPVR_out_filename}    
+    cat ~{sep=' ' getPVR_redo} >> ~{getPVR_redo_filename}
+  }
+
+  output {
+    File final_getPVR_out = getPVR_out_filename
+    File final_getPVR_redo = getPVR_redo_filename
   }
 }
