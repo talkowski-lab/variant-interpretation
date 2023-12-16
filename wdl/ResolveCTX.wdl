@@ -32,27 +32,27 @@ workflow ResolveCTX{
             runtime_attr_override = runtime_attr_subset_ctx_vcf
     }
 
-    call TinyResolve.TinyResolve as TinyResolve{
-        input:
-            samples = samples,
-            manta_vcf_tar = manta_vcf_tar,
-            cytoband = cytoband,
-            discfile = discfile,
-            mei_bed = mei_bed,
-            samples_per_shard = samples_per_shard,
-            sv_pipeline_docker = sv_pipeline_docker,
-            linux_docker = linux_docker,
-            runtime_attr_resolve = runtime_attr_resolve,
-            runtime_attr_untar = runtime_attr_untar
-    }
-
-    call mergeMantaVCF{
-        input:
-            input_vcfs=TinyResolve.tloc_vcf,
-            docker = relatedness_docker,
-            prefix = prefix,
-            runtime_attr_override = runtime_attr_override_merge
-    }
+#    call TinyResolve.TinyResolve as TinyResolve{
+#        input:
+#            samples = samples,
+#            manta_vcf_tar = manta_vcf_tar,
+#            cytoband = cytoband,
+#            discfile = discfile,
+#            mei_bed = mei_bed,
+#            samples_per_shard = samples_per_shard,
+#            sv_pipeline_docker = sv_pipeline_docker,
+#            linux_docker = linux_docker,
+#            runtime_attr_resolve = runtime_attr_resolve,
+#            runtime_attr_untar = runtime_attr_untar
+#    }
+#
+#    call mergeMantaVCF{
+#        input:
+#            input_vcfs=TinyResolve.tloc_vcf,
+#            docker = relatedness_docker,
+#            prefix = prefix,
+#            runtime_attr_override = runtime_attr_override_merge
+#    }
 
 #    call ReformatTinyResolve
 #    call MergeVCFtinyResolve
@@ -60,7 +60,8 @@ workflow ResolveCTX{
 
     output{
         File ctx_ref_bed = CtxVcf2Bed.ctx_bed
-        File merged_manta_raw = mergeMantaVCF.merged_manta
+#        File ctx_ref_bed = CtxVcf2Bed.ctx_bed
+#        File merged_manta_raw = mergeMantaVCF.merged_manta
     }
 }
 
