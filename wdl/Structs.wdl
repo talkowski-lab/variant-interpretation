@@ -5,6 +5,6 @@ struct RuntimeAttr {
     Int? cpu_cores
     Int? disk_gb
     Int? boot_disk_gb
-    Int? preemptible
+    Int? preemptible_tries
     Int? max_retries
 }
