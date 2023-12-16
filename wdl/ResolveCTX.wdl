@@ -15,6 +15,7 @@ workflow ResolveCTX{
         File manta_vcf_tar
         File cytoband
         Array[File] discfile
+        File mei_bed
         Int samples_per_shard = 25
         String sv_pipeline_docker
         String linux_docker
