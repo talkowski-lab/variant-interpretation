@@ -50,7 +50,7 @@ workflow ResolveCTX{
 
     call mergeMantaVCF{
         input:
-            input_vcfs=TinyResolve.tloc_vcf,
+            input_vcfs=TinyResolve.tloc_manta_vcf,
             docker = runtime_attr_resolve,
             prefix = prefix,
             runtime_attr_override = runtime_attr_override_merge
@@ -61,9 +61,8 @@ workflow ResolveCTX{
 #    call PEevidence
 
     output{
-
-#        File ctx_ref_bed = CtxVcf2Bed.ctx_bed
-#        File merged_manta_raw = mergeMantaVCF.merged_manta
+        File ctx_ref_bed = CtxVcf2Bed.ctx_bed
+        File merged_manta_raw = mergeMantaVCF.merged_manta
     }
 }
 
