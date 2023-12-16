@@ -42,7 +42,7 @@ workflow ResolveCTX{
             samples_per_shard = samples_per_shard,
             sv_pipeline_docker = sv_pipeline_docker,
             linux_docker = linux_docker,
-            runtime_attr_resolve = runtime_attr_resolve
+            runtime_attr_resolve = runtime_attr_resolve,
             runtime_attr_untar = runtime_attr_untar
     }
 
