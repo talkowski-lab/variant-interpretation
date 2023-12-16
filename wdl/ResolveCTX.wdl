@@ -51,7 +51,7 @@ workflow ResolveCTX{
     call mergeMantaVCF{
         input:
             input_vcfs=TinyResolve.tloc_manta_vcf,
-            docker = runtime_attr_resolve,
+            docker = docker_path,
             prefix = prefix,
             runtime_attr_override = runtime_attr_override_merge
     }
