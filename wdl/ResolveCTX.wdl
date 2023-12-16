@@ -59,8 +59,8 @@ workflow ResolveCTX{
 #    call PEevidence
 
     output{
-        ctx_ref_bed = CtxVcf2Bed.ctx_bed
-        merged_manta_raw = mergeMantaVCF.merged_manta
+        File ctx_ref_bed = CtxVcf2Bed.ctx_bed
+        File merged_manta_raw = mergeMantaVCF.merged_manta
     }
 }
 
