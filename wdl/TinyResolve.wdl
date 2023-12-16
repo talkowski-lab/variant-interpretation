@@ -1,7 +1,8 @@
 version 1.0
 
 import "Structs.wdl"
-import "GetShardInputs.wdl"
+#import "GetShardInputs.wdl"
+import "https://raw.githubusercontent.com/broadinstitute/gatk-sv/main/wdl/GetShardInputs.wdl"
 import "Utils.wdl" as util
 
 # this is edited from "gatk-sv/wdl/TinyResolve.wdl"
