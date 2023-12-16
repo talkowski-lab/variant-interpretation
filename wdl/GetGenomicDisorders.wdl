@@ -6,7 +6,7 @@ import "TasksMakeCohortVcf.wdl" as MiniTasks
 import "DeNovoSVsScatter.wdl" as runDeNovo
 import "SplitVcf.wdl" as getBatchedVcf
 
-workflow deNovoSV {
+workflow GenomicDisorders {
 
     input {
         File ped_input
