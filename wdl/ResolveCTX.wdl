@@ -3,6 +3,8 @@ version 1.0
 # IMPORT
 import "Structs.wdl"
 import "TinyResolve.wdl"
+import "https://raw.githubusercontent.com/broadinstitute/gatk-sv/main/wdl/GetShardInputs.wdl"
+#import "https://raw.githubusercontent.com/broadinstitute/gatk-sv/main/wdl/Utils.wdl" as util
 import "PEevidence.wdl"
 
 # WORKFLOW DEFINITION
