@@ -33,16 +33,17 @@ workflow ResolveCTX{
     }
 
     call TinyResolve.TinyResolve as TinyResolve{
-        samples = samples,
-        manta_vcf_tar = manta_vcf_tar,
-        cytoband = cytoband,
-        discfile = discfile,
-        mei_bed = mei_bed,
-        samples_per_shard = samples_per_shard,
-        sv_pipeline_docker = sv_pipeline_docker,
-        linux_docker = linux_docker,
-        runtime_attr_resolve = runtime_attr_resolve
-        runtime_attr_untar = runtime_attr_untar
+        input:
+            samples = samples,
+            manta_vcf_tar = manta_vcf_tar,
+            cytoband = cytoband,
+            discfile = discfile,
+            mei_bed = mei_bed,
+            samples_per_shard = samples_per_shard,
+            sv_pipeline_docker = sv_pipeline_docker,
+            linux_docker = linux_docker,
+            runtime_attr_resolve = runtime_attr_resolve
+            runtime_attr_untar = runtime_attr_untar
     }
 
     call mergeMantaVCF{
