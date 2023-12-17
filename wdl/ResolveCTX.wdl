@@ -121,7 +121,7 @@ task mergeMantaVCF{
     }
 
     RuntimeAttr default_attr = object {
-        cpu: 1,
+        cpu_cores: 1,
         mem_gb: 12,
         disk_gb: 4,
         boot_disk_gb: 8,
