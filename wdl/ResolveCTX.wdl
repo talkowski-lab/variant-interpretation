@@ -125,7 +125,7 @@ task mergeMantaVCF{
         mem_gb: 12,
         disk_gb: 4,
         boot_disk_gb: 8,
-        preemptible: 3,
+        preemptible_tries: 3,
         max_retries: 1
     }
 
