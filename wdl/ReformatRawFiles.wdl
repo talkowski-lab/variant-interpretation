@@ -194,10 +194,10 @@ task raw_divideByChrom{
     command <<<
         set -euo pipefail
 
-        zcat ${bed_file} | \
-        grep -w ^${chromosome} | \
+        zcat ~{bed_file} | \
+        grep -w ^~{chromosome} | \
         awk -F "\t" '$6 != "" {print $0}' | \
-        bgzip -c > ${chromosome}.bed.gz
+        bgzip -c > ~{chromosome}.bed.gz
     >>>
 
     runtime {
