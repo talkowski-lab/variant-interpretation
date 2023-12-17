@@ -87,6 +87,7 @@ workflow TinyResolve {
 
   output {
     Array[File] tloc_manta_vcf = flatten(ResolveManta.tloc_vcf)
+    Array[File] tloc_manta_vcf_idx = flatten(ResolveManta.tloc_vcf_idx)
     Array[File] tloc_manta_unresolved_vcf = flatten(ResolveManta.tloc_unresolved_vcf)
   }
 }
@@ -131,11 +132,13 @@ task ResolveManta {
       sample_no=`printf %03d $i`
       bash /src/variant-interpretation/scripts/mantatloc_check.sh $vcf $pe ${sample_id} ~{mei_bed} ~{cytoband}
       mv ${sample_id}.manta.complex.vcf.gz tloc_${sample_no}.${sample_id}.manta.complex.vcf.gz
+      tabix -p vcf tloc_${sample_no}.${sample_id}.manta.complex.vcf.gz
     done
   >>>
 
   output {
     Array[File] tloc_vcf = glob("tloc_*.vcf.gz")
+    Array[File] tloc_vcf_idx = glob("tloc_*.vcf.gz.tbi")
     Array[File] tloc_unresolved_vcf = glob("*unresolved.vcf.gz")
   }
   

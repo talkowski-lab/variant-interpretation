@@ -51,6 +51,7 @@ workflow ResolveCTX{
     call mergeMantaVCF{
         input:
             input_vcfs=TinyResolve.tloc_manta_vcf,
+            input_vcfs_idx=TinyResolve.tloc_manta_vcf_idx,
             docker = docker_path,
             prefix = prefix,
             runtime_attr_override = runtime_attr_override_merge
@@ -115,6 +116,7 @@ task CtxVcf2Bed {
 task mergeMantaVCF{
     input{
         Array [File] input_vcfs
+        Array [File] input_vcfs_idx
         String docker
         String prefix
         RuntimeAttr? runtime_attr_override
@@ -135,7 +137,6 @@ task mergeMantaVCF{
         File merged_manta = "~{prefix}.manta.tloc.vcf.gz"
     }
     command <<<
-        tabix -p vcf ~{sep=' ' input_vcfs}
 
         bcftools merge ~{sep=' ' input_vcfs} | grep -E "^#|SVTYPE=CTX" | bcftools sort | \
         bcftools view - -Oz -o "~{prefix}.manta.tloc.vcf.gz"
