@@ -92,7 +92,7 @@ task CtxVcf2Bed {
   }
 
   command <<<
-    set -e
+    set -euo pipefail
     bcftools view ~{vcf} | grep -E "^#|SVTYPE=CTX" | bgzip -c > ~{prefix}.ctx.vcf.gz
     svtk vcf2bed -i ALL --include-filters ~{prefix}.ctx.vcf.gz - | bgzip -c > ~{prefix}.ctx.bed.gz
 
