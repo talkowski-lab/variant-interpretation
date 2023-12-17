@@ -136,7 +136,7 @@ task mergeMantaVCF{
     }
     command <<<
 
-        bcftools merge -a ~{sep=' ' input_vcfs} | grep -E "^#|SVTYPE=CTX" | bcftools sort | \
+        bcftools merge ~{sep=' ' input_vcfs} | grep -E "^#|SVTYPE=CTX" | bcftools sort | \
         bcftools view - -Oz -o "~{prefix}.manta.tloc.vcf.gz"
 
     >>>
