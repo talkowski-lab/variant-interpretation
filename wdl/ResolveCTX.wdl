@@ -21,7 +21,8 @@ workflow ResolveCTX{
         String linux_docker
         RuntimeAttr? runtime_attr_resolve
         RuntimeAttr? runtime_attr_untar
-        RuntimeAttr? runtime_attr_override_merge
+        RuntimeAttr? runtime_attr_reformat
+#        RuntimeAttr? runtime_attr_override_merge
 
         RuntimeAttr? runtime_attr_subset_ctx_vcf
     }
@@ -48,14 +49,26 @@ workflow ResolveCTX{
             runtime_attr_untar = runtime_attr_untar
     }
 
-    call mergeMantaVCF{
-        input:
-            input_vcfs=TinyResolve.tloc_manta_vcf,
-            input_vcfs_idx=TinyResolve.tloc_manta_vcf_idx,
-            docker = docker_path,
-            prefix = prefix,
-            runtime_attr_override = runtime_attr_override_merge
+    scatter (file in TinyResolve.tloc_manta_vcf){
+        String file_idx = basename(file, ".tbi")
+
+        call reformatTinyResolve{
+            input:
+                input_vcf=file,
+                input_vcf_idx=file_idx,
+                docker = docker_path,
+                runtime_attr_override = runtime_attr_reformat
+        }
     }
+
+#    call mergeMantaVCF{
+#        input:
+#            input_vcfs=TinyResolve.tloc_manta_vcf,
+#            input_vcfs_idx=TinyResolve.tloc_manta_vcf_idx,
+#            docker = docker_path,
+#            prefix = prefix,
+#            runtime_attr_override = runtime_attr_override_merge
+#    }
 
 
 #    call ReformatTinyResolve
@@ -64,7 +77,7 @@ workflow ResolveCTX{
 
     output{
         File ctx_ref_bed = CtxVcf2Bed.ctx_bed
-        File merged_manta_raw = mergeMantaVCF.merged_manta
+        Array[File] ref_tinyresolve_bed = reformatTinyResolve.ref_tiny_resolve
     }
 }
 
@@ -111,6 +124,48 @@ task CtxVcf2Bed {
     preemptible: select_first([runtime_attr.preemptible_tries, default_attr.preemptible_tries])
     maxRetries: select_first([runtime_attr.max_retries, default_attr.max_retries])
   }
+}
+
+task reformatTinyResolve{
+    input{
+        File input_vcf
+        File input_vcf_idx
+        String docker
+        RuntimeAttr? runtime_attr_override
+    }
+
+    String prefix = basename(input_vcf, ".vcf.gz")
+
+    RuntimeAttr default_attr = object {
+        cpu_cores: 1,
+        mem_gb: 12,
+        disk_gb: 4,
+        boot_disk_gb: 8,
+        preemptible_tries: 3,
+        max_retries: 1
+    }
+
+    RuntimeAttr runtime_attr = select_first([runtime_attr_override, default_attr])
+
+    output{
+        Array[File] ref_tiny_resolve = "~{prefix}_tloc.bed.gz"
+    }
+    command <<<
+        set -euo pipefail
+
+        svtk vcf2bed -i ALL --include-filters ~{input_vcf} ~{prefix}.bed
+        awk '$5 == "CTX"{print $0}' ~{prefix}_tloc.bed | bgzip -c > ~{prefix}_tloc.bed
+    >>>
+
+    runtime {
+        cpu: select_first([runtime_attr.cpu_cores, default_attr.cpu_cores])
+        memory: select_first([runtime_attr.mem_gb, default_attr.mem_gb]) + " GiB"
+        disks: "local-disk " + select_first([runtime_attr.disk_gb, default_attr.disk_gb]) + " HDD"
+        bootDiskSizeGb: select_first([runtime_attr.boot_disk_gb, default_attr.boot_disk_gb])
+        preemptible: select_first([runtime_attr.preemptible_tries, default_attr.preemptible_tries])
+        maxRetries: select_first([runtime_attr.max_retries, default_attr.max_retries])
+        docker: docker
+    }
 }
 
 task mergeMantaVCF{
