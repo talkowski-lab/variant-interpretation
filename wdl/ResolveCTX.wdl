@@ -55,7 +55,7 @@ workflow ResolveCTX{
         call reformatTinyResolve{
             input:
                 input_vcf=file,
-                input_vcf_idx=file_idx,
+#                input_vcf_idx=file_idx,
                 docker = docker_path,
                 runtime_attr_override = runtime_attr_reformat
         }
@@ -133,7 +133,7 @@ task reformatTinyResolve{
         RuntimeAttr? runtime_attr_override
     }
 
-#    String prefix = basename(input_vcf, ".vcf.gz")
+    String prefix = basename(input_vcf, ".vcf.gz")
 
     RuntimeAttr default_attr = object {
         cpu_cores: 1,
