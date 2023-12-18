@@ -33,8 +33,8 @@ workflow GenomicDisorders {
         RuntimeAttr? runtime_attr_raw_reformat_bed
         RuntimeAttr? runtime_attr_gd
         RuntimeAttr? runtime_attr_merge_gd
-        RuntimAttr? runtime_attr_reformat_vcf
-        RuntimAttr? runtime_attr_vcf_overlap
+        RuntimeAttr? runtime_attr_reformat_vcf
+        RuntimeAttr? runtime_attr_vcf_overlap
 #        RuntimeAttr? runtime_attr_denovo
 #        RuntimeAttr? runtime_attr_subset_vcf
 #        RuntimeAttr? runtime_attr_vcf_to_bed
@@ -44,7 +44,7 @@ workflow GenomicDisorders {
 #        RuntimeAttr? runtime_attr_batch_vcf
 #        RuntimeAttr? runtime_override_shard_vcf
 #        RuntimeAttr? runtime_attr_merge
-#        RuntimAttr? runtime_attr_reformat_vcf
+#        RuntimeAttr? runtime_attr_reformat_vcf
     }
 
     #if the fam_ids input is given, subset all other input files to only include the necessary batches
