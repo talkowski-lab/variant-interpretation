@@ -22,7 +22,7 @@ workflow ResolveCTX{
         RuntimeAttr? runtime_attr_resolve
         RuntimeAttr? runtime_attr_untar
         RuntimeAttr? runtime_attr_reformat
-#        RuntimeAttr? runtime_attr_override_merge
+        RuntimeAttr? runtime_attr_override_merge
 
         RuntimeAttr? runtime_attr_subset_ctx_vcf
     }
