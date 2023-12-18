@@ -128,12 +128,12 @@ task CtxVcf2Bed {
 task reformatTinyResolve{
     input{
         File input_vcf
-        File input_vcf_idx
+#        File input_vcf_idx
         String docker
         RuntimeAttr? runtime_attr_override
     }
 
-    String prefix = basename(input_vcf, ".vcf.gz")
+#    String prefix = basename(input_vcf, ".vcf.gz")
 
     RuntimeAttr default_attr = object {
         cpu_cores: 1,
