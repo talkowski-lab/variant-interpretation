@@ -23,8 +23,8 @@ workflow ResolveCTX{
         RuntimeAttr? runtime_attr_untar
         RuntimeAttr? runtime_attr_reformat
         RuntimeAttr? runtime_attr_override_merge
-
         RuntimeAttr? runtime_attr_subset_ctx_vcf
+        RuntimeAttr? runtime_attr_override_get_raw_only
     }
 
     call CtxVcf2Bed{
@@ -63,20 +63,26 @@ workflow ResolveCTX{
 
     call mergeTinyResolve{
         input:
-            input_beds=reformatTinyResolve.ref_tiny_resolve,
+            input_beds=reformatTinyResolve.ctx_raw_for_vcf_ovl,
             docker = docker_path,
             prefix = prefix,
             runtime_attr_override = runtime_attr_override_merge
     }
 
-
-#    call ReformatTinyResolve
-#    call MergeVCFtinyResolve
-#    call PEevidence
+    call getRawOnlyCTX{
+        input:
+        ctx_vcf_input=CtxVcf2Bed.ctx_vcf_for_raw_ovl,
+        ctx_raw_input=mergeTinyResolve.merged_ctx_raw_for_vcf_ovl,
+        docker = docker_path,
+        prefix = prefix,
+        runtime_attr_override = runtime_attr_override_get_raw_only
+    }
 
     output{
-        File ctx_ref_bed = CtxVcf2Bed.ctx_bed
-        File tinyresolved_merged = mergeTinyResolve.merged_manta
+        File ctx_ref_bed = CtxVcf2Bed.ctx_vcf_for_pe
+        File ctx_ref_bed = CtxVcf2Bed.ctx_vcf_for_raw_ovl
+        File tinyresolved_merged = mergeTinyResolve.merged_ctx_raw_for_vcf_ovl
+        File raw_only_manta_bed = getRawOnlyCTX.raw_only
     }
 }
 
@@ -101,7 +107,8 @@ task CtxVcf2Bed {
   RuntimeAttr runtime_attr = select_first([runtime_attr_override, default_attr])
 
   output{
-    File ctx_bed = "~{prefix}.ctx.ref.split.bed"
+    File ctx_vcf_for_pe = "~{prefix}.ctx.refForPE.split.bed.gz"
+    File ctx_vcf_for_raw_ovl = "~{prefix}.ctx.refForOverlap.split.bed.gz"
   }
 
   command <<<
@@ -109,9 +116,10 @@ task CtxVcf2Bed {
     bcftools view ~{vcf} | grep -E "^#|SVTYPE=CTX" | bgzip -c > ~{prefix}.ctx.vcf.gz
     svtk vcf2bed -i ALL --include-filters ~{prefix}.ctx.vcf.gz - | bgzip -c > ~{prefix}.ctx.bed.gz
 
-    zcat ~{prefix}.ctx.bed.gz | awk '{print $1"\t"$2"\t"$8"\t"$12"\t"$6"\t"$36"\t"$4}'| tail -n+2 > ~{prefix}.ctx.ref.bed
+    zcat ~{prefix}.ctx.bed.gz | awk 'BEGIN { OFS="\t" } {print $1, $2, $8, $12, $6, $36, $4}'| tail -n+2 | bgzip -c > ~{prefix}.ctx.refForPE.bed
+    zcat ~{prefix}.ctx.refForPE.bed | awk 'BEGIN { OFS="\t" } {split($5,a,",");for(i in a)if(!seen[a[i]]++)print $1, $2, $3, $4, a[i], $6, $7}' | bgzip -c > ~{prefix}.ctx.refForPE.split.bed
+    zcat ~{prefix}.ctx.refForPE.split.bed | awk 'BEGIN { OFS="\t" } {print $1"_"$5, $2-20, $2+20, substr($0, index($0,$3))}' | bgzip -c > ~{prefix}.ctx.refForOverlap.split.bed.gz
 
-    awk '{split($5,a,",");for(i in a)if(!seen[a[i]]++)print $1"\t"$2"\t"$3"\t"$4"\t"a[i]"\t"$6"\t"$7}' ~{prefix}.ctx.ref.bed > ~{prefix}.ctx.ref.split.bed
   >>>
 
   runtime {
@@ -147,13 +155,14 @@ task reformatTinyResolve{
     RuntimeAttr runtime_attr = select_first([runtime_attr_override, default_attr])
 
     output{
-        File ref_tiny_resolve = "~{prefix}_tloc.bed.gz"
+        File ctx_raw_for_vcf_ovl = "~{prefix}_raw.ctx.refForOvl.bed.gz"
     }
     command <<<
         set -euo pipefail
 
         svtk vcf2bed -i ALL --include-filters ~{input_vcf} ~{prefix}.bed
-        awk '/^#/; $5 == "CTX"{print $0}' ~{prefix}.bed | bgzip -c > ~{prefix}_tloc.bed.gz
+        awk 'BEGIN { OFS="\t" } /^#/; $5 == "CTX"{print $1"_"$6,$2-20,$3+20,substr($0, index($0,$4))}' ~{prefix}.bed | \
+            bgzip -c > ~{prefix}_raw.ctx.refForOvl.bed.gz
     >>>
 
     runtime {
@@ -187,11 +196,54 @@ task mergeTinyResolve{
     RuntimeAttr runtime_attr = select_first([runtime_attr_override, default_attr])
 
     output{
-        File merged_manta = "~{prefix}_merged_tlocs.bed.gz"
+        File merged_ctx_raw_for_vcf_ovl = "~{prefix}_raw_ctx.bed.gz"
     }
     command <<<
         set -euo pipefail
-        zcat ~{sep=' ' input_beds} | grep -v "^#chrom" | sort -k 1,1 -k2,2n | bgzip -c > ~{prefix}_merged_tlocs.bed.gz
+        zcat ~{sep=' ' input_beds} | \
+            grep -v "^#chrom" | \
+            sort -k 1,1 -k2,2n | \
+            bgzip -c > ~{prefix}_raw_ctx.bed.gz
+    >>>
+
+    runtime {
+        cpu: select_first([runtime_attr.cpu_cores, default_attr.cpu_cores])
+        memory: select_first([runtime_attr.mem_gb, default_attr.mem_gb]) + " GiB"
+        disks: "local-disk " + select_first([runtime_attr.disk_gb, default_attr.disk_gb]) + " HDD"
+        bootDiskSizeGb: select_first([runtime_attr.boot_disk_gb, default_attr.boot_disk_gb])
+        preemptible: select_first([runtime_attr.preemptible_tries, default_attr.preemptible_tries])
+        maxRetries: select_first([runtime_attr.max_retries, default_attr.max_retries])
+        docker: docker
+    }
+}
+
+task getRawOnlyCTX{
+    input{
+        File ctx_vcf_input
+        File ctx_raw_input
+        String docker
+        String prefix
+        RuntimeAttr? runtime_attr_override
+    }
+
+    RuntimeAttr default_attr = object {
+        cpu_cores: 1,
+        mem_gb: 12,
+        disk_gb: 4,
+        boot_disk_gb: 8,
+        preemptible_tries: 3,
+        max_retries: 1
+    }
+
+    RuntimeAttr runtime_attr = select_first([runtime_attr_override, default_attr])
+
+    output{
+        File raw_only = "~{prefix}_raw_only.bed.gz"
+    }
+    command <<<
+        set -euo pipefail
+        bedtools intersect -v -a ~{ctx_raw_input} -b ~{ctx_vcf_input} |
+            bgzip -c > ~{prefix}_raw_only.bed.gz
     >>>
 
     runtime {
