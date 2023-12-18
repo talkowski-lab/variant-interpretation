@@ -266,7 +266,7 @@ task cleanPed{
     }
 
     command <<<
-        set -euxo pipefail
+        set -euo pipefail
 
         Rscript /src/variant-interpretation/scripts/cleanPed.R ${ped_input}
         cut -f2 cleaned_ped.txt | tail -n+2 > all_samples.txt
