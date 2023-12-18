@@ -61,14 +61,13 @@ workflow ResolveCTX{
         }
     }
 
-#    call mergeMantaVCF{
-#        input:
-#            input_vcfs=TinyResolve.tloc_manta_vcf,
-#            input_vcfs_idx=TinyResolve.tloc_manta_vcf_idx,
-#            docker = docker_path,
-#            prefix = prefix,
-#            runtime_attr_override = runtime_attr_override_merge
-#    }
+    call mergeTinyResolve{
+        input:
+            input_beds=reformatTinyResolve.ref_tiny_resolve,
+            docker = docker_path,
+            prefix = prefix,
+            runtime_attr_override = runtime_attr_override_merge
+    }
 
 
 #    call ReformatTinyResolve
@@ -77,7 +76,7 @@ workflow ResolveCTX{
 
     output{
         File ctx_ref_bed = CtxVcf2Bed.ctx_bed
-        Array[File] ref_tinyresolve_bed = reformatTinyResolve.ref_tiny_resolve
+        File tinyresolved_merged = mergeTinyResolve.merged_manta
     }
 }
 
@@ -148,7 +147,7 @@ task reformatTinyResolve{
     RuntimeAttr runtime_attr = select_first([runtime_attr_override, default_attr])
 
     output{
-        Array[File] ref_tiny_resolve = "~{prefix}_tloc.bed.gz"
+        File ref_tiny_resolve = "~{prefix}_tloc.bed.gz"
     }
     command <<<
         set -euo pipefail
@@ -168,10 +167,9 @@ task reformatTinyResolve{
     }
 }
 
-task mergeMantaVCF{
+task mergeTinyResolve{
     input{
-        Array [File] input_vcfs
-        Array [File] input_vcfs_idx
+        Array [File] input_beds
         String docker
         String prefix
         RuntimeAttr? runtime_attr_override
@@ -189,13 +187,11 @@ task mergeMantaVCF{
     RuntimeAttr runtime_attr = select_first([runtime_attr_override, default_attr])
 
     output{
-        File merged_manta = "~{prefix}.manta.tloc.vcf.gz"
+        File merged_manta = "tinyresolve_merged_tlocs.bed.gz"
     }
     command <<<
-
-        bcftools merge ~{sep=' ' input_vcfs} | grep -E "^#|SVTYPE=CTX" | bcftools sort | \
-        bcftools view - -Oz -o "~{prefix}.manta.tloc.vcf.gz"
-
+        set -euo pipefail
+        zcat ~{sep=' ' input_beds} | bgzip -c > tinyresolve_merged_tlocs.bed.gz
     >>>
 
     runtime {
