@@ -6,7 +6,6 @@ import "ReformatRawFiles.wdl" as raw
 import "TasksMakeCohortVcf.wdl" as MiniTasks
 import "DeNovoSVsScatter.wdl" as runDeNovo
 
-
 workflow GenomicDisorders {
 
     input {
@@ -15,6 +14,7 @@ workflow GenomicDisorders {
         File vcf_file
         Array[String] contigs
         File genomic_disorder_input
+        File genomic_disorder_input_ref
         File batch_raw_file
         File batch_depth_raw_file
         File sample_batches
@@ -24,6 +24,7 @@ workflow GenomicDisorders {
         File? fam_ids
         String variant_interpretation_docker
         String sv_pipeline_updates_docker
+        String genomic_disorders_docker
         RuntimeAttr? runtime_attr_gd
         RuntimeAttr? runtime_attr_denovo
         RuntimeAttr? runtime_attr_raw_vcf_to_bed
@@ -41,6 +42,9 @@ workflow GenomicDisorders {
         RuntimeAttr? runtime_attr_batch_vcf
         RuntimeAttr? runtime_override_shard_vcf
         RuntimeAttr? runtime_attr_merge
+        RuntimAttr? runtime_attr_reformat_vcf
+        RuntimAttr? runtime_attr_reformat_vcf
+        RuntimAttr? runtime_attr_vcf_overlap
     }
 
     #if the fam_ids input is given, subset all other input files to only include the necessary batches
@@ -58,18 +62,18 @@ workflow GenomicDisorders {
                 runtime_attr_override = runtime_attr_get_batched_files
         }
 
-        call getBatchedVcf.getBatchedVcf as getBatchedVcf {
-            input:
-                vcf_file = vcf_file,
-                prefix = prefix,
-                samples = getBatchedFiles.samples,
-                records_per_shard = 10000,
-                variant_interpretation_docker = variant_interpretation_docker,
-                sv_pipeline_updates_docker = sv_pipeline_updates_docker,
-                runtime_attr_batch_vcf = runtime_attr_batch_vcf,
-                runtime_override_shard_vcf = runtime_override_shard_vcf,
-                runtime_attr_merge = runtime_attr_merge
-        }
+#        call getBatchedVcf.getBatchedVcf as getBatchedVcf {
+#            input:
+#                vcf_file = vcf_file,
+#                prefix = prefix,
+#                samples = getBatchedFiles.samples,
+#                records_per_shard = 10000,
+#                variant_interpretation_docker = variant_interpretation_docker,
+#                sv_pipeline_updates_docker = sv_pipeline_updates_docker,
+#                runtime_attr_batch_vcf = runtime_attr_batch_vcf,
+#                runtime_override_shard_vcf = runtime_override_shard_vcf,
+#                runtime_attr_merge = runtime_attr_merge
+#        }
 
     }
 
@@ -77,7 +81,8 @@ workflow GenomicDisorders {
     call cleanPed{
         input:
             ped_input = ped_input,
-            vcf_input = select_first([getBatchedVcf.split_vcf, vcf_file]),
+#            vcf_input = select_first([getBatchedVcf.split_vcf, vcf_file]),
+            vcf_input = vcf_file,
             variant_interpretation_docker=variant_interpretation_docker,
             runtime_attr_override = runtime_attr_clean_ped
     }
@@ -116,33 +121,13 @@ workflow GenomicDisorders {
             input:
                 genomic_disorder_input=genomic_disorder_input,
                 ped = ped_input,
-                vcf_file = select_first([getBatchedVcf.split_vcf, vcf_file]),
+#                vcf_file = select_first([getBatchedVcf.split_vcf, vcf_file]),
                 depth_raw_file_proband = reformatDepthRawFiles.reformatted_proband_raw_files[i],
                 depth_raw_file_parents = reformatDepthRawFiles.reformatted_parents_raw_files[i],
                 chromosome=contigs[i],
                 variant_interpretation_docker=variant_interpretation_docker,
                 runtime_attr_override = runtime_attr_gd
         }
-
-        #splits vcf by chromosome
-        call subsetVcf {
-            input:
-                vcf_file = select_first([getBatchedVcf.split_vcf, vcf_file]),
-                chromosome=contigs[i],
-                variant_interpretation_docker=variant_interpretation_docker,
-                runtime_attr_override = runtime_attr_subset_vcf
-        }
-
-        #shards vcf
-        call MiniTasks.ScatterVcf as SplitVcf {
-            input:
-                vcf=subsetVcf.vcf_output,
-                prefix=prefix,
-                records_per_shard=records_per_shard,
-                sv_pipeline_docker=sv_pipeline_updates_docker,
-                runtime_attr_override=runtime_override_shard_vcf
-        }
-    }
 
     #merges the genomic disorder region output from each chromosome to compile a list of genomic disorder regions
     call mergeGenomicDisorders{
@@ -152,23 +137,48 @@ workflow GenomicDisorders {
             runtime_attr_override = runtime_attr_merge_gd
     }
 
-    call reformatVCF{ ????
+#        #splits vcf by chromosome
+#        call subsetVcf {
+#            input:
+#                vcf_file = select_first([getBatchedVcf.split_vcf, vcf_file]),
+#                chromosome=contigs[i],
+#                variant_interpretation_docker=variant_interpretation_docker,
+#                runtime_attr_override = runtime_attr_subset_vcf
+#        }
+
+#        #shards vcf
+#        call MiniTasks.ScatterVcf as SplitVcf {
+#            input:
+#                vcf=subsetVcf.vcf_output,
+#                prefix=prefix,
+#                records_per_shard=records_per_shard,
+#                sv_pipeline_docker=sv_pipeline_updates_docker,
+#                runtime_attr_override=runtime_override_shard_vcf
+#        }
+    }
+
+    call reformatVCF{
         input:
-            vcf = vcf,
+            vcf = vcf_file,
             prefix = prefix,
-            docker_path = docker_genomic_disorders,
+            docker_path = genomic_disorders_docker,
             runtime_attr_override = runtime_attr_reformat_vcf
     }
 
-    call excludeRawInVCF{
-
+    call getVCFoverlap{
+        input:
+          bed = reformatVCF.out_bed,
+          genomic_disorders = genomic_disorder_input_ref,
+          prefix = prefix,
+          docker_path = genomic_disorders_docker,
+          runtime_attr_override = runtime_attr_vcf_overlap
     }
 
     output {
         File cleaned_ped = cleanPed.cleaned_ped
         File gd_depth = mergeGenomicDisorders.gd_output_from_depth
-        File gd_for_denovo = getGenomicDisorders.gd_output_for_denovo
-        File gd_vcf = getGenomicDisorders.gd_output_from_final_vcf[1]
+#        File gd_for_denovo = getGenomicDisorders.gd_output_for_denovo
+#        File gd_vcf = getGenomicDisorders.gd_output_from_final_vcf[1]
         
     }
 }
@@ -207,14 +217,14 @@ task getBatchedFiles{
         File samples = "samples.txt"
     }
 
-    command {
+    command <<<
         set -euo pipefail
         grep -w -f ${fam_ids} ${ped_input} | cut -f2 | sort -u > samples.txt
         grep -w -f samples.txt ${sample_batches} | cut -f2 | sort -u > batches.txt
         grep -w -f batches.txt ${batch_bincov_index} > batch_bincov_index.txt
         grep -w -f batches.txt ${batch_raw_file} > batch_raw_files_list.txt
         grep -w -f batches.txt ${batch_depth_raw_file} > batch_depth_raw_files_list.txt
-    }
+    >>>
 
     runtime {
         cpu: select_first([runtime_attr.cpu, default_attr.cpu])
@@ -254,7 +264,7 @@ task cleanPed{
         File cleaned_ped = "subset_cleaned_ped.txt"
     }
 
-    command {
+    command <<<
 
         Rscript /src/variant-interpretation/scripts/cleanPed.R ${ped_input}
         cut -f2 cleaned_ped.txt | tail -n+2 > all_samples.txt
@@ -263,7 +273,7 @@ task cleanPed{
         grep -w -f excluded_samples.txt cleaned_ped.txt | cut -f1 | sort -u > excluded_families.txt
         grep -w -v -f excluded_families.txt cleaned_ped.txt > subset_cleaned_ped.txt
 
-    }
+    >>>
 
     runtime {
         cpu: select_first([runtime_attr.cpu, default_attr.cpu])
@@ -278,7 +288,7 @@ task cleanPed{
 
 task getGenomicDisorders{
     input{
-        File vcf_file
+#        File vcf_file
         File ped
         File depth_raw_file_proband
         File depth_raw_file_parents
@@ -288,7 +298,7 @@ task getGenomicDisorders{
         RuntimeAttr? runtime_attr_override
     }
 
-    Float input_size = size(select_all([vcf_file, ped, genomic_disorder_input, depth_raw_file_parents, depth_raw_file_proband]), "GB")
+    Float input_size = size(select_all([ped, genomic_disorder_input, depth_raw_file_parents, depth_raw_file_proband]), "GB")
     Float base_mem_gb = 3.75
 
     RuntimeAttr default_attr = object {
@@ -303,22 +313,13 @@ task getGenomicDisorders{
     RuntimeAttr runtime_attr = select_first([runtime_attr_override, default_attr])
 
     output{
-        File gd_output_from_final_vcf = "gd.variants.from.final.vcf.txt.gz"
-        File gd_output_for_denovo = "gd.variants.from.final.vcf.names.txt"
+#        File gd_output_from_final_vcf = "gd.variants.from.final.vcf.txt.gz"
+#        File gd_output_for_denovo = "gd.variants.from.final.vcf.names.txt"
         File gd_output_from_depth_raw_files = "~{chromosome}.gd.variants.in.depth.raw.files.txt.gz"
     }
 
     command <<<
         set -euxo pipefail
-
-        bedtools intersect -wa -wb -f 0.3 -r -a ~{vcf_file} -b ~{genomic_disorder_input} | cut -f 3 |sort -u > gd.variants.from.final.vcf.names.txt
-
-        echo "Done with first line"
-
-        bedtools intersect -wa -wb -f 0.3 -r -a ~{vcf_file} -b ~{genomic_disorder_input} > gd.variants.from.final.vcf.txt
-        bgzip gd.variants.from.final.vcf.txt
-
-        echo "Done with GD from vcf"
 
         Rscript /src/variant-interpretation/scripts/create_per_sample_bed.R ~{genomic_disorder_input} unsorted.gd.per.sample.txt unsorted.gd.per.family.txt ~{ped} ~{chromosome}
         sort -k1,1 -k2,2n unsorted.gd.per.sample.txt > gd.per.sample.txt
@@ -382,55 +383,55 @@ task getGenomicDisorders{
     }
 }
 
-task subsetVcf{
-    input{
-        File vcf_file
-        String chromosome
-        String variant_interpretation_docker
-        RuntimeAttr? runtime_attr_override
-    }
-
-    Float input_size = size(vcf_file, "GB")
-    Float base_mem_gb = 3.75
-
-    RuntimeAttr default_attr = object {
-                                      mem_gb: base_mem_gb,
-                                      disk_gb: ceil(10 + input_size * 1.5),
-                                      cpu: 1,
-                                      preemptible: 2,
-                                      max_retries: 1,
-                                      boot_disk_gb: 8
-                                  }
-    
-    RuntimeAttr runtime_attr = select_first([runtime_attr_override, default_attr])
-
-    output{
-        File vcf_output = "~{chromosome}.vcf.gz"
-        File no_header_vcf_output = "~{chromosome}.noheader.vcf.gz"
-    }
-
-    command <<<
-        set -euo pipefail
-
-        bcftools index ~{vcf_file}
-
-        bcftools view ~{vcf_file} --regions ~{chromosome} -O z -o  ~{chromosome}.vcf.gz
-
-        bcftools view ~{chromosome}.vcf.gz | grep -v ^## | bgzip -c > ~{chromosome}.noheader.vcf.gz
-
-        
-    >>>
-
-    runtime {
-        cpu: select_first([runtime_attr.cpu, default_attr.cpu])
-        memory: "~{select_first([runtime_attr.mem_gb, default_attr.mem_gb])} GB"
-        disks: "local-disk ~{select_first([runtime_attr.disk_gb, default_attr.disk_gb])} HDD"
-        bootDiskSizeGb: select_first([runtime_attr.boot_disk_gb, default_attr.boot_disk_gb])
-        preemptible: select_first([runtime_attr.preemptible, default_attr.preemptible])
-        maxRetries: select_first([runtime_attr.max_retries, default_attr.max_retries])
-        docker: variant_interpretation_docker
-    }
-}
+#task subsetVcf{
+#    input{
+#        File vcf_file
+#        String chromosome
+#        String variant_interpretation_docker
+#        RuntimeAttr? runtime_attr_override
+#    }
+#
+#    Float input_size = size(vcf_file, "GB")
+#    Float base_mem_gb = 3.75
+#
+#    RuntimeAttr default_attr = object {
+#                                      mem_gb: base_mem_gb,
+#                                      disk_gb: ceil(10 + input_size * 1.5),
+#                                      cpu: 1,
+#                                      preemptible: 2,
+#                                      max_retries: 1,
+#                                      boot_disk_gb: 8
+#                                  }
+#
+#    RuntimeAttr runtime_attr = select_first([runtime_attr_override, default_attr])
+#
+#    output{
+#        File vcf_output = "~{chromosome}.vcf.gz"
+#        File no_header_vcf_output = "~{chromosome}.noheader.vcf.gz"
+#    }
+#
+#    command <<<
+#        set -euo pipefail
+#
+#        bcftools index ~{vcf_file}
+#
+#        bcftools view ~{vcf_file} --regions ~{chromosome} -O z -o  ~{chromosome}.vcf.gz
+#
+#        bcftools view ~{chromosome}.vcf.gz | grep -v ^## | bgzip -c > ~{chromosome}.noheader.vcf.gz
+#
+#
+#    >>>
+#
+#    runtime {
+#        cpu: select_first([runtime_attr.cpu, default_attr.cpu])
+#        memory: "~{select_first([runtime_attr.mem_gb, default_attr.mem_gb])} GB"
+#        disks: "local-disk ~{select_first([runtime_attr.disk_gb, default_attr.disk_gb])} HDD"
+#        bootDiskSizeGb: select_first([runtime_attr.boot_disk_gb, default_attr.boot_disk_gb])
+#        preemptible: select_first([runtime_attr.preemptible, default_attr.preemptible])
+#        maxRetries: select_first([runtime_attr.max_retries, default_attr.max_retries])
+#        docker: variant_interpretation_docker
+#    }
+#}
 
 task mergeGenomicDisorders{
     input{
@@ -528,11 +529,11 @@ task reformatVCF {
     }
 
     RuntimeAttr default_attr = object {
-        cpu_cores: 1,
+        cpu: 1,
         mem_gb: 3.75,
         disk_gb: 10,
         boot_disk_gb: 10,
-        preemptible_tries: 0,
+        preemptible: 0,
         max_retries: 1
     }
 
@@ -559,12 +560,52 @@ task reformatVCF {
   >>>
 
   runtime {
-    cpu: select_first([runtime_attr.cpu_cores, default_attr.cpu_cores])
+    cpu: select_first([runtime_attr.cpu, default_attr.cpu])
     memory: select_first([runtime_attr.mem_gb, default_attr.mem_gb]) + " GiB"
     disks: "local-disk " + select_first([runtime_attr.disk_gb, default_attr.disk_gb]) + " HDD"
     bootDiskSizeGb: select_first([runtime_attr.boot_disk_gb, default_attr.boot_disk_gb])
     docker: docker_path
-    preemptible: select_first([runtime_attr.preemptible_tries, default_attr.preemptible_tries])
+    preemptible: select_first([runtime_attr.preemptible, default_attr.preemptible])
+    maxRetries: select_first([runtime_attr.max_retries, default_attr.max_retries])
+  }
+}
+
+task getVCFoverlap {
+  input {
+    File bed
+    File genomic_disorders
+    String docker_path
+    String prefix
+    RuntimeAttr? runtime_attr_override
+  }
+
+  RuntimeAttr default_attr = object {
+    cpu: 1,
+    mem_gb: 3.75,
+    disk_gb: 10,
+    boot_disk_gb: 10,
+    preemptible: 0,
+    max_retries: 1
+  }
+
+  RuntimeAttr runtime_attr = select_first([runtime_attr_override, default_attr])
+
+  output{
+    File out_bed = "~{bed}.gd.bed.gz"
+  }
+
+  command <<<
+    set -euo pipefail
+    bedtools intersect -wa -wb -f 0.3 -r -a ~{bed} -b ~{genomic_disorders} | bgzip -c > ~{bed}.gd.bed.gz
+  >>>
+
+  runtime {
+    cpu: select_first([runtime_attr.cpu, default_attr.cpu])
+    memory: select_first([runtime_attr.mem_gb, default_attr.mem_gb]) + " GiB"
+    disks: "local-disk " + select_first([runtime_attr.disk_gb, default_attr.disk_gb]) + " HDD"
+    bootDiskSizeGb: select_first([runtime_attr.boot_disk_gb, default_attr.boot_disk_gb])
+    docker: docker_path
+    preemptible: select_first([runtime_attr.preemptible, default_attr.preemptible])
     maxRetries: select_first([runtime_attr.max_retries, default_attr.max_retries])
   }
 }
