@@ -441,7 +441,7 @@ task mergeGenomicDisorders{
         RuntimeAttr? runtime_attr_override
     }
 
-    Float input_size = size(genomic_disorder_input, "GB")
+    Float input_size = size(gd_bed_to_merge, "GB")
     Float base_mem_gb = 3.75
 
     RuntimeAttr default_attr = object {
