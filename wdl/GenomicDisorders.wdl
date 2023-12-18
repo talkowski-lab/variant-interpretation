@@ -10,7 +10,7 @@ workflow GenomicDisorders {
 
     input {
         File ped_input
-        File python_config
+#        File python_config
         File vcf_file
         Array[String] contigs
         File genomic_disorder_input
@@ -19,11 +19,11 @@ workflow GenomicDisorders {
         File batch_depth_raw_file
         File sample_batches
         File batch_bincov_index
-        Int records_per_shard
+#        Int records_per_shard
         String prefix
         File? fam_ids
         String variant_interpretation_docker
-        String sv_pipeline_updates_docker
+#        String sv_pipeline_updates_docker
         String genomic_disorders_docker
         RuntimeAttr? runtime_attr_get_batched_files
         RuntimeAttr? runtime_attr_clean_ped
