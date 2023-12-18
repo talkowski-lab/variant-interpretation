@@ -128,7 +128,7 @@ workflow GenomicDisorders {
                 variant_interpretation_docker=variant_interpretation_docker,
                 runtime_attr_override = runtime_attr_gd
         }
-
+    }
     #merges the genomic disorder region output from each chromosome to compile a list of genomic disorder regions
     call mergeGenomicDisorders{
         input:
@@ -155,7 +155,7 @@ workflow GenomicDisorders {
 #                sv_pipeline_docker=sv_pipeline_updates_docker,
 #                runtime_attr_override=runtime_override_shard_vcf
 #        }
-    }
+#    }
 
     call reformatVCF{
         input:
