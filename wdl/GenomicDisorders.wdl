@@ -177,6 +177,7 @@ workflow GenomicDisorders {
     output {
         File cleaned_ped = cleanPed.cleaned_ped
         File gd_depth = mergeGenomicDisorders.gd_output_from_depth
+        File vcf_in_gds = getVCFoverlap.out_bed
 #        File gd_for_denovo = getGenomicDisorders.gd_output_for_denovo
 #        File gd_vcf = getGenomicDisorders.gd_output_from_final_vcf[1]
         
@@ -508,17 +509,16 @@ task mergeGenomicDisorders{
 #        zcat ${sep=" " bed_files} | grep -v ^chrom >> denovo.merged.bed
 #        bgzip denovo.merged.bed
 #    }
-
-    runtime {
-        cpu: select_first([runtime_attr.cpu, default_attr.cpu])
-        memory: "~{select_first([runtime_attr.mem_gb, default_attr.mem_gb])} GB"
-        disks: "local-disk ~{select_first([runtime_attr.disk_gb, default_attr.disk_gb])} HDD"
-        bootDiskSizeGb: select_first([runtime_attr.boot_disk_gb, default_attr.boot_disk_gb])
-        preemptible: select_first([runtime_attr.preemptible, default_attr.preemptible])
-        maxRetries: select_first([runtime_attr.max_retries, default_attr.max_retries])
-        docker: variant_interpretation_docker
-    }
-}
+#    runtime {
+#        cpu: select_first([runtime_attr.cpu, default_attr.cpu])
+#        memory: "~{select_first([runtime_attr.mem_gb, default_attr.mem_gb])} GB"
+#        disks: "local-disk ~{select_first([runtime_attr.disk_gb, default_attr.disk_gb])} HDD"
+#        bootDiskSizeGb: select_first([runtime_attr.boot_disk_gb, default_attr.boot_disk_gb])
+#        preemptible: select_first([runtime_attr.preemptible, default_attr.preemptible])
+#        maxRetries: select_first([runtime_attr.max_retries, default_attr.max_retries])
+#        docker: variant_interpretation_docker
+#    }
+#}
 
 task reformatVCF {
     input {
