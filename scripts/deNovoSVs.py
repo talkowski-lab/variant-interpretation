@@ -819,7 +819,9 @@ vcf_metrics    """
 
     # Define output files
     output = bed_final
-    de_novo = bed_final[(bed_final['is_de_novo'] == True) | (bed_final['filter_flag'] == 'ins_filter') | (bed_final['in_gd'] == True)]
+    de_novo = bed_final[(bed_final['is_de_novo'] == True) |
+                        (bed_final['filter_flag'] == 'ins_filter') |
+                        (bed_final['in_gd'] == True)]
 
     # Write output
     output.to_csv(path_or_buf=out_file, mode='a', index=False, sep='\t', header=True)
