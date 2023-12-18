@@ -63,7 +63,7 @@ workflow ResolveCTX{
 
     call mergeTinyResolve{
         input:
-            input_beds=reformatTinyResolve.ctx_raw_for_vcf_ovl,
+            input_beds = reformatTinyResolve.ctx_raw_for_vcf_ovl,
             docker = docker_path,
             prefix = prefix,
             runtime_attr_override = runtime_attr_override_merge
@@ -71,11 +71,11 @@ workflow ResolveCTX{
 
     call getRawOnlyCTX{
         input:
-        ctx_vcf_input=CtxVcf2Bed.ctx_vcf_for_raw_ovl,
-        ctx_raw_input=mergeTinyResolve.merged_ctx_raw_for_vcf_ovl,
-        docker = docker_path,
-        prefix = prefix,
-        runtime_attr_override = runtime_attr_override_get_raw_only
+            ctx_vcf_input = CtxVcf2Bed.ctx_vcf_for_raw_ovl,
+            ctx_raw_input = mergeTinyResolve.merged_ctx_raw_for_vcf_ovl,
+            docker = docker_path,
+            prefix = prefix,
+            runtime_attr_override = runtime_attr_override_get_raw_only
     }
 
     output{
