@@ -462,7 +462,7 @@ task mergeGenomicDisorders{
     command <<<
         set -euo pipefail
 
-        zcat ${sep=" " genomic_disorder_input} > gd.raw.files.output.txt
+        zcat ~{sep=" " genomic_disorder_input} > gd.raw.files.output.txt
         awk '{print $5"_"$8"_"$9"\t"$6"\t"$7"\t"$8"\t"$9"\t"$1"\t"$2"\t"$3"\t"$4}' gd.raw.files.output.txt | \
             bgzip -c > gd.raw.files.output.ref.txt.gz
     >>>
