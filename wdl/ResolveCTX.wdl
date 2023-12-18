@@ -191,7 +191,7 @@ task mergeTinyResolve{
     }
     command <<<
         set -euo pipefail
-        zcat ~{sep=' ' input_beds} | bgzip -c > tinyresolve_merged_tlocs.bed.gz
+        zcat ~{sep=' ' input_beds} | sort -k 1,1 -k2,2n | bgzip -c > tinyresolve_merged_tlocs.bed.gz
     >>>
 
     runtime {
