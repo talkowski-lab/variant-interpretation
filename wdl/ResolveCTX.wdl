@@ -187,11 +187,11 @@ task mergeTinyResolve{
     RuntimeAttr runtime_attr = select_first([runtime_attr_override, default_attr])
 
     output{
-        File merged_manta = "tinyresolve_merged_tlocs.bed.gz"
+        File merged_manta = "~{prefix}_merged_tlocs.bed.gz"
     }
     command <<<
         set -euo pipefail
-        zcat ~{sep=' ' input_beds} | grep -v "^#chrom" | sort -k 1,1 -k2,2n | bgzip -c > tinyresolve_merged_tlocs.bed.gz
+        zcat ~{sep=' ' input_beds} | grep -v "^#chrom" | sort -k 1,1 -k2,2n | bgzip -c > ~{prefix}_merged_tlocs.bed.gz
     >>>
 
     runtime {
