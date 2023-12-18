@@ -132,7 +132,7 @@ workflow GenomicDisorders {
     #merges the genomic disorder region output from each chromosome to compile a list of genomic disorder regions
     call mergeGenomicDisorders{
         input:
-            genomic_disorder_input=getGenomicDisorders.gd_output_from_depth_raw_files,
+            gd_bed_to_merge=getGenomicDisorders.gd_output_from_depth_raw_files,
             variant_interpretation_docker=variant_interpretation_docker,
             runtime_attr_override = runtime_attr_merge_gd
     }
@@ -436,7 +436,7 @@ task getGenomicDisorders{
 
 task mergeGenomicDisorders{
     input{
-        Array[File] genomic_disorder_input
+        Array[File] gd_bed_to_merge
         String variant_interpretation_docker
         RuntimeAttr? runtime_attr_override
     }
@@ -462,7 +462,7 @@ task mergeGenomicDisorders{
     command <<<
         set -euo pipefail
 
-        zcat ~{sep=" " genomic_disorder_input} > gd.raw.files.output.txt
+        zcat ~{sep=" " gd_bed_to_merge} > gd.raw.files.output.txt
         awk '{print $5"_"$8"_"$9"\t"$6"\t"$7"\t"$8"\t"$9"\t"$1"\t"$2"\t"$3"\t"$4}' gd.raw.files.output.txt | \
             bgzip -c > gd.raw.files.output.ref.txt.gz
     >>>
