@@ -153,7 +153,7 @@ task reformatTinyResolve{
         set -euo pipefail
 
         svtk vcf2bed -i ALL --include-filters ~{input_vcf} ~{prefix}.bed
-        awk '$5 == "CTX"{print $0}' ~{prefix}_tloc.bed | bgzip -c > ~{prefix}_tloc.bed
+        awk '/^#/; $5 == "CTX"{print $0}' ~{prefix}.bed | bgzip -c > ~{prefix}_tloc.bed.gz
     >>>
 
     runtime {
@@ -191,7 +191,7 @@ task mergeTinyResolve{
     }
     command <<<
         set -euo pipefail
-        zcat ~{sep=' ' input_beds} | sort -k 1,1 -k2,2n | bgzip -c > tinyresolve_merged_tlocs.bed.gz
+        zcat ~{sep=' ' input_beds} | grep -v "^#chrom" | sort -k 1,1 -k2,2n | bgzip -c > tinyresolve_merged_tlocs.bed.gz
     >>>
 
     runtime {
