@@ -25,6 +25,7 @@ workflow ResolveCTX{
         RuntimeAttr? runtime_attr_override_merge
         RuntimeAttr? runtime_attr_subset_ctx_vcf
         RuntimeAttr? runtime_attr_override_get_raw_only
+        RuntimeAttr? runtime_attr_override_ref_raw_pe
     }
 
     call CtxVcf2Bed{
@@ -78,12 +79,23 @@ workflow ResolveCTX{
             runtime_attr_override = runtime_attr_override_get_raw_only
     }
 
+    call reformatRawOnlyForPE{
+        input:
+            ctx_raw_input = getRawOnlyCTX.raw_only,
+            docker = docker_path,
+            prefix = prefix,
+            runtime_attr_override = runtime_attr_override_ref_raw_pe
+    }
+
+
+
     output{
         File ctx_vcf_for_pe = CtxVcf2Bed.ctx_vcf_for_pe
         File ctx_vcf_for_raw_ovl = CtxVcf2Bed.ctx_vcf_for_raw_ovl
         File tinyresolved_merged = mergeTinyResolve.merged_ctx_raw_for_vcf_ovl
         File raw_only_manta_bed = getRawOnlyCTX.raw_vcf_ovl
         File raw_only_manta_bed = getRawOnlyCTX.raw_only
+        File ctx_raw_for_pe = reformatRawOnlyForPE.raw_only_for_pe
     }
 }
 
@@ -286,8 +298,7 @@ task reformatRawOnlyForPE{
     command <<<
         set -euo pipefail
 
-
-
+        Rscript /src/variant-interpretation/scripts/reformatRawForPE.R ~{ctx_raw_input} ~{prefix}_raw_only.refForPE.bed.gz
     >>>
 
     runtime {
