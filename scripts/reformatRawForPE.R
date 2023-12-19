@@ -28,4 +28,4 @@ raw_input %>%
   select(V1, V2, V8, V9, V6, num_samples, V4) -> raw_output
 
 #write output
-write.table(output_file, out_file, sep = "\t", quote = F, row.names = F, col.names = T)
+write.table(raw_output, output_file, sep = "\t", quote = F, row.names = F, col.names = T)
