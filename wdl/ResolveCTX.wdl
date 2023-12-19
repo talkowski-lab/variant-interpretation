@@ -3,7 +3,7 @@ version 1.0
 # IMPORT
 import "Structs.wdl"
 import "TinyResolve.wdl"
-import "PEevidence.wdl"
+import "PEevidence.wdl" as PEevidence
 
 # WORKFLOW DEFINITION
 workflow ResolveCTX{
@@ -19,6 +19,11 @@ workflow ResolveCTX{
         Int samples_per_shard = 25
         String sv_pipeline_docker
         String linux_docker
+
+        File batches_pe
+        File sample_batch
+        String docker_pe_evidence
+
         RuntimeAttr? runtime_attr_resolve
         RuntimeAttr? runtime_attr_untar
         RuntimeAttr? runtime_attr_reformat
@@ -26,6 +31,8 @@ workflow ResolveCTX{
         RuntimeAttr? runtime_attr_subset_ctx_vcf
         RuntimeAttr? runtime_attr_override_get_raw_only
         RuntimeAttr? runtime_attr_override_ref_raw_pe
+        RuntimeAttr? runtime_attr_subset_sample_roi
+        RuntimeAttr? runtime_attr_subset_pe_evidence
     }
 
     call CtxVcf2Bed{
@@ -96,6 +103,35 @@ workflow ResolveCTX{
             runtime_attr_override = runtime_attr_override_merge
     }
 
+    scatter (sample in samples){
+
+        call PEevidence.subset_sample_roi as subset_sample_roi{
+            input:
+                sample = sample,
+                regions = mergeVcfRawForPE.merged_vcf_raw_for_pe,
+                docker_path = docker_pe_evidence,
+                runtime_attr_override = runtime_attr_subset_sample_roi
+        }
+
+        call PEevidence.subset_pe_evidence as subset_pe_evidence{
+            input:
+                sample_bed = subset_sample_roi.sample_roi,
+                sample_batch = sample_batch,
+                batches_pe = batches_pe,
+                sample = sample,
+                docker_path = docker_pe_evidence,
+                runtime_attr_override = runtime_attr_subset_pe_evidence
+        }
+    }
+
+    call mergeSamplePE{
+        input:
+            input_beds = subset_pe_evidence.sample_pe,
+            docker = docker_path,
+            prefix = prefix,
+            runtime_attr_override = runtime_attr_override_merge
+    }
+
     output{
         File ctx_vcf_for_pe = CtxVcf2Bed.ctx_vcf_for_pe
         File ctx_vcf_for_raw_ovl = CtxVcf2Bed.ctx_vcf_for_raw_ovl
@@ -104,6 +140,7 @@ workflow ResolveCTX{
         File raw_only_manta_bed = getRawOnlyCTX.raw_only
         File ctx_raw_for_pe = reformatRawOnlyForPE.raw_only_for_pe
         File ctx_vcf_raw_merged_for_pe = mergeVcfRawForPE.merged_vcf_raw_for_pe
+        File merged_pe_evidence = mergeSamplePE.merged_PE_evidence
     }
 }
 
@@ -349,6 +386,45 @@ task mergeVcfRawForPE{
         zcat ~{input_raw} ~{input_vcf}| \
             sort -k 1,1 -k2,2n | \
             bgzip -c > ~{prefix}_vcf_raw_forPE.bed.gz
+    >>>
+
+    runtime {
+        cpu: select_first([runtime_attr.cpu_cores, default_attr.cpu_cores])
+        memory: select_first([runtime_attr.mem_gb, default_attr.mem_gb]) + " GiB"
+        disks: "local-disk " + select_first([runtime_attr.disk_gb, default_attr.disk_gb]) + " HDD"
+        bootDiskSizeGb: select_first([runtime_attr.boot_disk_gb, default_attr.boot_disk_gb])
+        preemptible: select_first([runtime_attr.preemptible_tries, default_attr.preemptible_tries])
+        maxRetries: select_first([runtime_attr.max_retries, default_attr.max_retries])
+        docker: docker
+    }
+}
+
+task mergeSamplePE{
+    input{
+        Array[File] input_beds
+        String docker
+        String prefix
+        RuntimeAttr? runtime_attr_override
+    }
+
+    RuntimeAttr default_attr = object {
+        cpu_cores: 1,
+        mem_gb: 12,
+        disk_gb: 4,
+        boot_disk_gb: 8,
+        preemptible_tries: 3,
+        max_retries: 1
+    }
+
+    RuntimeAttr runtime_attr = select_first([runtime_attr_override, default_attr])
+
+    output{
+        File merged_PE_evidence = "~{prefix}_PEevidence.bed.gz"
+    }
+    command <<<
+        set -euo pipefail
+        zcat ~{sep=' ' input_beds} |
+            bgzip -c > ~{prefix}_PEevidence.bed.gz
     >>>
 
     runtime {
