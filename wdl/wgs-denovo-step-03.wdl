@@ -103,7 +103,7 @@ task subsetPed {
 
     command {
         bcftools query -l ~{vcf_file} > samples.txt
-        grep -f samples.txt ~{ped_uri} > ~{basename(ped_uri, '.ped')+'_subset.ped'}
+        grep -w -f samples.txt ~{ped_uri} > ~{basename(ped_uri, '.ped')+'_subset.ped'}
     }
 
     output {
