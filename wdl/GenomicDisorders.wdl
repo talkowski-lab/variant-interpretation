@@ -268,7 +268,7 @@ task cleanPed{
     command <<<
         set -euo pipefail
 
-        Rscript /src/variant-interpretation/scripts/cleanPed.R ${ped_input}
+        Rscript /src/variant-interpretation/scripts/cleanPed.R ~{ped_input}
         cut -f2 cleaned_ped.txt | tail -n+2 > all_samples.txt
         bcftools query -l ${vcf_input} > samples_to_include_in_ped.txt
         grep -w -v -f samples_to_include_in_ped.txt all_samples.txt > excluded_samples.txt
