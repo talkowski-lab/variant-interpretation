@@ -130,7 +130,7 @@ task addGenotypes {
         File normalized_vcf_idx
         String sv_base_mini_docker
         RuntimeAttr? runtime_attr_override
-        Int? thread_num_override
+        Int? thread_num_override  # TODO: 
     }
 
     #  CleanVcf5.FindRedundantMultiallelics
@@ -139,7 +139,7 @@ task addGenotypes {
     Float base_disk_gb = 10.0
 
     RuntimeAttr runtime_default = object {
-                                      mem_gb: 16,
+                                      mem_gb: 16,  # TODO: lower
                                       disk_gb: ceil(base_disk_gb + (vep_annotate_sizes + norm_vcf_sizes) * 5.0),
                                       cpu_cores: 1,
                                       preemptible_tries: 3,
@@ -201,10 +201,10 @@ task mergeVCFs {
     Float base_disk_gb = 10.0
     Float base_mem_gb = 2.0
     Float input_mem_scale = 3.0
-    Float input_disk_scale = 5.0
+    Float input_disk_scale = 5.0  # TODO: change to 10?
     
     RuntimeAttr runtime_default = object {
-        mem_gb: base_mem_gb + input_size * input_mem_scale,
+        mem_gb: base_mem_gb + input_size * input_mem_scale,  # TODO: fix, 4 GB
         disk_gb: ceil(base_disk_gb + input_size * input_disk_scale),
         cpu_cores: 1,
         preemptible_tries: 3,
@@ -216,7 +216,7 @@ task mergeVCFs {
     
     runtime {
         memory: "~{select_first([runtime_override.mem_gb, runtime_default.mem_gb])} GB"
-        disks: "local-disk ~{select_first([runtime_override.disk_gb, runtime_default.disk_gb])} HDD"
+        disks: "local-disk ~{select_first([runtime_override.disk_gb, runtime_default.disk_gb])} HDD"  # TODO: SSD
         cpu: select_first([runtime_override.cpu_cores, runtime_default.cpu_cores])
         preemptible: select_first([runtime_override.preemptible_tries, runtime_default.preemptible_tries])
         maxRetries: select_first([runtime_override.max_retries, runtime_default.max_retries])
