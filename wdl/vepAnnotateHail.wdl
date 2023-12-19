@@ -20,6 +20,7 @@ workflow vepAnnotateHail {
         File human_ancestor_fa
         File human_ancestor_fa_fai
         File top_level_fa
+        File gerp_conservation_scores
         String cohort_prefix
         RuntimeAttr? runtime_attr_vep_annotate
     }
@@ -31,6 +32,7 @@ workflow vepAnnotateHail {
         top_level_fa=top_level_fa,
         human_ancestor_fa=human_ancestor_fa,
         human_ancestor_fa_fai=human_ancestor_fa_fai,
+        gerp_conservation_scores=gerp_conservation_scores,
         vep_hail_docker=vep_hail_docker,
         runtime_attr_override=runtime_attr_vep_annotate
     }
@@ -47,6 +49,7 @@ task vepAnnotate {
         File top_level_fa
         File human_ancestor_fa
         File human_ancestor_fa_fai
+        File gerp_conservation_scores
         String vep_hail_docker
         RuntimeAttr? runtime_attr_override
     }
@@ -96,7 +99,7 @@ task vepAnnotate {
         "--format", "vcf",
         "__OUTPUT_FORMAT_FLAG__",
         "--force_overwrite",
-        "-dir", "/opt/vep/.vep",
+        "-dir", "/opt/vep",
         "--everything",
         "--allele_number",
         "--no_stats",
@@ -104,12 +107,12 @@ task vepAnnotate {
         "--minimal",
         "--assembly", "GRCh38",
         "--fasta", "~{top_level_fa}",
-        "--plugin", "LoF,loftee_path:/opt/vep/.vep/Plugins/,human_ancestor_fa:~{human_ancestor_fa},gerp_score:/opt/vep/.vep/Plugins/gerp_conservation_scores.homo_sapiens.GRCh38.bw",
-        "--dir_plugins", "/opt/vep/.vep/Plugins/",
+        "--plugin", "LoF,loftee_path:/opt/vep/Plugins/,human_ancestor_fa:~{human_ancestor_fa},gerp_score:~{gerp_conservation_scores}",
+        "--dir_plugins", "/opt/vep/Plugins/",
         "-o", "STDOUT"]
         }' > vep_config.json
 
-        python3 ~{vep_annotate_hail_python_script} ~{vcf_file} ~{vep_annotated_vcf_name} 
+        python3.9 ~{vep_annotate_hail_python_script} ~{vcf_file} ~{vep_annotated_vcf_name} 
 
     >>>
 }

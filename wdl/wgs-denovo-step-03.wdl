@@ -101,10 +101,10 @@ task subsetPed {
         bootDiskSizeGb: select_first([runtime_override.boot_disk_gb, runtime_default.boot_disk_gb])
     }
 
-    command {
+    command <<<
         bcftools query -l ~{vcf_file} > samples.txt
-        grep -w -f samples.txt ~{ped_uri} > ~{basename(ped_uri, '.ped')+'_subset.ped'}
-    }
+        awk 'FNR==NR{values[$1]; next} $2 in values' samples.txt ~{ped_uri} > ~{basename(ped_uri, '.ped')+'_subset.ped'}
+    >>>
 
     output {
         File new_ped_uri = basename(ped_uri, '.ped')+'_subset.ped'
