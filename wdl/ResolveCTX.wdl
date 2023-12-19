@@ -87,7 +87,14 @@ workflow ResolveCTX{
             runtime_attr_override = runtime_attr_override_ref_raw_pe
     }
 
-
+    call mergeVcfRawForPE{
+        input:
+            input_raw = reformatRawOnlyForPE.raw_only_for_pe,
+            input_vcf = CtxVcf2Bed.ctx_vcf_for_pe,
+            docker = docker_path,
+            prefix = prefix,
+            runtime_attr_override = runtime_attr_override_merge
+    }
 
     output{
         File ctx_vcf_for_pe = CtxVcf2Bed.ctx_vcf_for_pe
@@ -96,6 +103,7 @@ workflow ResolveCTX{
         File raw_vcf_ovl_bed = getRawOnlyCTX.raw_vcf_ovl
         File raw_only_manta_bed = getRawOnlyCTX.raw_only
         File ctx_raw_for_pe = reformatRawOnlyForPE.raw_only_for_pe
+        File ctx_vcf_raw_merged_for_pe = mergeVcfRawForPE.merged_vcf_raw_for_pe
     }
 }
 
@@ -298,7 +306,49 @@ task reformatRawOnlyForPE{
     command <<<
         set -euo pipefail
 
-        Rscript /src/variant-interpretation/scripts/reformatRawForPE.R ~{ctx_raw_input} ~{prefix}_raw_only.refForPE.bed.gz
+        Rscript /src/variant-interpretation/scripts/reformatRawForPE.R ~{ctx_raw_input} ~{prefix}_raw_only.refForPE.bed
+        bgzip ~{prefix}_raw_only.refForPE.bed
+    >>>
+
+    runtime {
+        cpu: select_first([runtime_attr.cpu_cores, default_attr.cpu_cores])
+        memory: select_first([runtime_attr.mem_gb, default_attr.mem_gb]) + " GiB"
+        disks: "local-disk " + select_first([runtime_attr.disk_gb, default_attr.disk_gb]) + " HDD"
+        bootDiskSizeGb: select_first([runtime_attr.boot_disk_gb, default_attr.boot_disk_gb])
+        preemptible: select_first([runtime_attr.preemptible_tries, default_attr.preemptible_tries])
+        maxRetries: select_first([runtime_attr.max_retries, default_attr.max_retries])
+        docker: docker
+    }
+}
+
+task mergeVcfRawForPE{
+    input{
+        File input_raw
+        File input_vcf
+        String docker
+        String prefix
+        RuntimeAttr? runtime_attr_override
+    }
+
+    RuntimeAttr default_attr = object {
+        cpu_cores: 1,
+        mem_gb: 12,
+        disk_gb: 4,
+        boot_disk_gb: 8,
+        preemptible_tries: 3,
+        max_retries: 1
+    }
+
+    RuntimeAttr runtime_attr = select_first([runtime_attr_override, default_attr])
+
+    output{
+        File merged_vcf_raw_for_pe = "~{prefix}_vcf_raw_forPE.bed.gz"
+    }
+    command <<<
+        set -euo pipefail
+        zcat ~{input_raw} ~{input_vcf}| \
+            sort -k 1,1 -k2,2n | \
+            bgzip -c > ~{prefix}_vcf_raw_forPE.bed.gz
     >>>
 
     runtime {
