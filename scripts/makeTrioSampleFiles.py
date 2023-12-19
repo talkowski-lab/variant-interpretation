@@ -18,10 +18,10 @@ try:
     ped = pd.read_csv(ped_uri, sep='\t', header=None)
     bucket.blob(f"resources/pedigrees/{cohort_prefix}_no_header.ped").upload_from_string(ped.to_csv(sep='\t', index=False, header=False), 'text/csv')
     ped.columns = ['FamID', 'IndividualID', 'FatherID', 'MotherID', 'Gender', 'Affected']
-    bucket.blob(f"resources/pedigrees/{cohort_prefix}.ped").upload_from_string(ped.to_csv(sep='\t', index=False), 'text/csv')
+    # bucket.blob(f"resources/pedigrees/{cohort_prefix}.ped").upload_from_string(ped.to_csv(sep='\t', index=False), 'text/csv')
 except Exception as e:
     ped.columns = ['FamID', 'IndividualID', 'FatherID', 'MotherID', 'Gender', 'Affected']
-    bucket.blob(f"resources/pedigrees/{cohort_prefix}.ped").upload_from_string(ped.to_csv(sep='\t', index=False), 'text/csv')
+    # bucket.blob(f"resources/pedigrees/{cohort_prefix}.ped").upload_from_string(ped.to_csv(sep='\t', index=False), 'text/csv')
     # save ped no header
     bucket.blob(f"resources/pedigrees/{cohort_prefix}_no_header.ped").upload_from_string(ped.to_csv(sep='\t', index=False, header=False), 'text/csv')
 

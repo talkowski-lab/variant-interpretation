@@ -16,16 +16,17 @@ except Exception as e:
     pass
 
 ped.columns = ['family_id', 'sample_id', 'paternal_id', 'maternal_id', 'sex', 'phenotype']
+ped[['family_id', 'sample_id', 'paternal_id', 'maternal_id']] = ped[['family_id', 'sample_id', 'paternal_id', 'maternal_id']].astype(str)
 ped.index = ped.sample_id
 
 somalier = pd.read_csv(samples_uri, sep='\t')
+somalier.columns = somalier.columns.str.replace("#", "")
 somalier.index = somalier.sample_id
 
 if subset_ped:
     ped = ped.loc[np.intersect1d(ped.index, somalier.index)]
 
 somalier = somalier.loc[ped.index]
-somalier.columns = somalier.columns.str.replace("#", "")
 
 somalier = somalier.replace({'-9': '0'})
 new_ped = ped.copy()

@@ -193,7 +193,7 @@ task combinePVR {
   String getPVR_out_filename = basename(vcf_metrics_tsv, '.tsv') + '_with_PVR.tsv'
   String getPVR_redo_filename = basename(vcf_metrics_tsv, '.tsv') + '_PVR_redo.tsv'
   command {
-    cat ~{vcf_metrics_tsv} | head -1 > ~{getPVR_redo_filename}
+    cat ~{vcf_metrics_tsv} | head -1 | tr " " "\t" > ~{getPVR_redo_filename}
     echo -e $(cat ~{getPVR_redo_filename})"\tChild_tag\tall_count\tref_count\talt_count\tref_prop\talt_prop\tsam_real_alt\treal_alt_count\treal_alt_prop\tcomplex_count\tFather_tag\tfa_all_count\tfa_ref_count\tfa_alt_count\tfa_ref_prop\tfa_alt_prop\tfa_sam_real_alt\tfa_real_alt_count\tfa_real_alt_prop\tfa_complex_count\tMother_tag\tmo_all_count\tmo_ref_count\tmo_alt_count\tmo_ref_prop\tmo_alt_prop\tmo_sam_real_alt\tmo_real_alt_count\tmo_real_alt_prop\tmo_complex_count" > ~{getPVR_out_filename} 
 
     cat ~{sep=' ' getPVR_out} >> ~{getPVR_out_filename}    
