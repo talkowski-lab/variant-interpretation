@@ -82,6 +82,7 @@ workflow ResolveCTX{
         File ctx_vcf_for_pe = CtxVcf2Bed.ctx_vcf_for_pe
         File ctx_vcf_for_raw_ovl = CtxVcf2Bed.ctx_vcf_for_raw_ovl
         File tinyresolved_merged = mergeTinyResolve.merged_ctx_raw_for_vcf_ovl
+        File raw_only_manta_bed = getRawOnlyCTX.raw_vcf_ovl
         File raw_only_manta_bed = getRawOnlyCTX.raw_only
     }
 }
@@ -239,11 +240,54 @@ task getRawOnlyCTX{
 
     output{
         File raw_only = "~{prefix}_raw_only.bed.gz"
+        File raw_vcf_ovl = "~{prefix}_raw_vcf_ovl.bed.gz"
     }
     command <<<
         set -euo pipefail
+        bedtools intersect -a ~{ctx_raw_input} -b ~{ctx_vcf_input} |
+            bgzip -c > ~{prefix}_raw_vcf_ovl.bed.gz
         bedtools intersect -v -a ~{ctx_raw_input} -b ~{ctx_vcf_input} |
             bgzip -c > ~{prefix}_raw_only.bed.gz
+    >>>
+
+    runtime {
+        cpu: select_first([runtime_attr.cpu_cores, default_attr.cpu_cores])
+        memory: select_first([runtime_attr.mem_gb, default_attr.mem_gb]) + " GiB"
+        disks: "local-disk " + select_first([runtime_attr.disk_gb, default_attr.disk_gb]) + " HDD"
+        bootDiskSizeGb: select_first([runtime_attr.boot_disk_gb, default_attr.boot_disk_gb])
+        preemptible: select_first([runtime_attr.preemptible_tries, default_attr.preemptible_tries])
+        maxRetries: select_first([runtime_attr.max_retries, default_attr.max_retries])
+        docker: docker
+    }
+}
+
+task reformatRawOnlyForPE{
+    input{
+        File ctx_raw_input
+        String docker
+        String prefix
+        RuntimeAttr? runtime_attr_override
+    }
+
+    RuntimeAttr default_attr = object {
+        cpu_cores: 1,
+        mem_gb: 12,
+        disk_gb: 4,
+        boot_disk_gb: 8,
+        preemptible_tries: 3,
+        max_retries: 1
+    }
+
+    RuntimeAttr runtime_attr = select_first([runtime_attr_override, default_attr])
+
+    output{
+        File raw_only_for_pe = "~{prefix}_raw_only.refForPE.bed.gz"
+    }
+    command <<<
+        set -euo pipefail
+
+
+
     >>>
 
     runtime {
