@@ -93,7 +93,7 @@ workflow ResolveCTX{
         File ctx_vcf_for_pe = CtxVcf2Bed.ctx_vcf_for_pe
         File ctx_vcf_for_raw_ovl = CtxVcf2Bed.ctx_vcf_for_raw_ovl
         File tinyresolved_merged = mergeTinyResolve.merged_ctx_raw_for_vcf_ovl
-        File raw_only_manta_bed = getRawOnlyCTX.raw_vcf_ovl
+        File raw_vcf_ovl_bed = getRawOnlyCTX.raw_vcf_ovl
         File raw_only_manta_bed = getRawOnlyCTX.raw_only
         File ctx_raw_for_pe = reformatRawOnlyForPE.raw_only_for_pe
     }
