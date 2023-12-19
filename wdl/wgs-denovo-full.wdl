@@ -21,6 +21,7 @@ workflow wgs_denovo_full {
             File file
             File python_trio_sample_script
             File python_preprocess_script
+            File subset_ped_python_script
             File uberSplit_v3_py
             File merge_vcf_to_tsv_fullQC_py
             File get_sample_pedigree_py
@@ -68,7 +69,8 @@ workflow wgs_denovo_full {
             hail_docker=hail_docker,
             sv_base_mini_docker=sv_base_mini_docker,
             uberSplit_v3_py=uberSplit_v3_py,
-            batch_size=batch_size
+            batch_size=batch_size,
+            subset_ped_python_script=subset_ped_python_script
     }
     call annotateHPandVAF.annotateHPandVAF as annotateHPandVAF {
         input:
@@ -77,7 +79,7 @@ workflow wgs_denovo_full {
             hg38_reference=hg38_reference,
             hg38_reference_fai=hg38_reference_fai,
             hg38_reference_dict=hg38_reference_dict,
-            jvarkit_docker=jvarkit_docker
+            jvarkit_docker=jvarkit_docker,
     }
 
     call step4.step4 as step4 {

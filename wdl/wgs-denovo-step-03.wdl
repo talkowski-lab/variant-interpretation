@@ -20,6 +20,7 @@ workflow step3 {
         File uberSplit_v3_py
         Int batch_size
         Boolean subset_ped=true
+        File subset_ped_python_script
     }
 
     String cohort_prefix = basename(merged_preprocessed_vcf_file, '.vep.merged.vcf.gz')
@@ -43,7 +44,8 @@ workflow step3 {
             input:
                 ped_uri=ped_uri,
                 vcf_file=merged_preprocessed_vcf_file,
-                sv_base_mini_docker=sv_base_mini_docker
+                sv_base_mini_docker=sv_base_mini_docker,
+                subset_ped_python_script=subset_ped_python_script
         }
     }
 
@@ -70,6 +72,7 @@ task subsetPed {
     input {
         File ped_uri
         File vcf_file
+        File subset_ped_python_script
         String sv_base_mini_docker
         RuntimeAttr? runtime_attr_override
     }
@@ -103,7 +106,8 @@ task subsetPed {
 
     command <<<
         bcftools query -l ~{vcf_file} > samples.txt
-        awk 'FNR==NR{values[$1]; next} $2 in values' samples.txt ~{ped_uri} > ~{basename(ped_uri, '.ped')+'_subset.ped'}
+        python3 ~{subset_ped_python_script} samples.txt ~{ped_uri}
+        # awk 'FNR==NR{values[$1]; next} $2 in values' samples.txt ~{ped_uri} > ~{basename(ped_uri, '.ped')+'_subset.ped'}
     >>>
 
     output {
