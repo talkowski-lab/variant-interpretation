@@ -8,6 +8,8 @@ import "PEevidence.wdl" as PEevidence
 # WORKFLOW DEFINITION
 workflow ResolveCTX{
     input{
+        Array[String] batches
+
         File vcf
         String prefix
         String docker_path
@@ -35,6 +37,7 @@ workflow ResolveCTX{
         RuntimeAttr? runtime_attr_subset_pe_evidence
     }
 
+    ##Get CTXs from main GATK-SV output
     call CtxVcf2Bed{
         input:
             vcf = vcf,
@@ -43,55 +46,59 @@ workflow ResolveCTX{
             runtime_attr_override = runtime_attr_subset_ctx_vcf
     }
 
-    call TinyResolve.TinyResolve as TinyResolve{
-        input:
-            samples = samples,
-            manta_vcf_tar = manta_vcf_tar,
-            cytoband = cytoband,
-            discfile = discfile,
-            mei_bed = mei_bed,
-            samples_per_shard = samples_per_shard,
-            sv_pipeline_docker = sv_pipeline_docker,
-            linux_docker = linux_docker,
-            runtime_attr_resolve = runtime_attr_resolve,
-            runtime_attr_untar = runtime_attr_untar
-    }
+    ##Get CTXx from Manta raw evidence after running TinyResolve (per batch)
+    scatter (batch in batches){
 
-    scatter (file in TinyResolve.tloc_manta_vcf){
-        String file_idx = basename(file, ".tbi")
-
-        call reformatTinyResolve{
+        call TinyResolve.TinyResolve as TinyResolve{
             input:
-                input_vcf=file,
-#                input_vcf_idx=file_idx,
-                docker = docker_path,
-                runtime_attr_override = runtime_attr_reformat
+                samples = samples,
+                manta_vcf_tar = manta_vcf_tar,
+                cytoband = cytoband,
+                discfile = discfile,
+                mei_bed = mei_bed,
+                samples_per_shard = samples_per_shard,
+                sv_pipeline_docker = sv_pipeline_docker,
+                linux_docker = linux_docker,
+                runtime_attr_resolve = runtime_attr_resolve,
+                runtime_attr_untar = runtime_attr_untar
         }
-    }
 
-    call mergeTinyResolve{
-        input:
-            input_beds = reformatTinyResolve.ctx_raw_for_vcf_ovl,
-            docker = docker_path,
-            prefix = prefix,
-            runtime_attr_override = runtime_attr_override_merge
-    }
+        scatter (file in TinyResolve.tloc_manta_vcf){
+            String file_idx = basename(file, ".tbi")
 
-    call getRawOnlyCTX{
-        input:
-            ctx_vcf_input = CtxVcf2Bed.ctx_vcf_for_raw_ovl,
-            ctx_raw_input = mergeTinyResolve.merged_ctx_raw_for_vcf_ovl,
-            docker = docker_path,
-            prefix = prefix,
-            runtime_attr_override = runtime_attr_override_get_raw_only
-    }
+            call reformatTinyResolve{
+                input:
+                    input_vcf=file,
+    #                input_vcf_idx=file_idx,
+                    docker = docker_path,
+                    runtime_attr_override = runtime_attr_reformat
+            }
+        }
 
-    call reformatRawOnlyForPE{
-        input:
-            ctx_raw_input = getRawOnlyCTX.raw_only,
-            docker = docker_path,
-            prefix = prefix,
-            runtime_attr_override = runtime_attr_override_ref_raw_pe
+        call mergeTinyResolve{
+            input:
+                input_beds = reformatTinyResolve.ctx_raw_for_vcf_ovl,
+                docker = docker_path,
+                prefix = prefix,
+                runtime_attr_override = runtime_attr_override_merge
+        }
+
+        call getRawOnlyCTX{
+            input:
+                ctx_vcf_input = CtxVcf2Bed.ctx_vcf_for_raw_ovl,
+                ctx_raw_input = mergeTinyResolve.merged_ctx_raw_for_vcf_ovl,
+                docker = docker_path,
+                prefix = prefix,
+                runtime_attr_override = runtime_attr_override_get_raw_only
+        }
+
+        call reformatRawOnlyForPE{
+            input:
+                ctx_raw_input = getRawOnlyCTX.raw_only,
+                docker = docker_path,
+                prefix = prefix,
+                runtime_attr_override = runtime_attr_override_ref_raw_pe
+        }
     }
 
     call mergeVcfRawForPE{
@@ -103,6 +110,7 @@ workflow ResolveCTX{
             runtime_attr_override = runtime_attr_override_merge
     }
 
+    ###TO DO AFTER MERGING ACROSS BATCHES???????
     File samples_for_pe = mergeVcfRawForPE.samples_with_ctx_for_pe
     Array[String] samples_pe = transpose(read_tsv(samples_for_pe))[0]
 
