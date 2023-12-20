@@ -103,7 +103,9 @@ workflow ResolveCTX{
             runtime_attr_override = runtime_attr_override_merge
     }
 
-    scatter (sample in samples){
+    Array[String] samples_pe = transpose(read_tsv(mergeVcfRawForPE.samples_with_ctx_for_pe)[0])
+
+    scatter (sample in samples_pe){
 
         call PEevidence.subset_sample_roi as subset_sample_roi{
             input:
@@ -380,12 +382,15 @@ task mergeVcfRawForPE{
 
     output{
         File merged_vcf_raw_for_pe = "~{prefix}_vcf_raw_forPE.bed.gz"
+        File samples_with_ctx_for_pe = "~{prefix}_samples_forPE.txt"
     }
     command <<<
         set -euo pipefail
         zcat ~{input_raw} ~{input_vcf}| \
             sort -k 1,1 -k2,2n | \
             bgzip -c > ~{prefix}_vcf_raw_forPE.bed.gz
+
+        zcat ~{prefix}_vcf_raw_forPE.bed.gz | cut -f5 | sort -u > ~{prefix}_samples_forPE.txt
     >>>
 
     runtime {
