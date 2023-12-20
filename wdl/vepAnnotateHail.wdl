@@ -21,6 +21,7 @@ workflow vepAnnotateHail {
         File human_ancestor_fa_fai
         File top_level_fa
         File gerp_conservation_scores
+        File hg38_vep_cache
         String cohort_prefix
         RuntimeAttr? runtime_attr_vep_annotate
     }
@@ -33,6 +34,7 @@ workflow vepAnnotateHail {
         human_ancestor_fa=human_ancestor_fa,
         human_ancestor_fa_fai=human_ancestor_fa_fai,
         gerp_conservation_scores=gerp_conservation_scores,
+        hg38_vep_cache=hg38_vep_cache,
         vep_hail_docker=vep_hail_docker,
         runtime_attr_override=runtime_attr_vep_annotate
     }
@@ -50,6 +52,7 @@ task vepAnnotate {
         File human_ancestor_fa
         File human_ancestor_fa_fai
         File gerp_conservation_scores
+        File hg38_vep_cache
         String vep_hail_docker
         RuntimeAttr? runtime_attr_override
     }
@@ -94,6 +97,7 @@ task vepAnnotate {
     command <<<
         set -euo pipefail
 
+        tar xzf ~{hg38_vep_cache}
         echo '{"command": [
         "vep",
         "--format", "vcf",
@@ -103,7 +107,8 @@ task vepAnnotate {
         "--everything",
         "--allele_number",
         "--no_stats",
-        "--cache", "--offline",
+        "--cache", 
+        "--offline",
         "--minimal",
         "--assembly", "GRCh38",
         "--fasta", "~{top_level_fa}",

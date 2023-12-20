@@ -1,6 +1,6 @@
 import pandas as pd
-import numpy as np
 import sys
+import os
 
 samples = sys.argv[1]
 ped_uri = sys.argv[2]
@@ -23,6 +23,6 @@ for sample in ped.index:
         # incomplete family
         ped = ped.drop(sample)
 
-new_ped_filename = ped_uri.split('.ped')[0]+'_subset.ped'
+new_ped_filename = os.path.basename(ped_uri).split('.ped')[0]+'_subset.ped'
 ped.to_csv(new_ped_filename, sep="\t", index=False)
 print(f"ped subset saved to {new_ped_filename}")
