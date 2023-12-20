@@ -97,7 +97,7 @@ task vepAnnotate {
     command <<<
         set -euo pipefail
 
-        tar xzf ~{hg38_vep_cache}
+        tar xzf ~{hg38_vep_cache} -C /opt/vep
         echo '{"command": [
         "vep",
         "--format", "vcf",

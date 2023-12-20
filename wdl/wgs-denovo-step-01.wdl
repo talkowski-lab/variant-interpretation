@@ -23,7 +23,7 @@ workflow step1 {
         String bucket_id
         String cohort_prefix
         String hail_docker
-        Boolean bad_header
+        Boolean bad_header=false
         RuntimeAttr? runtime_attr_merge_vcfs
     }
 
