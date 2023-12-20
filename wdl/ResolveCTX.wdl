@@ -103,7 +103,8 @@ workflow ResolveCTX{
             runtime_attr_override = runtime_attr_override_merge
     }
 
-    samples_pe = transpose(read_tsv(mergeVcfRawForPE.samples_with_ctx_for_pe)[0])
+    File samples_for_pe = mergeVcfRawForPE.samples_with_ctx_for_pe
+    Array[String] samples_pe = transpose(read_tsv(samples_for_pe))[0]
 
     scatter (sample in samples_pe){
 
