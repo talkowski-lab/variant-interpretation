@@ -81,18 +81,8 @@ task subset_sample_roi {
   }
 
   command {
-    set -eu
-
+    set -euo pipefail
     grep -w ~{sample} ~{regions} > ~{sample}.bed
-
-    set -o pipefail
-
-    if [ -s ~{sample}.bed ]; then
-      bgzip ~{sample}.bed
-    else
-      touch ~{sample}.bed
-      bgzip ~{sample}.bed
-    fi
   }
 
   runtime {

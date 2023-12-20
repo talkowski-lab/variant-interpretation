@@ -98,6 +98,7 @@ workflow ResolveCTX{
         input:
             input_raw = reformatRawOnlyForPE.raw_only_for_pe,
             input_vcf = CtxVcf2Bed.ctx_vcf_for_pe,
+            sample_batch = sample_batch,
             docker = docker_path,
             prefix = prefix,
             runtime_attr_override = runtime_attr_override_merge
@@ -365,6 +366,7 @@ task mergeVcfRawForPE{
     input{
         File input_raw
         File input_vcf
+        File sample_batch
         String docker
         String prefix
         RuntimeAttr? runtime_attr_override
@@ -383,7 +385,7 @@ task mergeVcfRawForPE{
 
     output{
         File merged_vcf_raw_for_pe = "~{prefix}_vcf_raw_forPE.bed.gz"
-        File samples_with_ctx_for_pe = "~{prefix}_samples_forPE.txt"
+        File samples_with_ctx_for_pe = "~{prefix}_samples_forPE_batch.txt"
     }
     command <<<
         set -euo pipefail
@@ -392,6 +394,8 @@ task mergeVcfRawForPE{
             bgzip -c > ~{prefix}_vcf_raw_forPE.bed.gz
 
         zcat ~{prefix}_vcf_raw_forPE.bed.gz | cut -f5 | sort -u > ~{prefix}_samples_forPE.txt
+        grep -w ~{prefix} ~{sample_batch} > batch_samples.txt
+        grep -f ~{prefix}_samples_forPE.txt batch_samples.txt > ~{prefix}_samples_forPE_batch.txt
     >>>
 
     runtime {
