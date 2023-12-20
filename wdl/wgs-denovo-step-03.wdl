@@ -16,7 +16,7 @@ workflow step3 {
         File merged_preprocessed_vcf_file
         # File vep_annotated_final_vcf_single
         String hail_docker
-        String sv_base_mini_docker
+        # String sv_base_mini_docker
         String trio_denovo_docker
         File uberSplit_v3_py
         Int batch_size
