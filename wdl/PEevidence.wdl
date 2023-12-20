@@ -77,12 +77,22 @@ task subset_sample_roi {
   RuntimeAttr runtime_attr = select_first([runtime_attr_override, default_attr])
 
   output{
-    File sample_roi = "~{sample}.bed"
+    File sample_roi = "~{sample}.bed.gz"
   }
 
   command {
-    set -e
+    set -eu
+
     grep -w ~{sample} ~{regions} > ~{sample}.bed
+
+    set -o pipefail
+
+    if [ -s ~{sample}.bed ]; then
+      bgzip ~{sample}.bed
+    else
+      touch ~{sample}.bed
+      bgzip ~{sample}.bed
+    fi
   }
 
   runtime {
@@ -123,6 +133,7 @@ task subset_pe_evidence {
 
   command {
     set -ex
+    gunzip ~{sample_bed}
 
     if [[ $(wc -l <~{sample_bed}) -ge 1 ]]; then
       while read chr1 pos1 chr2 pos2 sample carriers svname; do
