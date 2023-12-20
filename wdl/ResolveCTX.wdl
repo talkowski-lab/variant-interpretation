@@ -371,8 +371,8 @@ task reformatRawOnlyForPE{
 
 task mergeVcfRawForPE{
     input{
-        File input_raw
-        File input_vcf
+        Array[File] input_raw
+        Array[File] input_vcf
         String docker
         String prefix
         RuntimeAttr? runtime_attr_override
@@ -395,7 +395,7 @@ task mergeVcfRawForPE{
     }
     command <<<
         set -euo pipefail
-        zcat ~{input_raw} ~{input_vcf}| \
+        zcat ~{sep=' ' input_raw} ~{sep=' ' input_vcf} | \
             sort -k 1,1 -k2,2n | \
             bgzip -c > ~{prefix}_vcf_raw_forPE.bed.gz
 
