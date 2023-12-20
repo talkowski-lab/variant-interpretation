@@ -110,7 +110,7 @@ task subsetPed {
 
     command <<<
         bcftools query -l ~{vcf_file} > samples.txt
-        python3 ~{subset_ped_python_script} samples.txt ~{ped_uri}
+        python3 ~{subset_ped_python_script} samples.txt ~{ped_uri} > stdout
         # awk 'FNR==NR{values[$1]; next} $2 in values' samples.txt ~{ped_uri} > ~{basename(ped_uri, '.ped')+'_subset.ped'}
     >>>
 

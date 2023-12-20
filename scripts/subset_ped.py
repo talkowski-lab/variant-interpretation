@@ -23,4 +23,6 @@ for sample in ped.index:
         # incomplete family
         ped = ped.drop(sample)
 
-ped.to_csv(ped_uri.split('.ped')[0]+'_subset.ped', sep="\t")
+new_ped_filename = ped_uri.split('.ped')[0]+'_subset.ped'
+ped.to_csv(new_ped_filename, sep="\t", index=False)
+print(f"ped subset saved to {new_ped_filename}")
