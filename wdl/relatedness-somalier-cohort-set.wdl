@@ -375,7 +375,7 @@ task splitMergeVCFs {
             bcftools query -l $cur_vcf | sort -u > vcf_samples.txt
 
             shared_samples=$(comm -12 merged_vcf_samples.txt vcf_samples.txt | tr "\n" "," | head -c -1)
-            if [ -z "$merged_vcf_samples" ]; then
+            if [ -z "$shared_samples" ]; then
                 bcftools view -G -Oz -o tmp_merged_shared.vcf.gz $merged_vcf
                 bcftools view -G -Oz -o tmp_shared.vcf.gz $cur_vcf
             else
