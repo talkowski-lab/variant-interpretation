@@ -67,7 +67,8 @@ workflow wgs_denovo_full {
             # vep_annotated_final_vcf_single=vep_annotated_final_vcf[0][0],
             merged_preprocessed_vcf_file=step1and2.merged_preprocessed_vcf_file,
             hail_docker=hail_docker,
-            sv_base_mini_docker=sv_base_mini_docker,
+            # sv_base_mini_docker=sv_base_mini_docker,
+            trio_denovo_docker=trio_denovo_docker,
             uberSplit_v3_py=uberSplit_v3_py,
             batch_size=batch_size,
             subset_ped_python_script=subset_ped_python_script

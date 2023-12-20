@@ -17,6 +17,7 @@ workflow step3 {
         # File vep_annotated_final_vcf_single
         String hail_docker
         String sv_base_mini_docker
+        String trio_denovo_docker
         File uberSplit_v3_py
         Int batch_size
         Boolean subset_ped=true
@@ -44,7 +45,8 @@ workflow step3 {
             input:
                 ped_uri=ped_uri,
                 vcf_file=merged_preprocessed_vcf_file,
-                sv_base_mini_docker=sv_base_mini_docker,
+                # sv_base_mini_docker=sv_base_mini_docker,
+                trio_denovo_docker=trio_denovo_docker,
                 subset_ped_python_script=subset_ped_python_script
         }
     }
@@ -73,7 +75,8 @@ task subsetPed {
         File ped_uri
         File vcf_file
         File subset_ped_python_script
-        String sv_base_mini_docker
+        # String sv_base_mini_docker
+        String trio_denovo_docker
         RuntimeAttr? runtime_attr_override
     }
 
@@ -100,7 +103,8 @@ task subsetPed {
         cpu: select_first([runtime_override.cpu_cores, runtime_default.cpu_cores])
         preemptible: select_first([runtime_override.preemptible_tries, runtime_default.preemptible_tries])
         maxRetries: select_first([runtime_override.max_retries, runtime_default.max_retries])
-        docker: sv_base_mini_docker
+        # docker: sv_base_mini_docker
+        docker: trio_denovo_docker
         bootDiskSizeGb: select_first([runtime_override.boot_disk_gb, runtime_default.boot_disk_gb])
     }
 
