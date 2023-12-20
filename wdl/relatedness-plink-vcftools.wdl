@@ -74,7 +74,7 @@ task VCFToolsRelatedness {
 
     command <<<
         ##Run VCFtools
-        vcftools --gzvcf ~{vcf_file} --relatedness2 --positions ~{purcell5k}
+        vcftools --gzvcf ~{vcf_file} --relatedness2 --bed ~{purcell5k}
     >>>
 }
 
