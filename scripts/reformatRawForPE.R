@@ -30,4 +30,4 @@ raw_input %>%
 names(raw_output) <- c("chrom1", "pos1", "chrom2", "pos2", "sample", "num_samples", "name")
 
 #write output
-write.table(raw_output, output_file, sep = "\t", quote = F, row.names = F, col.names = F)
+write.table(raw_output, output_file, sep = "\t", quote = F, row.names = F, col.names = T)
