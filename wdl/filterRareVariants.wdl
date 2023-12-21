@@ -31,7 +31,7 @@ workflow filterRareVariants {
                 sv_base_mini_docker=sv_base_mini_docker,
                 cohort_prefix=cohort_prefix,
                 merge_or_concat='concat',
-                runtime_attr_override=select_first([runtime_attr_merge_vcfs])
+                runtime_attr_override=runtime_attr_merge_vcfs
         }
     }
     call mergeVCFs as mergeCohort {
@@ -40,7 +40,7 @@ workflow filterRareVariants {
         sv_base_mini_docker=sv_base_mini_docker,
         cohort_prefix=cohort_prefix,
         merge_or_concat='concat',
-        runtime_attr_override=select_first([runtime_attr_merge_vcfs])
+        runtime_attr_override=runtime_attr_merge_vcfs
     }
 
     call splitTrioVCFs {
@@ -49,7 +49,7 @@ workflow filterRareVariants {
             vcf_file=mergeCohort.merged_vcf_file,
             sv_base_mini_docker=sv_base_mini_docker,
             cohort_prefix=cohort_prefix,
-            runtime_attr_override=select_first([runtime_attr_split_vcf])
+            runtime_attr_override=runtime_attr_split_vcf
     }
 
     scatter (vcf_file in splitTrioVCFs.split_trio_vcfs) {
@@ -59,7 +59,7 @@ workflow filterRareVariants {
                 AC_threshold=AC_threshold,
                 AF_threshold=AF_threshold,
                 sv_base_mini_docker=sv_base_mini_docker,
-                runtime_attr_override=select_first([runtime_attr_filter_vcf])
+                runtime_attr_override=runtime_attr_filter_vcf
         }
     }
 
