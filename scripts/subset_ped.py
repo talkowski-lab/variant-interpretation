@@ -1,4 +1,5 @@
 import pandas as pd
+import numpy as np
 import sys
 import os
 
@@ -9,7 +10,7 @@ ped = pd.read_csv(ped_uri, sep="\t")
 samples = pd.read_csv(samples, header=None)[0]
 
 ped.index = ped.sample_id
-ped = ped.loc[samples]
+ped = ped.loc[np.intersect1d(ped.index, samples)]
 
 for sample in ped.index:
     mother = ped.loc[sample, 'maternal_id']
@@ -22,6 +23,7 @@ for sample in ped.index:
     except Exception as e:
         # incomplete family
         ped = ped.drop(sample)
+        pass
 
 new_ped_filename = os.path.basename(ped_uri).split('.ped')[0]+'_subset.ped'
 ped.to_csv(new_ped_filename, sep="\t", index=False)

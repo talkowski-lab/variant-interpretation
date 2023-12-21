@@ -97,13 +97,15 @@ task vepAnnotate {
     command <<<
         set -euo pipefail
 
-        tar xzf ~{hg38_vep_cache} -C /opt/vep
+        tar xzf ~{hg38_vep_cache} 
+        dir_cache=$(dirname "~{hg38_vep_cache}")
         echo '{"command": [
         "vep",
         "--format", "vcf",
         "__OUTPUT_FORMAT_FLAG__",
         "--force_overwrite",
-        "-dir", "/opt/vep",
+        "-dir_plugin", "/opt/vep",
+        "-dir_cache", "'$dir_cache'",
         "--everything",
         "--allele_number",
         "--no_stats",
