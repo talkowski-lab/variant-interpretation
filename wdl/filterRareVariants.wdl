@@ -214,7 +214,7 @@ task filterRareVariants {
     String new_filename = basename(vcf_file, '.vcf.gz') + '_ultra_rare.vcf.gz'
     
     command <<<
-        bcftools view -i "(INFO/AF<0.005 || INFO/AC=1) && GT[0]='het' && ((GT[1]!='het' && GT[2]='het') || (GT[1]='het' && GT[2]!='het'))" \
+        bcftools view -i "(INFO/AF<~{AF_threshold} || INFO/AC=~{AC_threshold}) && GT[0]='het' && ((GT[1]!='het' && GT[2]='het') || (GT[1]='het' && GT[2]!='het'))" \
         -Oz -o ~{new_filename} ~{vcf_file}
     >>>
 
