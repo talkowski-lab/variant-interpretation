@@ -17,7 +17,6 @@ workflow filterRareVariants {
         Array[Array[File]] vep_annotated_final_vcf_idx
         String cohort_prefix
         String sv_base_mini_docker
-        String trio_denovo_docker
         Float AF_threshold=0.005
         Int AC_threshold=1
         RuntimeAttr? runtime_attr_merge_vcfs
