@@ -14,7 +14,7 @@ workflow filterRareVariants {
         File trio_uri
         File ped_uri
         Array[Array[File]] vep_annotated_final_vcf
-        Array[Array[File]] vep_annotated_final_vcf_idx
+        # Array[Array[File]] vep_annotated_final_vcf_idx
         String cohort_prefix
         String sv_base_mini_docker
         Float AF_threshold=0.005
