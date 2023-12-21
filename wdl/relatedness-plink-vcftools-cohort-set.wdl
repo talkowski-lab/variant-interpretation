@@ -111,13 +111,13 @@ task subsetVCFs {
     }
 
     command {
-        bcftools view -R ~{bed_file} ~{vcf_uri} -o ~{basename(vcf_uri, '.vcf.gz')+".somalier.subset.vcf.gz"}
-        bcftools index -t ~{basename(vcf_uri, '.vcf.gz')+".somalier.subset.vcf.gz"}
+        bcftools view -R ~{bed_file} ~{vcf_uri} -o ~{basename(vcf_uri, '.vcf.gz')+".subset.vcf.gz"}
+        bcftools index -t ~{basename(vcf_uri, '.vcf.gz')+".subset.vcf.gz"}
     }
 
     output {
-        File subset_vcf = basename(vcf_uri, '.vcf.gz')+".somalier.subset.vcf.gz"
-        File subset_vcf_idx = basename(vcf_uri, '.vcf.gz')+".somalier.subset.vcf.gz.tbi"
+        File subset_vcf = basename(vcf_uri, '.vcf.gz')+".subset.vcf.gz"
+        File subset_vcf_idx = basename(vcf_uri, '.vcf.gz')+".subset.vcf.gz.tbi"
     }
 }
 
