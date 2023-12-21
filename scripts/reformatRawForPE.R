@@ -27,5 +27,7 @@ raw_input$num_samples <- sapply(raw_input$coords, function(x) nrow(subset(raw_in
 raw_input %>%
   select(V1, V2, V8, V9, V6, num_samples, V4) -> raw_output
 
+names(raw_output) <- c("chrom1", "pos1", "chrom2", "pos2", "sample", "num_samples", "name")
+
 #write output
 write.table(raw_output, output_file, sep = "\t", quote = F, row.names = F, col.names = F)

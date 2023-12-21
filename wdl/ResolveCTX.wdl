@@ -105,7 +105,7 @@ workflow ResolveCTX{
     }
 
     File samples_for_pe = mergeVcfRawForPE.samples_with_ctx_for_pe
-    Array[String] samples_pe = transpose(read_tsv(samples_for_pe))[0]
+    Array[String] samples_pe = transpose(read_tsv(samples_for_pe))[1]
 
     scatter (sample in samples_pe){
 
