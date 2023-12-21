@@ -12,7 +12,7 @@ struct RuntimeAttr {
 workflow relatedness {
     input {
         Array[Array[Array[File]]] vep_annotated_final_vcf
-        File purcell5k
+        File bed_file
         String relatedness_docker
         String somalier_docker
         String sv_base_mini_docker
@@ -25,7 +25,7 @@ workflow relatedness {
             scatter (vcf_uri in vcf_files) {
                 call subsetVCFs {
                     input:
-                        bed_file=purcell5k,
+                        bed_file=bed_file,
                         vcf_uri=vcf_uri,
                         vcf_idx=vcf_uri+'.tbi',
                         somalier_docker=somalier_docker
@@ -62,7 +62,7 @@ workflow relatedness {
     call VCFToolsRelatedness {
         input:
             vcf_file=splitMergeVCFs.merged_vcf_file,
-            purcell5k=purcell5k,
+            # bed_file=bed_file,
             relatedness_docker=relatedness_docker,
             runtime_attr_override=runtime_attr_relatedness
     }
@@ -294,7 +294,7 @@ task splitMergeVCFs {
 task VCFToolsRelatedness {
     input {
         File vcf_file
-        File purcell5k
+        # File bed_file
         String relatedness_docker
         RuntimeAttr? runtime_attr_override  
     }
@@ -326,7 +326,7 @@ task VCFToolsRelatedness {
 
     command <<<
         ##Run VCFtools
-        vcftools --gzvcf ~{vcf_file} --relatedness2 --bed ~{purcell5k}
+        vcftools --gzvcf ~{vcf_file} --relatedness2
     >>>
 }
 
