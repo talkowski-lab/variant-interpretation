@@ -5,14 +5,14 @@ import sys
 
 vcf_file = sys.argv[1]
 vep_annotated_vcf_name = sys.argv[2]
-cores = sys.argv[3]
-mem = sys.argv[4]
+cores = int(np.floor(float(sys.argv[3])))
+mem = int(np.floor(float(sys.argv[4])))
 
 builder = (
                 SparkSession 
                 .builder
                 .config("spark.executor.cores", cores)
-                .config("spark.executor.memory", f"{int(mem)}g")
+                .config("spark.executor.memory", f"{mem}g")
                 .enableHiveSupport()
 )
                                
