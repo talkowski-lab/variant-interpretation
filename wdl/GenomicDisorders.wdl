@@ -270,7 +270,7 @@ task cleanPed{
 
         Rscript /src/variant-interpretation/scripts/cleanPed.R ~{ped_input}
         cut -f2 cleaned_ped.txt | tail -n+2 > all_samples.txt
-        bcftools query -l ${vcf_input} > samples_to_include_in_ped.txt
+        bcftools query -l ~{vcf_input} > samples_to_include_in_ped.txt
         grep -w -v -f samples_to_include_in_ped.txt all_samples.txt > excluded_samples.txt
         grep -w -f excluded_samples.txt cleaned_ped.txt | cut -f1 | sort -u > excluded_families.txt
         grep -w -v -f excluded_families.txt cleaned_ped.txt > subset_cleaned_ped.txt
