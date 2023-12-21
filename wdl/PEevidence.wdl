@@ -82,7 +82,9 @@ task subset_sample_roi {
 
   command {
     set -euo pipefail
-    grep -w ~{sample} ~{regions} > ~{sample}.bed
+    grep ^chrom1 ~{regions} > ~{sample}.bed
+    grep -v ^chrom1 ~{regions} | \
+      grep -w ~{sample} >> ~{sample}.bed
   }
 
   runtime {
