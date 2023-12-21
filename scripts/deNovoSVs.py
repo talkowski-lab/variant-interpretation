@@ -373,7 +373,7 @@ vcf_metrics    """
     delta = end - start
     print("Took %f seconds to process" % delta)
 
-    # Remove mCNVs, BNDs and SVs in sex chromosomes
+    # Remove mCNVs, BNDs
     start = time.time()
     verbosePrint('Remove BND and mCNV', verbose)
     bed = bed[(~bed['svtype'].isin(['BND', 'CNV']))]
@@ -424,8 +424,8 @@ vcf_metrics    """
     bed_parents['family_id'] = bed_parents.apply(lambda r: getFamilyID(r,ped), axis=1)
     bed_parents['name_famid'] = bed_parents['name'] + "_" + bed_parents['family_id'].astype(str).str.strip("[]")
 
-    # Filter out by frequency - AF gnomad < 0.01 OR inGD
-    verbosePrint('Filtering by frequency', verbose)
+    # Flag out by frequency - AF gnomad < 0.01 OR inGD
+    verbosePrint('Flagging by frequency', verbose)
     start = time.time()
     bed_child["AF"] = pd.to_numeric(bed_child["AF"])
     try:
@@ -448,7 +448,7 @@ vcf_metrics    """
     print("Took %f seconds to process" % delta)
 
     # Get counts within family and remove if SV in parents
-    verbosePrint('Keep variants in children only', verbose)
+    verbosePrint('Flag if de novo in family', verbose)
     start = time.time()
     try:
         parents_SC = int(config['parents_SC'])
@@ -526,7 +526,7 @@ vcf_metrics    """
     # LARGE CNV: Check for false negative in parents: check depth in parents, independently of the calls
     verbosePrint('Large CNVs check', verbose)
     start = time.time()
-    # 1. Strip out if same CN in parents and proband if not in chrX
+    # 1.Flag if same CN in parents and proband if not in chrX
     remove_large_cnv = bed_child.loc[~(((bed_child['SVLEN'] <= 5000) | ((bed_child['RD_CN'] != bed_child['maternal_rdcn']) & (bed_child['RD_CN'] != bed_child['paternal_rdcn']))) | (bed_child['chrom'] == 'chrX'))]
     bed_child.loc[bed_child['name_famid'].isin(remove_large_cnv) & bed_child['is_de_novo'] == True, 'filter_flag'] = 'same_cn_as_parents'
     bed_child.loc[bed_child['name_famid'].isin(remove_large_cnv) & bed_child['is_de_novo'] == True, 'is_de_novo'] = False
@@ -680,12 +680,12 @@ vcf_metrics    """
     bed_child.loc[~(bed_child['name_famid'].isin(ins_names_overlap + large_cnv_names_overlap + small_cnv_names_overlap)) & bed_child['is_de_novo'] == True, 'filter_flag'] = 'not_in_raw_files_or_in_parents_raw_files'
     bed_child.loc[~(bed_child['name_famid'].isin(ins_names_overlap + large_cnv_names_overlap + small_cnv_names_overlap)) & bed_child['is_de_novo'] == True, 'is_de_novo'] = False
 
-    ###############
-    ## FILTERING ##
-    ###############
+    #######################
+    ## ANNOTATE / FILTER ##
+    #######################
     verbosePrint('Filtering out calls', verbose)
 
-    # 1. Filter out calls in exclude regions
+    # 1. Flag if variants are in exclude regions
     verbosePrint('Filtering out calls in exclude regions', verbose)
     start = time.time()
     # Reformat exclude_regions to bedtool
@@ -728,7 +728,7 @@ vcf_metrics    """
 
     bed_child.to_csv(path_or_buf="after_large_cnv.txt", mode='a', index=False, sep='\t', header=True)
 
-    # Filter out if small cnvs that are SR-only don't have BOTHSIDES_SUPPORT
+    # Flag if small cnvs that are SR-only don't have BOTHSIDES_SUPPORT
     verbosePrint('Filtering out small CNVs that are SR-only and dont have BOTHSIDES_SUPPORT', verbose)
     start = time.time()
     remove_small = bed_child[(bed_child['is_small_cnv'] == True) &
@@ -740,7 +740,7 @@ vcf_metrics    """
     delta = end - start
     print("Took %f seconds to process" % delta)
 
-    # Filter out calls that are depth only and < depth_only_size
+    # Flag calls that are depth only and < depth_only_size
     verbosePrint('Filtering out calls that are depth only and < depth_only_size', verbose)
     start = time.time()
     remove_depth_small = bed_child[ (bed_child['is_depth_only_small'] == True) ]['name_famid'].to_list()
@@ -750,7 +750,7 @@ vcf_metrics    """
     delta = end - start
     print("Took %f seconds to process" % delta)
 
-    # Filter out DELs that are >500bp and RD_CN=2 and PE only envidence
+    # Flag DELs that are >500bp and RD_CN=2 and PE only envidence
     verbosePrint('Filtering out DELs that are RD_CN=2 and PE only evidence', verbose)
     start = time.time()
     remove_dels = bed_child[(bed_child['SVTYPE'] == 'DEL') & ((bed_child['RD_CN'] == '2') | (bed_child['RD_CN'] == '3')) & (bed_child['EVIDENCE'] == 'PE')]['name_famid'].to_list()
@@ -760,8 +760,8 @@ vcf_metrics    """
     delta = end - start
     print("Took %f seconds to process" % delta)
 
-    # 4. Filter by quality
-    # Filter out if parents GQ is <= gq_min
+    # 4. Flag by quality
+    # Flag out if parents GQ is <= gq_min
     verbosePrint('Filtering if parents GQ <= min_gq', verbose)
     start = time.time()
     if (len(bed_child.index) > 0):
@@ -773,7 +773,7 @@ vcf_metrics    """
     delta = end - start
     print("Took %f seconds to process" % delta)
 
-    # Filter out INS that are manta or melt only and are SR only, have GQ=0, and FILTER contains 'HIGH_SR_BACKGROUND'
+    # Flag out INS that are manta or melt only and are SR only, have GQ=0, and FILTER contains 'HIGH_SR_BACKGROUND'
     verbosePrint('Filtering out INS that are manta or melt only and SR only, with GQ=0 and FILTER contains HIGH_SR_BACKGROUND', verbose)
     start = time.time()
     remove_ins = bed_child[(bed_child['SVTYPE'] == 'INS') & ((bed_child['ALGORITHMS'] == 'manta') | (bed_child['ALGORITHMS'] == 'melt')) & (bed_child['EVIDENCE_FIX'] == 'SR') & ((bed_child['GQ'] == '0') | (bed_child.FILTER.str.contains('HIGH_SR_BACKGROUND')))]['name_famid'].to_list()
@@ -783,7 +783,7 @@ vcf_metrics    """
     delta = end - start
     print("Took %f seconds to process" % delta)
 
-    # Remove if low coverage in parents
+    # Flag if low coverage in parents
     start = time.time()
     bed_child_coverage = bed_child[bed_child['is_de_novo'] == True]
     verbosePrint('Removing calls if there is low coverage evidence in parents', verbose)
@@ -819,7 +819,9 @@ vcf_metrics    """
 
     # Define output files
     output = bed_final
-    de_novo = bed_final[(bed_final['is_de_novo'] == True) | (bed_final['filter_flag'] == 'ins_filter') | (bed_final['in_gd'] == True)]
+    de_novo = bed_final[(bed_final['is_de_novo'] == True) |
+                        (bed_final['filter_flag'] == 'ins_filter') |
+                        (bed_final['in_gd'] == True)]
 
     # Write output
     output.to_csv(path_or_buf=out_file, mode='a', index=False, sep='\t', header=True)
