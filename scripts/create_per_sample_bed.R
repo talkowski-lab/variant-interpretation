@@ -10,6 +10,7 @@ parents_gd <- args[3]
 ped <- args[4]
 chromosome <- args[5]
 
+
 df_ori <- as.data.frame(read.table(input_gd, header = FALSE, sep="\t",stringsAsFactors=FALSE, quote=""))
 colnames(df_ori) <- c("chrom", "start", "end", "name", "annotation", "svtype")
 df <- subset(df_ori, chrom == chromosome)
@@ -35,18 +36,23 @@ if (nrow(df_DEL) > 0 & nrow(df_DUP) > 0) {
 if (exists('df2')) {
   ped <- as.data.frame(read.table(ped, header = TRUE, sep="\t",stringsAsFactors=FALSE, quote=""))
   samples <- ped$IndividualID
-  df2$samples <- gsub(" ", "",toString(samples))
-
-  df2 %>%
-    subset(select = c(chrom, start, end, name, svtype, samples)) %>%
-    separate_rows(samples, sep = ",", convert = T) -> df3
-
-  df3$chrom <- paste0(df3$chrom, "_", df3$svtype, "_", df3$samples)
-  df3 <- df3[, c(1,2,3,4)]
-
+  
   ped_subset <- subset(ped, select = c('FamID', 'IndividualID'))
   colnames(ped_subset) <- c('FamID', 'samples')
-
+  
+  
+  df2$samples <- gsub(" ", "",toString(samples))
+  
+  df2 %>%
+    subset(select = c(chrom, start, end, name, svtype, samples)) %>%
+    separate_rows(samples, sep = ",", convert = T) -> df3_nonMerged
+  
+  df3 <- merge(df3_nonMerged,ped_subset,by.x="samples",by.y="samples")
+  
+  df3$tag <- paste0(df3$chrom, "_", df3$svtype, "_", df3$FamID)
+  df3$chrom <- paste0(df3$chrom, "_", df3$svtype, "_", df3$samples)
+  df3 <- df3[, c(2,3,4,5,8)]
+  
   df2 %>%
     subset(select = c(chrom, start, end, name, svtype, samples)) %>%
     separate_rows(samples, sep = ",", convert = T) -> new_df
@@ -55,7 +61,6 @@ if (exists('df2')) {
   new_df$chrom <- paste0(new_df$chrom, "_", new_df$svtype, "_", new_df$FamID)
   new_df <- new_df[, c(2,3,4,5)]
 
-  #df4 = rbind(df3,new_df)
 
   write.table(df3, proband_gd, sep = "\t", quote = F, row.names = F, col.names = F)
   write.table(new_df, parents_gd, sep = "\t", quote = F, row.names = F, col.names = F)
