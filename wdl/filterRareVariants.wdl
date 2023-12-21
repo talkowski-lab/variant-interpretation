@@ -63,8 +63,18 @@ workflow filterRareVariants {
         }
     }
 
+    call mergeVCFs as mergeFiltered {
+        input:
+            vcf_files=filterRareVariants.filtered_vcf_file,
+            sv_base_mini_docker=sv_base_mini_docker,
+            cohort_prefix=cohort_prefix,
+            merge_or_concat='merge',
+            runtime_attr_override=runtime_attr_merge_vcfs
+    }
+
     output {
-        Array[File] filtered_trio_vcfs = filterRareVariants.filtered_vcf_file
+        File merged_filtered_vcf_file=mergeFiltered.merged_vcf_file
+        File merged_filtered_vcf_idx=mergeFiltered.merged_vcf_idx
     }
 }
 
