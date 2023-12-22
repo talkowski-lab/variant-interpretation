@@ -112,7 +112,6 @@ task mergeVCFs {
     }
 
     String merged_vcf_name="~{cohort_prefix}.merged.vcf.gz"
-    String sorted_vcf_name="~{cohort_prefix}.merged.sorted.vcf.gz"
 
     String merge_or_concat_new = if merge_or_concat == 'concat' then 'concat -n'  else merge_or_concat
 
@@ -121,13 +120,12 @@ task mergeVCFs {
         VCFS="~{write_lines(vcf_files)}"
         cat $VCFS | awk -F '/' '{print $NF"\t"$0}' | sort -k1,1V | awk '{print $2}' > vcfs_sorted.list
         bcftools ~{merge_or_concat_new} --no-version -Oz --file-list vcfs_sorted.list --output ~{merged_vcf_name}
-        bcftools sort ~{merged_vcf_name} --output ~{sorted_vcf_name}
-        bcftools index -t ~{sorted_vcf_name}
+        bcftools index -t ~{merged_vcf_name}
     >>>
 
     output {
-        File merged_vcf_file=sorted_vcf_name
-        File merged_vcf_idx=sorted_vcf_name + ".tbi"
+        File merged_vcf_file=merged_vcf_name
+        File merged_vcf_idx=merged_vcf_name + ".tbi"
     }
 }
 
