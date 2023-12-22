@@ -391,12 +391,12 @@ task mergeVcfRawForPE{
         set -euo pipefail
 
         ##Write header
-        zcat ~{input_raw} ~{input_vcf}| grep ^chrom1 > ~{prefix}_vcf_raw_forPE.bed.gz
+        zcat ~{input_raw} ~{input_vcf}| grep ^chrom1 > ~{prefix}_vcf_raw_forPE.bed
 
         ##Write calls
         zcat ~{input_raw} ~{input_vcf}| \
             grep -v ^chrom1 | \
-            sort -k 1,1 -k2,2n >> ~{prefix}_vcf_raw_forPE.bed.gz
+            sort -k 1,1 -k2,2n >> ~{prefix}_vcf_raw_forPE.bed
         bgzip ~{prefix}_vcf_raw_forPE.bed
 
         #Make list of samples with raw calls
