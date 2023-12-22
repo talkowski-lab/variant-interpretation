@@ -66,6 +66,7 @@ workflow filterRareVariants {
     call mergeVCFs as mergeFiltered {
         input:
             vcf_files=filterRareVariants.filtered_vcf_file,
+            vcf_files_idx=filterRareVariants.filtered_vcf_idx,
             sv_base_mini_docker=sv_base_mini_docker,
             cohort_prefix=cohort_prefix,
             merge_or_concat='merge',
@@ -81,6 +82,7 @@ workflow filterRareVariants {
 task mergeVCFs {
     input {
         Array[File] vcf_files
+        Array[File]? vcf_files_idx
         String sv_base_mini_docker
         String cohort_prefix
         String merge_or_concat    
