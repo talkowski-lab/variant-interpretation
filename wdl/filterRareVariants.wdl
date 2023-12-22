@@ -214,9 +214,11 @@ task filterRareVariants {
     command <<<
         bcftools view -i "(INFO/AF<~{AF_threshold} || INFO/AC=~{AC_threshold}) && GT[0]='het' && ((GT[1]!='het' && GT[2]='het') || (GT[1]='het' && GT[2]!='het'))" \
         -Oz -o ~{new_filename} ~{vcf_file}
+        bcftools index -t ~{new_filename}
     >>>
 
     output {
         File filtered_vcf_file = new_filename
+        File filtered_vcf_idx = new_filename + ".tbi"
     }
 }
