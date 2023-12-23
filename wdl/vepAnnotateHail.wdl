@@ -95,6 +95,8 @@ task vepAnnotate {
 
     output {
         File vep_vcf_file = vep_annotated_vcf_name
+        File hail_stdout = "STDOUT_warnings.txt"
+        File hail_log = "hail_log.txt"
     }
 
     String ancestor_dir = basename(human_ancestor_fa, "Homo_sapiens.GRCh38.dna.toplevel.fa.gz")
@@ -128,6 +130,6 @@ task vepAnnotate {
         }' > vep_config.json
 
         python3.9 ~{vep_annotate_hail_python_script} ~{vcf_file} ~{vep_annotated_vcf_name} ~{cpu_cores} ~{memory}
-
+        cp $(ls . | grep hail*.log) hail_log.txt
     >>>
 }

@@ -181,7 +181,8 @@ task filterRareVariants {
         }
 
         for i in "${!samples_array[@]}"; do 
-            filter_trio "$i" &
+            echo "trio $((i+1))/${#samples_array[@]}";
+            filter_trio "$i";
         done
         wait
     >>>
