@@ -14,13 +14,11 @@ workflow filterRareVariants {
         File trio_uri
         File ped_uri
         Array[Array[File]] vep_annotated_final_vcf
-        # Array[Array[File]] vep_annotated_final_vcf_idx
         String cohort_prefix
         String sv_base_mini_docker
         Float AF_threshold=0.005
         Int AC_threshold=1
         RuntimeAttr? runtime_attr_merge_vcfs
-        RuntimeAttr? runtime_attr_split_vcf
         RuntimeAttr? runtime_attr_filter_vcf
     }
 
@@ -43,30 +41,20 @@ workflow filterRareVariants {
         runtime_attr_override=runtime_attr_merge_vcfs
     }
 
-    call splitTrioVCFs {
+    call filterRareVariants {
         input:
             trio_uri=trio_uri,
             vcf_file=mergeCohort.merged_vcf_file,
+            AC_threshold=AC_threshold,
+            AF_threshold=AF_threshold,
             sv_base_mini_docker=sv_base_mini_docker,
-            cohort_prefix=cohort_prefix,
-            runtime_attr_override=runtime_attr_split_vcf
-    }
-
-    scatter (vcf_file in splitTrioVCFs.split_trio_vcfs) {
-        call filterRareVariants {
-            input:
-                vcf_file=vcf_file,
-                AC_threshold=AC_threshold,
-                AF_threshold=AF_threshold,
-                sv_base_mini_docker=sv_base_mini_docker,
-                runtime_attr_override=runtime_attr_filter_vcf
-        }
+            runtime_attr_override=runtime_attr_filter_vcf
     }
 
     call mergeVCFs as mergeFiltered {
         input:
-            vcf_files=filterRareVariants.filtered_vcf_file,
-            vcf_files_idx=filterRareVariants.filtered_vcf_idx,
+            vcf_files=filterRareVariants.split_trio_vcfs,
+            vcf_files_idx=filterRareVariants.split_trio_idx,
             sv_base_mini_docker=sv_base_mini_docker,
             cohort_prefix=cohort_prefix,
             merge_or_concat='merge',
@@ -131,10 +119,12 @@ task mergeVCFs {
     }
 }
 
-task splitTrioVCFs {
+task filterRareVariants {
     input {
         File trio_uri
         File vcf_file
+        Int AC_threshold
+        Float AF_threshold
         String sv_base_mini_docker
         String cohort_prefix
         RuntimeAttr? runtime_attr_override
@@ -165,62 +155,32 @@ task splitTrioVCFs {
         bootDiskSizeGb: select_first([runtime_override.boot_disk_gb, runtime_default.boot_disk_gb])
     }
 
-    command {
-        cat ~{trio_uri} | tail -n +2 | cut -f3-5 | tr '\t' ',' > samples.txt
-        cat ~{trio_uri} | tail -n +2 | cut -f2-3 | tr '\t' '_trio_' > filenames.txt
-        paste samples.txt samples.txt filenames.txt > trio.list
-        bcftools +split -S trio.list -Oz -o split_trio_vcfs ~{vcf_file}
-    }
-
-    output {
-        Array[File] split_trio_vcfs = glob("split_trio_vcfs/*")
-    }
-}
-
-task filterRareVariants {
-    input {
-        File vcf_file
-        Int AC_threshold
-        Float AF_threshold
-        String sv_base_mini_docker
-        RuntimeAttr? runtime_attr_override
-    }
-
-    Float input_size = size(vcf_file, "GB") 
-    Float base_disk_gb = 10.0
-    Float input_disk_scale = 5.0
-    
-    RuntimeAttr runtime_default = object {
-        mem_gb: 4,
-        disk_gb: ceil(base_disk_gb + input_size * input_disk_scale),
-        cpu_cores: 1,
-        preemptible_tries: 3,
-        max_retries: 1,
-        boot_disk_gb: 10
-    }
-
-    RuntimeAttr runtime_override = select_first([runtime_attr_override, runtime_default])
-    
-    runtime {
-        memory: "~{select_first([runtime_override.mem_gb, runtime_default.mem_gb])} GB"
-        disks: "local-disk ~{select_first([runtime_override.disk_gb, runtime_default.disk_gb])} HDD"
-        cpu: select_first([runtime_override.cpu_cores, runtime_default.cpu_cores])
-        preemptible: select_first([runtime_override.preemptible_tries, runtime_default.preemptible_tries])
-        maxRetries: select_first([runtime_override.max_retries, runtime_default.max_retries])
-        docker: sv_base_mini_docker
-        bootDiskSizeGb: select_first([runtime_override.boot_disk_gb, runtime_default.boot_disk_gb])
-    }
-
-    String new_filename = basename(vcf_file, '.vcf.gz') + '_ultra_rare.vcf.gz'
-    
     command <<<
-        bcftools view -i "(INFO/AF<~{AF_threshold} || INFO/AC=~{AC_threshold}) && GT[0]='het' && ((GT[1]!='het' && GT[2]='het') || (GT[1]='het' && GT[2]!='het'))" \
-        -Oz -o ~{new_filename} ~{vcf_file}
-        bcftools index -t ~{new_filename}
+        cat ~{trio_uri} | tail -n +2 | cut -f3-5 | tr '\t' ',' > samples.txt 
+        cat ~{trio_uri} | tail -n +2 | cut -f2-3 |  sed -E $'s/\t/_trio_/' > filenames.txt
+        readarray -t samples_array < samples.txt
+        readarray -t filenames_array < filenames.txt
+
+        filter_str="(INFO/AF<~{AF_threshold} || INFO/AC=~{AC_threshold}) && GT[0]='het' && ((GT[1]!='het' && GT[2]='het') || (GT[1]='het' && GT[2]!='het'))"
+        mkdir -p ultra_rare_trio_vcfs
+
+        filter_trio() {
+            i=$1
+            samples="${samples_array[$i]}";
+            filename="${filenames_array[$i]}";
+            bcftools view -s $samples -i "$(echo $filter_str)" \
+                -Oz -o ultra_rare_trio_vcfs/"$filename"_ultra_rare.vcf.gz ~{vcf_file};
+            bcftools index -t ultra_rare_trio_vcfs/"$filename"_ultra_rare.vcf.gz;
+        }
+
+        for i in "${!samples_array[@]}"; do 
+            filter_trio "$i" &
+        done
+        wait
     >>>
 
     output {
-        File filtered_vcf_file = new_filename
-        File filtered_vcf_idx = new_filename + ".tbi"
+        Array[File] split_trio_vcfs = glob("ultra_rare_trio_vcfs/*.vcf.gz")
+        Array[File] split_trio_idx = glob("ultra_rare_trio_vcfs/*.vcf.gz.tbi")
     }
 }

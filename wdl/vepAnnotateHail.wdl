@@ -104,6 +104,8 @@ task vepAnnotate {
 
         dir_cache=$(dirname "~{hg38_vep_cache}")
         tar xzf ~{hg38_vep_cache} -C $dir_cache
+        tabix -f -s 76 -b 77 -e 78 ~{loeuf_data}
+
         echo '{"command": [
         "vep",
         "--format", "vcf",
