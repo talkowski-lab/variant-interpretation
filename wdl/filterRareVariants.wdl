@@ -14,6 +14,7 @@ workflow filterRareVariants {
         File trio_uri
         File ped_uri
         Array[Array[File]] vep_annotated_final_vcf
+        Array[Array[File]] vep_annotated_final_vcf_idx
         String cohort_prefix
         String sv_base_mini_docker
         Float AF_threshold=0.005
@@ -26,6 +27,7 @@ workflow filterRareVariants {
         call mergeVCFs as mergeSharded {
             input:
                 vcf_files=cohort_vcf_files,
+                vcf_files_idx=vep_annotated_final_vcf_idx,
                 sv_base_mini_docker=sv_base_mini_docker,
                 cohort_prefix=cohort_prefix,
                 merge_or_concat='concat',
@@ -35,6 +37,7 @@ workflow filterRareVariants {
     call mergeVCFs as mergeCohort {
     input:
         vcf_files=mergeSharded.merged_vcf_file,
+        vcf_files_idx=mergeSharded.merged_vcf_idx,
         sv_base_mini_docker=sv_base_mini_docker,
         cohort_prefix=cohort_prefix,
         merge_or_concat='concat',
@@ -71,7 +74,7 @@ workflow filterRareVariants {
 task mergeVCFs {
     input {
         Array[File] vcf_files
-        Array[File]? vcf_files_idx
+        Array[File] vcf_files_idx
         String sv_base_mini_docker
         String cohort_prefix
         String merge_or_concat    
