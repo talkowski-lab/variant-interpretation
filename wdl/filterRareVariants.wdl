@@ -47,6 +47,7 @@ workflow filterRareVariants {
             vcf_file=mergeCohort.merged_vcf_file,
             AC_threshold=AC_threshold,
             AF_threshold=AF_threshold,
+            cohort_prefix=cohort_prefix,
             sv_base_mini_docker=sv_base_mini_docker,
             runtime_attr_override=runtime_attr_filter_vcf
     }
