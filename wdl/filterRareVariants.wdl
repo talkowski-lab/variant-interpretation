@@ -23,11 +23,14 @@ workflow filterRareVariants {
         RuntimeAttr? runtime_attr_filter_vcf
     }
 
-    scatter (cohort_vcf_files in vep_annotated_final_vcf) {
+    Array[Pair[Array[File], Array[File]]] vep_annotated_final = zip(vep_annotated_final_vcf, vep_annotated_final_vcf_idx)
+    scatter (vep_annotated_shard in vep_annotated_final) {
+        Array[File] cohort_vcf_files = vep_annotated_shard.left
+        Array[File] cohort_vcf_idx = vep_annotated_shard.right
         call mergeVCFs as mergeSharded {
             input:
                 vcf_files=cohort_vcf_files,
-                vcf_files_idx=vep_annotated_final_vcf_idx,
+                vcf_files_idx=cohort_vcf_idx,
                 sv_base_mini_docker=sv_base_mini_docker,
                 cohort_prefix=cohort_prefix,
                 merge_or_concat='concat',
