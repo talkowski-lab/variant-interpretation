@@ -37,20 +37,23 @@ workflow filterRareVariants {
                 runtime_attr_override=runtime_attr_merge_vcfs
         }
     }
-    call mergeVCFs as mergeCohort {
-    input:
-        vcf_files=mergeSharded.merged_vcf_file,
-        vcf_files_idx=mergeSharded.merged_vcf_idx,
-        sv_base_mini_docker=sv_base_mini_docker,
-        cohort_prefix=cohort_prefix,
-        merge_or_concat='concat',
-        runtime_attr_override=runtime_attr_merge_vcfs
+
+    if (length(mergeSharded.merged_vcf_file) > 1) {
+        call mergeVCFs as mergeCohort {
+        input:
+            vcf_files=mergeSharded.merged_vcf_file,
+            vcf_files_idx=mergeSharded.merged_vcf_idx,
+            sv_base_mini_docker=sv_base_mini_docker,
+            cohort_prefix=cohort_prefix,
+            merge_or_concat='concat',
+            runtime_attr_override=runtime_attr_merge_vcfs
+        }
     }
 
     call filterRareVariants {
         input:
             trio_uri=trio_uri,
-            vcf_file=mergeCohort.merged_vcf_file,
+            vcf_file=select_first([mergeCohort.merged_vcf_file, mergeSharded.merged_vcf_file[0]]),
             AC_threshold=AC_threshold,
             AF_threshold=AF_threshold,
             cohort_prefix=cohort_prefix,
