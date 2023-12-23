@@ -125,9 +125,10 @@ task subset_pe_evidence {
 
   command {
     set -ex
-    gunzip ~{sample_bed}
+    zcat ~{sample_bed} | grep -v ^chrom > sample_noheader.pe.bed
 
-    if [[ $(wc -l <~{sample_bed}) -ge 1 ]]; then
+
+    if [[ $(wc -l <sample_noheader.pe.bed) -ge 1 ]]; then
       while read chr1 pos1 chr2 pos2 sample carriers svname; do
         export GCS_OAUTH_TOKEN=$(gcloud auth application-default print-access-token)
         batchname=$(grep -w $sample ~{sample_batch} | cut -f1)
