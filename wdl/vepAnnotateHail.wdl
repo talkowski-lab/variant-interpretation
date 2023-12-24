@@ -30,7 +30,7 @@ workflow vepAnnotateHail {
         RuntimeAttr? runtime_attr_add_genotypes
     }
 
-    call normalizeVCF {
+    call removeGenotypes {
         input:
             vcf_file=vcf_file,
             sv_base_mini_docker=sv_base_mini_docker,
@@ -41,7 +41,7 @@ workflow vepAnnotateHail {
         
     call vepAnnotate {
         input:
-            vcf_file=normalizeVCF.vcf_no_genotype,
+            vcf_file=removeGenotypes.vcf_no_genotype,
             vep_annotate_hail_python_script=vep_annotate_hail_python_script,
             top_level_fa=top_level_fa,
             human_ancestor_fa=human_ancestor_fa,
@@ -56,8 +56,8 @@ workflow vepAnnotateHail {
     call addGenotypes { 
         input:
             vep_annotated_vcf=vepAnnotate.vep_vcf_file,
-            normalized_vcf=normalizeVCF.vcf_normalized_file_with_genotype,
-            normalized_vcf_idx=normalizeVCF.vcf_normalized_file_with_genotype_idx,
+            vcf_file=vcf_file,
+            vcf_file_idx=removeGenotypes.vcf_file_idx,
             sv_base_mini_docker=sv_base_mini_docker,
             runtime_attr_override=runtime_attr_add_genotypes
     }
@@ -68,7 +68,7 @@ workflow vepAnnotateHail {
     }
 }   
 
-task normalizeVCF {
+task removeGenotypes {
     input {
         File vcf_file
         String sv_base_mini_docker
@@ -102,23 +102,19 @@ task normalizeVCF {
     }
 
     String prefix = basename(vcf_file, ".vcf.gz")
-    String vcf_normalized_file_name = "~{prefix}.normalized.vcf.gz"
     String vcf_normalized_nogeno_file_name = "~{prefix}.normalized.stripped.vcf.gz"
 
     command <<<
         set -euo pipefail
 
-        bcftools norm -m - -f ~{hg38_fasta} -Oz -o ~{vcf_normalized_file_name} ~{vcf_file}
-        bcftools index -t ~{vcf_normalized_file_name}
-
-        bcftools view -G ~{vcf_normalized_file_name} -Oz -o ~{vcf_normalized_nogeno_file_name}
+        bcftools index -t ~{vcf_file}
+        bcftools view -G ~{vcf_file} -Oz -o ~{vcf_normalized_nogeno_file_name}
         bcftools index -t ~{vcf_normalized_nogeno_file_name}
         
     >>>
         
     output {
-        File vcf_normalized_file_with_genotype = "~{prefix}.normalized.vcf.gz"
-        File vcf_normalized_file_with_genotype_idx = "~{prefix}.normalized.vcf.gz.tbi"
+        File vcf_file_idx = vcf_file + '.tbi'
         File vcf_no_genotype = "~{prefix}.normalized.stripped.vcf.gz"
         File vcf_no_genotype_idx = "~{prefix}.normalized.stripped.vcf.gz.tbi"
     }
@@ -212,8 +208,8 @@ task vepAnnotate {
 task addGenotypes {
     input {
         File vep_annotated_vcf
-        File normalized_vcf
-        File normalized_vcf_idx
+        File vcf_file
+        File vcf_file_idx
         String sv_base_mini_docker
         RuntimeAttr? runtime_attr_override
         Int? thread_num_override  
@@ -221,7 +217,7 @@ task addGenotypes {
 
     #  CleanVcf5.FindRedundantMultiallelics
     Float vep_annotate_sizes = size(vep_annotated_vcf, "GB") 
-    Float norm_vcf_sizes = size(normalized_vcf, "GB")
+    Float norm_vcf_sizes = size(vcf_file, "GB")
     Float base_disk_gb = 10.0
 
     RuntimeAttr runtime_default = object {
@@ -257,7 +253,7 @@ task addGenotypes {
         --threads ~{thread_num} \
         -Oz \
         --output ~{combined_vcf_name} \
-        ~{normalized_vcf} \
+        ~{vcf_file} \
         ~{vep_annotated_vcf}
 
         bcftools index -t ~{combined_vcf_name}
