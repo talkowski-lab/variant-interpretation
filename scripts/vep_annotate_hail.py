@@ -8,19 +8,12 @@ vep_annotated_vcf_name = sys.argv[2]
 cores = sys.argv[3]  # string
 mem = int(np.floor(float(sys.argv[4])))
 
-# builder = (
-#                 SparkSession 
-#                 .builder
-#                 .config("spark.executor.cores", cores)
-#                 .config("spark.executor.memory", f"{mem}g")
-#                 .enableHiveSupport()
-# )
-                               
-# spark = builder.getOrCreate()
-# hl.init(sc=spark.sparkContext)
 hl.init(spark_conf={"spark.executor.cores": cores, 
                     "spark.executor.memory": f"{mem}g"})
 
+header = hl.get_vcf_metadata(vcf_file) 
 mt = hl.import_vcf(vcf_file, force_bgz=True, reference_genome='GRCh38')
 mt = hl.vep(mt, config='vep_config.json', csq=True)
-hl.export_vcf(mt, vep_annotated_vcf_name)
+header['info']['CSQ'] = {'Description': hl.eval(mt.vep_csq_header), 'Number': '.', 'Type': 'String'}
+mt = mt.annotate_rows(info = mt.info.annotate(CSQ=mt.vep))
+hl.export_vcf(dataset=mt, output=vep_annotated_vcf_name, metadata=header)
