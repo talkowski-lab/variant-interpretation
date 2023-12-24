@@ -140,9 +140,6 @@ task vepAnnotate {
         RuntimeAttr? runtime_attr_override
     }
 
-    String prefix = basename(vcf_file, ".vcf.gz")
-    String vep_annotated_vcf_name = "~{prefix}.vep.loftee.vcf.gz"
-
     Float input_size = size(vcf_file, "GB") + size(hg38_vep_cache, "GB") + size(gerp_conservation_scores, "GB")
     Float base_disk_gb = 10.0
     Float input_disk_scale = 10.0
@@ -158,6 +155,7 @@ task vepAnnotate {
     RuntimeAttr runtime_override = select_first([runtime_attr_override, runtime_default])
     Float memory = select_first([runtime_override.mem_gb, runtime_default.mem_gb])
     Int cpu_cores = select_first([runtime_override.cpu_cores, runtime_default.cpu_cores])
+    
     runtime {
         memory: "~{memory} GB"
         disks: "local-disk ~{select_first([runtime_override.disk_gb, runtime_default.disk_gb])} HDD"
@@ -169,7 +167,9 @@ task vepAnnotate {
     }
     
     RuntimeAttr runtime_attr = select_first([runtime_attr_override, runtime_default])
-    String ancestor_dir = basename(human_ancestor_fa, "Homo_sapiens.GRCh38.dna.toplevel.fa.gz")
+    
+    String prefix = basename(vcf_file, ".vcf.gz")
+    String vep_annotated_vcf_name = "~{prefix}.vep.vcf.bgz"
 
     command <<<
         set -euo pipefail
