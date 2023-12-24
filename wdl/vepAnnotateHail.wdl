@@ -25,7 +25,7 @@ workflow vepAnnotateHail {
         File hg38_vep_cache
         File loeuf_data
         String cohort_prefix
-        RuntimeAttr? runtime_attr_normalize
+        RuntimeAttr? runtime_attr_remove_genotypes
         RuntimeAttr? runtime_attr_vep_annotate
         RuntimeAttr? runtime_attr_add_genotypes
     }
@@ -36,7 +36,7 @@ workflow vepAnnotateHail {
             sv_base_mini_docker=sv_base_mini_docker,
             hg38_fasta=hg38_fasta,
             hg38_fasta_fai=hg38_fasta_fai,
-            runtime_attr_override=runtime_attr_normalize
+            runtime_attr_override=runtime_attr_remove_genotypes
     }
         
     call vepAnnotate {
