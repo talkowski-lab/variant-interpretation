@@ -110,19 +110,6 @@ workflow GenomicDisorders {
     }
     
     scatter (i in range(length(contigs))){
-        #generates a list of genomic disorder regions in the vcf input as well as in the depth raw files
-        call getGenomicDisorders{
-            input:
-                genomic_disorder_input=genomic_disorder_input,
-                ped = ped_input,
-                vcf_file = select_first([getBatchedVcf.split_vcf, vcf_file]),
-                depth_raw_file_proband = reformatDepthRawFiles.reformatted_proband_raw_files[i],
-                depth_raw_file_parents = reformatDepthRawFiles.reformatted_parents_raw_files[i],
-                chromosome=contigs[i],
-                variant_interpretation_docker=variant_interpretation_docker,
-                runtime_attr_override = runtime_attr_gd
-        }
-
         #splits vcf by chromosome
         call subsetVcf {
             input:
@@ -132,25 +119,39 @@ workflow GenomicDisorders {
                 runtime_attr_override = runtime_attr_subset_vcf
         }
 
-        #shards vcf
-        call MiniTasks.ScatterVcf as SplitVcf {
+        #generates a list of genomic disorder regions in the vcf input as well as in the depth raw files
+        call getGenomicDisorders{
             input:
-                vcf=subsetVcf.vcf_output,
-                prefix=prefix,
-                records_per_shard=records_per_shard,
-                sv_pipeline_docker=sv_pipeline_updates_docker,
-                runtime_attr_override=runtime_override_shard_vcf
+                genomic_disorder_input=genomic_disorder_input,
+                ped = ped_input,
+                vcf_file = select_first([getBatchedVcf.split_vcf, subsetVcf.vcf_output]),
+                depth_raw_file_proband = reformatDepthRawFiles.reformatted_proband_raw_files[i],
+                depth_raw_file_parents = reformatDepthRawFiles.reformatted_parents_raw_files[i],
+                chromosome=contigs[i],
+                variant_interpretation_docker=variant_interpretation_docker,
+                runtime_attr_override = runtime_attr_gd
         }
+
+
+
+        #shards vcf
+#        call MiniTasks.ScatterVcf as SplitVcf {
+#            input:
+#                vcf=subsetVcf.vcf_output,
+#                prefix=prefix,
+#                records_per_shard=records_per_shard,
+#                sv_pipeline_docker=sv_pipeline_updates_docker,
+#                runtime_attr_override=runtime_override_shard_vcf
+#        }
     
     
     }
 
-  
-
     #merges the genomic disorder region output from each chromosome to compile a list of genomic disorder regions
     call mergeGenomicDisorders{
         input:
-            genomic_disorder_input=getGenomicDisorders.gd_output_from_depth_raw_files,
+            gd_raw_input=getGenomicDisorders.gd_output_from_depth_raw_files,
+            gd_vcf_input=getGenomicDisorders.gd_output_from_final_vcf,
             variant_interpretation_docker=variant_interpretation_docker,
             runtime_attr_override = runtime_attr_merge_gd
     }
@@ -158,8 +159,7 @@ workflow GenomicDisorders {
     output {
         File cleaned_ped = cleanPed.cleaned_ped
         File gd_depth = mergeGenomicDisorders.gd_output_from_depth
-        File gd_vcf = getGenomicDisorders.gd_output_from_final_vcf[1]
-        
+        File gd_vcf = getGenomicDisorders.gd_output_from_vcf
     }
 }
 
@@ -240,9 +240,9 @@ task getGenomicDisorders{
     RuntimeAttr runtime_attr = select_first([runtime_attr_override, default_attr])
 
     output{
-        File gd_output_from_final_vcf = "gd.variants.from.final.vcf.txt.gz"
+        File gd_output_from_final_vcf = "~{chromosome}.gd.variants.from.final.vcf.txt.gz"
         File gd_output_from_depth_raw_files = "~{chromosome}.gd.variants.in.depth.raw.files.txt.gz"
-        File gd_output_for_denovo = "annotated.gd.variants.names.txt"
+        File gd_output_for_denovo = "~{chromosome}.annotated.gd.variants.names.txt"
     }
 
     command <<<
@@ -321,12 +321,13 @@ task getGenomicDisorders{
 
 task mergeGenomicDisorders{
     input{
-        Array[File] genomic_disorder_input
+        Array[File] gd_raw_input
+        Array[File] gd_vcf_input
         String variant_interpretation_docker
         RuntimeAttr? runtime_attr_override
     }
 
-    Float input_size = size(genomic_disorder_input, "GB")
+    Float input_size = size(gd_raw_input, "GB")
     Float base_mem_gb = 3.75
 
     RuntimeAttr default_attr = object {
@@ -342,13 +343,16 @@ task mergeGenomicDisorders{
 
     output{
         File gd_output_from_depth = "gd.raw.files.output.txt.gz"
+        File gd_output_from_vcf = "gd.vcf.files.output.txt.gz"
     }
 
     command {
         set -euo pipefail
 
-        zcat ${sep=" " genomic_disorder_input} > gd.raw.files.output.txt
+        bcftools concat ~{sep=" " gd_vcf_input} > gd.vcf.files.output.txt
+        zcat ~{sep=" " gd_raw_input} > gd.raw.files.output.txt
         bgzip gd.raw.files.output.txt
+        bgzip gd.vcf.files.output.txt
     }
 
     runtime {
