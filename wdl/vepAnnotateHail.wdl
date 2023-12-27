@@ -31,18 +31,46 @@ workflow vepAnnotateHail {
         RuntimeAttr? runtime_attr_add_genotypes
     }
 
-    call removeGenotypes {
-        input:
-            vcf_file=vcf_file,
-            sv_base_mini_docker=sv_base_mini_docker,
-            hg38_fasta=hg38_fasta,
-            hg38_fasta_fai=hg38_fasta_fai,
-            runtime_attr_override=runtime_attr_remove_genotypes
-    }
+    # call removeGenotypes {
+    #     input:
+    #         vcf_file=vcf_file,
+    #         sv_base_mini_docker=sv_base_mini_docker,
+    #         hg38_fasta=hg38_fasta,
+    #         hg38_fasta_fai=hg38_fasta_fai,
+    #         runtime_attr_override=runtime_attr_remove_genotypes
+    # }
         
+    # call vepAnnotate {
+    #     input:
+    #         vcf_file=removeGenotypes.vcf_no_genotype,
+    #         vep_annotate_hail_python_script=vep_annotate_hail_python_script,
+    #         top_level_fa=top_level_fa,
+    #         human_ancestor_fa=human_ancestor_fa,
+    #         human_ancestor_fa_fai=human_ancestor_fa_fai,
+    #         gerp_conservation_scores=gerp_conservation_scores,
+    #         hg38_vep_cache=hg38_vep_cache,
+    #         loeuf_data=loeuf_data,
+    #         mpc_file=mpc_file,
+    #         vep_hail_docker=vep_hail_docker,
+    #         runtime_attr_override=runtime_attr_vep_annotate
+    # }
+
+    # call addGenotypes { 
+    #     input:
+    #         vep_annotated_vcf=vepAnnotate.vep_vcf_file,
+    #         vcf_file=vcf_file,
+    #         vcf_file_idx=removeGenotypes.vcf_file_idx,
+    #         sv_base_mini_docker=sv_base_mini_docker,
+    #         runtime_attr_override=runtime_attr_add_genotypes
+    # }
+
+    # output {   
+    #     File vep_vcf_file = addGenotypes.merged_vcf_file
+    #     File vep_vcf_idx = addGenotypes.merged_vcf_idx
+    # }
     call vepAnnotate {
         input:
-            vcf_file=removeGenotypes.vcf_no_genotype,
+            vcf_file=vcf_file,
             vep_annotate_hail_python_script=vep_annotate_hail_python_script,
             top_level_fa=top_level_fa,
             human_ancestor_fa=human_ancestor_fa,
@@ -55,18 +83,9 @@ workflow vepAnnotateHail {
             runtime_attr_override=runtime_attr_vep_annotate
     }
 
-    call addGenotypes { 
-        input:
-            vep_annotated_vcf=vepAnnotate.vep_vcf_file,
-            vcf_file=vcf_file,
-            vcf_file_idx=removeGenotypes.vcf_file_idx,
-            sv_base_mini_docker=sv_base_mini_docker,
-            runtime_attr_override=runtime_attr_add_genotypes
-    }
-
-    output {   
-        File vep_vcf_file = addGenotypes.merged_vcf_file
-        File vep_vcf_idx = addGenotypes.merged_vcf_idx
+    output {
+        File vep_vcf_file = vepAnnotate.vep_vcf_file
+        File vep_vcf_idx = vepAnnotate.vep_vcf_idx
     }
 }   
 
@@ -201,10 +220,12 @@ task vepAnnotate {
 
         python3.9 ~{vep_annotate_hail_python_script} ~{vcf_file} ~{vep_annotated_vcf_name} ~{cpu_cores} ~{memory}
         cp $(ls . | grep hail*.log) hail_log.txt
+        /opt/vep/bcftools/bcftools index -t ~{vep_annotated_vcf_name}
     >>>
 
     output {
         File vep_vcf_file = vep_annotated_vcf_name
+        File vep_vcf_idx = vep_annotated_vcf_name + '.tbi'
         File hail_log = "hail_log.txt"
     }
 }
