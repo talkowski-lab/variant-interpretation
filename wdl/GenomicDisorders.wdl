@@ -159,7 +159,7 @@ workflow GenomicDisorders {
     output {
         File cleaned_ped = cleanPed.cleaned_ped
         File gd_depth = mergeGenomicDisorders.gd_output_from_depth
-        File gd_vcf = getGenomicDisorders.gd_output_from_vcf
+        File gd_vcf = mergeGenomicDisorders.gd_output_from_vcf
     }
 }
 
