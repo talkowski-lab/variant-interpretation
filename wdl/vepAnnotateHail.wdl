@@ -116,7 +116,7 @@ task removeGenotypes {
     >>>
         
     output {
-        File vcf_file_idx = vcf_file + '.tbi'
+        File vcf_file_idx = basename(vcf_file) + '.tbi'
         File vcf_no_genotype = "~{prefix}.normalized.stripped.vcf.gz"
         File vcf_no_genotype_idx = "~{prefix}.normalized.stripped.vcf.gz.tbi"
     }
