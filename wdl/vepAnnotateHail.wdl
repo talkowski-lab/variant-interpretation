@@ -109,7 +109,7 @@ task removeGenotypes {
     command <<<
         set -euo pipefail
 
-        bcftools index -t ~{vcf_file}
+        bcftools index -t ~{vcf_file} -o {basename(vcf_file)+'.tbi'}
         bcftools view -G ~{vcf_file} -Oz -o ~{vcf_normalized_nogeno_file_name}
         bcftools index -t ~{vcf_normalized_nogeno_file_name}
         
