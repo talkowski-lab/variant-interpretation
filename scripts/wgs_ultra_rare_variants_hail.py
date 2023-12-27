@@ -4,11 +4,9 @@
 # adapted from wgs_ultra_rare_variants_hail.ipynb in Terra Analysis
 
 from pyspark.sql import SparkSession
-from google.cloud import storage
 import hail as hl
 import pandas as pd
 import numpy as np
-import seaborn as sns
 import sys
 
 build = 'GRCh38'

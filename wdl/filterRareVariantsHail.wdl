@@ -31,7 +31,8 @@ workflow filterRareVariantsHail {
             trio_uri=trio_uri,
             filter_rare_variants_python_script=filter_rare_variants_python_script,
             vep_hail_docker=vep_hail_docker,
-            cohort_prefix=cohort_prefix
+            cohort_prefix=cohort_prefix,
+            runtime_attr_override=runtime_attr_filter_vcf
     }
 
     output {
