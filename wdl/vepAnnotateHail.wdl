@@ -24,6 +24,7 @@ workflow vepAnnotateHail {
         File gerp_conservation_scores
         File hg38_vep_cache
         File loeuf_data
+        File mpc_file
         String cohort_prefix
         RuntimeAttr? runtime_attr_remove_genotypes
         RuntimeAttr? runtime_attr_vep_annotate
@@ -49,6 +50,7 @@ workflow vepAnnotateHail {
             gerp_conservation_scores=gerp_conservation_scores,
             hg38_vep_cache=hg38_vep_cache,
             loeuf_data=loeuf_data,
+            mpc_file=mpc_file,
             vep_hail_docker=vep_hail_docker,
             runtime_attr_override=runtime_attr_vep_annotate
     }
@@ -132,6 +134,7 @@ task vepAnnotate {
         File gerp_conservation_scores
         File hg38_vep_cache
         File loeuf_data
+        File mpc_file
         String vep_hail_docker
         RuntimeAttr? runtime_attr_override
     }
@@ -189,6 +192,7 @@ task vepAnnotate {
         "--minimal",
         "--assembly", "GRCh38",
         "--fasta", "~{top_level_fa}",
+        "--plugin", "MPC,~{mpc_file}",
         "--plugin", "LOEUF,file=~{loeuf_data},match_by=transcript",
         "--plugin", "LoF,loftee_path:/opt/vep/Plugins/,human_ancestor_fa:~{human_ancestor_fa},gerp_bigwig:~{gerp_conservation_scores}",
         "-o", "STDOUT"],
