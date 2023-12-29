@@ -3,7 +3,6 @@
 
 # adapted from wgs_ultra_rare_variants_hail.ipynb in Terra Analysis
 
-from pyspark.sql import SparkSession
 import hail as hl
 import pandas as pd
 import numpy as np
@@ -14,13 +13,15 @@ lcr_uri = sys.argv[1]
 ped_uri = sys.argv[2]
 meta_uri = sys.argv[3]
 trio_uri = sys.argv[4]
-vcf_uri = sys.argv[5]
+vcf_file = sys.argv[5]
 cohort_prefix = sys.argv[6]
 cores = sys.argv[7]
-mem = sys.argv[8]
+mem = int(np.floor(float(sys.argv[8])))
 
-hl.init(spark_conf={"spark.executor.cores": cores, 
-                    "spark.executor.memory": f"{mem}g"})
+hl.init(min_block_size=128, spark_conf={"spark.executor.cores": cores, 
+                    "spark.executor.memory": f"{mem}g",
+                    "spark.driver.memory": f"{mem}g",
+                    "spark.executor.pyspark.memory": f"{mem}g"})
 
 pedigree = hl.Pedigree.read(ped_uri)
 
@@ -69,12 +70,9 @@ mt_filtered = mt_filtered.annotate_cols(pheno=meta[mt_filtered.s])
 mt_filtered = mt_filtered.filter_cols(mt_filtered.pheno.Role != '', keep = True)
 
 tdt_table_filtered = hl.transmission_disequilibrium_test(mt_filtered, pedigree)
-tdt_filtered_df = tdt_table_filtered.to_pandas()
 
 mt_filtered_rare = mt_filtered.filter_entries((mt_filtered.info.cohort_AC<=2)&(mt_filtered.info.cohort_AF<=0.05))
 tdt_table_filtered_rare = tdt_table_filtered.semi_join(mt_filtered_rare.rows())
-
-tdt_filtered_rare_df = tdt_table_filtered_rare.to_pandas()
 
 ultra_rare_vars_table = tdt_table_filtered_rare.filter((tdt_table_filtered_rare.t==1) & (tdt_table_filtered_rare.u==0))
 

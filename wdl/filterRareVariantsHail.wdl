@@ -36,6 +36,7 @@ workflow filterRareVariantsHail {
     }
 
     output {
+        File hail_log = filterRareVariants.hail_log
         File ultra_rare_variants_tsv = filterRareVariants.ultra_rare_variants_tsv
     }
 }
@@ -82,9 +83,12 @@ task filterRareVariants {
     command {
         python3.9 ~{filter_rare_variants_python_script} ~{lcr_uri} ~{ped_uri} ~{meta_uri} ~{trio_uri} ~{vcf_file} \
         ~{cohort_prefix} ~{cpu_cores} ~{memory}
+        
+        cp $(ls . | grep hail*.log) hail_log.txt
     }
 
     output {
+        File hail_log = "hail_log.txt"
         File ultra_rare_variants_tsv = cohort_prefix + '_ultra_rare_variants.tsv'
     }
 }
