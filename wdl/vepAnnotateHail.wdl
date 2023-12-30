@@ -160,7 +160,7 @@ task vepAnnotate {
 
     Float input_size = size(vcf_file, "GB") + size(hg38_vep_cache, "GB") + size(gerp_conservation_scores, "GB")
     Float base_disk_gb = 10.0
-    Float input_disk_scale = 10.0
+    Float input_disk_scale = 15.0
     RuntimeAttr runtime_default = object {
         mem_gb: 8,
         disk_gb: ceil(base_disk_gb + input_size * input_disk_scale),

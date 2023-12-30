@@ -131,6 +131,8 @@ ultra_rare_vars_df['LEN'] = abs(ultra_rare_vars_df.REF.str.len()-ultra_rare_vars
 ultra_rare_vars_df['TYPE'] =np.where(ultra_rare_vars_df.LEN==0, 'SNV', 'Indel')
 
 ultra_rare_vars_df.columns = ultra_rare_vars_df.columns.str.replace('info.', '')
+ultra_rare_vars_df['AC'] = ultra_rare_vars_df.AC.str[0]
+ultra_rare_vars_df['AF'] = ultra_rare_vars_df.AF.str[0]
 
 # 'POLYX'
 info_cols = ['END','AC','AF','AN','BaseQRankSum','ClippingRankSum','DP','FS','MLEAC','MLEAF','MQ','MQRankSum','QD','ReadPosRankSum','SOR','VQSLOD','cohort_AC', 'cohort_AF', 'CSQ']
