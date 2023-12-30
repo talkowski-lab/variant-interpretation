@@ -22,7 +22,7 @@ workflow filterRareVariantsHail {
         String sv_base_mini_docker
         String cohort_prefix
         Float AF_threshold=0.005
-        Int AC_threshold=1
+        Int AC_threshold=2
         RuntimeAttr? runtime_attr_merge_vcfs
 
         RuntimeAttr? runtime_attr_filter_vcf
@@ -65,6 +65,8 @@ workflow filterRareVariantsHail {
             filter_rare_variants_python_script=filter_rare_variants_python_script,
             vep_hail_docker=vep_hail_docker,
             cohort_prefix=cohort_prefix,
+            AC_threshold=AC_threshold,
+            AF_threshold=AF_threshold,
             runtime_attr_override=runtime_attr_filter_vcf
     }
 
@@ -136,6 +138,8 @@ task filterRareVariants {
         File filter_rare_variants_python_script
         String vep_hail_docker
         String cohort_prefix
+        Int AC_threshold
+        Float AF_threshold
         RuntimeAttr? runtime_attr_override
     }
 
@@ -167,7 +171,7 @@ task filterRareVariants {
 
     command {
         python3.9 ~{filter_rare_variants_python_script} ~{lcr_uri} ~{ped_uri} ~{meta_uri} ~{trio_uri} ~{vcf_file} \
-        ~{cohort_prefix} ~{cpu_cores} ~{memory}
+        ~{cohort_prefix} ~{cpu_cores} ~{memory} ~{AC_threshold} ~{AF_threshold}
 
         cp $(ls . | grep hail*.log) hail_log.txt
     }

@@ -17,6 +17,8 @@ vcf_file = sys.argv[5]
 cohort_prefix = sys.argv[6]
 cores = sys.argv[7]
 mem = int(np.floor(float(sys.argv[8])))
+ac_threshold = int(sys.argv[9])
+af_threshold = float(sys.argv[10])
 
 hl.init(min_block_size=128, spark_conf={"spark.executor.cores": cores, 
                     "spark.executor.memory": f"{mem}g",
@@ -98,7 +100,7 @@ mt_filtered = mt_filtered.drop('variant_qc')
 # t=1 u=0
 tdt_table_filtered = hl.transmission_disequilibrium_test(mt_filtered, pedigree)
 
-mt_filtered_rare = mt_filtered.filter_rows((mt_filtered.info.cohort_AC<=2)|(mt_filtered.info.cohort_AF<=0.005))
+mt_filtered_rare = mt_filtered.filter_rows((mt_filtered.info.cohort_AC<=ac_threshold)|(mt_filtered.info.cohort_AF<=af_threshold))
 tdt_table_filtered_rare = tdt_table_filtered.semi_join(mt_filtered_rare.rows())
 
 ultra_rare_vars_table = tdt_table_filtered_rare.filter((tdt_table_filtered_rare.t==1) & (tdt_table_filtered_rare.u==0))
