@@ -11,20 +11,53 @@ struct RuntimeAttr {
 
 workflow filterRareVariantsHail {
     input {
-        File vcf_file
+        Array[Array[File]] vep_annotated_final_vcf
+        Array[Array[File]] vep_annotated_final_vcf_idx
         File lcr_uri
         File ped_uri
         File meta_uri
         File trio_uri
         File filter_rare_variants_python_script
         String vep_hail_docker
+        String sv_base_mini_docker
         String cohort_prefix
+        Float AF_threshold=0.005
+        Int AC_threshold=1
+        RuntimeAttr? runtime_attr_merge_vcfs
+
         RuntimeAttr? runtime_attr_filter_vcf
+    }
+
+    Array[Pair[Array[File], Array[File]]] vep_annotated_final = zip(vep_annotated_final_vcf, vep_annotated_final_vcf_idx)
+    scatter (vep_annotated_shard in vep_annotated_final) {
+        Array[File] cohort_vcf_files = vep_annotated_shard.left
+        Array[File] cohort_vcf_idx = vep_annotated_shard.right
+        call mergeVCFs as mergeSharded {
+            input:
+                vcf_files=cohort_vcf_files,
+                vcf_files_idx=cohort_vcf_idx,
+                sv_base_mini_docker=sv_base_mini_docker,
+                cohort_prefix=cohort_prefix,
+                merge_or_concat='concat',
+                runtime_attr_override=runtime_attr_merge_vcfs
+        }
+    }
+
+    if (length(mergeSharded.merged_vcf_file) > 1) {
+        call mergeVCFs as mergeCohort {
+        input:
+            vcf_files=mergeSharded.merged_vcf_file,
+            vcf_files_idx=mergeSharded.merged_vcf_idx,
+            sv_base_mini_docker=sv_base_mini_docker,
+            cohort_prefix=cohort_prefix,
+            merge_or_concat='concat',
+            runtime_attr_override=runtime_attr_merge_vcfs
+        }
     }
 
     call filterRareVariants {
         input:
-            vcf_file=vcf_file,
+            vcf_file=select_first([mergeCohort.merged_vcf_file, mergeSharded.merged_vcf_file[0]]),
             lcr_uri=lcr_uri,
             ped_uri=ped_uri,
             meta_uri=meta_uri,
@@ -38,6 +71,58 @@ workflow filterRareVariantsHail {
     output {
         File hail_log = filterRareVariants.hail_log
         File ultra_rare_variants_tsv = filterRareVariants.ultra_rare_variants_tsv
+    }
+}
+
+task mergeVCFs {
+    input {
+        Array[File] vcf_files
+        Array[File] vcf_files_idx
+        String sv_base_mini_docker
+        String cohort_prefix
+        String merge_or_concat    
+        RuntimeAttr? runtime_attr_override
+    }
+    Float input_size = size(vcf_files, "GB")
+    Float base_disk_gb = 10.0
+    Float input_disk_scale = 5.0
+    
+    RuntimeAttr runtime_default = object {
+        mem_gb: 4,
+        disk_gb: ceil(base_disk_gb + input_size * input_disk_scale),
+        cpu_cores: 1,
+        preemptible_tries: 3,
+        max_retries: 1,
+        boot_disk_gb: 10
+    }
+
+    RuntimeAttr runtime_override = select_first([runtime_attr_override, runtime_default])
+    
+    runtime {
+        memory: "~{select_first([runtime_override.mem_gb, runtime_default.mem_gb])} GB"
+        disks: "local-disk ~{select_first([runtime_override.disk_gb, runtime_default.disk_gb])} HDD"
+        cpu: select_first([runtime_override.cpu_cores, runtime_default.cpu_cores])
+        preemptible: select_first([runtime_override.preemptible_tries, runtime_default.preemptible_tries])
+        maxRetries: select_first([runtime_override.max_retries, runtime_default.max_retries])
+        docker: sv_base_mini_docker
+        bootDiskSizeGb: select_first([runtime_override.boot_disk_gb, runtime_default.boot_disk_gb])
+    }
+
+    String merged_vcf_name="~{cohort_prefix}.merged.vcf.gz"
+
+    String merge_or_concat_new = if merge_or_concat == 'concat' then 'concat -n'  else merge_or_concat
+
+    command <<<
+        set -euo pipefail
+        VCFS="~{write_lines(vcf_files)}"
+        cat $VCFS | awk -F '/' '{print $NF"\t"$0}' | sort -k1,1V | awk '{print $2}' > vcfs_sorted.list
+        bcftools ~{merge_or_concat_new} --no-version -Oz --file-list vcfs_sorted.list --output ~{merged_vcf_name}
+        bcftools index -t ~{merged_vcf_name}
+    >>>
+
+    output {
+        File merged_vcf_file=merged_vcf_name
+        File merged_vcf_idx=merged_vcf_name + ".tbi"
     }
 }
 
@@ -83,7 +168,7 @@ task filterRareVariants {
     command {
         python3.9 ~{filter_rare_variants_python_script} ~{lcr_uri} ~{ped_uri} ~{meta_uri} ~{trio_uri} ~{vcf_file} \
         ~{cohort_prefix} ~{cpu_cores} ~{memory}
-        
+
         cp $(ls . | grep hail*.log) hail_log.txt
     }
 

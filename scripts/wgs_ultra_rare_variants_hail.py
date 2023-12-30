@@ -20,8 +20,7 @@ mem = int(np.floor(float(sys.argv[8])))
 
 hl.init(min_block_size=128, spark_conf={"spark.executor.cores": cores, 
                     "spark.executor.memory": f"{mem}g",
-                    "spark.driver.memory": f"{mem}g",
-                    "spark.executor.pyspark.memory": f"{mem}g"})
+                    "spark.driver.memory": f"{mem}g"})
 
 pedigree = hl.Pedigree.read(ped_uri)
 
@@ -51,9 +50,6 @@ mt = mt.annotate_rows(info=mt.info.annotate(cohort_AC=mt.info.AC[mt.a_index - 1]
                                            cohort_AF=mt.info.AF[mt.a_index - 1]))
 mt = mt.annotate_rows(ID=hl.variant_str(mt.row_key))
 
-# useful table here: https://hail.is/docs/0.2/methods/genetics.html#hail.methods.transmission_disequilibrium_test
-# t=1 u=0
-
 # try filtering before
 mt_filtered = mt
 mt_filtered = mt_filtered.filter_rows(mt_filtered.info.cohort_AC < 20 , keep=True)
@@ -69,14 +65,45 @@ meta = meta.annotate(s=meta.SampleID).key_by('s')
 mt_filtered = mt_filtered.annotate_cols(pheno=meta[mt_filtered.s])
 mt_filtered = mt_filtered.filter_cols(mt_filtered.pheno.Role != '', keep = True)
 
+# # filter for VQSR - PASS for SNVs only
+mt_filtered = mt_filtered.filter_rows((hl.is_snp(mt_filtered.alleles[0], mt_filtered.alleles[1]) &(mt_filtered.filters.size() == 0))
+                   | hl.is_indel(mt_filtered.alleles[0], mt_filtered.alleles[1]))
+# filter on depth
+mt_filtered = mt_filtered.filter_entries( (mt_filtered.DP < 10) | (mt_filtered.DP > 200), keep = False) 
+# row (variant INFO) level filters - GATK recommendations for short variants
+dn_snv_cond_row = (hl.is_snp(mt_filtered.alleles[0], mt_filtered.alleles[1])
+                    & (mt_filtered.qual >= 150)
+                    & (mt_filtered.info.SOR <= 2.5)
+                    & (mt_filtered.info.ReadPosRankSum >= -1.4)
+                    & (mt_filtered.info.QD >= 3.0)
+                    & (mt_filtered.info.MQ >= 50))
+dn_indel_cond_row = (hl.is_indel(mt_filtered.alleles[0], mt_filtered.alleles[1])
+                      & (mt_filtered.qual >= 150)
+                      & (mt_filtered.info.SOR <= 3)
+                      & (mt_filtered.info.ReadPosRankSum >= -1.7)
+                      & (mt_filtered.info.QD >= 4.0)
+                      & (mt_filtered.info.MQ >= 50))
+mt_filtered = mt_filtered.filter_rows(dn_snv_cond_row | dn_indel_cond_row, keep = True)
+
+# GQ mean filters
+mt_filtered = hl.variant_qc(mt_filtered)
+mt_filtered = mt_filtered.filter_rows(mt_filtered.variant_qc.gq_stats.mean >= 50, keep = True)
+# clean-up: remove AC = 0 loci
+mt_filtered = hl.variant_qc(mt_filtered)
+mt_filtered = mt_filtered.filter_rows(mt_filtered.variant_qc.AC[1] > 0, keep = True)
+# write to output vcf
+mt_filtered = mt_filtered.drop('variant_qc')
+
+# useful table here: https://hail.is/docs/0.2/methods/genetics.html#hail.methods.transmission_disequilibrium_test
+# t=1 u=0
 tdt_table_filtered = hl.transmission_disequilibrium_test(mt_filtered, pedigree)
 
-mt_filtered_rare = mt_filtered.filter_entries((mt_filtered.info.cohort_AC<=2)&(mt_filtered.info.cohort_AF<=0.05))
+mt_filtered_rare = mt_filtered.filter_rows((mt_filtered.info.cohort_AC<=2)|(mt_filtered.info.cohort_AF<=0.005))
 tdt_table_filtered_rare = tdt_table_filtered.semi_join(mt_filtered_rare.rows())
 
 ultra_rare_vars_table = tdt_table_filtered_rare.filter((tdt_table_filtered_rare.t==1) & (tdt_table_filtered_rare.u==0))
 
-trio_mat = hl.trio_matrix(mt_filtered, pedigree).semi_join_rows(ultra_rare_vars_table)
+trio_mat = hl.trio_matrix(mt_filtered, pedigree, complete_trios=True).semi_join_rows(ultra_rare_vars_table)
 
 ultra_rare_vars_df = trio_mat.filter_entries(trio_mat.proband_entry.GT.is_het()).entries().to_pandas()
 
