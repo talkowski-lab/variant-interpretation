@@ -18,9 +18,11 @@ workflow filterRareVariantsHail {
         File meta_uri
         File trio_uri
         File filter_rare_variants_python_script
+        File info_header
         String vep_hail_docker
         String sv_base_mini_docker
         String cohort_prefix
+        Boolean bad_header=false
         Float AF_threshold=0.005
         Int AC_threshold=2
         RuntimeAttr? runtime_attr_merge_vcfs
@@ -55,6 +57,14 @@ workflow filterRareVariantsHail {
         }
     }
 
+    call saveVCFHeader {
+        input:
+            vcf_uri=select_first([mergeCohort.merged_vcf_file, mergeSharded.merged_vcf_file[0]]),
+            info_header=info_header,
+            bad_header=bad_header,
+            sv_base_mini_docker=sv_base_mini_docker
+    }
+
     call filterRareVariants {
         input:
             vcf_file=select_first([mergeCohort.merged_vcf_file, mergeSharded.merged_vcf_file[0]]),
@@ -62,6 +72,7 @@ workflow filterRareVariantsHail {
             ped_uri=ped_uri,
             meta_uri=meta_uri,
             trio_uri=trio_uri,
+            header_file=saveVCFHeader.header_file,
             filter_rare_variants_python_script=filter_rare_variants_python_script,
             vep_hail_docker=vep_hail_docker,
             cohort_prefix=cohort_prefix,
@@ -73,6 +84,33 @@ workflow filterRareVariantsHail {
     output {
         File hail_log = filterRareVariants.hail_log
         File ultra_rare_variants_tsv = filterRareVariants.ultra_rare_variants_tsv
+    }
+}
+
+task saveVCFHeader {
+    input {
+        File vcf_uri
+        File info_header
+        String sv_base_mini_docker
+        Boolean bad_header
+    }
+
+    runtime {
+        docker: sv_base_mini_docker
+    }
+
+    String header_filename = basename(vcf_uri, '.vcf.gz') + '_header.txt'
+
+    command <<<
+    bcftools head ~{vcf_uri} > ~{header_filename}
+    if [[ "~{bad_header}" == "true" ]]; then
+        bcftools head ~{vcf_uri} | grep -v "INFO=" > no_info_header.txt
+        cat no_info_header.txt ~{info_header} | sort > ~{header_filename}
+    fi
+    >>>
+
+    output {
+        File header_file = header_filename
     }
 }
 
@@ -135,6 +173,7 @@ task filterRareVariants {
         File ped_uri
         File meta_uri
         File trio_uri
+        File header_file
         File filter_rare_variants_python_script
         String vep_hail_docker
         String cohort_prefix
@@ -171,7 +210,7 @@ task filterRareVariants {
 
     command {
         python3.9 ~{filter_rare_variants_python_script} ~{lcr_uri} ~{ped_uri} ~{meta_uri} ~{trio_uri} ~{vcf_file} \
-        ~{cohort_prefix} ~{cpu_cores} ~{memory} ~{AC_threshold} ~{AF_threshold}
+        ~{cohort_prefix} ~{cpu_cores} ~{memory} ~{AC_threshold} ~{AF_threshold} ~{header_file}
 
         cp $(ls . | grep hail*.log) hail_log.txt
     }

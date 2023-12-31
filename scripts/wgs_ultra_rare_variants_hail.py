@@ -19,6 +19,7 @@ cores = sys.argv[7]
 mem = int(np.floor(float(sys.argv[8])))
 ac_threshold = int(sys.argv[9])
 af_threshold = float(sys.argv[10])
+header_file = sys.argv[11]
 
 hl.init(min_block_size=128, spark_conf={"spark.executor.cores": cores, 
                     "spark.executor.memory": f"{mem}g",
@@ -28,7 +29,7 @@ pedigree = hl.Pedigree.read(ped_uri)
 
 trio_df = pd.read_csv(trio_uri, sep='\t')
 
-mt = hl.import_vcf(vcf_file, force_bgz=True, reference_genome='GRCh38')
+mt = hl.import_vcf(vcf_file, force_bgz=True, call_fields=[], header_file=header_file, reference_genome='GRCh38')
 
 #split-multi
 def split_multi_ssc(mt):
