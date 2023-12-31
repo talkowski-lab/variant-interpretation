@@ -57,13 +57,13 @@ workflow filterRareVariantsHail {
         }
     }
 
-    call saveVCFHeader {
-        input:
-            vcf_uri=select_first([mergeCohort.merged_vcf_file, mergeSharded.merged_vcf_file[0]]),
-            info_header=info_header,
-            bad_header=bad_header,
-            sv_base_mini_docker=sv_base_mini_docker
-    }
+    # call saveVCFHeader {
+    #     input:
+    #         vcf_uri=select_first([mergeCohort.merged_vcf_file, mergeSharded.merged_vcf_file[0]]),
+    #         info_header=info_header,
+    #         bad_header=bad_header,
+    #         sv_base_mini_docker=sv_base_mini_docker
+    # }
 
     call filterRareVariants {
         input:
@@ -72,12 +72,14 @@ workflow filterRareVariantsHail {
             ped_uri=ped_uri,
             meta_uri=meta_uri,
             trio_uri=trio_uri,
-            header_file=saveVCFHeader.header_file,
+            info_header=info_header,
+            # header_file=saveVCFHeader.header_file,
             filter_rare_variants_python_script=filter_rare_variants_python_script,
             vep_hail_docker=vep_hail_docker,
             cohort_prefix=cohort_prefix,
             AC_threshold=AC_threshold,
             AF_threshold=AF_threshold,
+            bad_header=bad_header,
             runtime_attr_override=runtime_attr_filter_vcf
     }
 
@@ -173,12 +175,14 @@ task filterRareVariants {
         File ped_uri
         File meta_uri
         File trio_uri
-        File header_file
+        # File header_file
+        File info_header
         File filter_rare_variants_python_script
         String vep_hail_docker
         String cohort_prefix
         Int AC_threshold
         Float AF_threshold
+        Boolean bad_header
         RuntimeAttr? runtime_attr_override
     }
 
@@ -208,12 +212,20 @@ task filterRareVariants {
         bootDiskSizeGb: select_first([runtime_override.boot_disk_gb, runtime_default.boot_disk_gb])
     }
 
-    command {
+    String header_filename = basename(vcf_file, '.vcf.gz') + '_header.txt'
+
+    command <<<
+        /opt/vep/bcftools/bcftools head ~{vcf_file} > ~{header_filename}
+        if [[ "~{bad_header}" == "true" ]]; then
+            /opt/vep/bcftools/bcftools head ~{vcf_file} | grep -v "INFO=" > no_info_header.txt
+            cat no_info_header.txt ~{info_header} | sort > ~{header_filename}
+        fi
+
         python3.9 ~{filter_rare_variants_python_script} ~{lcr_uri} ~{ped_uri} ~{meta_uri} ~{trio_uri} ~{vcf_file} \
-        ~{cohort_prefix} ~{cpu_cores} ~{memory} ~{AC_threshold} ~{AF_threshold} ~{header_file}
+        ~{cohort_prefix} ~{cpu_cores} ~{memory} ~{AC_threshold} ~{AF_threshold} ~{header_filename}
 
         cp $(ls . | grep hail*.log) hail_log.txt
-    }
+    >>>
 
     output {
         File hail_log = "hail_log.txt"
