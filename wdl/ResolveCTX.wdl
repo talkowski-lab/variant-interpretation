@@ -178,9 +178,13 @@ task CtxVcf2Bed {
     bcftools view ~{vcf} | grep -E "^#|SVTYPE=CTX" | bgzip -c > ~{prefix}.ctx.vcf.gz
     svtk vcf2bed -i ALL --include-filters ~{prefix}.ctx.vcf.gz - | bgzip -c > ~{prefix}.ctx.bed.gz
 
-    zcat ~{prefix}.ctx.bed.gz | awk 'BEGIN { OFS="\t" } {print $1, $2, $8, $12, $6, $36, $4}'| tail -n+2 | bgzip -c > ~{prefix}.ctx.refForPE.bed.gz
-    zcat ~{prefix}.ctx.refForPE.bed | awk 'BEGIN { OFS="\t" } {split($5,a,",");for(i in a)if(!seen[a[i]]++)print $1, $2, $3, $4, a[i], $6, $7}' | bgzip -c > ~{prefix}.ctx.refForPE.split.bed.gz
-    zcat ~{prefix}.ctx.refForPE.split.bed | awk 'BEGIN { OFS="\t" } {print $1"_"$5, $2-20, $2+20, substr($0, index($0,$3))}' | bgzip -c > ~{prefix}.ctx.refForOverlap.split.bed.gz
+    Rscript /src/variant-interpretation/scripts/subsetVCFforPE.R ~{prefix}.ctx.bed.gz ~{prefix}
+    bgzip ~{prefix}.ctx.refForPE.split.bed
+    bgzip ~{prefix}.ctx.refForOverlap.split.bed
+
+#    zcat ~{prefix}.ctx.bed.gz | awk 'BEGIN { OFS="\t" } {print $1, $2, $8, $12, $6, $36, $4}'| tail -n+2 | bgzip -c > ~{prefix}.ctx.refForPE.bed.gz
+#    zcat ~{prefix}.ctx.refForPE.bed | awk 'BEGIN { OFS="\t" } {split($5,a,",");for(i in a)if(!seen[a[i]]++)print $1, $2, $3, $4, a[i], $6, $7}' | bgzip -c > ~{prefix}.ctx.refForPE.split.bed.gz
+#    zcat ~{prefix}.ctx.refForPE.split.bed | awk 'BEGIN { OFS="\t" } {print $1"_"$5, $2-20, $2+20, substr($0, index($0,$3))}' | bgzip -c > ~{prefix}.ctx.refForOverlap.split.bed.gz
 
   >>>
 
