@@ -158,7 +158,7 @@ task mergeVCFs {
         set -euo pipefail
         VCFS="~{write_lines(vcf_files)}"
         cat $VCFS | awk -F '/' '{print $NF"\t"$0}' | sort -k1,1V | awk '{print $2}' > vcfs_sorted.list
-        bcftools ~{merge_or_concat_new} -Oz --file-list vcfs_sorted.list --output ~{merged_vcf_name}
+        bcftools ~{merge_or_concat_new} --no-version -Oz --file-list vcfs_sorted.list --output ~{merged_vcf_name}
         bcftools index -t ~{merged_vcf_name}
     >>>
 
@@ -218,7 +218,7 @@ task filterRareVariants {
         /opt/vep/bcftools/bcftools head ~{vcf_file} > ~{header_filename}
         if [[ "~{bad_header}" == "true" ]]; then
             /opt/vep/bcftools/bcftools head ~{vcf_file} | grep -v "INFO=" > no_info_header.txt
-            cat no_info_header.txt ~{info_header} | sort > ~{header_filename}
+            cat no_info_header.txt ~{info_header} | LC_ALL=C sort > ~{header_filename}
         fi
 
         python3.9 ~{filter_rare_variants_python_script} ~{lcr_uri} ~{ped_uri} ~{meta_uri} ~{trio_uri} ~{vcf_file} \
