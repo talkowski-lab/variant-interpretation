@@ -11,14 +11,14 @@ prefix <- args[2]
 
 #load libraries
 library(data.table)
-library(tidyverse)
+library(tidyr)
 
 #read data
 df <- fread(input_file)
 
 df %>%
   subset(SVTYPE == "CTX") %>%
-  separate_longer_delim(samples, ",") -> ctx
+  separate_rows(samples, sep = ",") -> ctx
 
 ctx_vcf_for_pe <- subset(ctx,
                select = c(`#chrom`, start, CHR2, END, samples, AC, name))
