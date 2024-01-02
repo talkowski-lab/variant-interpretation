@@ -30,4 +30,4 @@ ctx_vcf_for_raw_ovl$`#chrom` <- paste0(ctx_vcf_for_raw_ovl$`#chrom`, "_", ctx_vc
 
 #write output
 write.table(ctx_vcf_for_pe, paste0(prefix, ".ctx.refForPE.split.bed"), sep = "\t", quote = F, row.names = F, col.names = F)
-write.table(ctx_vcf_for_raw_ovl, paste0(prefix, "ctx.refForOverlap.split.bed"), sep = "\t", quote = F, row.names = F, col.names = F)
+write.table(ctx_vcf_for_raw_ovl, paste0(prefix, ".ctx.refForOverlap.split.bed"), sep = "\t", quote = F, row.names = F, col.names = F)
