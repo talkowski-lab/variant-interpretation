@@ -21,9 +21,9 @@ workflow TinyResolve {
     RuntimeAttr? runtime_attr_untar
   }
 
-  scatter (disc in discfile) {
-    File discfile_idx = disc + ".tbi"
-  }
+#  scatter (disc in discfile) {
+#    File discfile_idx = disc + ".tbi"
+#  }
   File cytoband_idx = cytoband + ".tbi"
 
   Int num_samples = length(samples)
@@ -55,13 +55,13 @@ workflow TinyResolve {
         all_items = discfile
     }
 
-    call GetShardInputs.GetShardInputs as GetShardDiscfileIndexes {
-      input:
-        items_per_shard = samples_per_shard,
-        shard_number = i,
-        num_items = num_samples,
-        all_items = discfile_idx
-    }
+#    call GetShardInputs.GetShardInputs as GetShardDiscfileIndexes {
+#      input:
+#        items_per_shard = samples_per_shard,
+#        shard_number = i,
+#        num_items = num_samples,
+#        all_items = discfile_idx
+#    }
 
     call GetShardInputs.GetShardInputs as GetShardVcfs {
       input:
@@ -79,7 +79,7 @@ workflow TinyResolve {
         cytoband=cytoband,
         cytoband_idx=cytoband_idx,
         discfile=GetShardDiscfiles.shard_items,
-        discfile_idx=GetShardDiscfileIndexes.shard_items,
+#        discfile_idx=GetShardDiscfileIndexes.shard_items,
         mei_bed=mei_bed,
         runtime_attr_override=runtime_attr_resolve
     }
@@ -99,7 +99,7 @@ task ResolveManta {
     Array[String] samples
     File cytoband_idx
     Array[File] discfile
-    Array[File] discfile_idx
+#    Array[File] discfile_idx
     File cytoband
     File mei_bed
     String sv_pipeline_docker
@@ -129,6 +129,7 @@ task ResolveManta {
       tabix -p vcf $vcf
       sample_id=${sample_ids[$i]}
       pe=${discfiles[$i]}
+      tabix -s1 -b2 -e2 $pe
       sample_no=`printf %03d $i`
       bash /src/variant-interpretation/scripts/mantatloc_check.sh $vcf $pe ${sample_id} ~{mei_bed} ~{cytoband}
       mv ${sample_id}.manta.complex.vcf.gz tloc_${sample_no}.${sample_id}.manta.complex.vcf.gz
