@@ -77,12 +77,14 @@ task subset_sample_roi {
   RuntimeAttr runtime_attr = select_first([runtime_attr_override, default_attr])
 
   output{
-    File sample_roi = "~{sample}.bed"
+    File sample_roi = "~{sample}.bed.gz"
   }
 
   command {
-    set -e
-    grep -w ~{sample} ~{regions} > ~{sample}.bed
+    set -euo pipefail
+
+    zcat ~{regions} | \
+    grep -Ew "^chrom1|~{sample}" | bgzip -c > ~{sample}.bed.gz
   }
 
   runtime {
@@ -123,8 +125,10 @@ task subset_pe_evidence {
 
   command {
     set -ex
+    zcat ~{sample_bed} | grep -v ^chrom > sample_noheader.pe.bed
 
-    if [[ $(wc -l <~{sample_bed}) -ge 1 ]]; then
+
+    if [[ $(wc -l <sample_noheader.pe.bed) -ge 1 ]]; then
       while read chr1 pos1 chr2 pos2 sample carriers svname; do
         export GCS_OAUTH_TOKEN=$(gcloud auth application-default print-access-token)
         batchname=$(grep -w $sample ~{sample_batch} | cut -f1)
@@ -134,7 +138,7 @@ task subset_pe_evidence {
         coords="$chr1:$pos1_win-$pos2_win"
         echo "Getting PE evidence for sample $sample, coordinates: $coords, using file $batchfile"
         tabix $batchfile $coords | grep -w $chr2 >> ~{sample}.pe.bed
-      done < ~{sample_bed}
+      done < sample_noheader.pe.bed
 
       bgzip ~{sample}.pe.bed
 
