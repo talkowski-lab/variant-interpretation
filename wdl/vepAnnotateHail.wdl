@@ -131,7 +131,6 @@ task splitByChromosome {
     Float input_size = size(vcf_file, "GB")
     Float base_disk_gb = 10.0
     Float input_disk_scale = 5.0
-    Int thread_num = select_first([thread_num_override,1])
     String prefix = basename(vcf_file, ".vcf.gz")
 
     RuntimeAttr runtime_default = object {
@@ -144,7 +143,8 @@ task splitByChromosome {
     }
 
     RuntimeAttr runtime_override = select_first([runtime_attr_override, runtime_default])
-    
+    Int thread_num = select_first([thread_num_override,runtime_override.cpu_cores])
+
     runtime {
         memory: "~{select_first([runtime_override.mem_gb, runtime_default.mem_gb])} GB"
         disks: "local-disk ~{select_first([runtime_override.disk_gb, runtime_default.disk_gb])} HDD"
@@ -181,7 +181,6 @@ task scatterVCF {
     Float input_size = size(vcf_file, "GB")
     Float base_disk_gb = 10.0
     Float input_disk_scale = 5.0
-    Int thread_num = select_first([thread_num_override,1])
     String prefix = basename(vcf_file, ".vcf.gz")
 
     RuntimeAttr runtime_default = object {
@@ -194,6 +193,8 @@ task scatterVCF {
     }
 
     RuntimeAttr runtime_override = select_first([runtime_attr_override, runtime_default])
+    Int thread_num = select_first([thread_num_override,runtime_override.cpu_cores])
+
     runtime {
         memory: "~{select_first([runtime_override.mem_gb, runtime_default.mem_gb])} GB"
         disks: "local-disk ~{select_first([runtime_override.disk_gb, runtime_default.disk_gb])} HDD"
