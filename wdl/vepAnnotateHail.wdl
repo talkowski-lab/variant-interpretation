@@ -134,7 +134,7 @@ task splitByChromosome {
     String prefix = basename(vcf_file, ".vcf.gz")
 
     RuntimeAttr runtime_default = object {
-        mem_gb: 4,
+        mem_gb: 8,
         disk_gb: ceil(base_disk_gb + input_size * input_disk_scale),
         cpu_cores: 1,
         preemptible_tries: 3,
@@ -158,7 +158,7 @@ task splitByChromosome {
     command <<<
         chr_string="chr1,chr2,chr3,chr4,chr5,chr6,chr7,chr8,chr9,chr10,chr11,chr12,chr13,chr14,chr15,chr16,chr17,chr18,chr19,chr20,chr21,chr22,chrX,chrY"
         echo $chr_string | tr ',' '\n' > chr_list.txt
-        awk '$0="~{prefix}."$0".vcf.gz"' chr_list.txt > filenames.txt
+        awk '$0="~{prefix}."$0' chr_list.txt > filenames.txt
         paste chr_list.txt filenames.txt > chr_filenames.txt
         bcftools +scatter ~{vcf_file} -Oz -o . --threads ~{thread_num} -S chr_filenames.txt 
     >>>
@@ -184,7 +184,7 @@ task scatterVCF {
     String prefix = basename(vcf_file, ".vcf.gz")
 
     RuntimeAttr runtime_default = object {
-        mem_gb: 4,
+        mem_gb: 8,
         disk_gb: ceil(base_disk_gb + input_size * input_disk_scale),
         cpu_cores: 1,
         preemptible_tries: 3,
