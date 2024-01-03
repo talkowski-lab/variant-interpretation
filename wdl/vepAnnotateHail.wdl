@@ -134,7 +134,7 @@ task splitByChromosome {
     String prefix = basename(vcf_file, ".vcf.gz")
 
     RuntimeAttr runtime_default = object {
-        mem_gb: 8,
+        mem_gb: 4,
         disk_gb: ceil(base_disk_gb + input_size * input_disk_scale),
         cpu_cores: 1,
         preemptible_tries: 3,
@@ -184,7 +184,7 @@ task scatterVCF {
     String prefix = basename(vcf_file, ".vcf.gz")
 
     RuntimeAttr runtime_default = object {
-        mem_gb: 8,
+        mem_gb: 4,
         disk_gb: ceil(base_disk_gb + input_size * input_disk_scale),
         cpu_cores: 1,
         preemptible_tries: 3,
