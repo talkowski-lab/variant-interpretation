@@ -14,8 +14,6 @@ workflow vepAnnotateHail {
     input {
         File vcf_file
         File vep_annotate_hail_python_script
-        String vep_hail_docker
-        String sv_base_mini_docker
         File hg38_fasta
         File hg38_fasta_fai
         File human_ancestor_fa
@@ -26,6 +24,11 @@ workflow vepAnnotateHail {
         File loeuf_data
         File mpc_file
         String cohort_prefix
+        String vep_hail_docker
+        String sv_base_mini_docker
+        Int? records_per_shard
+        Int? thread_num_override
+        RuntimeAttr? runtime_attr_split_vcf
         RuntimeAttr? runtime_attr_remove_genotypes
         RuntimeAttr? runtime_attr_vep_annotate
         RuntimeAttr? runtime_attr_add_genotypes
@@ -68,26 +71,158 @@ workflow vepAnnotateHail {
     #     File vep_vcf_file = addGenotypes.merged_vcf_file
     #     File vep_vcf_idx = addGenotypes.merged_vcf_idx
     # }
-    call vepAnnotate {
-        input:
-            vcf_file=vcf_file,
-            vep_annotate_hail_python_script=vep_annotate_hail_python_script,
-            top_level_fa=top_level_fa,
-            human_ancestor_fa=human_ancestor_fa,
-            human_ancestor_fa_fai=human_ancestor_fa_fai,
-            gerp_conservation_scores=gerp_conservation_scores,
-            hg38_vep_cache=hg38_vep_cache,
-            loeuf_data=loeuf_data,
-            mpc_file=mpc_file,
-            vep_hail_docker=vep_hail_docker,
-            runtime_attr_override=runtime_attr_vep_annotate
+    
+    if (defined(records_per_shard)) {
+        call scatterVCF {
+            input:
+                vcf_file=vcf_file,
+                records_per_shard=select_first([records_per_shard]),
+                sv_base_mini_docker=sv_base_mini_docker,
+                thread_num_override=thread_num_override,
+                runtime_attr_override=runtime_attr_split_vcf
+        }
+    }
+    
+    if (!defined(records_per_shard)) {
+        call splitByChromosome {
+            input:
+                vcf_file=vcf_file,
+                sv_base_mini_docker=sv_base_mini_docker,
+                thread_num_override=thread_num_override,
+                runtime_attr_override=runtime_attr_split_vcf
+        }
+    }
+
+    Array[File] vcf_shards = select_first([scatterVCF.shards, splitByChromosome.shards])
+
+    scatter (vcf_shard in vcf_shards) {
+        call vepAnnotate {
+            input:
+                vcf_file=vcf_shard,
+                vep_annotate_hail_python_script=vep_annotate_hail_python_script,
+                top_level_fa=top_level_fa,
+                human_ancestor_fa=human_ancestor_fa,
+                human_ancestor_fa_fai=human_ancestor_fa_fai,
+                gerp_conservation_scores=gerp_conservation_scores,
+                hg38_vep_cache=hg38_vep_cache,
+                loeuf_data=loeuf_data,
+                mpc_file=mpc_file,
+                vep_hail_docker=vep_hail_docker,
+                runtime_attr_override=runtime_attr_vep_annotate
+        }
     }
 
     output {
-        File vep_vcf_file = vepAnnotate.vep_vcf_file
-        File vep_vcf_idx = vepAnnotate.vep_vcf_idx
+        Array[File] vep_vcf_files = vepAnnotate.vep_vcf_file
+        Array[File] vep_vcf_idx = vepAnnotate.vep_vcf_idx
+        # File vep_vcf_file = vepAnnotate.vep_vcf_file
+        # File vep_vcf_idx = vepAnnotate.vep_vcf_idx
     }
 }   
+
+task splitByChromosome { 
+    input {
+        File vcf_file
+        String sv_base_mini_docker
+        Int? thread_num_override
+        RuntimeAttr? runtime_attr_override
+    }
+
+    Float input_size = size(vcf_file, "GB")
+    Float base_disk_gb = 10.0
+    Float input_disk_scale = 5.0
+    Int thread_num = select_first([thread_num_override,1])
+    String prefix = basename(vcf_file, ".vcf.gz")
+
+    RuntimeAttr runtime_default = object {
+        mem_gb: 4,
+        disk_gb: ceil(base_disk_gb + input_size * input_disk_scale),
+        cpu_cores: 1,
+        preemptible_tries: 3,
+        max_retries: 1,
+        boot_disk_gb: 10
+    }
+
+    RuntimeAttr runtime_override = select_first([runtime_attr_override, runtime_default])
+    
+    runtime {
+        memory: "~{select_first([runtime_override.mem_gb, runtime_default.mem_gb])} GB"
+        disks: "local-disk ~{select_first([runtime_override.disk_gb, runtime_default.disk_gb])} HDD"
+        cpu: select_first([runtime_override.cpu_cores, runtime_default.cpu_cores])
+        preemptible: select_first([runtime_override.preemptible_tries, runtime_default.preemptible_tries])
+        maxRetries: select_first([runtime_override.max_retries, runtime_default.max_retries])
+        docker: sv_base_mini_docker
+        bootDiskSizeGb: select_first([runtime_override.boot_disk_gb, runtime_default.boot_disk_gb])
+    }
+
+    command <<<
+        chr_string="chr1,chr2,chr3,chr4,chr5,chr6,chr7,chr8,chr9,chr10,chr11,chr12,chr13,chr14,chr15,chr16,chr17,chr18,chr19,chr20,chr21,chr22,chrX,chrY"
+        echo $chr_string | tr ',' '\n' > chr_list.txt
+        awk '$0="~{prefix}."$0".vcf.gz"' chr_list.txt > filenames.txt
+        paste chr_list.txt filenames.txt > chr_filenames.txt
+        bcftools +scatter ~{vcf_file} -Oz -o . --threads ~{thread_num} -S chr_filenames.txt 
+    >>>
+
+    output {
+        Array[File] shards = glob("~{prefix}.chr*.vcf.gz")
+        Array[String] shards_string = glob("~{prefix}.chr*.vcf.gz")
+    }
+}
+
+task scatterVCF {
+    input {
+        File vcf_file
+        Int records_per_shard
+        String sv_base_mini_docker
+        Int? thread_num_override
+        RuntimeAttr? runtime_attr_override
+    }
+
+    Float input_size = size(vcf_file, "GB")
+    Float base_disk_gb = 10.0
+    Float input_disk_scale = 5.0
+    Int thread_num = select_first([thread_num_override,1])
+    String prefix = basename(vcf_file, ".vcf.gz")
+
+    RuntimeAttr runtime_default = object {
+        mem_gb: 4,
+        disk_gb: ceil(base_disk_gb + input_size * input_disk_scale),
+        cpu_cores: 1,
+        preemptible_tries: 3,
+        max_retries: 1,
+        boot_disk_gb: 10
+    }
+
+    RuntimeAttr runtime_override = select_first([runtime_attr_override, runtime_default])
+    runtime {
+        memory: "~{select_first([runtime_override.mem_gb, runtime_default.mem_gb])} GB"
+        disks: "local-disk ~{select_first([runtime_override.disk_gb, runtime_default.disk_gb])} HDD"
+        cpu: select_first([runtime_override.cpu_cores, runtime_default.cpu_cores])
+        preemptible: select_first([runtime_override.preemptible_tries, runtime_default.preemptible_tries])
+        maxRetries: select_first([runtime_override.max_retries, runtime_default.max_retries])
+        docker: sv_base_mini_docker
+        bootDiskSizeGb: select_first([runtime_override.boot_disk_gb, runtime_default.boot_disk_gb])
+    }
+    
+    command <<<
+        set -euo pipefail
+        #  in case the file is empty create an empty shard
+        bcftools view -h ~{vcf_file} | bgzip -c > "~{prefix}.0.vcf.gz"
+        bcftools +scatter ~{vcf_file} -o . -Oz -p "~{prefix}". --threads ~{thread_num} -n ~{records_per_shard}
+
+        ls "~{prefix}".*.vcf.gz | sort -k1,1V > vcfs.list
+        i=0
+        while read VCF; do
+          shard_no=`printf %06d $i`
+          mv "$VCF" "~{prefix}.shard_${shard_no}.vcf.gz"
+          i=$((i+1))
+        done < vcfs.list
+    >>>
+    output {
+        Array[File] shards = glob("~{prefix}.shard_*.vcf.gz")
+        Array[String] shards_string = glob("~{prefix}.shard_*.vcf.gz")
+    }
+}
 
 task removeGenotypes {
     input {
