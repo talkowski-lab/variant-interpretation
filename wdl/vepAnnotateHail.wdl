@@ -220,7 +220,7 @@ task splitFile {
     }
 
     command <<<
-        split -l ~{shards_per_chunk} ~{file} "~{cohort_prefix}."
+        split -l ~{shards_per_chunk} ~{file} -a 4 -d "~{cohort_prefix}.shard"
     >>>
 
     output {
