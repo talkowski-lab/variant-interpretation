@@ -41,6 +41,7 @@ workflow vepAnnotateHail {
     if (sub(filename, ".vcf.gz", "")==filename) {  # input is not a single VCF file
         Boolean split_vcf=false
         Boolean merge_shards=true
+
         call splitFile {
             input:
                 file=file,
@@ -81,7 +82,7 @@ workflow vepAnnotateHail {
                 input:
                     vcf_files=read_lines(chunk_file),
                     sv_base_mini_docker=sv_base_mini_docker,
-                    cohort_prefix=cohort_prefix,
+                    cohort_prefix=basename(chunk_file),
                     merge_or_concat='concat',
                     runtime_attr_override=runtime_attr_merge_vcfs
             }
