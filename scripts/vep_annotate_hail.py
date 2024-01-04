@@ -2,17 +2,6 @@ from pyspark.sql import SparkSession
 import hail as hl
 import numpy as np
 import sys
-import socket
-from urllib3.connection import HTTPConnection
-
-HTTPConnection.default_socket_options = (
-    HTTPConnection.default_socket_options + [
-        (socket.SOL_SOCKET, socket.SO_KEEPALIVE, 1),
-        (socket.SOL_TCP, socket.TCP_KEEPIDLE, 45),
-        (socket.SOL_TCP, socket.TCP_KEEPINTVL, 10),
-        (socket.SOL_TCP, socket.TCP_KEEPCNT, 6)
-    ]
-)
 
 vcf_file = sys.argv[1]
 vep_annotated_vcf_name = sys.argv[2]
@@ -21,7 +10,9 @@ mem = int(np.floor(float(sys.argv[4])))
 
 hl.init(min_block_size=128, spark_conf={"spark.executor.cores": cores, 
                     "spark.executor.memory": f"{mem}g",
-                    "spark.driver.memory": f"{mem}g"}, tmp_dir="tmp", local_tmpdir="tmp")
+                    "spark.driver.cores": cores,
+                    "spark.driver.memory": f"{mem}g"
+                    }, tmp_dir="tmp", local_tmpdir="tmp")
 
 #split-multi
 def split_multi_ssc(mt):

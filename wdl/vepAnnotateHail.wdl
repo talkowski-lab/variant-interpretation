@@ -26,6 +26,7 @@ workflow vepAnnotateHail {
         String cohort_prefix
         String vep_hail_docker
         String sv_base_mini_docker
+        Boolean split_vcf=true
         Int? records_per_shard
         Int? thread_num_override
         RuntimeAttr? runtime_attr_split_vcf
@@ -71,29 +72,30 @@ workflow vepAnnotateHail {
     #     File vep_vcf_file = addGenotypes.merged_vcf_file
     #     File vep_vcf_idx = addGenotypes.merged_vcf_idx
     # }
-    
-    if (defined(records_per_shard)) {
-        call scatterVCF {
-            input:
-                vcf_file=vcf_file,
-                records_per_shard=select_first([records_per_shard]),
-                sv_base_mini_docker=sv_base_mini_docker,
-                thread_num_override=thread_num_override,
-                runtime_attr_override=runtime_attr_split_vcf
+    if (defined(split_vcf)) {
+        if (defined(records_per_shard)) {
+            call scatterVCF {
+                input:
+                    vcf_file=vcf_file,
+                    records_per_shard=select_first([records_per_shard]),
+                    sv_base_mini_docker=sv_base_mini_docker,
+                    thread_num_override=thread_num_override,
+                    runtime_attr_override=runtime_attr_split_vcf
+            }
         }
-    }
-    
-    if (!defined(records_per_shard)) {
-        call splitByChromosome {
-            input:
-                vcf_file=vcf_file,
-                sv_base_mini_docker=sv_base_mini_docker,
-                thread_num_override=thread_num_override,
-                runtime_attr_override=runtime_attr_split_vcf
+        
+        if (!defined(records_per_shard)) {
+            call splitByChromosome {
+                input:
+                    vcf_file=vcf_file,
+                    sv_base_mini_docker=sv_base_mini_docker,
+                    thread_num_override=thread_num_override,
+                    runtime_attr_override=runtime_attr_split_vcf
+            }
         }
     }
 
-    Array[File] vcf_shards = select_first([scatterVCF.shards, splitByChromosome.shards])
+    Array[File] vcf_shards = select_first([scatterVCF.shards, splitByChromosome.shards, [vcf_file]])
 
     scatter (vcf_shard in vcf_shards) {
         call vepAnnotate {

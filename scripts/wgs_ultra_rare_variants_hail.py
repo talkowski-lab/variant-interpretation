@@ -23,7 +23,9 @@ header_file = sys.argv[11]
 
 hl.init(min_block_size=128, spark_conf={"spark.executor.cores": cores, 
                     "spark.executor.memory": f"{mem}g",
-                    "spark.driver.memory": f"{mem}g"})
+                    "spark.driver.cores": cores,
+                    "spark.driver.memory": f"{mem}g"
+                    }, tmp_dir="tmp", local_tmpdir="tmp")
 
 pedigree = hl.Pedigree.read(ped_uri)
 
