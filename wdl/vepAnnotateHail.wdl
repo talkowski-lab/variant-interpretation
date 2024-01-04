@@ -27,7 +27,7 @@ workflow vepAnnotateHail {
         String vep_hail_docker
         String sv_base_mini_docker
         Boolean split_vcf=true
-        Int shards_per_chunk=20
+        Int shards_per_chunk=10
         Int? records_per_shard
         Int? thread_num_override
         RuntimeAttr? runtime_attr_merge_vcfs
@@ -36,9 +36,9 @@ workflow vepAnnotateHail {
         RuntimeAttr? runtime_attr_vep_annotate
         RuntimeAttr? runtime_attr_add_genotypes
     }
-        
+
     String filename = basename(file)
-    if (sub(filename, ".vcf.gz", "") != filename) {  # input is not a single VCF file
+    if (sub(filename, ".vcf.gz", "")==filename) {  # input is not a single VCF file
         Boolean split_vcf=false
         Boolean merge_shards=true
         call splitFile {
