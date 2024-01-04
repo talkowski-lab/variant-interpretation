@@ -109,18 +109,20 @@ workflow filterRareVariantsHail {
                     runtime_attr_override=runtime_attr_merge_results
             }
         }
-        call mergeResults {
-            input: 
-                ultra_rare_variants_tsvs=mergeShardResults.ultra_rare_variants_tsv,
-                vep_hail_docker=vep_hail_docker,
-                cohort_prefix=cohort_prefix,
-                runtime_attr_override=runtime_attr_merge_results
+        if (length(mergeShardResults.ultra_rare_variants_tsv) > 1) {
+            call mergeResults {
+                input: 
+                    ultra_rare_variants_tsvs=mergeShardResults.ultra_rare_variants_tsv,
+                    vep_hail_docker=vep_hail_docker,
+                    cohort_prefix=cohort_prefix,
+                    runtime_attr_override=runtime_attr_merge_results
+            }
         }
     }
 
     output {
         # File hail_log = filterRareVariants.hail_log
-        File ultra_rare_variants_tsv = select_first([filterRareVariants.ultra_rare_variants_tsv, mergeResults.ultra_rare_variants_tsv])
+        File ultra_rare_variants_tsv = select_first([filterRareVariants.ultra_rare_variants_tsv, mergeResults.ultra_rare_variants_tsv, mergeShardResults.ultra_rare_variants_tsv])
     }
 }
 
