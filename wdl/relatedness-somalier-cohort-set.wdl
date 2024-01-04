@@ -90,7 +90,7 @@ workflow runSomalier {
         input:
             sites_uri=sites_uri,
             hg38_fasta=hg38_fasta,
-            vcf_uri=select_first([splitMergeVCFs.merged_vcf_file, mergeVCFs.merged_vcf_file]),
+            vcf_uri=splitMergeVCFs.merged_vcf_file,
             ped_uri=ped_uri,
             ancestry_labels_1kg=ancestry_labels_1kg,
             somalier_1kg_tar=somalier_1kg_tar,
