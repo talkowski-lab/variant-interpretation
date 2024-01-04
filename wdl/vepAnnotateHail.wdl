@@ -72,7 +72,7 @@ workflow vepAnnotateHail {
     #     File vep_vcf_file = addGenotypes.merged_vcf_file
     #     File vep_vcf_idx = addGenotypes.merged_vcf_idx
     # }
-    if (defined(split_vcf)) {
+    if (split_vcf) {
         if (defined(records_per_shard)) {
             call scatterVCF {
                 input:
