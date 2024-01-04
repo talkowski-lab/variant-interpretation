@@ -36,45 +36,7 @@ workflow vepAnnotateHail {
         RuntimeAttr? runtime_attr_vep_annotate
         RuntimeAttr? runtime_attr_add_genotypes
     }
-
-    # call removeGenotypes {
-    #     input:
-    #         vcf_file=vcf_file,
-    #         sv_base_mini_docker=sv_base_mini_docker,
-    #         hg38_fasta=hg38_fasta,
-    #         hg38_fasta_fai=hg38_fasta_fai,
-    #         runtime_attr_override=runtime_attr_remove_genotypes
-    # }
         
-    # call vepAnnotate {
-    #     input:
-    #         vcf_file=removeGenotypes.vcf_no_genotype,
-    #         vep_annotate_hail_python_script=vep_annotate_hail_python_script,
-    #         top_level_fa=top_level_fa,
-    #         human_ancestor_fa=human_ancestor_fa,
-    #         human_ancestor_fa_fai=human_ancestor_fa_fai,
-    #         gerp_conservation_scores=gerp_conservation_scores,
-    #         hg38_vep_cache=hg38_vep_cache,
-    #         loeuf_data=loeuf_data,
-    #         mpc_file=mpc_file,
-    #         vep_hail_docker=vep_hail_docker,
-    #         runtime_attr_override=runtime_attr_vep_annotate
-    # }
-
-    # call addGenotypes { 
-    #     input:
-    #         vep_annotated_vcf=vepAnnotate.vep_vcf_file,
-    #         vcf_file=vcf_file,
-    #         vcf_file_idx=removeGenotypes.vcf_file_idx,
-    #         sv_base_mini_docker=sv_base_mini_docker,
-    #         runtime_attr_override=runtime_attr_add_genotypes
-    # }
-
-    # output {   
-    #     File vep_vcf_file = addGenotypes.merged_vcf_file
-    #     File vep_vcf_idx = addGenotypes.merged_vcf_idx
-    # }
-    
     String filename = basename(file)
     if (sub(filename, ".vcf.gz", "") != filename) {  # input is not a single VCF file
         Boolean split_vcf=false
@@ -165,8 +127,6 @@ workflow vepAnnotateHail {
     output {
         Array[File] vep_vcf_files = vep_vcf_files_
         Array[File] vep_vcf_idx = vep_vcf_idx_
-        # File vep_vcf_file = vepAnnotate.vep_vcf_file
-        # File vep_vcf_idx = vepAnnotate.vep_vcf_idx
     }
 }   
 
@@ -372,60 +332,6 @@ task scatterVCF {
     }
 }
 
-task removeGenotypes {
-    input {
-        File vcf_file
-        String sv_base_mini_docker
-        File hg38_fasta
-        File hg38_fasta_fai
-        RuntimeAttr? runtime_attr_override
-    }
-
-    Float input_size = size(vcf_file, "GB")
-    Float base_disk_gb = 10.0
-    Float input_disk_scale = 5.0
-    RuntimeAttr runtime_default = object {
-        mem_gb: 4,
-        disk_gb: ceil(base_disk_gb + input_size * input_disk_scale),
-        cpu_cores: 1,
-        preemptible_tries: 3,
-        max_retries: 1,
-        boot_disk_gb: 10
-    }
-
-    RuntimeAttr runtime_override = select_first([runtime_attr_override, runtime_default])
-    
-    runtime {
-        memory: "~{select_first([runtime_override.mem_gb, runtime_default.mem_gb])} GB"
-        disks: "local-disk ~{select_first([runtime_override.disk_gb, runtime_default.disk_gb])} HDD"
-        cpu: select_first([runtime_override.cpu_cores, runtime_default.cpu_cores])
-        preemptible: select_first([runtime_override.preemptible_tries, runtime_default.preemptible_tries])
-        maxRetries: select_first([runtime_override.max_retries, runtime_default.max_retries])
-        docker: sv_base_mini_docker
-        bootDiskSizeGb: select_first([runtime_override.boot_disk_gb, runtime_default.boot_disk_gb])
-    }
-
-    String prefix = basename(vcf_file, ".vcf.gz")
-    String vcf_normalized_nogeno_file_name = "~{prefix}.normalized.stripped.vcf.gz"
-
-    command <<<
-        set -euo pipefail
-
-        bcftools index -t ~{vcf_file} -o ~{basename(vcf_file)+'.tbi'}
-        bcftools view -G ~{vcf_file} -Oz -o ~{vcf_normalized_nogeno_file_name}
-        bcftools index -t ~{vcf_normalized_nogeno_file_name}
-        
-    >>>
-        
-    output {
-        File vcf_file_idx = basename(vcf_file) + '.tbi'
-        File vcf_no_genotype = "~{prefix}.normalized.stripped.vcf.gz"
-        File vcf_no_genotype_idx = "~{prefix}.normalized.stripped.vcf.gz.tbi"
-    }
-
-
-}
-
 task vepAnnotate {
     input {
         File vcf_file
@@ -510,66 +416,5 @@ task vepAnnotate {
         File vep_vcf_file = vep_annotated_vcf_name
         File vep_vcf_idx = vep_annotated_vcf_name + '.tbi'
         File hail_log = "hail_log.txt"
-    }
-}
-
-task addGenotypes {
-    input {
-        File vep_annotated_vcf
-        File vcf_file
-        File vcf_file_idx
-        String sv_base_mini_docker
-        RuntimeAttr? runtime_attr_override
-        Int? thread_num_override  
-    }
-
-    #  CleanVcf5.FindRedundantMultiallelics
-    Float vep_annotate_sizes = size(vep_annotated_vcf, "GB") 
-    Float norm_vcf_sizes = size(vcf_file, "GB")
-    Float base_disk_gb = 10.0
-
-    RuntimeAttr runtime_default = object {
-                                      mem_gb: 4,  
-                                      disk_gb: ceil(base_disk_gb + (vep_annotate_sizes + norm_vcf_sizes) * 5.0),
-                                      cpu_cores: 1,
-                                      preemptible_tries: 3,
-                                      max_retries: 1,
-                                      boot_disk_gb: 10
-                                  }
-    RuntimeAttr runtime_override = select_first([runtime_attr_override, runtime_default])
-    runtime {
-        memory: "~{select_first([runtime_override.mem_gb, runtime_default.mem_gb])} GB"
-        disks: "local-disk ~{select_first([runtime_override.disk_gb, runtime_default.disk_gb])} HDD"
-        cpu: select_first([runtime_override.cpu_cores, runtime_default.cpu_cores])
-        preemptible: select_first([runtime_override.preemptible_tries, runtime_default.preemptible_tries])
-        maxRetries: select_first([runtime_override.max_retries, runtime_default.max_retries])
-        docker: sv_base_mini_docker
-        bootDiskSizeGb: select_first([runtime_override.boot_disk_gb, runtime_default.boot_disk_gb])
-    }
-
-    String prefix = basename(vep_annotated_vcf, ".vcf.gz")
-    String combined_vcf_name="~{prefix}.vep.geno.vcf.gz"
-    Int thread_num = select_first([thread_num_override,1])
-
-    command <<<
-        set -euo pipefail
-        
-        bcftools index -t ~{vep_annotated_vcf}
-
-        bcftools merge \
-        --no-version \
-        --threads ~{thread_num} \
-        -Oz \
-        --output ~{combined_vcf_name} \
-        ~{vcf_file} \
-        ~{vep_annotated_vcf}
-
-        bcftools index -t ~{combined_vcf_name}
-
-    >>>
-
-    output {
-        File merged_vcf_file = combined_vcf_name
-        File merged_vcf_idx = combined_vcf_name + ".tbi"
     }
 }
