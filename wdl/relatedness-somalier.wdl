@@ -201,9 +201,6 @@ task mergeVCFs {
         RuntimeAttr? runtime_attr_override
     }
 
-    #  generally assume working disk size is ~2 * inputs, and outputs are ~2 *inputs, and inputs are not removed
-    #  generally assume working memory is ~3 * inputs
-    #  CleanVcf5.FindRedundantMultiallelics
     Float input_size = size(vcf_files, "GB")
     Float base_disk_gb = 10.0
     Float input_disk_scale = 5.0

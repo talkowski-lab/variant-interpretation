@@ -12,7 +12,7 @@ struct RuntimeAttr {
 workflow vepAnnotateHail {
 
     input {
-        File vcf_file
+        File file
         File vep_annotate_hail_python_script
         File hg38_fasta
         File hg38_fasta_fai
@@ -27,8 +27,10 @@ workflow vepAnnotateHail {
         String vep_hail_docker
         String sv_base_mini_docker
         Boolean split_vcf=true
+        Int shards_per_chunk=20
         Int? records_per_shard
         Int? thread_num_override
+        RuntimeAttr? runtime_attr_merge_vcfs
         RuntimeAttr? runtime_attr_split_vcf
         RuntimeAttr? runtime_attr_remove_genotypes
         RuntimeAttr? runtime_attr_vep_annotate
@@ -72,11 +74,25 @@ workflow vepAnnotateHail {
     #     File vep_vcf_file = addGenotypes.merged_vcf_file
     #     File vep_vcf_idx = addGenotypes.merged_vcf_idx
     # }
+    
+    String filename = basename(file)
+    if (sub(filename, ".vcf.gz", "") != filename) {  # input is not a single VCF file
+        Boolean split_vcf=false
+        Boolean merge_shards=true
+        call splitFile {
+            input:
+                file=file,
+                shards_per_chunk=shards_per_chunk,
+                cohort_prefix=cohort_prefix,
+                vep_hail_docker=vep_hail_docker
+        }
+    }
+
     if (split_vcf) {
         if (defined(records_per_shard)) {
             call scatterVCF {
                 input:
-                    vcf_file=vcf_file,
+                    vcf_file=file,
                     records_per_shard=select_first([records_per_shard]),
                     sv_base_mini_docker=sv_base_mini_docker,
                     thread_num_override=thread_num_override,
@@ -87,40 +103,169 @@ workflow vepAnnotateHail {
         if (!defined(records_per_shard)) {
             call splitByChromosome {
                 input:
-                    vcf_file=vcf_file,
+                    vcf_file=file,
                     sv_base_mini_docker=sv_base_mini_docker,
                     thread_num_override=thread_num_override,
                     runtime_attr_override=runtime_attr_split_vcf
             }
         }
     }
+    
+    Array[File] vcf_shards = select_first([scatterVCF.shards, splitByChromosome.shards, splitFile.chunks, [file]])
 
-    Array[File] vcf_shards = select_first([scatterVCF.shards, splitByChromosome.shards, [vcf_file]])
-
-    scatter (vcf_shard in vcf_shards) {
-        call vepAnnotate {
-            input:
-                vcf_file=vcf_shard,
-                vep_annotate_hail_python_script=vep_annotate_hail_python_script,
-                top_level_fa=top_level_fa,
-                human_ancestor_fa=human_ancestor_fa,
-                human_ancestor_fa_fai=human_ancestor_fa_fai,
-                gerp_conservation_scores=gerp_conservation_scores,
-                hg38_vep_cache=hg38_vep_cache,
-                loeuf_data=loeuf_data,
-                mpc_file=mpc_file,
-                vep_hail_docker=vep_hail_docker,
-                runtime_attr_override=runtime_attr_vep_annotate
+    if (defined(merge_shards)) {
+        scatter (chunk_file in vcf_shards) {
+            call mergeVCFs {
+                input:
+                    vcf_files=read_lines(chunk_file),
+                    sv_base_mini_docker=sv_base_mini_docker,
+                    cohort_prefix=cohort_prefix,
+                    merge_or_concat='concat',
+                    runtime_attr_override=runtime_attr_merge_vcfs
+            }
+            call vepAnnotate as vepAnnotateMergedShards {
+                input:
+                    vcf_file=mergeVCFs.merged_vcf_file,
+                    vep_annotate_hail_python_script=vep_annotate_hail_python_script,
+                    top_level_fa=top_level_fa,
+                    human_ancestor_fa=human_ancestor_fa,
+                    human_ancestor_fa_fai=human_ancestor_fa_fai,
+                    gerp_conservation_scores=gerp_conservation_scores,
+                    hg38_vep_cache=hg38_vep_cache,
+                    loeuf_data=loeuf_data,
+                    mpc_file=mpc_file,
+                    vep_hail_docker=vep_hail_docker,
+                    runtime_attr_override=runtime_attr_vep_annotate
+            }
+        }
+    }
+       
+    if (!defined(merge_shards)) {
+        scatter (vcf_shard in vcf_shards) {
+            call vepAnnotate {
+                input:
+                    vcf_file=vcf_shard,
+                    vep_annotate_hail_python_script=vep_annotate_hail_python_script,
+                    top_level_fa=top_level_fa,
+                    human_ancestor_fa=human_ancestor_fa,
+                    human_ancestor_fa_fai=human_ancestor_fa_fai,
+                    gerp_conservation_scores=gerp_conservation_scores,
+                    hg38_vep_cache=hg38_vep_cache,
+                    loeuf_data=loeuf_data,
+                    mpc_file=mpc_file,
+                    vep_hail_docker=vep_hail_docker,
+                    runtime_attr_override=runtime_attr_vep_annotate
+            }
         }
     }
 
+    Array[File] vep_vcf_files_ = select_first([vepAnnotate.vep_vcf_file, vepAnnotateMergedShards.vep_vcf_file])
+    Array[File] vep_vcf_idx_ = select_first([vepAnnotate.vep_vcf_idx, vepAnnotateMergedShards.vep_vcf_idx])
+
     output {
-        Array[File] vep_vcf_files = vepAnnotate.vep_vcf_file
-        Array[File] vep_vcf_idx = vepAnnotate.vep_vcf_idx
+        Array[File] vep_vcf_files = vep_vcf_files_
+        Array[File] vep_vcf_idx = vep_vcf_idx_
         # File vep_vcf_file = vepAnnotate.vep_vcf_file
         # File vep_vcf_idx = vepAnnotate.vep_vcf_idx
     }
 }   
+
+task mergeVCFs {
+    input {
+        Array[File] vcf_files
+        String sv_base_mini_docker
+        String cohort_prefix
+        String merge_or_concat   
+        RuntimeAttr? runtime_attr_override
+    }
+
+    Float input_size = size(vcf_files, "GB")
+    Float base_disk_gb = 10.0
+    Float input_disk_scale = 5.0
+    
+    RuntimeAttr runtime_default = object {
+        mem_gb: 4,
+        disk_gb: ceil(base_disk_gb + input_size * input_disk_scale),
+        cpu_cores: 1,
+        preemptible_tries: 3,
+        max_retries: 1,
+        boot_disk_gb: 10
+    }
+
+    RuntimeAttr runtime_override = select_first([runtime_attr_override, runtime_default])
+    
+    runtime {
+        memory: "~{select_first([runtime_override.mem_gb, runtime_default.mem_gb])} GB"
+        disks: "local-disk ~{select_first([runtime_override.disk_gb, runtime_default.disk_gb])} HDD"
+        cpu: select_first([runtime_override.cpu_cores, runtime_default.cpu_cores])
+        preemptible: select_first([runtime_override.preemptible_tries, runtime_default.preemptible_tries])
+        maxRetries: select_first([runtime_override.max_retries, runtime_default.max_retries])
+        docker: sv_base_mini_docker
+        bootDiskSizeGb: select_first([runtime_override.boot_disk_gb, runtime_default.boot_disk_gb])
+    }
+
+    String merged_vcf_name="~{cohort_prefix}.merged.vcf.gz"
+    String sorted_vcf_name="~{cohort_prefix}.merged.sorted.vcf.gz"
+
+    String merge_or_concat_new = if merge_or_concat == 'concat' then 'concat -n'  else merge_or_concat
+
+    command <<<
+        set -euo pipefail
+        VCFS="~{write_lines(vcf_files)}"
+        cat $VCFS | awk -F '/' '{print $NF"\t"$0}' | sort -k1,1V | awk '{print $2}' > vcfs_sorted.list
+        bcftools ~{merge_or_concat_new} --no-version -Oz --file-list vcfs_sorted.list --output ~{merged_vcf_name}
+        bcftools sort ~{merged_vcf_name} --output ~{sorted_vcf_name}
+        bcftools index -t ~{sorted_vcf_name}
+    >>>
+
+    output {
+        File merged_vcf_file=sorted_vcf_name
+        File merged_vcf_idx=sorted_vcf_name + ".tbi"
+    }
+}
+
+task splitFile {
+    input {
+        File file
+        Int shards_per_chunk
+        String cohort_prefix
+        String vep_hail_docker
+        RuntimeAttr? runtime_attr_override
+    }
+
+    Float input_size = size(file, "GB")
+    Float base_disk_gb = 10.0
+    Float input_disk_scale = 5.0
+
+    RuntimeAttr runtime_default = object {
+        mem_gb: 4,
+        disk_gb: ceil(base_disk_gb + input_size * input_disk_scale),
+        cpu_cores: 1,
+        preemptible_tries: 3,
+        max_retries: 1,
+        boot_disk_gb: 10
+    }
+
+    RuntimeAttr runtime_override = select_first([runtime_attr_override, runtime_default])
+
+    runtime {
+        memory: "~{select_first([runtime_override.mem_gb, runtime_default.mem_gb])} GB"
+        disks: "local-disk ~{select_first([runtime_override.disk_gb, runtime_default.disk_gb])} HDD"
+        cpu: select_first([runtime_override.cpu_cores, runtime_default.cpu_cores])
+        preemptible: select_first([runtime_override.preemptible_tries, runtime_default.preemptible_tries])
+        maxRetries: select_first([runtime_override.max_retries, runtime_default.max_retries])
+        docker: vep_hail_docker
+        bootDiskSizeGb: select_first([runtime_override.boot_disk_gb, runtime_default.boot_disk_gb])
+    }
+
+    command <<<
+        split -l ~{shards_per_chunk} ~{file} "~{cohort_prefix}."
+    >>>
+
+    output {
+        Array[File] chunks = glob("~{cohort_prefix}.*")
+    }
+}
 
 task splitByChromosome { 
     input {
