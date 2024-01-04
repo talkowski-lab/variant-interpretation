@@ -133,10 +133,11 @@ workflow GenomicDisorders {
     call mergeGenomicDisorders{
         input:
             gd_bed_to_merge=getGenomicDisorders.gd_output_from_depth_raw_files,
+            gd_denovo_bed_to_merge=getGenomicDisorders.gd_output_from_depth_raw_files_denovo,
             variant_interpretation_docker=variant_interpretation_docker,
             runtime_attr_override = runtime_attr_merge_gd
     }
-
+    
 #        #splits vcf by chromosome
 #        call subsetVcf {
 #            input:
@@ -177,6 +178,7 @@ workflow GenomicDisorders {
     output {
         File cleaned_ped = cleanPed.cleaned_ped
         File gd_depth = mergeGenomicDisorders.gd_output_from_depth
+        File gd_depth_denovo = mergeGenomicDisorders.gd_denovo_output_from_depth
         File vcf_in_gds = getVCFoverlap.out_bed
 #        File gd_for_denovo = getGenomicDisorders.gd_output_for_denovo
 #        File gd_vcf = getGenomicDisorders.gd_output_from_final_vcf[1]
@@ -318,6 +320,7 @@ task getGenomicDisorders{
 #        File gd_output_from_final_vcf = "gd.variants.from.final.vcf.txt.gz"
 #        File gd_output_for_denovo = "gd.variants.from.final.vcf.names.txt"
         File gd_output_from_depth_raw_files = "~{chromosome}.gd.variants.in.depth.raw.files.txt.gz"
+        File gd_output_from_depth_raw_files_denovo ="~{chromosome}.gd.variants.in.depth.raw.files.de.novo.txt"
     }
 
     command <<<
@@ -344,34 +347,41 @@ task getGenomicDisorders{
         bedtools intersect -wa -wb -a ~{chromosome}.coverage.parents.list.txt -b sorted.depth.parents.bed.gz | sort | uniq | awk -v OFS="\t" '{print $1,$2,$3,$4,$9,$10,$11,$12,$13}' > ~{chromosome}.coverage.parents.txt
 
         bedtools coverage -sorted -a gd.per.sample.txt -b sorted.depth.proband.bed.gz |awk '{if ($NF>=0.30) print }' > ~{chromosome}.coverage.proband.list.txt
-        bedtools intersect -wa -wb -a ~{chromosome}.coverage.proband.list.txt -b sorted.depth.proband.bed.gz | sort | uniq | awk -v OFS="\t" '{print $1,$2,$3,$4,$9,$10,$11,$12,$13}' > ~{chromosome}.coverage.proband.txt
+        bedtools intersect -wa -wb -a ~{chromosome}.coverage.proband.list.txt -b sorted.depth.proband.bed.gz | sort | uniq | awk -v OFS="\t" '{print $1,$2,$3,$4,$5,$10,$11,$12,$13,$14}' > ~{chromosome}.coverage.proband.txt
 
         # IMPORTANT "bedtools coverage" throws an error when sorted.depth.proband.bed.gz contains a sample, but the query file "gd.per.sample.txt" (so the ped file) doesn't contain the corresponding sample.
-        echo "done with coverage in depth variants". This error fix should be done in prior steps.
+        # This error fix should be done in prior steps.
 
-        cat ~{chromosome}.coverage.parents.txt ~{chromosome}.coverage.proband.txt > ~{chromosome}.coverage.txt
-
-        echo "done with cat"
         bedtools intersect -wa -wb -f 0.3 -sorted -a gd.per.sample.txt -b sorted.depth.proband.bed.gz > ~{chromosome}.gd.variants.in.depth.raw.file.proband.no.r.txt
         bedtools intersect -wa -wb -f 0.3 -sorted -a gd.per.family.txt -b sorted.depth.parents.bed.gz > ~{chromosome}.gd.variants.in.depth.raw.file.parents.no.r.txt
 
-        echo "done with intersect no -r"
+        # Remove the calls that do not reciprocally overlap with the 0.3 fraction of GD site.
+        bedtools intersect -v -wb -b ~{chromosome}.gd.variants.in.depth.raw.file.proband.no.r.txt -a ~{chromosome}.coverage.proband.txt > ~{chromosome}.kept.coverage.proband.txt
+        bedtools intersect -v -wb -b ~{chromosome}.gd.variants.in.depth.raw.file.parents.no.r.txt -a ~{chromosome}.coverage.parent.txt > ~{chromosome}.kept.coverage.parent.txt    
+        
+        #concatanate proband calls on GD site with desired overlap
+        cat ~{chromosome}.gd.variants.in.depth.raw.file.proband.txt ~{chromosome}.kept.coverage.proband.txt | awk -v OFS="\t" '{print $5,$7,$8,$9,$10,$1,$2,$3,$4}' > ~{chromosome}.proband.GD.calls.txt
 
-        cat ~{chromosome}.gd.variants.in.depth.raw.file.proband.no.r.txt ~{chromosome}.gd.variants.in.depth.raw.file.parents.no.r.txt > ~{chromosome}.remove.txt
+        #concatanate parent calls on GD site with desired overlap
+        cat ~{chromosome}.gd.variants.in.depth.raw.file.parents.txt ~{chromosome}.kept.coverage.parent.txt | awk -v OFS="\t" '{print $5,$6,$7,$8,$9,$1,$2,$3,$4}' > ~{chromosome}.parent.GD.calls.txt
 
-        echo "done with cat"
+        #get de novo only calls
+        bedtools intersect -v -wa  -f 0.3 -a ~{chromosome}.proband.GD.calls.txt -b ~{chromosome}.parent.GD.calls.txt > ~{chromosome}.proband.GD.calls.de_novo.txt
+        
+        #to get all GD calls of probands+parents
+        cat ~{chromosome}.proband.GD.calls.txt ~{chromosome}.parent.GD.calls.txt > ~{chromosome}.parent_and_proband.GD.calls.txt
 
-        bedtools intersect -v -wb -b ~{chromosome}.remove.txt -a ~{chromosome}.coverage.txt > ~{chromosome}.kept.coverage.txt
-
-        echo "done with grep"
-        # to remove sample/family tag from chr in final bed file
-        cat ~{chromosome}.gd.variants.in.depth.raw.file.proband.txt \
-            ~{chromosome}.gd.variants.in.depth.raw.file.parents.txt \
-            ~{chromosome}.kept.coverage.txt |\
+        #format the output files: remove sample/family tag from chr in final bed file        
+        cat ~{chromosome}.parent_and_proband.GD.calls.txt |\
             awk -v OFS="\t" '{sub(/_.*/, "", $1); print}' |\
-            awk -v OFS="\t" '{sub(/_.*/, "", $5); print}' | sort | uniq > ~{chromosome}.gd.variants.in.depth.raw.files.txt
+            awk -v OFS="\t" '{sub(/_.*/, "", $6); print}' | sort | uniq > ~{chromosome}.gd.variants.in.depth.raw.files.txt
+
+        cat ~{chromosome}.proband.GD.calls.de_novo.txt |\
+            awk -v OFS="\t" '{sub(/_.*/, "", $1); print}' |\
+            awk -v OFS="\t" '{sub(/_.*/, "", $6); print}' | sort | uniq > ~{chromosome}.gd.variants.in.depth.raw.files.de.novo.txt
+
         bgzip ~{chromosome}.gd.variants.in.depth.raw.files.txt
-        echo "done with cat"
+        bgzip ~{chromosome}.gd.variants.in.depth.raw.files.de.novo.txt
     >>>
 
     runtime {
@@ -438,6 +448,7 @@ task getGenomicDisorders{
 task mergeGenomicDisorders{
     input{
         Array[File] gd_bed_to_merge
+        Array[File] gd_denovo_bed_to_merge
         String variant_interpretation_docker
         RuntimeAttr? runtime_attr_override
     }
@@ -458,14 +469,19 @@ task mergeGenomicDisorders{
 
     output{
         File gd_output_from_depth = "gd.raw.files.output.ref.txt.gz"
+        File gd_denovo_output_from_depth = "gd.denovo.raw.files.output.ref.txt.gz"
     }
 
     command <<<
         set -euo pipefail
 
-        zcat ~{sep=" " gd_bed_to_merge} > gd.raw.files.output.txt
-        awk '{print $5"_"$8"_"$9"\t"$6"\t"$7"\t"$8"\t"$9"\t"$1"\t"$2"\t"$3"\t"$4}' gd.raw.files.output.txt | \
-            bgzip -c > gd.raw.files.output.ref.txt.gz
+        zcat ~{sep=" " gd_bed_to_merge} | bgzip -c > gd.raw.files.output.ref.txt.gz
+       # awk '{print $5"_"$8"_"$9"\t"$6"\t"$7"\t"$8"\t"$9"\t"$1"\t"$2"\t"$3"\t"$4}' gd.raw.files.output.txt | \
+       #     bgzip -c > gd.raw.files.output.ref.txt.gz
+
+        zcat ~{sep=" " gd_denovo_bed_to_merge} | bgzip -c > gd.denovo.raw.files.output.ref.txt.gz
+       # awk '{print $5"_"$8"_"$9"\t"$6"\t"$7"\t"$8"\t"$9"\t"$1"\t"$2"\t"$3"\t"$4}' gd.raw.files.output.txt | \
+       #     bgzip -c > gd.denovo.raw.files.output.ref.txt.gz
     >>>
 
     runtime {
