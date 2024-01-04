@@ -24,7 +24,7 @@ workflow runSomalier {
         String sv_base_mini_docker
         String hail_docker
         Boolean subset_ped=true   
-        Boolean overlapping_samples=false     
+        # Boolean overlapping_samples=false     
         RuntimeAttr? runtime_attr_relatedness
         RuntimeAttr? runtime_attr_correct
     }
@@ -58,26 +58,33 @@ workflow runSomalier {
             merge_or_concat='concat'
         }
     }
+    call splitMergeVCFs {
+        input:
+            vcf_files=mergeCohort.merged_vcf_file,
+            vcf_files_idx=mergeCohort.merged_vcf_idx,
+            sv_base_mini_docker=sv_base_mini_docker,
+            cohort_prefix=cohort_prefix
+    }
 
-    if (overlapping_samples) {
-        call splitMergeVCFs {
-            input:
-                vcf_files=mergeCohort.merged_vcf_file,
-                vcf_files_idx=mergeCohort.merged_vcf_idx,
-                sv_base_mini_docker=sv_base_mini_docker,
-                cohort_prefix=cohort_prefix
-        }
-    }
-    if (!overlapping_samples) {
-        call mergeVCFs {
-            input:
-                vcf_files=mergeCohort.merged_vcf_file,
-                vcf_files_idx=mergeCohort.merged_vcf_idx,
-                sv_base_mini_docker=sv_base_mini_docker,
-                cohort_prefix=cohort_prefix,
-                merge_or_concat='merge'
-        }
-    }
+    # if (overlapping_samples) {
+    #     call splitMergeVCFs {
+    #         input:
+    #             vcf_files=mergeCohort.merged_vcf_file,
+    #             vcf_files_idx=mergeCohort.merged_vcf_idx,
+    #             sv_base_mini_docker=sv_base_mini_docker,
+    #             cohort_prefix=cohort_prefix
+    #     }
+    # }
+    # if (!overlapping_samples) {
+    #     call mergeVCFs {
+    #         input:
+    #             vcf_files=mergeCohort.merged_vcf_file,
+    #             vcf_files_idx=mergeCohort.merged_vcf_idx,
+    #             sv_base_mini_docker=sv_base_mini_docker,
+    #             cohort_prefix=cohort_prefix,
+    #             merge_or_concat='merge'
+    #     }
+    # }
 
     call relatedness {
         input:
@@ -224,12 +231,10 @@ task mergeVCFs {
     #  CleanVcf5.FindRedundantMultiallelics
     Float input_size = size(vcf_files, "GB")
     Float base_disk_gb = 10.0
-    Float base_mem_gb = 2.0
-    Float input_mem_scale = 3.0
     Float input_disk_scale = 5.0
     
     RuntimeAttr runtime_default = object {
-        mem_gb: base_mem_gb + input_size * input_mem_scale,
+        mem_gb: 4,
         disk_gb: ceil(base_disk_gb + input_size * input_disk_scale),
         cpu_cores: 1,
         preemptible_tries: 3,
@@ -325,12 +330,10 @@ task splitMergeVCFs {
     #  CleanVcf5.FindRedundantMultiallelics
     Float input_size = size(vcf_files, "GB")
     Float base_disk_gb = 10.0
-    Float base_mem_gb = 2.0
-    Float input_mem_scale = 3.0
     Float input_disk_scale = 5.0
     
     RuntimeAttr runtime_default = object {
-        mem_gb: base_mem_gb + input_size * input_mem_scale,
+        mem_gb: 4,
         disk_gb: ceil(base_disk_gb + input_size * input_disk_scale),
         cpu_cores: 1,
         preemptible_tries: 3,
