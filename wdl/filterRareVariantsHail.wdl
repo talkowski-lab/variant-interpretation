@@ -101,13 +101,20 @@ workflow filterRareVariantsHail {
                 }
             }
 
-            call mergeResults {
+            call mergeResults as mergeShardResults {
                 input:
                     ultra_rare_variants_tsvs=filterRareVariants_sharded.ultra_rare_variants_tsv,
                     vep_hail_docker=vep_hail_docker,
                     cohort_prefix=cohort_prefix,
                     runtime_attr_override=runtime_attr_merge_results
             }
+        }
+        call mergeResults {
+            input: 
+                ultra_rare_variants_tsvs=mergeShardResults.ultra_rare_variants_tsv,
+                vep_hail_docker=vep_hail_docker,
+                cohort_prefix=cohort_prefix,
+                runtime_attr_override=runtime_attr_merge_results
         }
     }
 
