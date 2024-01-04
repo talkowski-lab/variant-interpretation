@@ -53,8 +53,9 @@ task testCluster {
 
     command <<<
         echo "import hail as hl
-        hl.init()" > dummy.py
-        hailctl dataproc start veptest --vep GRCh38 --region us-central1 --project terra-2fe17c7d
+hl.init()" > dummy.py
+        gcloud config set dataproc/region us-central1
+        hailctl dataproc start veptest --vep GRCh38
         hailctl dataproc submit veptest dummy.py
         hailctl dataproc stop veptest
         cp $(ls . | grep hail*.log) hail_log.txt
