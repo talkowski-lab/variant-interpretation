@@ -47,7 +47,7 @@ task annotateMPCandLOEUF {
         RuntimeAttr? runtime_attr_override
     }
 
-    Float input_size = size([vcf_metrics_tsv, mpc_dir, loeuf_file], "GB")
+    Float input_size = size([vcf_metrics_tsv, loeuf_file], "GB")
     Float base_disk_gb = 10.0
     Float input_disk_scale = 5.0
     

@@ -5,7 +5,7 @@ import sys
 import os
 
 vcf_metrics_tsv = sys.argv[1]
-mpc_dir = sys.argv[2]
+mpc_dir = f"gs://{sys.argv[2]}"
 mpc_chr22_file = sys.argv[3]
 loeuf_file = sys.argv[4]
 
