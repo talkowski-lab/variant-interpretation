@@ -39,7 +39,7 @@ workflow annotateMPCandLOEUF {
 task annotateMPCandLOEUF {
     input {
         File vcf_metrics_tsv
-        File mpc_dir
+        String mpc_dir
         File mpc_chr22_file
         File loeuf_file
         File annotate_mpc_loeuf_script
