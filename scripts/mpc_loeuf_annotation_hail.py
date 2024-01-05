@@ -5,9 +5,17 @@ import sys
 import os
 
 vcf_metrics_tsv = sys.argv[1]
-mpc_dir = f"gs://{sys.argv[2]}"
+mpc_dir = sys.argv[2]
 mpc_chr22_file = sys.argv[3]
 loeuf_file = sys.argv[4]
+cores = sys.argv[5]  # string
+mem = int(np.floor(float(sys.argv[6])))
+
+hl.init(min_block_size=128, spark_conf={"spark.executor.cores": cores, 
+                    "spark.executor.memory": f"{mem}g",
+                    "spark.driver.cores": cores,
+                    "spark.driver.memory": f"{mem}g"
+                    }, tmp_dir="tmp", local_tmpdir="tmp")
 
 mt = hl.import_table(vcf_metrics_tsv)
 keys = hl.parse_variant(mt.ID, reference_genome='GRCh38')

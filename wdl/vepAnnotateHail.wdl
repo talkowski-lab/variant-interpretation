@@ -373,9 +373,7 @@ task vepAnnotate {
         docker: vep_hail_docker
         bootDiskSizeGb: select_first([runtime_override.boot_disk_gb, runtime_default.boot_disk_gb])
     }
-    
-    RuntimeAttr runtime_attr = select_first([runtime_attr_override, runtime_default])
-    
+        
     String prefix = basename(vcf_file, ".vcf.gz")
     String vep_annotated_vcf_name = "~{prefix}.vep.vcf.bgz"
 
