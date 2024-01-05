@@ -118,11 +118,12 @@ workflow filterRareVariantsHail {
                     runtime_attr_override=runtime_attr_merge_results
             }
         }
+        File merged_ultra_rare_variants_tsv = mergeShardResults.ultra_rare_variants_tsv[0]
     }
 
     output {
         # File hail_log = filterRareVariants.hail_log
-        File ultra_rare_variants_tsv = select_first([filterRareVariants.ultra_rare_variants_tsv, mergeResults.ultra_rare_variants_tsv, mergeShardResults.ultra_rare_variants_tsv[0]])
+        File ultra_rare_variants_tsv = select_first([filterRareVariants.ultra_rare_variants_tsv, mergeResults.ultra_rare_variants_tsv, merged_ultra_rare_variants_tsv])
     }
 }
 
