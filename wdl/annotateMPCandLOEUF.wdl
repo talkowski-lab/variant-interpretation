@@ -13,7 +13,7 @@ workflow annotateMPCandLOEUF {
     input {
         File vcf_metrics_tsv
         File mpc_file
-        File loeuf_data
+        File loeuf_file
         File annotate_mpc_loeuf_script
         String hail_docker
         RuntimeAttr? runtime_attr_hail_annotate
@@ -23,7 +23,7 @@ workflow annotateMPCandLOEUF {
         input:
             vcf_metrics_tsv=vcf_metrics_tsv,
             mpc_file=mpc_file,
-            loeuf_data=loeuf_data,
+            loeuf_file=loeuf_file,
             annotate_mpc_loeuf_script=annotate_mpc_loeuf_script,
             hail_docker=hail_docker,
             runtime_attr_override=runtime_attr_hail_annotate
@@ -38,13 +38,13 @@ task annotateMPCandLOEUF {
     input {
         File vcf_metrics_tsv
         File mpc_file
-        File loeuf_data
+        File loeuf_file
         File annotate_mpc_loeuf_script
         String hail_docker
         RuntimeAttr? runtime_attr_override
     }
 
-    Float input_size = size([vcf_metrics_tsv, mpc_file, loeuf_data], "GB")
+    Float input_size = size([vcf_metrics_tsv, mpc_file, loeuf_file], "GB")
     Float base_disk_gb = 10.0
     Float input_disk_scale = 5.0
     
@@ -69,7 +69,7 @@ task annotateMPCandLOEUF {
         bootDiskSizeGb: select_first([runtime_override.boot_disk_gb, runtime_default.boot_disk_gb])
     }
     command {
-        python3 ~{annotate_mpc_loeuf_script} ~{vcf_metrics_tsv} ~{mpc_file} ~{loeuf_data}
+        python3 ~{annotate_mpc_loeuf_script} ~{vcf_metrics_tsv} ~{mpc_file} ~{loeuf_file}
     }
 
     output {
