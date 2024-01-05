@@ -5,7 +5,7 @@ import sys
 import os
 
 vcf_metrics_tsv = sys.argv[1]
-mpc_file = sys.argv[2]
+mpc_dir = sys.argv[2]
 mpc_chr22_file = sys.argv[3]
 loeuf_file = sys.argv[4]
 
@@ -14,7 +14,7 @@ keys = hl.parse_variant(mt.ID, reference_genome='GRCh38')
 mt = mt.annotate(alleles=keys.alleles, locus=keys.locus)
 
 # MPC
-mpc = hl.read_table(mpc_file)
+mpc = hl.read_table(mpc_dir)
 
 mpc = mpc.annotate(allele_array = [mpc.alleles[0], mpc.alleles[1]])
 mpc = mpc.annotate(locus = mpc.locus_38)
