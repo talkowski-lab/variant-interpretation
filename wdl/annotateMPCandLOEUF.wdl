@@ -12,7 +12,7 @@ struct RuntimeAttr {
 workflow annotateMPCandLOEUF {
     input {
         File vcf_metrics_tsv
-        File mpc_file
+        String mpc_file
         File mpc_chr22_file
         File loeuf_file
         File annotate_mpc_loeuf_script
