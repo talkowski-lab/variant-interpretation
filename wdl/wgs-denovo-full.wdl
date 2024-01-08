@@ -40,13 +40,13 @@ workflow wgs_denovo_full {
             String hail_docker
             String jvarkit_docker
             Boolean bad_header=false
+            Int? shards_per_chunk
             Int batch_size
             Float minDQ
     }
 
     call step1and2.step1 as step1and2 {
         input:
-            file=file,
             python_trio_sample_script=python_trio_sample_script,
             python_preprocess_script=python_preprocess_script,
             lcr_uri=lcr_uri,
@@ -57,17 +57,16 @@ workflow wgs_denovo_full {
             bucket_id=bucket_id,
             cohort_prefix=cohort_prefix,
             hail_docker=hail_docker,
-            bad_header=bad_header
+            bad_header=bad_header,
+            shards_per_chunk=select_first([shards_per_chunk])
     }
 
     call step3.step3 as step3 {
         input:
             trio_uri=trio_uri,
             ped_uri=ped_uri,
-            # vep_annotated_final_vcf_single=vep_annotated_final_vcf[0][0],
             merged_preprocessed_vcf_file=step1and2.merged_preprocessed_vcf_file,
             hail_docker=hail_docker,
-            # sv_base_mini_docker=sv_base_mini_docker,
             trio_denovo_docker=trio_denovo_docker,
             uberSplit_v3_py=uberSplit_v3_py,
             batch_size=batch_size,
@@ -109,7 +108,6 @@ workflow wgs_denovo_full {
         File merged_preprocessed_vcf_file = step1and2.merged_preprocessed_vcf_file
         File merged_preprocessed_vcf_idx = step1and2.merged_preprocessed_vcf_idx
         Array[File] split_trio_vcfs = step3.split_trio_vcfs
-        # File stats_files = step3.stats_files
         Array[File] split_trio_annot_vcfs = annotateHPandVAF.split_trio_annot_vcfs
         Array[File] trio_denovo_vcf = step4.trio_denovo_vcf
         File vcf_metrics_tsv = step5.vcf_metrics_tsv
