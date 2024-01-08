@@ -14,6 +14,7 @@ import hail as hl
 import pandas as pd
 import os
 import sys
+import numpy as np 
 
 build = "GRCh38"
 lcr_uri = sys.argv[1]
@@ -30,8 +31,6 @@ hl.init(min_block_size=128, spark_conf={"spark.executor.cores": cores,
                     "spark.driver.cores": cores,
                     "spark.driver.memory": f"{mem}g"
                     }, tmp_dir="tmp", local_tmpdir="tmp")
-
-hl.init(spark_conf={'spark.speculation': 'true'})
 
 #split-multi
 def split_multi_ssc(mt):

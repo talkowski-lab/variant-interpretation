@@ -22,7 +22,7 @@ workflow step1 {
         String sv_base_mini_docker
         String bucket_id
         String cohort_prefix
-        Int? shards_per_chunk
+        Int shards_per_chunk
         Boolean bad_header=false
         RuntimeAttr? runtime_attr_merge_vcfs
         RuntimeAttr? runtime_attr_preprocess
@@ -39,7 +39,7 @@ workflow step1 {
 
     Array[File] vep_annotated_final_vcf_array = flatten(vep_annotated_final_vcf)
 
-    if (defined(shards_per_chunk)) {
+    if (shards_per_chunk!=0) {
         call splitFile {
             input:
                 file=write_lines(vep_annotated_final_vcf_array),
@@ -85,7 +85,7 @@ workflow step1 {
         }
     }
 
-    if (!defined(shards_per_chunk)) {
+    if (shards_per_chunk==0) {
         scatter (vcf_uri in vep_annotated_final_vcf_array) {
             call saveVCFHeader {
                 input:

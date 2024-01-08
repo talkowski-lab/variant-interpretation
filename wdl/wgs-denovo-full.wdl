@@ -40,7 +40,7 @@ workflow wgs_denovo_full {
             String hail_docker
             String jvarkit_docker
             Boolean bad_header=false
-            Int? shards_per_chunk
+            Int shards_per_chunk=0
             Int batch_size
             Float minDQ
     }
