@@ -36,6 +36,11 @@ workflow runBaggingPU {
             csq_AF_threshold=csq_AF_threshold,
             runtime_attr_override=runtime_attr_bagging_pu
     }
+
+    output {
+        File bagging_pu_results = baggingPU.bagging_pu_results
+        File bagging_pu_importances = baggingPU.bagging_pu_importances
+    }
 }
 
 task baggingPU {
@@ -83,6 +88,7 @@ task baggingPU {
     >>>
 
     output {
-
+        File bagging_pu_results = "~{cohort_prefix}_baggingPU_results.tsv"
+        File bagging_pu_importances = "~{cohort_prefix}_feature_importances.tsv"
     }
 }
