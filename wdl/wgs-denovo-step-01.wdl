@@ -9,22 +9,25 @@ struct RuntimeAttr {
     Int? max_retries
 }
 
-workflow step1 {
+workflow step01 {
     input {
         # file can be a list of vcf files or just one vcf file
         File file
         File python_trio_sample_script
         File python_preprocess_script
+        File flatten_array_script
         File lcr_uri
         File ped_uri
         File info_header
         Array[Array[File]] vep_annotated_final_vcf
+        String hail_docker
         String sv_base_mini_docker
         String bucket_id
         String cohort_prefix
-        String hail_docker
+        Int? shards_per_chunk
         Boolean bad_header=false
         RuntimeAttr? runtime_attr_merge_vcfs
+        RuntimeAttr? runtime_attr_flatten
     }
 
     call makeTrioSampleFiles {
@@ -39,56 +42,110 @@ workflow step1 {
     String filename = basename(file)
     # if file is vcf.gz (just one file)
     Array[File] vcf_files = if (sub(filename, ".vcf.gz", "") != filename) then [file] else read_lines(file)
-    Array[Pair[File, Array[File]]] vcf_list_paired = zip(vcf_files, vep_annotated_final_vcf)
+    
+    if (defined(shards_per_chunk)) {
+        call flattenArray {
+            input:
+                nested_array=vep_annotated_final_vcf,
+                flatten_array_script=flatten_array_script,
+                hail_docker=hail_docker,
+                runtime_attr_override=runtime_attr_flatten
+        }
+        Array[File] vep_annotated_final_vcf_array = flattenArray.flattened_array
+  
+        call splitFile {
+            input:
+                file=write_lines(vep_annotated_final_vcf_array),
+                shards_per_chunk=select_first([shards_per_chunk]),
+                cohort_prefix=cohort_prefix,
+                hail_docker=hail_docker
+        }
 
-    scatter (pair in vcf_list_paired) {
-        File og_vcf_file = pair.left 
-        Array[File] vcf_uri_sublist = pair.right
-        scatter (vcf_uri in vcf_uri_sublist) {
-            call saveVCFHeader {
+        scatter (chunk_file in splitFile.chunks) {             
+            call mergeVCFs as mergeChunk {
                 input:
-                    vcf_uri=vcf_uri,
+                    vcf_contigs=read_lines(chunk_file),
+                    sv_base_mini_docker=sv_base_mini_docker,
+                    cohort_prefix=basename(chunk_file),
+                    runtime_attr_override=runtime_attr_merge_vcfs
+            }
+            call saveVCFHeader as saveVCFHeaderChunk {
+                input:
+                    vcf_uri=mergeChunk.merged_vcf_file,
                     info_header=info_header,
                     bad_header=bad_header,
                     sv_base_mini_docker=sv_base_mini_docker
             }
-            call preprocessVCF {
+            call preprocessVCF as preprocessVCFChunk {
                 input:
                     python_preprocess_script=python_preprocess_script,
                     lcr_uri=lcr_uri,
                     ped_uri=ped_uri,
-                    vcf_uri=vcf_uri,
+                    vcf_uri=mergeChunk.merged_vcf_file,
                     meta_uri=makeTrioSampleFiles.meta_uri,
                     trio_uri=makeTrioSampleFiles.trio_uri,
                     hail_docker=hail_docker,
-                    header_file=saveVCFHeader.header_file
+                    header_file=saveVCFHeaderChunk.header_file
             }
         }
-        call mergeVCFs {
+        call mergeVCFs as mergeChunks {
             input:
-                og_vcf_uri=og_vcf_file,
-                vcf_contigs=preprocessVCF.preprocessed_vcf,
+                vcf_contigs=preprocessVCFChunk.preprocessed_vcf,
+                sv_base_mini_docker=sv_base_mini_docker,
+                cohort_prefix=cohort_prefix,
+                runtime_attr_override=runtime_attr_merge_vcfs  
+        }
+    }
+
+    if (!defined(shards_per_chunk)) {
+        Array[Pair[File, Array[File]]] vcf_list_paired = zip(vcf_files, vep_annotated_final_vcf)
+
+        scatter (pair in vcf_list_paired) {
+            File og_vcf_file = pair.left 
+            Array[File] vcf_uri_sublist = pair.right
+            scatter (vcf_uri in vcf_uri_sublist) {
+                call saveVCFHeader {
+                    input:
+                        vcf_uri=vcf_uri,
+                        info_header=info_header,
+                        bad_header=bad_header,
+                        sv_base_mini_docker=sv_base_mini_docker
+                }
+                call preprocessVCF {
+                    input:
+                        python_preprocess_script=python_preprocess_script,
+                        lcr_uri=lcr_uri,
+                        ped_uri=ped_uri,
+                        vcf_uri=vcf_uri,
+                        meta_uri=makeTrioSampleFiles.meta_uri,
+                        trio_uri=makeTrioSampleFiles.trio_uri,
+                        hail_docker=hail_docker,
+                        header_file=saveVCFHeader.header_file
+                }
+            }
+            call mergeVCFs {
+                input:
+                    vcf_contigs=preprocessVCF.preprocessed_vcf,
+                    sv_base_mini_docker=sv_base_mini_docker,
+                    cohort_prefix=basename(og_vcf_file, '.vcf.gz'),
+                    runtime_attr_override=runtime_attr_merge_vcfs
+            }
+        }
+        call mergeVCFs as mergeAllVCFs {
+            input:
+                vcf_contigs=mergeVCFs.merged_vcf_file,
                 sv_base_mini_docker=sv_base_mini_docker,
                 cohort_prefix=cohort_prefix,
                 runtime_attr_override=runtime_attr_merge_vcfs
         }
     }
 
-    call mergeVCFs as mergeAllVCFs {
-        input:
-            og_vcf_uri=cohort_prefix+'.vcf.gz',
-            vcf_contigs=mergeVCFs.merged_vcf_file,
-            sv_base_mini_docker=sv_base_mini_docker,
-            cohort_prefix=cohort_prefix,
-            runtime_attr_override=runtime_attr_merge_vcfs
-    }
-
     output {
         File meta_uri = makeTrioSampleFiles.meta_uri
         File trio_uri = makeTrioSampleFiles.trio_uri
         File ped_uri_no_header = makeTrioSampleFiles.ped_uri_no_header
-        File merged_preprocessed_vcf_file = mergeAllVCFs.merged_vcf_file
-        File merged_preprocessed_vcf_idx = mergeAllVCFs.merged_vcf_idx
+        File merged_preprocessed_vcf_file = select_first([mergeChunks.merged_vcf_file, mergeAllVCFs.merged_vcf_file])
+        File merged_preprocessed_vcf_idx = select_first([mergeChunks.merged_vcf_idx, mergeAllVCFs.merged_vcf_idx])
     }
 }
 
@@ -170,7 +227,6 @@ task preprocessVCF {
 
 task mergeVCFs {
     input {
-        String og_vcf_uri
         Array[File] vcf_contigs
         String sv_base_mini_docker
         String cohort_prefix
@@ -207,7 +263,7 @@ task mergeVCFs {
         bootDiskSizeGb: select_first([runtime_override.boot_disk_gb, runtime_default.boot_disk_gb])
     }
 
-    String merged_vcf_name="~{basename(og_vcf_uri, '.vcf.gz')}.vep.merged.vcf.gz"
+    String merged_vcf_name="~{cohort_prefix}.vep.merged.vcf.gz"
 
     command <<<
         set -euo pipefail
@@ -221,5 +277,90 @@ task mergeVCFs {
     output {
         File merged_vcf_file=merged_vcf_name
         File merged_vcf_idx=merged_vcf_name + ".tbi"
+    }
+}
+
+task flattenArray {
+    input {
+        Array[Array[File]] nested_array
+        File flatten_array_script
+        String hail_docker
+        RuntimeAttr? runtime_attr_override
+    }
+
+    #  generally assume working disk size is ~2 * inputs, and outputs are ~2 *inputs, and inputs are not removed
+    #  generally assume working memory is ~3 * inputs
+    #  CleanVcf5.FindRedundantMultiallelics
+    
+    RuntimeAttr runtime_default = object {
+        mem_gb: 2,
+        disk_gb: 10,
+        cpu_cores: 1,
+        preemptible_tries: 3,
+        max_retries: 1,
+        boot_disk_gb: 10
+    }
+
+    RuntimeAttr runtime_override = select_first([runtime_attr_override, runtime_default])
+    
+    runtime {
+        memory: "~{select_first([runtime_override.mem_gb, runtime_default.mem_gb])} GB"
+        disks: "local-disk ~{select_first([runtime_override.disk_gb, runtime_default.disk_gb])} HDD"
+        cpu: select_first([runtime_override.cpu_cores, runtime_default.cpu_cores])
+        preemptible: select_first([runtime_override.preemptible_tries, runtime_default.preemptible_tries])
+        maxRetries: select_first([runtime_override.max_retries, runtime_default.max_retries])
+        docker: hail_docker
+        bootDiskSizeGb: select_first([runtime_override.boot_disk_gb, runtime_default.boot_disk_gb])
+    }
+
+    command <<<
+        echo ~{nested_array} | python3 ~{flatten_array_script} > flattened.txt
+    >>>
+
+    output {
+        Array[File] flattened_array = read_lines("flattened.txt")
+    }
+}
+
+task splitFile {
+    input {
+        File file
+        Int shards_per_chunk
+        String cohort_prefix
+        String hail_docker
+        RuntimeAttr? runtime_attr_override
+    }
+
+    Float input_size = size(file, "GB")
+    Float base_disk_gb = 10.0
+    Float input_disk_scale = 5.0
+
+    RuntimeAttr runtime_default = object {
+        mem_gb: 4,
+        disk_gb: ceil(base_disk_gb + input_size * input_disk_scale),
+        cpu_cores: 1,
+        preemptible_tries: 3,
+        max_retries: 1,
+        boot_disk_gb: 10
+    }
+
+    RuntimeAttr runtime_override = select_first([runtime_attr_override, runtime_default])
+
+    runtime {
+        memory: "~{select_first([runtime_override.mem_gb, runtime_default.mem_gb])} GB"
+        disks: "local-disk ~{select_first([runtime_override.disk_gb, runtime_default.disk_gb])} HDD"
+        cpu: select_first([runtime_override.cpu_cores, runtime_default.cpu_cores])
+        preemptible: select_first([runtime_override.preemptible_tries, runtime_default.preemptible_tries])
+        maxRetries: select_first([runtime_override.max_retries, runtime_default.max_retries])
+        docker: hail_docker
+        bootDiskSizeGb: select_first([runtime_override.boot_disk_gb, runtime_default.boot_disk_gb])
+    }
+
+    command <<<
+        split -l ~{shards_per_chunk} ~{file} -a 4 -d "~{cohort_prefix}.shard."
+    >>>
+
+    output {
+        Array[File] chunks = glob("~{cohort_prefix}.*")
     }
 }
