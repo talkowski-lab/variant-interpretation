@@ -58,7 +58,7 @@ workflow wgs_denovo_full {
             cohort_prefix=cohort_prefix,
             hail_docker=hail_docker,
             bad_header=bad_header,
-            shards_per_chunk=select_first([shards_per_chunk])
+            shards_per_chunk=shards_per_chunk
     }
 
     call step3.step3 as step3 {
