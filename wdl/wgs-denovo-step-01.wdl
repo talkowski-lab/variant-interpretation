@@ -12,7 +12,6 @@ struct RuntimeAttr {
 workflow step01 {
     input {
         # file can be a list of vcf files or just one vcf file
-        File file
         File python_trio_sample_script
         File python_preprocess_script
         File flatten_array_script
@@ -39,20 +38,16 @@ workflow step01 {
             hail_docker=hail_docker
     }
 
-    String filename = basename(file)
-    # if file is vcf.gz (just one file)
-    Array[File] vcf_files = if (sub(filename, ".vcf.gz", "") != filename) then [file] else read_lines(file)
-    
+    call flattenArray {
+        input:
+            nested_array=vep_annotated_final_vcf,
+            flatten_array_script=flatten_array_script,
+            hail_docker=hail_docker,
+            runtime_attr_override=runtime_attr_flatten
+    }
+    Array[File] vep_annotated_final_vcf_array = flattenArray.flattened_array
+
     if (defined(shards_per_chunk)) {
-        call flattenArray {
-            input:
-                nested_array=vep_annotated_final_vcf,
-                flatten_array_script=flatten_array_script,
-                hail_docker=hail_docker,
-                runtime_attr_override=runtime_attr_flatten
-        }
-        Array[File] vep_annotated_final_vcf_array = flattenArray.flattened_array
-  
         call splitFile {
             input:
                 file=write_lines(vep_annotated_final_vcf_array),
@@ -98,42 +93,29 @@ workflow step01 {
     }
 
     if (!defined(shards_per_chunk)) {
-        Array[Pair[File, Array[File]]] vcf_list_paired = zip(vcf_files, vep_annotated_final_vcf)
-
-        scatter (pair in vcf_list_paired) {
-            File og_vcf_file = pair.left 
-            Array[File] vcf_uri_sublist = pair.right
-            scatter (vcf_uri in vcf_uri_sublist) {
-                call saveVCFHeader {
-                    input:
-                        vcf_uri=vcf_uri,
-                        info_header=info_header,
-                        bad_header=bad_header,
-                        sv_base_mini_docker=sv_base_mini_docker
-                }
-                call preprocessVCF {
-                    input:
-                        python_preprocess_script=python_preprocess_script,
-                        lcr_uri=lcr_uri,
-                        ped_uri=ped_uri,
-                        vcf_uri=vcf_uri,
-                        meta_uri=makeTrioSampleFiles.meta_uri,
-                        trio_uri=makeTrioSampleFiles.trio_uri,
-                        hail_docker=hail_docker,
-                        header_file=saveVCFHeader.header_file
-                }
-            }
-            call mergeVCFs {
+        scatter (vcf_uri in vep_annotated_final_vcf_array) {
+            call saveVCFHeader {
                 input:
-                    vcf_contigs=preprocessVCF.preprocessed_vcf,
-                    sv_base_mini_docker=sv_base_mini_docker,
-                    cohort_prefix=basename(og_vcf_file, '.vcf.gz'),
-                    runtime_attr_override=runtime_attr_merge_vcfs
+                    vcf_uri=vcf_uri,
+                    info_header=info_header,
+                    bad_header=bad_header,
+                    sv_base_mini_docker=sv_base_mini_docker
+            }
+            call preprocessVCF {
+                input:
+                    python_preprocess_script=python_preprocess_script,
+                    lcr_uri=lcr_uri,
+                    ped_uri=ped_uri,
+                    vcf_uri=vcf_uri,
+                    meta_uri=makeTrioSampleFiles.meta_uri,
+                    trio_uri=makeTrioSampleFiles.trio_uri,
+                    hail_docker=hail_docker,
+                    header_file=saveVCFHeader.header_file
             }
         }
-        call mergeVCFs as mergeAllVCFs {
+        call mergeVCFs {
             input:
-                vcf_contigs=mergeVCFs.merged_vcf_file,
+                vcf_contigs=preprocessVCF.preprocessed_vcf,
                 sv_base_mini_docker=sv_base_mini_docker,
                 cohort_prefix=cohort_prefix,
                 runtime_attr_override=runtime_attr_merge_vcfs
@@ -144,8 +126,8 @@ workflow step01 {
         File meta_uri = makeTrioSampleFiles.meta_uri
         File trio_uri = makeTrioSampleFiles.trio_uri
         File ped_uri_no_header = makeTrioSampleFiles.ped_uri_no_header
-        File merged_preprocessed_vcf_file = select_first([mergeChunks.merged_vcf_file, mergeAllVCFs.merged_vcf_file])
-        File merged_preprocessed_vcf_idx = select_first([mergeChunks.merged_vcf_idx, mergeAllVCFs.merged_vcf_idx])
+        File merged_preprocessed_vcf_file = select_first([mergeChunks.merged_vcf_file, mergeVCFs.merged_vcf_file])
+        File merged_preprocessed_vcf_idx = select_first([mergeChunks.merged_vcf_idx, mergeVCFs.merged_vcf_idx])
     }
 }
 
