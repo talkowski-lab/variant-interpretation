@@ -15,6 +15,22 @@ import pandas as pd
 import os
 import sys
 
+build = "GRCh38"
+lcr_uri = sys.argv[1]
+ped_uri = sys.argv[2]
+meta_uri = sys.argv[3]
+trio_uri = sys.argv[4]
+vcf_uri = sys.argv[5]
+header_file = sys.argv[6]
+cores = sys.argv[7]  # string
+mem = int(np.floor(float(sys.argv[8])))
+
+hl.init(min_block_size=128, spark_conf={"spark.executor.cores": cores, 
+                    "spark.executor.memory": f"{mem}g",
+                    "spark.driver.cores": cores,
+                    "spark.driver.memory": f"{mem}g"
+                    }, tmp_dir="tmp", local_tmpdir="tmp")
+
 hl.init(spark_conf={'spark.speculation': 'true'})
 
 #split-multi
@@ -117,15 +133,6 @@ def trim_vcf(vcf_uri, lcr_uri, ped_uri, meta_uri, trio_uri, header_file, vcf_out
     # write to output vcf
     mt = mt.drop('variant_qc')
     hl.export_vcf(mt, vcf_out_uri)
-
-lcr_uri = sys.argv[1]
-ped_uri = sys.argv[2]
-meta_uri = sys.argv[3]
-trio_uri = sys.argv[4]
-vcf_uri = sys.argv[5]
-header_file = sys.argv[6]
-
-build = "GRCh38"
 
 vcf_out_uri = os.path.basename(vcf_uri).split('.vcf.gz')[0] + '.preprocessed.vcf.bgz'
 trim_vcf(vcf_uri, lcr_uri, ped_uri, meta_uri, trio_uri, header_file, vcf_out_uri, build)
