@@ -7,7 +7,7 @@ version 1.0
 ##########################################################################################
 
 import "IgvCramPlots.wdl" as igv_plots
-import "Structs.wdl"
+import "Structs2.wdl"
 
 workflow IGV_all_samples {
     input {

@@ -7,7 +7,7 @@ version 1.0
 ##########################################################################################
 
 import "IgvEvidencePlots.wdl" as igv_plots
-import "Structs.wdl"
+import "Structs2.wdl"
 import "EvidencePlots.wdl" as evidence
 
 workflow IGV_all_samples {
