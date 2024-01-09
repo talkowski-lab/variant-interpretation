@@ -263,19 +263,20 @@ task mergeVCFs {
     }
 
     String merged_vcf_name="~{cohort_prefix}.vep.merged.vcf.gz"
+    String sorted_vcf_name="~{cohort_prefix}.merged.sorted.vcf.gz"
 
     command <<<
         set -euo pipefail
         VCFS="~{write_lines(vcf_contigs)}"
         cat $VCFS | awk -F '/' '{print $NF"\t"$0}' | sort -k1,1V | awk '{print $2}' > vcfs_sorted.list
         bcftools concat -n --no-version -Oz --file-list vcfs_sorted.list --output ~{merged_vcf_name}
-        # java -jar /usr/picard/picard.jar GatherVcfs -I ~{sep=' -I ' vcf_contigs} -O ~{merged_vcf_name}
-        bcftools index -t ~{merged_vcf_name}
+        bcftools sort ~{merged_vcf_name} --output ~{sorted_vcf_name}
+        bcftools index -t ~{sorted_vcf_name}
     >>>
 
     output {
-        File merged_vcf_file=merged_vcf_name
-        File merged_vcf_idx=merged_vcf_name + ".tbi"
+        File merged_vcf_file=sorted_vcf_name
+        File merged_vcf_idx=sorted_vcf_name + ".tbi"
     }
 }
 

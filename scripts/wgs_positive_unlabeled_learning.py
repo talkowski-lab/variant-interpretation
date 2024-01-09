@@ -7,7 +7,7 @@ import sklearn.model_selection
 
 from sklearn.ensemble import RandomForestClassifier
 
-import baggingPU
+from baggingPU import BaggingClassifierPU
 
 # https://heartbeat.comet.ml/positive-and-unlabelled-learning-recovering-labels-for-data-using-machine-learning-59c1def5452f
 # https://roywrightme.wordpress.com/2017/11/16/positive-unlabeled-learning/
@@ -15,17 +15,17 @@ import baggingPU
 vcf_metrics_tsv = sys.argv[1]
 ultra_rare_variants_tsv = sys.argv[2]
 cohort_prefix = sys.argv[3]
-AC_threshold=sys.argv[4] 
-AF_threshold=sys.argv[5] 
-csq_AF_threshold=sys.argv[6]
+AC_threshold=int(sys.argv[4])
+AF_threshold=float(sys.argv[5]) 
+csq_AF_threshold=float(sys.argv[6])
 
 # Functions
 def load_variants(vcf_metrics_tsv, ultra_rare_variants_tsv): 
-    ultra_rare = pd.read_csv(vcf_metrics_tsv, sep='\t')
-    final_output = pd.read_csv(ultra_rare_variants_tsv, sep='\t')
+    ultra_rare = pd.read_csv(ultra_rare_variants_tsv, sep='\t')
+    final_output = pd.read_csv(vcf_metrics_tsv, sep='\t')
 
-    ultra_rare['MLEAC'] = ultra_rare.MLEAC.str.strip('][').str.split(', ').str[0]
-    ultra_rare['MLEAF'] = ultra_rare.MLEAF.str.strip('][').str.split(', ').str[0]
+    # ultra_rare['MLEAC'] = ultra_rare.MLEAC.str.strip('][').str.split(', ').str[0]
+    # ultra_rare['MLEAF'] = ultra_rare.MLEAF.str.strip('][').str.split(', ').str[0]
     ultra_rare['CSQ'] = ultra_rare.CSQ.str.strip('][').str.split(', ').str[0]
     ultra_rare = ultra_rare[(~ultra_rare.AD_father.isna()) & (~ultra_rare.AD_mother.isna())].reset_index(drop=True)
 
