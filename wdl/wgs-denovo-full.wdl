@@ -32,7 +32,6 @@ workflow wgs_denovo_full {
             File hg38_reference_dict
             File info_header
             Array[Array[File]] vep_annotated_final_vcf
-            Array[Array[File]] vep_annotated_final_vcf_idx
             String bucket_id
             String cohort_prefix
             String cohort_id
@@ -55,7 +54,6 @@ workflow wgs_denovo_full {
             ped_uri=ped_uri,
             info_header=info_header,
             vep_annotated_final_vcf=vep_annotated_final_vcf,
-            vep_annotated_final_vcf_idx=vep_annotated_final_vcf_idx,
             sv_base_mini_docker=sv_base_mini_docker,
             bucket_id=bucket_id,
             cohort_prefix=cohort_prefix,

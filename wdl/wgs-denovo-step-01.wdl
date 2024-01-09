@@ -18,7 +18,6 @@ workflow step1 {
         File ped_uri
         File info_header
         Array[Array[File]] vep_annotated_final_vcf
-        Array[Array[File]] vep_annotated_final_vcf_idx
         String hail_docker
         String vep_hail_docker
         String sv_base_mini_docker
@@ -40,7 +39,6 @@ workflow step1 {
     }
 
     Array[File] vep_annotated_final_vcf_array = flatten(vep_annotated_final_vcf)
-    Array[File] vep_annotated_final_vcf_idx_array = flatten(vep_annotated_final_vcf_idx)
 
     if (shards_per_chunk!=0) {
         call splitFile as splitVEPFiles {
@@ -50,24 +48,11 @@ workflow step1 {
                 cohort_prefix=cohort_prefix,
                 vep_hail_docker=vep_hail_docker
         }
-
-        call splitFile as splitVEPIndexFiles {
-            input:
-                file=write_lines(vep_annotated_final_vcf_idx_array),
-                shards_per_chunk=shards_per_chunk,
-                cohort_prefix=cohort_prefix,
-                vep_hail_docker=vep_hail_docker
-        }
-
-        Array[Pair[File, File]] chunk_vcf_idx_pairs = zip(splitVEPFiles.chunks, splitVEPIndexFiles.chunks)
         
-        scatter (chunk_vcf_idx_pair in chunk_vcf_idx_pairs) {        
-            File chunk_file = chunk_vcf_idx_pair.left    
-            File chunk_idx_file = chunk_vcf_idx_pair.right 
+        scatter (chunk_file in splitVEPFiles.chunks) {        
             call mergeVCFs as mergeChunk {
                 input:
                     vcf_files=read_lines(chunk_file),
-                    vcf_files_idx=read_lines(chunk_idx_file),
                     sv_base_mini_docker=sv_base_mini_docker,
                     cohort_prefix=basename(chunk_file),
                     runtime_attr_override=runtime_attr_merge_vcfs
@@ -95,7 +80,6 @@ workflow step1 {
         call mergeVCFs as mergeChunks {
             input:
                 vcf_files=preprocessVCFChunk.preprocessed_vcf,
-                vcf_files_idx=preprocessVCFChunk.preprocessed_vcf_idx,
                 sv_base_mini_docker=sv_base_mini_docker,
                 cohort_prefix=cohort_prefix,
                 runtime_attr_override=runtime_attr_merge_vcfs  
@@ -127,7 +111,6 @@ workflow step1 {
         call mergeVCFs {
             input:
                 vcf_files=preprocessVCF.preprocessed_vcf,
-                vcf_files_idx=preprocessVCF.preprocessed_vcf_idx,
                 sv_base_mini_docker=sv_base_mini_docker,
                 cohort_prefix=cohort_prefix,
                 runtime_attr_override=runtime_attr_merge_vcfs
@@ -248,7 +231,6 @@ task preprocessVCF {
 task mergeVCFs {
     input {
         Array[File] vcf_files
-        Array[File] vcf_files_idx
         String sv_base_mini_docker
         String cohort_prefix
         RuntimeAttr? runtime_attr_override
