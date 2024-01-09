@@ -32,12 +32,14 @@ workflow wgs_denovo_full {
             File hg38_reference_dict
             File info_header
             Array[Array[File]] vep_annotated_final_vcf
+            Array[Array[File]] vep_annotated_final_vcf_idx
             String bucket_id
             String cohort_prefix
             String cohort_id
             String sv_base_mini_docker
             String trio_denovo_docker
             String hail_docker
+            String vep_hail_docker
             String jvarkit_docker
             Boolean bad_header=false
             Int shards_per_chunk=0
@@ -53,10 +55,11 @@ workflow wgs_denovo_full {
             ped_uri=ped_uri,
             info_header=info_header,
             vep_annotated_final_vcf=vep_annotated_final_vcf,
+            vep_annotated_final_vcf_idx=vep_annotated_final_vcf_idx,
             sv_base_mini_docker=sv_base_mini_docker,
             bucket_id=bucket_id,
             cohort_prefix=cohort_prefix,
-            hail_docker=hail_docker,
+            vep_hail_docker=vep_hail_docker,
             bad_header=bad_header,
             shards_per_chunk=shards_per_chunk
     }
