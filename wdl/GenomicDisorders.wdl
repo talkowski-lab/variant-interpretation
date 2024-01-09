@@ -558,7 +558,7 @@ task reformatVCF {
 
     output{
         File out_bed = "~{prefix}.bed.gz"
-        File out_ref_bed = "{prefix}.ref.bed.gz"
+        File out_ref_bed = "~{prefix}.ref.bed.gz"
     }
 
     command <<<
