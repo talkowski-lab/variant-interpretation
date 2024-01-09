@@ -264,19 +264,25 @@ task cleanPed{
     RuntimeAttr runtime_attr = select_first([runtime_attr_override, default_attr])
 
     output{
-        File cleaned_ped = "subset_cleaned_ped.txt"
+        File cleaned_ped = "subset_ped.txt"
     }
 
     command <<<
         set -euo pipefail
 
-        Rscript /src/variant-interpretation/scripts/cleanPed.R ~{ped_input}
-        cut -f2 cleaned_ped.txt | tail -n+2 > all_samples.txt
-        bcftools query -l ~{vcf_input} > samples_to_include_in_ped.txt
-        grep -w -v -f samples_to_include_in_ped.txt all_samples.txt > excluded_samples.txt
-        grep -w -f excluded_samples.txt cleaned_ped.txt | cut -f1 | sort -u > excluded_families.txt
-        grep -w -v -f excluded_families.txt cleaned_ped.txt > subset_cleaned_ped.txt
+        ##Get samples in VCF file
+        bcftools query -l ~{vcf_input} > samples_in_vcf.txt
 
+        ##Keep only samples in the VCF file
+        grep ^FamID ~{ped_input} > subset_ped.txt
+        grep -wf samples_in_vcf.txt ~{ped_input} >> subset_ped.txt
+
+        Rscript /src/variant-interpretation/scripts/cleanPed.R subset_ped.txt
+
+#        cut -f2 cleaned_ped.txt | tail -n+2 > all_samples.txt
+#        grep -w -v -f samples_to_include_in_ped.txt all_samples.txt > excluded_samples.txt
+#        grep -w -f excluded_samples.txt cleaned_ped.txt | cut -f1 | sort -u > excluded_families.txt
+#        grep -w -v -f excluded_families.txt cleaned_ped.txt > subset_cleaned_ped.txt
     >>>
 
     runtime {

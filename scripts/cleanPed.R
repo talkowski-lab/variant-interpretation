@@ -89,6 +89,3 @@ new_trios_df <- data.frame(new_trios)
 final_ped<-rbind(new_trios_df, ped_without_large_families_df)
 
 write.table(final_ped,file="cleaned_ped.txt",quote=F,row.names=F,col.names=T,sep="\t")
-
-
-
