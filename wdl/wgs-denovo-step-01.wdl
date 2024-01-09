@@ -51,7 +51,7 @@ workflow step1 {
         scatter (chunk_file in splitFile.chunks) {             
             call mergeVCFs as mergeChunk {
                 input:
-                    vcf_contigs=read_lines(chunk_file),
+                    vcf_files=read_lines(chunk_file),
                     sv_base_mini_docker=sv_base_mini_docker,
                     cohort_prefix=basename(chunk_file),
                     runtime_attr_override=runtime_attr_merge_vcfs
@@ -78,7 +78,7 @@ workflow step1 {
         }
         call mergeVCFs as mergeChunks {
             input:
-                vcf_contigs=preprocessVCFChunk.preprocessed_vcf,
+                vcf_files=preprocessVCFChunk.preprocessed_vcf,
                 sv_base_mini_docker=sv_base_mini_docker,
                 cohort_prefix=cohort_prefix,
                 runtime_attr_override=runtime_attr_merge_vcfs  
@@ -109,7 +109,7 @@ workflow step1 {
         }
         call mergeVCFs {
             input:
-                vcf_contigs=preprocessVCF.preprocessed_vcf,
+                vcf_files=preprocessVCF.preprocessed_vcf,
                 sv_base_mini_docker=sv_base_mini_docker,
                 cohort_prefix=cohort_prefix,
                 runtime_attr_override=runtime_attr_merge_vcfs
@@ -226,7 +226,8 @@ task preprocessVCF {
 
 task mergeVCFs {
     input {
-        Array[File] vcf_contigs
+        Array[File] vcf_files
+        Array[File] vcf_files_idx
         String sv_base_mini_docker
         String cohort_prefix
         RuntimeAttr? runtime_attr_override
@@ -235,7 +236,7 @@ task mergeVCFs {
     #  generally assume working disk size is ~2 * inputs, and outputs are ~2 *inputs, and inputs are not removed
     #  generally assume working memory is ~3 * inputs
     #  CleanVcf5.FindRedundantMultiallelics
-    Float input_size = size(vcf_contigs, "GB")
+    Float input_size = size(vcf_files, "GB")
     Float base_disk_gb = 10.0
     Float base_mem_gb = 2.0
     Float input_mem_scale = 3.0
@@ -263,18 +264,20 @@ task mergeVCFs {
     }
 
     String merged_vcf_name="~{cohort_prefix}.vep.merged.vcf.gz"
+    String sorted_vcf_name="~{cohort_prefix}.merged.sorted.vcf.gz"
 
     command <<<
         set -euo pipefail
-        VCFS="~{write_lines(vcf_contigs)}"
+        VCFS="~{write_lines(vcf_files)}"
         cat $VCFS | awk -F '/' '{print $NF"\t"$0}' | sort -k1,1V | awk '{print $2}' > vcfs_sorted.list
-        bcftools concat -n --no-version -Oz --file-list $VCFS --output ~{merged_vcf_name}
+        bcftools concat -n --no-version -Oz --file-list vcfs_sorted.list --output ~{merged_vcf_name}
+        bcftools sort ~{merged_vcf_name} --output ~{sorted_vcf_name}
         bcftools index -t ~{merged_vcf_name}
     >>>
 
     output {
-        File merged_vcf_file=merged_vcf_name
-        File merged_vcf_idx=merged_vcf_name + ".tbi"
+        File merged_vcf_file=sorted_vcf_name
+        File merged_vcf_idx=sorted_vcf_name + ".tbi"
     }
 }
 
