@@ -4,7 +4,7 @@
 
 version 1.0
 
-import "Structs.wdl"
+import "Structs2.wdl"
 
 workflow IGV_evidence {
     input{
