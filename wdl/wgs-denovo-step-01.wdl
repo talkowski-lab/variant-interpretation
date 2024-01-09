@@ -233,7 +233,7 @@ task preprocessVCF {
         bootDiskSizeGb: select_first([runtime_override.boot_disk_gb, runtime_default.boot_disk_gb])
     }
 
-    File preprocessed_vcf_out = basename(vcf_uri, '.vcf.gz') + '.preprocessed.vcf.bgz'
+    String preprocessed_vcf_out = basename(vcf_uri, '.vcf.gz') + '.preprocessed.vcf.bgz'
     command <<<
         python3.9 ~{python_preprocess_script} ~{lcr_uri} ~{ped_uri} ~{meta_uri} ~{trio_uri} ~{vcf_uri} ~{header_file} ~{cpu_cores} ~{memory}
         /opt/vep/bcftools/bcftools index -t ~{preprocessed_vcf_out}
