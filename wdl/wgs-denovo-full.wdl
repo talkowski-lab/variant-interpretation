@@ -59,6 +59,7 @@ workflow wgs_denovo_full {
             sv_base_mini_docker=sv_base_mini_docker,
             bucket_id=bucket_id,
             cohort_prefix=cohort_prefix,
+            hail_docker=hail_docker,
             vep_hail_docker=vep_hail_docker,
             bad_header=bad_header,
             shards_per_chunk=shards_per_chunk

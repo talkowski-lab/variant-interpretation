@@ -19,6 +19,7 @@ workflow step1 {
         File info_header
         Array[Array[File]] vep_annotated_final_vcf
         Array[Array[File]] vep_annotated_final_vcf_idx
+        String hail_docker
         String vep_hail_docker
         String sv_base_mini_docker
         String bucket_id
@@ -35,7 +36,7 @@ workflow step1 {
             ped_uri=ped_uri,
             bucket_id=bucket_id,
             cohort_prefix=cohort_prefix,
-            vep_hail_docker=vep_hail_docker
+            hail_docker=hail_docker
     }
 
     Array[File] vep_annotated_final_vcf_array = flatten(vep_annotated_final_vcf)
@@ -148,15 +149,15 @@ task makeTrioSampleFiles {
         File ped_uri
         String bucket_id
         String cohort_prefix
-        String vep_hail_docker
+        String hail_docker
     }
 
     runtime {
-        docker: vep_hail_docker
+        docker: hail_docker
     }
 
     command <<<
-    python3.9 ~{python_trio_sample_script} ~{ped_uri} ~{cohort_prefix} ~{bucket_id}
+    python3 ~{python_trio_sample_script} ~{ped_uri} ~{cohort_prefix} ~{bucket_id}
     >>>
     
     output {
