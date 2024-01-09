@@ -18,7 +18,8 @@ workflow step1 {
         File ped_uri
         File info_header
         Array[Array[File]] vep_annotated_final_vcf
-        String hail_docker
+        Array[Array[File]] vep_annotated_final_vcf_idx
+        String vep_hail_docker
         String sv_base_mini_docker
         String bucket_id
         String cohort_prefix
@@ -34,24 +35,38 @@ workflow step1 {
             ped_uri=ped_uri,
             bucket_id=bucket_id,
             cohort_prefix=cohort_prefix,
-            hail_docker=hail_docker
+            vep_hail_docker=vep_hail_docker
     }
 
     Array[File] vep_annotated_final_vcf_array = flatten(vep_annotated_final_vcf)
+    Array[File] vep_annotated_final_vcf_idx_array = flatten(vep_annotated_final_vcf_idx)
 
     if (shards_per_chunk!=0) {
-        call splitFile {
+        call splitFile as splitVEPFiles {
             input:
                 file=write_lines(vep_annotated_final_vcf_array),
-                shards_per_chunk=select_first([shards_per_chunk]),
+                shards_per_chunk=shards_per_chunk,
                 cohort_prefix=cohort_prefix,
-                hail_docker=hail_docker
+                vep_hail_docker=vep_hail_docker
         }
 
-        scatter (chunk_file in splitFile.chunks) {             
+        call splitFile as splitVEPIndexFiles {
+            input:
+                file=write_lines(vep_annotated_final_vcf_idx_array),
+                shards_per_chunk=shards_per_chunk,
+                cohort_prefix=cohort_prefix,
+                vep_hail_docker=vep_hail_docker
+        }
+
+        Array[Pair[File, File]] chunk_vcf_idx_pairs = zip(splitVEPFiles.chunks, splitVEPIndexFiles.chunks)
+        
+        scatter (chunk_vcf_idx_pair in chunk_vcf_idx_pairs) {        
+            File chunk_file = chunk_vcf_idx_pair.left    
+            File chunk_idx_file = chunk_vcf_idx_pair.right 
             call mergeVCFs as mergeChunk {
                 input:
                     vcf_files=read_lines(chunk_file),
+                    vcf_files_idx=read_lines(chunk_idx_file),
                     sv_base_mini_docker=sv_base_mini_docker,
                     cohort_prefix=basename(chunk_file),
                     runtime_attr_override=runtime_attr_merge_vcfs
@@ -71,7 +86,7 @@ workflow step1 {
                     vcf_uri=mergeChunk.merged_vcf_file,
                     meta_uri=makeTrioSampleFiles.meta_uri,
                     trio_uri=makeTrioSampleFiles.trio_uri,
-                    hail_docker=hail_docker,
+                    vep_hail_docker=vep_hail_docker,
                     header_file=saveVCFHeaderChunk.header_file,
                     runtime_attr_override=runtime_attr_preprocess
             }
@@ -79,6 +94,7 @@ workflow step1 {
         call mergeVCFs as mergeChunks {
             input:
                 vcf_files=preprocessVCFChunk.preprocessed_vcf,
+                vcf_files_idx=preprocessVCFChunk.preprocessed_vcf_idx,
                 sv_base_mini_docker=sv_base_mini_docker,
                 cohort_prefix=cohort_prefix,
                 runtime_attr_override=runtime_attr_merge_vcfs  
@@ -102,7 +118,7 @@ workflow step1 {
                     vcf_uri=vcf_uri,
                     meta_uri=makeTrioSampleFiles.meta_uri,
                     trio_uri=makeTrioSampleFiles.trio_uri,
-                    hail_docker=hail_docker,
+                    vep_hail_docker=vep_hail_docker,
                     header_file=saveVCFHeader.header_file,
                     runtime_attr_override=runtime_attr_preprocess
             }
@@ -110,6 +126,7 @@ workflow step1 {
         call mergeVCFs {
             input:
                 vcf_files=preprocessVCF.preprocessed_vcf,
+                vcf_files_idx=preprocessVCF.preprocessed_vcf_idx,
                 sv_base_mini_docker=sv_base_mini_docker,
                 cohort_prefix=cohort_prefix,
                 runtime_attr_override=runtime_attr_merge_vcfs
@@ -131,15 +148,15 @@ task makeTrioSampleFiles {
         File ped_uri
         String bucket_id
         String cohort_prefix
-        String hail_docker
+        String vep_hail_docker
     }
 
     runtime {
-        docker: hail_docker
+        docker: vep_hail_docker
     }
 
     command <<<
-    python3 ~{python_trio_sample_script} ~{ped_uri} ~{cohort_prefix} ~{bucket_id}
+    python3.9 ~{python_trio_sample_script} ~{ped_uri} ~{cohort_prefix} ~{bucket_id}
     >>>
     
     output {
@@ -185,7 +202,7 @@ task preprocessVCF {
         File meta_uri
         File trio_uri
         File header_file
-        String hail_docker
+        String vep_hail_docker
         RuntimeAttr? runtime_attr_override
     }
     Float input_size = size(vcf_uri, "GB")
@@ -211,16 +228,19 @@ task preprocessVCF {
         cpu: cpu_cores
         preemptible: select_first([runtime_override.preemptible_tries, runtime_default.preemptible_tries])
         maxRetries: select_first([runtime_override.max_retries, runtime_default.max_retries])
-        docker: hail_docker
+        docker: vep_hail_docker
         bootDiskSizeGb: select_first([runtime_override.boot_disk_gb, runtime_default.boot_disk_gb])
     }
 
+    File preprocessed_vcf_out = basename(vcf_uri, '.vcf.gz') + '.preprocessed.vcf.bgz'
     command <<<
-    python3 ~{python_preprocess_script} ~{lcr_uri} ~{ped_uri} ~{meta_uri} ~{trio_uri} ~{vcf_uri} ~{header_file} ~{cpu_cores} ~{memory}
+        python3.9 ~{python_preprocess_script} ~{lcr_uri} ~{ped_uri} ~{meta_uri} ~{trio_uri} ~{vcf_uri} ~{header_file} ~{cpu_cores} ~{memory}
+        /opt/vep/bcftools/bcftools index -t ~{preprocessed_vcf_out}
     >>>
 
     output {
-        File preprocessed_vcf = basename(vcf_uri, '.vcf.gz') + '.preprocessed.vcf.bgz'
+        File preprocessed_vcf = preprocessed_vcf_out
+        File preprocessed_vcf_idx = preprocessed_vcf_out + '.tbi'
     }
 }
 
@@ -286,7 +306,7 @@ task splitFile {
         File file
         Int shards_per_chunk
         String cohort_prefix
-        String hail_docker
+        String vep_hail_docker
         RuntimeAttr? runtime_attr_override
     }
 
@@ -311,7 +331,7 @@ task splitFile {
         cpu: select_first([runtime_override.cpu_cores, runtime_default.cpu_cores])
         preemptible: select_first([runtime_override.preemptible_tries, runtime_default.preemptible_tries])
         maxRetries: select_first([runtime_override.max_retries, runtime_default.max_retries])
-        docker: hail_docker
+        docker: vep_hail_docker
         bootDiskSizeGb: select_first([runtime_override.boot_disk_gb, runtime_default.boot_disk_gb])
     }
 
