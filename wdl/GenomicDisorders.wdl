@@ -363,13 +363,13 @@ task getGenomicDisorders{
 
         # Remove the calls that do not reciprocally overlap with the 0.3 fraction of GD site.
         bedtools intersect -v -wb -b ~{chromosome}.gd.variants.in.depth.raw.file.proband.no.r.txt -a ~{chromosome}.coverage.proband.txt > ~{chromosome}.kept.coverage.proband.txt
-        bedtools intersect -v -wb -b ~{chromosome}.gd.variants.in.depth.raw.file.parents.no.r.txt -a ~{chromosome}.coverage.parent.txt > ~{chromosome}.kept.coverage.parent.txt    
+        bedtools intersect -v -wb -b ~{chromosome}.gd.variants.in.depth.raw.file.parents.no.r.txt -a ~{chromosome}.coverage.parents.txt > ~{chromosome}.kept.coverage.parents.txt
         
         #concatanate proband calls on GD site with desired overlap
         cat ~{chromosome}.gd.variants.in.depth.raw.file.proband.txt ~{chromosome}.kept.coverage.proband.txt | awk -v OFS="\t" '{print $5,$7,$8,$9,$10,$1,$2,$3,$4}' > ~{chromosome}.proband.GD.calls.txt
 
         #concatanate parent calls on GD site with desired overlap
-        cat ~{chromosome}.gd.variants.in.depth.raw.file.parents.txt ~{chromosome}.kept.coverage.parent.txt | awk -v OFS="\t" '{print $5,$6,$7,$8,$9,$1,$2,$3,$4}' > ~{chromosome}.parent.GD.calls.txt
+        cat ~{chromosome}.gd.variants.in.depth.raw.file.parents.txt ~{chromosome}.kept.coverage.parents.txt | awk -v OFS="\t" '{print $5,$6,$7,$8,$9,$1,$2,$3,$4}' > ~{chromosome}.parent.GD.calls.txt
 
         #get de novo only calls
         bedtools intersect -v -wa  -f 0.3 -a ~{chromosome}.proband.GD.calls.txt -b ~{chromosome}.parent.GD.calls.txt > ~{chromosome}.proband.GD.calls.de_novo.txt
