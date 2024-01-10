@@ -615,6 +615,7 @@ task getVCFoverlap {
 
   output{
     File out_bed = "~{prefix}.gd.fromVCF.bed.gz"
+
   }
 
   command <<<
