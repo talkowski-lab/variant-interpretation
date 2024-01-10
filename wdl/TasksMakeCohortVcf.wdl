@@ -1,6 +1,6 @@
 version 1.0
 
-import "Structs.wdl"
+import "Structs2.wdl"
 
 # use zcat to concatenate compressed files
 # -replaces "combine" task in some workflows
