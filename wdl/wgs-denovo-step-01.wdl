@@ -26,6 +26,9 @@ workflow step1 {
         Int shards_per_chunk
         Boolean bad_header=false
         RuntimeAttr? runtime_attr_preprocess
+        RuntimeAttr? runtime_attr_merge_chunk
+        RuntimeAttr? runtime_attr_merge_chunks
+        RuntimeAttr? runtime_attr_merge_unchunked
     }
 
     call makeTrioSampleFiles {
@@ -53,7 +56,8 @@ workflow step1 {
                 input:
                     vcf_files=read_lines(chunk_file),
                     sv_base_mini_docker=sv_base_mini_docker,
-                    cohort_prefix=basename(chunk_file)
+                    cohort_prefix=basename(chunk_file),
+                    runtime_attr_override=runtime_attr_merge_chunk
             }
             call saveVCFHeader as saveVCFHeaderChunk {
                 input:
@@ -79,7 +83,8 @@ workflow step1 {
             input:
                 vcf_files=preprocessVCFChunk.preprocessed_vcf,
                 sv_base_mini_docker=sv_base_mini_docker,
-                cohort_prefix=cohort_prefix
+                cohort_prefix=cohort_prefix,
+                runtime_attr_override=runtime_attr_merge_chunks
         }
     }
 
@@ -109,7 +114,8 @@ workflow step1 {
             input:
                 vcf_files=preprocessVCF.preprocessed_vcf,
                 sv_base_mini_docker=sv_base_mini_docker,
-                cohort_prefix=cohort_prefix
+                cohort_prefix=cohort_prefix,
+                runtime_attr_override=runtime_attr_merge_unchunked
         }
     }
 
