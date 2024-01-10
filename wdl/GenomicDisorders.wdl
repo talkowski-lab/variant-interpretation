@@ -168,7 +168,7 @@ workflow GenomicDisorders {
 
     call getVCFoverlap{
         input:
-          bed = reformatVCF.out_bed,
+          bed = reformatVCF.out_ref_bed,
           genomic_disorders = genomic_disorder_input_ref,
           prefix = prefix,
           docker_path = genomic_disorders_docker,
@@ -614,12 +614,12 @@ task getVCFoverlap {
   RuntimeAttr runtime_attr = select_first([runtime_attr_override, default_attr])
 
   output{
-    File out_bed = "~{bed}.gd.bed.gz"
+    File out_bed = "~{prefix}.gd.fromVCF.bed.gz"
   }
 
   command <<<
     set -euo pipefail
-    bedtools intersect -wa -wb -f 0.3 -r -a ~{bed} -b ~{genomic_disorders} | bgzip -c > ~{bed}.gd.bed.gz
+    bedtools intersect -wa -wb -f 0.3 -r -a ~{bed} -b ~{genomic_disorders} | bgzip -c > ~{prefix}.gd.fromVCF.bed.gz
   >>>
 
   runtime {
