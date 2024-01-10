@@ -326,7 +326,7 @@ task getGenomicDisorders{
 #        File gd_output_from_final_vcf = "gd.variants.from.final.vcf.txt.gz"
 #        File gd_output_for_denovo = "gd.variants.from.final.vcf.names.txt"
         File gd_output_from_depth_raw_files = "~{chromosome}.gd.variants.in.depth.raw.files.txt.gz"
-        File gd_output_from_depth_raw_files_denovo ="~{chromosome}.gd.variants.in.depth.raw.files.de.novo.txt"
+        File gd_output_from_depth_raw_files_denovo ="~{chromosome}.gd.variants.in.depth.raw.files.de.novo.txt.gz"
     }
 
     command <<<
