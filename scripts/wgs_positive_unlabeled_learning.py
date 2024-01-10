@@ -35,6 +35,7 @@ def load_variants(vcf_metrics_tsv, ultra_rare_variants_tsv):
     ultra_rare['AB_father'] = pd.Series([min(x.strip('][').split(', ')) for x in ultra_rare.AD_father]).astype(int) / ultra_rare.DP_father
     ultra_rare['AB_sample'] = pd.Series([min(x.strip('][').split(', ')) for x in ultra_rare.AD_sample]).astype(int) / ultra_rare.DP_sample
 
+    ultra_rare = ultra_rare[~ultra_rare.PL_sample.isna()]
     ultra_rare[['PL_sample_0.0', 'PL_sample_0.1', 'PL_sample_1.1']] = ultra_rare.PL_sample.str.strip('][').str.split(', ', expand=True).astype(int)
     ultra_rare['GQ_mean'] = ultra_rare[['GQ_sample', 'GQ_mother', 'GQ_father']].mean(axis=1)
     final_output[['PL_sample_0.0', 'PL_sample_0.1', 'PL_sample_1.1']] = final_output.PL_sample.str.split(",", expand=True).astype(int)

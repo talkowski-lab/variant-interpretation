@@ -241,12 +241,10 @@ task mergeVCFs {
     #  CleanVcf5.FindRedundantMultiallelics
     Float input_size = size(vcf_files, "GB")
     Float base_disk_gb = 10.0
-    Float base_mem_gb = 2.0
-    Float input_mem_scale = 3.0
     Float input_disk_scale = 5.0
     
     RuntimeAttr runtime_default = object {
-        mem_gb: base_mem_gb + input_size * input_mem_scale,
+        mem_gb: 4,
         disk_gb: ceil(base_disk_gb + input_size * input_disk_scale),
         cpu_cores: 1,
         preemptible_tries: 3,
@@ -255,9 +253,11 @@ task mergeVCFs {
     }
 
     RuntimeAttr runtime_override = select_first([runtime_attr_override, runtime_default])
-    
+    Float memory = select_first([runtime_override.mem_gb, runtime_default.mem_gb])
+    Int cpu_cores = select_first([runtime_override.cpu_cores, runtime_default.cpu_cores])
+
     runtime {
-        memory: "~{select_first([runtime_override.mem_gb, runtime_default.mem_gb])} GB"
+        memory: "~{memory} GB"
         disks: "local-disk ~{select_first([runtime_override.disk_gb, runtime_default.disk_gb])} HDD"
         cpu: select_first([runtime_override.cpu_cores, runtime_default.cpu_cores])
         preemptible: select_first([runtime_override.preemptible_tries, runtime_default.preemptible_tries])
@@ -275,7 +275,7 @@ task mergeVCFs {
         cat $VCFS | awk -F '/' '{print $NF"\t"$0}' | sort -k1,1V | awk '{print $2}' > vcfs_sorted.list
         bcftools concat -n --no-version -Oz --file-list vcfs_sorted.list --output ~{merged_vcf_name}
         mkdir -p tmp
-        bcftools sort ~{merged_vcf_name} --output ~{sorted_vcf_name} -T tmp/
+        bcftools sort ~{merged_vcf_name} --output ~{sorted_vcf_name} -T tmp/ -m ~{memory}G
         bcftools index -t ~{sorted_vcf_name}
     >>>
 
