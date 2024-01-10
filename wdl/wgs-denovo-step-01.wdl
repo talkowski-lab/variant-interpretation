@@ -25,6 +25,9 @@ workflow step1 {
         String cohort_prefix
         Int shards_per_chunk
         Boolean bad_header=false
+        Float? input_disk_scale_merge_chunk
+        Float? input_disk_scale_merge_chunks
+        Float? input_disk_scale_merge_unchunked
         RuntimeAttr? runtime_attr_preprocess
         RuntimeAttr? runtime_attr_merge_chunk
         RuntimeAttr? runtime_attr_merge_chunks
@@ -57,6 +60,7 @@ workflow step1 {
                     vcf_files=read_lines(chunk_file),
                     sv_base_mini_docker=sv_base_mini_docker,
                     cohort_prefix=basename(chunk_file),
+                    input_disk_scale=input_disk_scale_merge_chunk,
                     runtime_attr_override=runtime_attr_merge_chunk
             }
             call saveVCFHeader as saveVCFHeaderChunk {
@@ -84,6 +88,7 @@ workflow step1 {
                 vcf_files=preprocessVCFChunk.preprocessed_vcf,
                 sv_base_mini_docker=sv_base_mini_docker,
                 cohort_prefix=cohort_prefix,
+                input_disk_scale=input_disk_scale_merge_chunks,
                 runtime_attr_override=runtime_attr_merge_chunks
         }
     }
@@ -115,6 +120,7 @@ workflow step1 {
                 vcf_files=preprocessVCF.preprocessed_vcf,
                 sv_base_mini_docker=sv_base_mini_docker,
                 cohort_prefix=cohort_prefix,
+                input_disk_scale=input_disk_scale_merge_unchunked,
                 runtime_attr_override=runtime_attr_merge_unchunked
         }
     }
@@ -235,6 +241,7 @@ task mergeVCFs {
         Array[File] vcf_files
         String sv_base_mini_docker
         String cohort_prefix
+        Float? input_disk_scale
         RuntimeAttr? runtime_attr_override
     }
 
@@ -243,7 +250,7 @@ task mergeVCFs {
     #  CleanVcf5.FindRedundantMultiallelics
     Float input_size = size(vcf_files, "GB")
     Float base_disk_gb = 10.0
-    Float input_disk_scale = 10.0
+    Float input_disk_scale = select_first([input_disk_scale, 5.0])
     
     RuntimeAttr runtime_default = object {
         mem_gb: 4,
