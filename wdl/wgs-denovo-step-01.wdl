@@ -247,11 +247,11 @@ task mergeVCFs {
     #  CleanVcf5.FindRedundantMultiallelics
     Float input_size = size(vcf_files, "GB")
     Float base_disk_gb = 10.0
-    Float input_disk_scale = select_first([input_disk_scale, 5.0])
+    Float input_disk_scale_ = select_first([input_disk_scale, 5.0])
     
     RuntimeAttr runtime_default = object {
         mem_gb: 4,
-        disk_gb: ceil(base_disk_gb + input_size * input_disk_scale),
+        disk_gb: ceil(base_disk_gb + input_size * input_disk_scale_),
         cpu_cores: 1,
         preemptible_tries: 3,
         max_retries: 1,
