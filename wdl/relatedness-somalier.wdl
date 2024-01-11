@@ -13,7 +13,8 @@ workflow runSomalier {
     input {
         File sites_uri
         File hg38_fasta
-        Array[Array[File]] vep_annotated_final_vcf
+        Array[File]? vep_vcf_files
+        Array[Array[File]]? vep_annotated_final_vcf
         File ped_uri
         File bed_file
         File ancestry_labels_1kg
@@ -28,31 +29,37 @@ workflow runSomalier {
         RuntimeAttr? runtime_attr_relatedness
         RuntimeAttr? runtime_attr_correct
     }
-    scatter (vcf_files in vep_annotated_final_vcf) {
-        scatter (vcf_uri in vcf_files) {
-            call subsetVCFs {
-                input:
-                    bed_file=bed_file,
-                    vcf_uri=vcf_uri,
-                    vcf_idx=vcf_uri+'.tbi',
-                    somalier_docker=somalier_docker
-            }
+
+    if (defined(vep_annotated_final_vcf)) {
+        Array[File] vep_annotated_final_vcf_arr = flatten(select_first([vep_annotated_final_vcf]))
+    }
+    Array[File] vep_files = select_first([vep_vcf_files, vep_annotated_final_vcf_arr])
+    
+    scatter (vcf_uri in vep_files) {
+        call subsetVCFs {
+            input:
+                bed_file=bed_file,
+                vcf_uri=vcf_uri,
+                vcf_idx=vcf_uri+'.tbi',
+                somalier_docker=somalier_docker
         }
 
-        call mergeVCFs as mergeSharded {
-            input:
-                vcf_files=subsetVCFs.subset_vcf,
-                vcf_files_idx=subsetVCFs.subset_vcf_idx,
-                sv_base_mini_docker=sv_base_mini_docker,
-                cohort_prefix=cohort_prefix,
-                merge_or_concat='concat'
-        }
+        # call mergeVCFs as mergeSharded {
+        #     input:
+        #         vcf_files=subsetVCFs.subset_vcf,
+        #         vcf_files_idx=subsetVCFs.subset_vcf_idx,
+        #         sv_base_mini_docker=sv_base_mini_docker,
+        #         cohort_prefix=cohort_prefix,
+        #         merge_or_concat='concat'
+        # }
     }
 
     call mergeVCFs {
     input:
-        vcf_files=mergeSharded.merged_vcf_file,
-        vcf_files_idx=mergeSharded.merged_vcf_idx,
+        vcf_files=subsetVCFs.subset_vcf,
+        vcf_files_idx=subsetVCFs.subset_vcf_idx,
+        # vcf_files=mergeSharded.merged_vcf_file,
+        # vcf_files_idx=mergeSharded.merged_vcf_idx,
         sv_base_mini_docker=sv_base_mini_docker,
         cohort_prefix=cohort_prefix,
         merge_or_concat='concat'
