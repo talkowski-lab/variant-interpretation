@@ -22,13 +22,12 @@ workflow vepAnnotateHail {
         File gerp_conservation_scores
         File hg38_vep_cache
         File loeuf_data
-        File mpc_file
         String cohort_prefix
         String vep_hail_docker
         String sv_base_mini_docker
-        Boolean split_vcf=true
-        Int shards_per_chunk=10
-        Int? records_per_shard
+        Boolean split_vcf=true  # sharding VCF
+        Int shards_per_chunk=10  # combine pre-sharded VCFs
+        Int? records_per_shard  # if undefined, shards by chromosome
         Int? thread_num_override
         RuntimeAttr? runtime_attr_merge_vcfs
         RuntimeAttr? runtime_attr_split_vcf
@@ -42,6 +41,7 @@ workflow vepAnnotateHail {
         Boolean split_vcf=false
         Boolean merge_shards=true
 
+        # combine pre-sharded VCFs into chunks
         call splitFile {
             input:
                 file=file,
@@ -51,6 +51,7 @@ workflow vepAnnotateHail {
         }
     }
 
+    # shard the VCF (if not already sharded)
     if (split_vcf) {
         if (defined(records_per_shard)) {
             call scatterVCF {
@@ -76,6 +77,7 @@ workflow vepAnnotateHail {
     
     Array[File] vcf_shards = select_first([scatterVCF.shards, splitByChromosome.shards, splitFile.chunks, [file]])
 
+    # if split into chunks, merge shards in chunks, then run VEP on merged chunks
     if (defined(merge_shards)) {
         scatter (chunk_file in vcf_shards) {
             call mergeVCFs {
@@ -96,7 +98,6 @@ workflow vepAnnotateHail {
                     gerp_conservation_scores=gerp_conservation_scores,
                     hg38_vep_cache=hg38_vep_cache,
                     loeuf_data=loeuf_data,
-                    mpc_file=mpc_file,
                     vep_hail_docker=vep_hail_docker,
                     runtime_attr_override=runtime_attr_vep_annotate
             }
@@ -115,7 +116,6 @@ workflow vepAnnotateHail {
                     gerp_conservation_scores=gerp_conservation_scores,
                     hg38_vep_cache=hg38_vep_cache,
                     loeuf_data=loeuf_data,
-                    mpc_file=mpc_file,
                     vep_hail_docker=vep_hail_docker,
                     runtime_attr_override=runtime_attr_vep_annotate
             }
@@ -343,7 +343,6 @@ task vepAnnotate {
         File gerp_conservation_scores
         File hg38_vep_cache
         File loeuf_data
-        File mpc_file
         String vep_hail_docker
         RuntimeAttr? runtime_attr_override
     }
@@ -399,7 +398,6 @@ task vepAnnotate {
         "--minimal",
         "--assembly", "GRCh38",
         "--fasta", "~{top_level_fa}",
-        "--plugin", "MPC,~{mpc_file}",
         "--plugin", "LOEUF,file=~{loeuf_data},match_by=transcript",
         "--plugin", "LoF,loftee_path:/opt/vep/Plugins/,human_ancestor_fa:~{human_ancestor_fa},gerp_bigwig:~{gerp_conservation_scores}",
         "-o", "STDOUT"],
