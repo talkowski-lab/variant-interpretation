@@ -6,8 +6,8 @@ import os
 samples = sys.argv[1]
 ped_uri = sys.argv[2]
 
-ped = pd.read_csv(ped_uri, sep="\t")
-samples = pd.read_csv(samples, header=None)[0]
+ped = pd.read_csv(ped_uri, sep="\t", dtype={i: str for i in range(4)})
+samples = pd.read_csv(samples, header=None, dtype=str)[0]
 
 ped.index = ped.sample_id
 ped = ped.loc[np.intersect1d(ped.index, samples)]

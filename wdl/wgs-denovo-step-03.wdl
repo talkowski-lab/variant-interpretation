@@ -24,7 +24,7 @@ workflow step3 {
         File subset_ped_python_script
     }
 
-    String cohort_prefix = basename(merged_preprocessed_vcf_file, '.vep.merged.vcf.gz')
+    String cohort_prefix = basename(merged_preprocessed_vcf_file, '.vcf.gz')
     String stats_file = cohort_prefix + "_stats.txt"
 
     # call splitTrioVCFs {
