@@ -29,6 +29,7 @@ workflow vepAnnotateHail {
         Int shards_per_chunk=10  # combine pre-sharded VCFs
         Int? records_per_shard  # if undefined, shards by chromosome
         Int? thread_num_override
+        Float? input_disk_scale_merge_chunk
         RuntimeAttr? runtime_attr_merge_vcfs
         RuntimeAttr? runtime_attr_split_vcf
         RuntimeAttr? runtime_attr_remove_genotypes
@@ -86,6 +87,7 @@ workflow vepAnnotateHail {
                     sv_base_mini_docker=sv_base_mini_docker,
                     cohort_prefix=basename(chunk_file),
                     merge_or_concat='concat',
+                    input_disk_scale=input_disk_scale_merge_chunk,
                     runtime_attr_override=runtime_attr_merge_vcfs
             }
             call vepAnnotate as vepAnnotateMergedShards {
@@ -136,17 +138,18 @@ task mergeVCFs {
         Array[File] vcf_files
         String sv_base_mini_docker
         String cohort_prefix
-        String merge_or_concat   
+        String merge_or_concat 
+        Float? input_disk_scale
         RuntimeAttr? runtime_attr_override
     }
 
     Float input_size = size(vcf_files, "GB")
     Float base_disk_gb = 10.0
-    Float input_disk_scale = 5.0
+    Float input_disk_scale_ = select_first([input_disk_scale, 5.0])
     
     RuntimeAttr runtime_default = object {
         mem_gb: 4,
-        disk_gb: ceil(base_disk_gb + input_size * input_disk_scale),
+        disk_gb: ceil(base_disk_gb + input_size * input_disk_scale_),
         cpu_cores: 1,
         preemptible_tries: 3,
         max_retries: 1,
