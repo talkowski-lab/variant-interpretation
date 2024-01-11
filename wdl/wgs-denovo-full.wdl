@@ -73,6 +73,7 @@ workflow wgs_denovo_full {
             ped_uri=ped_uri,
             merged_preprocessed_vcf_file=step1and2.merged_preprocessed_vcf_file,
             hail_docker=hail_docker,
+            cohort_prefix=cohort_prefix,
             trio_denovo_docker=trio_denovo_docker,
             uberSplit_v3_py=uberSplit_v3_py,
             batch_size=batch_size,

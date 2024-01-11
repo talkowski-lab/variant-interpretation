@@ -16,6 +16,7 @@ workflow step3 {
         File merged_preprocessed_vcf_file
         # File vep_annotated_final_vcf_single
         String hail_docker
+        String cohort_prefix
         # String sv_base_mini_docker
         String trio_denovo_docker
         File uberSplit_v3_py
@@ -24,7 +25,7 @@ workflow step3 {
         File subset_ped_python_script
     }
 
-    String cohort_prefix = basename(merged_preprocessed_vcf_file, '.vcf.gz')
+    # String cohort_prefix = basename(merged_preprocessed_vcf_file, '.vcf.gz')
     String stats_file = cohort_prefix + "_stats.txt"
 
     # call splitTrioVCFs {
