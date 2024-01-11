@@ -8,18 +8,18 @@ ped_uri = sys.argv[2]
 cohort_prefix = sys.argv[3]
 subset_ped = bool(sys.argv[4].upper())
 
-ped = pd.read_csv(ped_uri, sep='\t')
+ped = pd.read_csv(ped_uri, dtype={i: str for i in range(4)}, sep='\t')
 try:
     float(ped.columns[-1])  # no header
-    ped = pd.read_csv(ped_uri, sep='\t', header=None)
+    ped = pd.read_csv(ped_uri, dtype={i: str for i in range(4)}, sep='\t', header=None)
 except Exception as e:
     pass
 
+ped = ped.iloc[:,:6]
 ped.columns = ['family_id', 'sample_id', 'paternal_id', 'maternal_id', 'sex', 'phenotype']
-ped[['family_id', 'sample_id', 'paternal_id', 'maternal_id']] = ped[['family_id', 'sample_id', 'paternal_id', 'maternal_id']].astype(str)
 ped.index = ped.sample_id
 
-somalier = pd.read_csv(samples_uri, sep='\t')
+somalier = pd.read_csv(samples_uri, dtype={i: str for i in range(4)}, sep='\t')
 somalier.columns = somalier.columns.str.replace("#", "")
 somalier.index = somalier.sample_id
 

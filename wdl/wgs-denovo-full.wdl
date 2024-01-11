@@ -17,8 +17,6 @@ struct RuntimeAttr {
 
 workflow wgs_denovo_full {
     input {
-            # file can be a list of vcf files or just one vcf file
-            File file
             File python_trio_sample_script
             File python_preprocess_script
             File subset_ped_python_script
