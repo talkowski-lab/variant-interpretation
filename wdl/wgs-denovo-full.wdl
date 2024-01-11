@@ -29,7 +29,8 @@ workflow wgs_denovo_full {
             File hg38_reference_fai
             File hg38_reference_dict
             File info_header
-            Array[Array[File]] vep_annotated_final_vcf
+            Array[File]? vep_vcf_files
+            Array[Array[File]]? vep_annotated_final_vcf
             String bucket_id
             String cohort_prefix
             String cohort_id
@@ -44,6 +45,11 @@ workflow wgs_denovo_full {
             Float minDQ
     }
 
+    if (defined(vep_annotated_final_vcf)) {
+        Array[File] vep_annotated_final_vcf_arr = flatten(select_first([vep_annotated_final_vcf]))
+    }
+    Array[File] vep_files = select_first([vep_vcf_files, vep_annotated_final_vcf_arr])
+
     call step1and2.step1 as step1and2 {
         input:
             python_trio_sample_script=python_trio_sample_script,
@@ -51,7 +57,7 @@ workflow wgs_denovo_full {
             lcr_uri=lcr_uri,
             ped_uri=ped_uri,
             info_header=info_header,
-            vep_annotated_final_vcf=vep_annotated_final_vcf,
+            vep_files=vep_files,
             sv_base_mini_docker=sv_base_mini_docker,
             bucket_id=bucket_id,
             cohort_prefix=cohort_prefix,
@@ -75,7 +81,7 @@ workflow wgs_denovo_full {
     call annotateHPandVAF.annotateHPandVAF as annotateHPandVAF {
         input:
             split_trio_vcfs=step3.split_trio_vcfs,
-            vep_annotated_final_vcf_single=vep_annotated_final_vcf[0][0],
+            vep_annotated_final_vcf_single=vep_files[0],
             hg38_reference=hg38_reference,
             hg38_reference_fai=hg38_reference_fai,
             hg38_reference_dict=hg38_reference_dict,

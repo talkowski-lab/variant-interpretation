@@ -11,13 +11,12 @@ struct RuntimeAttr {
 
 workflow step1 {
     input {
-        # file can be a list of vcf files or just one vcf file
         File python_trio_sample_script
         File python_preprocess_script
         File lcr_uri
         File ped_uri
         File info_header
-        Array[Array[File]] vep_annotated_final_vcf
+        Array[File] vep_files
         String hail_docker
         String vep_hail_docker
         String sv_base_mini_docker
@@ -43,12 +42,10 @@ workflow step1 {
             hail_docker=hail_docker
     }
 
-    Array[File] vep_annotated_final_vcf_array = flatten(vep_annotated_final_vcf)
-
     if (shards_per_chunk!=0) {
         call splitFile as splitVEPFiles {
             input:
-                file=write_lines(vep_annotated_final_vcf_array),
+                file=write_lines(vep_files),
                 shards_per_chunk=shards_per_chunk,
                 cohort_prefix=cohort_prefix,
                 vep_hail_docker=vep_hail_docker
@@ -94,7 +91,7 @@ workflow step1 {
     }
 
     if (shards_per_chunk==0) {
-        scatter (vcf_uri in vep_annotated_final_vcf_array) {
+        scatter (vcf_uri in vep_files) {
             call saveVCFHeader {
                 input:
                     vcf_uri=vcf_uri,
