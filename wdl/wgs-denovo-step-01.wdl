@@ -207,8 +207,8 @@ task preprocessVCF {
         boot_disk_gb: 10
     }
 
-    Float memory = select_first([runtime_override.mem_gb, runtime_default.mem_gb])
-    Int cpu_cores = select_first([runtime_override.cpu_cores, runtime_default.cpu_cores])
+    Float memory = select_first([runtime_attr_override.mem_gb, runtime_default.mem_gb])
+    Int cpu_cores = select_first([runtime_attr_override.cpu_cores, runtime_default.cpu_cores])
     RuntimeAttr runtime_override = select_first([runtime_attr_override, runtime_default])
     
     runtime {
@@ -258,8 +258,8 @@ task mergeVCFs {
         boot_disk_gb: 10
     }
 
-    Float memory = select_first([runtime_override.mem_gb, runtime_default.mem_gb])
-    Int cpu_cores = select_first([runtime_override.cpu_cores, runtime_default.cpu_cores])
+    Float memory = select_first([runtime_attr_override.mem_gb, runtime_default.mem_gb])
+    Int cpu_cores = select_first([runtime_attr_override.cpu_cores, runtime_default.cpu_cores])
     RuntimeAttr runtime_override = select_first([runtime_attr_override, runtime_default])
 
     runtime {
