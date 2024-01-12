@@ -194,7 +194,6 @@ task saveVCFHeader {
 task mergeVCFs {
     input {
         Array[File] vcf_files
-        Array[File] vcf_files_idx
         String sv_base_mini_docker
         String cohort_prefix
         String merge_or_concat    
