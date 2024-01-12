@@ -54,6 +54,7 @@ workflow filterRareVariantsHail {
                     runtime_attr_override=runtime_attr_merge_vcfs
                 }
             }
+            File merge_sharded = select_first([mergeSharded.merged_vcf_file])[0]
         }
 
         if (defined(vep_vcf_files)) {
@@ -69,7 +70,7 @@ workflow filterRareVariantsHail {
         
         call filterRareVariants {
             input:
-                vcf_file=select_first([mergeCohort.merged_vcf_file, select_first([mergeSharded.merged_vcf_file])[0], mergeHailShards.merged_vcf_file]),
+                vcf_file=select_first([mergeCohort.merged_vcf_file, merge_sharded, mergeHailShards.merged_vcf_file]),
                 lcr_uri=lcr_uri,
                 ped_uri=ped_uri,
                 meta_uri=meta_uri,
@@ -124,6 +125,7 @@ workflow filterRareVariantsHail {
                         runtime_attr_override=runtime_attr_merge_results
                 }
             }
+            File merge_sharded_results = select_first([mergeShardResults.ultra_rare_variants_tsv])[0]
         }
 
         if (defined(vep_vcf_files)) {
@@ -154,7 +156,7 @@ workflow filterRareVariantsHail {
                     runtime_attr_override=runtime_attr_merge_results         
             }
         }
-        File merged_ultra_rare_variants_tsv = select_first([select_first([mergeShardResults.ultra_rare_variants_tsv])[0], mergeHailShardResults.ultra_rare_variants_tsv])
+        File merged_ultra_rare_variants_tsv = select_first([merge_sharded_results, mergeHailShardResults.ultra_rare_variants_tsv])
 
     }
 
