@@ -11,8 +11,8 @@ struct RuntimeAttr {
 
 workflow filterRareVariantsHail {
     input {
-        Array[Array[File]] vep_annotated_final_vcf
-        Array[Array[File]] vep_annotated_final_vcf_idx
+        Array[File]? vep_vcf_files
+        Array[Array[File]]? vep_annotated_final_vcf
         File lcr_uri
         File ped_uri
         File meta_uri
@@ -29,40 +29,47 @@ workflow filterRareVariantsHail {
         RuntimeAttr? runtime_attr_merge_vcfs
         RuntimeAttr? runtime_attr_filter_vcf
         RuntimeAttr? runtime_attr_merge_results
-    }
-
-    Array[Pair[Array[File], Array[File]]] vep_annotated_final = zip(vep_annotated_final_vcf, vep_annotated_final_vcf_idx)
+    }  
     
     if (merge_annotated_vcfs) {
-        scatter (vep_annotated_shard in vep_annotated_final) {
-            Array[File] cohort_vcf_files = vep_annotated_shard.left
-            Array[File] cohort_vcf_idx = vep_annotated_shard.right
-            call mergeVCFs as mergeSharded {
+        if (defined(vep_annotated_final_vcf)) {
+            scatter (cohort_vcf_files in select_first([vep_annotated_final_vcf])) {
+                call mergeVCFs as mergeSharded {
+                    input:
+                        vcf_files=cohort_vcf_files,
+                        sv_base_mini_docker=sv_base_mini_docker,
+                        cohort_prefix=cohort_prefix,
+                        merge_or_concat='concat',
+                        runtime_attr_override=runtime_attr_merge_vcfs
+                }
+            }
+
+            if (length(mergeSharded.merged_vcf_file) > 1) {
+                call mergeVCFs as mergeCohort {
                 input:
-                    vcf_files=cohort_vcf_files,
-                    vcf_files_idx=cohort_vcf_idx,
+                    vcf_files=mergeSharded.merged_vcf_file,
                     sv_base_mini_docker=sv_base_mini_docker,
                     cohort_prefix=cohort_prefix,
                     merge_or_concat='concat',
                     runtime_attr_override=runtime_attr_merge_vcfs
+                }
             }
         }
 
-        if (length(mergeSharded.merged_vcf_file) > 1) {
-            call mergeVCFs as mergeCohort {
-            input:
-                vcf_files=mergeSharded.merged_vcf_file,
-                vcf_files_idx=mergeSharded.merged_vcf_idx,
-                sv_base_mini_docker=sv_base_mini_docker,
-                cohort_prefix=cohort_prefix,
-                merge_or_concat='concat',
-                runtime_attr_override=runtime_attr_merge_vcfs
+        if (defined(vep_vcf_files)) {
+            call mergeVCFs as mergeHailShards {
+                    input:
+                        vcf_files=select_first([vep_vcf_files]),
+                        sv_base_mini_docker=sv_base_mini_docker,
+                        cohort_prefix=cohort_prefix,
+                        merge_or_concat='concat',
+                        runtime_attr_override=runtime_attr_merge_vcfs
             }
         }
         
         call filterRareVariants {
             input:
-                vcf_file=select_first([mergeCohort.merged_vcf_file, mergeSharded.merged_vcf_file[0]]),
+                vcf_file=select_first([mergeCohort.merged_vcf_file, select_first([mergeSharded.merged_vcf_file])[0], mergeHailShards.merged_vcf_file]),
                 lcr_uri=lcr_uri,
                 ped_uri=ped_uri,
                 meta_uri=meta_uri,
@@ -79,11 +86,49 @@ workflow filterRareVariantsHail {
     }
 
     if (!merge_annotated_vcfs) {
-        scatter (vep_annotated_shard in vep_annotated_final) {
-            Array[File] cohort_vcf_files_ = vep_annotated_shard.left
-            Array[File] cohort_vcf_idx_ = vep_annotated_shard.right
-            scatter (vcf_file in cohort_vcf_files_) {
-                call filterRareVariants as filterRareVariants_sharded {
+        if (defined(vep_annotated_final_vcf)) {
+            scatter (cohort_vcf_files_ in select_first([vep_annotated_final_vcf])) {
+                scatter (vcf_file in cohort_vcf_files_) {
+                    call filterRareVariants as filterRareVariants_sharded {
+                        input:
+                            vcf_file=vcf_file,
+                            lcr_uri=lcr_uri,
+                            ped_uri=ped_uri,
+                            meta_uri=meta_uri,
+                            trio_uri=trio_uri,
+                            info_header=info_header,
+                            filter_rare_variants_python_script=filter_rare_variants_python_script,
+                            vep_hail_docker=vep_hail_docker,
+                            cohort_prefix=basename(vcf_file),
+                            AC_threshold=AC_threshold,
+                            AF_threshold=AF_threshold,
+                            bad_header=bad_header,
+                            runtime_attr_override=runtime_attr_filter_vcf
+                    }
+                }
+                call mergeResults as mergeShardResults {
+                    input:
+                        ultra_rare_variants_tsvs=filterRareVariants_sharded.ultra_rare_variants_tsv,
+                        vep_hail_docker=vep_hail_docker,
+                        cohort_prefix=cohort_prefix,
+                        runtime_attr_override=runtime_attr_merge_results
+                }
+            }
+
+            if (length(mergeShardResults.ultra_rare_variants_tsv) > 1) {
+                call mergeResults {
+                    input: 
+                        ultra_rare_variants_tsvs=mergeShardResults.ultra_rare_variants_tsv,
+                        vep_hail_docker=vep_hail_docker,
+                        cohort_prefix=cohort_prefix,
+                        runtime_attr_override=runtime_attr_merge_results
+                }
+            }
+        }
+
+        if (defined(vep_vcf_files)) {
+            scatter (vcf_file in select_first([vep_vcf_files])) {
+                call filterRareVariants as filterRareVariantsHail_sharded {
                     input:
                         vcf_file=vcf_file,
                         lcr_uri=lcr_uri,
@@ -101,24 +146,16 @@ workflow filterRareVariantsHail {
                 }
             }
 
-            call mergeResults as mergeShardResults {
+            call mergeResults as mergeHailShardResults {
                 input:
-                    ultra_rare_variants_tsvs=filterRareVariants_sharded.ultra_rare_variants_tsv,
+                    ultra_rare_variants_tsvs=filterRareVariantsHail_sharded.ultra_rare_variants_tsv,
                     vep_hail_docker=vep_hail_docker,
                     cohort_prefix=cohort_prefix,
-                    runtime_attr_override=runtime_attr_merge_results
+                    runtime_attr_override=runtime_attr_merge_results         
             }
         }
-        if (length(mergeShardResults.ultra_rare_variants_tsv) > 1) {
-            call mergeResults {
-                input: 
-                    ultra_rare_variants_tsvs=mergeShardResults.ultra_rare_variants_tsv,
-                    vep_hail_docker=vep_hail_docker,
-                    cohort_prefix=cohort_prefix,
-                    runtime_attr_override=runtime_attr_merge_results
-            }
-        }
-        File merged_ultra_rare_variants_tsv = mergeShardResults.ultra_rare_variants_tsv[0]
+        File merged_ultra_rare_variants_tsv = select_first([select_first([mergeShardResults.ultra_rare_variants_tsv])[0], mergeHailShardResults.ultra_rare_variants_tsv])
+
     }
 
     output {
