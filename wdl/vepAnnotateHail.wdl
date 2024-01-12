@@ -26,6 +26,9 @@ workflow vepAnnotateHail {
         String vep_hail_docker
         String sv_base_mini_docker
         Boolean split_vcf=true  # sharding VCF
+        Boolean? split_by_chromosome
+        Boolean? split_into_shards 
+        Int compression_level=3
         Int shards_per_chunk=10  # combine pre-sharded VCFs
         Int? records_per_shard  # if undefined, shards by chromosome
         Int? thread_num_override
@@ -54,29 +57,48 @@ workflow vepAnnotateHail {
 
     # shard the VCF (if not already sharded)
     if (split_vcf) {
-        if (defined(records_per_shard)) {
-            call scatterVCF {
-                input:
-                    vcf_file=file,
-                    records_per_shard=select_first([records_per_shard]),
-                    sv_base_mini_docker=sv_base_mini_docker,
-                    thread_num_override=thread_num_override,
-                    runtime_attr_override=runtime_attr_split_vcf
-            }
-        }
-        
-        if (!defined(records_per_shard)) {
+        if (split_by_chromosome==true) {
             call splitByChromosome {
                 input:
                     vcf_file=file,
                     sv_base_mini_docker=sv_base_mini_docker,
                     thread_num_override=thread_num_override,
+                    compression_level=compression_level,
                     runtime_attr_override=runtime_attr_split_vcf
+            }
+        }
+        if (split_into_shards==true) {
+            # if already split into chromosomes, shard further
+            if (defined(splitByChromosome.shards)) {
+                scatter (chrom_shard in select_first([splitByChromosome.shards])) {
+                    call scatterVCF as scatterChromosomes {
+                        input:
+                            vcf_file=chrom_shard,
+                            records_per_shard=select_first([records_per_shard]),
+                            sv_base_mini_docker=sv_base_mini_docker,
+                            thread_num_override=thread_num_override,
+                            compression_level=compression_level,
+                            runtime_attr_override=runtime_attr_split_vcf
+                    }
+                }
+            }
+
+            if (!defined(splitByChromosome.shards)) {
+                call scatterVCF {
+                    input:
+                        vcf_file=file,
+                        records_per_shard=select_first([records_per_shard]),
+                        sv_base_mini_docker=sv_base_mini_docker,
+                        thread_num_override=thread_num_override,
+                        compression_level=compression_level,
+                        runtime_attr_override=runtime_attr_split_vcf
+                }
             }
         }
     }
     
-    Array[File] vcf_shards = select_first([scatterVCF.shards, splitByChromosome.shards, splitFile.chunks, [file]])
+    Array[File] vcf_shards = select_first([scatterVCF.shards, scatterChromosomes.shards, 
+                                        splitByChromosome.shards, splitFile.chunks, [file]])
 
     # if split into chunks, merge shards in chunks, then run VEP on merged chunks
     if (defined(merge_shards)) {
@@ -172,7 +194,6 @@ task mergeVCFs {
     String sorted_vcf_name="~{cohort_prefix}.merged.sorted.vcf.gz"
 
     String merge_or_concat_new = if merge_or_concat == 'concat' then 'concat -n'  else merge_or_concat
-
     command <<<
         set -euo pipefail
         VCFS="~{write_lines(vcf_files)}"
@@ -236,6 +257,7 @@ task splitByChromosome {
         File vcf_file
         String sv_base_mini_docker
         Int? thread_num_override
+        Int? compression_level
         RuntimeAttr? runtime_attr_override
     }
 
@@ -255,6 +277,7 @@ task splitByChromosome {
 
     RuntimeAttr runtime_override = select_first([runtime_attr_override, runtime_default])
     Int thread_num = select_first([thread_num_override,runtime_override.cpu_cores])
+    String compression_str = if defined(compression_level) then "-Oz~{compression_level}" else "-Oz"
 
     runtime {
         memory: "~{select_first([runtime_override.mem_gb, runtime_default.mem_gb])} GB"
@@ -271,7 +294,7 @@ task splitByChromosome {
         echo $chr_string | tr ',' '\n' > chr_list.txt
         awk '$0="~{prefix}."$0' chr_list.txt > filenames.txt
         paste chr_list.txt filenames.txt > chr_filenames.txt
-        bcftools +scatter ~{vcf_file} -Oz -o . --threads ~{thread_num} -S chr_filenames.txt 
+        bcftools +scatter ~{vcf_file} ~{compression_str} -o . --threads ~{thread_num} -S chr_filenames.txt 
     >>>
 
     output {
@@ -285,6 +308,7 @@ task scatterVCF {
         File vcf_file
         Int records_per_shard
         String sv_base_mini_docker
+        Int? compression_level
         Int? thread_num_override
         RuntimeAttr? runtime_attr_override
     }
@@ -305,6 +329,7 @@ task scatterVCF {
 
     RuntimeAttr runtime_override = select_first([runtime_attr_override, runtime_default])
     Int thread_num = select_first([thread_num_override,runtime_override.cpu_cores])
+    String compression_str = if defined(compression_level) then "-Oz~{compression_level}" else "-Oz"
 
     runtime {
         memory: "~{select_first([runtime_override.mem_gb, runtime_default.mem_gb])} GB"
@@ -320,7 +345,7 @@ task scatterVCF {
         set -euo pipefail
         #  in case the file is empty create an empty shard
         bcftools view -h ~{vcf_file} | bgzip -c > "~{prefix}.0.vcf.gz"
-        bcftools +scatter ~{vcf_file} -o . -Oz -p "~{prefix}". --threads ~{thread_num} -n ~{records_per_shard}
+        bcftools +scatter ~{vcf_file} -o . ~{compression_str} -p "~{prefix}". --threads ~{thread_num} -n ~{records_per_shard}
 
         ls "~{prefix}".*.vcf.gz | sort -k1,1V > vcfs.list
         i=0
