@@ -22,7 +22,8 @@ workflow step1 {
         String sv_base_mini_docker
         String bucket_id
         String cohort_prefix
-        Int shards_per_chunk
+        Int shards_per_chunk=10
+        Boolean merge_split_vcf=false
         Boolean bad_header=false
         Float? input_disk_scale_merge_chunk
         Float? input_disk_scale_merge_chunks
@@ -42,7 +43,7 @@ workflow step1 {
             hail_docker=hail_docker
     }
 
-    if (shards_per_chunk!=0) {
+    if (merge_split_vcf) {
         call splitFile as splitVEPFiles {
             input:
                 file=write_lines(vep_files),
@@ -90,7 +91,7 @@ workflow step1 {
         }
     }
 
-    if (shards_per_chunk==0) {
+    if (!merge_split_vcf) {
         scatter (vcf_uri in vep_files) {
             call saveVCFHeader {
                 input:

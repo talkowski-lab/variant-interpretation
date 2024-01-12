@@ -40,7 +40,8 @@ workflow wgs_denovo_full {
             String vep_hail_docker
             String jvarkit_docker
             Boolean bad_header=false
-            Int shards_per_chunk=0
+            Boolean merge_split_vcf=false
+            Int shards_per_chunk=10
             Int batch_size
             Float minDQ
     }
@@ -64,6 +65,7 @@ workflow wgs_denovo_full {
             hail_docker=hail_docker,
             vep_hail_docker=vep_hail_docker,
             bad_header=bad_header,
+            merge_split_vcf=merge_split_vcf,
             shards_per_chunk=shards_per_chunk
     }
 

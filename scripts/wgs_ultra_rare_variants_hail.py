@@ -29,7 +29,7 @@ hl.init(min_block_size=128, spark_conf={"spark.executor.cores": cores,
 
 pedigree = hl.Pedigree.read(ped_uri)
 
-trio_df = pd.read_csv(trio_uri, sep='\t')
+trio_df = pd.read_csv(trio_uri, dtype=str, sep='\t')
 
 mt = hl.import_vcf(vcf_file, force_bgz=True, call_fields=[], header_file=header_file, reference_genome='GRCh38')
 
