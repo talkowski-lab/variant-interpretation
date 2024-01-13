@@ -25,9 +25,8 @@ workflow vepAnnotateHail {
         String cohort_prefix
         String vep_hail_docker
         String sv_base_mini_docker
-        Boolean split_vcf=true  # sharding VCF
-        Boolean? split_by_chromosome
-        Boolean? split_into_shards 
+        Boolean split_by_chromosome
+        Boolean split_into_shards 
         Int compression_level=3
         Int shards_per_chunk=10  # combine pre-sharded VCFs
         Int? records_per_shard  # if undefined, shards by chromosome
@@ -56,43 +55,41 @@ workflow vepAnnotateHail {
     }
 
     # shard the VCF (if not already sharded)
-    if (split_vcf) {
-        if (split_by_chromosome==true) {
-            call splitByChromosome {
-                input:
-                    vcf_file=file,
-                    sv_base_mini_docker=sv_base_mini_docker,
-                    thread_num_override=thread_num_override,
-                    compression_level=compression_level,
-                    runtime_attr_override=runtime_attr_split_vcf
-            }
+    if (split_by_chromosome) {
+        call splitByChromosome {
+            input:
+                vcf_file=file,
+                sv_base_mini_docker=sv_base_mini_docker,
+                thread_num_override=thread_num_override,
+                compression_level=compression_level,
+                runtime_attr_override=runtime_attr_split_vcf
         }
-        if (split_into_shards==true) {
-            # if already split into chromosomes, shard further
-            if (defined(splitByChromosome.shards)) {
-                scatter (chrom_shard in select_first([splitByChromosome.shards])) {
-                    call scatterVCF as scatterChromosomes {
-                        input:
-                            vcf_file=chrom_shard,
-                            records_per_shard=select_first([records_per_shard]),
-                            sv_base_mini_docker=sv_base_mini_docker,
-                            thread_num_override=thread_num_override,
-                            compression_level=compression_level,
-                            runtime_attr_override=runtime_attr_split_vcf
-                    }
-                }
-            }
-
-            if (!defined(splitByChromosome.shards)) {
-                call scatterVCF {
+    }
+    if (split_into_shards) {
+        # if already split into chromosomes, shard further
+        if (defined(splitByChromosome.shards)) {
+            scatter (chrom_shard in select_first([splitByChromosome.shards])) {
+                call scatterVCF as scatterChromosomes {
                     input:
-                        vcf_file=file,
+                        vcf_file=chrom_shard,
                         records_per_shard=select_first([records_per_shard]),
                         sv_base_mini_docker=sv_base_mini_docker,
                         thread_num_override=thread_num_override,
                         compression_level=compression_level,
                         runtime_attr_override=runtime_attr_split_vcf
                 }
+            }
+        }
+
+        if (!defined(splitByChromosome.shards)) {
+            call scatterVCF {
+                input:
+                    vcf_file=file,
+                    records_per_shard=select_first([records_per_shard]),
+                    sv_base_mini_docker=sv_base_mini_docker,
+                    thread_num_override=thread_num_override,
+                    compression_level=compression_level,
+                    runtime_attr_override=runtime_attr_split_vcf
             }
         }
     }
