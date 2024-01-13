@@ -29,21 +29,17 @@ workflow vepAnnotateHail {
         Boolean split_into_shards 
         Int compression_level=3
         Int shards_per_chunk=10  # combine pre-sharded VCFs
-        Int? records_per_shard  # if undefined, shards by chromosome
+        Int? records_per_shard 
         Int? thread_num_override
         Float? input_disk_scale_merge_chunk
         RuntimeAttr? runtime_attr_merge_vcfs
         RuntimeAttr? runtime_attr_split_vcf
-        RuntimeAttr? runtime_attr_remove_genotypes
         RuntimeAttr? runtime_attr_vep_annotate
-        RuntimeAttr? runtime_attr_add_genotypes
     }
 
     String filename = basename(file)
     if (sub(filename, ".vcf.gz", "")==filename) {  # input is not a single VCF file
-        Boolean split_vcf=false
         Boolean merge_shards=true
-
         # combine pre-sharded VCFs into chunks
         call splitFile {
             input:
@@ -79,6 +75,7 @@ workflow vepAnnotateHail {
                         runtime_attr_override=runtime_attr_split_vcf
                 }
             }
+            Array[File] chromosome_shards = flatten(scatterChromosomes.shards)
         }
 
         if (!defined(splitByChromosome.shards)) {
@@ -94,7 +91,7 @@ workflow vepAnnotateHail {
         }
     }
     
-    Array[File] vcf_shards = select_first([scatterVCF.shards, scatterChromosomes.shards, 
+    Array[File] vcf_shards = select_first([scatterVCF.shards, chromosome_shards, 
                                         splitByChromosome.shards, splitFile.chunks, [file]])
 
     # if split into chunks, merge shards in chunks, then run VEP on merged chunks
