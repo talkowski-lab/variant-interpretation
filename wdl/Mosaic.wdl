@@ -38,7 +38,8 @@ workflow MosaicManualCheck{
     RuntimeAttr? runtime_attr_concat_depth_plot
     RuntimeAttr? runtime_attr_concat_pesr_plot
 
-    RuntimeAttr? runtime_attr_mosaic
+    RuntimeAttr? runtime_attr_mosaic_potential
+    RuntimeAttr? runtime_attr_mosaic_depth
   }
   scatter (i in range(length(per_batch_clustered_pesr_vcf_list))) {
     call mosaic_pesr_part1.Mosaic as pesr1{
@@ -70,7 +71,8 @@ workflow MosaicManualCheck{
         median_file=median_files[i],
         sv_pipeline_docker=sv_pipeline_docker,
         sv_pipeline_rdtest_docker=sv_pipeline_rdtest_docker,
-        runtime_attr_mosaic=runtime_attr_mosaic
+        runtime_attr_mosaic_depth=runtime_attr_mosaic_depth,
+        runtime_attr_mosaic_potential=runtime_attr_mosaic_potential
     }
   }
   call preRF.make_cohort_VCFs as LookupGen {
