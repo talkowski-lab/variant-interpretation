@@ -13,7 +13,9 @@ workflow scatterVCF {
 
     input {
         File file
+        File split_vcf_hail_script
         String cohort_prefix
+        String vep_hail_docker
         String sv_base_mini_docker
         Boolean split_by_chromosome
         Boolean split_into_shards 
@@ -41,8 +43,9 @@ workflow scatterVCF {
                 call scatterVCF as scatterChromosomes {
                     input:
                         vcf_file=chrom_shard,
+                        split_vcf_hail_script=split_vcf_hail_script,
                         records_per_shard=select_first([records_per_shard]),
-                        sv_base_mini_docker=sv_base_mini_docker,
+                        vep_hail_docker=vep_hail_docker,
                         thread_num_override=thread_num_override,
                         compression_level=compression_level,
                         runtime_attr_override=runtime_attr_split_vcf
@@ -55,8 +58,9 @@ workflow scatterVCF {
             call scatterVCF {
                 input:
                     vcf_file=file,
+                    split_vcf_hail_script=split_vcf_hail_script,
                     records_per_shard=select_first([records_per_shard]),
-                    sv_base_mini_docker=sv_base_mini_docker,
+                    vep_hail_docker=vep_hail_docker,
                     thread_num_override=thread_num_override,
                     compression_level=compression_level,
                     runtime_attr_override=runtime_attr_split_vcf
@@ -167,8 +171,9 @@ task splitByChromosome {
 task scatterVCF {
     input {
         File vcf_file
+        File split_vcf_hail_script
         Int records_per_shard
-        String sv_base_mini_docker
+        String vep_hail_docker
         Int? compression_level
         Int? thread_num_override
         RuntimeAttr? runtime_attr_override
@@ -189,32 +194,23 @@ task scatterVCF {
     }
 
     RuntimeAttr runtime_override = select_first([runtime_attr_override, runtime_default])
-    Int thread_num = select_first([thread_num_override,runtime_override.cpu_cores])
-    String compression_str = if defined(compression_level) then "-Oz~{compression_level}" else "-Oz"
 
+    Float memory = select_first([runtime_override.mem_gb, runtime_default.mem_gb])
+    Int cpu_cores = select_first([runtime_override.cpu_cores, runtime_default.cpu_cores])
+    
     runtime {
-        memory: "~{select_first([runtime_override.mem_gb, runtime_default.mem_gb])} GB"
+        memory: "~{memory} GB"
         disks: "local-disk ~{select_first([runtime_override.disk_gb, runtime_default.disk_gb])} HDD"
-        cpu: select_first([runtime_override.cpu_cores, runtime_default.cpu_cores])
+        cpu: cpu_cores
         preemptible: select_first([runtime_override.preemptible_tries, runtime_default.preemptible_tries])
         maxRetries: select_first([runtime_override.max_retries, runtime_default.max_retries])
-        docker: sv_base_mini_docker
+        docker: vep_hail_docker
         bootDiskSizeGb: select_first([runtime_override.boot_disk_gb, runtime_default.boot_disk_gb])
     }
     
     command <<<
         set -euo pipefail
-        #  in case the file is empty create an empty shard
-        bcftools view -h ~{vcf_file} | bgzip -c > "~{prefix}.0.vcf.gz"
-        bcftools +scatter ~{vcf_file} -o . ~{compression_str} -p "~{prefix}". --threads ~{thread_num} -n ~{records_per_shard}
-
-        ls "~{prefix}".*.vcf.gz | sort -k1,1V > vcfs.list
-        i=0
-        while read VCF; do
-          shard_no=`printf %06d $i`
-          mv "$VCF" "~{prefix}.shard_${shard_no}.vcf.gz"
-          i=$((i+1))
-        done < vcfs.list
+        python3.9 ~{split_vcf_hail_script} ~{vcf_file} ~{records_per_shard} ~{prefix} ~{cpu_cores} ~{memory}
     >>>
     output {
         Array[File] shards = glob("~{prefix}.shard_*.vcf.gz")
