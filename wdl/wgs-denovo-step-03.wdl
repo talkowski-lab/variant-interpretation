@@ -14,10 +14,8 @@ workflow step3 {
         File trio_uri
         File ped_uri
         File merged_preprocessed_vcf_file
-        # File vep_annotated_final_vcf_single
         String hail_docker
         String cohort_prefix
-        # String sv_base_mini_docker
         String trio_denovo_docker
         File uberSplit_v3_py
         Int batch_size
@@ -25,28 +23,13 @@ workflow step3 {
         File subset_ped_python_script
     }
 
-    # String cohort_prefix = basename(merged_preprocessed_vcf_file, '.vcf.gz')
     String stats_file = cohort_prefix + "_stats.txt"
-
-    # call splitTrioVCFs {
-    #     input:
-    #         trio_uri=trio_uri,
-    #         vep_annotated_final_vcf_single=vep_annotated_final_vcf_single,
-    #         vcf_file=merged_preprocessed_vcf_file,
-    #         sv_base_mini_docker=sv_base_mini_docker,
-    #         cohort_prefix=cohort_prefix
-    # }
-
-    # output {
-    #     Array[File] split_trio_vcfs = splitTrioVCFs.split_trio_vcfs
-    # }
 
     if (subset_ped) {
         call subsetPed {
             input:
                 ped_uri=ped_uri,
                 vcf_file=merged_preprocessed_vcf_file,
-                # sv_base_mini_docker=sv_base_mini_docker,
                 trio_denovo_docker=trio_denovo_docker,
                 subset_ped_python_script=subset_ped_python_script
         }
@@ -76,7 +59,6 @@ task subsetPed {
         File ped_uri
         File vcf_file
         File subset_ped_python_script
-        # String sv_base_mini_docker
         String trio_denovo_docker
         RuntimeAttr? runtime_attr_override
     }
@@ -102,7 +84,6 @@ task subsetPed {
         cpu: select_first([runtime_override.cpu_cores, runtime_default.cpu_cores])
         preemptible: select_first([runtime_override.preemptible_tries, runtime_default.preemptible_tries])
         maxRetries: select_first([runtime_override.max_retries, runtime_default.max_retries])
-        # docker: sv_base_mini_docker
         docker: trio_denovo_docker
         bootDiskSizeGb: select_first([runtime_override.boot_disk_gb, runtime_default.boot_disk_gb])
     }
@@ -110,7 +91,6 @@ task subsetPed {
     command <<<
         bcftools query -l ~{vcf_file} > samples.txt
         python3 ~{subset_ped_python_script} samples.txt ~{ped_uri} > stdout
-        # awk 'FNR==NR{values[$1]; next} $2 in values' samples.txt ~{ped_uri} > ~{basename(ped_uri, '.ped')+'_subset.ped'}
     >>>
 
     output {
