@@ -69,9 +69,8 @@ workflow MosaicManualCheck{
         fam_file=fam_file,
         median_file=median_files[i],
         sv_pipeline_docker=sv_pipeline_docker,
-        sv_pipeline_rdtest_docker=sv_pipeline_rdtest_docker,
-        runtime_attr_override=runtime_attr_mosaic
-
+        sv_pipeline_rdtest_docker=sv_pipeline_rdtest_docker
+        #runtime_attr_override=runtime_attr_mosaic
     }
   }
   call preRF.make_cohort_VCFs as LookupGen {
