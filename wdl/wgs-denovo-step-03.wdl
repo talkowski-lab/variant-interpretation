@@ -17,7 +17,6 @@ workflow step3 {
         String hail_docker
         String cohort_prefix
         String trio_denovo_docker
-        File fill_missing_pl_script
         File uberSplit_v3_py
         Int batch_size
         Boolean subset_ped=true
@@ -50,18 +49,8 @@ workflow step3 {
             batch_size=batch_size
     }
 
-    scatter (vcf_file in uberSplit_v3.split_trio_vcfs) {
-        call fillMissingPL {
-            input:
-                fill_missing_pl_script=fill_missing_pl_script,
-                vcf_file=vcf_file,
-                hail_docker=hail_docker,
-                runtime_attr_override=runtime_attr_fill_missing_pl
-        }
-    }
-
     output {
-        Array[File] split_trio_vcfs = fillMissingPL.out_vcf
+        Array[File] split_trio_vcfs = uberSplit_v3.split_trio_vcfs
         File stats_files = uberSplit_v3.stats_file_out
     }
 }
