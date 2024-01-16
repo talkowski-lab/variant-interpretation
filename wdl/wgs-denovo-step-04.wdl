@@ -49,7 +49,7 @@ task trio_denovo {
         sample="${sample//_HP_VAF/}"
         python3 ~{get_sample_pedigree_py} ~{ped_uri} $sample
         # remove variants with missing PL in any sample in the trio
-        bcftools filter -e 'FORMAT/PL=="."' ~{vcf_file} -Oz -o ~{basename(vcf_file, '.vcf') + '.filtered_PL.vcf.gz'}
+        # bcftools filter -e 'FORMAT/PL=="."' ~{vcf_file} -Oz -o ~{basename(vcf_file, '.vcf') + '.filtered_PL.vcf.gz'}
         /src/wgs_denovo/triodenovo/triodenovo-fix/src/triodenovo --ped "$sample".ped \
             --in_vcf ~{basename(vcf_file, '.vcf') + '.filtered_PL.vcf.gz'} \
             --out_vcf ~{basename(vcf_file, '.vcf') + '.denovos.vcf'} \
