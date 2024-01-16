@@ -16,6 +16,9 @@ workflow Mosaic{
     File median_file
     String sv_pipeline_docker
     String sv_pipeline_rdtest_docker
+
+    RuntimeAttr? runtime_attr_mosaic
+
   }
   call GetPotential{
    input:
@@ -25,7 +28,8 @@ workflow Mosaic{
     rare_cutoff=rare_cutoff,
     cutoffs=cutoffs,
     depth_vcf=depth_vcf,
-    sv_pipeline_docker=sv_pipeline_docker
+    sv_pipeline_docker=sv_pipeline_docker,
+    runtime_attr_override=runtime_attr_mosaic
   }
   call RdTest{
    input:
@@ -35,7 +39,8 @@ workflow Mosaic{
     median_file=median_file,
     fam_file=fam_file,
     prefix=name,
-    sv_pipeline_rdtest_docker=sv_pipeline_rdtest_docker
+    sv_pipeline_rdtest_docker=sv_pipeline_rdtest_docker,
+    runtime_attr_override=runtime_attr_mosaic
   }
   output{
     File rare_potential=GetPotential.rare
