@@ -51,7 +51,7 @@ task trio_denovo {
         # remove variants with missing PL in any sample in the trio
         # bcftools filter -e 'FORMAT/PL=="."' ~{vcf_file} -Oz -o ~{basename(vcf_file, '.vcf') + '.filtered_PL.vcf.gz'}
         /src/wgs_denovo/triodenovo/triodenovo-fix/src/triodenovo --ped "$sample".ped \
-            --in_vcf ~{basename(vcf_file, '.vcf') + '.filtered_PL.vcf.gz'} \
+            --in_vcf ~{vcf_file} \
             --out_vcf ~{basename(vcf_file, '.vcf') + '.denovos.vcf'} \
             --minDQ ~{minDQ}
         bgzip ~{basename(vcf_file, '.vcf') + '.denovos.vcf'}
