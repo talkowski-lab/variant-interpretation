@@ -17,7 +17,7 @@ workflow Mosaic{
     String sv_pipeline_docker
     String sv_pipeline_rdtest_docker
 
-    #RuntimeAttr? runtime_attr_mosaic
+    RuntimeAttr? runtime_attr_mosaic
 
   }
   call GetPotential{
