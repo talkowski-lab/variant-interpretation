@@ -21,10 +21,10 @@ df %>%
   separate_rows(samples, sep = ",") -> ctx
 
 ctx_vcf_for_pe <- subset(ctx,
-               select = c(`#chrom`, start, CHR2, END, samples, AC, name))
+               select = c(`#chrom`, start, CHR2, END2, samples, AC, name))
 
 ctx_vcf_for_raw_ovl <- subset(ctx,
-               select = c(`#chrom`, start, end, CHR2, END, samples, AC, name))
+               select = c(`#chrom`, start, end, CHR2, END2, samples, AC, name))
 
 ctx_vcf_for_raw_ovl$`#chrom` <- paste0(ctx_vcf_for_raw_ovl$`#chrom`, "_", ctx_vcf_for_raw_ovl$samples)
 
