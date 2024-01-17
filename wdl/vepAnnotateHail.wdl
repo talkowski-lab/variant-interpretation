@@ -30,7 +30,7 @@ workflow vepAnnotateHail {
         Boolean split_into_shards 
         Int compression_level=3
         Int shards_per_chunk=10  # combine pre-sharded VCFs
-        Int? records_per_shard 
+        Int n_shards=0 
         Int? thread_num_override
         Float? input_disk_scale_merge_chunk
         RuntimeAttr? runtime_attr_merge_vcfs
@@ -70,7 +70,7 @@ workflow vepAnnotateHail {
                     input:
                         vcf_file=chrom_shard,
                         split_vcf_hail_script=split_vcf_hail_script,
-                        records_per_shard=select_first([records_per_shard]),
+                        n_shards=select_first([n_shards]),
                         vep_hail_docker=vep_hail_docker,
                         thread_num_override=thread_num_override,
                         compression_level=compression_level,
@@ -85,7 +85,7 @@ workflow vepAnnotateHail {
                 input:
                     vcf_file=file,
                     split_vcf_hail_script=split_vcf_hail_script,
-                    records_per_shard=select_first([records_per_shard]),
+                    n_shards=select_first([n_shards]),
                     vep_hail_docker=vep_hail_docker,
                     thread_num_override=thread_num_override,
                     compression_level=compression_level,
@@ -304,7 +304,7 @@ task scatterVCF {
     input {
         File vcf_file
         File split_vcf_hail_script
-        Int records_per_shard
+        Int n_shards
         String vep_hail_docker
         Int? compression_level
         Int? thread_num_override
@@ -342,7 +342,11 @@ task scatterVCF {
     
     command <<<
         set -euo pipefail
-        python3.9 ~{split_vcf_hail_script} ~{vcf_file} ~{records_per_shard} ~{prefix} ~{cpu_cores} ~{memory}
+        python3.9 ~{split_vcf_hail_script} ~{vcf_file} ~{n_shards} ~{prefix} ~{cpu_cores} ~{memory}
+        for file in $(ls ~{prefix}.vcf.bgz | grep '.bgz'); do
+            shard_num=$(echo $file | cut -d '-' -f2);
+            mv ~{prefix}.vcf.bgz/$file ~{prefix}.shard_"$shard_num".vcf.bgz
+        done
     >>>
     output {
         Array[File] shards = glob("~{prefix}.shard_*.vcf.bgz")

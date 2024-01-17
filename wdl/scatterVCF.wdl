@@ -20,7 +20,7 @@ workflow scatterVCF {
         Boolean split_by_chromosome
         Boolean split_into_shards 
         Int compression_level=3
-        Int? n_shards  
+        Int n_shards=0  
         Int? thread_num_override
         RuntimeAttr? runtime_attr_split_vcf
     }
