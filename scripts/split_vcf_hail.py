@@ -18,4 +18,4 @@ mt = hl.import_vcf(vcf_file, force_bgz=True, reference_genome='GRCh38')
 header = hl.get_vcf_metadata(vcf_file) 
 
 mt = mt.repartition(n_shards)
-hl.export_vcf(mt, output=prefix+'.vcf.gz', parallel='header_per_shard', metadata=header)
+hl.export_vcf(mt, output=prefix+'.vcf.bgz', parallel='header_per_shard', metadata=header)

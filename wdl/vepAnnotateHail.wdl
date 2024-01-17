@@ -345,8 +345,8 @@ task scatterVCF {
         python3.9 ~{split_vcf_hail_script} ~{vcf_file} ~{records_per_shard} ~{prefix} ~{cpu_cores} ~{memory}
     >>>
     output {
-        Array[File] shards = glob("~{prefix}.shard_*.vcf.gz")
-        Array[String] shards_string = glob("~{prefix}.shard_*.vcf.gz")
+        Array[File] shards = glob("~{prefix}.shard_*.vcf.bgz")
+        Array[String] shards_string = glob("~{prefix}.shard_*.vcf.bgz")
     }
 }
 
@@ -389,8 +389,9 @@ task vepAnnotate {
         docker: vep_hail_docker
         bootDiskSizeGb: select_first([runtime_override.boot_disk_gb, runtime_default.boot_disk_gb])
     }
-        
-    String prefix = basename(vcf_file, ".vcf.gz")
+
+    String filename = basename(vcf_file)
+    String prefix = if (sub(vcf_file, ".gz", "")!=filename) then basename(vcf_file, ".vcf.gz") else basename(vcf_file, ".vcf.bgz")
     String vep_annotated_vcf_name = "~{prefix}.vep.vcf.bgz"
 
     command <<<

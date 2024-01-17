@@ -213,7 +213,7 @@ task scatterVCF {
         python3.9 ~{split_vcf_hail_script} ~{vcf_file} ~{n_shards} ~{prefix} ~{cpu_cores} ~{memory}
     >>>
     output {
-        Array[File] shards = glob("~{prefix}.shard_*.vcf.gz")
-        Array[String] shards_string = glob("~{prefix}.shard_*.vcf.gz")
+        Array[File] shards = glob("~{prefix}.shard_*.vcf.bgz")
+        Array[String] shards_string = glob("~{prefix}.shard_*.vcf.bgz")
     }
 }
