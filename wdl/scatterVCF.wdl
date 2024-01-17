@@ -211,6 +211,10 @@ task scatterVCF {
     command <<<
         set -euo pipefail
         python3.9 ~{split_vcf_hail_script} ~{vcf_file} ~{n_shards} ~{prefix} ~{cpu_cores} ~{memory}
+        for file in $(ls ~{prefix}.vcf.bgz | grep '.bgz'); do
+            shard_num=$(echo $file | cut -d '-' -f2);
+            mv ~{prefix}.vcf.bgz/$file ~{prefix}.shard_"$shard_num".vcf.bgz
+        done
     >>>
     output {
         Array[File] shards = glob("~{prefix}.shard_*.vcf.bgz")
