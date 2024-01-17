@@ -147,16 +147,16 @@ task RdTest {
     /opt/RdTest/localize_bincov.sh rdtest.bed ~{coverage_file}
     awk -v OFS="\t" '{print $1,$2,$3,$4,$6,$5}' rdtest.bed > test.bed
 
+    mkdir plots
     Rscript /opt/RdTest/RdTest.R \
       -b test.bed \
       -n ~{prefix} \
       -c local_coverage.bed.gz \
       -m ~{median_file} \
       -f ~{fam_file} \
+      -o plots
       -p TRUE
-    mkdir plots
-    mv *jpg plots
-    tar -czvf mosaic.tar.gz plots/
+    tar -czf mosaic.tar.gz plots/
   >>>
 
   output {
