@@ -293,7 +293,7 @@ task mergeVCFs {
 
     output {
         File merged_vcf_file = if sort_after_merge then sorted_vcf_name else merged_vcf_name
-        File merged_vcf_idx = merged_vcf_file + ".tbi"
+        File merged_vcf_idx = if sort_after_merge then sorted_vcf_name else merged_vcf_name + ".tbi"
     }
 }
 
