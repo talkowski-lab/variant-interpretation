@@ -239,6 +239,7 @@ task mergeVCFs {
         Array[File] vcf_files
         String sv_base_mini_docker
         String cohort_prefix
+        Boolean sort_after_merge=false
         Float? input_disk_scale
         RuntimeAttr? runtime_attr_override
     }
@@ -281,14 +282,16 @@ task mergeVCFs {
         VCFS="~{write_lines(vcf_files)}"
         cat $VCFS | awk -F '/' '{print $NF"\t"$0}' | sort -k1,1V | awk '{print $2}' > vcfs_sorted.list
         bcftools concat -n --no-version -Oz --file-list vcfs_sorted.list --output ~{merged_vcf_name}
-        mkdir -p tmp
-        bcftools sort ~{merged_vcf_name} -Oz --output ~{sorted_vcf_name} -T tmp/
-        bcftools index -t ~{sorted_vcf_name}
+        if [ "~{sort_after_merge}" = "true" ]; then
+            mkdir -p tmp
+            bcftools sort ~{merged_vcf_name} -Oz --output ~{sorted_vcf_name} -T tmp/
+            bcftools index -t ~{sorted_vcf_name}
+        fi
     >>>
 
     output {
-        File merged_vcf_file=sorted_vcf_name
-        File merged_vcf_idx=sorted_vcf_name + ".tbi"
+        File merged_vcf_file = if sort_after_merge then sorted_vcf_name else merged_vcf_name
+        File merged_vcf_idx = merged_vcf_file + ".tbi"
     }
 }
 
