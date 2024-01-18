@@ -156,6 +156,7 @@ task RdTest {
       -f ~{fam_file} \
       -o plots \
       -p TRUE
+    mv plots/~{prefix}.metrics .
     tar -czf mosaic.tar.gz plots/
   >>>
 
