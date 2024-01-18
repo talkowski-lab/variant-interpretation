@@ -51,7 +51,13 @@ workflow step1 {
                 cohort_prefix=cohort_prefix,
                 vep_hail_docker=vep_hail_docker
         }
-        
+        call saveVCFHeader as saveVCFHeaderChunk {
+            input:
+                vcf_uri=vep_files[0],
+                info_header=info_header,
+                bad_header=bad_header,
+                sv_base_mini_docker=sv_base_mini_docker
+        }
         scatter (chunk_file in splitVEPFiles.chunks) {        
             call mergeVCFs as mergeChunk {
                 input:
@@ -60,13 +66,6 @@ workflow step1 {
                     cohort_prefix=basename(chunk_file),
                     input_disk_scale=input_disk_scale_merge_chunk,
                     runtime_attr_override=runtime_attr_merge_chunk
-            }
-            call saveVCFHeader as saveVCFHeaderChunk {
-                input:
-                    vcf_uri=mergeChunk.merged_vcf_file,
-                    info_header=info_header,
-                    bad_header=bad_header,
-                    sv_base_mini_docker=sv_base_mini_docker
             }
             call preprocessVCF as preprocessVCFChunk {
                 input:
@@ -92,14 +91,14 @@ workflow step1 {
     }
 
     if (!merge_split_vcf) {
+        call saveVCFHeader {
+            input:
+                vcf_uri=vep_files[0],
+                info_header=info_header,
+                bad_header=bad_header,
+                sv_base_mini_docker=sv_base_mini_docker
+        }
         scatter (vcf_uri in vep_files) {
-            call saveVCFHeader {
-                input:
-                    vcf_uri=vcf_uri,
-                    info_header=info_header,
-                    bad_header=bad_header,
-                    sv_base_mini_docker=sv_base_mini_docker
-            }
             call preprocessVCF {
                 input:
                     python_preprocess_script=python_preprocess_script,
