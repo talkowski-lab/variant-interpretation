@@ -154,7 +154,7 @@ task RdTest {
       -c local_coverage.bed.gz \
       -m ~{median_file} \
       -f ~{fam_file} \
-      -o plots
+      -o plots \
       -p TRUE
     tar -czf mosaic.tar.gz plots/
   >>>
