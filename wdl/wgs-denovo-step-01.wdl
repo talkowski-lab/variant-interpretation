@@ -286,7 +286,10 @@ task mergeVCFs {
             mkdir -p tmp
             bcftools sort ~{merged_vcf_name} -Oz --output ~{sorted_vcf_name} -T tmp/
             bcftools index -t ~{sorted_vcf_name}
+        else 
+            bcftools index -t ~{merged_vcf_name}
         fi
+
     >>>
 
     output {
