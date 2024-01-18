@@ -186,11 +186,13 @@ task ConcatPlots {
     set -o pipefail
 
     while read SPLIT; do
-      tar zxvf $SPLIT
-      mv plots/* output_folder/
+      tar zxf $SPLIT
+      # mv plots/* output_folder/
+      # argument list too long for mv
+      find plots/ -type f -exec mv -t output_folder/ {} +
     done < ~{write_lines(shard_plots)} \
 
-    tar zcvf ~{prefix}.plots.tar.gz output_folder/
+    tar zcf ~{prefix}.plots.tar.gz output_folder/
   >>>
 
   output {
