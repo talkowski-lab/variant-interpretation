@@ -170,6 +170,7 @@ def run_PU_bagging_indels(merged_output, numeric_indel, n_splits=5):
     
     results_indel = pd.DataFrame({'label': y_indel, 
                             'VarKey': merged_output.iloc[X_indel.index].VarKey,
+                            'predict_proba_bag': output_bag_indel,
                             'pred_bag': y_pred_bag_indel.astype(int)})
     return results_indel, importances_bag_indel
 

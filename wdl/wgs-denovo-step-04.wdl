@@ -21,18 +21,18 @@ workflow step4 {
         RuntimeAttr? runtime_attr_fill_missing_pl
     }
     scatter (vcf_file in split_trio_vcfs) {
-        call fillMissingPL {
-            input:
-                fill_missing_pl_script=fill_missing_pl_script,
-                vcf_file=vcf_file,
-                hail_docker=hail_docker,
-                runtime_attr_override=runtime_attr_fill_missing_pl
-        }
+        # call fillMissingPL {
+        #     input:
+        #         fill_missing_pl_script=fill_missing_pl_script,
+        #         vcf_file=vcf_file,
+        #         hail_docker=hail_docker,
+        #         runtime_attr_override=runtime_attr_fill_missing_pl
+        # }
 
         call trio_denovo {
             input:
                 ped_uri=ped_uri,
-                vcf_file=fillMissingPL.out_vcf,
+                vcf_file=vcf_file,
                 get_sample_pedigree_py=get_sample_pedigree_py,
                 trio_denovo_docker=trio_denovo_docker,
                 minDQ=minDQ
