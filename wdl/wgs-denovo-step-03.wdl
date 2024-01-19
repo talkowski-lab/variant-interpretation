@@ -21,7 +21,6 @@ workflow step3 {
         Int batch_size
         Boolean subset_ped=true
         File subset_ped_python_script
-        RuntimeAttr? runtime_attr_fill_missing_pl
     }
 
     String stats_file = cohort_prefix + "_stats.txt"
