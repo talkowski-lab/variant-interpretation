@@ -14,7 +14,6 @@ workflow step4 {
         File ped_uri
         Array[File] split_trio_vcfs
         File get_sample_pedigree_py
-        String hail_docker
         String trio_denovo_docker
         Float minDQ
         RuntimeAttr? runtime_attr_fill_missing_pl
