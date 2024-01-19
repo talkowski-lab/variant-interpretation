@@ -177,7 +177,7 @@ task splitByChromosomeRemote {
         
         export GCS_OAUTH_TOKEN=`/google-cloud-sdk/bin/gcloud auth application-default print-access-token`
         for chr in $(cat chr_list.txt); do
-            bcftools view ~{vcf_file} ~{compression_str} -o ~{prefix}."$chr".vcf.gz --threads ~{thread_num} -s $chr &
+            bcftools view ~{vcf_file} ~{compression_str} -o ~{prefix}."$chr".vcf.gz --threads ~{thread_num} -r $chr &
         done
 
         # get number of records in each chr
