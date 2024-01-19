@@ -53,9 +53,9 @@ workflow scatterVCF {
         }
     }
     if (split_into_shards) {
-        # if already split into chromosomes, shard further
-        if (split_by_chromosome) {
-            scatter (chrom_shard in select_first([splitByChromosome.shards])) {
+    # if already split into chromosomes, shard further
+        if (defined(select_first([splitByChromosome.shards, splitByChromosomeRemote.shards]))) {
+            scatter (chrom_shard in select_first([splitByChromosome.shards, splitByChromosomeRemote.shards])) {
                 File chrom_shard_basename = basename(chrom_shard)
                 Int chrom_n_variants = select_first([select_first([splitByChromosomeRemote.contig_lengths])[chrom_shard_basename], 0])
                 Int no_localize_n_shards = ceil(chrom_n_variants / select_first([records_per_shard]))
@@ -72,8 +72,8 @@ workflow scatterVCF {
             }
             Array[File] chromosome_shards = flatten(scatterChromosomes.shards)
         }
-
-        if (!split_by_chromosome) {
+        
+        if (!defined(select_first([splitByChromosome.shards, splitByChromosomeRemote.shards]))) {
             call scatterVCF {
                 input:
                     vcf_uri=file,
@@ -85,6 +85,7 @@ workflow scatterVCF {
             }
         }
     }
+    
     
     output {
     Array[File] vcf_shards = select_first([scatterVCF.shards, chromosome_shards, 
@@ -173,7 +174,8 @@ task splitByChromosomeRemote {
     command <<<
         chr_string="chr1,chr2,chr3,chr4,chr5,chr6,chr7,chr8,chr9,chr10,chr11,chr12,chr13,chr14,chr15,chr16,chr17,chr18,chr19,chr20,chr21,chr22,chrX,chrY"
         echo $chr_string | tr ',' '\n' > chr_list.txt
-
+        
+        source ~/.bashrc
         export GCS_OAUTH_TOKEN=`gcloud auth application-default print-access-token`
         for chr in $(cat chr_list.txt); do
             bcftools view ~{vcf_file} ~{compression_str} -o ~{prefix}."$chr".vcf.gz --threads ~{thread_num} -s $chr &
