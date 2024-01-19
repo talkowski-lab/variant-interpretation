@@ -175,8 +175,7 @@ task splitByChromosomeRemote {
         chr_string="chr1,chr2,chr3,chr4,chr5,chr6,chr7,chr8,chr9,chr10,chr11,chr12,chr13,chr14,chr15,chr16,chr17,chr18,chr19,chr20,chr21,chr22,chrX,chrY"
         echo $chr_string | tr ',' '\n' > chr_list.txt
         
-        source ~/.bashrc
-        export GCS_OAUTH_TOKEN=`gcloud auth application-default print-access-token`
+        export GCS_OAUTH_TOKEN=`/google-cloud-sdk/bin/gcloud auth application-default print-access-token`
         for chr in $(cat chr_list.txt); do
             bcftools view ~{vcf_file} ~{compression_str} -o ~{prefix}."$chr".vcf.gz --threads ~{thread_num} -s $chr &
         done
