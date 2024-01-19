@@ -188,7 +188,7 @@ task getChromosomeSizes {
     >>>
 
     output {
-        Map[String, Int] contig_lengths = read_lines('contig_lengths.txt')
+        Map[String, Int] contig_lengths = read_map('contig_lengths.txt')
     }
 }
 
