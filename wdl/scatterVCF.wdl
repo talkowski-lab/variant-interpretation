@@ -173,6 +173,7 @@ task splitByChromosomeRemote {
         
         export GCS_OAUTH_TOKEN=`/google-cloud-sdk/bin/gcloud auth application-default print-access-token`
         for chr in $(cat chr_list.txt); do
+            echo $chr;
             bcftools view ~{compression_str} -o ~{prefix}."$chr".vcf.gz --threads ~{thread_num} -r $chr ~{vcf_file};
         done
 
