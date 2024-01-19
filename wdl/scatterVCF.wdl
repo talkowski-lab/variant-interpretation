@@ -21,8 +21,6 @@ workflow scatterVCF {
         Boolean localize_vcf
         Boolean split_by_chromosome
         Boolean split_into_shards 
-        Int compression_level=3
-        Int? thread_num_override
         Int? n_shards  
         Int? records_per_shard
         RuntimeAttr? runtime_attr_split_by_chr
