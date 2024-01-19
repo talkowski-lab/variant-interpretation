@@ -242,7 +242,7 @@ task mergeVCFs {
         Array[File] vcf_files
         String sv_base_mini_docker
         String cohort_prefix
-        Boolean sort_after_merge=false
+        Boolean sort_after_merge
         Float? input_disk_scale
         RuntimeAttr? runtime_attr_override
     }
