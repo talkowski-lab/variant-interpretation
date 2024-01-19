@@ -63,8 +63,8 @@ workflow scatterVCF {
                 }
             }
             File splitChromosomeShards = select_first([splitByChromosome.shards, splitByChromosomeRemote.shards])
-            Int splitChromosomeContigLengths = select_first([splitByChromosome.contig_lengths, splitByChromosomeRemote.contig_lengths])
-            Pair[File, Int] split_chromosomes = (splitChromosomeShards, splitChromosomeContigLengths)
+            Float splitChromosomeContigLengths = select_first([splitByChromosome.contig_lengths, splitByChromosomeRemote.contig_lengths])
+            Pair[File, Float] split_chromosomes = (splitChromosomeShards, splitChromosomeContigLengths)
         }
     }
 
@@ -73,7 +73,7 @@ workflow scatterVCF {
         if (defined(split_chromosomes)) {
             scatter (chrom_pair in select_first([split_chromosomes])) {
                 File chrom_shard = select_first([chrom_pair.left])
-                Int chrom_n_records = select_first([chrom_pair.right])
+                Float chrom_n_records = select_first([chrom_pair.right])
                 Int no_localize_n_shards = ceil(chrom_n_records / select_first([records_per_shard, 0]))
                 call scatterVCF as scatterChromosomes {
                     input:
@@ -188,7 +188,7 @@ task getChromosomeSizes {
     >>>
 
     output {
-        Map[String, Int] contig_lengths = read_map('contig_lengths.txt')
+        Map[String, Float] contig_lengths = read_map('contig_lengths.txt')
     }
 }
 
@@ -197,7 +197,7 @@ task splitByChromosomeRemote {
         String vcf_file
         String chromosome
         String sv_base_mini_docker
-        Int chrom_length
+        Float chrom_length
         Boolean has_index
         RuntimeAttr? runtime_attr_override
     }
@@ -240,7 +240,7 @@ task splitByChromosomeRemote {
 
     output {
         File shards = "~{prefix}.~{chromosome}.vcf.gz"
-        Int contig_lengths = read_lines('contig_length.txt')[0]
+        Float contig_lengths = read_lines('contig_length.txt')[0]
     }
 }
 
@@ -288,7 +288,7 @@ task splitByChromosome {
 
     output {
         File shards = "~{prefix}.~{chromosome}.vcf.gz"
-        Int contig_lengths = read_lines('contig_length.txt')[0]
+        Float contig_lengths = read_lines('contig_length.txt')[0]
     }
 }
 
