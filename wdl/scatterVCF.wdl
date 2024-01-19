@@ -55,7 +55,7 @@ workflow scatterVCF {
     }
     if (split_into_shards) {
         # if already split into chromosomes, shard further
-        if (defined(splitByChromosome.shards)) {
+        if (split_by_chromosome) {
             scatter (chrom_shard in select_first([splitByChromosome.shards])) {
                 File chrom_shard_basename = basename(chrom_shard)
                 Int chrom_n_variants = select_first([select_first([splitByChromosomeRemote.contig_lengths])[chrom_shard_basename], 0])
@@ -74,7 +74,7 @@ workflow scatterVCF {
             Array[File] chromosome_shards = flatten(scatterChromosomes.shards)
         }
 
-        if (!defined(splitByChromosome.shards)) {
+        if (!split_by_chromosome) {
             call scatterVCF {
                 input:
                     vcf_uri=file,
@@ -142,7 +142,7 @@ task splitByChromosomeRemote {
         String sv_base_mini_docker
         Int? thread_num_override
         Int? compression_level
-        RuntimeAttr runtime_attr_override
+        RuntimeAttr? runtime_attr_override
     }
     Float base_disk_gb = 10.0
     Float input_disk_scale = 5.0
@@ -150,6 +150,7 @@ task splitByChromosomeRemote {
 
     RuntimeAttr runtime_default = object {
         mem_gb: 4,
+        disk_gb: select_first([runtime_attr_override]).disk_gb,
         cpu_cores: 1,
         preemptible_tries: 3,
         max_retries: 1,
@@ -157,7 +158,7 @@ task splitByChromosomeRemote {
     }
 
     RuntimeAttr runtime_override = select_first([runtime_attr_override, runtime_default])
-    Int thread_num = select_first([thread_num_override,runtime_override.cpu_cores])
+    Int thread_num = select_first([thread_num_override, runtime_override.cpu_cores])
     String compression_str = if defined(compression_level) then "-Oz~{compression_level}" else "-Oz"
 
     runtime {
