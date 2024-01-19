@@ -58,12 +58,12 @@ workflow scatterVCF {
             scatter (chrom_shard in select_first([splitByChromosome.shards, splitByChromosomeRemote.shards])) {
                 String chrom_shard_basename = basename(chrom_shard)
                 Int chrom_n_variants = select_first([select_first([splitByChromosomeRemote.contig_lengths])[chrom_shard_basename], 0])
-                Int no_localize_n_shards = ceil(chrom_n_variants / select_first([records_per_shard]))
+                Int no_localize_n_shards = ceil(chrom_n_variants / select_first([records_per_shard, 0]))
                 call scatterVCF as scatterChromosomes {
                     input:
                         vcf_uri=chrom_shard,
                         split_vcf_hail_script=split_vcf_hail_script,
-                        n_shards=select_first([no_localize_n_shards,n_shards]),
+                        n_shards=select_first([no_localize_n_shards, n_shards]),
                         vep_hail_docker=vep_hail_docker,
                         localize_vcf=localize_vcf,
                         chrom_filesizes=select_first([splitByChromosomeRemote.chrom_filesizes]),
