@@ -182,7 +182,7 @@ task splitByChromosomeRemote {
     >>>
 
     output {
-        File shards = "~{prefix}.chr*.vcf.gz"
+        File shards = "~{prefix}.~{chromosome}.vcf.gz"
         Int contig_lengths = read_lines('contig_length.txt')[0]
     }
 }
@@ -221,6 +221,8 @@ task splitByChromosome {
     }
 
     command <<<
+        tabix ~{vcf_file}
+        
         tabix -h -D ~{vcf_file} ~{chromosome} | bgzip -c > ~{prefix}."~{chromosome}".vcf.gz
         
         # get number of records in chr
@@ -228,7 +230,7 @@ task splitByChromosome {
     >>>
 
     output {
-        File shards = "~{prefix}.chr*.vcf.gz"
+        File shards = "~{prefix}.~{chromosome}.vcf.gz"
         Int contig_lengths = read_lines('contig_length.txt')[0]
     }
 }
