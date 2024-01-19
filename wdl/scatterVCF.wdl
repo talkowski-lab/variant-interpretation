@@ -63,7 +63,7 @@ workflow scatterVCF {
                     input:
                         vcf_uri=chrom_shard,
                         split_vcf_hail_script=split_vcf_hail_script,
-                        n_shards=select_first([n_shards, no_localize_n_shards]),
+                        n_shards=select_first([no_localize_n_shards,n_shards]),
                         vep_hail_docker=vep_hail_docker,
                         localize_vcf=localize_vcf,
                         chrom_filesizes=select_first([splitByChromosomeRemote.chrom_filesizes]),
