@@ -21,9 +21,9 @@ workflow scatterVCF {
         Boolean split_by_chromosome
         Boolean split_into_shards 
         Int compression_level=3
+        Int? thread_num_override
         Int? n_shards  
         Int? records_per_shard
-        Int? thread_num_override
         RuntimeAttr? runtime_attr_split_by_chr
         RuntimeAttr? runtime_attr_split_into_shards
     }
@@ -157,7 +157,7 @@ task splitByChromosomeRemote {
     }
 
     RuntimeAttr runtime_override = select_first([runtime_attr_override, runtime_default])
-    Int thread_num = select_first([thread_num_override, runtime_override.cpu_cores])
+    Int thread_num = select_first([thread_num_override, runtime_override.cpu_cores, runtime_default.cpu_cores])
     String compression_str = if defined(compression_level) then "-Oz~{compression_level}" else "-Oz"
 
     runtime {
