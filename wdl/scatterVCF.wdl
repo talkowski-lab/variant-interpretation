@@ -185,7 +185,7 @@ task splitByChromosomeRemote {
         awk -v OFS='\t' '$1="~{prefix}."$1".vcf.gz"' contig_lengths.txt > contig_lengths_with_filenames.txt
 
         # get chr file sizes in GB
-        ls -s --block-size=kB | grep vcf.gz | awk '{print $2"\t"$1}' > chr_file_sizes_tmp.txt
+        ls -s --block-size=kB | grep 'vcf.gz$' | awk '{print $2"\t"$1}' > chr_file_sizes_tmp.txt
         cat chr_file_sizes_tmp.txt | cut -f1 > filenames.txt
         awk -v OFMT='%.10f' '{$2=$2/(1024^2); print $2;}' chr_file_sizes_tmp.txt > chr_file_sizes_gb.txt
         paste -d '\t' filenames.txt chr_file_sizes_gb.txt > chr_file_sizes.txt
