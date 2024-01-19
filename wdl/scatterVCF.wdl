@@ -294,6 +294,7 @@ task scatterVCF {
     command <<<
         set -euo pipefail
         if [[ "~{localize_vcf}" == "false" ]]; then
+            export GCS_OAUTH_TOKEN=$(gcloud auth application-default print-access-token)
             curl -sSL https://broad.io/install-gcs-connector | python3.9
         fi;
         python3.9 ~{split_vcf_hail_script} ~{select_first([vcf_file, vcf_uri])} ~{n_shards} ~{prefix} ~{cpu_cores} ~{memory}
