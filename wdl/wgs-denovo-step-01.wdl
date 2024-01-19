@@ -23,6 +23,7 @@ workflow step1 {
         String bucket_id
         String cohort_prefix
         Int shards_per_chunk=10
+        Boolean sort_after_merge=false
         Boolean merge_split_vcf=false
         Boolean bad_header=false
         Float? input_disk_scale_merge_chunk
@@ -64,6 +65,7 @@ workflow step1 {
                     vcf_files=read_lines(chunk_file),
                     sv_base_mini_docker=sv_base_mini_docker,
                     cohort_prefix=basename(chunk_file),
+                    sort_after_merge=sort_after_merge,
                     input_disk_scale=input_disk_scale_merge_chunk,
                     runtime_attr_override=runtime_attr_merge_chunk
             }
@@ -85,7 +87,7 @@ workflow step1 {
                 vcf_files=preprocessVCFChunk.preprocessed_vcf,
                 sv_base_mini_docker=sv_base_mini_docker,
                 cohort_prefix=cohort_prefix,
-                sort_after_merge=true,
+                sort_after_merge=sort_after_merge,
                 input_disk_scale=input_disk_scale_merge_chunks,
                 runtime_attr_override=runtime_attr_merge_chunks
         }
@@ -118,6 +120,7 @@ workflow step1 {
                 vcf_files=preprocessVCF.preprocessed_vcf,
                 sv_base_mini_docker=sv_base_mini_docker,
                 cohort_prefix=cohort_prefix,
+                sort_after_merge=sort_after_merge,
                 input_disk_scale=input_disk_scale_merge_unchunked,
                 runtime_attr_override=runtime_attr_merge_unchunked
         }
