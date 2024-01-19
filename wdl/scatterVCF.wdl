@@ -40,7 +40,6 @@ workflow scatterVCF {
                     runtime_attr_override=runtime_attr_split_by_chr
             }
         }
-
         if (!localize_vcf) {
             String vcf_uri = file
             call splitByChromosomeRemote {
@@ -49,13 +48,13 @@ workflow scatterVCF {
                     sv_base_mini_docker=sv_base_mini_docker,
                     thread_num_override=thread_num_override,
                     compression_level=compression_level,
-                    runtime_attr_override=select_first([runtime_attr_split_by_chr])
+                    runtime_attr_override=runtime_attr_split_by_chr
             }
         }
     }
     if (split_into_shards) {
         # if already split into chromosomes, shard further
-        if (split_by_chromosome) {
+        if (defined(splitByChromosome.shards)) {
             scatter (chrom_shard in select_first([splitByChromosome.shards])) {
                 File chrom_shard_basename = basename(chrom_shard)
                 Int chrom_n_variants = select_first([select_first([splitByChromosomeRemote.contig_lengths])[chrom_shard_basename], 0])
@@ -74,7 +73,7 @@ workflow scatterVCF {
             Array[File] chromosome_shards = flatten(scatterChromosomes.shards)
         }
 
-        if (!split_by_chromosome) {
+        if (!defined(splitByChromosome.shards)) {
             call scatterVCF {
                 input:
                     vcf_uri=file,
