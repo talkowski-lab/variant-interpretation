@@ -54,7 +54,7 @@ workflow scatterVCF {
     }
     if (split_into_shards) {
         # if already split into chromosomes, shard further
-        if (defined(splitByChromosome.shards)) {
+        if (split_by_chromosome) {
             scatter (chrom_shard in select_first([splitByChromosome.shards])) {
                 File chrom_shard_basename = basename(chrom_shard)
                 Int chrom_n_variants = select_first([select_first([splitByChromosomeRemote.contig_lengths])[chrom_shard_basename], 0])
@@ -73,7 +73,7 @@ workflow scatterVCF {
             Array[File] chromosome_shards = flatten(scatterChromosomes.shards)
         }
 
-        if (!defined(splitByChromosome.shards)) {
+        if (!split_by_chromosome) {
             call scatterVCF {
                 input:
                     vcf_uri=file,
