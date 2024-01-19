@@ -161,7 +161,7 @@ task getChromosomeSizes {
 
     RuntimeAttr runtime_default = object {
         mem_gb: 4,
-        disk_gb: base_disk_gb,
+        disk_gb: ceil(base_disk_gb),
         cpu_cores: 1,
         preemptible_tries: 3,
         max_retries: 1,
