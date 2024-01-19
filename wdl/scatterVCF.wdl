@@ -56,7 +56,7 @@ workflow scatterVCF {
     # if already split into chromosomes, shard further
         if (defined(select_first([splitByChromosome.shards, splitByChromosomeRemote.shards]))) {
             scatter (chrom_shard in select_first([splitByChromosome.shards, splitByChromosomeRemote.shards])) {
-                File chrom_shard_basename = basename(chrom_shard)
+                String chrom_shard_basename = basename(chrom_shard)
                 Int chrom_n_variants = select_first([select_first([splitByChromosomeRemote.contig_lengths])[chrom_shard_basename], 0])
                 Int no_localize_n_shards = ceil(chrom_n_variants / select_first([records_per_shard]))
                 call scatterVCF as scatterChromosomes {
@@ -177,7 +177,7 @@ task splitByChromosomeRemote {
         
         export GCS_OAUTH_TOKEN=`/google-cloud-sdk/bin/gcloud auth application-default print-access-token`
         for chr in $(cat chr_list.txt); do
-            bcftools view ~{vcf_file} ~{compression_str} -o ~{prefix}."$chr".vcf.gz --threads ~{thread_num} -r $chr &
+            bcftools view ~{compression_str} -o ~{prefix}."$chr".vcf.gz --threads ~{thread_num} -r $chr ~{vcf_file} &
         done
 
         # get number of records in each chr
@@ -193,7 +193,7 @@ task splitByChromosomeRemote {
 
     output {
         Array[File] shards = glob("~{prefix}.chr*.vcf.gz")
-        Array[String] shards_string = glob("~{prefix}.chr*.vcf.gz")
+        # Array[String] shards_string = glob("~{prefix}.chr*.vcf.gz")
         Map[String, String] chrom_filesizes = read_map('chr_file_sizes.txt')
         Map[String, String] contig_lengths = read_map('contig_lengths_with_filenames.txt')
     }
