@@ -16,7 +16,6 @@ workflow step4 {
         File get_sample_pedigree_py
         String trio_denovo_docker
         Float minDQ
-        RuntimeAttr? runtime_attr_fill_missing_pl
     }
     scatter (vcf_file in split_trio_vcfs) {
         call trio_denovo {
