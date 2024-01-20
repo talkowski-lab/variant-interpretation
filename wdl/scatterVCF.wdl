@@ -141,6 +141,7 @@ task splitFile {
     }
 
     command <<<
+        set -euo pipefail
         split -l ~{shards_per_chunk} ~{file} -a 4 -d "~{cohort_prefix}.shard."
     >>>
 
@@ -181,6 +182,7 @@ task getChromosomeSizes {
         bootDiskSizeGb: select_first([runtime_override.boot_disk_gb, runtime_default.boot_disk_gb])
     }
     command <<<        
+        set -euo pipefail
         if [[ "~{has_index}" == "false" ]]; then
             tabix ~{vcf_file}
         fi;
@@ -232,6 +234,7 @@ task splitByChromosomeRemote {
     }
 
     command <<<        
+        set -euo pipefail
         if [[ "~{has_index}" == "false" ]]; then
             tabix ~{vcf_file}
         fi;
@@ -282,6 +285,7 @@ task splitByChromosome {
     }
 
     command <<<
+        set -euo pipefail
         tabix ~{vcf_file}
         
         tabix -h -D ~{vcf_file} ~{chromosome} | bgzip -c > ~{prefix}."~{chromosome}".vcf.gz
