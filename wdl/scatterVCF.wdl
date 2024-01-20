@@ -239,7 +239,7 @@ task splitByChromosomeRemote {
             tabix ~{vcf_file}
         fi;
         export GCS_OAUTH_TOKEN=`/google-cloud-sdk/bin/gcloud auth application-default print-access-token`
-        tabix -h -D ~{vcf_file} ~{chromosome} | bgzip -c > ~{prefix}."~{chromosome}".vcf.gz
+        tabix --verbosity 9 -h -D ~{vcf_file} ~{chromosome} | bgzip -c > ~{prefix}."~{chromosome}".vcf.gz
         
         # get number of records in chr
         bcftools index -s ~{vcf_file} | cut -f1,3 | grep -w ~{chromosome} | awk '{ print $2 }' > contig_length.txt
@@ -288,7 +288,7 @@ task splitByChromosome {
         set -euo pipefail
         tabix ~{vcf_file}
         
-        tabix -h -D ~{vcf_file} ~{chromosome} | bgzip -c > ~{prefix}."~{chromosome}".vcf.gz
+        tabix --verbosity 9 -h -D ~{vcf_file} ~{chromosome} | bgzip -c > ~{prefix}."~{chromosome}".vcf.gz
         
         # get number of records in chr
         bcftools index -s ~{vcf_file} | cut -f1,3 | grep -w ~{chromosome} | awk '{ print $2 }' > contig_length.txt
