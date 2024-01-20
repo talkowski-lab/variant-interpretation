@@ -236,7 +236,7 @@ task splitByChromosomeRemote {
     command <<<        
         set -euo pipefail
         if [[ "~{has_index}" == "false" ]]; then
-            tabix ~{vcf_file}
+            tabix --verbosity 9 ~{vcf_file}
         fi;
         export GCS_OAUTH_TOKEN=`/google-cloud-sdk/bin/gcloud auth application-default print-access-token`
         tabix --verbosity 9 -h -D ~{vcf_file} ~{chromosome} | bgzip -c > ~{prefix}."~{chromosome}".vcf.gz
@@ -286,7 +286,7 @@ task splitByChromosome {
 
     command <<<
         set -euo pipefail
-        tabix ~{vcf_file}
+        tabix --verbosity 9 ~{vcf_file}
         
         tabix --verbosity 9 -h -D ~{vcf_file} ~{chromosome} | bgzip -c > ~{prefix}."~{chromosome}".vcf.gz
         
