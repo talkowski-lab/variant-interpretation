@@ -205,7 +205,7 @@ task splitByChromosomeRemote {
         Boolean has_index
         RuntimeAttr? runtime_attr_override
     }
-    Float input_size = chrom_length * (n_samples*0.1) / 1000000  # assume ~1 million records == 1 GB for 375 samples, and sample scale is 0.1
+    Float input_size = chrom_length * (n_samples*0.01) / 1000000  # assume ~1 million records == 1 GB for 375 samples, and sample scale is 0.01
     Float base_disk_gb = 10.0
     Float input_disk_scale = 5.0
     String prefix = basename(vcf_file, ".vcf.gz")
