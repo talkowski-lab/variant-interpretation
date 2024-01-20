@@ -57,6 +57,7 @@ workflow scatterVCF {
                         vcf_file=vcf_uri,
                         chromosome=chromosome,
                         chrom_length=select_first([getChromosomeSizes.contig_lengths])[chromosome],
+                        n_samples=select_first([getChromosomeSizes.n_samples]),
                         has_index=has_index,
                         sv_base_mini_docker=sv_base_mini_docker,
                         runtime_attr_override=runtime_attr_split_by_chr
@@ -185,9 +186,11 @@ task getChromosomeSizes {
         fi;
         export GCS_OAUTH_TOKEN=`/google-cloud-sdk/bin/gcloud auth application-default print-access-token`
         bcftools index -s ~{vcf_file} | cut -f1,3 > contig_lengths.txt
+        bcftools query -l ~{vcf_file} | wc -l > n_samples.txt
     >>>
 
     output {
+        Float n_samples = read_lines('n_samples.txt')[0]
         Map[String, Float] contig_lengths = read_map('contig_lengths.txt')
     }
 }
@@ -198,10 +201,11 @@ task splitByChromosomeRemote {
         String chromosome
         String sv_base_mini_docker
         Float chrom_length
+        Float n_samples
         Boolean has_index
         RuntimeAttr? runtime_attr_override
     }
-    Float input_size = chrom_length / 1000000  # assume ~1 million records == 1 GB
+    Float input_size = chrom_length * (n_samples*0.1) / 1000000  # assume ~1 million records == 1 GB for 375 samples, and sample scale is 0.1
     Float base_disk_gb = 10.0
     Float input_disk_scale = 5.0
     String prefix = basename(vcf_file, ".vcf.gz")
