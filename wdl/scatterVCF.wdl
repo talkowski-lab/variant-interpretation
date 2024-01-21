@@ -142,7 +142,7 @@ task splitFile {
 
     command <<<
         set -euo pipefail
-        split -l ~{shards_per_chunk} ~{file} -a 4 -d "~{cohort_prefix}.shard."
+        split -l ~{shards_per_chunk} ~{file} -a 4 "~{cohort_prefix}.shard."
     >>>
 
     output {
@@ -239,7 +239,7 @@ task splitByChromosomeRemote {
             tabix --verbosity 9 ~{vcf_file}
         fi;
         export GCS_OAUTH_TOKEN=`/google-cloud-sdk/bin/gcloud auth application-default print-access-token`
-        tabix --verbosity 9 -h -D ~{vcf_file} ~{chromosome} | bgzip -c > ~{prefix}."~{chromosome}".vcf.gz
+        tabix --verbosity 9 -h ~{vcf_file} ~{chromosome} | bgzip -c > ~{prefix}."~{chromosome}".vcf.gz
         
         # get number of records in chr
         bcftools index -s ~{vcf_file} | cut -f1,3 | grep -w ~{chromosome} | awk '{ print $2 }' > contig_length.txt
@@ -288,7 +288,7 @@ task splitByChromosome {
         set -euo pipefail
         tabix --verbosity 9 ~{vcf_file}
         
-        tabix --verbosity 9 -h -D ~{vcf_file} ~{chromosome} | bgzip -c > ~{prefix}."~{chromosome}".vcf.gz
+        tabix --verbosity 9 -h ~{vcf_file} ~{chromosome} | bgzip -c > ~{prefix}."~{chromosome}".vcf.gz
         
         # get number of records in chr
         bcftools index -s ~{vcf_file} | cut -f1,3 | grep -w ~{chromosome} | awk '{ print $2 }' > contig_length.txt
@@ -343,7 +343,7 @@ task scatterVCF {
 
         python3.9 ~{split_vcf_hail_script} ~{vcf_file} ~{n_shards} ~{prefix} ~{cpu_cores} ~{memory}
         for file in $(ls ~{prefix}.vcf.bgz | grep '.bgz'); do
-            shard_num=$(echo $file | cut -d '-' -f2);
+            shard_num=$(echo $file | cut '-' -f2);
             mv ~{prefix}.vcf.bgz/$file ~{prefix}.shard_"$shard_num".vcf.bgz
         done
     >>>
