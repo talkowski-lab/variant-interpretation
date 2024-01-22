@@ -18,8 +18,8 @@ workflow runSomalier {
         File ped_uri
         File bed_file
         File ancestry_labels_1kg
-        File correct_somalier_ped_python_script
         File somalier_1kg_tar
+        String correct_somalier_ped_python_script
         String cohort_prefix
         String somalier_docker
         String sv_base_mini_docker
@@ -256,8 +256,8 @@ task mergeVCFs {
 task correctPedigree {
     input {
         File ped_uri
-        File correct_somalier_ped_python_script
         File out_samples
+        String correct_somalier_ped_python_script
         String cohort_prefix
         String hail_docker
         Boolean subset_ped=true
@@ -286,7 +286,8 @@ task correctPedigree {
     }
 
     command {
-        python3 ~{correct_somalier_ped_python_script} ~{out_samples} ~{ped_uri} ~{cohort_prefix} ~{subset_ped} > stdout
+        curl correct_somalier_ped_python_script > correct_somalier_ped_python_script.py
+        python3 correct_somalier_ped_python_script.py ~{out_samples} ~{ped_uri} ~{cohort_prefix} ~{subset_ped} > stdout
     }
 
     output {
