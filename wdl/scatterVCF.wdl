@@ -238,11 +238,13 @@ task splitByChromosomeRemote {
         if [[ "~{has_index}" == "false" ]]; then
             tabix --verbosity 9 ~{vcf_file}
         fi;
-        export GCS_OAUTH_TOKEN=`/google-cloud-sdk/bin/gcloud auth application-default print-access-token`
-        tabix --verbosity 9 -h ~{vcf_file} ~{chromosome} | bgzip -c > ~{prefix}."~{chromosome}".vcf.gz
+        # export GCS_OAUTH_TOKEN=`/google-cloud-sdk/bin/gcloud auth application-default print-access-token`
+        mkfifo /tmp/token_fifo
+        ( while true ; do curl -H "Metadata-Flavor: Google" http://metadata.google.internal/computeMetadata/v1/instance/service-accounts/default/token > /tmp/token_fifo ; done ) &
+        HTS_AUTH_LOCATION=/tmp/token_fifo tabix --verbosity 9 -h ~{vcf_file} ~{chromosome} | bgzip -c > ~{prefix}."~{chromosome}".vcf.gz
         
         # get number of records in chr
-        bcftools index -s ~{vcf_file} | cut -f1,3 | grep -w ~{chromosome} | awk '{ print $2 }' > contig_length.txt
+        HTS_AUTH_LOCATION=/tmp/token_fifo bcftools index -s ~{vcf_file} | cut -f1,3 | grep -w ~{chromosome} | awk '{ print $2 }' > contig_length.txt
     >>>
 
     output {
