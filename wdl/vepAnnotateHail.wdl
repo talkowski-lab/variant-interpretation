@@ -31,6 +31,7 @@ workflow vepAnnotateHail {
         Int compression_level=3
         Int shards_per_chunk=10  # combine pre-sharded VCFs
         Int n_shards=0 
+        Array[File]? vcf_shards  # if scatter-vcf run before VEP
         Int? thread_num_override
         Float? input_disk_scale_merge_chunk
         RuntimeAttr? runtime_attr_merge_vcfs
@@ -94,12 +95,12 @@ workflow vepAnnotateHail {
         }
     }
     
-    Array[File] vcf_shards = select_first([scatterVCF.shards, chromosome_shards, 
-                                        splitByChromosome.shards, splitFile.chunks, [file]])
+    Array[File] vcf_shards_ = select_first([scatterVCF.shards, chromosome_shards, 
+                                        splitByChromosome.shards, splitFile.chunks, vcf_shards, [file]])
 
     # if split into chunks, merge shards in chunks, then run VEP on merged chunks
     if (defined(merge_shards)) {
-        scatter (chunk_file in vcf_shards) {
+        scatter (chunk_file in vcf_shards_) {
             call mergeVCFs {
                 input:
                     vcf_files=read_lines(chunk_file),
@@ -126,7 +127,7 @@ workflow vepAnnotateHail {
     }
        
     if (!defined(merge_shards)) {
-        scatter (vcf_shard in vcf_shards) {
+        scatter (vcf_shard in vcf_shards_) {
             call vepAnnotate {
                 input:
                     vcf_file=vcf_shard,
