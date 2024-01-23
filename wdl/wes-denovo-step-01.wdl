@@ -94,9 +94,9 @@ task hailAnnotate {
     }
 
     output {
-        File annot_mt = "~{bucket_id}/hail/~{cohort_prefix}_wes_denovo_annot.mt"
+        String annot_mt = "~{bucket_id}/hail/~{cohort_prefix}_wes_denovo_annot.mt"
         File sample_qc_info = "~{cohort_prefix}_wes_post_annot_sample_QC_info.txt"
-        File pca_score_table_5k = "~{bucket_id}/hail/~{cohort_prefix}_wes_pca_score_table_5k.ht"
-        File pca_loading_table_5k = "~{bucket_id}/hail/~{cohort_prefix}_wes_pca_loading_table_5k.ht"
+        String pca_score_table_5k = "~{bucket_id}/hail/~{cohort_prefix}_wes_pca_score_table_5k.ht"
+        String pca_loading_table_5k = "~{bucket_id}/hail/~{cohort_prefix}_wes_pca_loading_table_5k.ht"
     }
 }
