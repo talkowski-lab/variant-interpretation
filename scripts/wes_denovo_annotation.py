@@ -48,7 +48,7 @@ mpc_chr22 = mpc_chr22.annotate(MPC = hl.float64(mpc_chr22.MPC))
 
 merged_mpc = mpc.select(mpc.MPC).union(mpc_chr22.select(mpc_chr22.MPC))
 
-mt = mt.annotate(MPC=merged_mpc[mt.locus, mt.alleles].MPC)
+mt = mt.annotate_rows(MPC=merged_mpc[mt.locus, mt.alleles].MPC)
 
 ## pAB annotations
 
