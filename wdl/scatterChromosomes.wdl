@@ -52,7 +52,7 @@ workflow scatterVCF {
 task scatterVCF {
     input {
         File vcf_file
-        File split_vcf_hail_script
+        String split_vcf_hail_script
         Int n_shards
         String vep_hail_docker
         RuntimeAttr? runtime_attr_override
