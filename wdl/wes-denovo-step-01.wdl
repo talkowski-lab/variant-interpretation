@@ -89,7 +89,7 @@ task hailAnnotate {
 
     command {
         curl ~{hail_annotation_script} > hail_annotation_script.py
-        python3.9 hail_annotation_script.py ~{vcf_file} ~{cohort_prefix} ~{bucket_id} ~{corrected_ped} \
+        python3 hail_annotation_script.py ~{vcf_file} ~{cohort_prefix} ~{bucket_id} ~{corrected_ped} \
         ~{gnomad_ht_uri} ~{mpc_dir} ~{mpc_chr22_file} ~{purcell5k} ~{cpu_cores} ~{memory}
     }
 
