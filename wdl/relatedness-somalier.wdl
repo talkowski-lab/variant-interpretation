@@ -286,7 +286,7 @@ task correctPedigree {
     }
 
     command {
-        curl correct_somalier_ped_python_script > correct_somalier_ped_python_script.py
+        curl ~{correct_somalier_ped_python_script} > correct_somalier_ped_python_script.py
         python3 correct_somalier_ped_python_script.py ~{out_samples} ~{ped_uri} ~{cohort_prefix} ~{subset_ped} > stdout
     }
 
