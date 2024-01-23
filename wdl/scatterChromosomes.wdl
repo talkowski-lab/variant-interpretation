@@ -12,17 +12,22 @@ struct RuntimeAttr {
 workflow scatterVCF {
 
     input {
-        Array[File] chromosome_shards
+        Array[File]? chromosome_shards
+        File? chrom_shards_file
         File contig_lengths_file
-        File split_vcf_hail_script
+        String split_vcf_hail_script
         String cohort_prefix
         String vep_hail_docker
         Int records_per_shard
         RuntimeAttr? runtime_attr_split_into_shards
     }
+    if (defined(chrom_shards_file)) {
+        Array[File] chromosome_shards_ = read_lines(select_first([chrom_shards_file]))
+    }
+
     Map[String, Float] contig_lengths = read_map(contig_lengths_file)
     Array[String] chromosomes = ["chr1", "chr2", "chr3", "chr4", "chr5", "chr6", "chr7", "chr8", "chr9", "chr10", "chr11", "chr12", "chr13", "chr14", "chr15", "chr16", "chr17", "chr18", "chr19", "chr20", "chr21", "chr22", "chrX", "chrY"]
-    Array[Pair[String, File]] split_chromosomes  = zip(chromosomes, chromosome_shards)
+    Array[Pair[String, File]] split_chromosomes  = zip(chromosomes, select_first([chromosome_shards, chromosome_shards_]))
     scatter (chrom_pair in split_chromosomes) {
         String chromosome = chrom_pair.left
         File chrom_shard = chrom_pair.right
@@ -84,8 +89,8 @@ task scatterVCF {
     
     command <<<
         set -euo pipefail
-
-        python3.9 ~{split_vcf_hail_script} ~{vcf_file} ~{n_shards} ~{prefix} ~{cpu_cores} ~{memory}
+        curl ~{split_vcf_hail_script} > split_vcf_hail.py
+        python3.9 split_vcf_hail.py ~{vcf_file} ~{n_shards} ~{prefix} ~{cpu_cores} ~{memory}
         for file in $(ls ~{prefix}.vcf.bgz | grep '.bgz'); do
             shard_num=$(echo $file | cut '-' -f2);
             mv ~{prefix}.vcf.bgz/$file ~{prefix}.shard_"$shard_num".vcf.bgz
