@@ -20,7 +20,7 @@ workflow step1 {
         String gnomad_ht_uri
         String cohort_prefix
         String hail_annotation_script
-        String vep_hail_docker
+        String hail_docker
     }
 
     call hailAnnotate {
@@ -34,7 +34,7 @@ workflow step1 {
             bucket_id=bucket_id,
             cohort_prefix=cohort_prefix,
             hail_annotation_script=hail_annotation_script,
-            vep_hail_docker=vep_hail_docker
+            hail_docker=hail_docker
     }
 
     output {
@@ -56,7 +56,7 @@ task hailAnnotate {
         String gnomad_ht_uri
         String cohort_prefix
         String hail_annotation_script
-        String vep_hail_docker
+        String hail_docker
         RuntimeAttr? runtime_attr_override
     }
     Float input_size = size(vcf_file, "GB")
@@ -83,7 +83,7 @@ task hailAnnotate {
         cpu: cpu_cores
         preemptible: select_first([runtime_override.preemptible_tries, runtime_default.preemptible_tries])
         maxRetries: select_first([runtime_override.max_retries, runtime_default.max_retries])
-        docker: vep_hail_docker
+        docker: hail_docker
         bootDiskSizeGb: select_first([runtime_override.boot_disk_gb, runtime_default.boot_disk_gb])
     }
 
