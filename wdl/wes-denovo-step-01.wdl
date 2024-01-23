@@ -16,6 +16,7 @@ workflow step1 {
         File purcell5k
         File mpc_chr22_file
         String mpc_dir
+        String bucket_id
         String gnomad_ht_uri
         String cohort_prefix
         String hail_annotation_script
@@ -30,6 +31,7 @@ workflow step1 {
             mpc_chr22_file=mpc_chr22_file,
             mpc_dir=mpc_dir,
             gnomad_ht_uri=gnomad_ht_uri,
+            bucket_id=bucket_id,
             cohort_prefix=cohort_prefix,
             hail_annotation_script=hail_annotation_script,
             vep_hail_docker=vep_hail_docker
@@ -50,6 +52,7 @@ task hailAnnotate {
         File purcell5k
         File mpc_chr22_file
         String mpc_dir
+        String bucket_id
         String gnomad_ht_uri
         String cohort_prefix
         String hail_annotation_script
@@ -86,14 +89,14 @@ task hailAnnotate {
 
     command {
         curl ~{hail_annotation_script} > hail_annotation_script.py
-        python3.9 hail_annotation_script.py ~{vcf_file} ~{cohort_prefix} ~{corrected_ped} ~{gnomad_ht_uri} \
-        ~{mpc_dir} ~{mpc_chr22_file} ~{purcell5k} ~{cpu_cores} ~{memory}
+        python3.9 hail_annotation_script.py ~{vcf_file} ~{cohort_prefix} ~{bucket_id} ~{corrected_ped} \
+        ~{gnomad_ht_uri} ~{mpc_dir} ~{mpc_chr22_file} ~{purcell5k} ~{cpu_cores} ~{memory}
     }
 
     output {
-        File annot_mt = "~{cohort_prefix}_wes_denovo_annot.mt"
+        File annot_mt = "~{bucket_id}/hail/~{cohort_prefix}_wes_denovo_annot.mt"
         File sample_qc_info = "~{cohort_prefix}_wes_post_annot_sample_QC_info.txt"
-        File pca_score_table_5k = "~{cohort_prefix}_wes_pca_score_table_5k.ht"
-        File pca_loading_table_5k = "~{cohort_prefix}_wes_pca_loading_table_5k.ht"
+        File pca_score_table_5k = "~{bucket_id}/hail/~{cohort_prefix}_wes_pca_score_table_5k.ht"
+        File pca_loading_table_5k = "~{bucket_id}/hail/~{cohort_prefix}_wes_pca_loading_table_5k.ht"
     }
 }
