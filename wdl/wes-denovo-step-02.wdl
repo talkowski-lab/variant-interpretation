@@ -14,6 +14,7 @@ workflow step2 {
         File corrected_ped
         String annot_mt
         String cohort_prefix
+        String bucket_id
         String hail_basic_filtering_script
         String hail_docker
     }
@@ -23,11 +24,13 @@ workflow step2 {
             annot_mt=annot_mt,
             corrected_ped=corrected_ped,
             cohort_prefix=cohort_prefix,
+            bucket_id=bucket_id,
             hail_basic_filtering_script=hail_basic_filtering_script,
             hail_docker=hail_docker
     }
 
     output {
+        File filtered_mt = hailBasicFiltering.filtered_mt
         File post_filter_sample_qc_info = hailBasicFiltering.post_filter_sample_qc_info
     }
 }
@@ -37,6 +40,7 @@ task hailBasicFiltering {
         File corrected_ped
         String annot_mt
         String cohort_prefix
+        String bucket_id
         String hail_basic_filtering_script
         String hail_docker
         RuntimeAttr? runtime_attr_override
@@ -71,11 +75,12 @@ task hailBasicFiltering {
 
     command {
         curl ~{hail_basic_filtering_script} > hail_basic_filtering_script.py
-        python3 hail_basic_filtering_script.py ~{annot_mt} ~{cohort_prefix} ~{corrected_ped} \
+        python3 hail_basic_filtering_script.py ~{annot_mt} ~{cohort_prefix} ~{corrected_ped} ~{bucket_id} \
         ~{cpu_cores} ~{memory}
     }
 
     output {
+        String filtered_mt = "~{bucket_id}/hail/~{cohort_prefix}_wes_denovo_basic_filtering.mt"
         File post_filter_sample_qc_info = "~{cohort_prefix}_wes_final_annot_post_filter_qc_info.txt"
     }
 }

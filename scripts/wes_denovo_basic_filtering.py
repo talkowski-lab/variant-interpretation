@@ -5,8 +5,9 @@ import sys
 annot_mt = sys.argv[1]
 cohort_prefix = sys.argv[2]
 corrected_ped = sys.argv[3]
-cores = sys.argv[4]
-mem = int(np.floor(float(sys.argv[5])))
+bucket_id = sys.argv[4]
+cores = sys.argv[5]
+mem = int(np.floor(float(sys.argv[6])))
 
 hl.init(min_block_size=128, spark_conf={"spark.executor.cores": cores, 
                     "spark.executor.memory": f"{mem}g",
@@ -175,7 +176,8 @@ def sex_aware_sample_annotations(mt):
 # Calculate sample call rates
 mt = sex_aware_sample_annotations(mt)
 
-mt = hl.sample_qc(mt)
-
 # get sample-level stats to plot
-mt.cols().flatten().export(f"{cohort_prefix}_wes_final_annot_post_filter_qc_info.txt")
+hl.sample_qc(mt).cols().flatten().export(f"{cohort_prefix}_wes_final_annot_post_filter_qc_info.txt")
+
+# export mt
+mt.write(f"{bucket_id}/hail/{cohort_prefix}_wes_denovo_basic_filtering.mt")
