@@ -13,7 +13,7 @@ workflow scatterVCF {
 
     input {
         File file
-        File split_vcf_hail_script
+        String split_vcf_hail_script
         String cohort_prefix
         String vep_hail_docker
         String sv_base_mini_docker
@@ -305,8 +305,8 @@ task splitByChromosome {
 task scatterVCF {
     input {
         File vcf_file
-        File split_vcf_hail_script
         Int n_shards
+        String split_vcf_hail_script
         String vep_hail_docker
         RuntimeAttr? runtime_attr_override
     }
@@ -342,10 +342,10 @@ task scatterVCF {
     
     command <<<
         set -euo pipefail
-
-        python3.9 ~{split_vcf_hail_script} ~{vcf_file} ~{n_shards} ~{prefix} ~{cpu_cores} ~{memory}
+        curl  ~{split_vcf_hail_script} > split_vcf.py
+        python3.9 split_vcf.py ~{vcf_file} ~{n_shards} ~{prefix} ~{cpu_cores} ~{memory}
         for file in $(ls ~{prefix}.vcf.bgz | grep '.bgz'); do
-            shard_num=$(echo $file | cut '-' -f2);
+            shard_num=$(echo $file | cut -d '-' -f2);
             mv ~{prefix}.vcf.bgz/$file ~{prefix}.shard_"$shard_num".vcf.bgz
         done
     >>>
