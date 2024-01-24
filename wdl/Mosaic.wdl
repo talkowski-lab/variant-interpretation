@@ -106,8 +106,6 @@ workflow MosaicManualCheck{
   call MiniTasks.ConcatBeds as concat_depth_bed{
     input:
       shard_bed_files = depth.rare_potential,
-      sd_blacklist=sd_blacklist,
-      igl_blacklist=igl_blacklist,
       prefix = "~{prefix}.depth",
       sv_base_mini_docker = sv_base_mini_docker,
       runtime_attr_override = runtime_attr_concat_depth_bed
