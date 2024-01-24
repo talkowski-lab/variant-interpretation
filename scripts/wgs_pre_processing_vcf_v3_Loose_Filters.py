@@ -129,9 +129,10 @@ def trim_vcf(vcf_uri, lcr_uri, ped_uri, meta_uri, trio_uri, header_file, vcf_out
     # GQ mean filters
     mt = hl.variant_qc(mt)
     mt = mt.filter_rows(mt.variant_qc.gq_stats.mean >= 50, keep = True)
-    # clean-up: remove AC = 0 loci
-    mt = hl.variant_qc(mt)
-    mt = mt.filter_rows(mt.variant_qc.AC[1] > 0, keep = True)
+    if not exclude_info_filters:
+        # clean-up: remove AC = 0 loci
+        mt = hl.variant_qc(mt)
+        mt = mt.filter_rows(mt.variant_qc.AC[1] > 0, keep = True)
     # write to output vcf
     mt = mt.drop('variant_qc')
     hl.export_vcf(mt, vcf_out_uri)
