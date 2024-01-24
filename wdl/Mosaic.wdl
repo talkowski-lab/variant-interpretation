@@ -20,8 +20,7 @@ workflow MosaicManualCheck{
     File outlier
     String prefix
 
-    File sd_blacklist
-    File igl_blacklist
+
 
     Array[File] per_batch_clustered_pesr_vcf_list # preRF
     Array[File] clustered_depth_vcfs
