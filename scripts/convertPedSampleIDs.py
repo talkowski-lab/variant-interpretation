@@ -28,6 +28,9 @@ sample_id_dict['0'] = '0'
 for sample_id in ['IndividualID', 'FatherID', 'MotherID']:
     ped[sample_id] = ped[sample_id].astype(str).map(sample_id_dict)
 
+ped.iloc[:,:4] = ped.iloc[:,:4].replace({np.nan: '0'})
+ped = ped[ped.IndividualID!='0']
+
 ped.to_csv(f"{cohort_prefix}.ped", sep='\t', index=False)
 bucket.blob(f"resources/pedigrees/{cohort_prefix}.ped").upload_from_string(ped.to_csv(sep='\t', index=False), 'text/csv')
 
