@@ -13,8 +13,8 @@ workflow runBaggingPU {
     input {
         File vcf_metrics_tsv
         File ultra_rare_variants_tsv
-        File bagging_pu_source_script
-        File run_bagging_pu_script
+        String bagging_pu_source_script
+        String run_bagging_pu_script
         String cohort_prefix
         String hail_docker
         Int AC_threshold=3
@@ -47,8 +47,8 @@ task baggingPU {
     input {
         File vcf_metrics_tsv
         File ultra_rare_variants_tsv
-        File bagging_pu_source_script
-        File run_bagging_pu_script
+        String bagging_pu_source_script
+        String run_bagging_pu_script
         String cohort_prefix
         String hail_docker
         Int AC_threshold
@@ -83,7 +83,9 @@ task baggingPU {
     }
 
     command <<<
-        python3 ~{run_bagging_pu_script} ~{vcf_metrics_tsv} ~{ultra_rare_variants_tsv} ~{cohort_prefix} \
+        curl ~{run_bagging_pu_script} > run_bagging_pu.py
+        curl ~{bagging_pu_source_script} > baggingPU.py
+        python3 run_bagging_pu.py ~{vcf_metrics_tsv} ~{ultra_rare_variants_tsv} ~{cohort_prefix} \
         ~{AC_threshold} ~{AF_threshold} ~{csq_AF_threshold}
     >>>
 

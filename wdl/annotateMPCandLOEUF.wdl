@@ -15,7 +15,7 @@ workflow annotateMPCandLOEUF {
         String mpc_dir
         File mpc_chr22_file
         File loeuf_file
-        File annotate_mpc_loeuf_script
+        String annotate_mpc_loeuf_script
         String hail_docker
         RuntimeAttr? runtime_attr_hail_annotate
     }
@@ -42,7 +42,7 @@ task annotateMPCandLOEUF {
         String mpc_dir
         File mpc_chr22_file
         File loeuf_file
-        File annotate_mpc_loeuf_script
+        String annotate_mpc_loeuf_script
         String hail_docker
         RuntimeAttr? runtime_attr_override
     }
@@ -75,7 +75,8 @@ task annotateMPCandLOEUF {
     }
     
     command {
-        python3 ~{annotate_mpc_loeuf_script} ~{vcf_metrics_tsv} ~{mpc_dir} ~{mpc_chr22_file} ~{loeuf_file} ~{cpu_cores} ~{memory}
+        curl ~{annotate_mpc_loeuf_script} > annotate_mpc_loeuf_script.py
+        python3 annotate_mpc_loeuf_script.py ~{vcf_metrics_tsv} ~{mpc_dir} ~{mpc_chr22_file} ~{loeuf_file} ~{cpu_cores} ~{memory}
     }
 
     output {

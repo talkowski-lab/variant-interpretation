@@ -13,7 +13,7 @@ workflow flagRepetitiveRegions {
     input {
         File vcf_metrics_tsv_annot
         File repetitive_regions_bed
-        File tsv_to_bed_script
+        String tsv_to_bed_script
         String sv_base_mini_docker
         String hail_docker
     }
@@ -40,7 +40,7 @@ workflow flagRepetitiveRegions {
 task convertTSVtoBED {
     input {
         File vcf_metrics_tsv_annot
-        File tsv_to_bed_script
+        String tsv_to_bed_script
         String hail_docker
         RuntimeAttr? runtime_attr_override
     }
@@ -71,7 +71,8 @@ task convertTSVtoBED {
     }
 
     command {
-        python3 ~{tsv_to_bed_script} ~{vcf_metrics_tsv_annot}
+        curl ~{tsv_to_bed_script} > tsv_to_bed.py
+        python3 tsv_to_bed.py ~{vcf_metrics_tsv_annot}
     }
 
     output {

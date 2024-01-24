@@ -17,8 +17,8 @@ workflow filterRareVariantsHail {
         File ped_uri
         File meta_uri
         File trio_uri
-        File filter_rare_variants_python_script
         File info_header
+        String filter_rare_variants_python_script
         String vep_hail_docker
         String sv_base_mini_docker
         String cohort_prefix
@@ -252,7 +252,7 @@ task filterRareVariants {
         File meta_uri
         File trio_uri
         File info_header
-        File filter_rare_variants_python_script
+        String filter_rare_variants_python_script
         String vep_hail_docker
         String cohort_prefix
         Int AC_threshold
@@ -295,8 +295,8 @@ task filterRareVariants {
             /opt/vep/bcftools/bcftools head ~{vcf_file} | grep -v "INFO=" > no_info_header.txt
             cat no_info_header.txt ~{info_header} | LC_ALL=C sort > ~{header_filename}
         fi
-
-        python3.9 ~{filter_rare_variants_python_script} ~{lcr_uri} ~{ped_uri} ~{meta_uri} ~{trio_uri} ~{vcf_file} \
+        curl ~{filter_rare_variants_python_script} > filter_rare_variants.py
+        python3.9 filter_rare_variants.py ~{lcr_uri} ~{ped_uri} ~{meta_uri} ~{trio_uri} ~{vcf_file} \
         ~{cohort_prefix} ~{cpu_cores} ~{memory} ~{AC_threshold} ~{AF_threshold} ~{header_filename}
 
         cp $(ls . | grep hail*.log) hail_log.txt
