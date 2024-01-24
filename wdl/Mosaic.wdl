@@ -20,6 +20,9 @@ workflow MosaicManualCheck{
     File outlier
     String prefix
 
+    File sd_blacklist
+    File igl_blacklist
+
     Array[File] per_batch_clustered_pesr_vcf_list # preRF
     Array[File] clustered_depth_vcfs
     Array[File] coverage_files
@@ -69,6 +72,8 @@ workflow MosaicManualCheck{
         coverage_file_idx=coverage_file_idxs[i],
         fam_file=fam_file,
         median_file=median_files[i],
+        sd_blacklist=sd_blacklist,
+        igl_blacklist=igl_blacklist,
         sv_pipeline_docker=sv_pipeline_docker,
         sv_pipeline_rdtest_docker=sv_pipeline_rdtest_docker,
         runtime_attr_mosaic_depth=runtime_attr_mosaic_depth,
@@ -101,6 +106,8 @@ workflow MosaicManualCheck{
   call MiniTasks.ConcatBeds as concat_depth_bed{
     input:
       shard_bed_files = depth.rare_potential,
+      sd_blacklist=sd_blacklist,
+      igl_blacklist=igl_blacklist,
       prefix = "~{prefix}.depth",
       sv_base_mini_docker = sv_base_mini_docker,
       runtime_attr_override = runtime_attr_concat_depth_bed
