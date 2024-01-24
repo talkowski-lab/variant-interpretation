@@ -229,8 +229,10 @@ task preprocessVCF {
         docker: vep_hail_docker
         bootDiskSizeGb: select_first([runtime_override.boot_disk_gb, runtime_default.boot_disk_gb])
     }
+    String filename = basename(vcf_uri)
+    String prefix = if (sub(filename, ".gz", "")!=filename) then basename(filename, ".vcf.gz") else basename(filename, ".vcf.bgz")
 
-    String preprocessed_vcf_out = basename(vcf_uri, '.vcf.gz') + '.preprocessed.vcf.bgz'
+    String preprocessed_vcf_out = '~{prefix}.preprocessed.vcf.bgz'
     command <<<
         curl ~{python_preprocess_script} > python_preprocess_script.py
         python3.9 python_preprocess_script.py ~{lcr_uri} ~{ped_uri} ~{meta_uri} ~{trio_uri} ~{vcf_uri} ~{header_file} \
