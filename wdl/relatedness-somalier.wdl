@@ -15,6 +15,7 @@ workflow runSomalier {
         File hg38_fasta
         Array[File]? vep_vcf_files
         Array[Array[File]]? vep_annotated_final_vcf
+        File? merged_vep_file
         File ped_uri
         File bed_file
         File ancestry_labels_1kg
@@ -30,46 +31,39 @@ workflow runSomalier {
         RuntimeAttr? runtime_attr_correct
     }
 
-    if (defined(vep_annotated_final_vcf)) {
-        Array[File] vep_annotated_final_vcf_arr = flatten(select_first([vep_annotated_final_vcf]))
-    }
-    Array[File] vep_files = select_first([vep_vcf_files, vep_annotated_final_vcf_arr])
-    
-    scatter (vcf_uri in vep_files) {
-        call subsetVCFs {
-            input:
-                bed_file=bed_file,
-                vcf_uri=vcf_uri,
-                vcf_idx=vcf_uri+'.tbi',
-                somalier_docker=somalier_docker
+    if (!defined(merged_vep_file)) {
+        if (defined(vep_annotated_final_vcf)) {
+            Array[File] vep_annotated_final_vcf_arr = flatten(select_first([vep_annotated_final_vcf]))
+        }
+        Array[File] vep_files = select_first([vep_vcf_files, vep_annotated_final_vcf_arr])
+        
+        scatter (vcf_uri in vep_files) {
+            call subsetVCFs {
+                input:
+                    bed_file=bed_file,
+                    vcf_uri=vcf_uri,
+                    vcf_idx=vcf_uri+'.tbi',
+                    somalier_docker=somalier_docker
+            }
         }
 
-        # call mergeVCFs as mergeSharded {
-        #     input:
-        #         vcf_files=subsetVCFs.subset_vcf,
-        #         vcf_files_idx=subsetVCFs.subset_vcf_idx,
-        #         sv_base_mini_docker=sv_base_mini_docker,
-        #         cohort_prefix=cohort_prefix,
-        #         merge_or_concat='concat'
-        # }
+        call mergeVCFs {
+        input:
+            vcf_files=subsetVCFs.subset_vcf,
+            vcf_files_idx=subsetVCFs.subset_vcf_idx,
+            sv_base_mini_docker=sv_base_mini_docker,
+            cohort_prefix=cohort_prefix,
+            merge_or_concat='concat'
+        }
     }
 
-    call mergeVCFs {
-    input:
-        vcf_files=subsetVCFs.subset_vcf,
-        vcf_files_idx=subsetVCFs.subset_vcf_idx,
-        # vcf_files=mergeSharded.merged_vcf_file,
-        # vcf_files_idx=mergeSharded.merged_vcf_idx,
-        sv_base_mini_docker=sv_base_mini_docker,
-        cohort_prefix=cohort_prefix,
-        merge_or_concat='concat'
-    }
-
+    File merged_vcf_file = select_first([merged_vep_file, mergeVCFs.merged_vcf_file])
+    
     call relatedness {
         input:
             sites_uri=sites_uri,
             hg38_fasta=hg38_fasta,
-            vcf_uri=mergeVCFs.merged_vcf_file,
+            vcf_uri=merged_vcf_file,
             ped_uri=ped_uri,
             ancestry_labels_1kg=ancestry_labels_1kg,
             somalier_1kg_tar=somalier_1kg_tar,
