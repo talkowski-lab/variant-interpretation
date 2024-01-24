@@ -20,7 +20,8 @@ workflow MosaicManualCheck{
     File outlier
     String prefix
 
-
+    File sd_blacklist
+    File igl_blacklist
 
     Array[File] per_batch_clustered_pesr_vcf_list # preRF
     Array[File] clustered_depth_vcfs
@@ -71,6 +72,8 @@ workflow MosaicManualCheck{
         coverage_file_idx=coverage_file_idxs[i],
         fam_file=fam_file,
         median_file=median_files[i],
+        sd_blacklist=sd_blacklist,
+        igl_blacklist=igl_blacklist,
         sv_pipeline_docker=sv_pipeline_docker,
         sv_pipeline_rdtest_docker=sv_pipeline_rdtest_docker,
         runtime_attr_mosaic_depth=runtime_attr_mosaic_depth,
