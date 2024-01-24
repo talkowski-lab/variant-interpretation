@@ -13,7 +13,7 @@ workflow step4 {
     input {
         File ped_uri
         Array[File] split_trio_vcfs
-        File get_sample_pedigree_py
+        String get_sample_pedigree_script
         String trio_denovo_docker
         Float minDQ
     }
@@ -22,7 +22,7 @@ workflow step4 {
             input:
                 ped_uri=ped_uri,
                 vcf_file=vcf_file,
-                get_sample_pedigree_py=get_sample_pedigree_py,
+                get_sample_pedigree_script=get_sample_pedigree_script,
                 trio_denovo_docker=trio_denovo_docker,
                 minDQ=minDQ
         }
@@ -42,7 +42,7 @@ task trio_denovo {
     input {
         File ped_uri
         File vcf_file
-        File get_sample_pedigree_py
+        String get_sample_pedigree_script
         String trio_denovo_docker
         Float minDQ
     }
@@ -54,7 +54,8 @@ task trio_denovo {
     command <<<
         sample=$(basename ~{vcf_file} '.vcf' | awk -F "_trio_" '{print $2}') 
         sample="${sample//_HP_VAF/}"
-        python3 ~{get_sample_pedigree_py} ~{ped_uri} $sample
+        curl ~{get_sample_pedigree_script} > get_sample_pedigree_script.py
+        python3 get_sample_pedigree_script.py ~{ped_uri} $sample
         /src/wgs_denovo/triodenovo/triodenovo-fix/src/triodenovo --ped "$sample".ped \
             --in_vcf ~{vcf_file} \
             --out_vcf ~{basename(vcf_file, '.vcf') + '.denovos.vcf'} \

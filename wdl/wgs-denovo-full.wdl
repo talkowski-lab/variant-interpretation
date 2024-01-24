@@ -17,12 +17,12 @@ struct RuntimeAttr {
 
 workflow wgs_denovo_full {
     input {
-            File python_trio_sample_script
-            File python_preprocess_script
-            File subset_ped_python_script
-            File uberSplit_v3_py
-            File merge_vcf_to_tsv_fullQC_py
-            File get_sample_pedigree_py
+            String python_trio_sample_script
+            String python_preprocess_script
+            String subset_ped_script
+            String uberSplit_v3_script
+            String merge_vcf_to_tsv_fullQC_script
+            String get_sample_pedigree_script
             File lcr_uri
             File ped_uri
             File hg38_reference
@@ -39,6 +39,7 @@ workflow wgs_denovo_full {
             String hail_docker
             String vep_hail_docker
             String jvarkit_docker
+            Boolean exclude_info_filters=false
             Boolean bad_header=false
             Boolean merge_split_vcf=false
             Int shards_per_chunk=10
@@ -64,6 +65,7 @@ workflow wgs_denovo_full {
             cohort_prefix=cohort_prefix,
             hail_docker=hail_docker,
             vep_hail_docker=vep_hail_docker,
+            exclude_info_filters=exclude_info_filters,
             bad_header=bad_header,
             merge_split_vcf=merge_split_vcf,
             shards_per_chunk=shards_per_chunk
@@ -77,9 +79,9 @@ workflow wgs_denovo_full {
             hail_docker=hail_docker,
             cohort_prefix=cohort_prefix,
             trio_denovo_docker=trio_denovo_docker,
-            uberSplit_v3_py=uberSplit_v3_py,
+            uberSplit_v3_script=uberSplit_v3_script,
             batch_size=batch_size,
-            subset_ped_python_script=subset_ped_python_script
+            subset_ped_script=subset_ped_script
     }
     call annotateHPandVAF.annotateHPandVAF as annotateHPandVAF {
         input:
@@ -95,7 +97,7 @@ workflow wgs_denovo_full {
         input:
             ped_uri=step1and2.ped_uri_no_header,
             split_trio_vcfs=step3.split_trio_vcfs,
-            get_sample_pedigree_py=get_sample_pedigree_py,
+            get_sample_pedigree_script=get_sample_pedigree_script,
             trio_denovo_docker=trio_denovo_docker,
             minDQ=minDQ
     }
@@ -105,7 +107,7 @@ workflow wgs_denovo_full {
             ped_uri=ped_uri,
             split_trio_vcfs=annotateHPandVAF.split_trio_annot_vcfs,
             trio_denovo_vcf=step4.trio_denovo_vcf,
-            merge_vcf_to_tsv_fullQC_py=merge_vcf_to_tsv_fullQC_py,
+            merge_vcf_to_tsv_fullQC_script=merge_vcf_to_tsv_fullQC_script,
             trio_denovo_docker=trio_denovo_docker,
             cohort_prefix=cohort_prefix
     }

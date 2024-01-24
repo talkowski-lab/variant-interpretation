@@ -23,8 +23,9 @@ meta_uri = sys.argv[3]
 trio_uri = sys.argv[4]
 vcf_uri = sys.argv[5]
 header_file = sys.argv[6]
-cores = sys.argv[7]  # string
-mem = int(np.floor(float(sys.argv[8])))
+exclude_info_filters = sys.argv[7]
+cores = sys.argv[8]  # string
+mem = int(np.floor(float(sys.argv[9])))
 
 hl.init(min_block_size=128, spark_conf={"spark.executor.cores": cores, 
                     "spark.executor.memory": f"{mem}g",
@@ -48,7 +49,7 @@ def split_multi_ssc(mt):
     mt = split_ds.drop('old_locus', 'old_alleles')
     return mt
 
-def trim_vcf(vcf_uri, lcr_uri, ped_uri, meta_uri, trio_uri, header_file, vcf_out_uri, build):
+def trim_vcf(vcf_uri, lcr_uri, ped_uri, meta_uri, trio_uri, header_file, vcf_out_uri, build, exclude_info_filters):
     """trim vcf by LCR; select samples after qc (optional); select ME with code = 2 (Fa:HomRef;Mo:HomRef;Child:Het) only; remove loci with low depth"""
     # load vcf
     mt = hl.import_vcf(vcf_uri, array_elements_required=False, reference_genome=build, force_bgz=True, call_fields=[], header_file=header_file, find_replace=('nul', '.'))
@@ -85,20 +86,22 @@ def trim_vcf(vcf_uri, lcr_uri, ped_uri, meta_uri, trio_uri, header_file, vcf_out
                        | hl.is_indel(mt.alleles[0], mt.alleles[1]))
     # filter on depth
     mt = mt.filter_entries( (mt.DP < 10) | (mt.DP > 200), keep = False) 
-    # row (variant INFO) level filters - GATK recommendations for short variants
-    dn_snv_cond_row = (hl.is_snp(mt.alleles[0], mt.alleles[1])
-                        & (mt.qual >= 150)
-                        & (mt.info.SOR <= 2.5)
-                        & (mt.info.ReadPosRankSum >= -1.4)
-                        & (mt.info.QD >= 3.0)
-                        & (mt.info.MQ >= 50))
-    dn_indel_cond_row = (hl.is_indel(mt.alleles[0], mt.alleles[1])
-                          & (mt.qual >= 150)
-                          & (mt.info.SOR <= 3)
-                          & (mt.info.ReadPosRankSum >= -1.7)
-                          & (mt.info.QD >= 4.0)
-                          & (mt.info.MQ >= 50))
-    mt = mt.filter_rows(dn_snv_cond_row | dn_indel_cond_row, keep = True)
+
+    if not exclude_info_filters:
+        # row (variant INFO) level filters - GATK recommendations for short variants
+        dn_snv_cond_row = (hl.is_snp(mt.alleles[0], mt.alleles[1])
+                            & (mt.qual >= 150)
+                            & (mt.info.SOR <= 2.5)
+                            & (mt.info.ReadPosRankSum >= -1.4)
+                            & (mt.info.QD >= 3.0)
+                            & (mt.info.MQ >= 50))
+        dn_indel_cond_row = (hl.is_indel(mt.alleles[0], mt.alleles[1])
+                            & (mt.qual >= 150)
+                            & (mt.info.SOR <= 3)
+                            & (mt.info.ReadPosRankSum >= -1.7)
+                            & (mt.info.QD >= 4.0)
+                            & (mt.info.MQ >= 50))
+        mt = mt.filter_rows(dn_snv_cond_row | dn_indel_cond_row, keep = True)
     # parents filters - homozygous
     ab = mt.AD[1]/hl.sum(mt.AD)
     hom_snv_parents = (hl.is_snp(mt.alleles[0], mt.alleles[1])
@@ -136,5 +139,5 @@ def trim_vcf(vcf_uri, lcr_uri, ped_uri, meta_uri, trio_uri, header_file, vcf_out
     # hl.export_vcf(mt, vcf_out_uri, metadata=header)
 
 vcf_out_uri = os.path.basename(vcf_uri).split('.vcf.gz')[0] + '.preprocessed.vcf.bgz'
-trim_vcf(vcf_uri, lcr_uri, ped_uri, meta_uri, trio_uri, header_file, vcf_out_uri, build)
+trim_vcf(vcf_uri, lcr_uri, ped_uri, meta_uri, trio_uri, header_file, vcf_out_uri, build, exclude_info_filters)
 

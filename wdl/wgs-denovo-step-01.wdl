@@ -11,8 +11,8 @@ struct RuntimeAttr {
 
 workflow step1 {
     input {
-        File python_trio_sample_script
-        File python_preprocess_script
+        String python_trio_sample_script
+        String python_preprocess_script
         File lcr_uri
         File ped_uri
         File info_header
@@ -23,6 +23,7 @@ workflow step1 {
         String bucket_id
         String cohort_prefix
         Int shards_per_chunk=10
+        Boolean exclude_info_filters=false
         Boolean sort_after_merge=false
         Boolean merge_split_vcf=false
         Boolean bad_header=false
@@ -79,6 +80,7 @@ workflow step1 {
                     trio_uri=makeTrioSampleFiles.trio_uri,
                     vep_hail_docker=vep_hail_docker,
                     header_file=saveVCFHeaderChunk.header_file,
+                    exclude_info_filters=exclude_info_filters,
                     runtime_attr_override=runtime_attr_preprocess
             }
         }
@@ -112,6 +114,7 @@ workflow step1 {
                     trio_uri=makeTrioSampleFiles.trio_uri,
                     vep_hail_docker=vep_hail_docker,
                     header_file=saveVCFHeader.header_file,
+                    exclude_info_filters=exclude_info_filters,
                     runtime_attr_override=runtime_attr_preprocess
             }
         }
@@ -137,7 +140,7 @@ workflow step1 {
 
 task makeTrioSampleFiles {
     input {
-        File python_trio_sample_script
+        String python_trio_sample_script
         File ped_uri
         String bucket_id
         String cohort_prefix
@@ -149,7 +152,8 @@ task makeTrioSampleFiles {
     }
 
     command <<<
-    python3 ~{python_trio_sample_script} ~{ped_uri} ~{cohort_prefix} ~{bucket_id}
+    curl ~{python_trio_sample_script} > python_trio_sample_script.py
+    python3 python_trio_sample_script.py ~{ped_uri} ~{cohort_prefix} ~{bucket_id}
     >>>
     
     output {
@@ -188,7 +192,7 @@ task saveVCFHeader {
 
 task preprocessVCF {
     input {
-        File python_preprocess_script
+        String python_preprocess_script
         File lcr_uri
         File ped_uri
         File vcf_uri
@@ -196,6 +200,7 @@ task preprocessVCF {
         File trio_uri
         File header_file
         String vep_hail_docker
+        Boolean exclude_info_filters
         RuntimeAttr? runtime_attr_override
     }
     Float input_size = size(vcf_uri, "GB")
@@ -227,7 +232,9 @@ task preprocessVCF {
 
     String preprocessed_vcf_out = basename(vcf_uri, '.vcf.gz') + '.preprocessed.vcf.bgz'
     command <<<
-        python3.9 ~{python_preprocess_script} ~{lcr_uri} ~{ped_uri} ~{meta_uri} ~{trio_uri} ~{vcf_uri} ~{header_file} ~{cpu_cores} ~{memory}
+        curl ~{python_preprocess_script} > python_preprocess_script.py
+        python3.9 python_preprocess_script.py ~{lcr_uri} ~{ped_uri} ~{meta_uri} ~{trio_uri} ~{vcf_uri} ~{header_file} \
+        ~{exclude_info_filters} ~{cpu_cores} ~{memory}
         /opt/vep/bcftools/bcftools index -t ~{preprocessed_vcf_out}
     >>>
 

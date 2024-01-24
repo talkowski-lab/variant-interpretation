@@ -17,10 +17,10 @@ workflow step3 {
         String hail_docker
         String cohort_prefix
         String trio_denovo_docker
-        File uberSplit_v3_py
+        String uberSplit_v3_script
+        String subset_ped_script
         Int batch_size
         Boolean subset_ped=true
-        File subset_ped_python_script
     }
 
     String stats_file = cohort_prefix + "_stats.txt"
@@ -31,7 +31,7 @@ workflow step3 {
                 ped_uri=ped_uri,
                 vcf_file=merged_preprocessed_vcf_file,
                 trio_denovo_docker=trio_denovo_docker,
-                subset_ped_python_script=subset_ped_python_script
+                subset_ped_script=subset_ped_script
         }
     }
 
@@ -44,7 +44,7 @@ workflow step3 {
             hail_docker=hail_docker,
             cohort_prefix=cohort_prefix,
             stats_file=stats_file,
-            uberSplit_v3_py=uberSplit_v3_py,
+            uberSplit_v3_script=uberSplit_v3_script,
             batch_size=batch_size
     }
 
@@ -58,7 +58,7 @@ task subsetPed {
     input {
         File ped_uri
         File vcf_file
-        File subset_ped_python_script
+        String subset_ped_script
         String trio_denovo_docker
         RuntimeAttr? runtime_attr_override
     }
@@ -90,7 +90,8 @@ task subsetPed {
 
     command <<<
         bcftools query -l ~{vcf_file} > samples.txt
-        python3 ~{subset_ped_python_script} samples.txt ~{ped_uri} > stdout
+        curl ~{subset_ped_script} > subset_ped_script.py
+        python3 subset_ped_script.py samples.txt ~{ped_uri} > stdout
     >>>
 
     output {
@@ -156,7 +157,7 @@ task uberSplit_v3 {
         String hail_docker
         String cohort_prefix
         String stats_file
-        File uberSplit_v3_py       
+        String uberSplit_v3_script       
         Int batch_size
     }
 
@@ -166,7 +167,8 @@ task uberSplit_v3 {
 
     command {
         mkdir -p ~{cohort_prefix}
-        python3 ~{uberSplit_v3_py} ~{ped_uri} ~{vcf_file} ~{cohort_prefix} ~{stats_file} ~{batch_size}
+        curl ~{uberSplit_v3_script} > uberSplit_v3.py
+        python3 uberSplit_v3.py ~{ped_uri} ~{vcf_file} ~{cohort_prefix} ~{stats_file} ~{batch_size}
     }
 
     output {
