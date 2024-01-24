@@ -65,6 +65,7 @@ task GetPotential{
     File depth_vcf
     File sd_blacklist
     File igl_blacklist
+    String sv_pipeline_docker
     RuntimeAttr? runtime_attr_override
   }
   RuntimeAttr default_attr = object {
