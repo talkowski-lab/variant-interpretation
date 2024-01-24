@@ -51,7 +51,7 @@ def split_multi_ssc(mt):
 def trim_vcf(vcf_uri, lcr_uri, ped_uri, meta_uri, trio_uri, header_file, vcf_out_uri, build):
     """trim vcf by LCR; select samples after qc (optional); select ME with code = 2 (Fa:HomRef;Mo:HomRef;Child:Het) only; remove loci with low depth"""
     # load vcf
-    mt = hl.import_vcf(vcf_uri, reference_genome=build, force_bgz=True, call_fields=[], header_file=header_file, find_replace=('nul', '.'))
+    mt = hl.import_vcf(vcf_uri, array_elements_required=False, reference_genome=build, force_bgz=True, call_fields=[], header_file=header_file, find_replace=('nul', '.'))
     mt = split_multi_ssc(mt)
     # annotate cohort ac to INFO field; cohortAC filter set to 100 
     mt = mt.annotate_rows(info=mt.info.annotate(cohort_AC=mt.info.AC[mt.a_index - 1]))

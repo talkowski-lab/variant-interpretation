@@ -92,7 +92,7 @@ task scatterVCF {
         curl ~{split_vcf_hail_script} > split_vcf_hail.py
         python3.9 split_vcf_hail.py ~{vcf_file} ~{n_shards} ~{prefix} ~{cpu_cores} ~{memory}
         for file in $(ls ~{prefix}.vcf.bgz | grep '.bgz'); do
-            shard_num=$(echo $file | cut '-' -f2);
+            shard_num=$(echo $file | cut -d '-' -f2);
             mv ~{prefix}.vcf.bgz/$file ~{prefix}.shard_"$shard_num".vcf.bgz
         done
     >>>
