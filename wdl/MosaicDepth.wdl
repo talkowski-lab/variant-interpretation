@@ -16,6 +16,8 @@ workflow Mosaic{
     File median_file
     String sv_pipeline_docker
     String sv_pipeline_rdtest_docker
+    File sd_blacklist
+    File igl_blacklist
 
     RuntimeAttr? runtime_attr_mosaic_depth
     RuntimeAttr? runtime_attr_mosaic_potential
@@ -29,6 +31,8 @@ workflow Mosaic{
     rare_cutoff=rare_cutoff,
     cutoffs=cutoffs,
     depth_vcf=depth_vcf,
+    sd_blacklist=sd_blacklist,
+    igl_blacklist=igl_blacklist,
     sv_pipeline_docker=sv_pipeline_docker,
     runtime_attr_override=runtime_attr_mosaic_potential
   }
