@@ -72,8 +72,6 @@ workflow MosaicManualCheck{
         coverage_file_idx=coverage_file_idxs[i],
         fam_file=fam_file,
         median_file=median_files[i],
-        sd_blacklist=sd_blacklist,
-        igl_blacklist=igl_blacklist,
         sv_pipeline_docker=sv_pipeline_docker,
         sv_pipeline_rdtest_docker=sv_pipeline_rdtest_docker,
         runtime_attr_mosaic_depth=runtime_attr_mosaic_depth,
