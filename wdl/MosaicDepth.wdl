@@ -63,7 +63,8 @@ task GetPotential{
     File cutoffs
     File lookup
     File depth_vcf
-    String sv_pipeline_docker
+    File sd_blacklist
+    File igl_blacklist
     RuntimeAttr? runtime_attr_override
   }
   RuntimeAttr default_attr = object {
