@@ -1,6 +1,7 @@
 import os
 import sys
 import pandas as pd
+import numpy as np
 from google.cloud import storage
 
 sample_tsv_uri = sys.argv[1]  # "gs://fc-71e715ea-2fb8-4a20-8560-15ed867dcc7d/resources/metadata/GMKF_collaborator_id_sample_id.tsv"

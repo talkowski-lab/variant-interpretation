@@ -75,4 +75,4 @@ score_table_5k.write(f"{bucket_id}/hail/{cohort_prefix}_wes_pca_score_table_5k.h
 loading_table_5k.write(f"{bucket_id}/hail/{cohort_prefix}_wes_pca_loading_table_5k.ht", overwrite = True)
 
 ## Export mt
-mt.write(f"{bucket_id}/hail/{cohort_prefix}_wes_denovo_annot.mt")
+mt.write(f"{bucket_id}/hail/{cohort_prefix}_wes_denovo_annot.mt", overwrite=True)
