@@ -193,11 +193,11 @@ task mergeVCFs {
 
     Float input_size = size(vcf_files, "GB")
     Float base_disk_gb = 10.0
-    Float input_disk_scale_ = 5.0
+    Float input_disk_scale = 5.0
     
     RuntimeAttr runtime_default = object {
         mem_gb: 4,
-        disk_gb: ceil(base_disk_gb + input_size * input_disk_scale_),
+        disk_gb: ceil(base_disk_gb + input_size * input_disk_scale),
         cpu_cores: 1,
         preemptible_tries: 3,
         max_retries: 1,

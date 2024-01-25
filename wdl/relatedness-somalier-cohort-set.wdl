@@ -264,7 +264,8 @@ task mergeVCFs {
         VCFS="~{write_lines(vcf_files)}"
         cat $VCFS | awk -F '/' '{print $NF"\t"$0}' | sort -k1,1V | awk '{print $2}' > vcfs_sorted.list
         bcftools ~{merge_or_concat_new} --no-version -Oz --file-list vcfs_sorted.list --output ~{merged_vcf_name}
-        bcftools sort ~{merged_vcf_name} --output ~{sorted_vcf_name}
+        cat ~{merged_vcf_name} | zcat | awk '$1 ~ /^#/ {print $0;next} {print $0 | "sort -k1,1V -k2,2n"}' > ~{basename(sorted_vcf_name, '.gz')}
+        bgzip ~{basename(sorted_vcf_name, '.gz')}
         bcftools index -t ~{sorted_vcf_name}
     >>>
 

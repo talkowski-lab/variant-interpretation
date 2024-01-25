@@ -27,9 +27,6 @@ workflow step1 {
         Boolean sort_after_merge=false
         Boolean merge_split_vcf=false
         Boolean bad_header=false
-        Float? input_disk_scale_merge_chunk
-        Float? input_disk_scale_merge_chunks
-        Float? input_disk_scale_merge_unchunked
         RuntimeAttr? runtime_attr_preprocess
         RuntimeAttr? runtime_attr_merge_chunk
         RuntimeAttr? runtime_attr_merge_chunks
@@ -67,7 +64,6 @@ workflow step1 {
                     sv_base_mini_docker=sv_base_mini_docker,
                     cohort_prefix=basename(chunk_file),
                     sort_after_merge=sort_after_merge,
-                    input_disk_scale=input_disk_scale_merge_chunk,
                     runtime_attr_override=runtime_attr_merge_chunk
             }
             call preprocessVCF as preprocessVCFChunk {
@@ -90,7 +86,6 @@ workflow step1 {
                 sv_base_mini_docker=sv_base_mini_docker,
                 cohort_prefix=cohort_prefix,
                 sort_after_merge=sort_after_merge,
-                input_disk_scale=input_disk_scale_merge_chunks,
                 runtime_attr_override=runtime_attr_merge_chunks
         }
     }
@@ -124,7 +119,6 @@ workflow step1 {
                 sv_base_mini_docker=sv_base_mini_docker,
                 cohort_prefix=cohort_prefix,
                 sort_after_merge=sort_after_merge,
-                input_disk_scale=input_disk_scale_merge_unchunked,
                 runtime_attr_override=runtime_attr_merge_unchunked
         }
     }
@@ -252,7 +246,6 @@ task mergeVCFs {
         String sv_base_mini_docker
         String cohort_prefix
         Boolean sort_after_merge
-        Float? input_disk_scale
         RuntimeAttr? runtime_attr_override
     }
 
@@ -261,11 +254,11 @@ task mergeVCFs {
     #  CleanVcf5.FindRedundantMultiallelics
     Float input_size = size(vcf_files, "GB")
     Float base_disk_gb = 10.0
-    Float input_disk_scale_ = select_first([input_disk_scale, 5.0])
+    Float input_disk_scale = 5.0
     
     RuntimeAttr runtime_default = object {
         mem_gb: 4,
-        disk_gb: ceil(base_disk_gb + input_size * input_disk_scale_),
+        disk_gb: ceil(base_disk_gb + input_size * input_disk_scale),
         cpu_cores: 1,
         preemptible_tries: 3,
         max_retries: 1,
