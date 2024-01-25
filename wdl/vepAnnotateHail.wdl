@@ -28,14 +28,12 @@ workflow vepAnnotateHail {
         String sv_base_mini_docker
         Boolean split_by_chromosome
         Boolean split_into_shards 
-        Boolean has_index
-        Boolean localize_vcf
-        Int compression_level=3
+        Boolean? has_index
+        Boolean? localize_vcf
         Int shards_per_chunk=10  # combine pre-sharded VCFs
         Int? n_shards
         Int? records_per_shard
         Array[File]? vcf_shards  # if scatter-vcf run before VEP
-        Int? thread_num_override
         Float? input_disk_scale_merge_chunk
         RuntimeAttr? runtime_attr_merge_vcfs
         RuntimeAttr? runtime_attr_split_by_chr
@@ -58,19 +56,19 @@ workflow vepAnnotateHail {
 
     # shard the VCF (if not already sharded)
     if (split_by_chromosome) {
-        if (!localize_vcf) {
+        if (!select_first([localize_vcf])) {
             String vcf_uri = file
             call getChromosomeSizes {
                 input:
                     vcf_file=vcf_uri,
-                    has_index=has_index,
+                    has_index=select_first([has_index]),
                     sv_base_mini_docker=sv_base_mini_docker
             }
         }
 
         Array[String] chromosomes = ["chr1", "chr2", "chr3", "chr4", "chr5", "chr6", "chr7", "chr8", "chr9", "chr10", "chr11", "chr12", "chr13", "chr14", "chr15", "chr16", "chr17", "chr18", "chr19", "chr20", "chr21", "chr22", "chrX", "chrY"]
         scatter (chromosome in chromosomes) {
-            if (localize_vcf) {
+            if (select_first([localize_vcf])) {
                 call splitByChromosome {
                     input:
                         vcf_file=file,
@@ -79,7 +77,7 @@ workflow vepAnnotateHail {
                         runtime_attr_override=runtime_attr_split_by_chr
                 }
             }
-            if (!localize_vcf) {
+            if (!select_first([localize_vcf])) {
                 String vcf_uri = file
                 call splitByChromosomeRemote {
                     input:
@@ -87,7 +85,7 @@ workflow vepAnnotateHail {
                         chromosome=chromosome,
                         chrom_length=select_first([getChromosomeSizes.contig_lengths])[chromosome],
                         n_samples=select_first([getChromosomeSizes.n_samples]),
-                        has_index=has_index,
+                        has_index=select_first([has_index]),
                         sv_base_mini_docker=sv_base_mini_docker,
                         runtime_attr_override=runtime_attr_split_by_chr
                 }
@@ -128,9 +126,8 @@ workflow vepAnnotateHail {
             }
         }
     }    
-    
     Array[File] vcf_shards_ = select_first([scatterVCF.shards, chromosome_shards, 
-                                        splitChromosomeShards, [file]])
+                                        splitChromosomeShards, splitFile.chunks, vcf_shards, [file]])
     
     # if split into chunks, merge shards in chunks, then run VEP on merged chunks
     if (defined(merge_shards)) {
@@ -442,8 +439,6 @@ task scatterVCF {
         String split_vcf_hail_script
         Int n_shards
         String vep_hail_docker
-        Int? compression_level
-        Int? thread_num_override
         RuntimeAttr? runtime_attr_override
     }
 
