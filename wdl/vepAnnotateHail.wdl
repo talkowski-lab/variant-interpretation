@@ -34,7 +34,6 @@ workflow vepAnnotateHail {
         Int? n_shards
         Int? records_per_shard
         Array[File]? vcf_shards  # if scatter-vcf run before VEP
-        Float? input_disk_scale_merge_chunk
         RuntimeAttr? runtime_attr_merge_vcfs
         RuntimeAttr? runtime_attr_split_by_chr
         RuntimeAttr? runtime_attr_split_into_shards
@@ -138,7 +137,6 @@ workflow vepAnnotateHail {
                     sv_base_mini_docker=sv_base_mini_docker,
                     cohort_prefix=basename(chunk_file),
                     merge_or_concat='concat',
-                    input_disk_scale=input_disk_scale_merge_chunk,
                     runtime_attr_override=runtime_attr_merge_vcfs
             }
             call vepAnnotate as vepAnnotateMergedShards {
@@ -190,13 +188,12 @@ task mergeVCFs {
         String sv_base_mini_docker
         String cohort_prefix
         String merge_or_concat 
-        Float? input_disk_scale
         RuntimeAttr? runtime_attr_override
     }
 
     Float input_size = size(vcf_files, "GB")
     Float base_disk_gb = 10.0
-    Float input_disk_scale_ = select_first([input_disk_scale, 5.0])
+    Float input_disk_scale_ = 5.0
     
     RuntimeAttr runtime_default = object {
         mem_gb: 4,
@@ -228,7 +225,8 @@ task mergeVCFs {
         VCFS="~{write_lines(vcf_files)}"
         cat $VCFS | awk -F '/' '{print $NF"\t"$0}' | sort -k1,1V | awk '{print $2}' > vcfs_sorted.list
         bcftools ~{merge_or_concat_new} --no-version -Oz --file-list vcfs_sorted.list --output ~{merged_vcf_name}
-        bcftools sort ~{merged_vcf_name} --output ~{sorted_vcf_name}
+        cat ~{merged_vcf_name} | zcat | awk '$1 ~ /^#/ {print $0;next} {print $0 | "sort -k1,1V -k2,2n"}' > ~{basename(sorted_vcf_name, '.gz')}
+        bgzip ~{basename(sorted_vcf_name, '.gz')}
         bcftools index -t ~{sorted_vcf_name}
     >>>
 
