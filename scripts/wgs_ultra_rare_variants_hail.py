@@ -136,13 +136,14 @@ ultra_rare_vars_df['LEN'] = abs(ultra_rare_vars_df.REF.str.len()-ultra_rare_vars
 ultra_rare_vars_df['TYPE'] =np.where(ultra_rare_vars_df.LEN==0, 'SNV', 'Indel')
 
 ultra_rare_vars_df.columns = ultra_rare_vars_df.columns.str.replace('info.', '')
-ultra_rare_vars_df['AC'] = ultra_rare_vars_df.AC.str[0]
-ultra_rare_vars_df['AF'] = ultra_rare_vars_df.AF.str[0]
-ultra_rare_vars_df['MLEAC'] = ultra_rare_vars_df.MLEAC.str[0]
-ultra_rare_vars_df['MLEAF'] = ultra_rare_vars_df.MLEAF.str[0]
+
+for info_cat in ['AC', 'AF', 'MLEAC', 'MLEAF']:
+    if info_cat in ultra_rare_vars_df.columns:
+            ultra_rare_vars_df[info_cat] = ultra_rare_vars_df[info_cat].str[0]
 
 # 'POLYX'
 info_cols = ['END','AC','AF','AN','BaseQRankSum','ClippingRankSum','DP','FS','MLEAC','MLEAF','MQ','MQRankSum','QD','ReadPosRankSum','SOR','VQSLOD','cohort_AC', 'cohort_AF', 'CSQ']
+info_cols = np.intersect1d(info_cols, list(mt.info.keys()))
 cols_to_keep = ['CHROM', 'POS', 'REF', 'ALT', 'LEN', 'TYPE', 'ID'] + info_cols + list(rename_cols.values())
 
 ultra_rare_vars_df[cols_to_keep].to_csv(f"{cohort_prefix}_ultra_rare_variants.tsv", sep='\t', index=False)
