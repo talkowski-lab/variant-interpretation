@@ -143,7 +143,7 @@ for info_cat in ['AC', 'AF', 'MLEAC', 'MLEAF']:
 
 # 'POLYX'
 info_cols = ['END','AC','AF','AN','BaseQRankSum','ClippingRankSum','DP','FS','MLEAC','MLEAF','MQ','MQRankSum','QD','ReadPosRankSum','SOR','VQSLOD','cohort_AC', 'cohort_AF', 'CSQ']
-info_cols = np.intersect1d(info_cols, list(mt.info.keys()))
+info_cols = list(np.intersect1d(info_cols, list(mt.info.keys())))
 cols_to_keep = ['CHROM', 'POS', 'REF', 'ALT', 'LEN', 'TYPE', 'ID'] + info_cols + list(rename_cols.values())
 
 ultra_rare_vars_df[cols_to_keep].to_csv(f"{cohort_prefix}_ultra_rare_variants.tsv", sep='\t', index=False)
