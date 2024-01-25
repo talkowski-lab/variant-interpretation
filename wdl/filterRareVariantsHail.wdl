@@ -22,6 +22,7 @@ workflow filterRareVariantsHail {
         String vep_hail_docker
         String sv_base_mini_docker
         String cohort_prefix
+        Boolean exclude_info_filters=false
         Boolean merge_annotated_vcfs=false
         Boolean bad_header=false
         Float AF_threshold=0.005
@@ -82,6 +83,7 @@ workflow filterRareVariantsHail {
                 AC_threshold=AC_threshold,
                 AF_threshold=AF_threshold,
                 bad_header=bad_header,
+                exclude_info_filters=exclude_info_filters,
                 runtime_attr_override=runtime_attr_filter_vcf
         }
     }
@@ -104,6 +106,7 @@ workflow filterRareVariantsHail {
                             AC_threshold=AC_threshold,
                             AF_threshold=AF_threshold,
                             bad_header=bad_header,
+                            exclude_info_filters=exclude_info_filters,
                             runtime_attr_override=runtime_attr_filter_vcf
                     }
                 }
@@ -144,6 +147,7 @@ workflow filterRareVariantsHail {
                         AC_threshold=AC_threshold,
                         AF_threshold=AF_threshold,
                         bad_header=bad_header,
+                        exclude_info_filters=exclude_info_filters,
                         runtime_attr_override=runtime_attr_filter_vcf
                 }
             }
@@ -257,6 +261,7 @@ task filterRareVariants {
         String cohort_prefix
         Int AC_threshold
         Float AF_threshold
+        Boolean exclude_info_filters
         Boolean bad_header
         RuntimeAttr? runtime_attr_override
     }
@@ -297,7 +302,7 @@ task filterRareVariants {
         fi
         curl ~{filter_rare_variants_python_script} > filter_rare_variants.py
         python3.9 filter_rare_variants.py ~{lcr_uri} ~{ped_uri} ~{meta_uri} ~{trio_uri} ~{vcf_file} \
-        ~{cohort_prefix} ~{cpu_cores} ~{memory} ~{AC_threshold} ~{AF_threshold} ~{header_filename}
+        ~{cohort_prefix} ~{cpu_cores} ~{memory} ~{AC_threshold} ~{AF_threshold} ~{exclude_info_filters} ~{header_filename}
 
         cp $(ls . | grep hail*.log) hail_log.txt
     >>>

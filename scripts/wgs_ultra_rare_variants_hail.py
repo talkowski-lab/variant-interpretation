@@ -19,7 +19,8 @@ cores = sys.argv[7]
 mem = int(np.floor(float(sys.argv[8])))
 ac_threshold = int(sys.argv[9])
 af_threshold = float(sys.argv[10])
-header_file = sys.argv[11]
+exclude_info_filters = bool(sys.argv[11])
+header_file = sys.argv[12]
 
 hl.init(min_block_size=128, spark_conf={"spark.executor.cores": cores, 
                     "spark.executor.memory": f"{mem}g",
@@ -75,29 +76,30 @@ mt_filtered = mt_filtered.filter_rows((hl.is_snp(mt_filtered.alleles[0], mt_filt
                    | hl.is_indel(mt_filtered.alleles[0], mt_filtered.alleles[1]))
 # filter on depth
 mt_filtered = mt_filtered.filter_entries( (mt_filtered.DP < 10) | (mt_filtered.DP > 200), keep = False) 
-# row (variant INFO) level filters - GATK recommendations for short variants
-dn_snv_cond_row = (hl.is_snp(mt_filtered.alleles[0], mt_filtered.alleles[1])
-                    & (mt_filtered.qual >= 150)
-                    & (mt_filtered.info.SOR <= 2.5)
-                    & (mt_filtered.info.ReadPosRankSum >= -1.4)
-                    & (mt_filtered.info.QD >= 3.0)
-                    & (mt_filtered.info.MQ >= 50))
-dn_indel_cond_row = (hl.is_indel(mt_filtered.alleles[0], mt_filtered.alleles[1])
-                      & (mt_filtered.qual >= 150)
-                      & (mt_filtered.info.SOR <= 3)
-                      & (mt_filtered.info.ReadPosRankSum >= -1.7)
-                      & (mt_filtered.info.QD >= 4.0)
-                      & (mt_filtered.info.MQ >= 50))
-mt_filtered = mt_filtered.filter_rows(dn_snv_cond_row | dn_indel_cond_row, keep = True)
 
-# GQ mean filters
-mt_filtered = hl.variant_qc(mt_filtered)
-mt_filtered = mt_filtered.filter_rows(mt_filtered.variant_qc.gq_stats.mean >= 50, keep = True)
-# clean-up: remove AC = 0 loci
-mt_filtered = hl.variant_qc(mt_filtered)
-mt_filtered = mt_filtered.filter_rows(mt_filtered.variant_qc.AC[1] > 0, keep = True)
-# write to output vcf
-mt_filtered = mt_filtered.drop('variant_qc')
+if not exclude_info_filters:
+    # row (variant INFO) level filters - GATK recommendations for short variants
+    dn_snv_cond_row = (hl.is_snp(mt_filtered.alleles[0], mt_filtered.alleles[1])
+                        & (mt_filtered.qual >= 150)
+                        & (mt_filtered.info.SOR <= 2.5)
+                        & (mt_filtered.info.ReadPosRankSum >= -1.4)
+                        & (mt_filtered.info.QD >= 3.0)
+                        & (mt_filtered.info.MQ >= 50))
+    dn_indel_cond_row = (hl.is_indel(mt_filtered.alleles[0], mt_filtered.alleles[1])
+                        & (mt_filtered.qual >= 150)
+                        & (mt_filtered.info.SOR <= 3)
+                        & (mt_filtered.info.ReadPosRankSum >= -1.7)
+                        & (mt_filtered.info.QD >= 4.0)
+                        & (mt_filtered.info.MQ >= 50))
+    mt_filtered = mt_filtered.filter_rows(dn_snv_cond_row | dn_indel_cond_row, keep = True)
+
+    # GQ mean filters
+    mt_filtered = hl.variant_qc(mt_filtered)
+    mt_filtered = mt_filtered.filter_rows(mt_filtered.variant_qc.gq_stats.mean >= 50, keep = True)
+    # clean-up: remove AC = 0 loci
+    mt_filtered = hl.variant_qc(mt_filtered)
+    mt_filtered = mt_filtered.filter_rows(mt_filtered.variant_qc.AC[1] > 0, keep = True)
+    mt_filtered = mt_filtered.drop('variant_qc')
 
 # useful table here: https://hail.is/docs/0.2/methods/genetics.html#hail.methods.transmission_disequilibrium_test
 # t=1 u=0
