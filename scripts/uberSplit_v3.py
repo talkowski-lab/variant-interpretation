@@ -40,7 +40,10 @@ def ismissing(entry):
 def get_ac_per_samp(entry):
     # entry looks like "0/1:21,19:40:99:431,0,510"
     gt = entry.split(":")[0]
-    ac = int(gt.split("/")[0]) + int(gt.split("/")[1])
+    try:
+        ac = int(gt.split("/")[0]) + int(gt.split("/")[1])
+    except:
+        ac = int(gt.split("|")[0]) + int(gt.split("|")[1])
     return ac
 
 def update_ac(keyMetrics, chd_entry, pat_entry, mat_entry):
