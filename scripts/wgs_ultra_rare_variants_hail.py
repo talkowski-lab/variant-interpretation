@@ -122,9 +122,9 @@ ultra_rare_vars_df['proband_entry.VAF'] = ultra_rare_vars_df['proband_entry.AD']
 
 child_format_fields = ['GT','AD','DP','GQ','PGT','PID','PL','VAF']  #'AB'
 parent_format_fields = ['GT','AD','DP','GQ','VAF']  #'AB'
-rename_cols = {f"mother_entry.{field}": f"{field}_mother" for field in parent_format_fields} |\
-    {f"father_entry.{field}": f"{field}_father" for field in parent_format_fields} |\
-    {f"proband_entry.{field}": f"{field}_sample" for field in child_format_fields} |\
+rename_cols = {f"mother_entry.{field}": f"{field}_mother" for field in parent_format_fields if f"mother_entry.{field}" in ultra_rare_vars_df.columns} |\
+    {f"father_entry.{field}": f"{field}_father" for field in parent_format_fields if f"father_entry.{field}" in ultra_rare_vars_df.columns} |\
+    {f"proband_entry.{field}": f"{field}_sample" for field in child_format_fields if f"proband_entry.{field}" in ultra_rare_vars_df.columns} |\
     {'qual': 'QUAL', 'proband.s': 'SAMPLE'}
 ultra_rare_vars_df = ultra_rare_vars_df.rename(rename_cols, axis=1)
 
