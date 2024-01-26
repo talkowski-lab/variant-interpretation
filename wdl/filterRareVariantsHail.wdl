@@ -54,6 +54,7 @@ workflow filterRareVariantsHail {
                     sv_base_mini_docker=sv_base_mini_docker,
                     cohort_prefix=basename(chunk_file),
                     sort_after_merge=sort_after_merge,
+                    merge_or_concat='concat',
                     runtime_attr_override=runtime_attr_merge_chunk
             }
             call filterRareVariants {
@@ -126,7 +127,7 @@ task mergeVCFs {
         String sv_base_mini_docker
         String cohort_prefix
         Boolean sort_after_merge=false
-        String merge_or_concat 
+        String merge_or_concat="concat" 
         RuntimeAttr? runtime_attr_override
     }
 
