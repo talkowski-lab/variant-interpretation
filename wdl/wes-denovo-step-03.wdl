@@ -9,7 +9,7 @@ struct RuntimeAttr {
     Int? max_retries
 }
 
-workflow step2 {
+workflow step3 {
     input {
         File corrected_ped
         File filtered_mt
