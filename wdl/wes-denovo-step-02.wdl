@@ -77,7 +77,7 @@ task hailBasicFiltering {
         tar -zxvf ~{annot_mt}
 
         curl ~{hail_basic_filtering_script} > hail_basic_filtering_script.py
-        python3 hail_basic_filtering_script.py ~{sub(annot_mt, '.gz', '')} ~{cohort_prefix} ~{corrected_ped} ~{bucket_id} \
+        python3 hail_basic_filtering_script.py ~{basename(annot_mt, '.gz')} ~{cohort_prefix} ~{corrected_ped} ~{bucket_id} \
         ~{cpu_cores} ~{memory}
 
         tar -zcvf ~{cohort_prefix}_wes_denovo_basic_filtering.mt.gz ~{cohort_prefix}_wes_denovo_basic_filtering.mt

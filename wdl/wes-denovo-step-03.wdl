@@ -13,6 +13,7 @@ workflow step3 {
     input {
         File corrected_ped
         File filtered_mt
+        File loeuf_file
         String cohort_prefix
         String bucket_id
         String hail_denovo_filtering_script
@@ -24,7 +25,7 @@ workflow step3 {
             filtered_mt=filtered_mt,
             corrected_ped=corrected_ped,
             cohort_prefix=cohort_prefix,
-            bucket_id=bucket_id,
+            loeuf_file=loeuf_file,
             hail_denovo_filtering_script=hail_denovo_filtering_script,
             hail_docker=hail_docker
     }
@@ -43,7 +44,7 @@ task hailDenovoFiltering {
         File corrected_ped
         File filtered_mt
         String cohort_prefix
-        String bucket_id
+        String loeuf_file
         String hail_denovo_filtering_script
         String hail_docker
         RuntimeAttr? runtime_attr_override
@@ -80,7 +81,7 @@ task hailDenovoFiltering {
         tar -zxvf ~{filtered_mt}
 
         curl ~{hail_denovo_filtering_script} > hail_denovo_filtering_script.py
-        python3 hail_denovo_filtering_script.py ~{sub(filtered_mt, '.gz', '')} ~{cohort_prefix} ~{corrected_ped} ~{bucket_id} \
+        python3 hail_denovo_filtering_script.py ~{basename(filtered_mt, '.gz')} ~{cohort_prefix} ~{corrected_ped} ~{loeuf_file} \
         ~{cpu_cores} ~{memory}
 
         tar -zcvf ~{cohort_prefix}_wes_final_denovo.ht.gz ~{cohort_prefix}_wes_final_denovo.ht

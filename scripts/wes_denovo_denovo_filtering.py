@@ -1,11 +1,13 @@
 import hail as hl
 import numpy as np
+import pandas as pd
+import ast
 import sys
 
 filtered_mt = sys.argv[1]
 cohort_prefix = sys.argv[2]
 corrected_ped = sys.argv[3]
-bucket_id = sys.argv[4]
+loeuf_file = sys.argv[4]
 cores = sys.argv[5]
 mem = int(np.floor(float(sys.argv[6])))
 
@@ -320,9 +322,39 @@ de_novo_results.flatten().export(f"{cohort_prefix}_wes_final_denovo.txt")
 
 de_novo_results.write(f"{cohort_prefix}_wes_final_denovo.ht", overwrite = True)
 
-mt = mt.semi_join_rows(de_novo_results.key_by('locus', 'alleles'))
+# LOEUF annotations
 
+mt = mt.semi_join_rows(de_novo_results.key_by('locus', 'alleles'))
 mt.rows().flatten().export(f"{cohort_prefix}_wes_final_denovo_vep.txt")
+
+vep_res = pd.read_csv(f"{cohort_prefix}_wes_final_denovo_vep.txt", sep='\t')
+vep_res['alleles'] = vep_res.alleles.apply(ast.literal_eval)
+vep_res['ID'] = vep_res.locus + ':' + vep_res.alleles.str.join(':')
+vep_res.columns = vep_res.columns.str.replace('info.', '')
+
+loeuf = pd.read_csv(loeuf_file, sep='\t')
+loeuf.index = loeuf.gene_name
+
+def get_genes_csq(csq):
+    genes = []
+    for ind_csq in csq:
+        gene = ind_csq.split('|')[3]
+        if gene!='':
+            genes.append(gene)
+    return list(set(genes))
+
+vep_res['CSQ'] = vep_res.CSQ.replace({np.nan: "[]"}).apply(ast.literal_eval)
+vep_res['all_genes'] = vep_res.CSQ.apply(get_genes_csq)
+
+all_genes = vep_res.all_genes.apply(pd.Series).stack().unique()
+
+loeuf_vals = loeuf.loc[np.intersect1d(loeuf.index, all_genes), 'LOEUF'].to_dict()
+loeuf_tile_vals = loeuf.loc[np.intersect1d(loeuf.index, all_genes), 'LOEUF_tile'].to_dict()
+
+vep_res['LOEUF'] = vep_res.all_genes.apply(lambda gene_list: pd.Series(gene_list).map(loeuf_vals).min())
+vep_res['LOEUF_tile'] = vep_res.all_genes.apply(lambda gene_list: pd.Series(gene_list).map(loeuf_tile_vals).min())
+
+vep_res.to_csv(f"{cohort_prefix}_wes_final_denovo_vep.txt", sep='\t', index=False)
 
 ## TDT
 
