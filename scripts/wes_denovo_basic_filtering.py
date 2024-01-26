@@ -5,9 +5,8 @@ import sys
 annot_mt = sys.argv[1]
 cohort_prefix = sys.argv[2]
 corrected_ped = sys.argv[3]
-bucket_id = sys.argv[4]
-cores = sys.argv[5]
-mem = int(np.floor(float(sys.argv[6])))
+cores = sys.argv[4]
+mem = int(np.floor(float(sys.argv[5])))
 
 hl.init(min_block_size=128, spark_conf={"spark.executor.cores": cores, 
                     "spark.executor.memory": f"{mem}g",

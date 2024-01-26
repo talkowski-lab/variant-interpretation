@@ -16,7 +16,6 @@ workflow step1 {
         File purcell5k
         File mpc_chr22_file
         String mpc_dir
-        String bucket_id
         String gnomad_ht_uri
         String cohort_prefix
         String hail_annotation_script
@@ -31,7 +30,6 @@ workflow step1 {
             mpc_chr22_file=mpc_chr22_file,
             mpc_dir=mpc_dir,
             gnomad_ht_uri=gnomad_ht_uri,
-            bucket_id=bucket_id,
             cohort_prefix=cohort_prefix,
             hail_annotation_script=hail_annotation_script,
             hail_docker=hail_docker
@@ -52,7 +50,6 @@ task hailAnnotate {
         File purcell5k
         File mpc_chr22_file
         String mpc_dir
-        String bucket_id
         String gnomad_ht_uri
         String cohort_prefix
         String hail_annotation_script
@@ -89,7 +86,7 @@ task hailAnnotate {
 
     command {
         curl ~{hail_annotation_script} > hail_annotation_script.py
-        python3 hail_annotation_script.py ~{vcf_file} ~{cohort_prefix} ~{bucket_id} ~{corrected_ped} \
+        python3 hail_annotation_script.py ~{vcf_file} ~{cohort_prefix} ~{corrected_ped} \
         ~{gnomad_ht_uri} ~{mpc_dir} ~{mpc_chr22_file} ~{purcell5k} ~{cpu_cores} ~{memory}
         
         tar -zcvf ~{cohort_prefix}_wes_denovo_annot.mt.gz ~{cohort_prefix}_wes_denovo_annot.mt

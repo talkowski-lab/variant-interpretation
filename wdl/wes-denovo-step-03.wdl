@@ -15,7 +15,6 @@ workflow step3 {
         File filtered_mt
         File loeuf_file
         String cohort_prefix
-        String bucket_id
         String hail_denovo_filtering_script
         String hail_docker
     }

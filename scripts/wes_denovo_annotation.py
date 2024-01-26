@@ -4,14 +4,13 @@ import sys
 
 vcf_file = sys.argv[1]
 cohort_prefix = sys.argv[2]
-bucket_id = sys.argv[3]
-corrected_ped = sys.argv[4]
-gnomad_ht_uri = sys.argv[5]
-mpc_dir = sys.argv[6]
-mpc_chr22_file = sys.argv[7]
-purcell5k = sys.argv[8]
-cores = sys.argv[9]
-mem = int(np.floor(float(sys.argv[10])))
+corrected_ped = sys.argv[3]
+gnomad_ht_uri = sys.argv[4]
+mpc_dir = sys.argv[5]
+mpc_chr22_file = sys.argv[6]
+purcell5k = sys.argv[7]
+cores = sys.argv[8]
+mem = int(np.floor(float(sys.argv[9])))
 
 hl.init(min_block_size=128, spark_conf={"spark.executor.cores": cores, 
                     "spark.executor.memory": f"{mem}g",

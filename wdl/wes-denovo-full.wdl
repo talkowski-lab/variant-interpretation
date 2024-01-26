@@ -19,8 +19,8 @@ workflow hailDenovoWES {
         File corrected_ped
         File purcell5k
         File mpc_chr22_file
+        File loeuf_file
         String mpc_dir
-        String bucket_id
         String gnomad_ht_uri
         String cohort_prefix
         String hail_annotation_script
@@ -37,7 +37,6 @@ workflow hailDenovoWES {
             mpc_chr22_file=mpc_chr22_file,
             mpc_dir=mpc_dir,
             gnomad_ht_uri=gnomad_ht_uri,
-            bucket_id=bucket_id,
             cohort_prefix=cohort_prefix,
             hail_annotation_script=hail_annotation_script,
             hail_docker=hail_docker
@@ -48,7 +47,6 @@ workflow hailDenovoWES {
             annot_mt=step1.annot_mt,
             corrected_ped=corrected_ped,
             cohort_prefix=cohort_prefix,
-            bucket_id=bucket_id,
             hail_basic_filtering_script=hail_basic_filtering_script,
             hail_docker=hail_docker
     }
@@ -58,7 +56,7 @@ workflow hailDenovoWES {
             filtered_mt=step2.filtered_mt,
             corrected_ped=corrected_ped,
             cohort_prefix=cohort_prefix,
-            bucket_id=bucket_id,
+            loeuf_file=loeuf_file,
             hail_denovo_filtering_script=hail_denovo_filtering_script,
             hail_docker=hail_docker
 
