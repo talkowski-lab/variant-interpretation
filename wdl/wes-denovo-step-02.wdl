@@ -12,7 +12,7 @@ struct RuntimeAttr {
 workflow step2 {
     input {
         File corrected_ped
-        String annot_mt
+        File annot_mt
         String cohort_prefix
         String bucket_id
         String hail_basic_filtering_script
@@ -38,7 +38,7 @@ workflow step2 {
 task hailBasicFiltering {
     input {
         File corrected_ped
-        String annot_mt
+        File annot_mt
         String cohort_prefix
         String bucket_id
         String hail_basic_filtering_script

@@ -12,7 +12,7 @@ struct RuntimeAttr {
 workflow step2 {
     input {
         File corrected_ped
-        String filtered_mt
+        File filtered_mt
         String cohort_prefix
         String bucket_id
         String hail_denovo_filtering_script
@@ -41,7 +41,7 @@ workflow step2 {
 task hailDenovoFiltering {
     input {
         File corrected_ped
-        String filtered_mt
+        File filtered_mt
         String cohort_prefix
         String bucket_id
         String hail_denovo_filtering_script
