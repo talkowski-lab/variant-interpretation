@@ -9,7 +9,7 @@ struct RuntimeAttr {
     Int? max_retries
 }
 
-workflow step1 {
+workflow hailDenovoWES {
     input {
         File vcf_file
         File corrected_ped
