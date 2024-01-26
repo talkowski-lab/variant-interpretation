@@ -318,7 +318,7 @@ de_novo_results = kyles_de_novo_v16(mt, pedigree, pop_frequency_prior = mt.gnoma
 # TODO: output (all below)
 de_novo_results.flatten().export(f"{cohort_prefix}_wes_final_denovo.txt")
 
-de_novo_results.write(f"{bucket_id}/hail/{cohort_prefix}_wes_final_denovo.ht", overwrite = True)
+de_novo_results.write(f"{cohort_prefix}_wes_final_denovo.ht", overwrite = True)
 
 mt = mt.semi_join_rows(de_novo_results.key_by('locus', 'alleles'))
 
@@ -338,7 +338,7 @@ td = hl.trio_matrix(mt, pedigree, complete_trios = True)
 
 # TODO: output?
 # Write trio dataset
-td.write(f"{bucket_id}/hail/{cohort_prefix}_trio_tdt.mt", overwrite=True)
+td.write(f"{cohort_prefix}_trio_tdt.mt", overwrite=True)
 
 # Parent-aware TDT annotations, plus extras for use in genotype counts
 #
@@ -411,7 +411,7 @@ td = parent_aware_t_u_annotations_v3(td)
 
 # TODO: output?
 # Write these results to check against built-in TDT function
-td.write(f"{bucket_id}/hail/{cohort_prefix}_parent_aware_trio_tdt.mt", overwrite = True)
+td.write(f"{cohort_prefix}_parent_aware_trio_tdt.mt", overwrite = True)
 
 
 # TODO: idk the point of the below code...

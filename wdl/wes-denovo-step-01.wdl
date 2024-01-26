@@ -91,12 +91,16 @@ task hailAnnotate {
         curl ~{hail_annotation_script} > hail_annotation_script.py
         python3 hail_annotation_script.py ~{vcf_file} ~{cohort_prefix} ~{bucket_id} ~{corrected_ped} \
         ~{gnomad_ht_uri} ~{mpc_dir} ~{mpc_chr22_file} ~{purcell5k} ~{cpu_cores} ~{memory}
+        
+        tar -zcvf ~{cohort_prefix}_wes_denovo_annot.mt.gz ~{cohort_prefix}_wes_denovo_annot.mt
+        tar -zcvf ~{cohort_prefix}_wes_pca_score_table_5k.ht.gz ~{cohort_prefix}_wes_pca_score_table_5k.ht
+        tar -zcvf ~{cohort_prefix}_wes_pca_loading_table_5k.ht.gz ~{cohort_prefix}_wes_pca_loading_table_5k.ht
     }
 
     output {
-        String annot_mt = "~{bucket_id}/hail/~{cohort_prefix}_wes_denovo_annot.mt"
+        File annot_mt = "~{cohort_prefix}_wes_denovo_annot.mt.gz"
         File sample_qc_info = "~{cohort_prefix}_wes_post_annot_sample_QC_info.txt"
-        String pca_score_table_5k = "~{bucket_id}/hail/~{cohort_prefix}_wes_pca_score_table_5k.ht"
-        String pca_loading_table_5k = "~{bucket_id}/hail/~{cohort_prefix}_wes_pca_loading_table_5k.ht"
+        File pca_score_table_5k = "~{cohort_prefix}_wes_pca_score_table_5k.ht.gz"
+        File pca_loading_table_5k = "~{cohort_prefix}_wes_pca_loading_table_5k.ht.gz"
     }
 }

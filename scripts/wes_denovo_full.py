@@ -71,8 +71,8 @@ mt5k = mt.filter_rows(hl.is_defined(p5k[mt.locus]), keep = True)
 eigenvalues_5k, score_table_5k, loading_table_5k = hl.hwe_normalized_pca(mt5k.GT, k=20, compute_loadings=True)
 
 ## also export unfiltered PCA results as mts
-score_table_5k.write(f"{bucket_id}/hail/{cohort_prefix}_wes_pca_score_table_5k.ht", overwrite = True)
-loading_table_5k.write(f"{bucket_id}/hail/{cohort_prefix}_wes_pca_loading_table_5k.ht", overwrite = True)
+score_table_5k.write(f"{cohort_prefix}_wes_pca_score_table_5k.ht", overwrite = True)
+loading_table_5k.write(f"{cohort_prefix}_wes_pca_loading_table_5k.ht", overwrite = True)
 
 
 # Step 2: Filtering
@@ -539,7 +539,7 @@ de_novo_results = kyles_de_novo_v16(mt, pedigree, pop_frequency_prior = mt.gnoma
 # TODO: output (all below)
 de_novo_results.flatten().export(f"{cohort_prefix}_wes_final_denovo.txt")
 
-de_novo_results.write(f"{bucket_id}/hail/{cohort_prefix}_wes_final_denovo.ht", overwrite = True)
+de_novo_results.write(f"{cohort_prefix}_wes_final_denovo.ht", overwrite = True)
 
 mt = mt.semi_join_rows(de_novo_results.key_by('locus', 'alleles'))
 
@@ -559,7 +559,7 @@ td = hl.trio_matrix(mt, pedigree, complete_trios = True)
 
 # TODO: output?
 # Write trio dataset
-td.write(f"{bucket_id}/hail/{cohort_prefix}_trio_tdt.mt", overwrite=True)
+td.write(f"{cohort_prefix}_trio_tdt.mt", overwrite=True)
 
 # Parent-aware TDT annotations, plus extras for use in genotype counts
 #
@@ -632,7 +632,7 @@ td = parent_aware_t_u_annotations_v3(td)
 
 # TODO: output?
 # Write these results to check against built-in TDT function
-td.write(f"{bucket_id}/hail/{cohort_prefix}_parent_aware_trio_tdt.mt", overwrite = True)
+td.write(f"{cohort_prefix}_parent_aware_trio_tdt.mt", overwrite = True)
 
 
 # TODO: idk the point of the below code...

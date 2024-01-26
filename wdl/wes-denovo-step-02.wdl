@@ -74,13 +74,17 @@ task hailBasicFiltering {
     }
 
     command {
+        tar -zxvf ~{annot_mt}
+
         curl ~{hail_basic_filtering_script} > hail_basic_filtering_script.py
-        python3 hail_basic_filtering_script.py ~{annot_mt} ~{cohort_prefix} ~{corrected_ped} ~{bucket_id} \
+        python3 hail_basic_filtering_script.py ~{sub(annot_mt, '.gz', '')} ~{cohort_prefix} ~{corrected_ped} ~{bucket_id} \
         ~{cpu_cores} ~{memory}
+
+        tar -zcvf ~{cohort_prefix}_wes_denovo_basic_filtering.mt.gz ~{cohort_prefix}_wes_denovo_basic_filtering.mt
     }
 
     output {
-        String filtered_mt = "~{bucket_id}/hail/~{cohort_prefix}_wes_denovo_basic_filtering.mt"
+        File filtered_mt = "~{cohort_prefix}_wes_denovo_basic_filtering.mt.gz"
         File post_filter_sample_qc_info = "~{cohort_prefix}_wes_final_annot_post_filter_qc_info.txt"
     }
 }

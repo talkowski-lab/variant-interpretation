@@ -44,11 +44,23 @@ loeuf.index = loeuf.gene_name
 df = mt.to_pandas()
 df.index = df.VarKey
 
-df['gene_name'] = df.CSQ.str.split(',').str[0].str.split('|').str[3].replace({'': np.nan})
-loeuf_vals = loeuf.loc[np.intersect1d(loeuf.index,df.gene_name.dropna()), 'LOEUF'].to_dict()
-loeuf_tile_vals = loeuf.loc[np.intersect1d(loeuf.index,df.gene_name.dropna()), 'LOEUF_tile'].to_dict()
-df['LOEUF'] = df.gene_name.map(loeuf_vals)
-df['LOEUF_tile'] = df.gene_name.map(loeuf_tile_vals)
+def get_genes_csq(csq):
+    genes = []
+    for ind_csq in csq:
+        gene = ind_csq.split('|')[csq_columns.index('SYMBOL')]
+        if gene!='':
+            genes.append(gene)
+    return list(set(genes))
+
+df['all_genes'] = df.CSQ.str.split(',').apply(get_genes_csq)
+
+all_genes = df.all_genes.apply(pd.Series).stack().unique()
+
+loeuf_vals = loeuf.loc[np.intersect1d(loeuf.index, all_genes), 'LOEUF'].to_dict()
+loeuf_tile_vals = loeuf.loc[np.intersect1d(loeuf.index, all_genes), 'LOEUF_tile'].to_dict()
+
+df['LOEUF'] = df.all_genes.apply(lambda gene_list: pd.Series(gene_list).map(loeuf_vals).min())
+df['LOEUF_tile'] = df.all_genes.apply(lambda gene_list: pd.Series(gene_list).map(loeuf_tile_vals).min())
 
 new_filename = os.path.basename(vcf_metrics_tsv).split('.tsv')[0] + '_with_mpc_loeuf.tsv'
 df.to_csv(new_filename, sep='\t')

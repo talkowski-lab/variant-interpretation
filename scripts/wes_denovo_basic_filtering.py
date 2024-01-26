@@ -180,4 +180,4 @@ mt = sex_aware_sample_annotations(mt)
 hl.sample_qc(mt).cols().flatten().export(f"{cohort_prefix}_wes_final_annot_post_filter_qc_info.txt")
 
 # export mt
-mt.write(f"{bucket_id}/hail/{cohort_prefix}_wes_denovo_basic_filtering.mt", overwrite=True)
+mt.write(f"{cohort_prefix}_wes_denovo_basic_filtering.mt", overwrite=True)

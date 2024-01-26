@@ -99,20 +99,27 @@ task hailDenovoWES {
         curl ~{hail_wes_denovo_full_script} > hail_wes_denovo_full_script.py
         python3 hail_wes_denovo_full_script.py ~{vcf_file} ~{cohort_prefix} ~{bucket_id} ~{corrected_ped} \
         ~{gnomad_ht_uri} ~{mpc_dir} ~{mpc_chr22_file} ~{purcell5k} ~{cpu_cores} ~{memory}
+
+        tar -zcvf ~{cohort_prefix}_wes_pca_score_table_5k.ht.gz ~{cohort_prefix}_wes_pca_score_table_5k.ht
+        tar -zcvf ~{cohort_prefix}_wes_pca_loading_table_5k.ht.gz ~{cohort_prefix}_wes_pca_loading_table_5k.ht
+
+        tar -zcvf ~{cohort_prefix}_wes_final_denovo.ht.gz ~{cohort_prefix}_wes_final_denovo.ht
+        tar -zcvf ~{cohort_prefix}_trio_tdt.mt.gz ~{cohort_prefix}_trio_tdt.mt
+        tar -zcvf ~{cohort_prefix}_parent_aware_trio_tdt.mt.gz ~{cohort_prefix}_parent_aware_trio_tdt.mt
     }
 
     output {
         # step 1 output
         File sample_qc_info = "~{cohort_prefix}_wes_post_annot_sample_QC_info.txt"
-        String pca_score_table_5k = "~{bucket_id}/hail/~{cohort_prefix}_wes_pca_score_table_5k.ht"
-        String pca_loading_table_5k = "~{bucket_id}/hail/~{cohort_prefix}_wes_pca_loading_table_5k.ht"
+        File pca_score_table_5k = "~{cohort_prefix}_wes_pca_score_table_5k.ht.gz"
+        File pca_loading_table_5k = "~{cohort_prefix}_wes_pca_loading_table_5k.ht.gz"
         # step 2 output
         File post_filter_sample_qc_info = "~{cohort_prefix}_wes_final_annot_post_filter_qc_info.txt"
         # step 3 output
         File de_novo_results = "~{cohort_prefix}_wes_final_denovo.txt"
         File de_novo_vep = "~{cohort_prefix}_wes_final_denovo_vep.txt"
-        String de_novo_ht = "~{cohort_prefix}_wes_final_denovo.ht"
-        String tdt_mt = "~{bucket_id}/hail/~{cohort_prefix}_trio_tdt.mt"
-        String tdt_parent_aware_mt = "~{bucket_id}/hail/~{cohort_prefix}_parent_aware_trio_tdt.mt"
+        File de_novo_ht = "~{cohort_prefix}_wes_final_denovo.ht.gz"
+        File tdt_mt = "~{cohort_prefix}_trio_tdt.mt.gz"
+        File tdt_parent_aware_mt = "~{cohort_prefix}_parent_aware_trio_tdt.mt.gz"
     }
 }
