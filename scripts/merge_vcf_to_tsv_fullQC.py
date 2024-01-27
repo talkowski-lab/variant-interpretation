@@ -157,18 +157,18 @@ def parse_trio_vcf(vcf_path: str, sample_info: dict, sampleID: str, abnd_colname
     format_heads = vcf_df['FORMAT'].to_numpy()
     format_child_dict = list(map(parse_format_str, format_heads, vcf_df[sampleID].to_numpy()))
     format_child_df = pd.DataFrame(format_child_dict)
-    format_child_df = format_child_df[format_return_columns].add_suffix('_sample')
+    format_child_df = format_child_df.reindex(columns=format_return_columns).add_suffix('_sample')
     # father format columns
     format_return_columns = ['GT','AB','AD','DP','GQ','VAF']
     format_heads = vcf_df['FORMAT'].to_numpy()
     format_father_dict = list(map(parse_format_str, format_heads, vcf_df[fatherID].to_numpy()))
     format_father_df = pd.DataFrame(format_father_dict)
-    format_father_df = format_father_df[format_return_columns].add_suffix('_father')
+    format_father_df = format_father_df.reindex(columns=format_return_columns).add_suffix('_father')
     # mother format columns
     format_heads = vcf_df['FORMAT'].to_numpy()
     format_mother_dict = list(map(parse_format_str, format_heads, vcf_df[motherID].to_numpy()))
     format_mother_df = pd.DataFrame(format_mother_dict)
-    format_mother_df = format_mother_df[format_return_columns].add_suffix('_mother')
+    format_mother_df = format_mother_df.reindex(columns=format_return_columns).add_suffix('_mother')
     format_df = pd.concat([format_child_df, format_father_df, format_mother_df], axis='columns')
     format_df['GQ_mean'] = format_df[['GQ_father','GQ_mother','GQ_sample']].astype('int64').mean(axis='columns')
 
