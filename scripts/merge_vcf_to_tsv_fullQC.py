@@ -211,7 +211,10 @@ def parse_format_str(format_head: str, format_str: str) -> dict:
         if format_columns[index] == 'AB':
             continue
         if format_columns[index] == 'AD':
-            format_dict['AB'] = float(value.split(',')[1]) / (float(value.split(',')[0]) + float(value.split(',')[1]))
+            try:
+                format_dict['AB'] = float(value.split(',')[1]) / (float(value.split(',')[0]) + float(value.split(',')[1]))
+            except:
+                format_dict['AB'] = np.nan
         format_dict[format_columns[index]] = value
     
     return format_dict
