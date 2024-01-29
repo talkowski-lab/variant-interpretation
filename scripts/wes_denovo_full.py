@@ -5,7 +5,7 @@ import sys
 vcf_file = sys.argv[1]
 cohort_prefix = sys.argv[2]
 bucket_id = sys.argv[3]
-corrected_ped = sys.argv[4]
+ped_uri = sys.argv[4]
 gnomad_ht_uri = sys.argv[5]
 mpc_dir = sys.argv[6]
 mpc_chr22_file = sys.argv[7]
@@ -24,8 +24,8 @@ mt = hl.import_vcf(vcf_file, reference_genome = 'GRCh38', force_bgz=True)
 # Step 1: Annotations
 
 ## Filter out discrepant samples from Somalier
-corrected_pedigree = hl.import_table(corrected_ped, impute=True).key_by('sample_id')
-mt = mt.filter_cols(hl.is_defined(corrected_pedigree[mt.s]))
+ped = hl.import_table(ped_uri, impute=True).key_by('sample_id')
+mt = mt.filter_cols(hl.is_defined(ped[mt.s]))
 
 ## gnomAD exome frequency annotations
 gnomad_ht = hl.read_table(gnomad_ht_uri)
@@ -113,7 +113,7 @@ mt = mt.drop('variant_qc')
 # - Any autosomal or PAR call in a male with depth less than 10
 # - Het calls in males in hemizygous regions
 
-ped = hl.import_table(corrected_ped, impute=True)
+ped = hl.import_table(ped_uri, impute=True)
 
 original_cols = list(ped.row.keys())
 new_cols = ['family_id', 'sample_id', 'paternal_id', 'maternal_id', 'sex', 'phenotype']
@@ -275,7 +275,7 @@ from hail.table import Table
 from hail.typecheck import typecheck, numeric
 from hail.methods.misc import require_biallelic
 
-pedigree = hl.Pedigree.read(corrected_ped)
+pedigree = hl.Pedigree.read(ped_uri)
 
 #de novo calling script by kyle, version 16
 

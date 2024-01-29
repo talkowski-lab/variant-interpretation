@@ -4,7 +4,7 @@ import sys
 
 vcf_file = sys.argv[1]
 cohort_prefix = sys.argv[2]
-corrected_ped = sys.argv[3]
+ped_uri = sys.argv[3]
 gnomad_ht_uri = sys.argv[4]
 mpc_dir = sys.argv[5]
 mpc_chr22_file = sys.argv[6]
@@ -23,8 +23,8 @@ mt = hl.import_vcf(vcf_file, reference_genome = 'GRCh38', force_bgz=True)
 # Step 1: Annotations
 
 ## Filter out discrepant samples from Somalier
-corrected_pedigree = hl.import_table(corrected_ped, impute=True).key_by('sample_id')
-mt = mt.filter_cols(hl.is_defined(corrected_pedigree[mt.s]))
+ped = hl.import_table(ped_uri, impute=True).key_by('sample_id')
+mt = mt.filter_cols(hl.is_defined(ped[mt.s]))
 
 ## gnomAD exome frequency annotations
 gnomad_ht = hl.read_table(gnomad_ht_uri)

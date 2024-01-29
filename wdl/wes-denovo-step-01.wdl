@@ -12,7 +12,7 @@ struct RuntimeAttr {
 workflow step1 {
     input {
         File vcf_file
-        File corrected_ped
+        File ped_uri
         File purcell5k
         File mpc_chr22_file
         String mpc_dir
@@ -25,7 +25,7 @@ workflow step1 {
     call hailAnnotate {
         input:
             vcf_file=vcf_file,
-            corrected_ped=corrected_ped,
+            ped_uri=ped_uri,
             purcell5k=purcell5k,
             mpc_chr22_file=mpc_chr22_file,
             mpc_dir=mpc_dir,
@@ -46,7 +46,7 @@ workflow step1 {
 task hailAnnotate {
     input {
         File vcf_file
-        File corrected_ped
+        File ped_uri
         File purcell5k
         File mpc_chr22_file
         String mpc_dir
@@ -86,7 +86,7 @@ task hailAnnotate {
 
     command {
         curl ~{hail_annotation_script} > hail_annotation_script.py
-        python3 hail_annotation_script.py ~{vcf_file} ~{cohort_prefix} ~{corrected_ped} \
+        python3 hail_annotation_script.py ~{vcf_file} ~{cohort_prefix} ~{ped_uri} \
         ~{gnomad_ht_uri} ~{mpc_dir} ~{mpc_chr22_file} ~{purcell5k} ~{cpu_cores} ~{memory}
         
         tar -zcvf ~{cohort_prefix}_wes_denovo_annot.mt.gz ~{cohort_prefix}_wes_denovo_annot.mt

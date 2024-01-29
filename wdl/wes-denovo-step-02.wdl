@@ -11,7 +11,7 @@ struct RuntimeAttr {
 
 workflow step2 {
     input {
-        File corrected_ped
+        File ped_uri
         File annot_mt
         String cohort_prefix
         String hail_basic_filtering_script
@@ -21,7 +21,7 @@ workflow step2 {
     call hailBasicFiltering {
         input:
             annot_mt=annot_mt,
-            corrected_ped=corrected_ped,
+            ped_uri=ped_uri,
             cohort_prefix=cohort_prefix,
             hail_basic_filtering_script=hail_basic_filtering_script,
             hail_docker=hail_docker
@@ -35,14 +35,14 @@ workflow step2 {
 
 task hailBasicFiltering {
     input {
-        File corrected_ped
+        File ped_uri
         File annot_mt
         String cohort_prefix
         String hail_basic_filtering_script
         String hail_docker
         RuntimeAttr? runtime_attr_override
     }
-    Float input_size = size(corrected_ped, "GB")
+    Float input_size = size(ped_uri, "GB")
     Float base_disk_gb = 10.0
     Float input_disk_scale = 5.0
 
@@ -74,7 +74,7 @@ task hailBasicFiltering {
         tar -zxvf ~{annot_mt}
 
         curl ~{hail_basic_filtering_script} > hail_basic_filtering_script.py
-        python3 hail_basic_filtering_script.py ~{basename(annot_mt, '.gz')} ~{cohort_prefix} ~{corrected_ped} \
+        python3 hail_basic_filtering_script.py ~{basename(annot_mt, '.gz')} ~{cohort_prefix} ~{ped_uri} \
         ~{cpu_cores} ~{memory}
 
         tar -zcvf ~{cohort_prefix}_wes_denovo_basic_filtering.mt.gz ~{cohort_prefix}_wes_denovo_basic_filtering.mt

@@ -11,7 +11,7 @@ struct RuntimeAttr {
 
 workflow step3 {
     input {
-        File corrected_ped
+        File ped_uri
         File filtered_mt
         File loeuf_file
         String cohort_prefix
@@ -22,7 +22,7 @@ workflow step3 {
     call hailDenovoFiltering {
         input:
             filtered_mt=filtered_mt,
-            corrected_ped=corrected_ped,
+            ped_uri=ped_uri,
             cohort_prefix=cohort_prefix,
             loeuf_file=loeuf_file,
             hail_denovo_filtering_script=hail_denovo_filtering_script,
@@ -40,7 +40,7 @@ workflow step3 {
 
 task hailDenovoFiltering {
     input {
-        File corrected_ped
+        File ped_uri
         File filtered_mt
         String cohort_prefix
         String loeuf_file
@@ -48,7 +48,7 @@ task hailDenovoFiltering {
         String hail_docker
         RuntimeAttr? runtime_attr_override
     }
-    Float input_size = size(corrected_ped, "GB")
+    Float input_size = size(ped_uri, "GB")
     Float base_disk_gb = 10.0
     Float input_disk_scale = 5.0
 
@@ -80,7 +80,7 @@ task hailDenovoFiltering {
         tar -zxvf ~{filtered_mt}
 
         curl ~{hail_denovo_filtering_script} > hail_denovo_filtering_script.py
-        python3 hail_denovo_filtering_script.py ~{basename(filtered_mt, '.gz')} ~{cohort_prefix} ~{corrected_ped} ~{loeuf_file} \
+        python3 hail_denovo_filtering_script.py ~{basename(filtered_mt, '.gz')} ~{cohort_prefix} ~{ped_uri} ~{loeuf_file} \
         ~{cpu_cores} ~{memory}
 
         tar -zcvf ~{cohort_prefix}_wes_final_denovo.ht.gz ~{cohort_prefix}_wes_final_denovo.ht

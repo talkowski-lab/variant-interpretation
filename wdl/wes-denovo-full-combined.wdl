@@ -12,7 +12,7 @@ struct RuntimeAttr {
 workflow hailDenovoWESCombined {
     input {
         File vcf_file
-        File corrected_ped
+        File ped_uri
         File purcell5k
         File mpc_chr22_file
         String mpc_dir
@@ -26,7 +26,7 @@ workflow hailDenovoWESCombined {
     call hailDenovoWES {
         input:
             vcf_file=vcf_file,
-            corrected_ped=corrected_ped,
+            ped_uri=ped_uri,
             purcell5k=purcell5k,
             mpc_chr22_file=mpc_chr22_file,
             mpc_dir=mpc_dir,
@@ -56,7 +56,7 @@ workflow hailDenovoWESCombined {
 task hailDenovoWES {
     input {
         File vcf_file
-        File corrected_ped
+        File ped_uri
         File purcell5k
         File mpc_chr22_file
         String mpc_dir
@@ -97,7 +97,7 @@ task hailDenovoWES {
 
     command {
         curl ~{hail_wes_denovo_full_script} > hail_wes_denovo_full_script.py
-        python3 hail_wes_denovo_full_script.py ~{vcf_file} ~{cohort_prefix} ~{bucket_id} ~{corrected_ped} \
+        python3 hail_wes_denovo_full_script.py ~{vcf_file} ~{cohort_prefix} ~{bucket_id} ~{ped_uri} \
         ~{gnomad_ht_uri} ~{mpc_dir} ~{mpc_chr22_file} ~{purcell5k} ~{cpu_cores} ~{memory}
 
         tar -zcvf ~{cohort_prefix}_wes_pca_score_table_5k.ht.gz ~{cohort_prefix}_wes_pca_score_table_5k.ht

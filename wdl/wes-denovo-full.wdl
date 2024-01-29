@@ -16,7 +16,7 @@ struct RuntimeAttr {
 workflow hailDenovoWES {
     input {
         File vcf_file
-        File corrected_ped
+        File ped_uri
         File purcell5k
         File mpc_chr22_file
         File loeuf_file
@@ -32,7 +32,7 @@ workflow hailDenovoWES {
     call step1.hailAnnotate as step1 {
         input:
             vcf_file=vcf_file,
-            corrected_ped=corrected_ped,
+            ped_uri=ped_uri,
             purcell5k=purcell5k,
             mpc_chr22_file=mpc_chr22_file,
             mpc_dir=mpc_dir,
@@ -45,7 +45,7 @@ workflow hailDenovoWES {
     call step2.hailBasicFiltering as step2 {
         input:
             annot_mt=step1.annot_mt,
-            corrected_ped=corrected_ped,
+            ped_uri=ped_uri,
             cohort_prefix=cohort_prefix,
             hail_basic_filtering_script=hail_basic_filtering_script,
             hail_docker=hail_docker
@@ -54,7 +54,7 @@ workflow hailDenovoWES {
     call step3.hailDenovoFiltering as step3 {
         input:
             filtered_mt=step2.filtered_mt,
-            corrected_ped=corrected_ped,
+            ped_uri=ped_uri,
             cohort_prefix=cohort_prefix,
             loeuf_file=loeuf_file,
             hail_denovo_filtering_script=hail_denovo_filtering_script,

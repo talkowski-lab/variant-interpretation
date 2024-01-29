@@ -4,7 +4,7 @@ import sys
 
 annot_mt = sys.argv[1]
 cohort_prefix = sys.argv[2]
-corrected_ped = sys.argv[3]
+ped_uri = sys.argv[3]
 cores = sys.argv[4]
 mem = int(np.floor(float(sys.argv[5])))
 
@@ -54,7 +54,7 @@ mt = mt.drop('variant_qc')
 # - Any autosomal or PAR call in a male with depth less than 10
 # - Het calls in males in hemizygous regions
 
-ped = hl.import_table(corrected_ped, impute=True)
+ped = hl.import_table(ped_uri, impute=True)
 
 original_cols = list(ped.row.keys())
 new_cols = ['family_id', 'sample_id', 'paternal_id', 'maternal_id', 'sex', 'phenotype']

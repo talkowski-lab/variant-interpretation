@@ -6,7 +6,7 @@ import sys
 
 filtered_mt = sys.argv[1]
 cohort_prefix = sys.argv[2]
-corrected_ped = sys.argv[3]
+ped_uri = sys.argv[3]
 loeuf_file = sys.argv[4]
 cores = sys.argv[5]
 mem = int(np.floor(float(sys.argv[6])))
@@ -56,7 +56,7 @@ from hail.table import Table
 from hail.typecheck import typecheck, numeric
 from hail.methods.misc import require_biallelic
 
-pedigree = hl.Pedigree.read(corrected_ped)
+pedigree = hl.Pedigree.read(ped_uri)
 
 #de novo calling script by kyle, version 16
 
