@@ -64,7 +64,7 @@ workflow liftoverVCF {
   call mergeVCF{
     input:
       shard_vcf_files = liftover.contig_vcf,
-      shard_vcf_files_rejected = liftover.contig_vcf,
+      shard_vcf_files_rejected = liftover.rejected_file,
       docker_path = docker_bcftools,
       runtime_attr_override = runtime_attr_mergeVCF
     }
