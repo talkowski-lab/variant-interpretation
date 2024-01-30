@@ -15,9 +15,10 @@ workflow filterRareVariantsHail {
         Array[Array[File]]? vep_annotated_final_vcf
         File lcr_uri
         File ped_uri
-        File meta_uri
-        File trio_uri
+        File? meta_uri
+        File? trio_uri
         File info_header
+        String python_trio_sample_script
         String filter_rare_variants_python_script
         String vep_hail_docker
         String sv_base_mini_docker
@@ -33,6 +34,18 @@ workflow filterRareVariantsHail {
         RuntimeAttr? runtime_attr_filter_vcf
         RuntimeAttr? runtime_attr_merge_results
     }  
+
+    if (!defined(meta_uri)) {
+        call makeTrioSampleFiles {
+            input:
+                python_trio_sample_script=python_trio_sample_script,
+                ped_uri=ped_uri,
+                cohort_prefix=cohort_prefix,
+                vep_hail_docker=vep_hail_docker
+        }        
+    }
+    File meta_uri_ = select_first([meta_uri, makeTrioSampleFiles.meta_uri])
+    File trio_uri_ = select_first([trio_uri, makeTrioSampleFiles.trio_uri])
 
     if (defined(vep_annotated_final_vcf)) {
         Array[File] vep_annotated_final_vcf_arr = flatten(select_first([vep_annotated_final_vcf]))
@@ -62,8 +75,8 @@ workflow filterRareVariantsHail {
                     vcf_file=mergeChunk.merged_vcf_file,
                     lcr_uri=lcr_uri,
                     ped_uri=ped_uri,
-                    meta_uri=meta_uri,
-                    trio_uri=trio_uri,
+                    meta_uri=meta_uri_,
+                    trio_uri=trio_uri_,
                     info_header=info_header,
                     filter_rare_variants_python_script=filter_rare_variants_python_script,
                     vep_hail_docker=vep_hail_docker,
@@ -91,8 +104,8 @@ workflow filterRareVariantsHail {
                     vcf_file=vcf_file,
                     lcr_uri=lcr_uri,
                     ped_uri=ped_uri,
-                    meta_uri=meta_uri,
-                    trio_uri=trio_uri,
+                    meta_uri=meta_uri_,
+                    trio_uri=trio_uri_,
                     info_header=info_header,
                     filter_rare_variants_python_script=filter_rare_variants_python_script,
                     vep_hail_docker=vep_hail_docker,
@@ -118,6 +131,30 @@ workflow filterRareVariantsHail {
     output {
         # File hail_log = filterRareVariants.hail_log
         File ultra_rare_variants_tsv = merged_ultra_rare_variants_tsv
+    }
+}
+
+task makeTrioSampleFiles {
+    input {
+        String python_trio_sample_script
+        File ped_uri
+        String cohort_prefix
+        String vep_hail_docker
+    }
+
+    runtime {
+        docker: vep_hail_docker
+    }
+
+    command <<<
+    curl ~{python_trio_sample_script} > python_trio_sample_script.py
+    python3 python_trio_sample_script.py ~{ped_uri} ~{cohort_prefix} 
+    >>>
+    
+    output {
+        File meta_uri = "~{cohort_prefix}_sample_list.txt"
+        File trio_uri = "~{cohort_prefix}_trio_list.txt"
+        File ped_uri_no_header = "~{cohort_prefix}_no_header.ped"
     }
 }
 

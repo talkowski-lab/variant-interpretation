@@ -20,7 +20,6 @@ workflow step1 {
         String hail_docker
         String vep_hail_docker
         String sv_base_mini_docker
-        String bucket_id
         String cohort_prefix
         Int shards_per_chunk=10
         Boolean exclude_info_filters=false
@@ -37,7 +36,6 @@ workflow step1 {
         input:
             python_trio_sample_script=python_trio_sample_script,
             ped_uri=ped_uri,
-            bucket_id=bucket_id,
             cohort_prefix=cohort_prefix,
             hail_docker=hail_docker
     }
@@ -136,7 +134,6 @@ task makeTrioSampleFiles {
     input {
         String python_trio_sample_script
         File ped_uri
-        String bucket_id
         String cohort_prefix
         String hail_docker
     }
@@ -147,13 +144,13 @@ task makeTrioSampleFiles {
 
     command <<<
     curl ~{python_trio_sample_script} > python_trio_sample_script.py
-    python3 python_trio_sample_script.py ~{ped_uri} ~{cohort_prefix} ~{bucket_id}
+    python3 python_trio_sample_script.py ~{ped_uri} ~{cohort_prefix} 
     >>>
     
     output {
-        String meta_uri = "~{bucket_id}/resources/metadata/~{cohort_prefix}_sample_list.txt"
-        String trio_uri = "~{bucket_id}/resources/metadata/~{cohort_prefix}_trio_list.txt"
-        String ped_uri_no_header = bucket_id + "/resources/pedigrees/" + cohort_prefix + "_no_header.ped"
+        File meta_uri = "~{cohort_prefix}_sample_list.txt"
+        File trio_uri = "~{cohort_prefix}_trio_list.txt"
+        String ped_uri_no_header = "~{cohort_prefix}_no_header.ped"
     }
 }
 
