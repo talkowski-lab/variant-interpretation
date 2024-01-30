@@ -12,6 +12,7 @@ cohort_arr=( $( awk -F"\t" -v col=$trio_denovo_vcf_col_num '{if ($col!="") print
 cohort_n=0
 for cohort in ${cohort_arr[@]};
 do
+    echo 'cohort: '$cohort
     export GCS_OAUTH_TOKEN=$(gcloud auth application-default print-access-token)
     if (( $cohort_n > ${#trio_denovo_vcf_arr[@]})); then
         break
