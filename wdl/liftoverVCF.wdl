@@ -199,6 +199,8 @@ task mergeVCF {
   }
 
   command <<<
+    set -euo pipefail
+
     bcftools concat -n -a ${sep=" " shard_vcf_files} -O z -o merged_lov.vcf.gz
     bcftools concat -n -a ${sep=" " shard_vcf_files_rejected} -O z -o rejected.vcf.gz
     
