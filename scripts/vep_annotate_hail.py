@@ -31,7 +31,7 @@ def split_multi_ssc(mt):
     return mt
 
 header = hl.get_vcf_metadata(vcf_file) 
-mt = hl.import_vcf(vcf_file, force_bgz=True, reference_genome='GRCh38')
+mt = hl.import_vcf(vcf_file, force_bgz=True, array_elements_required=False, reference_genome='GRCh38')
 mt = split_multi_ssc(mt)
 # annotate cohort ac to INFO field (after splitting multiallelic)
 mt = mt.annotate_rows(info=mt.info.annotate(cohort_AC=mt.info.AC[mt.a_index - 1],
