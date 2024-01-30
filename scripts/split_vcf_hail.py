@@ -14,7 +14,7 @@ hl.init(min_block_size=128, spark_conf={"spark.executor.cores": cores,
                     "spark.driver.memory": f"{mem}g"
                     }, tmp_dir="tmp", local_tmpdir="tmp")
 
-mt = hl.import_vcf(vcf_file, force_bgz=True, reference_genome='GRCh38')
+mt = hl.import_vcf(vcf_file, force_bgz=True, array_elements_required=False, reference_genome='GRCh38')
 header = hl.get_vcf_metadata(vcf_file) 
 
 # for haploid (e.g. chrY)
