@@ -28,7 +28,7 @@ do
     vcf_list=$(gsutil -m ls $parent_path | grep -v cromwell_glob_control_file | sort -u)
     for vcf_file in $vcf_list;
         do
-            num_vars_arr+=( $( bcftools view -H $vcf_file | wc -l ) )
+            num_vars_arr+=( $( gsutil cat $vcf_file | bcftools view -H | wc -l ) )
         done
     num_vars=$( IFS=$'\n'; echo "${num_vars_arr[*]}" )
     paste <(echo "$vcf_list") <(echo "$num_vars") > num_vars_cohorts/"$cohort"_split_trio_num_vars.tsv
