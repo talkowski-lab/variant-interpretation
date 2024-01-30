@@ -192,18 +192,24 @@ task mergeVCF {
   RuntimeAttr runtime_attr = select_first([runtime_attr_override, default_attr])
 
   output {
-    File output_vcf = "merged_lov.vcf.gz"
-    File output_vcf_index = "merged_lov.vcf.gz.tbi"
-    File output_rejected = "rejected.vcf.gz"
-    File output_rejected_index = "rejected.vcf.gz"
+    File output_vcf = "sorted_merged_lov.vcf.gz"
+    File output_vcf_index = "sorted_merged_lov.vcf.gz.tbi"
+    File output_rejected = "sorted_rejected.vcf.gz"
+    File output_rejected_index = "sorted_rejected.vcf.gz"
   }
 
-  command {
-    bcftools concat ${sep=" " shard_vcf_files} -O z -o merged_lov.vcf.gz
-    bcftools concat ${sep=" " shard_vcf_files_rejected} -O z -o rejected.vcf.gz
-    tabix -p vcf merged_lov.vcf.gz
-    tabix -p vcf rejected.vcf.gz
-  }
+  command <<<
+    bcftools concat -n -a ${sep=" " shard_vcf_files} -O z -o merged_lov.vcf.gz
+    bcftools concat -n -a ${sep=" " shard_vcf_files_rejected} -O z -o rejected.vcf.gz
+    
+    cat  merged_lov.vcf.gz | zcat | awk '$1 ~ /^#/ {print $0;next} {print $0 | "sort -k1,1V -k2,2n"}' > sorted_merged_lov.vcf
+    bgzip sorted_merged_lov.vcf
+    cat  rejected.vcf.gz | zcat | awk '$1 ~ /^#/ {print $0;next} {print $0 | "sort -k1,1V -k2,2n"}' > sorted_rejected.vcf
+    bgzip sorted_rejected.vcf
+
+    tabix -p vcf sorted_merged_lov.vcf.gz
+    tabix -p vcf sorted_rejected.vcf.gz
+  >>>
 
   runtime {
     cpu: select_first([runtime_attr.cpu_cores, default_attr.cpu_cores])
