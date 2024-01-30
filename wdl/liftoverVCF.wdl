@@ -201,8 +201,8 @@ task mergeVCF {
   command <<<
     set -euo pipefail
 
-    bcftools concat -a ${sep=" " shard_vcf_files} -O z -o merged_lov.vcf.gz
-    bcftools concat -a ${sep=" " shard_vcf_files_rejected} -O z -o rejected.vcf.gz
+    bcftools concat -a ~{sep=" " shard_vcf_files} -O z -o merged_lov.vcf.gz
+    bcftools concat -a ~{sep=" " shard_vcf_files_rejected} -O z -o rejected.vcf.gz
     
     cat  merged_lov.vcf.gz | zcat | awk '$1 ~ /^#/ {print $0;next} {print $0 | "sort -k1,1V -k2,2n"}' > sorted_merged_lov.vcf
     bgzip sorted_merged_lov.vcf
