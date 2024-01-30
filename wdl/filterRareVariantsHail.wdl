@@ -20,6 +20,7 @@ workflow filterRareVariantsHail {
         File info_header
         String python_trio_sample_script
         String filter_rare_variants_python_script
+        String hail_docker
         String vep_hail_docker
         String sv_base_mini_docker
         String cohort_prefix
@@ -41,7 +42,7 @@ workflow filterRareVariantsHail {
                 python_trio_sample_script=python_trio_sample_script,
                 ped_uri=ped_uri,
                 cohort_prefix=cohort_prefix,
-                vep_hail_docker=vep_hail_docker
+                hail_docker=hail_docker
         }        
     }
     File meta_uri_ = select_first([meta_uri, makeTrioSampleFiles.meta_uri])
@@ -139,11 +140,11 @@ task makeTrioSampleFiles {
         String python_trio_sample_script
         File ped_uri
         String cohort_prefix
-        String vep_hail_docker
+        String hail_docker
     }
 
     runtime {
-        docker: vep_hail_docker
+        docker: hail_docker
     }
 
     command <<<
