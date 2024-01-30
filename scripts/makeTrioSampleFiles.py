@@ -1,7 +1,7 @@
 import pandas as pd
 import os
 import sys
-from google.cloud import storage
+# from google.cloud import storage
 
 ped_uri = sys.argv[1]
 cohort_prefix = sys.argv[2]
