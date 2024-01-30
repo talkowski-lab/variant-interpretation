@@ -58,6 +58,7 @@ task getNumVariantsStep03 {
     }
 
     command <<< 
+        set -euo pipefail
         curl ~{num_variants_step03_script} > get_num_variants_step03.sh
         bash get_num_variants_step03.sh ~{cohort_tsv}
     >>>
@@ -79,6 +80,7 @@ task getNumVariantsStep04 {
     }
 
     command <<< 
+        set -euo pipefail
         curl ~{num_variants_step04_script} > get_num_variants_step04.sh
         bash get_num_variants_step04.sh ~{cohort_tsv}
     >>>
@@ -102,6 +104,8 @@ task combineNumVariants {
     }
 
     command <<<
+        set -euo pipefail
+        
         num_vars_step03_dir=$(dirname ~{num_vars_step03[0]})
         num_vars_step04_dir=$(dirname ~{num_vars_step04[0]})
         
@@ -110,6 +114,7 @@ task combineNumVariants {
         mkfifo /tmp/token_fifo
         ( while true ; do curl -H "Metadata-Flavor: Google" http://metadata.google.internal/computeMetadata/v1/instance/service-accounts/default/token > /tmp/token_fifo ; done ) &
         HTS_AUTH_LOCATION=/tmp/token_fifo \
+        curl -sSL https://broad.io/install-gcs-connector | python3.9
         python3.9 get_num_variants.py ~{cohort_tsv} $num_vars_step03_dir $num_vars_step04_dir
     >>>
 
