@@ -200,6 +200,18 @@ task mergeVCF {
 
   command <<<
     set -euo pipefail
+    shard_vcfs=~{write_lines(shard_vcf_files)}
+    shard_vcfs_rejected=~{write_lines(shard_vcf_files_rejected)}
+
+    for vcf in $(cat $shard_vcfs); 
+    do
+      tabix $vcf
+    done
+
+    for vcf in $(cat $shard_vcf_files_rejected); 
+    do
+      tabix $vcf
+    done
 
     bcftools concat -a ~{sep=" " shard_vcf_files} -O z -o merged_lov.vcf.gz
     bcftools concat -a ~{sep=" " shard_vcf_files_rejected} -O z -o rejected.vcf.gz
