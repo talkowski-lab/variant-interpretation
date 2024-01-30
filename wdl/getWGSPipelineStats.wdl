@@ -60,6 +60,7 @@ task getNumVariantsStep03 {
     command <<< 
         set -euo pipefail
         curl ~{num_variants_step03_script} > get_num_variants_step03.sh
+        sed -i 's.bcftools./opt/vep/bcftools/bcftools.g' get_num_variants_step03.sh
         bash get_num_variants_step03.sh ~{cohort_tsv}
     >>>
 
@@ -82,6 +83,7 @@ task getNumVariantsStep04 {
     command <<< 
         set -euo pipefail
         curl ~{num_variants_step04_script} > get_num_variants_step04.sh
+        sed -i 's.bcftools./opt/vep/bcftools/bcftools.g' get_num_variants_step04.sh
         bash get_num_variants_step04.sh ~{cohort_tsv}
     >>>
 
