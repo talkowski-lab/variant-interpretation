@@ -32,17 +32,21 @@ workflow getWGSPipelineStats {
             vep_hail_docker=vep_hail_docker
     }
 
-    call combineNumVariants {
-        input:
-            cohort_tsv=cohort_tsv,
-            num_vars_step03=getNumVariantsStep03.num_vars_step03,
-            num_vars_step04=getNumVariantsStep04.num_vars_step04,
-            num_variants_all_steps_script=num_variants_all_steps_script,
-            vep_hail_docker=vep_hail_docker
-    }
+    # call combineNumVariants {
+    #     input:
+    #         cohort_tsv=cohort_tsv,
+    #         num_vars_step03=getNumVariantsStep03.num_vars_step03,
+    #         num_vars_step04=getNumVariantsStep04.num_vars_step04,
+    #         num_variants_all_steps_script=num_variants_all_steps_script,
+    #         vep_hail_docker=vep_hail_docker
+    # }
 
     output {
-        File cohort_num_variants_wgs = combineNumVariants.cohort_num_variants_wgs
+        String num_vars_step03_dir = sub(getNumVariantsStep03.num_vars_step03[0], 
+            basename(getNumVariantsStep03.num_vars_step03[0]), '')
+        String num_vars_step04_dir = sub(getNumVariantsStep04.num_vars_step04[0], 
+            basename(getNumVariantsStep04.num_vars_step04[0]), '')
+        # File cohort_num_variants_wgs = combineNumVariants.cohort_num_variants_wgs
     }
 }
 
