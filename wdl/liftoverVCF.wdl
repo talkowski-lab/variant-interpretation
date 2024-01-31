@@ -208,7 +208,7 @@ task mergeVCF {
       tabix $vcf
     done
 
-    for vcf in $(cat $shard_vcf_files_rejected); 
+    for vcf in $(cat $shard_vcf_rejected); 
     do
       tabix $vcf
     done
