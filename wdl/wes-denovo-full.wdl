@@ -21,6 +21,7 @@ workflow hailDenovoWES {
         File purcell5k
         File mpc_chr22_file
         File loeuf_file
+        Boolean sort_after_merge=false
         String mpc_dir
         String gnomad_ht_uri
         String cohort_prefix
@@ -37,6 +38,7 @@ workflow hailDenovoWES {
                 vcf_files=select_first([vcf_files]),
                 sv_base_mini_docker=sv_base_mini_docker,
                 cohort_prefix=cohort_prefix,
+                sort_after_merge=sort_after_merge,
                 merge_or_concat='concat'
         }
     }
@@ -99,6 +101,7 @@ task mergeVCFs {
         String sv_base_mini_docker
         String cohort_prefix
         String merge_or_concat 
+        Boolean sort_after_merge
         RuntimeAttr? runtime_attr_override
     }
 
@@ -136,13 +139,17 @@ task mergeVCFs {
         VCFS="~{write_lines(vcf_files)}"
         cat $VCFS | awk -F '/' '{print $NF"\t"$0}' | sort -k1,1V | awk '{print $2}' > vcfs_sorted.list
         bcftools ~{merge_or_concat_new} --no-version -Oz --file-list vcfs_sorted.list --output ~{merged_vcf_name}
-        cat ~{merged_vcf_name} | zcat | awk '$1 ~ /^#/ {print $0;next} {print $0 | "sort -k1,1V -k2,2n"}' > ~{basename(sorted_vcf_name, '.gz')}
-        bgzip ~{basename(sorted_vcf_name, '.gz')}
-        bcftools index -t ~{sorted_vcf_name}
+        if [[ "~{sort_after_merge}" == "true" ]]; then
+            cat ~{merged_vcf_name} | zcat | awk '$1 ~ /^#/ {print $0;next} {print $0 | "sort -k1,1V -k2,2n"}' > ~{basename(sorted_vcf_name, '.gz')}
+            bgzip ~{basename(sorted_vcf_name, '.gz')}
+            bcftools index -t ~{sorted_vcf_name}
+        else
+            bcftools index -t ~{merged_vcf_name}
+        fi
     >>>
 
     output {
-        File merged_vcf_file=sorted_vcf_name
-        File merged_vcf_idx=sorted_vcf_name + ".tbi"
+        File merged_vcf_file=if sort_after_merge then sorted_vcf_name else merged_vcf_name
+        File merged_vcf_idx=if sort_after_merge then sorted_vcf_name else merged_vcf_name + ".tbi"
     }
 }

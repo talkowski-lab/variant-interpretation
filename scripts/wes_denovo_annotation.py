@@ -18,7 +18,7 @@ hl.init(min_block_size=128, spark_conf={"spark.executor.cores": cores,
                     "spark.driver.memory": f"{mem}g"
                     }, tmp_dir="tmp", local_tmpdir="tmp")
 
-mt = hl.import_vcf(vcf_file, reference_genome = 'GRCh38', force_bgz=True)
+mt = hl.import_vcf(vcf_file, reference_genome = 'GRCh38', array_elements_required=False, force_bgz=True)
 
 # Step 1: Annotations
 
