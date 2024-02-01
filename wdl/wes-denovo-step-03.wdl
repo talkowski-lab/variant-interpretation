@@ -48,7 +48,7 @@ task hailDenovoFiltering {
         String hail_docker
         RuntimeAttr? runtime_attr_override
     }
-    Float input_size = size(ped_uri, "GB")
+    Float input_size = size(filtered_mt, "GB")
     Float base_disk_gb = 10.0
     Float input_disk_scale = 5.0
 
