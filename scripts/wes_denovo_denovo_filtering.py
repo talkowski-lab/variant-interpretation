@@ -59,12 +59,10 @@ from hail.methods.misc import require_biallelic
 # check ped number of columns
 tmp_ped = pd.read_csv(ped_uri, sep='\t')
 if len(tmp_ped) > 6:
-    # remove spaces in phenotype column
-    tmp_ped.iloc[:,5] = tmp_ped.iloc[:,5].astype(str).str.replace(' ', '_')
     tmp_ped.iloc[:,:6].to_csv(f"{cohort_prefix}.ped", sep='\t', index=False)
     ped_uri = f"{cohort_prefix}.ped"
 
-pedigree = hl.Pedigree.read(ped_uri)
+pedigree = hl.Pedigree.read(ped_uri, delimiter='\t')
 
 #de novo calling script by kyle, version 16
 

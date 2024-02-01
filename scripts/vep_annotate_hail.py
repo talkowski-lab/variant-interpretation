@@ -17,10 +17,11 @@ hl.init(min_block_size=128, spark_conf={"spark.executor.cores": cores,
 #split-multi
 def split_multi_ssc(mt):
     mt = mt.annotate_rows(num_alleles = mt.alleles.size() ) # Add number of alleles at site before split
-    # Now split
+    # only split variants that aren't already split
     bi = mt.filter_rows(hl.len(mt.alleles) == 2)
     bi = bi.annotate_rows(a_index=1, was_split=False, old_locus=bi.locus, old_alleles=bi.alleles)
     multi = mt.filter_rows(hl.len(mt.alleles) > 2)
+    # Now split
     split = hl.split_multi(multi)
     sm = split.union_rows(bi)
     # sm = hl.split_multi(mt)
