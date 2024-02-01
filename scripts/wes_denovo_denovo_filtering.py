@@ -56,12 +56,19 @@ from hail.table import Table
 from hail.typecheck import typecheck, numeric
 from hail.methods.misc import require_biallelic
 
-# check ped number of columns
 tmp_ped = pd.read_csv(ped_uri, sep='\t')
+# check ped number of columns
 if len(tmp_ped) > 6:
-    tmp_ped.iloc[:,:6].to_csv(f"{cohort_prefix}.ped", sep='\t', index=False)
-    ped_uri = f"{cohort_prefix}.ped"
+    tmp_ped = tmp_ped.iloc[:,:6]
+    
+# subset ped to samples in mt
+samps = mt.s.collect()
+tmp_ped = tmp_ped[tmp_ped.iloc[:,1].isin(samps)]  # sample_id
+tmp_ped = tmp_ped.drop_duplicates('sample_id')    
 
+tmp_ped.to_csv(f"{cohort_prefix}.ped", sep='\t', index=False)
+
+ped_uri = f"{cohort_prefix}.ped"
 pedigree = hl.Pedigree.read(ped_uri, delimiter='\t')
 
 #de novo calling script by kyle, version 16
