@@ -5,9 +5,8 @@ import sys
 
 vcf_file = sys.argv[1]
 vep_annotated_vcf_name = sys.argv[2]
-split_multi = bool(sys.argv[3])
-cores = sys.argv[4]  # string
-mem = int(np.floor(float(sys.argv[5])))
+cores = sys.argv[3]  # string
+mem = int(np.floor(float(sys.argv[4])))
 
 hl.init(min_block_size=128, spark_conf={"spark.executor.cores": cores, 
                     "spark.executor.memory": f"{mem}g",
@@ -19,7 +18,12 @@ hl.init(min_block_size=128, spark_conf={"spark.executor.cores": cores,
 def split_multi_ssc(mt):
     mt = mt.annotate_rows(num_alleles = mt.alleles.size() ) # Add number of alleles at site before split
     # Now split
-    sm = hl.split_multi(mt)
+    bi = mt.filter_rows(hl.len(mt.alleles) == 2)
+    bi = bi.annotate_rows(a_index=1, was_split=False)
+    multi = mt.filter_rows(hl.len(mt.alleles) > 2)
+    split = hl.split_multi(multi)
+    sm = split.union_rows(bi)
+    # sm = hl.split_multi(mt)
     pl = hl.or_missing(hl.is_defined(sm.PL),
                       (hl.range(0, 3).map(lambda i: hl.min(hl.range(0, hl.len(sm.PL))
        .filter(lambda j: hl.downcode(hl.unphased_diploid_gt_index_call(j), sm.a_index) == hl.unphased_diploid_gt_index_call(i))
@@ -33,8 +37,7 @@ def split_multi_ssc(mt):
 
 header = hl.get_vcf_metadata(vcf_file) 
 mt = hl.import_vcf(vcf_file, force_bgz=True, array_elements_required=False, reference_genome='GRCh38')
-if split_multi:
-    mt = split_multi_ssc(mt)
+mt = split_multi_ssc(mt)
 # annotate cohort ac to INFO field (after splitting multiallelic)
 mt = mt.annotate_rows(info=mt.info.annotate(cohort_AC=mt.info.AC[mt.a_index - 1],
                                            cohort_AF=mt.info.AF[mt.a_index - 1]))

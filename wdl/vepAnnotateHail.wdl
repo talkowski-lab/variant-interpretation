@@ -28,7 +28,6 @@ workflow vepAnnotateHail {
         String sv_base_mini_docker
         Boolean split_by_chromosome
         Boolean split_into_shards 
-        Boolean split_multi=true
         Boolean? has_index
         Boolean? localize_vcf
         Int shards_per_chunk=10  # combine pre-sharded VCFs
@@ -150,7 +149,6 @@ workflow vepAnnotateHail {
                     gerp_conservation_scores=gerp_conservation_scores,
                     hg38_vep_cache=hg38_vep_cache,
                     loeuf_data=loeuf_data,
-                    split_multi=split_multi,
                     vep_hail_docker=vep_hail_docker,
                     runtime_attr_override=runtime_attr_vep_annotate
             }
@@ -169,7 +167,6 @@ workflow vepAnnotateHail {
                     gerp_conservation_scores=gerp_conservation_scores,
                     hg38_vep_cache=hg38_vep_cache,
                     loeuf_data=loeuf_data,
-                    split_multi=split_multi,
                     vep_hail_docker=vep_hail_docker,
                     runtime_attr_override=runtime_attr_vep_annotate
             }
@@ -497,7 +494,6 @@ task vepAnnotate {
         File gerp_conservation_scores
         File hg38_vep_cache
         File loeuf_data
-        Boolean split_multi
         String vep_hail_docker
         RuntimeAttr? runtime_attr_override
     }
@@ -561,7 +557,7 @@ task vepAnnotate {
         }' > vep_config.json
 
         curl ~{vep_annotate_hail_python_script} > vep_annotate.py
-        python3.9 vep_annotate.py ~{vcf_file} ~{vep_annotated_vcf_name} ~{split_multi} ~{cpu_cores} ~{memory}
+        python3.9 vep_annotate.py ~{vcf_file} ~{vep_annotated_vcf_name} ~{cpu_cores} ~{memory}
         cp $(ls . | grep hail*.log) hail_log.txt
         /opt/vep/bcftools/bcftools index -t ~{vep_annotated_vcf_name}
     >>>
