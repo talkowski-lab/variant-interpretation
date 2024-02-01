@@ -31,7 +31,6 @@ workflow wgs_denovo_full {
             File info_header
             Array[File]? vep_vcf_files
             Array[Array[File]]? vep_annotated_final_vcf
-            String bucket_id
             String cohort_prefix
             String cohort_id
             String sv_base_mini_docker
@@ -61,7 +60,6 @@ workflow wgs_denovo_full {
             info_header=info_header,
             vep_files=vep_files,
             sv_base_mini_docker=sv_base_mini_docker,
-            bucket_id=bucket_id,
             cohort_prefix=cohort_prefix,
             hail_docker=hail_docker,
             vep_hail_docker=vep_hail_docker,

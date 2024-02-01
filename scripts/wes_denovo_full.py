@@ -24,8 +24,8 @@ mt = hl.import_vcf(vcf_file, reference_genome = 'GRCh38', force_bgz=True)
 # Step 1: Annotations
 
 ## Filter out discrepant samples from Somalier
-ped = hl.import_table(ped_uri, impute=True).key_by('sample_id')
-mt = mt.filter_cols(hl.is_defined(ped[mt.s]))
+# ped = hl.import_table(ped_uri, impute=True).key_by('sample_id')
+# mt = mt.filter_cols(hl.is_defined(ped[mt.s]))
 
 ## gnomAD exome frequency annotations
 gnomad_ht = hl.read_table(gnomad_ht_uri)
