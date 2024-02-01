@@ -210,7 +210,7 @@ task mergeVCF {
     File output_vcf = "sorted_merged_lov.vcf.gz"
     File output_vcf_index = "sorted_merged_lov.vcf.gz.tbi"
     File output_rejected = "sorted_rejected.vcf.gz"
-    File output_rejected_index = "sorted_rejected.vcf.gz"
+    File output_rejected_index = "sorted_rejected.vcf.gz.tbi"
   }
 
   command <<<
