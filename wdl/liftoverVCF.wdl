@@ -180,16 +180,31 @@ task mergeVCF {
     RuntimeAttr? runtime_attr_override
   }
 
-  RuntimeAttr default_attr = object {
-    cpu_cores: 1,
-    mem_gb: 3.75,
-    disk_gb: 10,
-    boot_disk_gb: 10,
-    preemptible_tries: 0,
-    max_retries: 1
-  }
+    Float input_size = size(shard_vcf_files, "GB") + size(shard_vcf_files_rejected, "GB") 
+    Float base_disk_gb = 10.0
+    Float input_disk_scale = 10.0
+    RuntimeAttr runtime_default = object {
+        mem_gb: 8,
+        disk_gb: ceil(base_disk_gb + input_size * input_disk_scale),
+        cpu_cores: 1,
+        preemptible_tries: 3,
+        max_retries: 1,
+        boot_disk_gb: 10
+    }
 
-  RuntimeAttr runtime_attr = select_first([runtime_attr_override, default_attr])
+    RuntimeAttr runtime_override = select_first([runtime_attr_override, runtime_default])
+    Float memory = select_first([runtime_override.mem_gb, runtime_default.mem_gb])
+    Int cpu_cores = select_first([runtime_override.cpu_cores, runtime_default.cpu_cores])
+    
+    runtime {
+        memory: "~{memory} GB"
+        disks: "local-disk ~{select_first([runtime_override.disk_gb, runtime_default.disk_gb])} HDD"
+        cpu: cpu_cores
+        preemptible: select_first([runtime_override.preemptible_tries, runtime_default.preemptible_tries])
+        maxRetries: select_first([runtime_override.max_retries, runtime_default.max_retries])
+        docker: docker_path
+        bootDiskSizeGb: select_first([runtime_override.boot_disk_gb, runtime_default.boot_disk_gb])
+    }
 
   output {
     File output_vcf = "sorted_merged_lov.vcf.gz"
@@ -200,38 +215,26 @@ task mergeVCF {
 
   command <<<
     set -euo pipefail
-    shard_vcfs=~{write_lines(shard_vcf_files)}
-    shard_vcfs_rejected=~{write_lines(shard_vcf_files_rejected)}
+    # shard_vcfs=~{write_lines(shard_vcf_files)}
+    # shard_vcfs_rejected=~{write_lines(shard_vcf_files_rejected)}
 
-    for vcf in $(cat $shard_vcfs); 
-    do
-      tabix $vcf
-    done
+    # for vcf in $(cat $shard_vcfs); 
+    # do
+    #   tabix $vcf
+    # done
 
-    for vcf in $(cat $shard_vcfs_rejected); 
-    do
-      tabix $vcf
-    done
+    # for vcf in $(cat $shard_vcfs_rejected); 
+    # do
+    #   tabix $vcf
+    # done
 
-    bcftools concat -a ~{sep=" " shard_vcf_files} -O z -o merged_lov.vcf.gz
-    bcftools concat -a ~{sep=" " shard_vcf_files_rejected} -O z -o rejected.vcf.gz
+    bcftools concat -n ~{sep=" " shard_vcf_files} -O z -o merged_lov.vcf.gz
+    bcftools concat -n ~{sep=" " shard_vcf_files_rejected} -O z -o rejected.vcf.gz
     
-    cat  merged_lov.vcf.gz | zcat | awk '$1 ~ /^#/ {print $0;next} {print $0 | "sort -k1,1V -k2,2n"}' > sorted_merged_lov.vcf
-    bgzip sorted_merged_lov.vcf
-    cat  rejected.vcf.gz | zcat | awk '$1 ~ /^#/ {print $0;next} {print $0 | "sort -k1,1V -k2,2n"}' > sorted_rejected.vcf
-    bgzip sorted_rejected.vcf
+    bcftools sort -Oz -o sorted_merged_lov.vcf.gz merged_lov.vcf.gz
+    bcftools sort -Oz -o sorted_rejected.vcf.gz rejected.vcf.gz
 
     tabix -p vcf sorted_merged_lov.vcf.gz
     tabix -p vcf sorted_rejected.vcf.gz
   >>>
-
-  runtime {
-    cpu: select_first([runtime_attr.cpu_cores, default_attr.cpu_cores])
-    memory: select_first([runtime_attr.mem_gb, default_attr.mem_gb]) + " GiB"
-    disks: "local-disk " + select_first([runtime_attr.disk_gb, default_attr.disk_gb]) + " HDD"
-    bootDiskSizeGb: select_first([runtime_attr.boot_disk_gb, default_attr.boot_disk_gb])
-    docker: docker_path
-    preemptible: select_first([runtime_attr.preemptible_tries, default_attr.preemptible_tries])
-    maxRetries: select_first([runtime_attr.max_retries, default_attr.max_retries])
-  }
 }
