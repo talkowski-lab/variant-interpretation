@@ -5,8 +5,9 @@ import sys
 
 vcf_file = sys.argv[1]
 vep_annotated_vcf_name = sys.argv[2]
-cores = sys.argv[3]  # string
-mem = int(np.floor(float(sys.argv[4])))
+split_multi = bool(sys.argv[3])
+cores = sys.argv[4]  # string
+mem = int(np.floor(float(sys.argv[5])))
 
 hl.init(min_block_size=128, spark_conf={"spark.executor.cores": cores, 
                     "spark.executor.memory": f"{mem}g",
@@ -32,7 +33,8 @@ def split_multi_ssc(mt):
 
 header = hl.get_vcf_metadata(vcf_file) 
 mt = hl.import_vcf(vcf_file, force_bgz=True, array_elements_required=False, reference_genome='GRCh38')
-mt = split_multi_ssc(mt)
+if split_multi:
+    mt = split_multi_ssc(mt)
 # annotate cohort ac to INFO field (after splitting multiallelic)
 mt = mt.annotate_rows(info=mt.info.annotate(cohort_AC=mt.info.AC[mt.a_index - 1],
                                            cohort_AF=mt.info.AF[mt.a_index - 1]))
