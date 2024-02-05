@@ -73,7 +73,7 @@ loeuf_tile_vals = loeuf.loc[np.intersect1d(loeuf.index, all_genes), 'LOEUF_tile'
 df['LOEUF'] = df.all_genes.apply(lambda gene_list: pd.Series(gene_list).map(loeuf_vals).min())
 df['LOEUF_tile'] = df.all_genes.apply(lambda gene_list: pd.Series(gene_list).map(loeuf_tile_vals).min())
 
-if sample!='':
+if sample!='false':
     df['SAMPLE'] = sample
 
 df.to_csv(f"{os.path.basename(vcf_file).split(file_ext)[0]}_annot.tsv", sep='\t')

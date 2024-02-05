@@ -35,7 +35,7 @@ workflow annotateStep1 {
             mpc_chr22_file=mpc_chr22_file,
             loeuf_file=loeuf_file,
             file_ext='.vcf' + sub(basename(merged_preprocessed_vcf_file), '.*.vcf', ''),
-            sample='',
+            sample='false',
             annotate_vcf_script=annotate_vcf_script,
             vep_hail_docker=vep_hail_docker
     }
