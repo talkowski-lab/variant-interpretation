@@ -10,8 +10,10 @@ vep_uri = sys.argv[2]
 mpc_dir = sys.argv[3]
 mpc_chr22_file = sys.argv[4]
 loeuf_file = sys.argv[5]
-cores = sys.argv[6]
-mem = int(np.floor(float(sys.argv[7])))
+file_ext = sys.argv[6]
+sample = sys.argv[7]
+cores = sys.argv[8]
+mem = int(np.floor(float(sys.argv[9])))
 
 hl.init(min_block_size=128, spark_conf={"spark.executor.cores": cores, 
                     "spark.executor.memory": f"{mem}g",
@@ -37,12 +39,12 @@ merged_mpc = mpc.select(mpc.MPC).union(mpc_chr22.select(mpc_chr22.MPC))
 
 mt = mt.annotate_rows(info = mt.info.annotate(MPC=merged_mpc[mt.locus, mt.alleles].MPC))
 
-mt.info.CSQ.export(f"{os.path.basename(vcf_file).split('.vcf')[0]}_CSQ.txt")
+mt.info.CSQ.export(f"{os.path.basename(vcf_file).split(file_ext)[0]}_CSQ.txt")
 
-mt.info.MPC.export(f"{os.path.basename(vcf_file).split('.vcf')[0]}_MPC.txt")
+mt.info.MPC.export(f"{os.path.basename(vcf_file).split(file_ext)[0]}_MPC.txt")
 
-df = pd.concat([pd.read_csv(f"{os.path.basename(vcf_file).split('.vcf')[0]}_CSQ.txt", sep='\t'),
-                pd.read_csv(f"{os.path.basename(vcf_file).split('.vcf')[0]}_MPC.txt", sep='\t').iloc[:,2]], axis=1)
+df = pd.concat([pd.read_csv(f"{os.path.basename(vcf_file).split(file_ext)[0]}_CSQ.txt", sep='\t'),
+                pd.read_csv(f"{os.path.basename(vcf_file).split(file_ext)[0]}_MPC.txt", sep='\t').iloc[:,2]], axis=1)
 
 df.columns = ['locus', 'alleles', 'CSQ', 'MPC']
         
@@ -71,6 +73,7 @@ loeuf_tile_vals = loeuf.loc[np.intersect1d(loeuf.index, all_genes), 'LOEUF_tile'
 df['LOEUF'] = df.all_genes.apply(lambda gene_list: pd.Series(gene_list).map(loeuf_vals).min())
 df['LOEUF_tile'] = df.all_genes.apply(lambda gene_list: pd.Series(gene_list).map(loeuf_tile_vals).min())
 
-df['SAMPLE'] = os.path.basename(vcf_file).split('.vcf')[0].split('_trio_')[1]
+if sample!='':
+    df['SAMPLE'] = sample
 
-df.to_csv(f"{os.path.basename(vcf_file).split('.vcf')[0]}_annot.tsv", sep='\t')
+df.to_csv(f"{os.path.basename(vcf_file).split(file_ext)[0]}_annot.tsv", sep='\t')

@@ -9,16 +9,16 @@ struct RuntimeAttr {
     Int? max_retries
 }
 
-workflow annotateStep3 {
+workflow annotateStep4 {
     input {
         Array[Array[File]]? vep_annotated_final_vcf
         Array[File]? vep_vcf_files
-        Array[File] split_trio_vcfs
+        File merged_preprocessed_vcf_file
         String mpc_dir
         File mpc_chr22_file
         File loeuf_file
         String cohort_prefix
-        String annotate_vcf_script
+        String annotate_step04_script
         String vep_hail_docker
     }
 
@@ -28,23 +28,21 @@ workflow annotateStep3 {
     File vep_uri = select_first([vep_vcf_files, vep_annotated_final_vcf_arr])[0]
 
     scatter (vcf_uri in split_trio_vcfs) {
-        call annotateStep03 {
+        call annotateStep04 {
             input:
                 vcf_uri=vcf_uri,
                 vep_uri=vep_uri,
                 mpc_dir=mpc_dir,
                 mpc_chr22_file=mpc_chr22_file,
                 loeuf_file=loeuf_file,
-                file_ext='.vcf',
-                sample=sub(basename(vcf_uri, '.vcf'), '*_trio_', ''),
-                annotate_vcf_script=annotate_vcf_script,
+                annotate_step04_script=annotate_step04_script,
                 vep_hail_docker=vep_hail_docker
         }
     }
 
     call mergeResults {
         input:
-            split_trio_annot_tsvs=annotateStep03.split_trio_annot_tsv_,
+            split_trio_annot_tsvs=annotateStep04.split_trio_annot_tsv_,
             cohort_prefix=cohort_prefix,
             vep_hail_docker=vep_hail_docker
     }
@@ -54,16 +52,14 @@ workflow annotateStep3 {
     }
 }
 
-task annotateStep03 {
+task annotateStep04 {
     input {
         File vcf_uri
         File vep_uri
         String mpc_dir
         File mpc_chr22_file
         File loeuf_file
-        String file_ext
-        String sample
-        String annotate_vcf_script
+        String annotate_step04_script
         String vep_hail_docker
         RuntimeAttr? runtime_attr_override
     }
@@ -96,9 +92,8 @@ task annotateStep03 {
     }
 
     command {
-        curl ~{annotate_vcf_script} > annotate.py
-        python3.9 annotate.py ~{vcf_uri} ~{vep_uri} ~{mpc_dir} ~{mpc_chr22_file} ~{loeuf_file} \
-        ~{file_ext} ~{sample} ~{cpu_cores} ~{memory}
+        curl ~{annotate_step04_script} > annotate.py
+        python3.9 annotate.py ~{vcf_uri} ~{vep_uri} ~{mpc_dir} ~{mpc_chr22_file} ~{loeuf_file} ~{cpu_cores} ~{memory}
     }
 
     output {
