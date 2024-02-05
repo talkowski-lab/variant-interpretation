@@ -36,7 +36,7 @@ workflow annotateStep3 {
                 mpc_chr22_file=mpc_chr22_file,
                 loeuf_file=loeuf_file,
                 file_ext='.vcf',
-                sample=sub(basename(vcf_uri, '.vcf'), '*_trio_', ''),
+                sample=sub(basename(vcf_uri, '.vcf'), '.*_trio_', ''),
                 annotate_vcf_script=annotate_vcf_script,
                 vep_hail_docker=vep_hail_docker
         }
