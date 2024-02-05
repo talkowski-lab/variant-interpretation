@@ -5,15 +5,13 @@ import sys
 import ast
 import os
 
-ped_uri = sys.argv[2]
-vcf_file = sys.argv[5]
-vep_uri = sys.argv[]
-cohort_prefix = sys.argv[6]
-mpc_dir = sys.argv[2]
-mpc_chr22_file = sys.argv[3]
-loeuf_file = sys.argv[4]
-cores = sys.argv[7]
-mem = int(np.floor(float(sys.argv[8])))
+vcf_file = sys.argv[1]
+vep_uri = sys.argv[2]
+mpc_dir = sys.argv[3]
+mpc_chr22_file = sys.argv[4]
+loeuf_file = sys.argv[5]
+cores = sys.argv[6]
+mem = int(np.floor(float(sys.argv[7])))
 
 hl.init(min_block_size=128, spark_conf={"spark.executor.cores": cores, 
                     "spark.executor.memory": f"{mem}g",
