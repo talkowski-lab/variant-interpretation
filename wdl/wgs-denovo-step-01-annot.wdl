@@ -41,7 +41,7 @@ workflow annotateStep1 {
     }
 
     output {
-        File split_trio_annot_tsv = annotateStep01.split_trio_annot_tsv_
+        File merged_preprocessed_vcf_file_annot = annotateStep01.merged_preprocessed_vcf_file_annot
     }
 }
 
@@ -93,6 +93,6 @@ task annotateStep01 {
     }
 
     output {
-        File split_trio_annot_tsv_ = basename(vcf_uri, '.vcf') + "_annot.tsv"
+        File merged_preprocessed_vcf_file_annot = basename(vcf_uri, '.vcf') + "_annot.tsv"
     }
 }
