@@ -13,12 +13,12 @@ workflow annotateStep4 {
     input {
         Array[Array[File]]? vep_annotated_final_vcf
         Array[File]? vep_vcf_files
-        File merged_preprocessed_vcf_file
+        Array[File] split_trio_vcfs
         String mpc_dir
         File mpc_chr22_file
         File loeuf_file
         String cohort_prefix
-        String annotate_step04_script
+        String annotate_vcf_script
         String vep_hail_docker
     }
 
@@ -35,7 +35,9 @@ workflow annotateStep4 {
                 mpc_dir=mpc_dir,
                 mpc_chr22_file=mpc_chr22_file,
                 loeuf_file=loeuf_file,
-                annotate_step04_script=annotate_step04_script,
+                file_ext='.denovos.vcf.gz',
+                sample=sub(basename(vcf_uri, '.denovos.vcf.gz'), '.*_trio_', ''),
+                annotate_vcf_script=annotate_vcf_script,
                 vep_hail_docker=vep_hail_docker
         }
     }
@@ -59,7 +61,9 @@ task annotateStep04 {
         String mpc_dir
         File mpc_chr22_file
         File loeuf_file
-        String annotate_step04_script
+        String file_ext
+        String sample
+        String annotate_vcf_script
         String vep_hail_docker
         RuntimeAttr? runtime_attr_override
     }
@@ -92,8 +96,9 @@ task annotateStep04 {
     }
 
     command {
-        curl ~{annotate_step04_script} > annotate.py
-        python3.9 annotate.py ~{vcf_uri} ~{vep_uri} ~{mpc_dir} ~{mpc_chr22_file} ~{loeuf_file} ~{cpu_cores} ~{memory}
+        curl ~{annotate_vcf_script} > annotate_vcf.py
+        python3.9 annotate_vcf.py ~{vcf_uri} ~{vep_uri} ~{mpc_dir} ~{mpc_chr22_file} ~{loeuf_file} \
+        ~{file_ext} ~{sample} ~{cpu_cores} ~{memory}
     }
 
     output {

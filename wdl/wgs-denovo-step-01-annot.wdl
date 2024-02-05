@@ -10,16 +10,51 @@ struct RuntimeAttr {
 }
 
 workflow annotateStep1 {
-
-}
-
-task annotateStep1 {
     input {
-        File vcf_uri
+        Array[Array[File]]? vep_annotated_final_vcf
+        Array[File]? vep_vcf_files
+        File merged_preprocessed_vcf_file
         String mpc_dir
         File mpc_chr22_file
         File loeuf_file
-        String annotate_step01_script
+        String cohort_prefix
+        String annotate_vcf_script
+        String vep_hail_docker
+    }
+
+    if (defined(vep_annotated_final_vcf)) {
+        Array[File] vep_annotated_final_vcf_arr = flatten(select_first([vep_annotated_final_vcf]))
+    }
+    File vep_uri = select_first([vep_vcf_files, vep_annotated_final_vcf_arr])[0]
+
+    call annotateStep01 {
+        input:
+            vcf_uri=merged_preprocessed_vcf_file,
+            vep_uri=vep_uri,
+            mpc_dir=mpc_dir,
+            mpc_chr22_file=mpc_chr22_file,
+            loeuf_file=loeuf_file,
+            file_ext='.vcf' + sub(basename(merged_preprocessed_vcf_file), '.*.vcf', ''),
+            sample='',
+            annotate_vcf_script=annotate_vcf_script,
+            vep_hail_docker=vep_hail_docker
+    }
+
+    output {
+        File split_trio_annot_tsv = annotateStep01.split_trio_annot_tsv_
+    }
+}
+
+task annotateStep01 {
+    input {
+        File vcf_uri
+        File vep_uri
+        String mpc_dir
+        File mpc_chr22_file
+        File loeuf_file
+        String file_ext
+        String sample
+        String annotate_vcf_script
         String vep_hail_docker
         RuntimeAttr? runtime_attr_override
     }
@@ -52,11 +87,12 @@ task annotateStep1 {
     }
 
     command {
-        curl ~{annotate_step01_script} > annotate.py
-        python3.9 annotate.py ~{vcf_uri} ~{TODO}
+        curl ~{annotate_vcf_script} > annotate_vcf.py
+        python3.9 annotate_vcf.py ~{vcf_uri} ~{vep_uri} ~{mpc_dir} ~{mpc_chr22_file} ~{loeuf_file} \
+        ~{file_ext} ~{sample} ~{cpu_cores} ~{memory}
     }
 
     output {
-
+        File split_trio_annot_tsv_ = basename(vcf_uri, '.vcf') + "_annot.tsv"
     }
 }
