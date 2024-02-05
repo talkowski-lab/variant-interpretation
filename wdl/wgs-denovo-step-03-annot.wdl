@@ -19,7 +19,7 @@ workflow annotateStep3 {
         File loeuf_file
         String cohort_prefix
         String annotate_vcf_script
-        String vep_hail_docker
+        String hail_docker
     }
 
     if (defined(vep_annotated_final_vcf)) {
@@ -38,7 +38,7 @@ workflow annotateStep3 {
                 file_ext='.vcf',
                 sample=sub(basename(vcf_uri, '.vcf'), '.*_trio_', ''),
                 annotate_vcf_script=annotate_vcf_script,
-                vep_hail_docker=vep_hail_docker
+                hail_docker=hail_docker
         }
     }
 
@@ -46,7 +46,7 @@ workflow annotateStep3 {
         input:
             split_trio_annot_tsvs=annotateStep03.split_trio_annot_tsv_,
             cohort_prefix=cohort_prefix,
-            vep_hail_docker=vep_hail_docker
+            hail_docker=hail_docker
     }
 
     output {
@@ -64,7 +64,7 @@ task annotateStep03 {
         String file_ext
         String sample
         String annotate_vcf_script
-        String vep_hail_docker
+        String hail_docker
         RuntimeAttr? runtime_attr_override
     }
 
@@ -91,7 +91,7 @@ task annotateStep03 {
         cpu: cpu_cores
         preemptible: select_first([runtime_override.preemptible_tries, runtime_default.preemptible_tries])
         maxRetries: select_first([runtime_override.max_retries, runtime_default.max_retries])
-        docker: vep_hail_docker
+        docker: hail_docker
         bootDiskSizeGb: select_first([runtime_override.boot_disk_gb, runtime_default.boot_disk_gb])
     }
 
@@ -109,7 +109,7 @@ task annotateStep03 {
 task mergeResults {
     input {
         Array[File] split_trio_annot_tsvs
-        String vep_hail_docker
+        String hail_docker
         String cohort_prefix
         RuntimeAttr? runtime_attr_override
     }
@@ -136,7 +136,7 @@ task mergeResults {
         cpu: cpu_cores
         preemptible: select_first([runtime_override.preemptible_tries, runtime_default.preemptible_tries])
         maxRetries: select_first([runtime_override.max_retries, runtime_default.max_retries])
-        docker: vep_hail_docker
+        docker: hail_docker
         bootDiskSizeGb: select_first([runtime_override.boot_disk_gb, runtime_default.boot_disk_gb])
     }
 
