@@ -88,7 +88,7 @@ task annotateStep01 {
 
     command {
         curl ~{annotate_vcf_script} > annotate_vcf.py
-        python3.9 annotate_vcf.py ~{vcf_uri} ~{vep_uri} ~{mpc_dir} ~{mpc_chr22_file} ~{loeuf_file} \
+        python3 annotate_vcf.py ~{vcf_uri} ~{vep_uri} ~{mpc_dir} ~{mpc_chr22_file} ~{loeuf_file} \
         ~{file_ext} ~{sample} ~{cpu_cores} ~{memory}
     }
 
