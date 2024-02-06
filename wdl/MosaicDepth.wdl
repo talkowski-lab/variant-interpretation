@@ -37,7 +37,7 @@ workflow Mosaic{
     runtime_attr_override=runtime_attr_mosaic_potential
   }
   
-/*
+
   call RdTest{
    input:
     bed=GetPotential.rare,
@@ -49,7 +49,7 @@ workflow Mosaic{
     sv_pipeline_rdtest_docker=sv_pipeline_rdtest_docker,
     runtime_attr_override=runtime_attr_mosaic_depth
   }
-*/
+
   output{
     File rare_potential=GetPotential.rare
     File common_potential=GetPotential.common
@@ -141,7 +141,7 @@ task GetPotential{
   }
 }
 
-/*
+
 # Run rdtest plot
 task RdTest {
   input{
@@ -178,14 +178,14 @@ task RdTest {
       -m ~{median_file} \
       -f ~{fam_file} \
       -o plots \
-      -p TRUE
-    mv plots/~{prefix}.metrics .
-    tar -czf mosaic.tar.gz plots/
+      #-p TRUE
+    #mv plots/~{prefix}.metrics .
+    #tar -czf mosaic.tar.gz plots/
   >>>
 
   output {
     File stats = "~{prefix}.metrics"
-    File plots= "mosaic.tar.gz"
+    #File plots= "mosaic.tar.gz"
   }
 
   runtime {
@@ -198,4 +198,4 @@ task RdTest {
     maxRetries: select_first([runtime_attr.max_retries, default_attr.max_retries])
   }
 }
-*/
+
