@@ -68,6 +68,7 @@ workflow annotateAllSteps {
                 mpc_dir=mpc_dir,
                 mpc_chr22_file=mpc_chr22_file,
                 loeuf_file=loeuf_file,
+                header_file=saveVCF.header_file,
                 file_ext='.vcf',
                 sample=sub(basename(vcf_uri, '.vcf'), '.*_trio_', ''),
                 annotate_vcf_script=annotate_vcf_script,
