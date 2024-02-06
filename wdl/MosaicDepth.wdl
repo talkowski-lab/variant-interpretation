@@ -58,7 +58,7 @@ workflow Mosaic{
 task GetPotential{
   input{
     String name
-    Int rare_cutoff
+    Int? rare_cutoff
     File metrics
     File cutoffs
     File lookup
