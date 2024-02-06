@@ -14,8 +14,8 @@ struct RuntimeAttr {
 
 workflow annotateAllSteps {
     input {
-        Array[Array[File]]+ vep_annotated_final_vcf
-        Array[File]+ vep_vcf_files
+        Array[Array[File]]? vep_annotated_final_vcf
+        Array[File]? vep_vcf_files
         Array[File] split_trio_vcfs
         Array[File] trio_denovo_vcf
         File merged_preprocessed_vcf_file
