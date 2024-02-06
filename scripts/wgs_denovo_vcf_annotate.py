@@ -76,4 +76,4 @@ df['LOEUF_tile'] = df.all_genes.apply(lambda gene_list: pd.Series(gene_list).map
 if sample!='false':
     df['SAMPLE'] = sample
 
-df.to_csv(f"{os.path.basename(vcf_file).split(file_ext)[0]}_annot.tsv", sep='\t')
+df.to_csv(f"{os.path.basename(vcf_file).split(file_ext)[0]}_annot.tsv", sep='\t', index=False)
