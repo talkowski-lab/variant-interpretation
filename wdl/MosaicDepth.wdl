@@ -5,7 +5,7 @@ import "Structs.wdl"
 workflow Mosaic{
   input{
     String name
-    #Int rare_cutoff
+    Int? rare_cutoff
     File metrics
     File cutoffs
     File depth_vcf
@@ -28,7 +28,7 @@ workflow Mosaic{
     name=name,
     lookup=lookup,
     metrics=metrics,
-    #rare_cutoff=rare_cutoff,
+    rare_cutoff=rare_cutoff,
     cutoffs=cutoffs,
     depth_vcf=depth_vcf,
     sd_blacklist=sd_blacklist,
@@ -58,7 +58,7 @@ workflow Mosaic{
 task GetPotential{
   input{
     String name
-    #Int rare_cutoff
+    Int rare_cutoff
     File metrics
     File cutoffs
     File lookup
