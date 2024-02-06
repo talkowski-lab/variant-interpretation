@@ -1,5 +1,6 @@
 version 1.0
 
+import "wgs-denovo-annotate.wdl" as annotateVCF
 import "wgs-denovo-step-01-annot.wdl" as step1
 import "wgs-denovo-step-03-annot.wdl" as step3
 
@@ -46,7 +47,7 @@ workflow annotateAllSteps {
             sv_base_mini_docker=sv_base_mini_docker
     }
 
-    call step1.annotateStep01 as annotateStep01 {
+    call annotateVCF.annotateVCF as annotateStep01 {
         input:
             vcf_uri=merged_preprocessed_vcf_file,
             vep_uri=vep_uri,
@@ -61,7 +62,7 @@ workflow annotateAllSteps {
     }
 
     scatter (vcf_uri in split_trio_vcfs) {
-        call step3.annotateStep03 as annotateStep03 {
+        call annotateVCF.annotateVCF as annotateStep03 {
             input:
                 vcf_uri=vcf_uri,
                 vep_uri=vep_uri,
@@ -78,7 +79,7 @@ workflow annotateAllSteps {
 
     call step3.mergeResults as mergeResults {
         input:
-            split_trio_annot_tsvs=annotateStep03.split_trio_annot_tsv_,
+            annot_tsvs=annotateStep03.annotated_tsv,
             cohort_prefix=cohort_prefix,
             hail_docker=hail_docker
     }
@@ -86,7 +87,7 @@ workflow annotateAllSteps {
     call labelStep04 {
         input:
             trio_denovo_vcf=trio_denovo_vcf,
-            merged_split_trio_tsv=mergeResults.split_trio_annot_tsv,
+            merged_split_trio_tsv=mergeResults.merged_tsv,
             file_ext='.denovos.vcf.gz',
             cohort_prefix=cohort_prefix,
             transfer_annot_script=transfer_annot_script,
@@ -94,8 +95,8 @@ workflow annotateAllSteps {
     }
 
     output {
-        File merged_preprocessed_vcf_file_annot = annotateStep01.merged_preprocessed_vcf_file_annot
-        File split_trio_annot_tsv = mergeResults.split_trio_annot_tsv
+        File merged_preprocessed_vcf_file_annot = annotateStep01.annotated_tsv
+        File split_trio_annot_tsv = mergeResults.merged_tsv
         File trio_denovo_vcf_annot = labelStep04.trio_denovo_vcf_annot
     }
 }
