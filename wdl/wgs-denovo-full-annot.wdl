@@ -14,8 +14,8 @@ struct RuntimeAttr {
 
 workflow annotateAllSteps {
     input {
-        Array[Array[File]]? vep_annotated_final_vcf
-        Array[File]? vep_vcf_files
+        Array[Array[File]]+ vep_annotated_final_vcf
+        Array[File]+ vep_vcf_files
         Array[File] split_trio_vcfs
         Array[File] trio_denovo_vcf
         File merged_preprocessed_vcf_file
@@ -31,6 +31,7 @@ workflow annotateAllSteps {
     if (defined(vep_annotated_final_vcf)) {
         Array[File] vep_annotated_final_vcf_arr = flatten(select_first([vep_annotated_final_vcf]))
     }
+
     File vep_uri = select_first([vep_vcf_files, vep_annotated_final_vcf_arr])[0]
 
     call step1.annotateStep01 as annotateStep01 {
