@@ -16,7 +16,7 @@ import "MosaicPesrPart2.wdl" as mosaic_pesr_part2
 workflow MosaicManualCheck{
   input{
     File fam_file
-    Int rare_cutoff
+    #Int rare_cutoff
     File outlier
     String prefix
 
@@ -65,7 +65,7 @@ workflow MosaicManualCheck{
         name=basename(clustered_depth_vcfs[i]),
         metrics=agg_metrics[i],
         cutoffs=RF_cutoffs[i],
-        rare_cutoff=rare_cutoff,
+        #rare_cutoff=rare_cutoff,
         depth_vcf=clustered_depth_vcfs[i],
         lookup=LookupGen.depthlookup,
         coverage_file=coverage_files[i],
@@ -91,7 +91,7 @@ workflow MosaicManualCheck{
       input:
         name=basename(pesr1.common_potential[i]),
         outlier=outlier,
-        rare_cutoff=rare_cutoff,
+        #rare_cutoff=rare_cutoff,
         lookup=LookupGen.pesrlookup,
         potential=pesr1.common_potential[i],
         coverage_file=coverage_files[i],
