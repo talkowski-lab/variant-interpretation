@@ -102,7 +102,7 @@ task annotateStep03 {
     }
 
     output {
-        File split_trio_annot_tsv_ = basename(vcf_uri, '.vcf') + "_annot.tsv"
+        File split_trio_annot_tsv_ = basename(vcf_uri, file_ext) + "_annot.tsv"
     }
 }
 

@@ -93,6 +93,6 @@ task annotateStep01 {
     }
 
     output {
-        File merged_preprocessed_vcf_file_annot = basename(vcf_uri, '.vcf') + "_annot.tsv"
+        File merged_preprocessed_vcf_file_annot = basename(vcf_uri, file_ext) + "_annot.tsv"
     }
 }
