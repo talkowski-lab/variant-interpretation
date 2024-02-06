@@ -5,7 +5,7 @@ import "Structs.wdl"
 workflow Mosaic{
   input{
     String name
-    #Int rare_cutoff
+    Int? rare_cutoff
     File outlier
     File lookup
     File potential
@@ -19,7 +19,7 @@ workflow Mosaic{
   call GetPotential{
     input:
         outlier=outlier,
-        #rare_cutoff=rare_cutoff,
+        rare_cutoff=rare_cutoff,
         potential=potential,
         name=name,
         lookup=lookup,
@@ -44,7 +44,7 @@ workflow Mosaic{
 task GetPotential{
   input{
     String name
-    #Int rare_cutoff
+    Int? rare_cutoff
     File outlier
     File potential
     File lookup
