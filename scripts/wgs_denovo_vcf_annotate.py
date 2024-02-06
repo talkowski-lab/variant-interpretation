@@ -10,10 +10,11 @@ vep_uri = sys.argv[2]
 mpc_dir = sys.argv[3]
 mpc_chr22_file = sys.argv[4]
 loeuf_file = sys.argv[5]
-file_ext = sys.argv[6]
-sample = sys.argv[7]
-cores = sys.argv[8]
-mem = int(np.floor(float(sys.argv[9])))
+header_file = sys.argv[6]
+file_ext = sys.argv[7]
+sample = sys.argv[8]
+cores = sys.argv[9]
+mem = int(np.floor(float(sys.argv[10])))
 
 hl.init(min_block_size=128, spark_conf={"spark.executor.cores": cores, 
                     "spark.executor.memory": f"{mem}g",
@@ -21,7 +22,7 @@ hl.init(min_block_size=128, spark_conf={"spark.executor.cores": cores,
                     "spark.driver.memory": f"{mem}g"
                     }, tmp_dir="tmp", local_tmpdir="tmp")
 
-mt = hl.import_vcf(vcf_file, force_bgz=True, array_elements_required=False, reference_genome='GRCh38')
+mt = hl.import_vcf(vcf_file, force_bgz=True, array_elements_required=False, call_fields=[], header_file=header_file, reference_genome='GRCh38')
 
 # MPC
 mpc = hl.read_table(mpc_dir)
@@ -54,7 +55,7 @@ csq_columns = metadata['info']['CSQ']['Description'].split('Format: ')[1].split(
 loeuf = pd.read_csv(loeuf_file, sep='\t')
 loeuf.index = loeuf.gene_name
 
-df['CSQ'] = df.CSQ.apply(ast.literal_eval)
+df['CSQ'] = df.CSQ.replace({np.nan, '[]'}).apply(ast.literal_eval)
 
 def combine_csq(csq, col_num):
     csqs = []

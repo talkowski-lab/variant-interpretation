@@ -22,10 +22,13 @@ workflow annotateAllSteps {
         String mpc_dir
         File mpc_chr22_file
         File loeuf_file
+        File info_header
         String cohort_prefix
         String transfer_annot_script
         String annotate_vcf_script
         String hail_docker
+        String sv_base_mini_docker
+        Boolean bad_header=false
     }
 
     if (defined(vep_annotated_final_vcf)) {
@@ -33,6 +36,15 @@ workflow annotateAllSteps {
     }
 
     File vep_uri = select_first([vep_vcf_files, vep_annotated_final_vcf_arr])[0]
+    
+    call step1.saveVCFHeader as saveVCFHeader {
+        input:
+            vcf_uri=vep_uri,
+            info_header=info_header,
+            bad_header=bad_header,
+            file_ext='.vcf' + sub(basename(vep_uri), '.*.vcf', ''),
+            sv_base_mini_docker=sv_base_mini_docker
+    }
 
     call step1.annotateStep01 as annotateStep01 {
         input:
@@ -41,6 +53,7 @@ workflow annotateAllSteps {
             mpc_dir=mpc_dir,
             mpc_chr22_file=mpc_chr22_file,
             loeuf_file=loeuf_file,
+            header_file=saveVCFHeader.header_file,
             file_ext='.vcf' + sub(basename(merged_preprocessed_vcf_file), '.*.vcf', ''),
             sample='false',
             annotate_vcf_script=annotate_vcf_script,

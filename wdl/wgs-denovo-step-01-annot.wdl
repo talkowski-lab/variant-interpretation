@@ -17,20 +17,33 @@ workflow annotateStep1 {
         String mpc_dir
         File mpc_chr22_file
         File loeuf_file
+        File info_header
         String cohort_prefix
         String annotate_vcf_script
         String hail_docker
+        String sv_base_mini_docker
+        Boolean bad_header=false
     }
 
     if (defined(vep_annotated_final_vcf)) {
         Array[File] vep_annotated_final_vcf_arr = flatten(select_first([vep_annotated_final_vcf]))
     }
     File vep_uri = select_first([vep_vcf_files, vep_annotated_final_vcf_arr])[0]
+    
+    call saveVCFHeader {
+        input:
+            vcf_uri=vep_uri,
+            info_header=info_header,
+            bad_header=bad_header,
+            file_ext='.vcf' + sub(basename(vep_uri), '.*.vcf', ''),
+            sv_base_mini_docker=sv_base_mini_docker
+    }
 
     call annotateStep01 {
         input:
             vcf_uri=merged_preprocessed_vcf_file,
             vep_uri=vep_uri,
+            header_file=saveVCFHeader.header_file,
             mpc_dir=mpc_dir,
             mpc_chr22_file=mpc_chr22_file,
             loeuf_file=loeuf_file,
@@ -45,10 +58,39 @@ workflow annotateStep1 {
     }
 }
 
+task saveVCFHeader {
+    input {
+        File vcf_uri
+        File info_header
+        String file_ext
+        String sv_base_mini_docker
+        Boolean bad_header
+    }
+
+    runtime {
+        docker: sv_base_mini_docker
+    }
+
+    String header_filename = basename(vcf_uri, file_ext) + '_header.txt'
+
+    command <<<
+    bcftools head ~{vcf_uri} > ~{header_filename}
+    if [[ "~{bad_header}" == "true" ]]; then
+        bcftools head ~{vcf_uri} | grep -v "INFO=" > no_info_header.txt
+        cat no_info_header.txt ~{info_header} | sort > ~{header_filename}
+    fi
+    >>>
+
+    output {
+        File header_file = header_filename
+    }
+}
+
 task annotateStep01 {
     input {
         File vcf_uri
         File vep_uri
+        File header_file
         String mpc_dir
         File mpc_chr22_file
         File loeuf_file
@@ -86,11 +128,11 @@ task annotateStep01 {
         bootDiskSizeGb: select_first([runtime_override.boot_disk_gb, runtime_default.boot_disk_gb])
     }
 
-    command {
+    command <<<
         curl ~{annotate_vcf_script} > annotate_vcf.py
-        python3 annotate_vcf.py ~{vcf_uri} ~{vep_uri} ~{mpc_dir} ~{mpc_chr22_file} ~{loeuf_file} \
+        python3 annotate_vcf.py ~{vcf_uri} ~{vep_uri} ~{mpc_dir} ~{mpc_chr22_file} ~{loeuf_file} ~{header_file} \
         ~{file_ext} ~{sample} ~{cpu_cores} ~{memory}
-    }
+    >>>
 
     output {
         File merged_preprocessed_vcf_file_annot = basename(vcf_uri, file_ext) + "_annot.tsv"
