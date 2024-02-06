@@ -55,7 +55,7 @@ csq_columns = metadata['info']['CSQ']['Description'].split('Format: ')[1].split(
 loeuf = pd.read_csv(loeuf_file, sep='\t')
 loeuf.index = loeuf.gene_name
 
-df['CSQ'] = df.CSQ.replace({np.nan, '[]'}).apply(ast.literal_eval)
+df['CSQ'] = df.CSQ.replace({np.nan: '[]'}).apply(ast.literal_eval)
 
 def combine_csq(csq, col_num):
     csqs = []
