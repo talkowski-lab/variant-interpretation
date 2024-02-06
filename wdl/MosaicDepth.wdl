@@ -5,7 +5,7 @@ import "Structs.wdl"
 workflow Mosaic{
   input{
     String name
-    #Int rare_cutoff
+    Int rare_cutoff
     File metrics
     File cutoffs
     File depth_vcf
@@ -28,7 +28,7 @@ workflow Mosaic{
     name=name,
     lookup=lookup,
     metrics=metrics,
-    #rare_cutoff=rare_cutoff,
+    rare_cutoff=rare_cutoff,
     cutoffs=cutoffs,
     depth_vcf=depth_vcf,
     sd_blacklist=sd_blacklist,
@@ -58,7 +58,7 @@ workflow Mosaic{
 task GetPotential{
   input{
     String name
-    #Int rare_cutoff
+    Int rare_cutoff
     File metrics
     File cutoffs
     File lookup
@@ -99,15 +99,14 @@ task GetPotential{
     bash /opt/sv-pipeline/04_variant_resolution/scripts/stitch_fragmented_calls.sh -x 1 test2.vcf.gz test3.vcf.gz
     svtk vcf2bed test3.vcf.gz ~{name}.potentialmosaic.bed
 
-    ## removing rare filtering
-    #while read chr start end id type sample;do
-    #    n=$(zfgrep "$id:" ~{lookup}|cut -f 8)||true
-    #    if [ "$n" -eq "$n" ] ;then
-    #      if [ "$n" -lt ~{rare_cutoff} ]; then
-    #        printf "$chr\t$start\t$end\t$id\t$type\t$sample\n"
-    #      fi
-    #    fi
-    #done<~{name}.potentialmosaic.bed > ~{name}.potentialmosaic.rare.bed
+    while read chr start end id type sample;do
+        n=$(zfgrep "$id:" ~{lookup}|cut -f 8)||true
+        if [ "$n" -eq "$n" ] ;then
+          if [ "$n" -lt ~{rare_cutoff} ]; then
+            printf "$chr\t$start\t$end\t$id\t$type\t$sample\n"
+          fi
+        fi
+    done<~{name}.potentialmosaic.bed > ~{name}.potentialmosaic.rare.bed
 
     cp ~{name}.potentialmosaic.bed ~{name}.potentialmosaic.rare.bed
 
