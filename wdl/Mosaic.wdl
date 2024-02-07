@@ -24,9 +24,9 @@ workflow MosaicManualCheck{
     File igl_blacklist
 
     #Array[File] per_batch_clustered_pesr_vcf_list # preRF
-    Array[File] manta_vcf[i]
-    Array[File] wham_vcf[i]
-    Array[File] melt_vcf[i]
+    Array[File] manta_vcf
+    Array[File] wham_vcf
+    Array[File] melt_vcf
     Array[File] clustered_depth_vcfs
     Array[File] coverage_files
     Array[File] coverage_file_idxs
