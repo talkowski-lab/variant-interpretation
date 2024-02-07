@@ -48,10 +48,7 @@ workflow filterRareVariantsHail {
     File meta_uri_ = select_first([meta_uri, makeTrioSampleFiles.meta_uri])
     File trio_uri_ = select_first([trio_uri, makeTrioSampleFiles.trio_uri])
 
-    if (defined(vep_annotated_final_vcf)) {
-        Array[File] vep_annotated_final_vcf_arr = flatten(select_first([vep_annotated_final_vcf]))
-    }
-    Array[File] vep_files = select_first([vep_vcf_files, vep_annotated_final_vcf_arr])
+    Array[File] vep_files = select_first([vep_vcf_files, vep_annotated_final_vcf])
 
     if (merge_split_vcf) {
         call splitFile as splitVEPFiles {
