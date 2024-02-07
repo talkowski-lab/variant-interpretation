@@ -5,7 +5,10 @@ import "Structs.wdl"
 workflow Mosaic{
   input{
     String name
-    Array[File] pesr_vcfs
+    #Array[File] pesr_vcfs
+    File manta_vcf
+    File wham_vcf
+    File melt_vcf
     File metrics
     File cutoffs
     File coverage_file
@@ -16,7 +19,10 @@ workflow Mosaic{
   }
   call MergePesrVcfs {
     input:
-      pesr_vcfs=pesr_vcfs,
+      #pesr_vcfs=pesr_vcfs,
+      manta_vcf = manta_vcf,
+      wham_vcf = wham_vcf,
+      melt_vcf = melt_vcf,
       batch=name,
       sv_pipeline_docker=sv_pipeline_docker
   }
@@ -36,7 +42,10 @@ workflow Mosaic{
 }
 task MergePesrVcfs {
   input{
-    Array[File] pesr_vcfs
+    #Array[File] pesr_vcfs
+    File manta_vcf
+    File wham_vcf
+    File melt_vcf
     String batch
     String sv_pipeline_docker
     RuntimeAttr? runtime_attr_override
@@ -52,6 +61,12 @@ task MergePesrVcfs {
   RuntimeAttr runtime_attr = select_first([runtime_attr_override, default_attr])
   command <<<
     set -euo pipefail
+    bcftools view --min-ac 1 ~{manta_vcf} | bgzip -c > manta.vcf.gz
+    bcftools view --min-ac 1 ~{wham_vcf} | bgzip -c > wham.vcf.gz
+    bcftools view --min-ac 1 ~{melt_vcf} | bgzip -c > melt.vcf.gz
+    vcf-concat manta.vcf.gz wham.vcf.gz melt.vcf.gz | vcf-sort -c | bgzip -c > ~{batch}.filtered_pesr_merged.vcf.gz
+
+/*
     for VCF in ~{sep=" " pesr_vcfs}; do
       bcftools view --min-ac 1 $VCF |bgzip -c > temp.vcf.gz
       mv temp.vcf.gz $VCF
@@ -61,6 +76,8 @@ task MergePesrVcfs {
       | vcf-sort -c \
       | bgzip -c > \
       ~{batch}.filtered_pesr_merged.vcf.gz
+*/
+
   >>>
 
   output {
