@@ -44,11 +44,19 @@ workflow MosaicManualCheck{
     RuntimeAttr? runtime_attr_mosaic_potential
     RuntimeAttr? runtime_attr_mosaic_depth
   }
-  scatter (i in range(length(per_batch_clustered_pesr_vcf_list))) {
+
+  call subset_pesr{
+      input:
+          per_batch_clustered_pesr_vcf_list = per_batch_clustered_pesr_vcf_list,
+          prefix = prefix,
+          sv_pipeline_docker=sv_pipeline_docker
+        }
+
+  scatter (i in range(length(subset))) {
     call mosaic_pesr_part1.Mosaic as pesr1{
       input:
         name=basename(clustered_depth_vcfs[i]),
-        pesr_vcfs=read_lines(per_batch_clustered_pesr_vcf_list[i]),
+        pesr_vcfs=read_lines(subset[i]),
         metrics=agg_metrics[i],
         cutoffs=RF_cutoffs[i],
         coverage_file=coverage_files[i],
@@ -141,6 +149,45 @@ workflow MosaicManualCheck{
     #File depth_plots = concat_depth_plots.merged_plots
     #File pesr_plots = concat_pesr_plots.merged_plots
   }
+}
+
+task subset_pesr{
+    input {
+        File per_batch_clustered_pesr_vcf_list
+        String prefix
+        String sv_pipeline_docker=sv_pipeline_docker
+    }
+    Float input_size = size(select_all([bed, ped_file]), "GB")
+    Float base_mem_gb = 3.75
+    RuntimeAttr default_attr = object {
+                                      mem_gb: base_mem_gb,
+                                      disk_gb: ceil(10 + input_size),
+                                      cpu: 1,
+                                      preemptible: 2,
+                                      max_retries: 1,
+                                      boot_disk_gb: 8
+                                  }
+    RuntimeAttr runtime_attr = select_first([runtime_attr_override, default_attr])
+
+    command <<<
+        set -euo pipefail
+        grep "^${prefix}" ~{per_batch_clustered_pesr_vcf_list} > ~{prefix}.subset_pesr.txt
+        >>>
+
+    output{
+    Array[file] subset = "~{prefix}.subset_pesr.txt"
+    }
+
+    runtime {
+        cpu: select_first([runtime_attr.cpu, default_attr.cpu])
+        memory: "~{select_first([runtime_attr.mem_gb, default_attr.mem_gb])} GB"
+        disks: "local-disk ~{select_first([runtime_attr.disk_gb, default_attr.disk_gb])} HDD"
+        bootDiskSizeGb: select_first([runtime_attr.boot_disk_gb, default_attr.boot_disk_gb])
+        preemptible: select_first([runtime_attr.preemptible, default_attr.preemptible])
+        maxRetries: select_first([runtime_attr.max_retries, default_attr.max_retries])
+        docker: sv_pipeline_docker
+    }
+
 }
 
 /*
