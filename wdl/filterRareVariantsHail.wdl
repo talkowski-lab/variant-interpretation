@@ -200,14 +200,20 @@ task mergeVCFs {
         VCFS="~{write_lines(vcf_files)}"
         cat $VCFS | awk -F '/' '{print $NF"\t"$0}' | sort -k1,1V | awk '{print $2}' > vcfs_sorted.list
         bcftools ~{merge_or_concat_new} --no-version -Oz --file-list vcfs_sorted.list --output ~{merged_vcf_name}
-        cat ~{merged_vcf_name} | zcat | awk '$1 ~ /^#/ {print $0;next} {print $0 | "sort -k1,1V -k2,2n"}' > ~{basename(sorted_vcf_name, '.gz')}
-        bgzip ~{basename(sorted_vcf_name, '.gz')}
-        bcftools index -t ~{sorted_vcf_name}
+        if [ "~{sort_after_merge}" = "true" ]; then
+            mkdir -p tmp
+            # bcftools sort ~{merged_vcf_name} -Oz --output ~{sorted_vcf_name} -T tmp/
+            cat ~{merged_vcf_name} | zcat | awk '$1 ~ /^#/ {print $0;next} {print $0 | "sort -k1,1V -k2,2n"}' > ~{basename(sorted_vcf_name, '.gz')}
+            bgzip ~{basename(sorted_vcf_name, '.gz')}
+            bcftools index -t ~{sorted_vcf_name}
+        else 
+            bcftools index -t ~{merged_vcf_name}
+        fi
     >>>
 
     output {
-        File merged_vcf_file=sorted_vcf_name
-        File merged_vcf_idx=sorted_vcf_name + ".tbi"
+        File merged_vcf_file = if sort_after_merge then sorted_vcf_name else merged_vcf_name
+        File merged_vcf_idx = if sort_after_merge then sorted_vcf_name else merged_vcf_name + ".tbi"
     }
 }
 
