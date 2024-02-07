@@ -55,7 +55,9 @@ csq_columns = metadata['info']['CSQ']['Description'].split('Format: ')[1].split(
 loeuf = pd.read_csv(loeuf_file, sep='\t')
 loeuf.index = loeuf.gene_name
 
-df['CSQ'] = df.CSQ.replace({np.nan: '[]'}).apply(ast.literal_eval)
+# filter out empty/nan CSQ
+df = df[~df.CSQ.isna()]
+df['CSQ'] = df.CSQ.apply(ast.literal_eval)
 
 def combine_csq(csq, col_num):
     csqs = []
@@ -63,7 +65,7 @@ def combine_csq(csq, col_num):
         csqs.append(ind_csq.split('|')[col_num])
     return csqs
 
-df['TYPE'] = df.CSQ.apply(combine_csq, args=[csq_columns.index('VARIANT_CLASS')]).replace({[]: ['']}).apply(lambda lst: pd.Series(lst).unique()[0]).map({'': np.nan, 'insertion': 'Indel', 'deletion': 'Indel'})
+df['TYPE'] = df.CSQ.apply(combine_csq, args=[csq_columns.index('VARIANT_CLASS')]).apply(lambda lst: pd.Series(lst).unique()[0]).map({'': np.nan, 'insertion': 'Indel', 'deletion': 'Indel'})
 df['all_genes'] = df.CSQ.apply(combine_csq, args=[csq_columns.index('SYMBOL')]).apply(lambda lst: pd.Series(lst).unique())
 
 all_genes = df.all_genes.apply(pd.Series).stack().unique()
