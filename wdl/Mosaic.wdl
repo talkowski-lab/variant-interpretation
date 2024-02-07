@@ -23,7 +23,10 @@ workflow MosaicManualCheck{
     File sd_blacklist
     File igl_blacklist
 
-    Array[File] per_batch_clustered_pesr_vcf_list # preRF
+    #Array[File] per_batch_clustered_pesr_vcf_list # preRF
+    File manta_vcf
+    File wham_vcf
+    File melt_vcf
     Array[File] clustered_depth_vcfs
     Array[File] coverage_files
     Array[File] coverage_file_idxs
@@ -44,21 +47,23 @@ workflow MosaicManualCheck{
     RuntimeAttr? runtime_attr_mosaic_potential
     RuntimeAttr? runtime_attr_mosaic_depth
   }
-  scatter (i in range(length(per_batch_clustered_pesr_vcf_list))) {
-    call mosaic_pesr_part1.Mosaic as pesr1{
-      input:
-        name=basename(clustered_depth_vcfs[i]),
-        pesr_vcfs=read_lines(per_batch_clustered_pesr_vcf_list[i]),
-        metrics=agg_metrics[i],
-        cutoffs=RF_cutoffs[i],
-        coverage_file=coverage_files[i],
-        coverage_file_idx=coverage_file_idxs[i],
-        fam_file=fam_file,
-        median_file=median_files[i],
-        sv_pipeline_docker=sv_pipeline_docker
-
+  #scatter (i in range(length(per_batch_clustered_pesr_vcf_list))) {
+  call mosaic_pesr_part1.Mosaic as pesr1{
+    input:
+      name=basename(clustered_depth_vcfs[i]),
+      #pesr_vcfs=read_lines(per_batch_clustered_pesr_vcf_list[i]),
+      manta_vcf = manta_vcf,
+      wham_vcf = wham_vcf,
+      melt_vcf = melt_vcf,
+      metrics=agg_metrics[i],
+      cutoffs=RF_cutoffs[i],
+      coverage_file=coverage_files[i],
+      coverage_file_idx=coverage_file_idxs[i],
+      fam_file=fam_file,
+      median_file=median_files[i],
+      sv_pipeline_docker=sv_pipeline_docker
     }
-  }
+  #}
   scatter (i in range(length(clustered_depth_vcfs))) {
     call depth_mosaic.Mosaic as depth{
       input:
