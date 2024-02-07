@@ -62,9 +62,9 @@ workflow MosaicManualCheck{
         fam_file=fam_file,
         median_file=median_files,
         sv_pipeline_docker=sv_pipeline_docker
-    }
+  }
   
-    call depth_mosaic.Mosaic as depth{
+  call depth_mosaic.Mosaic as depth{
       input:
         name=basename(clustered_depth_vcfs),
         metrics=agg_metrics,
