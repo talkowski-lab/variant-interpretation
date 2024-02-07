@@ -24,16 +24,16 @@ workflow MosaicManualCheck{
     File igl_blacklist
 
     #Array[File] per_batch_clustered_pesr_vcf_list # preRF
-    Array[File] manta_vcf
-    Array[File] wham_vcf
-    Array[File] melt_vcf
-    Array[File] clustered_depth_vcfs
-    Array[File] coverage_files
-    Array[File] coverage_file_idxs
-    Array[File] median_files
+    File manta_vcf
+    File wham_vcf
+    File melt_vcf
+    File clustered_depth_vcfs
+    File coverage_files
+    File coverage_file_idxs
+    File median_files
 
-    Array[File] agg_metrics
-    Array[File] RF_cutoffs
+    File agg_metrics
+    File RF_cutoffs
 
     String sv_pipeline_docker
     String sv_base_mini_docker
@@ -47,36 +47,35 @@ workflow MosaicManualCheck{
     RuntimeAttr? runtime_attr_mosaic_potential
     RuntimeAttr? runtime_attr_mosaic_depth
   }
-  scatter (i in range(length(per_batch_clustered_pesr_vcf_list))) {
-    call mosaic_pesr_part1.Mosaic as pesr1{
+
+  call mosaic_pesr_part1.Mosaic as pesr1{
       input:
-        name=basename(clustered_depth_vcfs[i]),
+        name=basename(clustered_depth_vcfs),
         #pesr_vcfs=read_lines(per_batch_clustered_pesr_vcf_list[i]),
-        manta_vcf = manta_vcf[i],
-        wham_vcf = wham_vcf[i],
-        melt_vcf = melt_vcf[i],
-        metrics=agg_metrics[i],
-        cutoffs=RF_cutoffs[i],
-        coverage_file=coverage_files[i],
-        coverage_file_idx=coverage_file_idxs[i],
+        manta_vcf = manta_vcf,
+        wham_vcf = wham_vcf,
+        melt_vcf = melt_vcf,
+        metrics=agg_metrics,
+        cutoffs=RF_cutoffs,
+        coverage_file=coverage_files,
+        coverage_file_idx=coverage_file_idxs,
         fam_file=fam_file,
-        median_file=median_files[i],
+        median_file=median_files,
         sv_pipeline_docker=sv_pipeline_docker
     }
-  }
-  scatter (i in range(length(clustered_depth_vcfs))) {
+  
     call depth_mosaic.Mosaic as depth{
       input:
-        name=basename(clustered_depth_vcfs[i]),
-        metrics=agg_metrics[i],
-        cutoffs=RF_cutoffs[i],
+        name=basename(clustered_depth_vcfs),
+        metrics=agg_metrics,
+        cutoffs=RF_cutoffs,
         rare_cutoff=rare_cutoff,
-        depth_vcf=clustered_depth_vcfs[i],
+        depth_vcf=clustered_depth_vcfs,
         lookup=LookupGen.depthlookup,
-        coverage_file=coverage_files[i],
-        coverage_file_idx=coverage_file_idxs[i],
+        coverage_file=coverage_files,
+        coverage_file_idx=coverage_file_idxs,
         fam_file=fam_file,
-        median_file=median_files[i],
+        median_file=median_files,
         sd_blacklist=sd_blacklist,
         igl_blacklist=igl_blacklist,
         sv_pipeline_docker=sv_pipeline_docker,
@@ -99,10 +98,10 @@ workflow MosaicManualCheck{
         rare_cutoff=rare_cutoff,
         lookup=LookupGen.pesrlookup,
         potential=pesr1.common_potential[i],
-        coverage_file=coverage_files[i],
-        coverage_file_idx=coverage_file_idxs[i],
+        coverage_file=coverage_files,
+        coverage_file_idx=coverage_file_idxs,
         fam_file=fam_file,
-        median_file=median_files[i],
+        median_file=median_files,
         sv_pipeline_docker=sv_pipeline_docker,
         sv_pipeline_rdtest_docker=sv_pipeline_rdtest_docker
     }
