@@ -156,6 +156,7 @@ task subset_pesr{
         File per_batch_clustered_pesr_vcf_list
         String prefix
         String sv_pipeline_docker=sv_pipeline_docker
+        RuntimeAttr? runtime_attr_override
     }
 
   Float input_size = size(per_batch_clustered_pesr_vcf_list, "GB")
