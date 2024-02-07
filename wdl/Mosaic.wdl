@@ -52,11 +52,11 @@ workflow MosaicManualCheck{
           sv_pipeline_docker=sv_pipeline_docker
         }
 
-  scatter (i in range(length(subset))) {
+  scatter (i in range(length(subset_pesr))) {
     call mosaic_pesr_part1.Mosaic as pesr1{
       input:
         name=basename(clustered_depth_vcfs[i]),
-        pesr_vcfs=read_lines(subset[i]),
+        pesr_vcfs=read_lines(subset_pesr[i]),
         metrics=agg_metrics[i],
         cutoffs=RF_cutoffs[i],
         coverage_file=coverage_files[i],
@@ -153,7 +153,7 @@ workflow MosaicManualCheck{
 
 task subset_pesr{
     input {
-        File per_batch_clustered_pesr_vcf_list
+        Array[File] per_batch_clustered_pesr_vcf_list
         String prefix
         String sv_pipeline_docker=sv_pipeline_docker
     }
