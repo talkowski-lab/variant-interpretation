@@ -28,7 +28,7 @@ hl.init(min_block_size=128, spark_conf={"spark.executor.cores": cores,
                     "spark.driver.memory": f"{mem}g"
                     }, tmp_dir="tmp", local_tmpdir="tmp")
 
-pedigree = hl.Pedigree.read(ped_uri)
+pedigree = hl.Pedigree.read(ped_uri, delimiter='\t')
 
 trio_df = pd.read_csv(trio_uri, dtype=str, sep='\t')
 
