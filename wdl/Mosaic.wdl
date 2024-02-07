@@ -83,7 +83,7 @@ workflow MosaicManualCheck{
         runtime_attr_mosaic_depth=runtime_attr_mosaic_depth,
         runtime_attr_mosaic_potential=runtime_attr_mosaic_potential
     }
-  }
+  
   call preRF.make_cohort_VCFs as LookupGen {
     input:
       pesr_vcfs = pesr1.merged_pesr,
