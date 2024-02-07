@@ -22,10 +22,7 @@ workflow annotateStep4 {
         String vep_hail_docker
     }
 
-    if (defined(vep_annotated_final_vcf)) {
-        Array[File] vep_annotated_final_vcf_arr = flatten(select_first([vep_annotated_final_vcf]))
-    }
-    File vep_uri = select_first([vep_vcf_files, vep_annotated_final_vcf_arr])[0]
+    File vep_uri = select_first([vep_vcf_files, vep_annotated_final_vcf])[0]
 
     scatter (vcf_uri in split_trio_vcfs) {
         call annotateStep04 {
