@@ -5,7 +5,7 @@ import "Structs.wdl"
 workflow Mosaic{
   input{
     String name
-    Array[File] pesr_vcfs
+    Array[File] subset
     File metrics
     File cutoffs
     File coverage_file
@@ -16,7 +16,7 @@ workflow Mosaic{
   }
   call MergePesrVcfs {
     input:
-      pesr_vcfs=pesr_vcfs,
+      pesr_vcfs=subset,
       batch=name,
       sv_pipeline_docker=sv_pipeline_docker
   }
