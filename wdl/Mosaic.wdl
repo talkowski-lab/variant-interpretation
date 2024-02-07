@@ -175,7 +175,7 @@ task subset_pesr{
         >>>
 
     output{
-    Array[file] subset_pesr = "~{prefix}.subset_pesr.txt"
+    Array[File] subset_pesr = "~{prefix}.subset_pesr.txt"
     }
 
     runtime {
