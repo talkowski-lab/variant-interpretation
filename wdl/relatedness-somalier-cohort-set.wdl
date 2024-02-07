@@ -13,7 +13,7 @@ workflow runSomalier {
     input {
         File sites_uri
         File hg38_fasta
-        Array[Array[Array[File]]] vep_annotated_final_vcf
+        Array[File] vep_annotated_final_vcf
         File ped_uri
         File bed_file
         File ancestry_labels_1kg

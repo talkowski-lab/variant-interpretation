@@ -11,7 +11,7 @@ struct RuntimeAttr {
 
 workflow annotateStep4 {
     input {
-        Array[Array[File]]? vep_annotated_final_vcf
+        Array[File]? vep_annotated_final_vcf
         Array[File]? vep_vcf_files
         Array[File] split_trio_vcfs
         String mpc_dir

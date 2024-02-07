@@ -14,7 +14,7 @@ workflow runSomalier {
         File sites_uri
         File hg38_fasta
         Array[File]? vep_vcf_files
-        Array[Array[File]]? vep_annotated_final_vcf
+        Array[File]? vep_annotated_final_vcf
         File? merged_vep_file
         File ped_uri
         File bed_file

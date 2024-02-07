@@ -12,7 +12,7 @@ struct RuntimeAttr {
 workflow filterRareVariantsHail {
     input {
         Array[File]? vep_vcf_files
-        Array[Array[File]]? vep_annotated_final_vcf
+        Array[File]? vep_annotated_final_vcf
         File lcr_uri
         File ped_uri
         File? meta_uri

@@ -13,7 +13,7 @@ struct RuntimeAttr {
 
 workflow annotateStep1 {
     input {
-        Array[Array[File]]? vep_annotated_final_vcf
+        Array[File]? vep_annotated_final_vcf
         Array[File]? vep_vcf_files
         File merged_preprocessed_vcf_file
         String mpc_dir
