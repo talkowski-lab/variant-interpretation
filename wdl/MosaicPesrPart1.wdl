@@ -66,18 +66,6 @@ task MergePesrVcfs {
     bcftools view --min-ac 1 ~{melt_vcf} | bgzip -c > melt.vcf.gz
     vcf-concat manta.vcf.gz wham.vcf.gz melt.vcf.gz | vcf-sort -c | bgzip -c > ~{batch}.filtered_pesr_merged.vcf.gz
 
-  /*
-    for VCF in ~{sep=" " pesr_vcfs}; do
-      bcftools view --min-ac 1 $VCF |bgzip -c > temp.vcf.gz
-      mv temp.vcf.gz $VCF
-    done
-
-    vcf-concat ~{sep=" " pesr_vcfs} \
-      | vcf-sort -c \
-      | bgzip -c > \
-      ~{batch}.filtered_pesr_merged.vcf.gz
-  */
-
   >>>
 
   output {
