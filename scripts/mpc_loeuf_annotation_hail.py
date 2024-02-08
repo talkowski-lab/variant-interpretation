@@ -42,7 +42,6 @@ loeuf = pd.read_csv(loeuf_file, sep='\t')
 loeuf.index = loeuf.gene_name
 
 df = mt.to_pandas()
-df.index = df.VarKey
 
 def get_genes_csq(csq):
     genes = []
