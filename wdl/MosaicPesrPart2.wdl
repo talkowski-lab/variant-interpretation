@@ -106,6 +106,15 @@ task rdtest {
     preemptible_tries: 3,
     max_retries: 1
   }
+  runtime {
+    cpu: default_attr.cpu_cores
+    memory: default_attr.mem_gb + " GiB"
+    disks: "local-disk " + default_attr.disk_gb + " HDD"
+    bootDiskSizeGb: default_attr.boot_disk_gb
+    docker: sv_pipeline_rdtest_docker
+    preemptible: default_attr.preemptible_tries
+    maxRetries: default_attr.max_retries
+  }
   command <<<
     set -euo pipefail
 
