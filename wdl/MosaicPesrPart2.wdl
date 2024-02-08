@@ -73,15 +73,15 @@ task GetPotential{
     echo -e "#chr\tstart\tend\tid\ttype\tsample" > header.bed
     cat header.bed ~{name}.potentialmosaic.rare.bed | bgzip > ~{name}.potentialmosaic.rare.bed.gz
   >>>
-  runtime {
-    cpu: select_first([runtime_attr.cpu_cores, default_attr.cpu_cores])
-    memory: select_first([runtime_attr.mem_gb, default_attr.mem_gb]) + " GiB"
-    disks: "local-disk " + select_first([runtime_attr.disk_gb, default_attr.disk_gb]) + " HDD"
-    bootDiskSizeGb: select_first([runtime_attr.boot_disk_gb, default_attr.boot_disk_gb])
+runtime {
+    cpu: default_attr.cpu_cores
+    memory: default_attr.mem_gb + " GiB"
+    disks: "local-disk " + default_attr.disk_gb + " HDD"
+    bootDiskSizeGb: default_attr.boot_disk_gb
     docker: sv_pipeline_docker
-    preemptible: select_first([runtime_attr.preemptible_tries, default_attr.preemptible_tries])
-    maxRetries: select_first([runtime_attr.max_retries, default_attr.max_retries])
-  }
+    preemptible: default_attr.preemptible_tries
+    maxRetries: default_attr.max_retries
+}
   output{
     File rare="~{name}.potentialmosaic.rare.bed.gz"
   }
