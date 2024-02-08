@@ -58,7 +58,6 @@ task GetPotential{
     preemptible_tries: 3,
     max_retries: 1
   }
-  RuntimeAttr runtime_attr = default_attr
   command<<<
     set -euox pipefail
     fgrep -v -f ~{outlier} ~{potential} >potential.txt
