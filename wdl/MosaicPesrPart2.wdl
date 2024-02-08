@@ -49,17 +49,16 @@ task GetPotential{
     File potential
     File lookup
     String sv_pipeline_docker
-    RuntimeAttr? runtime_attr_override
   }
   RuntimeAttr default_attr = object {
     cpu_cores: 1,
     mem_gb: 8,
-    disk_gb: 100,
+    disk_gb: 300,
     boot_disk_gb: 10,
     preemptible_tries: 3,
     max_retries: 1
   }
-  RuntimeAttr runtime_attr = select_first([runtime_attr_override, default_attr])
+  RuntimeAttr runtime_attr = default_attr
   command<<<
     set -euox pipefail
     fgrep -v -f ~{outlier} ~{potential} >potential.txt
@@ -98,17 +97,15 @@ task rdtest {
     File fam_file
     String prefix
     String sv_pipeline_rdtest_docker
-    RuntimeAttr? runtime_attr_override
   }
   RuntimeAttr default_attr = object {
     cpu_cores: 1,
     mem_gb: 3.75,
-    disk_gb: 10,
+    disk_gb: 300,
     boot_disk_gb: 10,
     preemptible_tries: 3,
     max_retries: 1
   }
-  RuntimeAttr runtime_attr = select_first([runtime_attr_override, default_attr])
   command <<<
     set -euo pipefail
 
