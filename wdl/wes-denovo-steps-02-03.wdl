@@ -42,7 +42,7 @@ workflow hailDenovoWES {
         }
     }
 
-    File annot_mt_ = select_first([annot_mt, compressMT.compressed_mt])
+    File annot_mt_ = select_first([compressMT.compressed_mt, annot_mt])
     
     call step2.hailBasicFiltering as step2 {
         input:
