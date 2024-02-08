@@ -1,8 +1,10 @@
+import datetime
+import pandas as pd
 import hail as hl
 import numpy as np
 import sys
 
-vcf_file = sys.argv[1]
+file = sys.argv[1]
 cohort_prefix = sys.argv[2]
 ped_uri = sys.argv[3]
 gnomad_ht_uri = sys.argv[4]
@@ -11,6 +13,7 @@ mpc_chr22_file = sys.argv[6]
 purcell5k = sys.argv[7]
 cores = sys.argv[8]
 mem = int(np.floor(float(sys.argv[9])))
+bucket_id = sys.argv[10]
 
 hl.init(min_block_size=128, spark_conf={"spark.executor.cores": cores, 
                     "spark.executor.memory": f"{mem}g",
@@ -18,7 +21,10 @@ hl.init(min_block_size=128, spark_conf={"spark.executor.cores": cores,
                     "spark.driver.memory": f"{mem}g"
                     }, tmp_dir="tmp", local_tmpdir="tmp")
 
-mt = hl.import_vcf(vcf_file, reference_genome = 'GRCh38', array_elements_required=False, force_bgz=True)
+if file.split('.')[-1] == 'mt':
+    mt = hl.read_matrix_table(file)
+else:
+    mt = hl.import_vcf(file, reference_genome = 'GRCh38', array_elements_required=False, force_bgz=True)
 
 # Step 1: Annotations
 
@@ -69,9 +75,20 @@ mt5k = mt.filter_rows(hl.is_defined(p5k[mt.locus]), keep = True)
 #5k variants only
 eigenvalues_5k, score_table_5k, loading_table_5k = hl.hwe_normalized_pca(mt5k.GT, k=20, compute_loadings=True)
 
-## also export unfiltered PCA results as mts
-score_table_5k.write(f"{cohort_prefix}_wes_pca_score_table_5k.ht", overwrite = True)
-loading_table_5k.write(f"{cohort_prefix}_wes_pca_loading_table_5k.ht", overwrite = True)
-
 ## Export mt
-mt.write(f"{cohort_prefix}_wes_denovo_annot.mt", overwrite=True)
+if bucket_id == 'false':
+## also export unfiltered PCA results as mts
+    score_table_5k.write(f"{cohort_prefix}_wes_pca_score_table_5k.ht", overwrite = True)
+    loading_table_5k.write(f"{cohort_prefix}_wes_pca_loading_table_5k.ht", overwrite = True)
+    mt.write(f"{cohort_prefix}_wes_denovo_annot.mt", overwrite=True)
+else:
+    filename = f"{bucket_id}/hail/{str(datetime.date.today())}/{cohort_prefix}_wes_denovo_annot.mt"
+    score_table_file = f"{bucket_id}/hail/{str(datetime.date.today())}/{cohort_prefix}_wes_pca_score_table_5k.ht"
+    loading_table_file = f"{bucket_id}/hail/{str(datetime.date.today())}/{cohort_prefix}_wes_pca_loading_table_5k.ht"
+    
+    mt_uris = [filename, score_table_file, loading_table_file]
+    pd.Series(mt_uris).to_csv('mt_uri.txt',index=False, header=None)
+    
+    mt.write(filename, overwrite=True)
+    score_table_5k.write(score_table_file, overwrite=True)
+    loading_table_5k.write(loading_table_file, overwrite=True)
