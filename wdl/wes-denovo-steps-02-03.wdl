@@ -15,7 +15,7 @@ struct RuntimeAttr {
 
 workflow hailDenovoWES {
     input {
-        File? mt_uri
+        String? mt_uri
         Float? mt_size
         File? annot_mt
         File ped_uri
