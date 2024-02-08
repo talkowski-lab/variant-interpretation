@@ -49,7 +49,7 @@ workflow hailDenovoWES {
 
     call step2.hailBasicFilteringRemote as step2 {
         input:
-            annot_mt=mt_uri,
+            annot_mt=step1.annot_mt,
             input_size=mt_size,
             ped_uri=ped_uri,
             bucket_id=bucket_id,
