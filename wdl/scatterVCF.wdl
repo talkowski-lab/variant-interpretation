@@ -21,6 +21,7 @@ workflow scatterVCF {
         Boolean localize_vcf
         Boolean split_by_chromosome
         Boolean split_into_shards 
+        Int? mt_size
         Int? n_shards  
         Int? records_per_shard
         RuntimeAttr? runtime_attr_split_by_chr
@@ -89,19 +90,32 @@ workflow scatterVCF {
         }
         
         if (!defined(select_first([splitByChromosome.shards, splitByChromosomeRemote.shards]))) {
-            call scatterVCF {
+            if (localize_vcf) {
+                call scatterVCF {
                 input:
                     vcf_file=file,
                     split_vcf_hail_script=split_vcf_hail_script,
                     n_shards=select_first([n_shards]),
                     vep_hail_docker=vep_hail_docker,
                     runtime_attr_override=runtime_attr_split_into_shards
+                }
+            }
+            if (!localize_vcf) {
+                call scatterVCFRemote {
+                input:
+                    vcf_file=file,
+                    input_size=select_first([mt_size]),
+                    split_vcf_hail_script=split_vcf_hail_script,
+                    n_shards=select_first([n_shards]),
+                    vep_hail_docker=vep_hail_docker,
+                    runtime_attr_override=runtime_attr_split_into_shards
+                }
             }
         }
     }    
     
     output {
-    Array[File] vcf_shards = select_first([scatterVCF.shards, chromosome_shards, 
+    Array[File] vcf_shards = select_first([scatterVCF.shards, scatterVCFRemote.shards, chromosome_shards, 
                                         splitChromosomeShards])
     }
 }   
@@ -315,6 +329,59 @@ task scatterVCF {
     Float base_disk_gb = 10.0
     Float input_disk_scale = 5.0
     String prefix = basename(vcf_file, ".vcf.gz")
+
+    RuntimeAttr runtime_default = object {
+        mem_gb: 4,
+        disk_gb: ceil(base_disk_gb + input_size * input_disk_scale),
+        cpu_cores: 1,
+        preemptible_tries: 3,
+        max_retries: 1,
+        boot_disk_gb: 10
+    }
+
+    RuntimeAttr runtime_override = select_first([runtime_attr_override, runtime_default])
+
+    Float memory = select_first([runtime_override.mem_gb, runtime_default.mem_gb])
+    Int cpu_cores = select_first([runtime_override.cpu_cores, runtime_default.cpu_cores])
+    
+    runtime {
+        memory: "~{memory} GB"
+        disks: "local-disk ~{select_first([runtime_override.disk_gb, runtime_default.disk_gb])} HDD"
+        cpu: cpu_cores
+        preemptible: select_first([runtime_override.preemptible_tries, runtime_default.preemptible_tries])
+        maxRetries: select_first([runtime_override.max_retries, runtime_default.max_retries])
+        docker: vep_hail_docker
+        bootDiskSizeGb: select_first([runtime_override.boot_disk_gb, runtime_default.boot_disk_gb])
+    }
+    
+    command <<<
+        set -euo pipefail
+        curl  ~{split_vcf_hail_script} > split_vcf.py
+        python3.9 split_vcf.py ~{vcf_file} ~{n_shards} ~{prefix} ~{cpu_cores} ~{memory}
+        for file in $(ls ~{prefix}.vcf.bgz | grep '.bgz'); do
+            shard_num=$(echo $file | cut -d '-' -f2);
+            mv ~{prefix}.vcf.bgz/$file ~{prefix}.shard_"$shard_num".vcf.bgz
+        done
+    >>>
+    output {
+        Array[File] shards = glob("~{prefix}.shard_*.vcf.bgz")
+        Array[String] shards_string = glob("~{prefix}.shard_*.vcf.bgz")
+    }
+}
+
+task scatterVCFRemote {
+    input {
+        String vcf_file
+        Int input_size
+        Int n_shards
+        String split_vcf_hail_script
+        String vep_hail_docker
+        RuntimeAttr? runtime_attr_override
+    }
+
+    Float base_disk_gb = 10.0
+    Float input_disk_scale = 5.0
+    String prefix = if sub(vcf_file, '.mt', '')!=vcf_file then basename(vcf_file, '.mt') else basename(vcf_file, ".vcf.gz")
 
     RuntimeAttr runtime_default = object {
         mem_gb: 4,
