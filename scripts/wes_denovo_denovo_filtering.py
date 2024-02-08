@@ -340,7 +340,7 @@ if bucket_id == 'false':
     de_novo_results.write(f"{cohort_prefix}_wes_final_denovo.ht", overwrite = True)
 else:
     mt_uris = []
-    filename = f"{bucket_id}/hail/{str(datetime.date.today())}/{cohort_prefix}_wes_final_denovo.ht"
+    filename = f"{bucket_id}/hail/{str(datetime.datetime.now().strftime('%Y-%m-%d_%H:%M'))}/{cohort_prefix}_wes_final_denovo.ht"
     mt_uris.append(filename)
     de_novo_results.write(filename, overwrite=True)
 
@@ -395,7 +395,7 @@ td = hl.trio_matrix(mt, pedigree, complete_trios = True)
 if bucket_id == 'false':
     td.write(f"{cohort_prefix}_trio_tdt.mt", overwrite=True)
 else:
-    filename = f"{bucket_id}/hail/{str(datetime.date.today())}/{cohort_prefix}_trio_tdt.mt"
+    filename = f"{bucket_id}/hail/{str(datetime.datetime.now().strftime('%Y-%m-%d_%H:%M'))}/{cohort_prefix}_trio_tdt.mt"
     mt_uris.append(filename)
     td.write(filename, overwrite=True)
 
@@ -473,7 +473,7 @@ td = parent_aware_t_u_annotations_v3(td)
 if bucket_id == 'false':
     td.write(f"{cohort_prefix}_parent_aware_trio_tdt.mt", overwrite = True)
 else:
-    filename = f"{bucket_id}/hail/{str(datetime.date.today())}/{cohort_prefix}_parent_aware_trio_tdt.mt"
+    filename = f"{bucket_id}/hail/{str(datetime.datetime.now().strftime('%Y-%m-%d_%H:%M'))}/{cohort_prefix}_parent_aware_trio_tdt.mt"
     mt_uris.append(filename)
     pd.Series(mt_uris).to_csv('mt_uri.txt', index=False, header=None)
     td.write(filename, overwrite=True)

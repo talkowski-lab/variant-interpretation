@@ -82,9 +82,9 @@ if bucket_id == 'false':
     loading_table_5k.write(f"{cohort_prefix}_wes_pca_loading_table_5k.ht", overwrite = True)
     mt.write(f"{cohort_prefix}_wes_denovo_annot.mt", overwrite=True)
 else:
-    filename = f"{bucket_id}/hail/{str(datetime.date.today())}/{cohort_prefix}_wes_denovo_annot.mt"
-    score_table_file = f"{bucket_id}/hail/{str(datetime.date.today())}/{cohort_prefix}_wes_pca_score_table_5k.ht"
-    loading_table_file = f"{bucket_id}/hail/{str(datetime.date.today())}/{cohort_prefix}_wes_pca_loading_table_5k.ht"
+    filename = f"{bucket_id}/hail/{str(datetime.datetime.now().strftime('%Y-%m-%d_%H:%M'))}/{cohort_prefix}_wes_denovo_annot.mt"
+    score_table_file = f"{bucket_id}/hail/{str(datetime.datetime.now().strftime('%Y-%m-%d_%H:%M'))}/{cohort_prefix}_wes_pca_score_table_5k.ht"
+    loading_table_file = f"{bucket_id}/hail/{str(datetime.datetime.now().strftime('%Y-%m-%d_%H:%M'))}/{cohort_prefix}_wes_pca_loading_table_5k.ht"
     
     mt_uris = [filename, score_table_file, loading_table_file]
     pd.Series(mt_uris).to_csv('mt_uri.txt',index=False, header=None)
