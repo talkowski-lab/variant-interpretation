@@ -1,5 +1,6 @@
 version 1.0
 
+import "compressHailMT.wdl" as compressHailMT
 import "wes-denovo-step-02.wdl" as step2
 import "wes-denovo-step-03.wdl" as step3
 
@@ -14,7 +15,9 @@ struct RuntimeAttr {
 
 workflow hailDenovoWES {
     input {
-        File annot_mt
+        File? mt_uri
+        Float? mt_size
+        File? annot_mt
         File ped_uri
         File purcell5k
         File mpc_chr22_file
@@ -30,9 +33,20 @@ workflow hailDenovoWES {
         String sv_base_mini_docker
     }
 
+    if (defined(mt_uri)) {
+        call compressHailMT.compressMT as compressMT {
+            input:
+                mt_uri=select_first([mt_uri]),
+                mt_size=select_first([mt_size]),
+                hail_docker=hail_docker
+        }
+    }
+
+    File annot_mt_ = select_first([annot_mt, compressMT.compressed_mt])
+    
     call step2.hailBasicFiltering as step2 {
         input:
-            annot_mt=annot_mt,
+            annot_mt=annot_mt_,
             ped_uri=ped_uri,
             cohort_prefix=cohort_prefix,
             hail_basic_filtering_script=hail_basic_filtering_script,
