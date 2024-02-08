@@ -17,10 +17,10 @@ workflow scatterVCF {
         String cohort_prefix
         String vep_hail_docker
         String sv_base_mini_docker
-        Boolean has_index
         Boolean localize_vcf
         Boolean split_by_chromosome
         Boolean split_into_shards 
+        Boolean? has_index
         Int? mt_size
         Int? n_shards  
         Int? records_per_shard
@@ -35,7 +35,7 @@ workflow scatterVCF {
             call getChromosomeSizes {
                 input:
                     vcf_file=vcf_uri,
-                    has_index=has_index,
+                    has_index=select_first([has_index]),
                     sv_base_mini_docker=sv_base_mini_docker
             }
         }
@@ -59,7 +59,7 @@ workflow scatterVCF {
                         chromosome=chromosome,
                         chrom_length=select_first([getChromosomeSizes.contig_lengths])[chromosome],
                         n_samples=select_first([getChromosomeSizes.n_samples]),
-                        has_index=has_index,
+                        has_index=select_first([has_index]),
                         sv_base_mini_docker=sv_base_mini_docker,
                         runtime_attr_override=runtime_attr_split_by_chr
                 }
