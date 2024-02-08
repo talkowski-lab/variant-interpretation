@@ -1,3 +1,5 @@
+import datetime
+import pandas as pd
 import hail as hl
 import numpy as np
 import sys
@@ -7,6 +9,7 @@ cohort_prefix = sys.argv[2]
 ped_uri = sys.argv[3]
 cores = sys.argv[4]
 mem = int(np.floor(float(sys.argv[5])))
+bucket_id = sys.argv[6]
 
 hl.init(min_block_size=128, spark_conf={"spark.executor.cores": cores, 
                     "spark.executor.memory": f"{mem}g",
@@ -179,4 +182,9 @@ mt = sex_aware_sample_annotations(mt)
 hl.sample_qc(mt).cols().flatten().export(f"{cohort_prefix}_wes_final_annot_post_filter_qc_info.txt")
 
 # export mt
-mt.write(f"{cohort_prefix}_wes_denovo_basic_filtering.mt", overwrite=True)
+if bucket_id == 'false':
+    mt.write(f"{cohort_prefix}_wes_denovo_basic_filtering.mt", overwrite=True)
+else:
+    filename = f"{bucket_id}/hail/{str(datetime.date.today())}/{cohort_prefix}_wes_denovo_basic_filtering.mt"
+    pd.Series([filename]).to_csv('mt_uri.txt',index=False, header=None)
+    mt.write(filename, overwrite=True)

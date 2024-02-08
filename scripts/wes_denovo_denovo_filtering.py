@@ -1,3 +1,5 @@
+import datetime
+import pandas as pd
 import hail as hl
 import numpy as np
 import pandas as pd
@@ -10,6 +12,7 @@ ped_uri = sys.argv[3]
 loeuf_file = sys.argv[4]
 cores = sys.argv[5]
 mem = int(np.floor(float(sys.argv[6])))
+bucket_id = sys.argv[7]
 
 hl.init(min_block_size=128, spark_conf={"spark.executor.cores": cores, 
                     "spark.executor.memory": f"{mem}g",
@@ -333,7 +336,13 @@ de_novo_results = kyles_de_novo_v16(mt, pedigree, pop_frequency_prior = mt.gnoma
 # TODO: output (all below)
 de_novo_results.flatten().export(f"{cohort_prefix}_wes_final_denovo.txt")
 
-de_novo_results.write(f"{cohort_prefix}_wes_final_denovo.ht", overwrite = True)
+if bucket_id == 'false':
+    de_novo_results.write(f"{cohort_prefix}_wes_final_denovo.ht", overwrite = True)
+else:
+    mt_uris = []
+    filename = f"{bucket_id}/hail/{str(datetime.date.today())}/{cohort_prefix}_wes_final_denovo.ht"
+    mt_uris.append(filename)
+    de_novo_results.write(filename, overwrite=True)
 
 # LOEUF annotations
 
@@ -383,7 +392,12 @@ td = hl.trio_matrix(mt, pedigree, complete_trios = True)
 
 # TODO: output?
 # Write trio dataset
-td.write(f"{cohort_prefix}_trio_tdt.mt", overwrite=True)
+if bucket_id == 'false':
+    td.write(f"{cohort_prefix}_trio_tdt.mt", overwrite=True)
+else:
+    filename = f"{bucket_id}/hail/{str(datetime.date.today())}/{cohort_prefix}_trio_tdt.mt"
+    mt_uris.append(filename)
+    td.write(filename, overwrite=True)
 
 # Parent-aware TDT annotations, plus extras for use in genotype counts
 #
@@ -456,7 +470,13 @@ td = parent_aware_t_u_annotations_v3(td)
 
 # TODO: output?
 # Write these results to check against built-in TDT function
-td.write(f"{cohort_prefix}_parent_aware_trio_tdt.mt", overwrite = True)
+if bucket_id == 'false':
+    td.write(f"{cohort_prefix}_parent_aware_trio_tdt.mt", overwrite = True)
+else:
+    filename = f"{bucket_id}/hail/{str(datetime.date.today())}/{cohort_prefix}_parent_aware_trio_tdt.mt"
+    mt_uris.append(filename)
+    pd.Series(mt_uris).to_csv('mt_uri.txt', index=False, header=None)
+    td.write(filename, overwrite=True)
 
 
 # TODO: idk the point of the below code...
