@@ -12,14 +12,14 @@ struct RuntimeAttr {
 workflow compressHailMT {
     input {
         String mt_uri
-        String sv_base_mini_docker
+        String hail_docker
         Float mt_size
     }
 
     call compressMT {
         input:
             mt_uri=mt_uri,
-            sv_base_mini_docker=sv_base_mini_docker,
+            hail_docker=hail_docker,
             mt_size=mt_size
     }
 
@@ -31,7 +31,7 @@ workflow compressHailMT {
 task compressMT {
     input {
         String mt_uri
-        String sv_base_mini_docker
+        String hail_docker
         Float mt_size
         RuntimeAttr? runtime_attr_override
     }
@@ -60,7 +60,7 @@ task compressMT {
         cpu: cpu_cores
         preemptible: select_first([runtime_override.preemptible_tries, runtime_default.preemptible_tries])
         maxRetries: select_first([runtime_override.max_retries, runtime_default.max_retries])
-        docker: sv_base_mini_docker
+        docker: hail_docker
         bootDiskSizeGb: select_first([runtime_override.boot_disk_gb, runtime_default.boot_disk_gb])
     }
 
