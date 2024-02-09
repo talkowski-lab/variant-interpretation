@@ -100,7 +100,7 @@ def BaggingPU(X, y, kf, n_jobs=-1):
     return y_pred_bag, output_bag, classifiers
 
 def run_PU_bagging(merged_output, numeric, n_splits=5):
-    merged_output = merged_output[~merged_output[numeric].isna().any(axis=1)]
+    merged_output = merged_output[~merged_output[numeric].isna().any(axis=1)].reset_index(drop=True)
     X = merged_output[numeric].sample(frac=1)
     y = merged_output['label'].loc[X.index]
     
