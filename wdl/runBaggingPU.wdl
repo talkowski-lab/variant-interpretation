@@ -13,27 +13,30 @@ workflow runBaggingPU {
     input {
         File vcf_metrics_tsv
         File ultra_rare_variants_tsv
+        String var_type
         String bagging_pu_source_script
         String run_bagging_pu_script
         String cohort_prefix
         String hail_docker
-        Int AC_threshold=3
-        Float AF_threshold=0.005
-        Float csq_AF_threshold=0.01
+        Array[File]? numeric
         RuntimeAttr? runtime_attr_bagging_pu
     }
+
+    if (!defined(numeric)) {
+        Array[File] numeric_default = ['']
+    }
+    Array[File] numeric_ = select_first([numeric, numeric_default])
 
     call baggingPU {
         input:
             vcf_metrics_tsv=vcf_metrics_tsv,
             ultra_rare_variants_tsv=ultra_rare_variants_tsv,
+            var_type=var_type,
             bagging_pu_source_script=bagging_pu_source_script,
             run_bagging_pu_script=run_bagging_pu_script,
             cohort_prefix=cohort_prefix,
             hail_docker=hail_docker,
-            AC_threshold=AC_threshold,
-            AF_threshold=AF_threshold,
-            csq_AF_threshold=csq_AF_threshold,
+            numeric=numeric_,
             runtime_attr_override=runtime_attr_bagging_pu
     }
 
@@ -47,13 +50,12 @@ task baggingPU {
     input {
         File vcf_metrics_tsv
         File ultra_rare_variants_tsv
+        String var_type
         String bagging_pu_source_script
         String run_bagging_pu_script
         String cohort_prefix
         String hail_docker
-        Int AC_threshold
-        Float AF_threshold
-        Float csq_AF_threshold
+        Array[File] numeric
         RuntimeAttr? runtime_attr_override
     }
 
@@ -81,16 +83,16 @@ task baggingPU {
         docker: hail_docker
         bootDiskSizeGb: select_first([runtime_override.boot_disk_gb, runtime_default.boot_disk_gb])
     }
-
+    
     command <<<
         curl ~{run_bagging_pu_script} > run_bagging_pu.py
         curl ~{bagging_pu_source_script} > baggingPU.py
         python3 run_bagging_pu.py ~{vcf_metrics_tsv} ~{ultra_rare_variants_tsv} ~{cohort_prefix} \
-        ~{AC_threshold} ~{AF_threshold} ~{csq_AF_threshold}
+        ~{var_type} ~{sep=',' numeric}
     >>>
 
     output {
-        File bagging_pu_results = "~{cohort_prefix}_baggingPU_results.tsv"
-        File bagging_pu_importances = "~{cohort_prefix}_feature_importances.tsv"
+        File bagging_pu_results = "~{cohort_prefix}_baggingPU_{var_type}_results.tsv"
+        File bagging_pu_importances = "~{cohort_prefix}_{var_type}_feature_importances.tsv"
     }
 }
