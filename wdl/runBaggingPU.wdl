@@ -18,14 +18,14 @@ workflow runBaggingPU {
         String run_bagging_pu_script
         String cohort_prefix
         String hail_docker
-        Array[File]? numeric
+        Array[String]? numeric
         RuntimeAttr? runtime_attr_bagging_pu
     }
 
     if (!defined(numeric)) {
-        Array[File] numeric_default = ['']
+        Array[String] numeric_default = ['']
     }
-    Array[File] numeric_ = select_first([numeric, numeric_default])
+    Array[String] numeric_ = select_first([numeric, numeric_default])
 
     call baggingPU {
         input:
@@ -55,7 +55,7 @@ task baggingPU {
         String run_bagging_pu_script
         String cohort_prefix
         String hail_docker
-        Array[File] numeric
+        Array[String] numeric
         RuntimeAttr? runtime_attr_override
     }
 
