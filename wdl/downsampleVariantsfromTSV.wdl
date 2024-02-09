@@ -84,7 +84,6 @@ task getNumVars {
     }
 
     command <<<
-        set -euo pipefail
         type_col=$(cat ~{reference_tsv} | head -n 1 | awk -v name='TYPE' '{for (i=1;i<=NF;i++) if ($i==name) print i; exit}')
         n_vars=$(cat ~{reference_tsv} | awk -v col=$type_col '{ if ($col == "~{var_type}") { print } }' | wc -l)
         echo $n_vars > n_vars.txt
