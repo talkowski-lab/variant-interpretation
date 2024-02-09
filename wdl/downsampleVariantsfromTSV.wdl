@@ -84,6 +84,7 @@ task getNumVars {
     }
 
     command <<<
+        set -euo pipefail
         type_col=$(cat ~{reference_tsv} | head -n 1 | awk -v name='TYPE' '{for (i=1;i<=NF;i++) if ($i==name) print i; exit}')
         n_vars=$(cat ~{reference_tsv} | awk -v col=$type_col '{ if ($col == "~{var_type}") { print } }' | wc -l)
         echo $n_vars > n_vars.txt
@@ -129,6 +130,7 @@ task downsampleVariants {
     }
 
     command <<<
+        set -euo pipefail
         type_col=$(cat ~{full_input_tsv} | head -n 1 | awk -v name='TYPE' '{for (i=1;i<=NF;i++) if ($i==name) print i; exit}')
         var_type_tsv=$(basename ~{full_input_tsv} '.tsv')_~{var_type}.tsv
         cat ~{full_input_tsv} | awk -v col=$type_col '{ if ($col == "~{var_type}") { print } }' > $var_type_tsv
