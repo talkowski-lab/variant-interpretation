@@ -120,7 +120,7 @@ def run_PU_bagging(merged_output, numeric, n_splits=5):
                             'pred_bag': y_pred_bag.astype(int)})
     return results, importances_bag
 
-if numeric != '':
+if numeric != 'false':
     numeric = numeric.split(',')
 elif var_type == 'Indel':
     numeric = ['BaseQRankSum', 'MQ', 'MQRankSum', 'QD'] 

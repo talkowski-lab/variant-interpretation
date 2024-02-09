@@ -23,7 +23,7 @@ workflow runBaggingPU {
     }
 
     if (!defined(numeric)) {
-        Array[String] numeric_default = ['']
+        Array[String] numeric_default = ['false']
     }
     Array[String] numeric_ = select_first([numeric, numeric_default])
 
