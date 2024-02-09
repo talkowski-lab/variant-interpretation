@@ -100,8 +100,9 @@ def BaggingPU(X, y, kf, n_jobs=-1):
     return y_pred_bag, output_bag, classifiers
 
 def run_PU_bagging(merged_output, numeric, n_splits=5):
-    X = merged_output[merged_output.TYPE=='Indel'][numeric].sample(frac=1)
-    y = merged_output[merged_output.TYPE=='Indel']['label'].loc[X.index]
+    merged_output = merged_output[~merged_output[numeric].isna().any(axis=1)]
+    X = merged_output[numeric].sample(frac=1)
+    y = merged_output['label'].loc[X.index]
     
     kf = sklearn.model_selection.KFold(n_splits=n_splits)
     y_pred_bag, output_bag, classifiers_bag = BaggingPU(X, y, kf, n_jobs=-1)
