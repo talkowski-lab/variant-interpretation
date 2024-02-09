@@ -92,7 +92,7 @@ task baggingPU {
     >>>
 
     output {
-        File bagging_pu_results = "~{cohort_prefix}_baggingPU_{var_type}_results.tsv"
-        File bagging_pu_importances = "~{cohort_prefix}_{var_type}_feature_importances.tsv"
+        File bagging_pu_results = "~{cohort_prefix}_baggingPU_~{var_type}_results.tsv"
+        File bagging_pu_importances = "~{cohort_prefix}_~{var_type}_feature_importances.tsv"
     }
 }
