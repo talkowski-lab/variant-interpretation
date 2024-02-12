@@ -11,6 +11,8 @@ struct RuntimeAttr {
 
 workflow getWGSPipelineStats {
     input {
+        String BILLING_PROJECT_ID
+        String WORKSPACE
         String num_variants_step03_script
         String num_variants_step04_script
         String num_variants_all_steps_script
@@ -21,6 +23,8 @@ workflow getWGSPipelineStats {
 
     call getCohortTSV {
         input:
+            BILLING_PROJECT_ID=BILLING_PROJECT_ID,
+            WORKSPACE=WORKSPACE,
             hail_docker=hail_docker,
             terra_data_table_util_script=terra_data_table_util_script
     }
@@ -59,6 +63,8 @@ workflow getWGSPipelineStats {
 
 task getCohortTSV {
     input {
+        String BILLING_PROJECT_ID
+        String WORKSPACE
         String terra_data_table_util_script
         String hail_docker
     }
@@ -71,16 +77,16 @@ task getCohortTSV {
         curl ~{terra_data_table_util_script} > terra_data_table_util.py
         echo '
         import os
+        import sys
         import pandas as pd
         from terra_data_table_util import get_terra_table_to_df
-        BILLING_PROJECT_ID = os.environ["WORKSPACE_NAMESPACE"]
-        WORKSPACE = os.environ["WORKSPACE_NAME"]
-        BUCKET = os.environ["WORKSPACE_BUCKET"]
+        BILLING_PROJECT_ID = sys.argv[1]
+        WORKSPACE = sys.argv[2]
 
         cohort_df = get_terra_table_to_df(project=BILLING_PROJECT_ID, workspace=WORKSPACE, table_name="cohort")
         cohort_df.to_csv("cohort_data_table.tsv", sep="\t", index=False);
         ' > save_cohort_tsv.py
-        python3 save_cohort_tsv.py
+        python3 save_cohort_tsv.py ~{BILLING_PROJECT_ID} ~{WORKSPACE}
     >>>
 
     output {
