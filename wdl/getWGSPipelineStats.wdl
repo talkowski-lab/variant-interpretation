@@ -11,30 +11,37 @@ struct RuntimeAttr {
 
 workflow getWGSPipelineStats {
     input {
-        File cohort_tsv
         String num_variants_step03_script
         String num_variants_step04_script
         String num_variants_all_steps_script
+        String terra_data_table_util_script
         String vep_hail_docker
+        String hail_docker
+    }
+
+    call getCohortTSV {
+        input:
+            hail_docker=hail_docker,
+            terra_data_table_util_script=terra_data_table_util_script
     }
 
     call getNumVariantsStep03 {
         input:
-            cohort_tsv=cohort_tsv,
+            cohort_tsv=getCohortTSV.cohort_tsv,
             num_variants_step03_script=num_variants_step03_script,
             vep_hail_docker=vep_hail_docker
     }
 
     call getNumVariantsStep04 {
         input:
-            cohort_tsv=cohort_tsv,
+            cohort_tsv=getCohortTSV.cohort_tsv,
             num_variants_step04_script=num_variants_step04_script,
             vep_hail_docker=vep_hail_docker
     }
 
     # call combineNumVariants {
     #     input:
-    #         cohort_tsv=cohort_tsv,
+    #         cohort_tsv=getCohortTSV.cohort_tsv,
     #         num_vars_step03=getNumVariantsStep03.num_vars_step03,
     #         num_vars_step04=getNumVariantsStep04.num_vars_step04,
     #         num_variants_all_steps_script=num_variants_all_steps_script,
@@ -43,10 +50,41 @@ workflow getWGSPipelineStats {
 
     output {
         String num_vars_step03_dir = sub(getNumVariantsStep03.num_vars_step03[0], 
-            basename(getNumVariantsStep03.num_vars_step03[0]), '')
+            basename(getNumVariantsStep03.num_vars_step03[0]), "")
         String num_vars_step04_dir = sub(getNumVariantsStep04.num_vars_step04[0], 
-            basename(getNumVariantsStep04.num_vars_step04[0]), '')
+            basename(getNumVariantsStep04.num_vars_step04[0]), "")
         # File cohort_num_variants_wgs = combineNumVariants.cohort_num_variants_wgs
+    }
+}
+
+task getCohortTSV {
+    input {
+        String terra_data_table_util_script
+        String hail_docker
+    }
+
+    runtime {
+        docker: hail_docker
+    }
+
+    command <<<
+        curl ~{terra_data_table_util_script} > terra_data_table_util.py
+        echo '
+        import os
+        import pandas as pd
+        from terra_data_table_util import get_terra_table_to_df
+        BILLING_PROJECT_ID = os.environ["WORKSPACE_NAMESPACE"]
+        WORKSPACE = os.environ["WORKSPACE_NAME"]
+        BUCKET = os.environ["WORKSPACE_BUCKET"]
+
+        cohort_df = get_terra_table_to_df(project=BILLING_PROJECT_ID, workspace=WORKSPACE, table_name="cohort")
+        cohort_df.to_csv("cohort_data_table.tsv", sep="\t", index=False);
+        ' > save_cohort_tsv.py
+        python3 save_cohort_tsv.py
+    >>>
+
+    output {
+        File cohort_tsv = "cohort_data_table.tsv"
     }
 }
 
@@ -86,7 +124,7 @@ task getNumVariantsStep03 {
     command <<< 
         set -euo pipefail
         curl ~{num_variants_step03_script} > get_num_variants_step03.sh
-        sed -i 's.bcftools./opt/vep/bcftools/bcftools.g' get_num_variants_step03.sh
+        sed -i "s.bcftools./opt/vep/bcftools/bcftools.g" get_num_variants_step03.sh
         bash get_num_variants_step03.sh ~{cohort_tsv}
     >>>
 
@@ -132,7 +170,7 @@ task getNumVariantsStep04 {
     command <<< 
         set -euo pipefail
         curl ~{num_variants_step04_script} > get_num_variants_step04.sh
-        sed -i 's.bcftools./opt/vep/bcftools/bcftools.g' get_num_variants_step04.sh
+        sed -i "s.bcftools./opt/vep/bcftools/bcftools.g" get_num_variants_step04.sh
         bash get_num_variants_step04.sh ~{cohort_tsv}
     >>>
 
@@ -193,6 +231,6 @@ task combineNumVariants {
     >>>
 
     output {
-        File cohort_num_variants_wgs = "~{basename(cohort_tsv, '.tsv')}_total_avg_num_vars_per_trio.tsv"
+        File cohort_num_variants_wgs = "~{basename(cohort_tsv, ".tsv")}_total_avg_num_vars_per_trio.tsv"
     }
 }
