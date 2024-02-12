@@ -85,7 +85,7 @@ task getCohortTSV {
         WORKSPACE = sys.argv[2]
 
         cohort_df = get_terra_table_to_df(project=BILLING_PROJECT_ID, workspace=WORKSPACE, table_name="cohort")
-        cohort_df.to_csv("cohort_data_table.tsv", sep="\t", index=False, quotechar="'")
+        cohort_df.to_csv("cohort_data_table.tsv", sep="\t", index=False, quotechar="\'")
         ' > save_cohort_tsv.py
         python3 save_cohort_tsv.py ~{BILLING_PROJECT_ID} ~{WORKSPACE}
     >>>
