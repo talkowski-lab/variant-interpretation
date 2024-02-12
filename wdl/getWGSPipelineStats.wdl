@@ -79,6 +79,7 @@ task getCohortTSV {
         import os
         import sys
         import pandas as pd
+        import numpy as np
         from terra_data_table_util import get_terra_table_to_df
         BILLING_PROJECT_ID = sys.argv[1]
         WORKSPACE = sys.argv[2]
