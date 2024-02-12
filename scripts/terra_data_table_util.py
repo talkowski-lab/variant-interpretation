@@ -127,11 +127,11 @@ import pkg_resources
 
 installed_packages = {pkg.key for pkg in pkg_resources.working_set}
 
-if "tenancity" not in installed_packages:
-    get_ipython().run_line_magic('pip', 'install tenacity')
+# if "tenancity" not in installed_packages:
+#     get_ipython().run_line_magic('pip', 'install tenacity')
 
-if "firecloud" not in installed_packages:
-    get_ipython().run_line_magic('pip', 'install --upgrade firecloud')
+# if "firecloud" not in installed_packages:
+#     get_ipython().run_line_magic('pip', 'install --upgrade firecloud')
 
 # For debugging:
 # ! pip install pysnooper
