@@ -32,10 +32,7 @@ workflow runSomalier {
     }
 
     if (!defined(merged_vep_file)) {
-        if (defined(vep_annotated_final_vcf)) {
-            Array[File] vep_annotated_final_vcf_arr = flatten(select_first([vep_annotated_final_vcf]))
-        }
-        Array[File] vep_files = select_first([vep_vcf_files, vep_annotated_final_vcf_arr])
+        Array[File] vep_files = select_first([vep_vcf_files, vep_annotated_final_vcf])
         
         scatter (vcf_uri in vep_files) {
             call subsetVCFs {
