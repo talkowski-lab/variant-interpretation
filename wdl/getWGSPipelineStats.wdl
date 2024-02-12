@@ -84,7 +84,11 @@ task getCohortTSV {
         WORKSPACE = sys.argv[2]
 
         cohort_df = get_terra_table_to_df(project=BILLING_PROJECT_ID, workspace=WORKSPACE, table_name="cohort")
-        cohort_df.to_csv("cohort_data_table.tsv", sep="\t", index=False);
+        cohort_df.to_csv("cohort_data_table.tsv", sep="\t", index=False)
+
+        cohort_df = pd.read_csv("cohort_data_table.tsv", sep="\t")
+        cohort_df = cohort_df.replace({'[]':np.nan})
+        cohort_df.to_csv("cohort_data_table.tsv", sep="\t", index=False)
         ' > save_cohort_tsv.py
         python3 save_cohort_tsv.py ~{BILLING_PROJECT_ID} ~{WORKSPACE}
     >>>
