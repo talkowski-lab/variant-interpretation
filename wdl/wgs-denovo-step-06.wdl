@@ -12,9 +12,9 @@ struct RuntimeAttr {
 workflow step5 {
     input {
         File vcf_metrics_tsv
-        Float AF_threshold
-        Int AC_threshold
-        Float csq_af_threshold
+        Float AF_threshold=0.005
+        Int AC_threshold=2
+        Float csq_af_threshold=0.01
         String filter_final_tsv_script
         String hail_docker
     }
