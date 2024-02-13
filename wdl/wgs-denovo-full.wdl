@@ -46,10 +46,7 @@ workflow wgs_denovo_full {
             Float minDQ
     }
 
-    if (defined(vep_annotated_final_vcf)) {
-        Array[File] vep_annotated_final_vcf_arr = flatten(select_first([vep_annotated_final_vcf]))
-    }
-    Array[File] vep_files = select_first([vep_vcf_files, vep_annotated_final_vcf_arr])
+    Array[File] vep_files = select_first([vep_vcf_files, vep_annotated_final_vcf])
 
     call step1and2.step1 as step1and2 {
         input:
