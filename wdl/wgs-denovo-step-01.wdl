@@ -286,9 +286,9 @@ task mergeVCFs {
         bcftools concat -n --no-version -Oz --file-list vcfs_sorted.list --output ~{merged_vcf_name}
         if [ "~{sort_after_merge}" = "true" ]; then
             mkdir -p tmp
-            # bcftools sort ~{merged_vcf_name} -Oz --output ~{sorted_vcf_name} -T tmp/
-            cat ~{merged_vcf_name} | zcat | awk '$1 ~ /^#/ {print $0;next} {print $0 | "sort -k1,1V -k2,2n"}' > ~{basename(sorted_vcf_name, '.gz')}
-            bgzip ~{basename(sorted_vcf_name, '.gz')}
+            bcftools sort ~{merged_vcf_name} -Oz --output ~{sorted_vcf_name} -T tmp/
+            # cat ~{merged_vcf_name} | zcat | awk '$1 ~ /^#/ {print $0;next} {print $0 | "sort -k1,1V -k2,2n"}' > ~{basename(sorted_vcf_name, '.gz')}
+            # bgzip ~{basename(sorted_vcf_name, '.gz')}
             bcftools index -t ~{sorted_vcf_name}
         else 
             bcftools index -t ~{merged_vcf_name}
