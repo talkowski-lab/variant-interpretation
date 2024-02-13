@@ -4,9 +4,9 @@ import pandas as pd
 import numpy as np
 
 vcf_metrics_uri = sys.argv[1]
-AC_threshold = sys.argv[2]
-AF_threshold = sys.argv[3]
-csq_af_threshold = sys.argv[4]
+AC_threshold = int(sys.argv[2])
+AF_threshold = float(sys.argv[3])
+csq_af_threshold = float(sys.argv[4])
 
 final_output = pd.read_csv(vcf_metrics_uri, sep='\t')
 
