@@ -9,7 +9,7 @@ struct RuntimeAttr {
     Int? max_retries
 }
 
-workflow step5 {
+workflow step6 {
     input {
         File vcf_metrics_tsv
         Float AF_threshold=0.005
