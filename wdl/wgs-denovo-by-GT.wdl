@@ -1,5 +1,7 @@
 version 1.0
 
+import "wgs-denovo-step-01.wdl" as step1
+
 struct RuntimeAttr {
     Float? mem_gb
     Int? cpu_cores
@@ -11,26 +13,95 @@ struct RuntimeAttr {
 
 workflow getDenovoByGT {
     input {
-        File vcf_file
+        Array[File] vep_files
         File ped_uri
+        File info_header
         Float af_threshold=0.01
         String cohort_prefix
         String vep_hail_docker
+        String hail_docker
+        String sv_base_mini_docker
+        Int shards_per_chunk=10
+        Boolean sort_after_merge=false
+        Boolean merge_split_vcf=false
+        Boolean bad_header=false
         String denovo_snv_indels_gt_script
     }
 
-    call denovoByGT {
-        input:
-            vcf_file=vcf_file,
-            ped_uri=ped_uri,
-            af_threshold=af_threshold,
-            cohort_prefix=cohort_prefix,
-            vep_hail_docker=vep_hail_docker,
-            denovo_snv_indels_gt_script=denovo_snv_indels_gt_script
+    String file_ext = if sub(basename(vep_files[0]), '.vcf.gz', '')!=basename(vep_files[0]) then '.vcf.gz' else '.vcf.bgz'
+    
+    if (merge_split_vcf) {
+        call step1.splitFile as splitVEPFiles {
+            input:
+                file=write_lines(vep_files),
+                shards_per_chunk=shards_per_chunk,
+                cohort_prefix=cohort_prefix,
+                vep_hail_docker=vep_hail_docker
+        }
+        call step1.saveVCFHeader as saveVCFHeaderChunk {
+            input:
+                vcf_uri=vep_files[0],
+                info_header=info_header,
+                bad_header=bad_header,
+                sv_base_mini_docker=sv_base_mini_docker
+        }
+        scatter (chunk_file in splitVEPFiles.chunks) {        
+            call step1.mergeVCFs as mergeChunk {
+                input:
+                    vcf_files=read_lines(chunk_file),
+                    sv_base_mini_docker=sv_base_mini_docker,
+                    cohort_prefix=basename(chunk_file),
+                    sort_after_merge=sort_after_merge
+            }
+            call denovoByGT as denovoByGTChunk {
+                input:
+                    vcf_file=mergeChunk.merged_vcf_file,
+                    ped_uri=ped_uri,
+                    file_ext=file_ext,
+                    header_file=saveVCFHeaderChunk.header_file,
+                    af_threshold=af_threshold,
+                    vep_hail_docker=vep_hail_docker,
+                    denovo_snv_indels_gt_script=denovo_snv_indels_gt_script
+            }
+        }
+        call mergeResults as mergeChunks {
+            input:
+                tsvs=denovoByGTChunk.denovo_gt,
+                hail_docker=hail_docker,
+                cohort_prefix=cohort_prefix
+        }
+    }
+
+    if (!merge_split_vcf) {
+        call step1.saveVCFHeader as saveVCFHeader {
+            input:
+                vcf_uri=vep_files[0],
+                info_header=info_header,
+                bad_header=bad_header,
+                sv_base_mini_docker=sv_base_mini_docker
+        }
+        scatter (vcf_uri in vep_files) {
+            call denovoByGT {
+                input:
+                    vcf_file=vcf_uri,
+                    ped_uri=ped_uri,
+                    file_ext=file_ext,
+                    header_file=saveVCFHeader.header_file,
+                    af_threshold=af_threshold,
+                    vep_hail_docker=vep_hail_docker,
+                    denovo_snv_indels_gt_script=denovo_snv_indels_gt_script
+            }
+        }
+        call mergeResults {
+            input:
+                tsvs=denovoByGT.denovo_gt,
+                hail_docker=hail_docker,
+                cohort_prefix=cohort_prefix
+        }
     }
 
     output {
-        File denovo_gt = denovoByGT.denovo_gt
+        File denovo_gt = select_first([mergeChunks.merged_tsv, mergeResults.merged_tsv])
     }
 }
 
@@ -38,14 +109,15 @@ task denovoByGT {
     input {
         File vcf_file
         File ped_uri
+        File header_file
+        String file_ext
         Float af_threshold
-        String cohort_prefix
         String vep_hail_docker
         String denovo_snv_indels_gt_script
         RuntimeAttr? runtime_attr_override
     }
 
-        Float input_size = size(vcf_file, "GB")
+    Float input_size = size(vcf_file, "GB")
     Float base_disk_gb = 10.0
     Float input_disk_scale = 10.0
     RuntimeAttr runtime_default = object {
@@ -73,10 +145,56 @@ task denovoByGT {
 
     command {
         curl ~{denovo_snv_indels_gt_script} > denovo_snv_indels.py
-        python3.9 denovo_snv_indels.py ~{vcf_file} ~{ped_uri} ~{af_threshold} ~{cohort_prefix} ~{cpu_cores} ~{memory}
+        python3.9 denovo_snv_indels.py ~{vcf_file} ~{ped_uri} ~{af_threshold} ~{header_file} ~{cpu_cores} ~{memory} \
+            ~{file_ext}
     }
 
     output {
-        File denovo_gt = "~{cohort_prefix}_denovo_GT_AF_filter.tsv.gz"
+        File denovo_gt = "~{basename(vcf_file, file_ext)}_denovo_GT_AF_filter.tsv.gz"
+    }
+}
+
+task mergeResults {
+    input {
+        Array[File] tsvs
+        String hail_docker
+        String cohort_prefix
+        RuntimeAttr? runtime_attr_override
+    }
+
+    Float input_size = size(tsvs, "GB")
+    Float base_disk_gb = 10.0
+    Float input_disk_scale = 5.0
+    RuntimeAttr runtime_default = object {
+        mem_gb: 4,
+        disk_gb: ceil(base_disk_gb + input_size * input_disk_scale),
+        cpu_cores: 1,
+        preemptible_tries: 3,
+        max_retries: 1,
+        boot_disk_gb: 10
+    }
+
+    RuntimeAttr runtime_override = select_first([runtime_attr_override, runtime_default])
+    Float memory = select_first([runtime_override.mem_gb, runtime_default.mem_gb])
+    Int cpu_cores = select_first([runtime_override.cpu_cores, runtime_default.cpu_cores])
+
+    runtime {
+        memory: "~{memory} GB"
+        disks: "local-disk ~{select_first([runtime_override.disk_gb, runtime_default.disk_gb])} HDD"
+        cpu: cpu_cores
+        preemptible: select_first([runtime_override.preemptible_tries, runtime_default.preemptible_tries])
+        maxRetries: select_first([runtime_override.max_retries, runtime_default.max_retries])
+        docker: hail_docker
+        bootDiskSizeGb: select_first([runtime_override.boot_disk_gb, runtime_default.boot_disk_gb])
+    }
+
+    command <<<
+        gzip -cd ~{tsvs[0]} | head -n 1 > "~{cohort_prefix}_denovo_GT_AF_filter.tsv"; 
+        tail -n +2 -q <(zcat ~{sep=') <(zcat ' tsvs}) >> "~{cohort_prefix}_denovo_GT_AF_filter.tsv"
+        gzip "~{cohort_prefix}_denovo_GT_AF_filter.tsv"
+    >>>
+
+    output {
+        File merged_tsv = cohort_prefix + '_denovo_GT_AF_filter.tsv.gz'
     }
 }

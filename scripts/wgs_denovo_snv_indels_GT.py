@@ -5,14 +5,16 @@ import hail as hl
 import pandas as pd
 import numpy as np
 import sys
+import os
 
 build = 'GRCh38'
 vcf_file = sys.argv[1]
 ped_uri = sys.argv[2]
 af_threshold = float(sys.argv[3])
-cohort_prefix = sys.argv[4]
+header_file = sys.argv[4]
 cores = sys.argv[5]
 mem = int(np.floor(float(sys.argv[6])))
+file_ext = sys.argv[7]
 
 hl.init(min_block_size=128, spark_conf={"spark.executor.cores": cores, 
                     "spark.executor.memory": f"{mem}g",
@@ -60,4 +62,4 @@ tm_denovo = tm.filter_entries((tm.proband_entry.GT.is_het()) &
                   (tm.mother_entry.GT.is_hom_ref()))
 
 tm_denovo_df = tm_denovo.entries().to_pandas()
-tm_denovo_df.to_csv(f"{cohort_prefix}_denovo_GT_AF_filter.tsv.gz", sep='\t', index=False)
+tm_denovo_df.to_csv(f"{os.path.basename(vcf_file).split(file_ext)[0]}_denovo_GT_AF_filter.tsv.gz", sep='\t', index=False)
