@@ -1,5 +1,6 @@
 version 1.0
 
+import "mergeSplitVCF.wdl" as mergeSplitVCF
 import "wgs-denovo-step-01.wdl" as step1
 
 struct RuntimeAttr {
@@ -31,7 +32,7 @@ workflow getDenovoByGT {
     String file_ext = if sub(basename(vep_files[0]), '.vcf.gz', '')!=basename(vep_files[0]) then '.vcf.gz' else '.vcf.bgz'
     
     if (merge_split_vcf) {
-        call step1.splitFile as splitVEPFiles {
+        call mergeSplitVCF.splitFile as splitVEPFiles {
             input:
                 file=write_lines(vep_files),
                 shards_per_chunk=shards_per_chunk,
@@ -46,7 +47,7 @@ workflow getDenovoByGT {
                 sv_base_mini_docker=sv_base_mini_docker
         }
         scatter (chunk_file in splitVEPFiles.chunks) {        
-            call step1.mergeVCFs as mergeChunk {
+            call mergeSplitVCF.mergeVCFs as mergeChunk {
                 input:
                     vcf_files=read_lines(chunk_file),
                     sv_base_mini_docker=sv_base_mini_docker,
