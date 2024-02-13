@@ -189,9 +189,24 @@ task mergeResults {
     }
 
     command <<<
-        gzip -cd ~{tsvs[0]} | head -n 1 > "~{cohort_prefix}_denovo_GT_AF_filter.tsv"; 
-        tail -n +2 -q <(zcat ~{sep=') <(zcat ' tsvs}) >> "~{cohort_prefix}_denovo_GT_AF_filter.tsv"
-        gzip "~{cohort_prefix}_denovo_GT_AF_filter.tsv"
+        cat <<EOF > merge_tsvs.py 
+        import os
+        import sys
+        import pandas as pd
+        import numpy as np
+
+        cohort_prefix = sys.argv[1]
+        tsvs = sys.argv[2:]
+
+        merged_df = pd.DataFrame()
+        for tsv in tsvs:
+            df = pd.read_csv(tsv, sep='\t')
+            merged_df = pd.concat([merged_df, df])
+        
+        merged_df.to_csv(f"{cohort_prefix}_denovo_GT_AF_filter.tsv.gz", sep='\t', index=False)
+        EOF
+       
+        python3 merge_tsvs.py ~{cohort_prefix} ~{sep=' ' tsvs}
     >>>
 
     output {
