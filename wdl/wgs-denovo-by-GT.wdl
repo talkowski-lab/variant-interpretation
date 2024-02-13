@@ -199,7 +199,9 @@ task mergeResults {
         tsvs = sys.argv[2:]
 
         merged_df = pd.DataFrame()
-        for tsv in tsvs:
+        for i, tsv in enumerate(tsvs):
+            if ((i+1)%10)==0:
+                print(f"{i+1}/{len(tsvs)}")
             df = pd.read_csv(tsv, sep='\t')
             merged_df = pd.concat([merged_df, df])
         
