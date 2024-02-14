@@ -66,10 +66,9 @@ def main():
         trio_key = os.path.basename(in_vcf_path).replace('.vcf', '').replace('_HP_VAF', '')
         sampleID = triokey_to_samp[trio_key]
         print("Processing:" + sampleID)
-        variant_df = parse_trio_vcf(in_vcf_path, sample_info, sampleID)
-        result_df = variant_df[variant_df['ID'].isin(trio_variant_keys[trio_key].index)]
-        result_df.index = result_df['ID']
-        result_df = pd.concat([result_df, trio_variant_keys[trio_key]], axis=1)
+        variant_df = parse_trio_vcf(in_vcf_path, sample_info, sampleID).set_index('ID', drop=False)
+        result_df = variant_df.loc[trio_variant_keys[trio_key].index]
+        result_df[trio_variant_keys[trio_key].columns] = trio_variant_keys[trio_key].columns
         if conter == 0:
             result_df.to_csv(out_file, sep = '\t', index = False, na_rep = '.')
         else:
