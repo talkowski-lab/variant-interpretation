@@ -4,6 +4,7 @@ import "wgs-denovo-step-01.wdl" as step1and2
 import "wgs-denovo-step-03.wdl" as step3
 import "wgs-denovo-step-04.wdl" as step4
 import "wgs-denovo-step-05.wdl" as step5
+import "wgs-denovo-step-06.wdl" as step6
 import "annotateHPandVAF.wdl" as annotateHPandVAF
 
 struct RuntimeAttr {
@@ -23,6 +24,7 @@ workflow wgs_denovo_full {
             String uberSplit_v3_script
             String merge_vcf_to_tsv_fullQC_script
             String get_sample_pedigree_script
+            String filter_final_tsv_script
             File lcr_uri
             File ped_uri
             File hg38_reference
@@ -44,6 +46,9 @@ workflow wgs_denovo_full {
             Int shards_per_chunk=10
             Int batch_size
             Float minDQ
+            Float AF_threshold=0.005
+            Int AC_threshold=2
+            Float csq_af_threshold=0.01
     }
 
     Array[File] vep_files = select_first([vep_vcf_files, vep_annotated_final_vcf])
@@ -85,7 +90,7 @@ workflow wgs_denovo_full {
             hg38_reference=hg38_reference,
             hg38_reference_fai=hg38_reference_fai,
             hg38_reference_dict=hg38_reference_dict,
-            jvarkit_docker=jvarkit_docker,
+            jvarkit_docker=jvarkit_docker
     }
 
     call step4.step4 as step4 {
@@ -107,6 +112,16 @@ workflow wgs_denovo_full {
             cohort_prefix=cohort_prefix
     }
 
+    call step6.step6 as step6 {
+        input:
+            vcf_metrics_tsv=step5.vcf_metrics_tsv,
+            AF_threshold=AF_threshold,
+            AC_threshold=AC_threshold,
+            csq_af_threshold=csq_af_threshold,
+            filter_final_tsv_script=filter_final_tsv_script,
+            hail_docker=hail_docker
+    }
+
     output {
         File meta_uri = step1and2.meta_uri
         File trio_uri = step1and2.trio_uri
@@ -117,5 +132,6 @@ workflow wgs_denovo_full {
         Array[File] split_trio_annot_vcfs = annotateHPandVAF.split_trio_annot_vcfs
         Array[File] trio_denovo_vcf = step4.trio_denovo_vcf
         File vcf_metrics_tsv = step5.vcf_metrics_tsv
+        File vcf_metrics_tsv_final = step6.vcf_metrics_tsv_final
     }    
 }
