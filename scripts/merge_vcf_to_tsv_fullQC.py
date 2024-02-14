@@ -68,7 +68,7 @@ def main():
         print("Processing:" + sampleID)
         variant_df = parse_trio_vcf(in_vcf_path, sample_info, sampleID).set_index('ID', drop=False)
         result_df = variant_df.loc[trio_variant_keys[trio_key].index]
-        result_df[trio_variant_keys[trio_key].columns] = trio_variant_keys[trio_key].columns
+        result_df[trio_variant_keys[trio_key].columns] = trio_variant_keys[trio_key]
         if conter == 0:
             result_df.to_csv(out_file, sep = '\t', index = False, na_rep = '.')
         else:
