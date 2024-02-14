@@ -152,7 +152,7 @@ task makeTrioSampleFiles {
     output {
         File meta_uri = "~{cohort_prefix}_sample_list.txt"
         File trio_uri = "~{cohort_prefix}_trio_list.txt"
-        String ped_uri_no_header = "~{cohort_prefix}_no_header.ped"
+        File ped_uri_no_header = "~{cohort_prefix}_no_header.ped"
     }
 }
 
