@@ -42,11 +42,11 @@ mt = mt.distinct_by_row()
 try:
     mt = split_multi_ssc(mt)
     mt = mt.distinct_by_row()
+    # annotate cohort ac to INFO field (after splitting multiallelic)
+    mt = mt.annotate_rows(info=mt.info.annotate(cohort_AC=mt.info.AC[mt.a_index - 1],
+                                                cohort_AF=mt.info.AF[mt.a_index - 1]))
 except:
     pass
-# annotate cohort ac to INFO field (after splitting multiallelic)
-mt = mt.annotate_rows(info=mt.info.annotate(cohort_AC=mt.info.AC[mt.a_index - 1],
-                                           cohort_AF=mt.info.AF[mt.a_index - 1]))
 
 mt = hl.vep(mt, config='vep_config.json', csq=True)
 header['info']['CSQ'] = {'Description': hl.eval(mt.vep_csq_header), 'Number': '.', 'Type': 'String'}
