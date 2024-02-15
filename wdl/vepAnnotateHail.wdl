@@ -43,7 +43,8 @@ workflow vepAnnotateHail {
     }
 
     String filename = basename(file)
-    if (sub(filename, ".vcf.gz", "")==filename) {  # input is not a single VCF file
+    # input is not a single VCF file
+    if ((sub(filename, ".vcf.gz", "")==filename) && (sub(filename, ".vcf.bgz", "")==filename)) { 
         Boolean merge_shards=true
         # combine pre-sharded VCFs into chunks
         call mergeSplitVCF.splitFile as splitFile {
