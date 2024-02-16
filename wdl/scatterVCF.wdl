@@ -120,7 +120,7 @@ workflow scatterVCF_workflow {
 
     output {
     Array[File] vcf_shards = select_first([scatterVCF.shards, scatterVCFRemote.shards, chromosome_shards, 
-                                        splitChromosomeShards])
+                                        splitChromosomeShards, [file]])
     }
 }   
 

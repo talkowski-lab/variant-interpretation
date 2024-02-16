@@ -94,7 +94,7 @@ workflow vepAnnotateHail {
                     split_into_shards=split_into_shards
             }
         }
-        Array[File] vcf_shards_ = select_first([scatterVCF.vcf_shards, vcf_shards, [file]])
+        Array[File] vcf_shards_ = select_first([scatterVCF.vcf_shards, vcf_shards])
     
         scatter (vcf_shard in vcf_shards_) {
             call vepAnnotate {
