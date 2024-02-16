@@ -91,7 +91,7 @@ workflow scatterVCF_workflow {
             Array[File] chromosome_shards = flatten(scatterChromosomes.shards)
         }
         
-        if (!defined(select_first([splitByChromosome.shards, splitByChromosomeRemote.shards]))) {
+        if (!defined(split_chromosomes)) {
             if (localize_vcf) {
                 call scatterVCF {
                 input:
