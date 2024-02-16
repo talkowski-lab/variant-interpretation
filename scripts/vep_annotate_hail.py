@@ -48,7 +48,7 @@ try:
 except:
     pass
 
-mt = hl.vep(mt, config='vep_config.json', csq=True)
+mt = hl.vep(mt, config='vep_config.json', csq=True, tolerate_parse_error=True)
 header['info']['CSQ'] = {'Description': hl.eval(mt.vep_csq_header), 'Number': '.', 'Type': 'String'}
 mt = mt.annotate_rows(info = mt.info.annotate(CSQ=mt.vep))
 hl.export_vcf(dataset=mt, output=vep_annotated_vcf_name, metadata=header)
