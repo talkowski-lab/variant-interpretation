@@ -1,6 +1,7 @@
 version 1.0
 
 import "mergeSplitVCF.wdl" as mergeSplitVCF
+import "mergeVCFs.wdl" as mergeVCFs
 
 struct RuntimeAttr {
     Float? mem_gb
@@ -58,7 +59,7 @@ workflow step1 {
                 sv_base_mini_docker=sv_base_mini_docker
         }
         scatter (chunk_file in splitVEPFiles.chunks) {        
-            call mergeSplitVCF.mergeVCFs as mergeChunk {
+            call mergeVCFs.mergeVCFs as mergeChunk {
                 input:
                     vcf_files=read_lines(chunk_file),
                     sv_base_mini_docker=sv_base_mini_docker,
@@ -80,7 +81,7 @@ workflow step1 {
                     runtime_attr_override=runtime_attr_preprocess
             }
         }
-        call mergeSplitVCF.mergeVCFs as mergeChunks {
+        call mergeVCFs.mergeVCFs as mergeChunks {
             input:
                 vcf_files=preprocessVCFChunk.preprocessed_vcf,
                 sv_base_mini_docker=sv_base_mini_docker,
@@ -113,7 +114,7 @@ workflow step1 {
                     runtime_attr_override=runtime_attr_preprocess
             }
         }
-        call mergeSplitVCF.mergeVCFs as mergeVCFs {
+        call mergeVCFs.mergeVCFs as mergeVCFs {
             input:
                 vcf_files=preprocessVCF.preprocessed_vcf,
                 sv_base_mini_docker=sv_base_mini_docker,
