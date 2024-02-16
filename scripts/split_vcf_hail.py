@@ -22,13 +22,16 @@ else:
     mt = hl.import_vcf(file, force_bgz=True, array_elements_required=False, reference_genome='GRCh38')
     header = hl.get_vcf_metadata(file) 
 
-# for haploid (e.g. chrY)
-mt = mt.annotate_entries(
-    GT = hl.if_else(
-             mt.GT.ploidy == 1, 
-             hl.call(mt.GT[0], mt.GT[0]),
-             mt.GT)
-)
+try:
+    # for haploid (e.g. chrY)
+    mt = mt.annotate_entries(
+        GT = hl.if_else(
+                mt.GT.ploidy == 1, 
+                hl.call(mt.GT[0], mt.GT[0]),
+                mt.GT)
+    )
+except:
+    pass
 
 if records_per_shard!=0:
     tot_num_records = mt.count_rows()
