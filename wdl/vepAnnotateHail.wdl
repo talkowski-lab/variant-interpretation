@@ -2,6 +2,7 @@ version 1.0
     
 import "scatterVCF.wdl" as scatterVCF
 import "mergeSplitVCF.wdl" as mergeSplitVCF
+import "mergeVCFs.wdl" as mergeVCFs
 
 struct RuntimeAttr {
     Float? mem_gb
@@ -56,7 +57,7 @@ workflow vepAnnotateHail {
                 vep_hail_docker=vep_hail_docker
         }
         scatter (chunk_file in splitFile.chunks) {
-            call mergeSplitVCF.mergeVCFs as mergeVCFs {
+            call mergeVCFs.mergeVCFs as mergeVCFs {
                 input:
                     vcf_files=read_lines(chunk_file),
                     sv_base_mini_docker=sv_base_mini_docker,
