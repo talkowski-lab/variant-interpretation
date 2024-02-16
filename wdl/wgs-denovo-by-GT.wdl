@@ -2,6 +2,7 @@ version 1.0
 
 import "mergeSplitVCF.wdl" as mergeSplitVCF
 import "wgs-denovo-step-01.wdl" as step1
+import "mergeVCFs.wdl" as mergeVCFs
 
 struct RuntimeAttr {
     Float? mem_gb
@@ -47,7 +48,7 @@ workflow getDenovoByGT {
                 sv_base_mini_docker=sv_base_mini_docker
         }
         scatter (chunk_file in splitVEPFiles.chunks) {        
-            call mergeSplitVCF.mergeVCFs as mergeChunk {
+            call mergeVCFs.mergeVCFs as mergeChunk {
                 input:
                     vcf_files=read_lines(chunk_file),
                     sv_base_mini_docker=sv_base_mini_docker,
