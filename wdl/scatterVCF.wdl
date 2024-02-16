@@ -1,5 +1,5 @@
 version 1.0
-    
+  
 struct RuntimeAttr {
     Float? mem_gb
     Int? cpu_cores
@@ -9,7 +9,7 @@ struct RuntimeAttr {
     Int? max_retries
 }
 
-workflow scatterVCF {
+workflow scatterVCF_workflow {
 
     input {
         File file
@@ -21,10 +21,10 @@ workflow scatterVCF {
         Boolean localize_vcf
         Boolean split_by_chromosome
         Boolean split_into_shards 
-        Boolean? has_index
+        Boolean has_index=false
         Int? mt_size
-        Int? n_shards  
-        Int? records_per_shard
+        Int n_shards=0
+        Int records_per_shard=0
         RuntimeAttr? runtime_attr_split_by_chr
         RuntimeAttr? runtime_attr_split_into_shards
     }
@@ -77,12 +77,13 @@ workflow scatterVCF {
             scatter (chrom_pair in select_first([split_chromosomes])) {
                 File chrom_shard = select_first([chrom_pair.left])
                 Float chrom_n_records = select_first([chrom_pair.right])
-                Int no_localize_n_shards = ceil(chrom_n_records / select_first([records_per_shard, 0]))
+                Int chrom_n_shards = ceil(chrom_n_records / select_first([records_per_shard, 0]))
                 call scatterVCF as scatterChromosomes {
                     input:
                         vcf_file=chrom_shard,
                         split_vcf_hail_script=split_vcf_hail_script,
-                        n_shards=select_first([no_localize_n_shards, n_shards]),
+                        n_shards=chrom_n_shards,
+                        records_per_shard=0,
                         vep_hail_docker=vep_hail_docker,
                         runtime_attr_override=runtime_attr_split_into_shards
                 }
@@ -97,6 +98,7 @@ workflow scatterVCF {
                     vcf_file=file,
                     split_vcf_hail_script=split_vcf_hail_script,
                     n_shards=select_first([n_shards]),
+                    records_per_shard=select_first([records_per_shard, 0]),
                     vep_hail_docker=vep_hail_docker,
                     runtime_attr_override=runtime_attr_split_into_shards
                 }
@@ -108,13 +110,14 @@ workflow scatterVCF {
                     input_size=select_first([mt_size]),
                     split_vcf_hail_script=split_vcf_hail_script,
                     n_shards=select_first([n_shards]),
+                    records_per_shard=select_first([records_per_shard, 0]),
                     hail_docker=hail_docker,
                     runtime_attr_override=runtime_attr_split_into_shards
                 }
             }
         }
     }    
-    
+
     output {
     Array[File] vcf_shards = select_first([scatterVCF.shards, scatterVCFRemote.shards, chromosome_shards, 
                                         splitChromosomeShards])
@@ -277,6 +280,7 @@ task scatterVCF {
     input {
         File vcf_file
         Int n_shards
+        Int records_per_shard
         String split_vcf_hail_script
         String vep_hail_docker
         RuntimeAttr? runtime_attr_override
@@ -314,7 +318,7 @@ task scatterVCF {
     command <<<
         set -euo pipefail
         curl  ~{split_vcf_hail_script} > split_vcf.py
-        python3.9 split_vcf.py ~{vcf_file} ~{n_shards} ~{prefix} ~{cpu_cores} ~{memory}
+        python3.9 split_vcf.py ~{vcf_file} ~{n_shards} ~{records_per_shard} ~{prefix} ~{cpu_cores} ~{memory}
         for file in $(ls ~{prefix}.vcf.bgz | grep '.bgz'); do
             shard_num=$(echo $file | cut -d '-' -f2);
             mv ~{prefix}.vcf.bgz/$file ~{prefix}.shard_"$shard_num".vcf.bgz
@@ -331,6 +335,7 @@ task scatterVCFRemote {
         String vcf_file
         Int input_size
         Int n_shards
+        Int records_per_shard
         String split_vcf_hail_script
         String hail_docker
         RuntimeAttr? runtime_attr_override
@@ -367,7 +372,7 @@ task scatterVCFRemote {
     command <<<
         set -euo pipefail
         curl  ~{split_vcf_hail_script} > split_vcf.py
-        python3.9 split_vcf.py ~{vcf_file} ~{n_shards} ~{prefix} ~{cpu_cores} ~{memory}
+        python3.9 split_vcf.py ~{vcf_file} ~{n_shards} ~{records_per_shard} ~{prefix} ~{cpu_cores} ~{memory}
         for file in $(ls ~{prefix}.vcf.bgz | grep '.bgz'); do
             shard_num=$(echo $file | cut -d '-' -f2);
             mv ~{prefix}.vcf.bgz/$file ~{prefix}.shard_"$shard_num".vcf.bgz

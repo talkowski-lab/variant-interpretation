@@ -4,9 +4,10 @@ import numpy as np
 
 file = sys.argv[1]
 n_shards = int(sys.argv[2])
-prefix = sys.argv[3]
-cores = sys.argv[4]
-mem = int(np.floor(float(sys.argv[5])))
+records_per_shard = int(sys.argv[3])
+prefix = sys.argv[4]
+cores = sys.argv[5]
+mem = int(np.floor(float(sys.argv[6])))
 
 hl.init(min_block_size=128, spark_conf={"spark.executor.cores": cores, 
                     "spark.executor.memory": f"{mem}g",
@@ -28,6 +29,10 @@ mt = mt.annotate_entries(
              hl.call(mt.GT[0], mt.GT[0]),
              mt.GT)
 )
+
+if records_per_shard!=0:
+    tot_num_records = mt.count_rows()
+    n_shards = int(np.ceil(tot_num_records / records_per_shard))
 
 if n_shards!=0:
     mt = mt.repartition(n_shards)
