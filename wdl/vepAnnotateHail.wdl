@@ -80,7 +80,7 @@ workflow vepAnnotateHail {
         }
     }
 
-    if (!defined(merge_split_vcf)) {
+    if (!merge_split_vcf) {
         if (!defined(vcf_shards)) {
             call scatterVCF.scatterVCF_workflow as scatterVCF {
                 input:
