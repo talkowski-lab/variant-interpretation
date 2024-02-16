@@ -8,11 +8,11 @@ vep_annotated_vcf_name = sys.argv[2]
 cores = sys.argv[3]  # string
 mem = int(np.floor(float(sys.argv[4])))
 
-hl.init(min_block_size=128, spark_conf={"spark.executor.cores": cores, 
-                    "spark.executor.memory": f"{mem}g",
-                    "spark.driver.cores": cores,
-                    "spark.driver.memory": f"{mem}g"
-                    }, tmp_dir="tmp", local_tmpdir="tmp")
+# hl.init(min_block_size=128, spark_conf={"spark.executor.cores": cores, 
+#                     "spark.executor.memory": f"{mem}g",
+#                     "spark.driver.cores": cores,
+#                     "spark.driver.memory": f"{mem}g"
+#                     }, tmp_dir="tmp", local_tmpdir="tmp")
 
 #split-multi
 def split_multi_ssc(mt):

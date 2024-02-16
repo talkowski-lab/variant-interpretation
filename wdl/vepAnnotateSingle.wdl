@@ -20,6 +20,7 @@ workflow vepAnnotateSingle {
         File human_ancestor_fa
         File human_ancestor_fa_fai
         File top_level_fa
+        File gerp_conservation_scores
         String cohort_prefix
         Boolean merge_annotated_vcfs
         Int? records_per_shard
@@ -356,7 +357,7 @@ task scatterVCF {
         i=0
         while read VCF; do
           shard_no=`printf %06d $i`
-          mv "$VCF" "~{prefix}.shard_${shard_no}.vcf.gz"
+          mv "$VCF" "~{prefix}.shard_~{shard_no}.vcf.gz"
           i=$((i+1))
         done < vcfs.list
     >>>
@@ -372,6 +373,7 @@ task vepAnnotate {
         File top_level_fa
         File human_ancestor_fa
         File human_ancestor_fa_fai
+        File gerp_conservation_scores
         String vep_docker
         RuntimeAttr? runtime_attr_override
     }
@@ -419,12 +421,14 @@ task vepAnnotate {
         set -euo pipefail
 
         vep --vcf \
+        --verbose \
         --force_overwrite \
         -dir /opt/vep/.vep \
         --format vcf \
         --everything \
         --allele_number \
         --no_stats \
+        --dir_cache . \
         --cache \
         --offline \
         --minimal \
@@ -433,7 +437,7 @@ task vepAnnotate {
         --input_file ~{vcf_file} \
         --output_file ~{vep_annotated_vcf_name} \
         --compress_output bgzip \
-        --plugin LoF,loftee_path:/opt/vep/.vep/Plugins/,human_ancestor_fa:~{human_ancestor_fa},gerp_score:/opt/vep/.vep/Plugins/gerp_conservation_scores.homo_sapiens.GRCh38.bw \
-        --dir_plugins /opt/vep/.vep/Plugins/
+        --plugin LoF,loftee_path:/opt/vep/Plugins/,human_ancestor_fa:~{human_ancestor_fa},gerp_bigwig:~{gerp_conservation_scores} \
+        --dir_plugins /opt/vep/Plugins/
     >>>
 }
