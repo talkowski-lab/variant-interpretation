@@ -17,7 +17,7 @@ final_output[['PL_sample_0.0', 'PL_sample_0.1', 'PL_sample_1.1']] = final_output
 
 final_output.index = final_output.VarKey
 final_output = final_output[final_output.POLYX <= 10]
-final_output = final_output[final_output['VQSLOD']!='.']
+# final_output = final_output[final_output['VQSLOD']!='.']
 if 'cohort_AF' not in final_output.columns:
     final_output['cohort_AF'] = final_output.cohort_AC / final_output.AN
 final_output = final_output[(final_output.cohort_AC<=AC_threshold) | (final_output.cohort_AF<=AF_threshold)]
