@@ -391,7 +391,7 @@ task vepAnnotate {
     #  generally assume working disk size is ~2 * inputs, and outputs are ~2 *inputs, and inputs are not removed
     #  generally assume working memory is ~3 * inputs
     #  from task FinalCleanup in CleanVcfChromosome.wdl
-    Float input_size = size(vcf_file, "GB")
+    Float input_size = size(vcf_file, "GB") + size(hg38_vep_cache, "GB") + size(gerp_conservation_scores, "GB")
     Float base_disk_gb = 10.0
     Float base_mem_gb = 2.0
     Float input_mem_scale = 3.0
