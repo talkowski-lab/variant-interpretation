@@ -77,17 +77,18 @@ workflow vepAnnotateSingle {
     }
 
     if (!defined(records_per_shard)) {
-        call normalizeVCF {
-            input:
-                vcf_file=vcf_file,
-                sv_base_mini_docker=sv_base_mini_docker,
-                hg38_fasta=hg38_fasta,
-                hg38_fasta_fai=hg38_fasta_fai,
-                runtime_attr_override=runtime_attr_normalize
-        }
+        # call normalizeVCF {
+        #     input:
+        #         vcf_file=vcf_file,
+        #         sv_base_mini_docker=sv_base_mini_docker,
+        #         hg38_fasta=hg38_fasta,
+        #         hg38_fasta_fai=hg38_fasta_fai,
+        #         runtime_attr_override=runtime_attr_normalize
+        # }
         call vepAnnotate {
             input:
-                vcf_file=normalizeVCF.vcf_no_genotype,
+                # vcf_file=normalizeVCF.vcf_no_genotype,
+                vcf_file=vcf_file,
                 top_level_fa=top_level_fa,
                 human_ancestor_fa=human_ancestor_fa,
                 human_ancestor_fa_fai=human_ancestor_fa_fai,
@@ -95,18 +96,22 @@ workflow vepAnnotateSingle {
                 vep_hail_docker=vep_hail_docker,
                 runtime_attr_override=runtime_attr_vep_annotate
         }
-        call addGenotypes { 
-            input:
-            vep_annotated_vcf=select_first([vepAnnotate.vep_vcf_file]),
-            normalized_vcf=normalizeVCF.vcf_normalized_file_with_genotype,
-            normalized_vcf_idx=normalizeVCF.vcf_normalized_file_with_genotype_idx,
-            sv_base_mini_docker=sv_base_mini_docker,
-            runtime_attr_override=runtime_attr_add_genotypes
-        }
+        # call addGenotypes { 
+        #     input:
+        #     vep_annotated_vcf=select_first([vepAnnotate.vep_vcf_file]),
+        #     normalized_vcf=normalizeVCF.vcf_normalized_file_with_genotype,
+        #     normalized_vcf_idx=normalizeVCF.vcf_normalized_file_with_genotype_idx,
+        #     sv_base_mini_docker=sv_base_mini_docker,
+        #     runtime_attr_override=runtime_attr_add_genotypes
+        # }
     }
 
-    Array[File] genotyped_vcf_file = select_first([addGenotypes_sharded.merged_vcf_file, addGenotypes.merged_vcf_file])
-    Array[File] genotyped_vcf_idx = select_first([addGenotypes_sharded.merged_vcf_idx, addGenotypes.merged_vcf_idx])
+    # Array[File] genotyped_vcf_file = select_first([addGenotypes_sharded.merged_vcf_file, addGenotypes.merged_vcf_file])
+    # Array[File] genotyped_vcf_idx = select_first([addGenotypes_sharded.merged_vcf_idx, addGenotypes.merged_vcf_idx])
+
+
+    Array[File] genotyped_vcf_file = select_first([addGenotypes_sharded.merged_vcf_file, vepAnnotate.vep_vcf_file])
+    Array[File] genotyped_vcf_idx = select_first([addGenotypes_sharded.merged_vcf_idx, vepAnnotate.vep_vcf_idx])
 
     if (merge_annotated_vcfs) {
         call mergeVCFs {
@@ -415,6 +420,7 @@ task vepAnnotate {
 
     output {
         File vep_vcf_file = vep_annotated_vcf_name
+        File vep_vcf_idx = vep_annotated_vcf_name + '.tbi'
     }
 
     String ancestor_dir = basename(human_ancestor_fa, "Homo_sapiens.GRCh38.dna.toplevel.fa.gz")
@@ -440,5 +446,7 @@ task vepAnnotate {
         --compress_output bgzip \
         --plugin LoF,loftee_path:/opt/vep/Plugins/,human_ancestor_fa:~{human_ancestor_fa},gerp_bigwig:~{gerp_conservation_scores} \
         --dir_plugins /opt/vep/Plugins/
+
+        /opt/vep/bcftools/bcftools index -t ~{vep_annotated_vcf_name}
     >>>
 }
