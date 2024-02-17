@@ -116,8 +116,8 @@ workflow vepAnnotateSingle {
     # Array[File] genotyped_vcf_idx = select_first([addGenotypes_sharded.merged_vcf_idx, addGenotypes.merged_vcf_idx])
 
 
-    Array[File] genotyped_vcf_file = select_first([addGenotypes_sharded.merged_vcf_file, vepAnnotate.vep_vcf_file])
-    Array[File] genotyped_vcf_idx = select_first([addGenotypes_sharded.merged_vcf_idx, vepAnnotate.vep_vcf_idx])
+    Array[File] genotyped_vcf_file = select_first([addGenotypes_sharded.merged_vcf_file, [select_first([vepAnnotate.vep_vcf_file])]])
+    Array[File] genotyped_vcf_idx = select_first([addGenotypes_sharded.merged_vcf_idx, [select_first([vepAnnotate.vep_vcf_idx])]])
 
     if (merge_annotated_vcfs) {
         call mergeVCFs {
@@ -132,8 +132,8 @@ workflow vepAnnotateSingle {
     }
 
     output {   
-        Array[File] vep_annotated_final_vcf = select_first([merged_vcf_file, genotyped_vcf_file])
-        Array[File] vep_annotated_final_vcf_idx = select_first([merged_vcf_idx, genotyped_vcf_idx])
+        Array[File] vep_annotated_final_vcf = select_first([[select_first([mergeVCFs.merged_vcf_file])], genotyped_vcf_file])
+        Array[File] vep_annotated_final_vcf_idx = select_first([[select_first([mergeVCFs.merged_vcf_idx])], genotyped_vcf_idx])
     }
 }   
 
