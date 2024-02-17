@@ -13,7 +13,7 @@ workflow vepAnnotateSingle {
 
     input {
         File vcf_file
-        String vep_docker
+        String vep_hail_docker
         String sv_base_mini_docker
         File hg38_fasta
         File hg38_fasta_fai
@@ -60,7 +60,7 @@ workflow vepAnnotateSingle {
                     top_level_fa=top_level_fa,
                     human_ancestor_fa=human_ancestor_fa,
                     human_ancestor_fa_fai=human_ancestor_fa_fai,
-                    vep_docker=vep_docker,
+                    vep_hail_docker=vep_hail_docker,
                     runtime_attr_override=runtime_attr_vep_annotate
             }
 
@@ -90,7 +90,7 @@ workflow vepAnnotateSingle {
                 top_level_fa=top_level_fa,
                 human_ancestor_fa=human_ancestor_fa,
                 human_ancestor_fa_fai=human_ancestor_fa_fai,
-                vep_docker=vep_docker,
+                vep_hail_docker=vep_hail_docker,
                 runtime_attr_override=runtime_attr_vep_annotate
         }
         call addGenotypes { 
@@ -357,7 +357,7 @@ task scatterVCF {
         i=0
         while read VCF; do
           shard_no=`printf %06d $i`
-          mv "$VCF" "~{prefix}.shard_~{shard_no}.vcf.gz"
+          mv "$VCF" "~{prefix}.shard_${shard_no}.vcf.gz"
           i=$((i+1))
         done < vcfs.list
     >>>
@@ -374,7 +374,7 @@ task vepAnnotate {
         File human_ancestor_fa
         File human_ancestor_fa_fai
         File gerp_conservation_scores
-        String vep_docker
+        String vep_hail_docker
         RuntimeAttr? runtime_attr_override
     }
 
@@ -405,7 +405,7 @@ task vepAnnotate {
         cpu: select_first([runtime_override.cpu_cores, runtime_default.cpu_cores])
         preemptible: select_first([runtime_override.preemptible_tries, runtime_default.preemptible_tries])
         maxRetries: select_first([runtime_override.max_retries, runtime_default.max_retries])
-        docker: vep_docker
+        docker: vep_hail_docker
         bootDiskSizeGb: select_first([runtime_override.boot_disk_gb, runtime_default.boot_disk_gb])
     }
     
@@ -419,7 +419,6 @@ task vepAnnotate {
 
     command <<<
         set -euo pipefail
-
         vep --vcf \
         --verbose \
         --force_overwrite \
