@@ -127,13 +127,13 @@ workflow vepAnnotateSingle {
                 cohort_prefix=cohort_prefix,
                 runtime_attr_override=runtime_attr_merge_vcfs
         }       
-        File merged_vcf_file = select_first([mergeVCFs.merged_vcf_file])
-        File merged_vcf_idx = select_first([mergeVCFs.merged_vcf_idx])
+        Array[File] merged_vcf_file = [select_first([mergeVCFs.merged_vcf_file])]
+        Array[File] merged_vcf_idx = [select_first([mergeVCFs.merged_vcf_idx])]
     }
 
     output {   
-        Array[File] vep_annotated_final_vcf = select_first([[select_first([mergeVCFs.merged_vcf_file])], genotyped_vcf_file])
-        Array[File] vep_annotated_final_vcf_idx = select_first([[select_first([mergeVCFs.merged_vcf_idx])], genotyped_vcf_idx])
+        Array[File] vep_annotated_final_vcf = if merge_annotated_vcfs then select_first([merged_vcf_file]) else select_first([genotyped_vcf_file])
+        Array[File] vep_annotated_final_vcf_idx = if merge_annotated_vcfs then select_first([merged_vcf_idx]) else select_first([genotyped_vcf_idx])
     }
 }   
 
