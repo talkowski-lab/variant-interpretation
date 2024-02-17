@@ -21,6 +21,8 @@ workflow vepAnnotateSingle {
         File human_ancestor_fa_fai
         File top_level_fa
         File gerp_conservation_scores
+        File hg38_vep_cache
+        File loeuf_data
         String cohort_prefix
         Boolean merge_annotated_vcfs
         Int? records_per_shard
@@ -61,6 +63,8 @@ workflow vepAnnotateSingle {
                     human_ancestor_fa=human_ancestor_fa,
                     human_ancestor_fa_fai=human_ancestor_fa_fai,
                     gerp_conservation_scores=gerp_conservation_scores,
+                    hg38_vep_cache=hg38_vep_cache,
+                    loeuf_data=loeuf_data,
                     vep_hail_docker=vep_hail_docker,
                     runtime_attr_override=runtime_attr_vep_annotate
             }
@@ -93,6 +97,8 @@ workflow vepAnnotateSingle {
                 human_ancestor_fa=human_ancestor_fa,
                 human_ancestor_fa_fai=human_ancestor_fa_fai,
                 gerp_conservation_scores=gerp_conservation_scores,
+                hg38_vep_cache=hg38_vep_cache,
+                loeuf_data=loeuf_data,
                 vep_hail_docker=vep_hail_docker,
                 runtime_attr_override=runtime_attr_vep_annotate
         }
@@ -381,6 +387,8 @@ task vepAnnotate {
         File human_ancestor_fa
         File human_ancestor_fa_fai
         File gerp_conservation_scores
+        File hg38_vep_cache
+        File loeuf_data
         String vep_hail_docker
         RuntimeAttr? runtime_attr_override
     }
@@ -427,6 +435,11 @@ task vepAnnotate {
 
     command <<<
         set -euo pipefail
+
+        dir_cache=$(dirname "~{hg38_vep_cache}")
+        tar xzf ~{hg38_vep_cache} -C $dir_cache
+        tabix -f -s 76 -b 77 -e 78 ~{loeuf_data}
+
         vep --vcf \
         --verbose \
         --force_overwrite \
@@ -435,7 +448,7 @@ task vepAnnotate {
         --everything \
         --allele_number \
         --no_stats \
-        --dir_cache . \
+        --dir_cache $dir_cache \
         --cache \
         --offline \
         --minimal \
@@ -444,6 +457,7 @@ task vepAnnotate {
         --input_file ~{vcf_file} \
         --output_file ~{vep_annotated_vcf_name} \
         --compress_output bgzip \
+        --plugin LOEUF,file=~{loeuf_data},match_by=transcript \
         --plugin LoF,loftee_path:/opt/vep/Plugins/,human_ancestor_fa:~{human_ancestor_fa},gerp_bigwig:~{gerp_conservation_scores} \
         --dir_plugins /opt/vep/Plugins/
 
