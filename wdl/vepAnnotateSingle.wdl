@@ -60,6 +60,7 @@ workflow vepAnnotateSingle {
                     top_level_fa=top_level_fa,
                     human_ancestor_fa=human_ancestor_fa,
                     human_ancestor_fa_fai=human_ancestor_fa_fai,
+                    gerp_conservation_scores=gerp_conservation_scores,
                     vep_hail_docker=vep_hail_docker,
                     runtime_attr_override=runtime_attr_vep_annotate
             }
@@ -90,6 +91,7 @@ workflow vepAnnotateSingle {
                 top_level_fa=top_level_fa,
                 human_ancestor_fa=human_ancestor_fa,
                 human_ancestor_fa_fai=human_ancestor_fa_fai,
+                gerp_conservation_scores=gerp_conservation_scores,
                 vep_hail_docker=vep_hail_docker,
                 runtime_attr_override=runtime_attr_vep_annotate
         }
