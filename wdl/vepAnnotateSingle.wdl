@@ -394,7 +394,7 @@ task vepAnnotate {
     }
 
     String filename = basename(vcf_file)
-    String prefix = if (sub(filename, "\.gz", "")!=filename) then basename(vcf_file, ".vcf.gz") else basename(vcf_file, ".vcf.bgz")
+    String prefix = if (sub(filename, "\\.gz", "")!=filename) then basename(vcf_file, ".vcf.gz") else basename(vcf_file, ".vcf.bgz")
     String vep_annotated_vcf_name = "~{prefix}.vep.loftee.vcf.gz"
 
     #  generally assume working disk size is ~2 * inputs, and outputs are ~2 *inputs, and inputs are not removed
