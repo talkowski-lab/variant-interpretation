@@ -26,8 +26,8 @@ workflow filterRareVariantsHail {
         String vep_hail_docker
         String sv_base_mini_docker
         String cohort_prefix
+        Boolean merge_split_vcf
         Boolean exclude_info_filters=false
-        Boolean merge_split_vcf=false
         Boolean sort_after_merge=false
         Boolean bad_header=false
         Float AF_threshold=0.005
