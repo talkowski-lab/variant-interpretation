@@ -63,4 +63,4 @@ df['LOEUF'] = df.genes.apply(lambda gene_list: pd.Series(gene_list).map(loeuf_va
 df['LOEUF_tile'] = df.genes.apply(lambda gene_list: pd.Series(gene_list).map(loeuf_tile_vals).min())
 
 new_filename = os.path.basename(vcf_metrics_tsv).split('.tsv')[0] + '_with_mpc_loeuf.tsv'
-df.to_csv(new_filename, sep='\t')
+df.to_csv(new_filename, sep='\t', index=False)

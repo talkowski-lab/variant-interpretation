@@ -6,6 +6,7 @@ import "wgs-denovo-step-04.wdl" as step4
 import "wgs-denovo-step-05.wdl" as step5
 import "wgs-denovo-step-06.wdl" as step6
 import "annotateHPandVAF.wdl" as annotateHPandVAF
+import "annotateMPCandLOEUF.wdl" as annotateMPCandLOEUF
 
 struct RuntimeAttr {
     Float? mem_gb
@@ -25,6 +26,10 @@ workflow wgs_denovo_full {
             String merge_vcf_to_tsv_fullQC_script
             String get_sample_pedigree_script
             String filter_final_tsv_script
+            String annotate_mpc_loeuf_script
+            String mpc_dir
+            File mpc_chr22_file
+            File loeuf_file
             File lcr_uri
             File ped_uri
             File hg38_reference
@@ -112,9 +117,19 @@ workflow wgs_denovo_full {
             cohort_prefix=cohort_prefix
     }
 
+    call annotateMPCandLOEUF.annotateMPCandLOEUF as annotateMPCandLOEUF {
+        input:
+            vcf_metrics_tsv=vcf_metrics_tsv,
+            mpc_dir=mpc_dir,
+            mpc_chr22_file=mpc_chr22_file,
+            loeuf_file=loeuf_file,
+            annotate_mpc_loeuf_script=annotate_mpc_loeuf_script,
+            hail_docker=hail_docker
+    }
+
     call step6.step6 as step6 {
         input:
-            vcf_metrics_tsv=step5.vcf_metrics_tsv,
+            vcf_metrics_tsv_annot=annotateMPCandLOEUF.vcf_metrics_tsv_annot,
             AF_threshold=AF_threshold,
             AC_threshold=AC_threshold,
             csq_af_threshold=csq_af_threshold,
@@ -132,6 +147,7 @@ workflow wgs_denovo_full {
         Array[File] split_trio_annot_vcfs = annotateHPandVAF.split_trio_annot_vcfs
         Array[File] trio_denovo_vcf = step4.trio_denovo_vcf
         File vcf_metrics_tsv = step5.vcf_metrics_tsv
+        File vcf_metrics_tsv_annot = annotateMPCandLOEUF.vcf_metrics_tsv_annot
         File vcf_metrics_tsv_final = step6.vcf_metrics_tsv_final
     }    
 }

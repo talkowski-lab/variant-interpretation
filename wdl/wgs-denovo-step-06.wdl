@@ -11,7 +11,7 @@ struct RuntimeAttr {
 
 workflow step6 {
     input {
-        File vcf_metrics_tsv
+        File vcf_metrics_tsv_annot
         Float AF_threshold=0.005
         Int AC_threshold=2
         Float csq_af_threshold=0.01
@@ -21,7 +21,7 @@ workflow step6 {
 
     call filterFinalTSV {
         input:
-            vcf_metrics_tsv=vcf_metrics_tsv,
+            vcf_metrics_tsv_annot=vcf_metrics_tsv_annot,
             AF_threshold=AF_threshold,
             AC_threshold=AC_threshold,
             csq_af_threshold=csq_af_threshold,
@@ -36,7 +36,7 @@ workflow step6 {
 
 task filterFinalTSV {
     input {
-        File vcf_metrics_tsv
+        File vcf_metrics_tsv_annot
         Float AF_threshold
         Int AC_threshold
         Float csq_af_threshold
@@ -45,7 +45,7 @@ task filterFinalTSV {
         RuntimeAttr? runtime_attr_override
     }
 
-    Float input_size = size(vcf_metrics_tsv, "GB")
+    Float input_size = size(vcf_metrics_tsv_annot, "GB")
     Float base_disk_gb = 10.0
     Float input_disk_scale = 5.0
     RuntimeAttr runtime_default = object {
@@ -73,10 +73,10 @@ task filterFinalTSV {
 
     command {
         curl ~{filter_final_tsv_script} > filter_tsv.py
-        python3 filter_tsv.py ~{vcf_metrics_tsv} ~{AC_threshold} ~{AF_threshold} ~{csq_af_threshold} 
+        python3 filter_tsv.py ~{vcf_metrics_tsv_annot} ~{AC_threshold} ~{AF_threshold} ~{csq_af_threshold} 
     }
 
     output {
-        File vcf_metrics_tsv_final = basename(vcf_metrics_tsv, '.tsv') + '_filtered.tsv'
+        File vcf_metrics_tsv_final = basename(vcf_metrics_tsv_annot, '.tsv') + '_filtered.tsv'
     }
 }
