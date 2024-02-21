@@ -125,16 +125,17 @@ def run_PU_bagging(merged_output, numeric, n_splits=5):
                             'pred_bag': y_pred_bag.astype(int)})
     return results, importances_bag
 
+final_output, ultra_rare, final_output_raw, ultra_rare_raw = load_variants(vcf_metrics_tsv, ultra_rare_variants_tsv, var_type)
+final_output, ultra_rare, merged_output = filter_variants(final_output, ultra_rare, final_output_raw, ultra_rare_raw)
+
 if numeric != 'false':
     numeric = numeric.split(',')
 elif var_type == 'Indel':
     numeric = ['BaseQRankSum', 'MQ', 'MQRankSum', 'QD'] 
 elif var_type == 'SNV':
     numeric = ['BaseQRankSum', 'FS', 'MQ', 'MQRankSum', 'QD', 'SOR']
+numeric = np.intersect1d(numeric, merged_output.columns).tolist()
 
-final_output, ultra_rare, final_output_raw, ultra_rare_raw = load_variants(vcf_metrics_tsv, ultra_rare_variants_tsv, var_type)
-final_output, ultra_rare, merged_output = filter_variants(final_output, ultra_rare, final_output_raw, ultra_rare_raw)
-                                                         
 results, importances_bag = run_PU_bagging(merged_output, numeric)
 
 results.to_csv(f"{cohort_prefix}_baggingPU_{var_type}_results.tsv", sep='\t', index=False)
