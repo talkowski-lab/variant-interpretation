@@ -54,6 +54,8 @@ def filter_variants(final_output, ultra_rare, final_output_raw, ultra_rare_raw):
     if (final_output['VQSLOD']!='.').sum()!=0:
         final_output = final_output[final_output['VQSLOD']!='.'].reset_index(drop=True)
 
+    ultra_rare = ultra_rare[ultra_rare.GQ_sample>=99]
+
     try:
         ultra_rare = ultra_rare[~ultra_rare.VQSLOD.isna()]
     except:
