@@ -135,6 +135,7 @@ elif var_type == 'Indel':
 elif var_type == 'SNV':
     numeric = ['BaseQRankSum', 'FS', 'MQ', 'MQRankSum', 'QD', 'SOR']
 numeric = np.intersect1d(numeric, np.intersect1d(ultra_rare.columns, final_output.columns)).tolist()
+merged_output = merged_output[~(merged_output[numeric]=='.').any(axis=1)]
 
 results, importances_bag = run_PU_bagging(merged_output, numeric)
 
