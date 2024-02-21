@@ -74,9 +74,15 @@ def filter_variants(final_output, ultra_rare, final_output_raw, ultra_rare_raw):
     # overlapping variants set to unlabeled
     ultra_rare = ultra_rare[~ultra_rare.VarKey.isin(np.intersect1d(ultra_rare.VarKey, final_output.VarKey))]
   
+    ultra_rare['GQ_hom'] = ultra_rare.apply(lambda row: row.GQ_mother if row.GT_mother=='0/0' 
+                                            else row.GQ_father, axis=1)
+    ultra_rare['GQ_het'] = ultra_rare.apply(lambda row: row.GQ_mother if row.GT_mother=='0/1' else row.GQ_father, axis=1)
+
     merged_output = pd.concat([ultra_rare, final_output]).reset_index(drop=True)
     merged_output['var_type'] = merged_output.label.map({1: 'ultra-rare', 0: 'unlabeled'})
 
+    merged_output['GQ_parent'] = merged_output.apply(lambda row: row.GQ_hom if row.label==1 
+                                                    else row[['GQ_mother', 'GQ_father']].min(), axis=1)
     return final_output, ultra_rare, merged_output
 
 def BaggingPU(X, y, kf, n_jobs=-1):
@@ -131,9 +137,9 @@ final_output, ultra_rare, merged_output = filter_variants(final_output, ultra_ra
 if numeric != 'false':
     numeric = numeric.split(',')
 elif var_type == 'Indel':
-    numeric = ['BaseQRankSum', 'MQ', 'MQRankSum', 'QD'] 
+    numeric = ['BaseQRankSum', 'MQ', 'MQRankSum', 'QD', 'GQ_parent'] 
 elif var_type == 'SNV':
-    numeric = ['BaseQRankSum', 'FS', 'MQ', 'MQRankSum', 'QD', 'SOR']
+    numeric = ['BaseQRankSum', 'FS', 'MQ', 'MQRankSum', 'QD', 'SOR', 'GQ_parent']
 numeric = np.intersect1d(numeric, np.intersect1d(ultra_rare.columns, final_output.columns)).tolist()
 merged_output = merged_output[~(merged_output[numeric]=='.').any(axis=1)]
 
