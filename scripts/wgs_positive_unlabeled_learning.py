@@ -51,7 +51,7 @@ def load_variants(vcf_metrics_tsv, ultra_rare_variants_tsv, var_type):
     return final_output, ultra_rare, final_output_raw, ultra_rare_raw
 
 def filter_variants(final_output, ultra_rare, final_output_raw, ultra_rare_raw):
-    if (final_output['VQSLOD']!='.').sum()!=final_output.shape[0]:
+    if (final_output['VQSLOD']!='.').sum()!=0:
         final_output = final_output[final_output['VQSLOD']!='.'].reset_index(drop=True)
 
     try:
