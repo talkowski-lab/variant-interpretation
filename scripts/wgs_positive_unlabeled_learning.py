@@ -51,10 +51,14 @@ def load_variants(vcf_metrics_tsv, ultra_rare_variants_tsv, var_type):
     return final_output, ultra_rare, final_output_raw, ultra_rare_raw
 
 def filter_variants(final_output, ultra_rare, final_output_raw, ultra_rare_raw):
-    final_output = final_output[final_output['VQSLOD']!='.'].reset_index(drop=True)
+    if (final_output['VQSLOD']!='.').sum()!=final_output.shape[0]:
+        final_output = final_output[final_output['VQSLOD']!='.'].reset_index(drop=True)
 
-    ultra_rare = ultra_rare[(~ultra_rare.VQSLOD.isna())&
-                            (~ultra_rare.VAF_sample.isna())&
+    try:
+        ultra_rare = ultra_rare[~ultra_rare.VQSLOD.isna()]
+    except:
+        pass
+    ultra_rare = ultra_rare[(~ultra_rare.VAF_sample.isna())&
                             (~ultra_rare.VAF_mother.isna())&
                             (~ultra_rare.VAF_father.isna())].reset_index(drop=True)
 
