@@ -65,32 +65,32 @@ task getOutliers {
 
     command <<<
         cat <<EOF > get_outliers.py 
-            import os
-            import sys
-            import pandas as pd
-            import numpy as np
+        import os
+        import sys
+        import pandas as pd
+        import numpy as np
 
-            cohort_prefix = sys.argv[1]
-            vcf_metrics_tsv = sys.argv[2]
+        cohort_prefix = sys.argv[1]
+        vcf_metrics_tsv = sys.argv[2]
 
-            df = pd.read_csv(vcf_metrics_tsv, sep='\t')
-            snv_counts = df[df.TYPE=='SNV'].SAMPLE.value_counts()
-            indel_counts = df[df.TYPE=='Indel'].SAMPLE.value_counts()
+        df = pd.read_csv(vcf_metrics_tsv, sep='\t')
+        snv_counts = df[df.TYPE=='SNV'].SAMPLE.value_counts()
+        indel_counts = df[df.TYPE=='Indel'].SAMPLE.value_counts()
 
-            snv_summary = snv_counts.describe()
-            indel_summary = indel_counts.describe()
-            snv_q1 = snv_summary['25%']
-            snv_q3 = snv_summary['75%']
-            indel_q1 = indel_summary['25%']
-            indel_q3 = indel_summary['75%']
-            snv_iqr = snv_q3 - snv_q1
-            indel_iqr = indel_q3 - indel_q1
+        snv_summary = snv_counts.describe()
+        indel_summary = indel_counts.describe()
+        snv_q1 = snv_summary['25%']
+        snv_q3 = snv_summary['75%']
+        indel_q1 = indel_summary['25%']
+        indel_q3 = indel_summary['75%']
+        snv_iqr = snv_q3 - snv_q1
+        indel_iqr = indel_q3 - indel_q1
 
-            snv_outliers = snv_counts[(snv_counts>=(snv_q3 + 1.5*snv_iqr))].index 
-            indel_outliers = indel_counts[(indel_counts>=(indel_q3 + 1.5*indel_iqr))].index 
+        snv_outliers = snv_counts[(snv_counts>=(snv_q3 + 1.5*snv_iqr))].index 
+        indel_outliers = indel_counts[(indel_counts>=(indel_q3 + 1.5*indel_iqr))].index 
 
-            cohort_outliers = pd.Series(np.union1d(snv_outliers, indel_outliers))
-            cohort_outliers.to_csv('outliers.txt', header=None, index=False)
+        cohort_outliers = pd.Series(np.union1d(snv_outliers, indel_outliers))
+        cohort_outliers.to_csv('outliers.txt', header=None, index=False)
         EOF
 
         python3 get_outliers.py ~{cohort_prefix} ~{vcf_metrics_tsv}
