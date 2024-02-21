@@ -32,6 +32,7 @@ workflow runBaggingPU {
         input:
             vcf_metrics_tsv=vcf_metrics_tsv,
             ultra_rare_variants_tsv=ultra_rare_variants_tsv,
+            outlier_samples=outlier_samples,
             var_type=var_type,
             bagging_pu_source_script=bagging_pu_source_script,
             run_bagging_pu_script=run_bagging_pu_script,
