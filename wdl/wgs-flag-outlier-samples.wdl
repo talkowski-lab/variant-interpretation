@@ -95,6 +95,7 @@ task getOutliers {
     >>>
 
     output {
+        File outlier_file = 'outliers.txt'
         Array[String] outlier_samples = read_lines('outliers.txt')
     }
 }
