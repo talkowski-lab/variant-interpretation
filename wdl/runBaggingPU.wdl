@@ -13,6 +13,7 @@ workflow runBaggingPU {
     input {
         File vcf_metrics_tsv
         File ultra_rare_variants_tsv
+        Array[String] outlier_samples
         String var_type
         String bagging_pu_source_script
         String run_bagging_pu_script
@@ -50,6 +51,7 @@ task baggingPU {
     input {
         File vcf_metrics_tsv
         File ultra_rare_variants_tsv
+        Array[String] outlier_samples
         String var_type
         String bagging_pu_source_script
         String run_bagging_pu_script
@@ -88,7 +90,7 @@ task baggingPU {
         curl ~{run_bagging_pu_script} > run_bagging_pu.py
         curl ~{bagging_pu_source_script} > baggingPU.py
         python3 run_bagging_pu.py ~{vcf_metrics_tsv} ~{ultra_rare_variants_tsv} ~{cohort_prefix} \
-        ~{var_type} ~{sep=',' numeric}
+        ~{var_type} ~{sep=',' numeric} ~{sep=',' outlier_samples}
     >>>
 
     output {

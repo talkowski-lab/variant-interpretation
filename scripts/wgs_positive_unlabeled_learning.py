@@ -18,14 +18,17 @@ ultra_rare_variants_tsv = sys.argv[2]
 cohort_prefix = sys.argv[3]
 var_type = sys.argv[4]
 numeric = sys.argv[5]
+outlier_samples = sys.argv[6].split(',')
 
 # Functions
 def load_variants(vcf_metrics_tsv, ultra_rare_variants_tsv, var_type): 
     ultra_rare = pd.read_csv(ultra_rare_variants_tsv, sep='\t')
     ultra_rare = ultra_rare[ultra_rare.TYPE==var_type]
+    ultra_rare = ultra_rare[~ultra_rare.SAMPLE.isin(outlier_samples)]
 
     final_output = pd.read_csv(vcf_metrics_tsv, sep='\t')
     final_output = final_output[final_output.TYPE==var_type]
+    final_output = final_output[~final_output.SAMPLE.isin(outlier_samples)]
 
     ultra_rare = ultra_rare[(~ultra_rare.AD_father.isna()) & (~ultra_rare.AD_mother.isna())].reset_index(drop=True)
 
