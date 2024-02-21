@@ -92,10 +92,11 @@ task getOutliers {
             cohort_outliers = pd.Series(np.union1d(snv_outliers, indel_outliers))
             cohort_outliers.to_csv('outliers.txt', header=None, index=False)
         EOF
+
+        python3 get_outliers.py ~{cohort_prefix} ~{vcf_metrics_tsv}
     >>>
 
     output {
-        File outlier_file = 'outliers.txt'
         Array[String] outlier_samples = read_lines('outliers.txt')
     }
 }
