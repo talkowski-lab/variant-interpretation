@@ -11,7 +11,7 @@ struct RuntimeAttr {
 
 workflow runBaggingPU {
     input {
-        File vcf_metrics_tsv
+        File vcf_metrics_tsv_final
         File ultra_rare_variants_tsv
         Array[String] outlier_samples
         String var_type
@@ -30,7 +30,7 @@ workflow runBaggingPU {
 
     call baggingPU {
         input:
-            vcf_metrics_tsv=vcf_metrics_tsv,
+            vcf_metrics_tsv_final=vcf_metrics_tsv_final,
             ultra_rare_variants_tsv=ultra_rare_variants_tsv,
             outlier_samples=outlier_samples,
             var_type=var_type,
@@ -50,7 +50,7 @@ workflow runBaggingPU {
 
 task baggingPU {
     input {
-        File vcf_metrics_tsv
+        File vcf_metrics_tsv_final
         File ultra_rare_variants_tsv
         Array[String] outlier_samples
         String var_type
@@ -62,7 +62,7 @@ task baggingPU {
         RuntimeAttr? runtime_attr_override
     }
 
-    Float input_size = size([vcf_metrics_tsv, ultra_rare_variants_tsv], "GB")
+    Float input_size = size([vcf_metrics_tsv_final, ultra_rare_variants_tsv], "GB")
     Float base_disk_gb = 10.0
     Float input_disk_scale = 5.0
 
@@ -90,7 +90,7 @@ task baggingPU {
     command <<<
         curl ~{run_bagging_pu_script} > run_bagging_pu.py
         curl ~{bagging_pu_source_script} > baggingPU.py
-        python3 run_bagging_pu.py ~{vcf_metrics_tsv} ~{ultra_rare_variants_tsv} ~{cohort_prefix} \
+        python3 run_bagging_pu.py ~{vcf_metrics_tsv_final} ~{ultra_rare_variants_tsv} ~{cohort_prefix} \
         ~{var_type} ~{sep=',' numeric} ~{sep=',' outlier_samples}
     >>>
 

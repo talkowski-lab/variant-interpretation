@@ -57,7 +57,9 @@ def filter_variants(final_output, ultra_rare, final_output_raw, ultra_rare_raw):
     if (final_output['VQSLOD']!='.').sum()!=0:
         final_output = final_output[final_output['VQSLOD']!='.'].reset_index(drop=True)
 
+    # TODO: remove when filter-rare-variants-hail is fixed?
     ultra_rare = ultra_rare[ultra_rare.GQ_sample>=99]
+    ultra_rare = ultra_rare[(ultra_rare.GQ_mother>=30)&(ultra_rare.GQ_father>=30)]
 
     try:
         ultra_rare = ultra_rare[~ultra_rare.VQSLOD.isna()]
@@ -83,11 +85,13 @@ def filter_variants(final_output, ultra_rare, final_output_raw, ultra_rare_raw):
                                             else row.GQ_father, axis=1)
     ultra_rare['GQ_het'] = ultra_rare.apply(lambda row: row.GQ_mother if row.GT_mother=='0/1' else row.GQ_father, axis=1)
 
+
+    ultra_rare['GQ_parent'] = ultra_rare['GQ_hom']
+    final_output['GQ_parent'] = final_output[['GQ_mother', 'GQ_father']].min(axis=1)
+
     merged_output = pd.concat([ultra_rare, final_output]).reset_index(drop=True)
     merged_output['var_type'] = merged_output.label.map({1: 'ultra-rare', 0: 'unlabeled'})
 
-    merged_output['GQ_parent'] = merged_output.apply(lambda row: row.GQ_hom if row.label==1 
-                                                    else row[['GQ_mother', 'GQ_father']].min(), axis=1)
     return final_output, ultra_rare, merged_output
 
 def BaggingPU(X, y, kf, n_jobs=-1):
