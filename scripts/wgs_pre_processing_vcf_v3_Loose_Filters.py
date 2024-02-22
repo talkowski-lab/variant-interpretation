@@ -15,6 +15,7 @@ import pandas as pd
 import os
 import sys
 import numpy as np 
+import ast
 
 build = "GRCh38"
 lcr_uri = sys.argv[1]
@@ -23,7 +24,7 @@ meta_uri = sys.argv[3]
 trio_uri = sys.argv[4]
 vcf_uri = sys.argv[5]
 header_file = sys.argv[6]
-exclude_info_filters = bool(sys.argv[7])
+exclude_info_filters = ast.literal_eval(sys.argv[7].capitalize())
 cores = sys.argv[8]  # string
 mem = int(np.floor(float(sys.argv[9])))
 

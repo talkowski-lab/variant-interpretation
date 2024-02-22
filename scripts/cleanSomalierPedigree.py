@@ -2,11 +2,12 @@ import pandas as pd
 import numpy as np
 import os
 import sys
+import ast
 
 samples_uri = sys.argv[1]
 ped_uri = sys.argv[2]
 cohort_prefix = sys.argv[3]
-subset_ped = bool(sys.argv[4].upper())
+subset_ped = ast.literal_eval(sys.argv[4].capitalize())
 
 ped = pd.read_csv(ped_uri, dtype={i: str for i in range(4)}, sep='\t')
 try:

@@ -7,6 +7,7 @@ import hail as hl
 import pandas as pd
 import numpy as np
 import sys
+import ast
 
 build = 'GRCh38'
 lcr_uri = sys.argv[1]
@@ -19,7 +20,7 @@ cores = sys.argv[7]
 mem = int(np.floor(float(sys.argv[8])))
 ac_threshold = int(sys.argv[9])
 af_threshold = float(sys.argv[10])
-exclude_info_filters = bool(sys.argv[11])
+exclude_info_filters = ast.literal_eval(sys.argv[11].capitalize())
 header_file = sys.argv[12]
 
 hl.init(min_block_size=128, spark_conf={"spark.executor.cores": cores, 
