@@ -3,6 +3,7 @@ version 1.0
 import "wes-denovo-step-01.wdl" as step1
 import "wes-denovo-step-02.wdl" as step2
 import "wes-denovo-step-03.wdl" as step3
+import "mergeVCFs.wdl" as mergeVCFs
 
 struct RuntimeAttr {
     Float? mem_gb
@@ -33,13 +34,12 @@ workflow hailDenovoWES {
     }
 
     if (defined(vcf_files)) {
-        call mergeVCFs {
+        call mergeVCFs.mergeVCFs as mergeVCFs {
             input:
                 vcf_files=select_first([vcf_files]),
                 sv_base_mini_docker=sv_base_mini_docker,
                 cohort_prefix=cohort_prefix,
-                sort_after_merge=sort_after_merge,
-                merge_or_concat='concat'
+                sort_after_merge=sort_after_merge
         }
     }
 
@@ -92,64 +92,5 @@ workflow hailDenovoWES {
         File de_novo_ht = step3.de_novo_ht
         File tdt_mt = step3.tdt_mt
         File tdt_parent_aware_mt = step3.tdt_parent_aware_mt
-    }
-}
-
-task mergeVCFs {
-    input {
-        Array[File] vcf_files
-        String sv_base_mini_docker
-        String cohort_prefix
-        String merge_or_concat 
-        Boolean sort_after_merge
-        RuntimeAttr? runtime_attr_override
-    }
-
-    Float input_size = size(vcf_files, "GB")
-    Float base_disk_gb = 10.0
-    Float input_disk_scale = 10.0
-    
-    RuntimeAttr runtime_default = object {
-        mem_gb: 4,
-        disk_gb: ceil(base_disk_gb + input_size * input_disk_scale),
-        cpu_cores: 1,
-        preemptible_tries: 3,
-        max_retries: 1,
-        boot_disk_gb: 10
-    }
-
-    RuntimeAttr runtime_override = select_first([runtime_attr_override, runtime_default])
-    
-    runtime {
-        memory: "~{select_first([runtime_override.mem_gb, runtime_default.mem_gb])} GB"
-        disks: "local-disk ~{select_first([runtime_override.disk_gb, runtime_default.disk_gb])} HDD"
-        cpu: select_first([runtime_override.cpu_cores, runtime_default.cpu_cores])
-        preemptible: select_first([runtime_override.preemptible_tries, runtime_default.preemptible_tries])
-        maxRetries: select_first([runtime_override.max_retries, runtime_default.max_retries])
-        docker: sv_base_mini_docker
-        bootDiskSizeGb: select_first([runtime_override.boot_disk_gb, runtime_default.boot_disk_gb])
-    }
-
-    String merged_vcf_name="~{cohort_prefix}.merged.vcf.gz"
-    String sorted_vcf_name="~{cohort_prefix}.merged.sorted.vcf.gz"
-
-    String merge_or_concat_new = if merge_or_concat == 'concat' then 'concat -n'  else merge_or_concat
-    command <<<
-        set -euo pipefail
-        VCFS="~{write_lines(vcf_files)}"
-        cat $VCFS | awk -F '/' '{print $NF"\t"$0}' | sort -k1,1V | awk '{print $2}' > vcfs_sorted.list
-        bcftools ~{merge_or_concat_new} --no-version -Oz --file-list vcfs_sorted.list --output ~{merged_vcf_name}
-        if [[ "~{sort_after_merge}" == "true" ]]; then
-            cat ~{merged_vcf_name} | zcat | awk '$1 ~ /^#/ {print $0;next} {print $0 | "sort -k1,1V -k2,2n"}' > ~{basename(sorted_vcf_name, '.gz')}
-            bgzip ~{basename(sorted_vcf_name, '.gz')}
-            bcftools index -t ~{sorted_vcf_name}
-        else
-            bcftools index -t ~{merged_vcf_name}
-        fi
-    >>>
-
-    output {
-        File merged_vcf_file=if sort_after_merge then sorted_vcf_name else merged_vcf_name
-        File merged_vcf_idx=if sort_after_merge then sorted_vcf_name else merged_vcf_name + ".tbi"
     }
 }
