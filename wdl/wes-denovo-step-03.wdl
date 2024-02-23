@@ -19,7 +19,7 @@ workflow step3 {
         String cohort_prefix
         String hail_denovo_filtering_script
         String hail_docker
-        String bucket_id
+        String bucket_id=false
         RuntimeAttr? runtime_attr_override
     }
 

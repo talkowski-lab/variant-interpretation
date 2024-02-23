@@ -20,7 +20,7 @@ workflow step1 {
         String cohort_prefix
         String hail_annotation_script
         String hail_docker
-        String bucket_id
+        String bucket_id=false
         RuntimeAttr? runtime_attr_override
     }
 
