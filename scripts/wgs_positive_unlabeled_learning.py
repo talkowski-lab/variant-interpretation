@@ -85,7 +85,6 @@ def filter_variants(final_output, ultra_rare, final_output_raw, ultra_rare_raw):
                                             else row.GQ_father, axis=1)
     ultra_rare['GQ_het'] = ultra_rare.apply(lambda row: row.GQ_mother if row.GT_mother=='0/1' else row.GQ_father, axis=1)
 
-
     ultra_rare['GQ_parent'] = ultra_rare['GQ_hom']
     final_output['GQ_parent'] = final_output[['GQ_mother', 'GQ_father']].min(axis=1)
 
