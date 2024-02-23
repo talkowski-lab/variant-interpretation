@@ -21,6 +21,7 @@ workflow step1 {
         String hail_annotation_script
         String hail_docker
         String bucket_id
+        RuntimeAttr? runtime_attr_override
     }
 
     if (bucket_id=='false') {
@@ -34,7 +35,8 @@ workflow step1 {
                 gnomad_ht_uri=gnomad_ht_uri,
                 cohort_prefix=cohort_prefix,
                 hail_annotation_script=hail_annotation_script,
-                hail_docker=hail_docker
+                hail_docker=hail_docker,
+                runtime_attr_override=runtime_attr_override
         }
     }
 
@@ -50,7 +52,8 @@ workflow step1 {
                 bucket_id=bucket_id,
                 cohort_prefix=cohort_prefix,
                 hail_annotation_script=hail_annotation_script,
-                hail_docker=hail_docker
+                hail_docker=hail_docker,
+                runtime_attr_override=runtime_attr_override
         }
     }
 

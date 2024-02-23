@@ -19,6 +19,7 @@ workflow step2 {
         String hail_basic_filtering_script
         String hail_docker
         String bucket_id
+        RuntimeAttr? runtime_attr_override
     }
 
     if (bucket_id=='false') {
@@ -28,7 +29,8 @@ workflow step2 {
                 ped_uri=ped_uri,
                 cohort_prefix=cohort_prefix,
                 hail_basic_filtering_script=hail_basic_filtering_script,
-                hail_docker=hail_docker
+                hail_docker=hail_docker,
+                runtime_attr_override=runtime_attr_override
         }
     }
 
@@ -46,7 +48,8 @@ workflow step2 {
                 bucket_id=bucket_id,
                 cohort_prefix=cohort_prefix,
                 hail_basic_filtering_script=hail_basic_filtering_script,
-                hail_docker=hail_docker
+                hail_docker=hail_docker,
+                runtime_attr_override=runtime_attr_override
         }
     }
 

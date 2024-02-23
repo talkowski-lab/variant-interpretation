@@ -20,6 +20,7 @@ workflow step3 {
         String hail_denovo_filtering_script
         String hail_docker
         String bucket_id
+        RuntimeAttr? runtime_attr_override
     }
 
     if (bucket_id=='false') {
@@ -30,7 +31,8 @@ workflow step3 {
                 cohort_prefix=cohort_prefix,
                 loeuf_file=loeuf_file,
                 hail_denovo_filtering_script=hail_denovo_filtering_script,
-                hail_docker=hail_docker
+                hail_docker=hail_docker,
+                runtime_attr_override=runtime_attr_override
         }
     }
 
@@ -49,7 +51,8 @@ workflow step3 {
                 cohort_prefix=cohort_prefix,
                 loeuf_file=loeuf_file,
                 hail_denovo_filtering_script=hail_denovo_filtering_script,
-                hail_docker=hail_docker
+                hail_docker=hail_docker,
+                runtime_attr_override=runtime_attr_override
         }
     }
 
