@@ -15,7 +15,6 @@ workflow step1 {
         File ped_uri
         File purcell5k
         File mpc_chr22_file
-        Float? input_size
         String mpc_dir
         String gnomad_ht_uri
         String cohort_prefix
@@ -41,18 +40,17 @@ workflow step1 {
 
     if (bucket_id!='false') {
         call hailAnnotateRemote {
-        input:
-            vcf_file=vcf_file,
-            input_size=select_first([input_size]),
-            ped_uri=ped_uri,
-            purcell5k=purcell5k,
-            mpc_chr22_file=mpc_chr22_file,
-            mpc_dir=mpc_dir,
-            gnomad_ht_uri=gnomad_ht_uri,
-            bucket_id=bucket_id,
-            cohort_prefix=cohort_prefix,
-            hail_annotation_script=hail_annotation_script,
-            hail_docker=hail_docker
+            input:
+                vcf_file=vcf_file,
+                ped_uri=ped_uri,
+                purcell5k=purcell5k,
+                mpc_chr22_file=mpc_chr22_file,
+                mpc_dir=mpc_dir,
+                gnomad_ht_uri=gnomad_ht_uri,
+                bucket_id=bucket_id,
+                cohort_prefix=cohort_prefix,
+                hail_annotation_script=hail_annotation_script,
+                hail_docker=hail_docker
         }
     }
 
@@ -125,8 +123,7 @@ task hailAnnotate {
 
 task hailAnnotateRemote {
     input {
-        String vcf_file
-        Float input_size
+        File vcf_file
         File ped_uri
         File purcell5k
         File mpc_chr22_file
@@ -138,6 +135,7 @@ task hailAnnotateRemote {
         String hail_docker
         RuntimeAttr? runtime_attr_override
     }
+    Float input_size = size(vcf_file, 'GB')
     Float base_disk_gb = 10.0
     Float input_disk_scale = 5.0
 

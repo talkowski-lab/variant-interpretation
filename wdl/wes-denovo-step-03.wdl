@@ -1,5 +1,7 @@
 version 1.0
 
+import "wes-denovo-helpers.wdl" as helpers
+
 struct RuntimeAttr {
     Float? mem_gb
     Int? cpu_cores
@@ -34,9 +36,14 @@ workflow step3 {
     }
 
     if (bucket_id!='false') {
+        call helpers.getHailMTSize as getHailMTSize {
+            input:
+                mt_uri=filtered_mt,
+                hail_docker=hail_docker
+        }
         call hailDenovoFilteringRemote {
             input:
-                input_size=select_first([input_size]),
+                input_size=select_first([getHailMTSize.mt_size]),
                 filtered_mt=filtered_mt,
                 ped_uri=ped_uri,
                 bucket_id=bucket_id,
