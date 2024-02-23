@@ -15,32 +15,52 @@ workflow step1 {
         File ped_uri
         File purcell5k
         File mpc_chr22_file
+        Float? input_size
         String mpc_dir
         String gnomad_ht_uri
         String cohort_prefix
         String hail_annotation_script
         String hail_docker
-        String? bucket_id
+        String bucket_id
     }
 
-    call hailAnnotate {
+    if (bucket_id=='false') {
+        call hailAnnotate {
+            input:
+                vcf_file=vcf_file,
+                ped_uri=ped_uri,
+                purcell5k=purcell5k,
+                mpc_chr22_file=mpc_chr22_file,
+                mpc_dir=mpc_dir,
+                gnomad_ht_uri=gnomad_ht_uri,
+                cohort_prefix=cohort_prefix,
+                hail_annotation_script=hail_annotation_script,
+                hail_docker=hail_docker
+        }
+    }
+
+    if (bucket_id!='false') {
+        call hailAnnotateRemote {
         input:
             vcf_file=vcf_file,
+            input_size=select_first([input_size]),
             ped_uri=ped_uri,
             purcell5k=purcell5k,
             mpc_chr22_file=mpc_chr22_file,
             mpc_dir=mpc_dir,
             gnomad_ht_uri=gnomad_ht_uri,
+            bucket_id=bucket_id,
             cohort_prefix=cohort_prefix,
             hail_annotation_script=hail_annotation_script,
             hail_docker=hail_docker
+        }
     }
 
     output {
-        File annot_mt = hailAnnotate.annot_mt
-        File sample_qc_info = hailAnnotate.sample_qc_info
-        File pca_score_table_5k = hailAnnotate.pca_score_table_5k
-        File pca_loading_table_5k = hailAnnotate.pca_loading_table_5k
+        String annot_mt = select_first([hailAnnotate.annot_mt, hailAnnotateRemote.annot_mt])
+        File sample_qc_info = select_first([hailAnnotate.sample_qc_info, hailAnnotateRemote.sample_qc_info])
+        String pca_score_table_5k = select_first([hailAnnotate.pca_score_table_5k, hailAnnotateRemote.pca_score_table_5k])
+        String pca_loading_table_5k = select_first([hailAnnotate.pca_loading_table_5k, hailAnnotateRemote.pca_loading_table_5k])
     }
 }
 
@@ -105,7 +125,7 @@ task hailAnnotate {
 
 task hailAnnotateRemote {
     input {
-        String mt_uri
+        String vcf_file
         Float input_size
         File ped_uri
         File purcell5k
@@ -147,14 +167,14 @@ task hailAnnotateRemote {
 
     command {
         curl ~{hail_annotation_script} > hail_annotation_script.py
-        python3 hail_annotation_script.py ~{mt_uri} ~{cohort_prefix} ~{ped_uri} \
+        python3 hail_annotation_script.py ~{vcf_file} ~{cohort_prefix} ~{ped_uri} \
         ~{gnomad_ht_uri} ~{mpc_dir} ~{mpc_chr22_file} ~{purcell5k} ~{cpu_cores} ~{memory} ~{bucket_id}
     }
 
     output {
-        String annot_mt = read_lines('mt_uri.txt')[0]
+        String annot_mt = read_lines('vcf_file.txt')[0]
         File sample_qc_info = "~{cohort_prefix}_wes_post_annot_sample_QC_info.txt"
-        String pca_score_table_5k = read_lines('mt_uri.txt')[1]
-        String pca_loading_table_5k = read_lines('mt_uri.txt')[2]
+        String pca_score_table_5k = read_lines('vcf_file.txt')[1]
+        String pca_loading_table_5k = read_lines('vcf_file.txt')[2]
     }
 }

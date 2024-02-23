@@ -14,28 +14,45 @@ workflow step3 {
         File ped_uri
         File filtered_mt
         File loeuf_file
+        Float? input_size
         String cohort_prefix
         String hail_denovo_filtering_script
         String hail_docker
-        String? bucket_id
+        String bucket_id
     }
 
-    call hailDenovoFiltering {
-        input:
-            filtered_mt=filtered_mt,
-            ped_uri=ped_uri,
-            cohort_prefix=cohort_prefix,
-            loeuf_file=loeuf_file,
-            hail_denovo_filtering_script=hail_denovo_filtering_script,
-            hail_docker=hail_docker
+    if (bucket_id=='false') {
+        call hailDenovoFiltering {
+            input:
+                filtered_mt=filtered_mt,
+                ped_uri=ped_uri,
+                cohort_prefix=cohort_prefix,
+                loeuf_file=loeuf_file,
+                hail_denovo_filtering_script=hail_denovo_filtering_script,
+                hail_docker=hail_docker
+        }
+    }
+
+    if (bucket_id!='false') {
+        call hailDenovoFilteringRemote {
+            input:
+                input_size=select_first([input_size]),
+                filtered_mt=filtered_mt,
+                ped_uri=ped_uri,
+                bucket_id=bucket_id,
+                cohort_prefix=cohort_prefix,
+                loeuf_file=loeuf_file,
+                hail_denovo_filtering_script=hail_denovo_filtering_script,
+                hail_docker=hail_docker
+        }
     }
 
     output {
-        File de_novo_results = hailDenovoFiltering.de_novo_results
-        File de_novo_vep = hailDenovoFiltering.de_novo_vep
-        File de_novo_ht = hailDenovoFiltering.de_novo_ht
-        File tdt_mt = hailDenovoFiltering.tdt_mt
-        File tdt_parent_aware_mt = hailDenovoFiltering.tdt_parent_aware_mt
+        File de_novo_results = select_first([hailDenovoFiltering.de_novo_results, hailDenovoFilteringRemote.de_novo_results])
+        File de_novo_vep = select_first([hailDenovoFiltering.de_novo_vep, hailDenovoFilteringRemote.de_novo_vep])
+        String de_novo_ht = select_first([hailDenovoFiltering.de_novo_ht, hailDenovoFilteringRemote.de_novo_ht])
+        String tdt_mt = select_first([hailDenovoFiltering.tdt_mt, hailDenovoFilteringRemote.tdt_mt])
+        String tdt_parent_aware_mt = select_first([hailDenovoFiltering.tdt_parent_aware_mt, hailDenovoFilteringRemote.tdt_parent_aware_mt])
     }
 }
 

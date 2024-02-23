@@ -23,7 +23,7 @@ workflow hailDenovoWES {
         File mpc_chr22_file
         File loeuf_file
         Boolean sort_after_merge=false
-        String bucket_id=false
+        String bucket_id=false  # leave empty to compress Hail MT/HT outputs
         String mpc_dir
         String gnomad_ht_uri
         String cohort_prefix
@@ -46,7 +46,7 @@ workflow hailDenovoWES {
 
     File vcf_file_ = select_first([vcf_file, mergeVCFs.merged_vcf_file])
 
-    call step1.hailAnnotate as step1 {
+    call step1.step1 as step1 {
         input:
             vcf_file=vcf_file_,
             ped_uri=ped_uri,
@@ -60,7 +60,7 @@ workflow hailDenovoWES {
             hail_docker=hail_docker
     }
 
-    call step2.hailBasicFiltering as step2 {
+    call step2.step2 as step2 {
         input:
             annot_mt=step1.annot_mt,
             ped_uri=ped_uri,
@@ -70,7 +70,7 @@ workflow hailDenovoWES {
             hail_docker=hail_docker
     }
 
-    call step3.hailDenovoFiltering as step3 {
+    call step3.step3 as step3 {
         input:
             filtered_mt=step2.filtered_mt,
             ped_uri=ped_uri,

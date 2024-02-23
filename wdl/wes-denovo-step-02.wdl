@@ -13,24 +13,40 @@ workflow step2 {
     input {
         File ped_uri
         File annot_mt
+        Float? input_size
         String cohort_prefix
         String hail_basic_filtering_script
         String hail_docker
-        String? bucket_id
+        String bucket_id
     }
 
-    call hailBasicFiltering {
-        input:
-            annot_mt=annot_mt,
-            ped_uri=ped_uri,
-            cohort_prefix=cohort_prefix,
-            hail_basic_filtering_script=hail_basic_filtering_script,
-            hail_docker=hail_docker
+    if (bucket_id=='false') {
+        call hailBasicFiltering {
+            input:
+                annot_mt=annot_mt,
+                ped_uri=ped_uri,
+                cohort_prefix=cohort_prefix,
+                hail_basic_filtering_script=hail_basic_filtering_script,
+                hail_docker=hail_docker
+        }
+    }
+
+    if (bucket_id!='false') {
+        call hailBasicFilteringRemote {
+            input:
+                annot_mt=annot_mt,
+                input_size=select_first([input_size]),
+                ped_uri=ped_uri,
+                bucket_id=bucket_id,
+                cohort_prefix=cohort_prefix,
+                hail_basic_filtering_script=hail_basic_filtering_script,
+                hail_docker=hail_docker
+        }
     }
 
     output {
-        File filtered_mt = hailBasicFiltering.filtered_mt
-        File post_filter_sample_qc_info = hailBasicFiltering.post_filter_sample_qc_info
+        String filtered_mt = select_first([hailBasicFiltering.filtered_mt, hailBasicFilteringRemote.filtered_mt])
+        File post_filter_sample_qc_info = select_first([hailBasicFiltering.post_filter_sample_qc_info, hailBasicFilteringRemote.post_filter_sample_qc_info])
     }
 }
 
