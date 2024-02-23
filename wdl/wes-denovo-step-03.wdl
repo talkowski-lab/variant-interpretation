@@ -16,7 +16,6 @@ workflow step3 {
         File ped_uri
         File filtered_mt
         File loeuf_file
-        Float? input_size
         String cohort_prefix
         String hail_denovo_filtering_script
         String hail_docker
