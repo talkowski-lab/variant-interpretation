@@ -173,9 +173,9 @@ task hailAnnotateRemote {
     }
 
     output {
-        String annot_mt = read_lines('vcf_file.txt')[0]
+        String annot_mt = read_lines('mt_uri.txt')[0]
         File sample_qc_info = "~{cohort_prefix}_wes_post_annot_sample_QC_info.txt"
-        String pca_score_table_5k = read_lines('vcf_file.txt')[1]
-        String pca_loading_table_5k = read_lines('vcf_file.txt')[2]
+        String pca_score_table_5k = read_lines('mt_uri.txt')[1]
+        String pca_loading_table_5k = read_lines('mt_uri.txt')[2]
     }
 }
