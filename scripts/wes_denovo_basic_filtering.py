@@ -185,6 +185,6 @@ hl.sample_qc(mt).cols().flatten().export(f"{cohort_prefix}_wes_final_annot_post_
 if bucket_id == 'false':
     mt.write(f"{cohort_prefix}_wes_denovo_basic_filtering.mt", overwrite=True)
 else:
-    filename = f"{bucket_id}/hail/{str(datetime.datetime.now().strftime('%Y-%m-%d_%H:%M'))}/{cohort_prefix}_wes_denovo_basic_filtering.mt"
+    filename = f"{bucket_id}/hail/{str(datetime.datetime.now().strftime('%Y-%m-%d_%H-%M'))}/{cohort_prefix}_wes_denovo_basic_filtering.mt"
     pd.Series([filename]).to_csv('mt_uri.txt',index=False, header=None)
     mt.write(filename, overwrite=True)
