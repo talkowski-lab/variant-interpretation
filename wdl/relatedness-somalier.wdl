@@ -65,7 +65,7 @@ workflow runSomalier {
             ancestry_labels_1kg=ancestry_labels_1kg,
             somalier_1kg_tar=somalier_1kg_tar,
             cohort_prefix=cohort_prefix,
-            somalier_docker=somalier_docker,
+            hail_docker=hail_docker,
             infer_ped=infer_ped,
             runtime_attr_override=runtime_attr_relatedness
     }
@@ -143,7 +143,7 @@ task relatedness {
         File ancestry_labels_1kg
         File somalier_1kg_tar
         String cohort_prefix
-        String somalier_docker
+        String hail_docker
         Boolean infer_ped
         RuntimeAttr? runtime_attr_override
     }
@@ -165,7 +165,7 @@ task relatedness {
         cpu: select_first([runtime_override.cpu_cores, runtime_default.cpu_cores])
         preemptible: select_first([runtime_override.preemptible_tries, runtime_default.preemptible_tries])
         maxRetries: select_first([runtime_override.max_retries, runtime_default.max_retries])
-        docker: somalier_docker
+        docker: hail_docker
         bootDiskSizeGb: select_first([runtime_override.boot_disk_gb, runtime_default.boot_disk_gb])
     }
 
@@ -174,11 +174,11 @@ task relatedness {
         set -euo pipefail
 
         bcftools index -t ~{vcf_uri}
-        somalier extract -d extracted/ --sites ~{sites_uri} -f ~{hg38_fasta} ~{vcf_uri}
-        somalier relate ~{infer_string} --ped ~{ped_uri} -o ~{cohort_prefix} extracted/*.somalier
+        /somalier_test extract -d extracted/ --sites ~{sites_uri} -f ~{hg38_fasta} ~{vcf_uri}
+        SOMALIER_SAMPLE_RATE=0 SOMALIER_RELATEDNESS_CUTOFF=0.25 /somalier_test relate ~{infer_string} --ped ~{ped_uri} -o ~{cohort_prefix} extracted/*.somalier
 
         tar -xf ~{somalier_1kg_tar}
-        somalier ancestry -o ~{cohort_prefix} --labels ~{ancestry_labels_1kg} 1kg-somalier/*.somalier ++ extracted/*.somalier
+        /somalier_test ancestry -o ~{cohort_prefix} --labels ~{ancestry_labels_1kg} 1kg-somalier/*.somalier ++ extracted/*.somalier
     }
 
     output {
