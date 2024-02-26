@@ -12,7 +12,7 @@ final_output['START'] = final_output.apply(lambda x:  x.POS if x.Indel_type=='In
 final_output['END'] = final_output.apply(lambda x:  x.POS + x.LEN if x.Indel_type=='Insertion' else x.POS, axis=1)
 
 if 'VarKey' not in final_output.columns:
-    final_output['VarKey'] = final_output[['CHROM', 'POS', 'REF', 'ALT']].astype(str).agg(':'.join, axis=1)
+    final_output['VarKey'] = final_output[['CHROM', 'POS', 'REF', 'ALT', 'SAMPLE']].astype(str).agg(':'.join, axis=1)
 
 new_filename = os.path.basename(final_output_uri).split('.tsv')[0] + '.bed'
 final_output[['CHROM', 'START', 'END', 'VarKey', 'TYPE', 'SAMPLE']].to_csv(new_filename, sep='\t', index=False)
