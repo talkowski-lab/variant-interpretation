@@ -65,7 +65,7 @@ workflow runSomalier {
             ancestry_labels_1kg=ancestry_labels_1kg,
             somalier_1kg_tar=somalier_1kg_tar,
             cohort_prefix=cohort_prefix,
-            hail_docker=hail_docker,
+            sv_base_mini_docker=sv_base_mini_docker,
             infer_ped=infer_ped,
             runtime_attr_override=runtime_attr_relatedness
     }
@@ -143,7 +143,7 @@ task relatedness {
         File ancestry_labels_1kg
         File somalier_1kg_tar
         String cohort_prefix
-        String hail_docker
+        String sv_base_mini_docker
         Boolean infer_ped
         RuntimeAttr? runtime_attr_override
     }
@@ -165,7 +165,7 @@ task relatedness {
         cpu: select_first([runtime_override.cpu_cores, runtime_default.cpu_cores])
         preemptible: select_first([runtime_override.preemptible_tries, runtime_default.preemptible_tries])
         maxRetries: select_first([runtime_override.max_retries, runtime_default.max_retries])
-        docker: hail_docker
+        docker: sv_base_mini_docker
         bootDiskSizeGb: select_first([runtime_override.boot_disk_gb, runtime_default.boot_disk_gb])
     }
 
