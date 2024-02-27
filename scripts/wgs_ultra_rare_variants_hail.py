@@ -198,7 +198,7 @@ csq_columns_more = ["Allele","Consequence","IMPACT","SYMBOL","Gene","Feature_typ
 def get_csq_max_af(csq):
     if csq=='.':
         return ''
-    csq_df = pd.DataFrame(csq.split(','))[0].str.split('|', expand=True)      
+    csq_df = pd.DataFrame(csq)[0].str.split('|', expand=True)      
     try:
         csq_df.columns = csq_columns_more
     except:
