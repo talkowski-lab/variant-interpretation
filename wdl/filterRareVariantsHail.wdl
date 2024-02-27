@@ -34,8 +34,8 @@ workflow filterRareVariantsHail {
         Float AF_threshold=0.005
         Int AC_threshold=2
         Float csq_af_threshold=0.01
-        Int gq_sample_threshold=99
-        Int gq_parent_threshold=30
+        Int gq_het_threshold=99
+        Int gq_hom_ref_threshold=30
         Int shards_per_chunk=10
         RuntimeAttr? runtime_attr_merge_chunk
         RuntimeAttr? runtime_attr_filter_vcf
@@ -87,8 +87,8 @@ workflow filterRareVariantsHail {
                     AC_threshold=AC_threshold,
                     AF_threshold=AF_threshold,
                     csq_af_threshold=csq_af_threshold,
-                    gq_sample_threshold=gq_sample_threshold,
-                    gq_parent_threshold=gq_parent_threshold,
+                    gq_het_threshold=gq_het_threshold,
+                    gq_hom_ref_threshold=gq_hom_ref_threshold,
                     bad_header=bad_header,
                     exclude_info_filters=exclude_info_filters,
                     runtime_attr_override=runtime_attr_filter_vcf
@@ -119,8 +119,8 @@ workflow filterRareVariantsHail {
                     AC_threshold=AC_threshold,
                     AF_threshold=AF_threshold,
                     csq_af_threshold=csq_af_threshold,
-                    gq_sample_threshold=gq_sample_threshold,
-                    gq_parent_threshold=gq_parent_threshold,
+                    gq_het_threshold=gq_het_threshold,
+                    gq_hom_ref_threshold=gq_hom_ref_threshold,
                     bad_header=bad_header,
                     exclude_info_filters=exclude_info_filters,
                     runtime_attr_override=runtime_attr_filter_vcf
@@ -208,8 +208,8 @@ task filterRareVariants {
         Int AC_threshold
         Float AF_threshold
         Float csq_af_threshold
-        Int gq_sample_threshold
-        Int gq_parent_threshold
+        Int gq_het_threshold
+        Int gq_hom_ref_threshold
         Boolean exclude_info_filters
         Boolean bad_header
         RuntimeAttr? runtime_attr_override
@@ -252,7 +252,7 @@ task filterRareVariants {
         curl ~{filter_rare_variants_python_script} > filter_rare_variants.py
         python3.9 filter_rare_variants.py ~{lcr_uri} ~{ped_uri} ~{meta_uri} ~{trio_uri} ~{vcf_file} \
         ~{cohort_prefix} ~{cpu_cores} ~{memory} ~{AC_threshold} ~{AF_threshold} ~{csq_af_threshold} \
-        ~{gq_sample_threshold} ~{gq_parent_threshold} ~{exclude_info_filters} ~{header_filename}
+        ~{gq_het_threshold} ~{gq_hom_ref_threshold} ~{exclude_info_filters} ~{header_filename}
 
         cp $(ls . | grep hail*.log) hail_log.txt
     >>>

@@ -81,9 +81,9 @@ def filter_variants(final_output, ultra_rare, final_output_raw, ultra_rare_raw):
     # overlapping variants set to unlabeled
     ultra_rare = ultra_rare[~ultra_rare.VarKey.isin(np.intersect1d(ultra_rare.VarKey, final_output.VarKey))]
   
-    ultra_rare['GQ_hom'] = ultra_rare.apply(lambda row: row.GQ_mother if row.GT_mother=='0/0' 
+    ultra_rare['GQ_hom'] = ultra_rare.apply(lambda row: row.GQ_mother if row.GT_mother.isin(['0/0', '0|0']) 
                                             else row.GQ_father, axis=1)
-    ultra_rare['GQ_het'] = ultra_rare.apply(lambda row: row.GQ_mother if row.GT_mother=='0/1' else row.GQ_father, axis=1)
+    # ultra_rare['GQ_het'] = ultra_rare.apply(lambda row: row.GQ_mother if ~row.GT_mother.isin(['0/0', '0|0']) else row.GQ_father, axis=1)
 
     ultra_rare['GQ_parent'] = ultra_rare['GQ_hom']
     final_output['GQ_parent'] = final_output[['GQ_mother', 'GQ_father']].min(axis=1)

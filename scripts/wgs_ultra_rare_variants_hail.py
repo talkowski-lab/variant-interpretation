@@ -21,8 +21,8 @@ mem = int(np.floor(float(sys.argv[8])))
 ac_threshold = int(sys.argv[9])
 af_threshold = float(sys.argv[10])
 csq_af_threshold = float(sys.argv[11])
-gq_sample_threshold = float(sys.argv[12])
-gq_parent_threshold = float(sys.argv[13])
+gq_het_threshold = float(sys.argv[12])
+gq_hom_ref_threshold = float(sys.argv[13])
 exclude_info_filters = ast.literal_eval(sys.argv[14].capitalize())
 header_file = sys.argv[15]
 
@@ -119,9 +119,18 @@ ultra_rare_vars_table = tdt_table_filtered_rare.filter((tdt_table_filtered_rare.
 
 trio_mat = hl.trio_matrix(mt_filtered, pedigree, complete_trios=True).semi_join_rows(ultra_rare_vars_table)
 
-ultra_rare_vars_df = trio_mat.filter_entries((trio_mat.proband_entry.GT.is_het() 
+
+trio_mat = trio_mat.filter_entries((trio_mat.proband_entry.GT.is_het() 
                                             & (trio_mat.father_entry.GT.is_het() 
-                                               | trio_mat.mother_entry.GT.is_het()))).entries().to_pandas()
+                                               | trio_mat.mother_entry.GT.is_het())))
+
+trio_mat = trio_mat.filter_entries(hl.if_else(trio_mat.father_entry.GT.is_het(), trio_mat.father_entry.GQ>=gq_het_threshold,
+                                              trio_mat.father_entry.GQ>=gq_hom_ref_threshold)
+                                    & hl.if_else(trio_mat.mother_entry.GT.is_het(), trio_mat.mother_entry.GQ>=gq_het_threshold,
+                                    trio_mat.mother_entry.GQ>=gq_hom_ref_threshold) 
+                                    & (trio_mat.proband_entry.GQ>=gq_het_threshold))
+
+ultra_rare_vars_df = trio_mat.entries().to_pandas()
 
 ultra_rare_vars_df = ultra_rare_vars_df[ultra_rare_vars_df['proband.s'].isin(trio_df.SampleID)]
 
@@ -193,9 +202,9 @@ ultra_rare_vars_df.loc[:,'MAX_AF'] = ultra_rare_vars_df.CSQ.apply(lambda csq: ge
 ultra_rare_vars_df = ultra_rare_vars_df[ultra_rare_vars_df.MAX_AF<=csq_af_threshold]
 
 # filter by child GQ and parent GQ
-ultra_rare_vars_df = ultra_rare_vars_df[(ultra_rare_vars_df.GQ_sample>=gq_sample_threshold)
-                                        & (ultra_rare_vars_df.GQ_mother>=gq_parent_threshold)
-                                        & (ultra_rare_vars_df.GQ_father>=gq_parent_threshold)]
+ultra_rare_vars_df = ultra_rare_vars_df[(ultra_rare_vars_df.GQ_sample>=gq_het_threshold)
+                                        & (ultra_rare_vars_df.GQ_mother>=gq_hom_ref_threshold)
+                                        & (ultra_rare_vars_df.GQ_father>=gq_hom_ref_threshold)]
 
 # 'POLYX' -- added after downsampling
 info_cols = ['END','AC','AF','AN','BaseQRankSum','ClippingRankSum','DP','FS','MLEAC','MLEAF','MQ','MQRankSum','QD','ReadPosRankSum','SOR','VQSLOD','cohort_AC', 'cohort_AF', 'CSQ']
