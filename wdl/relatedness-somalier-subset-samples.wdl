@@ -179,7 +179,7 @@ task relatedness_subset {
     command {
         set -euo pipefail
 
-        bcftools view -S ~{sample_file} -Oz -o ~{subset_vcf_uri} ~{vcf_uri}
+        bcftools view -S ~{sample_file} --no-update -Oz -o ~{subset_vcf_uri} ~{vcf_uri}
         bcftools index -t ~{subset_vcf_uri}
         /somalier_test extract -d extracted/ --sites ~{sites_uri} -f ~{hg38_fasta} ~{subset_vcf_uri}
         SOMALIER_SAMPLE_RATE=0 SOMALIER_RELATEDNESS_CUTOFF=~{relatedness_cutoff} /somalier_test relate ~{infer_string} --ped ~{ped_uri} -o ~{new_cohort_prefix} extracted/*.somalier
