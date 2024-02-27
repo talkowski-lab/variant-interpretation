@@ -76,7 +76,10 @@ mt_filtered = mt_filtered.filter_cols(mt_filtered.pheno.Role != '', keep = True)
 mt_filtered = mt_filtered.filter_rows((hl.is_snp(mt_filtered.alleles[0], mt_filtered.alleles[1]) &(mt_filtered.filters.size() == 0))
                    | hl.is_indel(mt_filtered.alleles[0], mt_filtered.alleles[1]))
 # filter on depth
-mt_filtered = mt_filtered.filter_entries( (mt_filtered.DP < 10) | (mt_filtered.DP > 200), keep = False) 
+mt_filtered = mt_filtered.annotate_entries(DPC=hl.sum(mt_filtered.AD),
+                                           AB=mt_filtered.AD[1]/hl.sum(mt_filtered.AD),
+                                           VAF=mt_filtered.AD[1]/mt_filtered.DP)
+mt_filtered = mt_filtered.filter_entries( (mt_filtered.DPC < 10) | (mt_filtered.DPC > 200), keep = False) 
 
 if not exclude_info_filters:
     # row (variant INFO) level filters - GATK recommendations for short variants
@@ -113,16 +116,18 @@ ultra_rare_vars_table = tdt_table_filtered_rare.filter((tdt_table_filtered_rare.
 
 trio_mat = hl.trio_matrix(mt_filtered, pedigree, complete_trios=True).semi_join_rows(ultra_rare_vars_table)
 
-ultra_rare_vars_df = trio_mat.filter_entries(trio_mat.proband_entry.GT.is_het()).entries().to_pandas()
+ultra_rare_vars_df = trio_mat.filter_entries((trio_mat.proband_entry.GT.is_het() 
+                                            & (trio_mat.father_entry.GT.is_het() 
+                                               | trio_mat.mother_entry.GT.is_het()))).entries().to_pandas()
 
 ultra_rare_vars_df = ultra_rare_vars_df[ultra_rare_vars_df['proband.s'].isin(trio_df.SampleID)]
 
-ultra_rare_vars_df['father_entry.VAF'] = ultra_rare_vars_df['father_entry.AD'].str[1] / (ultra_rare_vars_df['father_entry.AD'].str[0]+ultra_rare_vars_df['father_entry.AD'].str[1])
-ultra_rare_vars_df['mother_entry.VAF'] = ultra_rare_vars_df['mother_entry.AD'].str[1] / (ultra_rare_vars_df['mother_entry.AD'].str[0]+ultra_rare_vars_df['mother_entry.AD'].str[1])
-ultra_rare_vars_df['proband_entry.VAF'] = ultra_rare_vars_df['proband_entry.AD'].str[1] / (ultra_rare_vars_df['proband_entry.AD'].str[0]+ultra_rare_vars_df['proband_entry.AD'].str[1])
+# ultra_rare_vars_df['father_entry.VAF'] = ultra_rare_vars_df['father_entry.AD'].str[1] / ultra_rare_vars_df['father_entry.DP']
+# ultra_rare_vars_df['mother_entry.VAF'] = ultra_rare_vars_df['mother_entry.AD'].str[1] / ultra_rare_vars_df['mother_entry.DP']
+# ultra_rare_vars_df['proband_entry.VAF'] = ultra_rare_vars_df['proband_entry.AD'].str[1] / ultra_rare_vars_df['proband_entry.DP']
 
-child_format_fields = ['GT','AD','DP','GQ','PGT','PID','PL','VAF']  #'AB'
-parent_format_fields = ['GT','AD','DP','GQ','VAF']  #'AB'
+child_format_fields = ['GT','AD','DP','DPC','GQ','PGT','PID','PL','VAF','AB']  
+parent_format_fields = ['GT','AD','DP','DPC','GQ','VAF','AB']  
 rename_cols = {f"mother_entry.{field}": f"{field}_mother" for field in parent_format_fields if f"mother_entry.{field}" in ultra_rare_vars_df.columns} |\
     {f"father_entry.{field}": f"{field}_father" for field in parent_format_fields if f"father_entry.{field}" in ultra_rare_vars_df.columns} |\
     {f"proband_entry.{field}": f"{field}_sample" for field in child_format_fields if f"proband_entry.{field}" in ultra_rare_vars_df.columns} |\

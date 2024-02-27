@@ -21,11 +21,15 @@ workflow filterRareVariantsHail {
         File? meta_uri
         File? trio_uri
         File info_header
+        File hg38_reference
+        File hg38_reference_dict
+        File hg38_reference_fai
         String python_trio_sample_script
         String filter_rare_variants_python_script
         String hail_docker
         String vep_hail_docker
         String sv_base_mini_docker
+        String jvarkit_docker
         String cohort_prefix
         Boolean merge_split_vcf
         Boolean exclude_info_filters=false
@@ -128,9 +132,26 @@ workflow filterRareVariantsHail {
 
     File merged_ultra_rare_variants_tsv = select_first([mergeResults_merged.ultra_rare_variants_tsv, mergeResults_sharded.ultra_rare_variants_tsv])
 
+    call convertTSVtoVCF {
+        input:
+        tsv=merged_ultra_rare_variants_tsv,
+        vcf_file=vep_files[0],
+        vep_hail_docker=vep_hail_docker
+    }
+
+    call annotatePOLYX {
+        input:
+        vcf_file=convertTSVtoVCF.output_vcf,
+        hg38_reference=hg38_reference,
+        hg38_reference_fai=hg38_reference_fai,
+        hg38_reference_dict=hg38_reference_dict,
+        jvarkit_docker=jvarkit_docker
+    }
+
     output {
         # File hail_log = filterRareVariants.hail_log
         File ultra_rare_variants_tsv = merged_ultra_rare_variants_tsv
+        File polyx_vcf = annotatePOLYX.polyx_vcf
     }
 }
 
@@ -291,5 +312,123 @@ task mergeResults {
 
     output {
         File ultra_rare_variants_tsv = cohort_prefix + '_ultra_rare_variants.tsv'
+    }
+}
+
+task convertTSVtoVCF {
+    input {
+        File tsv
+        File vcf_file  # for header
+        String vep_hail_docker
+        RuntimeAttr? runtime_attr_override
+    }
+
+    Float input_size = size(tsv, "GB") + size(vcf_file, "GB")
+    Float base_disk_gb = 10.0
+    Float input_disk_scale = 5.0
+    RuntimeAttr runtime_default = object {
+        mem_gb: 4,
+        disk_gb: ceil(base_disk_gb + input_size * input_disk_scale),
+        cpu_cores: 1,
+        preemptible_tries: 3,
+        max_retries: 1,
+        boot_disk_gb: 10
+    }
+
+    RuntimeAttr runtime_override = select_first([runtime_attr_override, runtime_default])
+    Float memory = select_first([runtime_override.mem_gb, runtime_default.mem_gb])
+    Int cpu_cores = select_first([runtime_override.cpu_cores, runtime_default.cpu_cores])
+
+    runtime {
+        memory: "~{memory} GB"
+        disks: "local-disk ~{select_first([runtime_override.disk_gb, runtime_default.disk_gb])} HDD"
+        cpu: cpu_cores
+        preemptible: select_first([runtime_override.preemptible_tries, runtime_default.preemptible_tries])
+        maxRetries: select_first([runtime_override.max_retries, runtime_default.max_retries])
+        docker: vep_hail_docker
+        bootDiskSizeGb: select_first([runtime_override.boot_disk_gb, runtime_default.boot_disk_gb])
+    }
+
+    command <<<
+        cat <<EOF > tsv_to_vcf.py 
+        import os
+        import sys
+        import pandas as pd
+        import numpy as np
+        import hail as hl
+
+        tsv = sys.argv[1]
+        vcf_file = sys.argv[2]
+        cores = sys.argv[3]
+        mem = int(np.floor(float(sys.argv[4])))
+
+        hl.init(min_block_size=128, spark_conf={"spark.executor.cores": cores, 
+                    "spark.executor.memory": f"{mem}g",
+                    "spark.driver.cores": cores,
+                    "spark.driver.memory": f"{mem}g"
+                    }, tmp_dir="tmp", local_tmpdir="tmp")
+
+        mt = hl.import_matrix_table(tsv, row_fields={'CHROM':'str','POS':'int','REF':'str','ALT':'str'})
+
+        mt = mt.annotate_rows(locus=hl.locus(mt.CHROM, mt.POS, 'GRCh38'),
+                        alleles=hl.array([mt.REF, mt.ALT]))
+        mt = mt.key_rows_by('locus','alleles')
+
+        header = hl.get_vcf_metadata(vcf_file)
+        hl.export_vcf(mt, os.path.basename(tsv).split('.tsv')[0]+'.vcf', metadata=header)
+        EOF
+
+        python3.9 tsv_to_vcf.py ~{tsv} ~{vcf_file} ~{cpu_cores} ~{memory}
+    >>>
+
+    output {
+        File output_vcf = basename(tsv, '.tsv') + '.vcf'
+    }
+}
+
+task annotatePOLYX {
+    input {
+        File vcf_file
+        File hg38_reference
+        File hg38_reference_fai
+        File hg38_reference_dict
+        String jvarkit_docker
+        RuntimeAttr? runtime_attr_override
+    }
+    Float input_size = size(vcf_file, "GB")
+    Float base_disk_gb = 10.0
+    Float base_mem_gb = 2.0
+    Float input_mem_scale = 3.0
+    Float input_disk_scale = 5.0
+    
+    RuntimeAttr runtime_default = object {
+        mem_gb: base_mem_gb + input_size * input_mem_scale,
+        disk_gb: ceil(base_disk_gb + input_size * input_disk_scale),
+        cpu_cores: 1,
+        preemptible_tries: 3,
+        max_retries: 1,
+        boot_disk_gb: 10
+    }
+
+    RuntimeAttr runtime_override = select_first([runtime_attr_override, runtime_default])
+    
+    runtime {
+        memory: "~{select_first([runtime_override.mem_gb, runtime_default.mem_gb])} GB"
+        disks: "local-disk ~{select_first([runtime_override.disk_gb, runtime_default.disk_gb])} HDD"
+        cpu: select_first([runtime_override.cpu_cores, runtime_default.cpu_cores])
+        preemptible: select_first([runtime_override.preemptible_tries, runtime_default.preemptible_tries])
+        maxRetries: select_first([runtime_override.max_retries, runtime_default.max_retries])
+        docker: jvarkit_docker
+        bootDiskSizeGb: select_first([runtime_override.boot_disk_gb, runtime_default.boot_disk_gb])
+    }
+
+    String out_vcf = basename(vcf_file, '.vcf')+'_POLYX.vcf'
+
+    command {
+        java -jar /opt/jvarkit/dist/jvarkit.jar vcfpolyx -R ~{hg38_reference} -o ~{out_vcf} ~{vcf_file}
+    }
+
+    output {
+        File polyx_vcf = out_vcf
     }
 }
