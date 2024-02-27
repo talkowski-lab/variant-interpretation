@@ -235,6 +235,7 @@ task splitSamples {
     }
 
     command <<<
+        set -eou pipefail
         bcftools query -l ~{vcf_file} > ~{cohort_prefix}_samples.txt
 
         cat <<EOF > split_samples.py 
