@@ -201,11 +201,6 @@ ultra_rare_vars_df.loc[:,'MAX_AF'] = ultra_rare_vars_df.CSQ.apply(lambda csq: ge
 
 ultra_rare_vars_df = ultra_rare_vars_df[ultra_rare_vars_df.MAX_AF<=csq_af_threshold]
 
-# filter by child GQ and parent GQ
-ultra_rare_vars_df = ultra_rare_vars_df[(ultra_rare_vars_df.GQ_sample>=gq_het_threshold)
-                                        & (ultra_rare_vars_df.GQ_mother>=gq_hom_ref_threshold)
-                                        & (ultra_rare_vars_df.GQ_father>=gq_hom_ref_threshold)]
-
 # 'POLYX' -- added after downsampling
 info_cols = ['END','AC','AF','AN','BaseQRankSum','ClippingRankSum','DP','FS','MLEAC','MLEAF','MQ','MQRankSum','QD','ReadPosRankSum','SOR','VQSLOD','cohort_AC', 'cohort_AF', 'CSQ']
 info_cols = list(np.intersect1d(info_cols, list(mt.info.keys())))
