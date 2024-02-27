@@ -257,13 +257,13 @@ task splitSamples {
 
         for i, shard in enumerate(shard_samples):
             print(i)
-            pd.Series(shard).to_csv(f"{cohort_prefix}_shard{i}.txt", index=False, header=None)
+            pd.Series(shard).to_csv(f"{cohort_prefix}_shard_{i}.txt", index=False, header=None)
         EOF
 
         python3 split_samples.py ~{cohort_prefix} ~{samples_per_chunk}
     >>>
 
     output {
-        Array[File] sample_shard_files = glob("shard*.txt")
+        Array[File] sample_shard_files = glob("shard_*.txt")
     }
 }
