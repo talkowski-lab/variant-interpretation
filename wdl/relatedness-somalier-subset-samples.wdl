@@ -264,6 +264,6 @@ task splitSamples {
     >>>
 
     output {
-        Array[File] sample_shard_files = glob("shard_*.txt")
+        Array[File] sample_shard_files = glob("~{cohort_prefix}_shard_*.txt")
     }
 }
