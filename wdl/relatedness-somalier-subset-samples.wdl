@@ -247,7 +247,7 @@ task splitSamples {
         cohort_prefix = sys.argv[1]
         samples_per_chunk = int(sys.argv[2])
 
-        samples = pd.read_csv(f"{cohort_prefix}_samples.txt", header=None)[0].tolist()
+        samples = sorted(pd.read_csv(f"{cohort_prefix}_samples.txt", header=None)[0].tolist())
         n = samples_per_chunk  # number of samples in each chunk
         chunks = [samples[i * n:(i + 1) * n] for i in range((len(samples) + n - 1) // n )]  
         
