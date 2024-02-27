@@ -56,11 +56,11 @@ workflow runSomalier {
         }
     }
 
-    File merged_vcf_file = select_first([merged_vcf_file, mergeVCFs.merged_vcf_file])
+    File merged_vcf_file_ = select_first([merged_vcf_file, mergeVCFs.merged_vcf_file])
 
     call splitSamples {
         input:
-            vcf_file=merged_vcf_file,
+            vcf_file=merged_vcf_file_,
             samples_per_chunk=samples_per_chunk,
             cohort_prefix=cohort_prefix,
             sv_base_mini_docker=sv_base_mini_docker
@@ -71,7 +71,7 @@ workflow runSomalier {
             input:
                 sites_uri=sites_uri,
                 hg38_fasta=hg38_fasta,
-                vcf_uri=merged_vcf_file,
+                vcf_uri=merged_vcf_file_,
                 ped_uri=ped_uri,
                 sample_file=sample_file,
                 ancestry_labels_1kg=ancestry_labels_1kg,
