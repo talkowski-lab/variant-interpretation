@@ -20,8 +20,11 @@ cores = sys.argv[7]
 mem = int(np.floor(float(sys.argv[8])))
 ac_threshold = int(sys.argv[9])
 af_threshold = float(sys.argv[10])
-exclude_info_filters = ast.literal_eval(sys.argv[11].capitalize())
-header_file = sys.argv[12]
+csq_af_threshold = float(sys.argv[11])
+gq_sample_threshold = float(sys.argv[12])
+gq_parent_threshold = float(sys.argv[13])
+exclude_info_filters = ast.literal_eval(sys.argv[14].capitalize())
+header_file = sys.argv[15]
 
 hl.init(min_block_size=128, spark_conf={"spark.executor.cores": cores, 
                     "spark.executor.memory": f"{mem}g",
@@ -147,7 +150,54 @@ for info_cat in ['AC', 'AF', 'MLEAC', 'MLEAF']:
     if info_cat in ultra_rare_vars_df.columns:
             ultra_rare_vars_df[info_cat] = ultra_rare_vars_df[info_cat].str[0]
 
-# 'POLYX'
+# CSQ AF threshold
+csq_columns_less = ['Allele', 'Consequence', 'IMPACT', 'SYMBOL', 'Gene', 'Feature_type', 'Feature', 
+                    'BIOTYPE', 'EXON', 'INTRON', 'HGVSc', 'HGVSp', 'cDNA_position', 'CDS_position', 
+                    'Protein_position', 'Amino_acids', 'Codons', 'Existing_variation', 'ALLELE_NUM', 
+                    'DISTANCE', 'STRAND', 'FLAGS', 'VARIANT_CLASS', 'MINIMISED', 'SYMBOL_SOURCE', 
+                    'HGNC_ID', 'CANONICAL', 'TSL', 'APPRIS', 'CCDS', 'ENSP', 'SWISSPROT', 'TREMBL', 
+                    'UNIPARC', 'GENE_PHENO', 'SIFT', 'PolyPhen', 'DOMAINS', 'miRNA', 'HGVS_OFFSET', 
+                    'AF', 'AFR_AF', 'AMR_AF', 'EAS_AF', 'EUR_AF', 'SAS_AF', 'AA_AF', 'EA_AF', 'gnomAD_AF', 
+                    'gnomAD_AFR_AF', 'gnomAD_AMR_AF', 'gnomAD_ASJ_AF', 'gnomAD_EAS_AF', 'gnomAD_FIN_AF', 
+                    'gnomAD_NFE_AF', 'gnomAD_OTH_AF', 'gnomAD_SAS_AF', 'MAX_AF', 'MAX_AF_POPS', 'CLIN_SIG', 
+                    'SOMATIC', 'PHENO', 'PUBMED', 'MOTIF_NAME', 'MOTIF_POS', 'HIGH_INF_POS', 'MOTIF_SCORE_CHANGE', 
+                    'LOEUF', 'LoF', 'LoF_filter', 'LoF_flags', 'LoF_info']
+
+csq_columns_more = ["Allele","Consequence","IMPACT","SYMBOL","Gene","Feature_type","Feature",
+                   "BIOTYPE","EXON","INTRON","HGVSc","HGVSp","cDNA_position","CDS_position",
+                   "Protein_position","Amino_acids","Codons","Existing_variation","ALLELE_NUM",
+                   "DISTANCE","STRAND","FLAGS","VARIANT_CLASS","MINIMISED","SYMBOL_SOURCE",
+                   "HGNC_ID","CANONICAL","MANE_SELECT","MANE_PLUS_CLINICAL","TSL","APPRIS",
+                   "CCDS","ENSP","SWISSPROT","TREMBL","UNIPARC","UNIPROT_ISOFORM","GENE_PHENO",
+                   "SIFT","PolyPhen","DOMAINS","miRNA","HGVS_OFFSET","AF","AFR_AF","AMR_AF",
+                   "EAS_AF","EUR_AF","SAS_AF","gnomADe_AF","gnomADe_AFR_AF","gnomADe_AMR_AF",
+                   "gnomADe_ASJ_AF","gnomADe_EAS_AF","gnomADe_FIN_AF","gnomADe_NFE_AF","gnomADe_OTH_AF",
+                   "gnomADe_SAS_AF","gnomADg_AF","gnomADg_AFR_AF","gnomADg_AMI_AF","gnomADg_AMR_AF",
+                   "gnomADg_ASJ_AF","gnomADg_EAS_AF","gnomADg_FIN_AF","gnomADg_MID_AF","gnomADg_NFE_AF",
+                   "gnomADg_OTH_AF","gnomADg_SAS_AF","MAX_AF","MAX_AF_POPS","CLIN_SIG","SOMATIC",
+                   "PHENO","PUBMED","MOTIF_NAME","MOTIF_POS","HIGH_INF_POS","MOTIF_SCORE_CHANGE",
+                   "TRANSCRIPTION_FACTORS","LoF","LoF_filter","LoF_flags","LoF_info"]
+
+def get_csq_max_af(csq):
+    if csq=='.':
+        return ''
+    csq_df = pd.DataFrame(csq.split(','))[0].str.split('|', expand=True)      
+    try:
+        csq_df.columns = csq_columns_more
+    except:
+        csq_df.columns = csq_columns_less            
+    return csq_df.MAX_AF.max()
+
+ultra_rare_vars_df.loc[:,'MAX_AF'] = ultra_rare_vars_df.CSQ.apply(lambda csq: get_csq_max_af(csq)).replace({'': 0}).astype(float)
+
+ultra_rare_vars_df = ultra_rare_vars_df[ultra_rare_vars_df.MAX_AF<=csq_af_threshold]
+
+# filter by child GQ and parent GQ
+ultra_rare_vars_df = ultra_rare_vars_df[(ultra_rare_vars_df.GQ_sample>=gq_sample_threshold)
+                                        & (ultra_rare_vars_df.GQ_mother>=gq_parent_threshold)
+                                        & (ultra_rare_vars_df.GQ_father>=gq_parent_threshold)]
+
+# 'POLYX' -- added after downsampling
 info_cols = ['END','AC','AF','AN','BaseQRankSum','ClippingRankSum','DP','FS','MLEAC','MLEAF','MQ','MQRankSum','QD','ReadPosRankSum','SOR','VQSLOD','cohort_AC', 'cohort_AF', 'CSQ']
 info_cols = list(np.intersect1d(info_cols, list(mt.info.keys())))
 cols_to_keep = ['CHROM', 'POS', 'REF', 'ALT', 'LEN', 'TYPE', 'ID'] + info_cols + list(rename_cols.values())
