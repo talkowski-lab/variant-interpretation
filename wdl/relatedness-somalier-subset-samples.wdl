@@ -17,7 +17,7 @@ workflow runSomalier {
         File hg38_fasta
         Array[File]? vep_vcf_files
         Array[File]? vep_annotated_final_vcf
-        File? merged_vep_file
+        File? merged_vcf_file
         File ped_uri
         File bed_file
         File ancestry_labels_1kg
@@ -35,7 +35,7 @@ workflow runSomalier {
         RuntimeAttr? runtime_attr_correct
     }
 
-    if (!defined(merged_vep_file)) {
+    if (!defined(merged_vcf_file)) {
         Array[File] vep_files = select_first([vep_vcf_files, vep_annotated_final_vcf])
         
         scatter (vcf_uri in vep_files) {
@@ -56,7 +56,7 @@ workflow runSomalier {
         }
     }
 
-    File merged_vcf_file = select_first([merged_vep_file, mergeVCFs.merged_vcf_file])
+    File merged_vcf_file = select_first([merged_vcf_file, mergeVCFs.merged_vcf_file])
 
     call splitSamples {
         input:
@@ -256,6 +256,7 @@ task splitSamples {
                 shard_samples.append(chunk1 + chunk2)
 
         for i, shard in enumerate(shard_samples):
+            print(i)
             pd.Series(shard).to_csv(f"{cohort_prefix}_shard{i}.txt", index=False, header=None)
         EOF
 
