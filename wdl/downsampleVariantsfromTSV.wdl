@@ -18,7 +18,8 @@ workflow downsampleVariantsfromTSV {
         File hg38_reference
         File hg38_reference_dict
         File hg38_reference_fai
-        Float scale=1
+        Float snv_scale=1
+        Float indel_scale=1
         String jvarkit_docker
         String vep_hail_docker
         String sv_base_mini_docker
@@ -35,7 +36,7 @@ workflow downsampleVariantsfromTSV {
             full_input_tsv=full_input_tsv,
             sv_base_mini_docker=sv_base_mini_docker,
             var_type='SNV',
-            scale=scale,
+            scale=snv_scale,
             num_variants=getNumSNVs.num_variants
     }
 
@@ -50,7 +51,7 @@ workflow downsampleVariantsfromTSV {
             full_input_tsv=full_input_tsv,
             sv_base_mini_docker=sv_base_mini_docker,
             var_type='Indel',
-            scale=scale,
+            scale=indel_scale,
             num_variants=getNumIndels.num_variants
     }
 
