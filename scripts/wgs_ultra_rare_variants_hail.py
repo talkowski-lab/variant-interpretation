@@ -196,7 +196,7 @@ csq_columns_more = ["Allele","Consequence","IMPACT","SYMBOL","Gene","Feature_typ
                    "TRANSCRIPTION_FACTORS","LoF","LoF_filter","LoF_flags","LoF_info"]
 
 def get_csq_max_af(csq):
-    if len(csq)==0:
+    if csq is None:
         return 0
     csq_df = pd.DataFrame(csq)[0].str.split('|', expand=True)      
     try:
