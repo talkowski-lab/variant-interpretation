@@ -256,7 +256,6 @@ task splitSamples {
                 shard_samples.append(chunk1 + chunk2)
 
         for i, shard in enumerate(shard_samples):
-            print(i)
             pd.Series(shard).to_csv(f"{cohort_prefix}_shard_{i}.txt", index=False, header=None)
         EOF
 
