@@ -368,7 +368,8 @@ task convertTSVtoVCF {
                     "spark.driver.memory": f"{mem}g"
                     }, tmp_dir="tmp", local_tmpdir="tmp")
 
-        mt = hl.import_matrix_table(tsv, row_fields={'CHROM':'str','POS':'int','REF':'str','ALT':'str'})
+        pd.read_csv(tsv, sep='\t')[['CHROM','POS','REF','ALT']].to_csv('temp.tsv', sep='\t',index=False)
+        mt = hl.import_matrix_table('temp.tsv', row_fields={'CHROM':'str','POS':'int','REF':'str','ALT':'str'})
 
         mt = mt.annotate_rows(locus=hl.locus(mt.CHROM, mt.POS, 'GRCh38'),
                         alleles=hl.array([mt.REF, mt.ALT]))
