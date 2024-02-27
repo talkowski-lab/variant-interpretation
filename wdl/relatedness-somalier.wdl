@@ -29,6 +29,7 @@ workflow runSomalier {
         String hail_docker
         Boolean subset_ped=true
         Boolean infer_ped=true
+        Float relatedness_cutoff=0.25
         RuntimeAttr? runtime_attr_relatedness
         RuntimeAttr? runtime_attr_correct
     }
@@ -67,6 +68,7 @@ workflow runSomalier {
             cohort_prefix=cohort_prefix,
             sv_base_mini_docker=sv_base_mini_docker,
             infer_ped=infer_ped,
+            relatedness_cutoff=relatedness_cutoff,
             runtime_attr_override=runtime_attr_relatedness
     }
 
@@ -144,6 +146,7 @@ task relatedness {
         File somalier_1kg_tar
         String cohort_prefix
         String sv_base_mini_docker
+        Float relatedness_cutoff
         Boolean infer_ped
         RuntimeAttr? runtime_attr_override
     }
@@ -175,7 +178,7 @@ task relatedness {
 
         bcftools index -t ~{vcf_uri}
         /somalier_test extract -d extracted/ --sites ~{sites_uri} -f ~{hg38_fasta} ~{vcf_uri}
-        SOMALIER_SAMPLE_RATE=0 SOMALIER_RELATEDNESS_CUTOFF=0.25 /somalier_test relate ~{infer_string} --ped ~{ped_uri} -o ~{cohort_prefix} extracted/*.somalier
+        SOMALIER_SAMPLE_RATE=0 SOMALIER_RELATEDNESS_CUTOFF=~{relatedness_cutoff} /somalier_test relate ~{infer_string} --ped ~{ped_uri} -o ~{cohort_prefix} extracted/*.somalier
 
         tar -xf ~{somalier_1kg_tar}
         /somalier_test ancestry -o ~{cohort_prefix} --labels ~{ancestry_labels_1kg} 1kg-somalier/*.somalier ++ extracted/*.somalier
