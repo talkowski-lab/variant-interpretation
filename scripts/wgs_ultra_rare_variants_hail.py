@@ -205,7 +205,7 @@ def get_csq_max_af(csq):
         csq_df.columns = csq_columns_less            
     return csq_df.MAX_AF.max()
 
-ultra_rare_vars_df.loc[:,'MAX_AF'] = ultra_rare_vars_df.CSQ.apply(lambda csq: get_csq_max_af(csq)).astype(float)
+ultra_rare_vars_df.loc[:,'MAX_AF'] = ultra_rare_vars_df.CSQ.apply(lambda csq: get_csq_max_af(csq)).replace({'': 0}).astype(float)
 
 ultra_rare_vars_df = ultra_rare_vars_df[ultra_rare_vars_df.MAX_AF<=csq_af_threshold]
 
