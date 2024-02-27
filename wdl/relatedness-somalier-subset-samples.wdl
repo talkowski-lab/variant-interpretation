@@ -27,6 +27,7 @@ workflow runSomalier {
         String somalier_docker
         String sv_base_mini_docker
         String hail_docker
+        Int samples_per_chunk
         Boolean subset_ped=true
         Boolean infer_ped=true
         Float relatedness_cutoff=0.25
@@ -57,41 +58,39 @@ workflow runSomalier {
 
     File merged_vcf_file = select_first([merged_vep_file, mergeVCFs.merged_vcf_file])
 
-    call relatedness {
+    call splitSamples {
         input:
-            sites_uri=sites_uri,
-            hg38_fasta=hg38_fasta,
-            vcf_uri=merged_vcf_file,
-            ped_uri=ped_uri,
-            ancestry_labels_1kg=ancestry_labels_1kg,
-            somalier_1kg_tar=somalier_1kg_tar,
+            vcf_file=merged_vcf_file,
+            samples_per_chunk=samples_per_chunk,
             cohort_prefix=cohort_prefix,
-            sv_base_mini_docker=sv_base_mini_docker,
-            infer_ped=infer_ped,
-            relatedness_cutoff=relatedness_cutoff,
-            runtime_attr_override=runtime_attr_relatedness
-    }
+            sv_base_mini_docker=sv_base_mini_docker
+    } 
 
-    call correctPedigree {
-        input:
-            ped_uri=ped_uri,
-            correct_somalier_ped_python_script=correct_somalier_ped_python_script,
-            out_samples=relatedness.out_samples,
-            cohort_prefix=cohort_prefix,
-            hail_docker=hail_docker,
-            subset_ped=subset_ped,
-            runtime_attr_override=runtime_attr_correct
+    scatter (sample_file in splitSamples.sample_shard_files) {
+        call relatedness_subset {
+            input:
+                sites_uri=sites_uri,
+                hg38_fasta=hg38_fasta,
+                vcf_uri=merged_vcf_file,
+                ped_uri=ped_uri,
+                sample_file=sample_file,
+                ancestry_labels_1kg=ancestry_labels_1kg,
+                somalier_1kg_tar=somalier_1kg_tar,
+                cohort_prefix=cohort_prefix,
+                sv_base_mini_docker=sv_base_mini_docker,
+                infer_ped=infer_ped,
+                relatedness_cutoff=relatedness_cutoff,
+                runtime_attr_override=runtime_attr_relatedness
+        }
     }
 
     output {
-        File out_samples = relatedness.out_samples
-        File out_pairs = relatedness.out_pairs
-        File out_groups = relatedness.out_groups
-        File out_html = relatedness.out_html
-        File ancestry_html = relatedness.ancestry_html
-        File ancestry_out = relatedness.ancestry_out
-        File corrected_ped = correctPedigree.corrected_ped
-        File somalier_errors = correctPedigree.somalier_errors
+        Array[File] out_samples = relatedness_subset.out_samples
+        Array[File] out_pairs = relatedness_subset.out_pairs
+        Array[File] out_groups = relatedness_subset.out_groups
+        Array[File] out_html = relatedness_subset.out_html
+        Array[File] ancestry_html = relatedness_subset.ancestry_html
+        Array[File] ancestry_out = relatedness_subset.ancestry_out
     }
 }
 
@@ -136,7 +135,7 @@ task subsetVCFs {
     }
 }
 
-task relatedness {
+task relatedness_subset {
     input {
         File sites_uri
         File hg38_fasta
@@ -144,6 +143,7 @@ task relatedness {
         File ped_uri
         File ancestry_labels_1kg
         File somalier_1kg_tar
+        File sample_file
         String cohort_prefix
         String sv_base_mini_docker
         Float relatedness_cutoff
@@ -173,67 +173,96 @@ task relatedness {
     }
 
     String infer_string = if infer_ped then "--infer" else ""
+    String new_cohort_prefix = basename(sample_file, '.txt')
+    String subset_vcf_uri = "~{new_cohort_prefix}.vcf.gz"
+
     command {
         set -euo pipefail
 
-        bcftools index -t ~{vcf_uri}
-        /somalier_test extract -d extracted/ --sites ~{sites_uri} -f ~{hg38_fasta} ~{vcf_uri}
-        SOMALIER_SAMPLE_RATE=0 SOMALIER_RELATEDNESS_CUTOFF=~{relatedness_cutoff} /somalier_test relate ~{infer_string} --ped ~{ped_uri} -o ~{cohort_prefix} extracted/*.somalier
+        bcftools view -S ~{sample_file} -Oz -o ~{subset_vcf_uri} ~{vcf_uri}
+        bcftools index -t ~{subset_vcf_uri}
+        /somalier_test extract -d extracted/ --sites ~{sites_uri} -f ~{hg38_fasta} ~{subset_vcf_uri}
+        SOMALIER_SAMPLE_RATE=0 SOMALIER_RELATEDNESS_CUTOFF=~{relatedness_cutoff} /somalier_test relate ~{infer_string} --ped ~{ped_uri} -o ~{new_cohort_prefix} extracted/*.somalier
 
         tar -xf ~{somalier_1kg_tar}
-        /somalier_test ancestry -o ~{cohort_prefix} --labels ~{ancestry_labels_1kg} 1kg-somalier/*.somalier ++ extracted/*.somalier
+        /somalier_test ancestry -o ~{new_cohort_prefix} --labels ~{ancestry_labels_1kg} 1kg-somalier/*.somalier ++ extracted/*.somalier
     }
 
     output {
-        File out_samples = cohort_prefix + ".samples.tsv" # creates a .ped like vep_annotated_final_vcf with extra QC columns
-        File out_pairs = cohort_prefix + ".pairs.tsv" # shows IBS for all possible sample pairs
-        File out_groups = cohort_prefix + ".groups.tsv" # shows pairs of samples above a certain relatedness
-        File out_html = cohort_prefix + ".html" # interactive html
-        File ancestry_html = cohort_prefix + ".somalier-ancestry.html"
-        File ancestry_out = cohort_prefix + ".somalier-ancestry.tsv"
+        File out_samples = new_cohort_prefix + ".samples.tsv" # creates a .ped like vep_annotated_final_vcf with extra QC columns
+        File out_pairs = new_cohort_prefix + ".pairs.tsv" # shows IBS for all possible sample pairs
+        File out_groups = new_cohort_prefix + ".groups.tsv" # shows pairs of samples above a certain relatedness
+        File out_html = new_cohort_prefix + ".html" # interactive html
+        File ancestry_html = new_cohort_prefix + ".somalier-ancestry.html"
+        File ancestry_out = new_cohort_prefix + ".somalier-ancestry.tsv"
     }
 }
 
-task correctPedigree {
+task splitSamples {
     input {
-        File ped_uri
-        File out_samples
-        String correct_somalier_ped_python_script
+        File vcf_file
+        Int samples_per_chunk
         String cohort_prefix
-        String hail_docker
-        Boolean subset_ped=true
-        RuntimeAttr? runtime_attr_override    
+        String sv_base_mini_docker
+        RuntimeAttr? runtime_attr_override
     }
 
-    Float relatedness_size = size(ped_uri, "GB") 
+    Float input_size = size(vcf_file, "GB")
     Float base_disk_gb = 10.0
+    Float input_disk_scale = 5.0
+    
     RuntimeAttr runtime_default = object {
-                                      mem_gb: 16,
-                                      disk_gb: ceil(base_disk_gb + (relatedness_size) * 5.0),
-                                      cpu_cores: 1,
-                                      preemptible_tries: 3,
-                                      max_retries: 1,
-                                      boot_disk_gb: 10
-                                  }
+        mem_gb: 4,
+        disk_gb: ceil(base_disk_gb + input_size * input_disk_scale),
+        cpu_cores: 1,
+        preemptible_tries: 3,
+        max_retries: 1,
+        boot_disk_gb: 10
+    }
+
     RuntimeAttr runtime_override = select_first([runtime_attr_override, runtime_default])
+    Float memory = select_first([runtime_override.mem_gb, runtime_default.mem_gb])
+    Int cpu_cores = select_first([runtime_override.cpu_cores, runtime_default.cpu_cores])
+    
     runtime {
-        memory: "~{select_first([runtime_override.mem_gb, runtime_default.mem_gb])} GB"
+        memory: "~{memory} GB"
         disks: "local-disk ~{select_first([runtime_override.disk_gb, runtime_default.disk_gb])} HDD"
-        cpu: select_first([runtime_override.cpu_cores, runtime_default.cpu_cores])
+        cpu: cpu_cores
         preemptible: select_first([runtime_override.preemptible_tries, runtime_default.preemptible_tries])
         maxRetries: select_first([runtime_override.max_retries, runtime_default.max_retries])
-        docker: hail_docker
+        docker: sv_base_mini_docker
         bootDiskSizeGb: select_first([runtime_override.boot_disk_gb, runtime_default.boot_disk_gb])
     }
 
-    command {
-        set -euo pipefail
-        curl ~{correct_somalier_ped_python_script} > correct_somalier_ped_python_script.py
-        python3 correct_somalier_ped_python_script.py ~{out_samples} ~{ped_uri} ~{cohort_prefix} ~{subset_ped} > stdout
-    }
+    command <<<
+        bcftools query -l ~{vcf_file} > ~{cohort_prefix}_samples.txt
+
+        cat <<EOF > split_samples.py 
+        import os
+        import sys
+        import pandas as pd
+        import numpy as np
+
+        cohort_prefix = sys.argv[1]
+        samples_per_chunk = int(sys.argv[2])
+
+        samples = pd.read_csv(f"{cohort_prefix}_samples.txt", header=None)[0].tolist()
+        n = samples_per_chunk  # number of samples in each chunk
+        chunks = [samples[i * n:(i + 1) * n] for i in range((len(samples) + n - 1) // n )]  
+        
+        shard_samples = []
+        for i, chunk1 in enumerate(chunks):
+            for chunk2 in chunks[i+1:]:
+                shard_samples.append(chunk1 + chunk2)
+
+        for i, shard in enumerate(shard_samples):
+            pd.Series(shard).to_csv(f"{cohort_prefix}_shard{i}.txt", index=False, header=None)
+        EOF
+
+        python3 split_samples.py ~{cohort_prefix} ~{samples_per_chunk}
+    >>>
 
     output {
-        File corrected_ped = cohort_prefix + "_ped_corrected.ped"
-        File somalier_errors = cohort_prefix + "_somalier_errors.tsv"
+        Array[File] sample_shard_files = glob("shard*.txt")
     }
 }
