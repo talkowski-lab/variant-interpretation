@@ -124,11 +124,19 @@ trio_mat = trio_mat.filter_entries((trio_mat.proband_entry.GT.is_het()
                                             & (trio_mat.father_entry.GT.is_het() 
                                                | trio_mat.mother_entry.GT.is_het())))
 
+# GQ sample/parent filters
 trio_mat = trio_mat.filter_entries(hl.if_else(trio_mat.father_entry.GT.is_het(), trio_mat.father_entry.GQ>=gq_het_threshold,
                                               trio_mat.father_entry.GQ>=gq_hom_ref_threshold)
                                     & hl.if_else(trio_mat.mother_entry.GT.is_het(), trio_mat.mother_entry.GQ>=gq_het_threshold,
-                                    trio_mat.mother_entry.GQ>=gq_hom_ref_threshold) 
+                                                trio_mat.mother_entry.GQ>=gq_hom_ref_threshold) 
                                     & (trio_mat.proband_entry.GQ>=gq_het_threshold))
+
+# AB sample/parent filters
+trio_mat = trio_mat.filter_entries(hl.if_else(trio_mat.father_entry.GT.is_het(), (trio_mat.father_entry.AB>=0.2) & (trio_mat.father_entry.AB<=0.8),
+                                              trio_mat.father_entry.AB<=0.05)
+                                    & hl.if_else(trio_mat.mother_entry.GT.is_het(), (trio_mat.mother_entry.AB>=0.2) & (trio_mat.mother_entry.AB<=0.8),
+                                                trio_mat.mother_entry.AB<=0.05) 
+                                    & ((trio_mat.proband_entry.AB>=0.2) & (trio_mat.proband_entry.AB<=0.8)))
 
 ultra_rare_vars_df = trio_mat.entries().to_pandas()
 
