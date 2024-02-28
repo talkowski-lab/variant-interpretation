@@ -162,7 +162,7 @@ task removeRegions {
     
     command <<<
         set -eou pipefail
-        
+
         cat <<EOF > remove_regions.py 
         import os
         import sys
@@ -183,7 +183,7 @@ task removeRegions {
                 |(df.DPC_father!=df.DP_father)
 
         df = df[(~df.rm_region)&(~df.multiallelic)]
-        df.to_csv(f"{os.path.basename(tsv).split('.tsv')}_no_repetitive_regions_multiallelic.tsv", sep='\t', index=False)
+        df.to_csv(f"{os.path.basename(tsv).split('.tsv')[0]}_no_repetitive_regions_multiallelic.tsv", sep='\t', index=False)
         EOF
 
         python3 remove_regions.py ~{tsv} ~{regions_bed}
