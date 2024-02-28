@@ -161,6 +161,8 @@ task removeRegions {
     }
     
     command <<<
+        set -eou pipefail
+        
         cat <<EOF > remove_regions.py 
         import os
         import sys
