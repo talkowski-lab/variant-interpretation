@@ -59,6 +59,8 @@ def load_variants(vcf_metrics_tsv, ultra_rare_variants_tsv, polyx_vcf, var_type)
                                                 else row.AB_father, axis=1)
     ultra_rare['DPC_parent'] = ultra_rare.apply(lambda row: row.DPC_mother if row.GT_mother in ['0/0', '0|0'] 
                                                 else row.DPC_father, axis=1)
+    ultra_rare['VAF_parent'] = ultra_rare.apply(lambda row: row.VAF_mother if row.GT_mother in ['0/0', '0|0'] 
+                                                else row.VAF_father, axis=1)
     
     final_output['GQ_parent'] = final_output[['GQ_mother', 'GQ_father']].min(axis=1)
     final_output['AB_parent'] = final_output[['AB_mother', 'AB_father']].min(axis=1)
@@ -77,7 +79,7 @@ def filter_variants(final_output, ultra_rare, final_output_raw, ultra_rare_raw):
     # ultra_rare = ultra_rare[(ultra_rare.GQ_mother>=30)&(ultra_rare.GQ_father>=30)]
 
     ultra_rare = ultra_rare[ultra_rare.POLYX<=10]
-    
+
     try:
         ultra_rare = ultra_rare[~ultra_rare.VQSLOD.isna()]
     except:
