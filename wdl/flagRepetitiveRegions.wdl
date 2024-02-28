@@ -11,7 +11,7 @@ struct RuntimeAttr {
 
 workflow flagRepetitiveRegions {
     input {
-        File vcf_metrics_tsv_annot
+        File tsv
         File repetitive_regions_bed
         String tsv_to_bed_script
         String sv_base_mini_docker
@@ -20,7 +20,7 @@ workflow flagRepetitiveRegions {
 
     call convertTSVtoBED {
         input:
-            vcf_metrics_tsv_annot=vcf_metrics_tsv_annot,
+            tsv=tsv,
             tsv_to_bed_script=tsv_to_bed_script,
             hail_docker=hail_docker
     }
@@ -39,13 +39,13 @@ workflow flagRepetitiveRegions {
 
 task convertTSVtoBED {
     input {
-        File vcf_metrics_tsv_annot
+        File tsv
         String tsv_to_bed_script
         String hail_docker
         RuntimeAttr? runtime_attr_override
     }
 
-    Float input_size = size(vcf_metrics_tsv_annot, "GB")
+    Float input_size = size(tsv, "GB")
     Float base_disk_gb = 10.0
     Float input_disk_scale = 5.0
 
@@ -72,11 +72,11 @@ task convertTSVtoBED {
 
     command {
         curl ~{tsv_to_bed_script} > tsv_to_bed.py
-        python3 tsv_to_bed.py ~{vcf_metrics_tsv_annot}
+        python3 tsv_to_bed.py ~{tsv}
     }
 
     output {
-        File bed_file = basename(vcf_metrics_tsv_annot, '.tsv') + '.bed'
+        File bed_file = basename(tsv, '.tsv') + '.bed'
     }
 }
 

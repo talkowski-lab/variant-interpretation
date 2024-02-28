@@ -15,13 +15,14 @@ from baggingPU import BaggingClassifierPU
 
 vcf_metrics_tsv = sys.argv[1]
 ultra_rare_variants_tsv = sys.argv[2]
-cohort_prefix = sys.argv[3]
-var_type = sys.argv[4]
-numeric = sys.argv[5]
-outlier_samples = sys.argv[6].split(',')
+polyx_vcf = sys.argv[3]
+cohort_prefix = sys.argv[4]
+var_type = sys.argv[5]
+numeric = sys.argv[6]
+outlier_samples = sys.argv[7].split(',')
 
 # Functions
-def load_variants(vcf_metrics_tsv, ultra_rare_variants_tsv, var_type): 
+def load_variants(vcf_metrics_tsv, ultra_rare_variants_tsv, polyx_vcf, var_type): 
     ultra_rare = pd.read_csv(ultra_rare_variants_tsv, sep='\t')
     ultra_rare = ultra_rare[ultra_rare.TYPE==var_type]
     ultra_rare = ultra_rare[~ultra_rare.SAMPLE.isin(outlier_samples)]
@@ -30,14 +31,16 @@ def load_variants(vcf_metrics_tsv, ultra_rare_variants_tsv, var_type):
     final_output = final_output[final_output.TYPE==var_type]
     final_output = final_output[~final_output.SAMPLE.isin(outlier_samples)]
 
+    polyx_df = pd.read_csv(polyx_vcf, sep='\t', comment='#', header=None)
+    ultra_rare['POLYX'] = polyx_df[7].str.split('=').str[-1].astype(int)
+
     ultra_rare = ultra_rare[(~ultra_rare.AD_father.isna()) & (~ultra_rare.AD_mother.isna())].reset_index(drop=True)
 
     ultra_rare['VarKey'] = ultra_rare.ID + ':' + ultra_rare.SAMPLE
 
-    
-    ultra_rare['AB_mother'] = ultra_rare.AD_mother.apply(ast.literal_eval).apply(min) / ultra_rare.AD_mother.apply(ast.literal_eval).apply(sum)
-    ultra_rare['AB_father'] = ultra_rare.AD_father.apply(ast.literal_eval).apply(min) / ultra_rare.AD_father.apply(ast.literal_eval).apply(sum)
-    ultra_rare['AB_sample'] = ultra_rare.AD_sample.apply(ast.literal_eval).apply(min) / ultra_rare.AD_sample.apply(ast.literal_eval).apply(sum)
+    # ultra_rare['AB_mother'] = ultra_rare.AD_mother.apply(ast.literal_eval).apply(min) / ultra_rare.AD_mother.apply(ast.literal_eval).apply(sum)
+    # ultra_rare['AB_father'] = ultra_rare.AD_father.apply(ast.literal_eval).apply(min) / ultra_rare.AD_father.apply(ast.literal_eval).apply(sum)
+    # ultra_rare['AB_sample'] = ultra_rare.AD_sample.apply(ast.literal_eval).apply(min) / ultra_rare.AD_sample.apply(ast.literal_eval).apply(sum)
 
     ultra_rare = ultra_rare[~ultra_rare.PL_sample.isna()]
     ultra_rare[['PL_sample_0.0', 'PL_sample_0.1', 'PL_sample_1.1']] = ultra_rare.PL_sample.str.strip('][').str.split(', ', expand=True).astype(int)
@@ -45,9 +48,21 @@ def load_variants(vcf_metrics_tsv, ultra_rare_variants_tsv, var_type):
 
     # https://gatk.broadinstitute.org/hc/en-us/articles/360040507131-FilterVcf-Picard-
     # Allele balance is calculated for heterozygotes as the number of bases supporting the least-represented allele over the total number of base observations. Different heterozygote genotypes at the same locus are measured independently
-    final_output['AB_mother'] = final_output.AD_mother.apply(ast.literal_eval).apply(min) / final_output.AD_mother.apply(ast.literal_eval).apply(sum)
-    final_output['AB_father'] = final_output.AD_father.apply(ast.literal_eval).apply(min) / final_output.AD_father.apply(ast.literal_eval).apply(sum)
-    final_output['AB_sample'] = final_output.AD_sample.apply(ast.literal_eval).apply(min) / final_output.AD_sample.apply(ast.literal_eval).apply(sum)
+    
+    for samp in ['sample', 'mother', 'father']:
+        final_output[f"DPC_{samp}"] = final_output[f"AD_{samp}"].apply(ast.literal_eval).apply(sum)
+        final_output[f"AB_{samp}"] = final_output[f"AD_{samp}"].apply(ast.literal_eval).str[1] / final_output[f"DPC_{samp}"]
+
+    ultra_rare['GQ_parent'] = ultra_rare.apply(lambda row: row.GQ_mother if row.GT_mother in ['0/0', '0|0']
+                                            else row.GQ_father, axis=1)
+    ultra_rare['AB_parent'] = ultra_rare.apply(lambda row: row.AB_mother if row.GT_mother in ['0/0', '0|0'] 
+                                                else row.AB_father, axis=1)
+    ultra_rare['DPC_parent'] = ultra_rare.apply(lambda row: row.DPC_mother if row.GT_mother in ['0/0', '0|0'] 
+                                                else row.DPC_father, axis=1)
+    
+    final_output['GQ_parent'] = final_output[['GQ_mother', 'GQ_father']].min(axis=1)
+    final_output['AB_parent'] = final_output[['AB_mother', 'AB_father']].min(axis=1)
+    final_output['DPC_parent'] = final_output[['DPC_mother', 'DPC_father']].min(axis=1)
 
     final_output_raw = final_output.copy();
     ultra_rare_raw = ultra_rare.copy();
@@ -58,9 +73,11 @@ def filter_variants(final_output, ultra_rare, final_output_raw, ultra_rare_raw):
         final_output = final_output[final_output['VQSLOD']!='.'].reset_index(drop=True)
 
     # TODO: remove when filter-rare-variants-hail is fixed?
-    ultra_rare = ultra_rare[ultra_rare.GQ_sample>=99]
-    ultra_rare = ultra_rare[(ultra_rare.GQ_mother>=30)&(ultra_rare.GQ_father>=30)]
+    # ultra_rare = ultra_rare[ultra_rare.GQ_sample>=99]
+    # ultra_rare = ultra_rare[(ultra_rare.GQ_mother>=30)&(ultra_rare.GQ_father>=30)]
 
+    ultra_rare = ultra_rare[ultra_rare.POLYX<=10]
+    
     try:
         ultra_rare = ultra_rare[~ultra_rare.VQSLOD.isna()]
     except:
@@ -81,13 +98,6 @@ def filter_variants(final_output, ultra_rare, final_output_raw, ultra_rare_raw):
     # overlapping variants set to unlabeled
     ultra_rare = ultra_rare[~ultra_rare.VarKey.isin(np.intersect1d(ultra_rare.VarKey, final_output.VarKey))]
   
-    ultra_rare['GQ_hom'] = ultra_rare.apply(lambda row: row.GQ_mother if row.GT_mother.isin(['0/0', '0|0']) 
-                                            else row.GQ_father, axis=1)
-    # ultra_rare['GQ_het'] = ultra_rare.apply(lambda row: row.GQ_mother if ~row.GT_mother.isin(['0/0', '0|0']) else row.GQ_father, axis=1)
-
-    ultra_rare['GQ_parent'] = ultra_rare['GQ_hom']
-    final_output['GQ_parent'] = final_output[['GQ_mother', 'GQ_father']].min(axis=1)
-
     merged_output = pd.concat([ultra_rare, final_output]).reset_index(drop=True)
     merged_output['var_type'] = merged_output.label.map({1: 'ultra-rare', 0: 'unlabeled'})
 
@@ -139,7 +149,7 @@ def run_PU_bagging(merged_output, numeric, n_splits=5):
                             'pred_bag': y_pred_bag.astype(int)})
     return results, importances_bag
 
-final_output, ultra_rare, final_output_raw, ultra_rare_raw = load_variants(vcf_metrics_tsv, ultra_rare_variants_tsv, var_type)
+final_output, ultra_rare, final_output_raw, ultra_rare_raw = load_variants(vcf_metrics_tsv, ultra_rare_variants_tsv, polyx_vcf, var_type)
 final_output, ultra_rare, merged_output = filter_variants(final_output, ultra_rare, final_output_raw, ultra_rare_raw)
 
 if numeric != 'false':
