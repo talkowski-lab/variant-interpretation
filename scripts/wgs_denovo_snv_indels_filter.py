@@ -60,7 +60,7 @@ def get_csq_max_af(csq):
         csq_df.columns = csq_columns_less            
     return csq_df.MAX_AF.max()
 
-final_output.loc[:,'MAX_AF'] = final_output.CSQ.apply(lambda csq: get_csq_max_af(csq)).replace({'': 0}).astype(float)
+# final_output.loc[:,'MAX_AF'] = final_output.CSQ.apply(lambda csq: get_csq_max_af(csq)).replace({'': 0}).astype(float)
 
 final_output = final_output[final_output.MAX_AF<=csq_af_threshold]
 

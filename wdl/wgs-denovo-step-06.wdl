@@ -1,5 +1,7 @@
 version 1.0 
 
+import "prioritizeCSQ.wdl" as prioritizeCSQ
+
 struct RuntimeAttr {
     Float? mem_gb
     Int? cpu_cores
@@ -12,16 +14,28 @@ struct RuntimeAttr {
 workflow step6 {
     input {
         File vcf_metrics_tsv_annot
+        Array[File]? vep_annotated_final_vcf
+        Array[File]? vep_vcf_files
         Float AF_threshold=0.005
         Int AC_threshold=2
         Float csq_af_threshold=0.01
         String filter_final_tsv_script
+        String prioritize_csq_script
         String hail_docker
+    }
+
+    Array[File] vep_files = select_first([vep_vcf_files, vep_annotated_final_vcf])
+
+    call prioritizeCSQ.prioritizeCSQ as prioritizeCSQ {
+        vcf_metrics_tsv=vcf_metrics_tsv_annot,
+        vep_files=vep_files,
+        prioritize_csq_script=prioritize_csq_script,
+        hail_docker=hail_docker
     }
 
     call filterFinalTSV {
         input:
-            vcf_metrics_tsv_annot=vcf_metrics_tsv_annot,
+            vcf_metrics_tsv_annot=prioritizeCSQ.vcf_metrics_tsv_prior_csq,
             AF_threshold=AF_threshold,
             AC_threshold=AC_threshold,
             csq_af_threshold=csq_af_threshold,

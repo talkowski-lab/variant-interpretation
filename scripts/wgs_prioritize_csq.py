@@ -254,7 +254,7 @@ def process_consequence_cohort(csq_columns, vcf_metrics_uri):
     mt = ht.to_matrix_table_row_major(columns=numeric, entry_field_name='metrics', col_field_name='SAMPLE')
     mt = mt.key_rows_by(mt.locus, mt.alleles)
 
-    transcript_consequences = mt.CSQ.split(',').map(lambda x: x.split('\|'))
+    transcript_consequences = mt.CSQ.replace("\[",'').replace("\]",'').replace("\'",'').replace(' ','').split(',').map(lambda x: x.split('\|'))
 
     transcript_consequences_strs = transcript_consequences.map(lambda x: hl.if_else(hl.len(x)>1, hl.struct(**
                                                            {col: x[i] if col!='Consequence' else x[i].split('&')  
