@@ -172,6 +172,7 @@ task getSubmissionInfo {
 
     large_files = pd.read_csv(file_sizes, sep='\t')
 
+    suffixes = ['B', 'KB', 'MB', 'GB', 'TB', 'PB']
     def humansize(nbytes):
         i = 0
         while nbytes >= 1024 and i < len(suffixes)-1:
