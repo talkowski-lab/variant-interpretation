@@ -63,7 +63,7 @@ task getBucketSizes {
         import datetime
         import sys
         
-        bucket_id = sys.argv[1]
+        bucket_id = sys.argv[1].strip('gs://')
 
         storage_client = storage.Client()
         blobs_list = storage_client.list_blobs(bucket_or_name=bucket_id)
