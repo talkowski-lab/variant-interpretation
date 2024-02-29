@@ -192,17 +192,17 @@ task getSubmissionInfo {
     submission_id_sizes['status'] = submission_id_sizes.submission_id.map(submissions.set_index('submissionId').status.to_dict())
     submission_id_sizes['submissionDate'] = submission_id_sizes.submission_id.map(submissions.set_index('submissionId').submissionDate.to_dict())
 
-    def get_workflow_status(sub_id):
+    def get_workflow(sub_id):
         submission = fapi.get_submission(BILLING_PROJECT_ID, WORKSPACE, sub_id).json()
 
         workflow_id = submission['workflows'][0]['workflowId']
         try:
             workflow = fapi.get_workflow_metadata(BILLING_PROJECT_ID, WORKSPACE, sub_id, workflow_id).json()
-            return workflow['status']
+            return workflow
         except:
             return np.nan
 
-    submission_id_sizes['workflow_status'] = submission_id_sizes.submission_id.apply(get_workflow_status)
+    submission_id_sizes['workflow'] = submission_id_sizes.submission_id.apply(get_workflow)
     
     submission_id_sizes.to_csv(f"terra_submissions_{str(datetime.datetime.now().strftime('%Y-%m-%d'))}.tsv", sep='\t', index=False)
     EOF
