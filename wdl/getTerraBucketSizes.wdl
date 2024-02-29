@@ -196,9 +196,11 @@ task getSubmissionInfo {
         submission = fapi.get_submission(BILLING_PROJECT_ID, WORKSPACE, sub_id).json()
 
         workflow_id = submission['workflows'][0]['workflowId']
-        workflow = fapi.get_workflow_metadata(BILLING_PROJECT_ID, WORKSPACE, sub_id, workflow_id).json()
-
-        return workflow['status']
+        try:
+            workflow = fapi.get_workflow_metadata(BILLING_PROJECT_ID, WORKSPACE, sub_id, workflow_id).json()
+            return workflow['status']
+        except:
+            return np.nan
 
     submission_id_sizes['workflow_status'] = submission_id_sizes.submission_id.apply(get_workflow_status)
     
