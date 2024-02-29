@@ -61,7 +61,7 @@ def get_csq_max_af(csq):
     return csq_df.MAX_AF.max()
 
 # final_output.loc[:,'MAX_AF'] = final_output.CSQ.apply(lambda csq: get_csq_max_af(csq)).replace({'': 0}).astype(float)
-
+final_output['MAX_AF'] = final_output.MAX_AF.replace({np.nan: 0})
 final_output = final_output[final_output.MAX_AF<=csq_af_threshold]
 
 final_output.to_csv(os.path.basename(vcf_metrics_uri).split('.tsv')[0]+'_filtered.tsv', sep='\t', index=False)

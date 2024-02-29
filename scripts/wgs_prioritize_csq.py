@@ -281,5 +281,4 @@ def process_consequence_cohort(csq_columns, vcf_metrics_uri):
 header = hl.get_vcf_metadata(vep_uri)
 csq_columns = header['info']['CSQ']['Description'].split('Format: ')[-1].split('|')
 df = process_consequence_cohort(csq_columns, vcf_metrics_uri)
-df['MAX_AF'] = df.MAX_AF.replace({np.nan: 0})
 df.to_csv(f"{os.path.basename(vcf_metrics_uri).split('.tsv')[0]}_prioritized_csq.tsv", sep='\t',index=False)
