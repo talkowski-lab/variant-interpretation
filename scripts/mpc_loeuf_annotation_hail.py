@@ -46,6 +46,8 @@ df = mt.to_pandas()
 def get_genes_csq(csq):
     genes = []
     for ind_csq in csq:
+        if ind_csq=='.':
+            continue
         gene = ind_csq.split('|')[3]
         if gene!='':
             genes.append(gene)
