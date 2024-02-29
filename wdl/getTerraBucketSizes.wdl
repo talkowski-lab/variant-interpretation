@@ -150,6 +150,8 @@ task getSubmissionInfo {
     from firecloud import fiss
     from firecloud.errors import FireCloudServerError
     import firecloud.api as fapi
+    import pandas as pd 
+    import numpy as np
     import re
     import sys
     import time
