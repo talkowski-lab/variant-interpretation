@@ -26,10 +26,10 @@ workflow step6 {
 
     Array[File] vep_files = select_first([vep_vcf_files, vep_annotated_final_vcf])
 
-    call prioritizeCSQ.prioritizeCSQ as prioritizeCSQ {
+    call prioritizeCSQ.annotateMostSevereCSQ as prioritizeCSQ {
         input:
         vcf_metrics_tsv=vcf_metrics_tsv_annot,
-        vep_files=vep_files,
+        vep_uri=vep_files[0],
         prioritize_csq_script=prioritize_csq_script,
         hail_docker=hail_docker
     }

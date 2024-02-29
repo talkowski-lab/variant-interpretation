@@ -12,14 +12,13 @@ struct RuntimeAttr {
 workflow prioritizeCSQ {
     input {
         File vcf_metrics_tsv
-        Array[File] vep_files
-        # Array[File]? vep_annotated_final_vcf
-        # Array[File]? vep_vcf_files
+        Array[File]? vep_annotated_final_vcf
+        Array[File]? vep_vcf_files
         String prioritize_csq_script
         String hail_docker
     }
 
-    # Array[File] vep_files = select_first([vep_vcf_files, vep_annotated_final_vcf])
+    Array[File] vep_files = select_first([vep_vcf_files, vep_annotated_final_vcf])
     
     call annotateMostSevereCSQ {
         input:
