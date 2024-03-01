@@ -362,15 +362,15 @@ task getSubmissionsToDelete {
     submission_sizes['submission_path'] = submission_sizes.index.map(submission_info.submission_path.to_dict())
 
     def split_df_by_column_sum(df, column_name, target_sum):
-    current_sum = 0
-    current_group = 0
-    for sub_id in df.index:
-        current_sum += df.loc[sub_id, column_name]
-        df.loc[sub_id, 'group'] = current_group
-        if current_sum >= target_sum:
-            current_group += 1
-            current_sum = 0
-    return df
+        current_sum = 0
+        current_group = 0
+        for sub_id in df.index:
+            current_sum += df.loc[sub_id, column_name]
+            df.loc[sub_id, 'group'] = current_group
+            if current_sum >= target_sum:
+                current_group += 1
+                current_sum = 0
+        return df
     
     chunk_size = 1_000_000_000  # 1 TB
     submission_sizes = split_df_by_column_sum(submission_sizes, 'sizes', chunk_size)
