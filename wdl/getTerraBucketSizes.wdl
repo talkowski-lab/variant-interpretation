@@ -1,5 +1,7 @@
 version 1.0
 
+import "mergeSplitVCF.wdl" as mergeSplitVCF
+
 struct RuntimeAttr {
     Float? mem_gb
     Int? cpu_cores
@@ -42,10 +44,20 @@ workflow getTerraBucketSizes {
         hail_docker=hail_docker
     }
 
-    call deleteSubmissions {
+    call mergeSplitVCF.splitFile as splitSubmissions {
         input:
-        submissions_to_delete=getSubmissionsToDelete.submissions_to_delete,
-        hail_docker=hail_docker
+        file=getSubmissionsToDelete.submissions_to_delete,
+        shards_per_chunk=100,
+        cohort_prefix=basename(getSubmissionsToDelete.submissions_to_delete, '.txt'),
+        vep_hail_docker=hail_docker
+    }
+
+    scatter (submissions_shard in splitSubmissions.chunks) {
+        call deleteSubmissions {
+            input:
+            submissions_to_delete=submissions_shard,
+            hail_docker=hail_docker
+        }
     }
 
     output {
@@ -337,11 +349,11 @@ task getSubmissionsToDelete {
         all_workflow_submissions = submissions[submissions.methodConfigurationName.str.contains(workflow_name)]
         return all_workflow_submissions
 
-    def has_updated_submission(submission_id):
+    def is_most_recent_submission(submission_id):
         workflow_name = submissions[submissions.submissionId==submission_id].methodConfigurationName.tolist()[0].split('_')[0]
         all_workflow_submissions = submissions[(submissions.methodConfigurationName.str.contains(workflow_name))]
         try:
-            cohort = submissions[submissions.submissionId==submission_id].submissionEntity[0]['entityName']
+            cohort = submissions[submissions.submissionId==submission_id].submissionEntity.iloc[0]['entityName']
             all_workflow_submissions = all_workflow_submissions[all_workflow_submissions.submissionEntity.apply(lambda entity_dict:
                                                                                                             entity_dict['entityName']==cohort)]
         except:
@@ -350,7 +362,7 @@ task getSubmissionsToDelete {
         return successful_sorted_runs.iloc[0,:].submissionId==submission_id
 
     old_submission_df = pd.DataFrame(submission_info[submission_info.workflow_status=='Succeeded'].submission_id)
-    old_submission_df['is_most_recent'] = old_submission_df.submission_id.apply(has_updated_submission)
+    old_submission_df['is_most_recent'] = old_submission_df.submission_id.apply(is_most_recent_submission)
 
     old_successful_submissions_to_delete = old_submission_df[~old_submission_df.is_most_recent].submission_id
     all_submissions_to_delete = pd.concat([submissions_to_delete, failed_new_submissions, old_successful_submissions_to_delete])
