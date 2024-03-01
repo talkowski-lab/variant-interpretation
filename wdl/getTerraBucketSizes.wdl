@@ -427,6 +427,6 @@ task deleteSubmissions {
     }
 
     command {
-        gsutil -m rm -r $(cat ~{submissions_to_delete})
+        gsutil -m rm -r $(cat ~{submissions_to_delete}) || true
     }
 }
