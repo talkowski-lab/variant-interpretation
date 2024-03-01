@@ -348,7 +348,7 @@ task getSubmissionsToDelete {
             all_workflow_submissions = all_workflow_submissions[all_workflow_submissions.submissionEntity.apply(lambda entity_dict:
                                                                                                             entity_dict['entityName']==cohort)]
         except:
-            pass
+            return True
         successful_sorted_runs = all_workflow_submissions[all_workflow_submissions.workflow_status=='Succeeded'].sort_values('submissionDate', ascending=False)
         return successful_sorted_runs.iloc[0,:].submissionId==submission_id
 

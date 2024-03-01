@@ -13,6 +13,7 @@ workflow downsampleVariantsfromTSV {
     input {
         Array[File]? vep_vcf_files
         Array[File]? vep_annotated_final_vcf
+        File? merged_preprocessed_vcf_file
         File reference_tsv
         File full_input_tsv
         File hg38_reference
@@ -56,7 +57,7 @@ workflow downsampleVariantsfromTSV {
     }
 
     # only annotate Indels for now
-    Array[File] vep_files = select_first([vep_vcf_files, vep_annotated_final_vcf])
+    Array[File] vep_files = select_first([[select_first([merged_preprocessed_vcf_file])], vep_vcf_files, vep_annotated_final_vcf])
     call convertTSVtoVCF {
         input:
         tsv=downsampleIndels.downsampled_tsv,
