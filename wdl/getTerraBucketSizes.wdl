@@ -337,7 +337,8 @@ task getSubmissionsToDelete {
                                             & (submission_info.workflow_status!='Succeeded')].submission_id
 
     ## Old successful submissions that have been overrided
-    old_successful_submissions = submission_info[(submission_info.workflow_status=='Succeeded')].submission_id
+    old_successful_submissions = submission_info[(submission_info.submissionDate < week_ago) 
+                                            & (submission_info.workflow_status=='Succeeded')].submission_id
 
     submissions = pd.DataFrame(fapi.list_submissions(BILLING_PROJECT_ID, WORKSPACE).json()).sort_values('submissionDate',ascending=False).set_index('submissionId',drop=False)
     submissions = pd.concat([submissions, submissions.submissionEntity.apply(pd.Series)], axis=1)
@@ -417,7 +418,6 @@ task deleteSubmissions {
     }
 
     command {
-        set -eou pipefail
         gsutil -m rm -r $(cat ~{submissions_to_delete})
     }
 }
