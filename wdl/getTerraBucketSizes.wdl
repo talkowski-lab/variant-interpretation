@@ -1,7 +1,5 @@
 version 1.0
 
-import "mergeSplitVCF.wdl" as mergeSplitVCF
-
 struct RuntimeAttr {
     Float? mem_gb
     Int? cpu_cores
@@ -44,15 +42,7 @@ workflow getTerraBucketSizes {
         hail_docker=hail_docker
     }
 
-    call mergeSplitVCF.splitFile as splitSubmissions {
-        input:
-        file=getSubmissionsToDelete.submissions_to_delete,
-        shards_per_chunk=100,
-        cohort_prefix=basename(getSubmissionsToDelete.submissions_to_delete, '.txt'),
-        vep_hail_docker=hail_docker
-    }
-
-    scatter (submissions_shard in splitSubmissions.chunks) {
+    scatter (submissions_shard in getSubmissionsToDelete.submissions_to_delete) {
         call deleteSubmissions {
             input:
             submissions_to_delete=submissions_shard,
@@ -63,7 +53,7 @@ workflow getTerraBucketSizes {
     output {
         File file_sizes = getBucketSizes.file_sizes
         File submission_info = getSubmissionInfo.submission_info
-        File submissions_to_delete = getSubmissionsToDelete.submissions_to_delete
+        Array[File] submissions_to_delete = getSubmissionsToDelete.submissions_to_delete
         String space_cleared = getSubmissionsToDelete.space_cleared
     }
 }
@@ -367,10 +357,29 @@ task getSubmissionsToDelete {
 
     old_successful_submissions_to_delete = old_submission_df[~old_submission_df.is_most_recent].submission_id
     all_submissions_to_delete = pd.concat([submissions_to_delete, failed_new_submissions, old_successful_submissions_to_delete])
-    paths_to_delete = submission_info.loc[all_submissions_to_delete].submission_path
+    
+    submission_sizes = pd.DataFrame(large_files[large_files.submission_id.isin(all_submissions_to_delete)].groupby('submission_id').sizes.sum()).sort_values('sizes')
+    submission_sizes['submission_path'] = submission_sizes.index.map(submission_info.submission_path.to_dict())
 
-    to_delete_filename = f"terra_submissions_to_delete_{str(datetime.datetime.now().strftime('%Y-%m-%d'))}.txt"
-    paths_to_delete.to_csv(to_delete_filename, index=False, header=None)
+    def split_df_by_column_sum(df, column_name, target_sum):
+    current_sum = 0
+    current_group = 0
+    for sub_id in df.index:
+        current_sum += df.loc[sub_id, column_name]
+        df.loc[sub_id, 'group'] = current_group
+        if current_sum >= target_sum:
+            current_group += 1
+            current_sum = 0
+    return df
+    
+    chunk_size = 1_000_000_000  # 1 TB
+    submission_sizes = split_df_by_column_sum(submission_sizes, 'sizes', chunk_size)
+    submission_sizes['group'] = submission_sizes.group.astype(int)
+    for group in submission_sizes.group.unique():
+        group_df = submission_sizes[submission_sizes.group==group]
+        to_delete_filename = f"terra_submissions_to_delete_chunk_{group}_{str(datetime.datetime.now().strftime('%Y-%m-%d'))}.txt"
+        group_df.submission_path.to_csv(to_delete_filename, index=False, header=None)
+    
     space_cleared = humansize(large_files[large_files.submission_id.isin(all_submissions_to_delete)].sizes.sum())
     with open("space_cleared.txt", "w") as text_file:
         print(space_cleared, file=text_file)
@@ -380,7 +389,7 @@ task getSubmissionsToDelete {
     >>>
 
     output {
-        File submissions_to_delete = glob("terra_submissions_to_delete_*")[0]
+        Array[File] submissions_to_delete = glob("terra_submissions_to_delete_chunk_*")
         String space_cleared = read_lines("space_cleared.txt")[0]
     }
 }
