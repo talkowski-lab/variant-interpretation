@@ -327,18 +327,10 @@ task getSubmissionsToDelete {
                                             & (submission_info.workflow_status!='Succeeded')].submission_id
 
     ## Old successful submissions that have been overrided
-    old_successful_submissions = submission_info[(submission_info.submissionDate < week_ago) 
-                                            & (submission_info.workflow_status=='Succeeded')].submission_id
-
     submissions = pd.DataFrame(fapi.list_submissions(BILLING_PROJECT_ID, WORKSPACE).json()).sort_values('submissionDate',ascending=False).set_index('submissionId',drop=False)
     submissions = pd.concat([submissions, submissions.submissionEntity.apply(pd.Series)], axis=1)
     submissions['submissionDate'] = submissions.submissionDate.apply(lambda date_str: datetime.datetime.fromisoformat(date_str[:-1]))
     submissions['workflow_status'] = submissions.submissionId.map(submission_info.workflow_status.to_dict())
-
-    def get_all_submissions(submission_id):
-        workflow_name = submissions[submissions.submissionId==submission_id].methodConfigurationName.tolist()[0].strip('_')[0]
-        all_workflow_submissions = submissions[submissions.methodConfigurationName.str.contains(workflow_name)]
-        return all_workflow_submissions
 
     def is_most_recent_submission(submission_id):
         workflow_name = submissions[submissions.submissionId==submission_id].methodConfigurationName.tolist()[0].split('_')[0]
@@ -352,7 +344,10 @@ task getSubmissionsToDelete {
         successful_sorted_runs = all_workflow_submissions[all_workflow_submissions.workflow_status=='Succeeded'].sort_values('submissionDate', ascending=False)
         return successful_sorted_runs.iloc[0,:].submissionId==submission_id
 
-    old_submission_df = pd.DataFrame(submission_info[submission_info.workflow_status=='Succeeded'].submission_id)
+    old_successful_submissions = submission_info[(submission_info.submissionDate < week_ago) 
+                                            & (submission_info.workflow_status=='Succeeded')].submission_id
+
+    old_submission_df = pd.DataFrame(submission_info.loc[old_successful_submissions].submission_id)
     old_submission_df['is_most_recent'] = old_submission_df.submission_id.apply(is_most_recent_submission)
 
     old_successful_submissions_to_delete = old_submission_df[~old_submission_df.is_most_recent].submission_id

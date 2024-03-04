@@ -25,11 +25,11 @@ outlier_samples = sys.argv[7].split(',')
 def load_variants(vcf_metrics_tsv, ultra_rare_variants_tsv, polyx_vcf, var_type): 
     ultra_rare = pd.read_csv(ultra_rare_variants_tsv, sep='\t')
     ultra_rare = ultra_rare[ultra_rare.TYPE==var_type]
-    ultra_rare = ultra_rare[~ultra_rare.SAMPLE.isin(outlier_samples)]
+    # ultra_rare = ultra_rare[~ultra_rare.SAMPLE.isin(outlier_samples)]
 
     final_output = pd.read_csv(vcf_metrics_tsv, sep='\t')
     final_output = final_output[final_output.TYPE==var_type]
-    final_output = final_output[~final_output.SAMPLE.isin(outlier_samples)]
+    # final_output = final_output[~final_output.SAMPLE.isin(outlier_samples)]
 
     polyx_df = pd.read_csv(polyx_vcf, sep='\t', comment='#', header=None)
     ultra_rare['POLYX'] = polyx_df[7].str.split('=').str[-1].astype(int)
@@ -65,6 +65,7 @@ def load_variants(vcf_metrics_tsv, ultra_rare_variants_tsv, polyx_vcf, var_type)
     final_output['GQ_parent'] = final_output[['GQ_mother', 'GQ_father']].min(axis=1)
     final_output['AB_parent'] = final_output[['AB_mother', 'AB_father']].min(axis=1)
     final_output['DPC_parent'] = final_output[['DPC_mother', 'DPC_father']].min(axis=1)
+    final_output['VAF_parent'] = final_output[['VAF_mother', 'VAF_father']].min(axis=1)
 
     final_output_raw = final_output.copy();
     ultra_rare_raw = ultra_rare.copy();
