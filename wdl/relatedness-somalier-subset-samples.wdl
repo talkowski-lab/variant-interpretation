@@ -78,7 +78,7 @@ workflow runSomalier {
                 ancestry_labels_1kg=ancestry_labels_1kg,
                 somalier_1kg_tar=somalier_1kg_tar,
                 cohort_prefix=cohort_prefix,
-                sv_base_mini_docker=sv_base_mini_docker,
+                somalier_docker=somalier_docker,
                 infer_ped=infer_ped,
                 unknown_flag=unknown_flag,
                 relatedness_cutoff=relatedness_cutoff,
@@ -147,7 +147,7 @@ task relatedness_subset {
         File somalier_1kg_tar
         File sample_file
         String cohort_prefix
-        String sv_base_mini_docker
+        String somalier_docker
         Float relatedness_cutoff
         Boolean infer_ped
         Boolean unknown_flag
@@ -171,7 +171,7 @@ task relatedness_subset {
         cpu: select_first([runtime_override.cpu_cores, runtime_default.cpu_cores])
         preemptible: select_first([runtime_override.preemptible_tries, runtime_default.preemptible_tries])
         maxRetries: select_first([runtime_override.max_retries, runtime_default.max_retries])
-        docker: sv_base_mini_docker
+        docker: somalier_docker
         bootDiskSizeGb: select_first([runtime_override.boot_disk_gb, runtime_default.boot_disk_gb])
     }
 
@@ -185,12 +185,12 @@ task relatedness_subset {
 
         bcftools view -S ~{sample_file} --no-update -Oz -o ~{subset_vcf_uri} ~{vcf_uri}
         bcftools index -t ~{subset_vcf_uri}
-        /somalier_test extract -d extracted/ --sites ~{sites_uri} -f ~{hg38_fasta} ~{subset_vcf_uri}
+        somalier extract -d extracted/ --sites ~{sites_uri} -f ~{hg38_fasta} ~{subset_vcf_uri}
 
-        SOMALIER_RELATEDNESS_CUTOFF=~{relatedness_cutoff} /somalier_test relate ~{infer_string} ~{unknown_flag_str} -o ~{new_cohort_prefix} extracted/*.somalier
+        somalier relate ~{infer_string} ~{unknown_flag_str} -o ~{new_cohort_prefix} extracted/*.somalier
 
         tar -xf ~{somalier_1kg_tar}
-        /somalier_test ancestry -o ~{new_cohort_prefix} --labels ~{ancestry_labels_1kg} 1kg-somalier/*.somalier ++ extracted/*.somalier
+        somalier ancestry -o ~{new_cohort_prefix} --labels ~{ancestry_labels_1kg} 1kg-somalier/*.somalier ++ extracted/*.somalier
     }
 
     output {
