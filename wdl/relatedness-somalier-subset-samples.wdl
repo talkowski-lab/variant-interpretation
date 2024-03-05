@@ -175,7 +175,7 @@ task relatedness_subset {
         bootDiskSizeGb: select_first([runtime_override.boot_disk_gb, runtime_default.boot_disk_gb])
     }
 
-    String infer_string = if infer_ped then "--infer --ped ~{basename(ped_uri)}" else "--ped ~{basename(ped_uri)}"
+    String infer_string = if infer_ped then "--infer" else ""
     String unknown_flag_str = if unknown_flag then "-u" else ""
     String new_cohort_prefix = basename(sample_file, '.txt')
     String subset_vcf_uri = "~{new_cohort_prefix}.vcf.gz"
@@ -187,7 +187,7 @@ task relatedness_subset {
         bcftools index -t ~{subset_vcf_uri}
         somalier extract -d extracted/ --sites ~{sites_uri} -f ~{hg38_fasta} ~{subset_vcf_uri}
 
-        somalier relate ~{infer_string} ~{unknown_flag_str} -o ~{new_cohort_prefix} extracted/*.somalier
+        somalier relate --ped ~{ped_uri} ~{infer_string} ~{unknown_flag_str} -o ~{new_cohort_prefix} extracted/*.somalier
 
         tar -xf ~{somalier_1kg_tar}
         somalier ancestry -o ~{new_cohort_prefix} --labels ~{ancestry_labels_1kg} 1kg-somalier/*.somalier ++ extracted/*.somalier
