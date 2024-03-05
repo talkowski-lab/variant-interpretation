@@ -3,6 +3,7 @@ import sys
 import pandas as pd
 import numpy as np
 import warnings
+import ast
 
 vcf_metrics_uri = sys.argv[1]
 AC_threshold = int(sys.argv[2])
