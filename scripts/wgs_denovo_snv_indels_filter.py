@@ -2,6 +2,7 @@ import os
 import sys
 import pandas as pd
 import numpy as np
+import warnings
 
 vcf_metrics_uri = sys.argv[1]
 AC_threshold = int(sys.argv[2])
@@ -10,10 +11,16 @@ csq_af_threshold = float(sys.argv[4])
 
 final_output = pd.read_csv(vcf_metrics_uri, sep='\t')
 
-final_output['AB_mother'] = pd.Series([min(x.split(',')) for x in final_output.AD_mother]).astype(int) / final_output.DP_mother
-final_output['AB_father'] = pd.Series([min(x.split(',')) for x in final_output.AD_father]).astype(int) / final_output.DP_father
-final_output['AB_sample'] = pd.Series([min(x.split(',')) for x in final_output.AD_sample]).astype(int) / final_output.DP_sample
 final_output[['PL_sample_0.0', 'PL_sample_0.1', 'PL_sample_1.1']] = final_output.PL_sample.str.split(",", expand=True).astype(int)
+
+for samp in ['sample', 'mother', 'father']:
+    final_output[f"DPC_{samp}"] = final_output[f"AD_{samp}"].apply(ast.literal_eval).apply(sum)
+    final_output[f"AB_{samp}"] = final_output[f"AD_{samp}"].apply(ast.literal_eval).str[1] / final_output[f"DPC_{samp}"]
+
+final_output['GQ_parent'] = final_output[['GQ_mother', 'GQ_father']].min(axis=1)
+final_output['AB_parent'] = final_output[['AB_mother', 'AB_father']].min(axis=1)
+final_output['DPC_parent'] = final_output[['DPC_mother', 'DPC_father']].min(axis=1)
+final_output['VAF_parent'] = final_output[['VAF_mother', 'VAF_father']].min(axis=1)
 
 final_output.index = final_output.VarKey
 final_output = final_output[final_output.POLYX <= 10]
@@ -50,6 +57,7 @@ csq_columns_more = ["Allele","Consequence","IMPACT","SYMBOL","Gene","Feature_typ
                    "PHENO","PUBMED","MOTIF_NAME","MOTIF_POS","HIGH_INF_POS","MOTIF_SCORE_CHANGE",
                    "TRANSCRIPTION_FACTORS","LoF","LoF_filter","LoF_flags","LoF_info"]
 
+# OLD
 def get_csq_max_af(csq):
     if csq=='.':
         return ''
@@ -61,7 +69,37 @@ def get_csq_max_af(csq):
     return csq_df.MAX_AF.max()
 
 # final_output.loc[:,'MAX_AF'] = final_output.CSQ.apply(lambda csq: get_csq_max_af(csq)).replace({'': 0}).astype(float)
-final_output['MAX_AF'] = final_output.MAX_AF.replace({np.nan: 0})
-final_output = final_output[final_output.MAX_AF<=csq_af_threshold]
+# final_output['MAX_AF'] = final_output.MAX_AF.replace({np.nan: 0})
+# final_output = final_output[final_output.MAX_AF<=csq_af_threshold]
+
+# NEW
+def get_gnomAD_AF(csq, col_num):
+    if type(csq)==float:
+        return 0
+    csqs = []
+    for ind_csq in csq:
+        af = ind_csq.split('|')[col_num]
+        if af != '':
+            csqs.append(af)
+    csqs = list(set(csqs))
+    if len(csqs)==0:
+        return 0
+    return csqs[0]
+
+final_output['CSQ'] = final_output.CSQ.replace({'.':np.nan}).str.split(',')
+n_csq_fields = len(final_output[~final_output.CSQ.isna()].CSQ[0][0].split('|'))
+
+if n_csq_fields==len(csq_columns_more):
+    gnomad_af_str = 'gnomADe_AF'
+    csq_columns = csq_columns_more
+elif n_csq_fields==len(csq_columns_less):
+    gnomad_af_str = 'gnomAD_AF'
+    csq_columns = csq_columns_less
+else:
+    warnings.simplefilter("error")
+    warnings.warn("CSQ fields are messed up!")
+
+final_output[gnomad_af_str] = final_output.CSQ.apply(get_gnomAD_AF, col_num=csq_columns.index(gnomad_af_str)).astype(float)
+final_output = final_output[final_output[gnomad_af_str]<=csq_af_threshold]
 
 final_output.to_csv(os.path.basename(vcf_metrics_uri).split('.tsv')[0]+'_filtered.tsv', sep='\t', index=False)
