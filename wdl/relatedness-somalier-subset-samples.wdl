@@ -175,7 +175,7 @@ task relatedness_subset {
         bootDiskSizeGb: select_first([runtime_override.boot_disk_gb, runtime_default.boot_disk_gb])
     }
 
-    String infer_string = if infer_ped then "--infer --ped ~{ped_uri}" else "--ped ~{ped_uri}"
+    String infer_string = if infer_ped then "--infer" else "--ped ~{ped_uri}"
     String unknown_flag_str = if unknown_flag then "-u" else ""
     String new_cohort_prefix = basename(sample_file, '.txt')
     String subset_vcf_uri = "~{new_cohort_prefix}.vcf.gz"
