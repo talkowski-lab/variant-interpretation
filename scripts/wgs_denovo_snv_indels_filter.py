@@ -88,7 +88,7 @@ def get_gnomAD_AF(csq, col_num):
     return csqs[0]
 
 final_output['CSQ'] = final_output.CSQ.replace({'.':np.nan}).str.split(',')
-n_csq_fields = len(final_output[~final_output.CSQ.isna()].CSQ[0][0].split('|'))
+n_csq_fields = len(final_output[~final_output.CSQ.isna()].CSQ.iloc[0][0].split('|'))
 
 if n_csq_fields==len(csq_columns_more):
     gnomad_af_str = 'gnomADe_AF'

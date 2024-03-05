@@ -14,8 +14,6 @@ struct RuntimeAttr {
 workflow step6 {
     input {
         File vcf_metrics_tsv_annot
-        Array[File]? vep_annotated_final_vcf
-        Array[File]? vep_vcf_files
         Float AF_threshold=0.005
         Int AC_threshold=2
         Float csq_af_threshold=0.01
@@ -24,12 +22,9 @@ workflow step6 {
         String hail_docker
     }
 
-    Array[File] vep_files = select_first([vep_vcf_files, vep_annotated_final_vcf])
-
     call prioritizeCSQ.annotateMostSevereCSQ as prioritizeCSQ {
         input:
         vcf_metrics_tsv=vcf_metrics_tsv_annot,
-        vep_uri=vep_files[0],
         prioritize_csq_script=prioritize_csq_script,
         hail_docker=hail_docker
     }

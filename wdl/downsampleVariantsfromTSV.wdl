@@ -11,9 +11,6 @@ struct RuntimeAttr {
 
 workflow downsampleVariantsfromTSV {
     input {
-        Array[File]? vep_vcf_files
-        Array[File]? vep_annotated_final_vcf
-        File? merged_preprocessed_vcf_file
         File reference_tsv
         File full_input_tsv
         File hg38_reference
@@ -57,11 +54,9 @@ workflow downsampleVariantsfromTSV {
     }
 
     # only annotate Indels for now
-    Array[File] vep_files = select_first([[select_first([merged_preprocessed_vcf_file])], vep_vcf_files, vep_annotated_final_vcf])
     call convertTSVtoVCF {
         input:
         tsv=downsampleIndels.downsampled_tsv,
-        vcf_file=vep_files[0],
         vep_hail_docker=vep_hail_docker
     }
 
@@ -186,12 +181,11 @@ task downsampleVariants {
 task convertTSVtoVCF {
     input {
         File tsv
-        File vcf_file  # for header
         String vep_hail_docker
         RuntimeAttr? runtime_attr_override
     }
 
-    Float input_size = size(tsv, "GB") + size(vcf_file, "GB")
+    Float input_size = size(tsv, "GB") 
     Float base_disk_gb = 10.0
     Float input_disk_scale = 5.0
     RuntimeAttr runtime_default = object {
@@ -226,9 +220,8 @@ task convertTSVtoVCF {
         import hail as hl
 
         tsv = sys.argv[1]
-        vcf_file = sys.argv[2]
-        cores = sys.argv[3]
-        mem = int(np.floor(float(sys.argv[4])))
+        cores = sys.argv[2]
+        mem = int(np.floor(float(sys.argv[3])))
 
         hl.init(min_block_size=128, spark_conf={"spark.executor.cores": cores, 
                     "spark.executor.memory": f"{mem}g",
@@ -243,11 +236,10 @@ task convertTSVtoVCF {
                         alleles=hl.array([mt.REF, mt.ALT]))
         mt = mt.key_rows_by('locus','alleles')
 
-        header = hl.get_vcf_metadata(vcf_file)
-        hl.export_vcf(mt, os.path.basename(tsv).split('.tsv')[0]+'.vcf', metadata=header)
+        hl.export_vcf(mt, os.path.basename(tsv).split('.tsv')[0]+'.vcf')
         EOF
 
-        python3.9 tsv_to_vcf.py ~{tsv} ~{vcf_file} ~{cpu_cores} ~{memory}
+        python3.9 tsv_to_vcf.py ~{tsv} ~{cpu_cores} ~{memory}
     >>>
 
     output {

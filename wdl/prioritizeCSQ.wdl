@@ -12,18 +12,13 @@ struct RuntimeAttr {
 workflow prioritizeCSQ {
     input {
         File vcf_metrics_tsv
-        Array[File]? vep_annotated_final_vcf
-        Array[File]? vep_vcf_files
         String prioritize_csq_script
         String hail_docker
     }
-
-    Array[File] vep_files = select_first([vep_vcf_files, vep_annotated_final_vcf])
     
     call annotateMostSevereCSQ {
         input:
         vcf_metrics_tsv=vcf_metrics_tsv,
-        vep_uri=vep_files[0],
         prioritize_csq_script=prioritize_csq_script,
         hail_docker=hail_docker
     }
@@ -36,13 +31,12 @@ workflow prioritizeCSQ {
 task annotateMostSevereCSQ {
     input {
         File vcf_metrics_tsv
-        File vep_uri
         String prioritize_csq_script
         String hail_docker
         RuntimeAttr? runtime_attr_override
     }
 
-    Float input_size = size([vcf_metrics_tsv, vep_uri], "GB")
+    Float input_size = size(vcf_metrics_tsv, "GB")
     Float base_disk_gb = 10.0
     Float input_disk_scale = 5.0
 
@@ -71,7 +65,7 @@ task annotateMostSevereCSQ {
     
     command <<<
         curl ~{prioritize_csq_script} > prioritize_csq.py
-        python3 prioritize_csq.py ~{vcf_metrics_tsv} ~{vep_uri} ~{cpu_cores} ~{memory}
+        python3 prioritize_csq.py ~{vcf_metrics_tsv} ~{cpu_cores} ~{memory}
     >>>
 
     output {

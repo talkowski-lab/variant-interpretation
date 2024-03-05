@@ -3,11 +3,11 @@ import pandas as pd
 import numpy as np
 import sys
 import os
+import warnings
 
 vcf_metrics_uri = sys.argv[1]
-vep_uri = sys.argv[2]
-cores = sys.argv[3]
-mem = int(np.floor(float(sys.argv[4])))
+cores = sys.argv[2]
+mem = int(np.floor(float(sys.argv[3])))
 
 hl.init(min_block_size=128, spark_conf={"spark.executor.cores": cores, 
                     "spark.executor.memory": f"{mem}g",
@@ -278,7 +278,44 @@ def process_consequence_cohort(csq_columns, vcf_metrics_uri):
 
     return vcf_metrics
 
-header = hl.get_vcf_metadata(vep_uri)
-csq_columns = header['info']['CSQ']['Description'].split('Format: ')[-1].split('|')
+csq_columns_less = ['Allele', 'Consequence', 'IMPACT', 'SYMBOL', 'Gene', 'Feature_type', 'Feature', 
+                    'BIOTYPE', 'EXON', 'INTRON', 'HGVSc', 'HGVSp', 'cDNA_position', 'CDS_position', 
+                    'Protein_position', 'Amino_acids', 'Codons', 'Existing_variation', 'ALLELE_NUM', 
+                    'DISTANCE', 'STRAND', 'FLAGS', 'VARIANT_CLASS', 'MINIMISED', 'SYMBOL_SOURCE', 
+                    'HGNC_ID', 'CANONICAL', 'TSL', 'APPRIS', 'CCDS', 'ENSP', 'SWISSPROT', 'TREMBL', 
+                    'UNIPARC', 'GENE_PHENO', 'SIFT', 'PolyPhen', 'DOMAINS', 'miRNA', 'HGVS_OFFSET', 
+                    'AF', 'AFR_AF', 'AMR_AF', 'EAS_AF', 'EUR_AF', 'SAS_AF', 'AA_AF', 'EA_AF', 'gnomAD_AF', 
+                    'gnomAD_AFR_AF', 'gnomAD_AMR_AF', 'gnomAD_ASJ_AF', 'gnomAD_EAS_AF', 'gnomAD_FIN_AF', 
+                    'gnomAD_NFE_AF', 'gnomAD_OTH_AF', 'gnomAD_SAS_AF', 'MAX_AF', 'MAX_AF_POPS', 'CLIN_SIG', 
+                    'SOMATIC', 'PHENO', 'PUBMED', 'MOTIF_NAME', 'MOTIF_POS', 'HIGH_INF_POS', 'MOTIF_SCORE_CHANGE', 
+                    'LOEUF', 'LoF', 'LoF_filter', 'LoF_flags', 'LoF_info']
+
+csq_columns_more = ["Allele","Consequence","IMPACT","SYMBOL","Gene","Feature_type","Feature",
+                   "BIOTYPE","EXON","INTRON","HGVSc","HGVSp","cDNA_position","CDS_position",
+                   "Protein_position","Amino_acids","Codons","Existing_variation","ALLELE_NUM",
+                   "DISTANCE","STRAND","FLAGS","VARIANT_CLASS","MINIMISED","SYMBOL_SOURCE",
+                   "HGNC_ID","CANONICAL","MANE_SELECT","MANE_PLUS_CLINICAL","TSL","APPRIS",
+                   "CCDS","ENSP","SWISSPROT","TREMBL","UNIPARC","UNIPROT_ISOFORM","GENE_PHENO",
+                   "SIFT","PolyPhen","DOMAINS","miRNA","HGVS_OFFSET","AF","AFR_AF","AMR_AF",
+                   "EAS_AF","EUR_AF","SAS_AF","gnomADe_AF","gnomADe_AFR_AF","gnomADe_AMR_AF",
+                   "gnomADe_ASJ_AF","gnomADe_EAS_AF","gnomADe_FIN_AF","gnomADe_NFE_AF","gnomADe_OTH_AF",
+                   "gnomADe_SAS_AF","gnomADg_AF","gnomADg_AFR_AF","gnomADg_AMI_AF","gnomADg_AMR_AF",
+                   "gnomADg_ASJ_AF","gnomADg_EAS_AF","gnomADg_FIN_AF","gnomADg_MID_AF","gnomADg_NFE_AF",
+                   "gnomADg_OTH_AF","gnomADg_SAS_AF","MAX_AF","MAX_AF_POPS","CLIN_SIG","SOMATIC",
+                   "PHENO","PUBMED","MOTIF_NAME","MOTIF_POS","HIGH_INF_POS","MOTIF_SCORE_CHANGE",
+                   "TRANSCRIPTION_FACTORS","LoF","LoF_filter","LoF_flags","LoF_info"]
+
+final_output = pd.read_csv(vcf_metrics_uri, sep='\t')
+final_output['CSQ'] = final_output.CSQ.replace({'.':np.nan}).str.split(',')
+n_csq_fields = len(final_output[~final_output.CSQ.isna()].CSQ.iloc[0][0].split('|'))
+
+if n_csq_fields==len(csq_columns_more):
+    csq_columns = csq_columns_more
+elif n_csq_fields==len(csq_columns_less):
+    csq_columns = csq_columns_less
+else:
+    warnings.simplefilter("error")
+    warnings.warn("CSQ fields are messed up!")
+
 df = process_consequence_cohort(csq_columns, vcf_metrics_uri)
 df.to_csv(f"{os.path.basename(vcf_metrics_uri).split('.tsv')[0]}_prioritized_csq.tsv", sep='\t',index=False)
