@@ -30,6 +30,7 @@ workflow runSomalier {
         Int samples_per_chunk
         Boolean subset_ped=true
         Boolean infer_ped=true
+        Boolean unknown_flag=false
         Float relatedness_cutoff=0.25
         RuntimeAttr? runtime_attr_relatedness
         RuntimeAttr? runtime_attr_correct
@@ -79,6 +80,7 @@ workflow runSomalier {
                 cohort_prefix=cohort_prefix,
                 sv_base_mini_docker=sv_base_mini_docker,
                 infer_ped=infer_ped,
+                unknown_flag=unknown_flag,
                 relatedness_cutoff=relatedness_cutoff,
                 runtime_attr_override=runtime_attr_relatedness
         }
@@ -148,6 +150,7 @@ task relatedness_subset {
         String sv_base_mini_docker
         Float relatedness_cutoff
         Boolean infer_ped
+        Boolean unknown_flag
         RuntimeAttr? runtime_attr_override
     }
 
@@ -172,7 +175,8 @@ task relatedness_subset {
         bootDiskSizeGb: select_first([runtime_override.boot_disk_gb, runtime_default.boot_disk_gb])
     }
 
-    String infer_string = if infer_ped then "--infer" else "--ped ~{ped_uri}"
+    String infer_string = if infer_ped then "--infer --ped ~{ped_uri}" else "--ped ~{ped_uri}"
+    String unknown_flag_str = if unknown_flag then "-u" else ""
     String new_cohort_prefix = basename(sample_file, '.txt')
     String subset_vcf_uri = "~{new_cohort_prefix}.vcf.gz"
 
@@ -182,7 +186,8 @@ task relatedness_subset {
         bcftools view -S ~{sample_file} --no-update -Oz -o ~{subset_vcf_uri} ~{vcf_uri}
         bcftools index -t ~{subset_vcf_uri}
         /somalier_test extract -d extracted/ --sites ~{sites_uri} -f ~{hg38_fasta} ~{subset_vcf_uri}
-        SOMALIER_RELATEDNESS_CUTOFF=~{relatedness_cutoff} /somalier_test relate ~{infer_string} -o ~{new_cohort_prefix} extracted/*.somalier
+
+        SOMALIER_RELATEDNESS_CUTOFF=~{relatedness_cutoff} /somalier_test relate ~{infer_string} ~{unknown_flag_str} -o ~{new_cohort_prefix} extracted/*.somalier
 
         tar -xf ~{somalier_1kg_tar}
         /somalier_test ancestry -o ~{new_cohort_prefix} --labels ~{ancestry_labels_1kg} 1kg-somalier/*.somalier ++ extracted/*.somalier
