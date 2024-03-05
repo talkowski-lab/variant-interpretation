@@ -53,8 +53,8 @@ workflow Mosaic{
   output{
     File rare_potential=GetPotential.rare
     File common_potential=GetPotential.common
-    #File igvplots=RdTest.plots
-    #File stats=RdTest.stats
+    File igvplots=RdTest.plots
+    File stats=RdTest.stats
   }
 }
 
@@ -170,22 +170,22 @@ task RdTest {
     /opt/RdTest/localize_bincov.sh rdtest.bed ~{coverage_file}
     awk -v OFS="\t" '{print $1,$2,$3,$4,$6,$5}' rdtest.bed > test.bed
 
-    #mkdir plots
+    mkdir plots
     Rscript /opt/RdTest/RdTest.R \
       -b test.bed \
       -n ~{prefix} \
       -c local_coverage.bed.gz \
       -m ~{median_file} \
       -f ~{fam_file} 
-      #-o plots \
-      #-p TRUE
-    #mv plots/~{prefix}.metrics .
-    #tar -czf mosaic.tar.gz plots/
+      -o plots \
+      -p TRUE
+    mv plots/~{prefix}.metrics .
+    tar -czf mosaic.tar.gz plots/
   >>>
 
   output {
     File stats = "~{prefix}.metrics"
-    #File plots= "mosaic.tar.gz"
+    File plots= "mosaic.tar.gz"
   }
 
   runtime {
