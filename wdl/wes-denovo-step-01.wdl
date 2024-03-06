@@ -60,8 +60,6 @@ workflow step1 {
     output {
         String annot_mt = select_first([hailAnnotate.annot_mt, hailAnnotateRemote.annot_mt])
         File sample_qc_info = select_first([hailAnnotate.sample_qc_info, hailAnnotateRemote.sample_qc_info])
-        String pca_score_table_5k = select_first([hailAnnotate.pca_score_table_5k, hailAnnotateRemote.pca_score_table_5k])
-        String pca_loading_table_5k = select_first([hailAnnotate.pca_loading_table_5k, hailAnnotateRemote.pca_loading_table_5k])
     }
 }
 
@@ -119,17 +117,16 @@ task hailAnnotate {
     output {
         File annot_mt = "~{cohort_prefix}_wes_denovo_annot.mt.gz"
         File sample_qc_info = "~{cohort_prefix}_wes_post_annot_sample_QC_info.txt"
-        File pca_score_table_5k = "~{cohort_prefix}_wes_pca_score_table_5k.ht.gz"
-        File pca_loading_table_5k = "~{cohort_prefix}_wes_pca_loading_table_5k.ht.gz"
     }
 }
 
 task hailAnnotateRemote {
     input {
-        File vcf_file
         File ped_uri
         File purcell5k
         File mpc_chr22_file
+        Float input_size
+        String vcf_file
         String bucket_id
         String mpc_dir
         String gnomad_ht_uri
@@ -138,7 +135,6 @@ task hailAnnotateRemote {
         String hail_docker
         RuntimeAttr? runtime_attr_override
     }
-    Float input_size = size(vcf_file, 'GB')
     Float base_disk_gb = 10.0
     Float input_disk_scale = 5.0
 
@@ -175,7 +171,5 @@ task hailAnnotateRemote {
     output {
         String annot_mt = read_lines('mt_uri.txt')[0]
         File sample_qc_info = "~{cohort_prefix}_wes_post_annot_sample_QC_info.txt"
-        String pca_score_table_5k = read_lines('mt_uri.txt')[1]
-        String pca_loading_table_5k = read_lines('mt_uri.txt')[2]
     }
 }

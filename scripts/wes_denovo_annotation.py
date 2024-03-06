@@ -65,30 +65,11 @@ mt = mt.annotate_entries(pAB = hl.or_missing(mt.GT.is_het(),
 hl.sample_qc(mt, 'sample_qc').cols().flatten().export(
     f"{cohort_prefix}_wes_post_annot_sample_QC_info.txt")
 
-## PCA on 5k variants only
-# Create filtered mt
-# Load lifted-over Purcell 5k interval list
-p5k = hl.import_locus_intervals(purcell5k, 
-                                 reference_genome='GRCh38') #few variants that are likely most useful (PCA and relatedness)
-mt5k = mt.filter_rows(hl.is_defined(p5k[mt.locus]), keep = True)
-
-#5k variants only
-eigenvalues_5k, score_table_5k, loading_table_5k = hl.hwe_normalized_pca(mt5k.GT, k=20, compute_loadings=True)
-
 ## Export mt
 if bucket_id == 'false':
-## also export unfiltered PCA results as mts
-    score_table_5k.write(f"{cohort_prefix}_wes_pca_score_table_5k.ht", overwrite = True)
-    loading_table_5k.write(f"{cohort_prefix}_wes_pca_loading_table_5k.ht", overwrite = True)
     mt.write(f"{cohort_prefix}_wes_denovo_annot.mt", overwrite=True)
 else:
     filename = f"{bucket_id}/hail/{str(datetime.datetime.now().strftime('%Y-%m-%d_%H-%M'))}/{cohort_prefix}_wes_denovo_annot.mt"
-    score_table_file = f"{bucket_id}/hail/{str(datetime.datetime.now().strftime('%Y-%m-%d_%H-%M'))}/{cohort_prefix}_wes_pca_score_table_5k.ht"
-    loading_table_file = f"{bucket_id}/hail/{str(datetime.datetime.now().strftime('%Y-%m-%d_%H-%M'))}/{cohort_prefix}_wes_pca_loading_table_5k.ht"
-    
-    mt_uris = [filename, score_table_file, loading_table_file]
-    pd.Series(mt_uris).to_csv('mt_uri.txt',index=False, header=None)
+    pd.Series([filename]).to_csv('mt_uri.txt',index=False, header=None)
     
     mt.write(filename, overwrite=True)
-    score_table_5k.write(score_table_file, overwrite=True)
-    loading_table_5k.write(loading_table_file, overwrite=True)
