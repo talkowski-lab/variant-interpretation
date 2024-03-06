@@ -176,7 +176,7 @@ task RdTest {
       -n ~{prefix} \
       -c local_coverage.bed.gz \
       -m ~{median_file} \
-      -f ~{fam_file} 
+      -f ~{fam_file} \
       -o plots \
       -p TRUE
     mv plots/~{prefix}.metrics .
