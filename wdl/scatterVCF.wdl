@@ -379,7 +379,7 @@ task scatterVCFRemote {
     command <<<
         set -euo pipefail
         curl  ~{split_vcf_hail_script} > split_vcf.py
-        python3.9 split_vcf.py ~{vcf_file} ~{n_shards} ~{records_per_shard} ~{prefix} ~{cpu_cores} ~{memory}
+        python3 split_vcf.py ~{vcf_file} ~{n_shards} ~{records_per_shard} ~{prefix} ~{cpu_cores} ~{memory}
         for file in $(ls ~{prefix}.vcf.bgz | grep '.bgz'); do
             shard_num=$(echo $file | cut -d '-' -f2);
             mv ~{prefix}.vcf.bgz/$file ~{prefix}.shard_"$shard_num".vcf.bgz
