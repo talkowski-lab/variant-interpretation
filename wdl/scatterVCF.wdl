@@ -105,14 +105,15 @@ workflow scatterVCF_workflow {
                 }
             }
             if (!localize_vcf) {
+                String mt_uri = file
                 call helpers.getHailMTSize as getHailMTSize {
                 input:
-                    mt_uri=file,
+                    mt_uri=mt_uri,
                     hail_docker=hail_docker
                 }
                 call scatterVCFRemote {
                 input:
-                    vcf_file=file,
+                    vcf_file=mt_uri,
                     input_size=getHailMTSize.mt_size,
                     split_vcf_hail_script=split_vcf_hail_script,
                     n_shards=select_first([n_shards]),
