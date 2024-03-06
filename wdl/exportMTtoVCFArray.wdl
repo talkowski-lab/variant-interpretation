@@ -19,10 +19,17 @@ workflow exportMTtoVCF {
     }
 
     scatter (mt_uri in mt_uris) {
-        call exportMTtoVCF.exportMTtoVCF as exportMT {
+        call helpers.getHailMTSize as getHailMTSize {
             input:
-            mt_uri=mt_uri,
-            hail_docker=hail_docker
+                mt_uri=mt_uri,
+                hail_docker=hail_docker
+        }
+
+        call exportMTtoVCF.exportMT as exportMT {
+            input:
+                input_size=getHailMTSize.mt_size,
+                mt_uri=mt_uri,
+                hail_docker=hail_docker
         }
     }
 
