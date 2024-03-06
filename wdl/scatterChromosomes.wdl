@@ -30,7 +30,7 @@ workflow scatterVCF {
     Map[String, Float] contig_lengths = read_map(contig_lengths_file)
     Array[String] chromosomes = ["chr1", "chr2", "chr3", "chr4", "chr5", "chr6", "chr7", "chr8", "chr9", "chr10", "chr11", "chr12", "chr13", "chr14", "chr15", "chr16", "chr17", "chr18", "chr19", "chr20", "chr21", "chr22", "chrX", "chrY"]
     Array[String] contigs_ = select_first([contigs, chromosomes])
-    Array[Pair[String, File]] split_chromosomes  = zip(chromosomes, select_first([contigs_, chromosome_shards_]))
+    Array[Pair[String, File]] split_chromosomes  = zip(contigs_, chromosome_shards_)
     scatter (chrom_pair in split_chromosomes) {
         String chromosome = chrom_pair.left
         File chrom_shard = chrom_pair.right
