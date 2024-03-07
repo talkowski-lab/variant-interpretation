@@ -85,7 +85,8 @@ task scatterHailMT {
     }
 
     command <<<
-        python3 ~{split_mt_hail_script} ~{mt_uri} ~{n_shards} ~{records_per_shard} ~{cpu_cores} ~{memory} ~{bucket_id}
+        curl ~{split_mt_hail_script} > split_mt.py
+        python3 split_mt.py ~{mt_uri} ~{n_shards} ~{records_per_shard} ~{cpu_cores} ~{memory} ~{bucket_id}
     >>>
 
     output {
