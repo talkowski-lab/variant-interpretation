@@ -37,7 +37,7 @@ workflow Mosaic{
   }
   output{
     File potentialmosaic = GetPotential.rare
-    # File igvplots = rdtest.plots
+    File igvplots = rdtest.plots
   }
 }
 
@@ -122,16 +122,16 @@ task rdtest {
       -c local_coverage.bed.gz \
       -m ~{median_file} \
       -f ~{fam_file} 
-      #-p TRUE
-    #mkdir plots
-    #mv *jpg plots
-    #tar -czvf mosaic.tar.gz plots/
+      -p TRUE
+    mkdir plots
+    mv *jpg plots
+    tar -czvf mosaic.tar.gz plots/
   >>>
 
   output {
     File stats = "~{prefix}.metrics"
     File local_coverage = "local_coverage.bed.gz"
-    #File plots= "mosaic.tar.gz"
+    File plots= "mosaic.tar.gz"
   }
   runtime {
     cpu: select_first([runtime_attr.cpu_cores, default_attr.cpu_cores])
