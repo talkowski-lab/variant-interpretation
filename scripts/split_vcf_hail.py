@@ -37,9 +37,9 @@ try:
 except:
     pass
 
-if records_per_shard!=0:
-    tot_num_records = mt.count_rows()
-    n_shards = int(np.ceil(tot_num_records / records_per_shard))
+# if records_per_shard!=0:
+#     tot_num_records = mt.count_rows()
+#     n_shards = int(np.ceil(tot_num_records / records_per_shard))
 
 if n_shards!=0:
     mt = mt.repartition(n_shards)

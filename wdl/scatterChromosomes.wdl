@@ -42,7 +42,7 @@ workflow scatterVCF {
         String chromosome = chrom_pair.left
         File chrom_shard = chrom_pair.right
         Float chrom_n_records = contig_lengths[chromosome]
-        Int n_shards = ceil(chrom_n_records / records_per_shard)  # TODO: pretty sure this is redundant because it's calculated in the Python script
+        Int n_shards = ceil(chrom_n_records / records_per_shard)
         if (localize_vcf) {
             call scatterVCF.scatterVCF as scatterChromosomes {
                 input:

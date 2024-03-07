@@ -15,13 +15,25 @@ struct RuntimeAttr {
 workflow scatterMT {
     input {
         Array[String] mt_uris
-        Int n_shards=0
+        Array[String] contigs
+        File contig_lengths_file
         Int records_per_shard
         String split_mt_hail_script
         String bucket_id
         String hail_docker
     }
-    scatter (mt_uri in mt_uris) {
+
+    Map[String, Float] contig_lengths = read_map(contig_lengths_file)
+    Array[String] chromosomes = ["chr1", "chr2", "chr3", "chr4", "chr5", "chr6", "chr7", "chr8", "chr9", "chr10", "chr11", "chr12", "chr13", "chr14", "chr15", "chr16", "chr17", "chr18", "chr19", "chr20", "chr21", "chr22", "chrX", "chrY"]
+    Array[String] contigs_ = select_first([contigs, chromosomes])
+    Array[Pair[String, File]] split_contigs  = zip(contigs_, mt_uris)
+
+    scatter (contig_pair in split_contigs) {
+        String contig = contig_pair.left
+        String mt_uri = contig_pair.right
+        Float chrom_n_records = contig_lengths[contig]
+        Int n_shards = ceil(chrom_n_records / records_per_shard)
+
         call helpers.getHailMTSize as getHailMTSize {
             input:
                 mt_uri=mt_uri,
