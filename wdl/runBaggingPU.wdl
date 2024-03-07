@@ -66,6 +66,7 @@ workflow runBaggingPU {
             cohort_prefix=cohort_prefix,
             hail_docker=hail_docker,
             numeric=numeric_,
+            vqslod_cutoff=vqslod_cutoff,
             runtime_attr_override=runtime_attr_bagging_pu
     }
 
