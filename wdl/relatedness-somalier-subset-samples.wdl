@@ -89,11 +89,18 @@ workflow runSomalier {
     } 
 
     scatter (sample_file in splitSamples.sample_shard_files) {
+        call helpers.subsetVCFSamplesHail {
+            input:
+                samples_file=sample_file,
+                vcf_file=merged_vcf_file_,
+                hail_docker=hail_docker
+        }
+
         call relatedness_subset {
             input:
                 sites_uri=sites_uri,
                 hg38_fasta=hg38_fasta,
-                vcf_uri=merged_vcf_file_,
+                vcf_uri=subsetVCFSamplesHail.vcf_subset,
                 ped_uri=ped_uri,
                 sample_file=sample_file,
                 ancestry_labels_1kg=ancestry_labels_1kg,
@@ -199,14 +206,13 @@ task relatedness_subset {
     String infer_string = if infer_ped then "--infer" else ""
     String unknown_flag_str = if unknown_flag then "-u" else ""
     String new_cohort_prefix = basename(sample_file, '.txt')
-    String subset_vcf_uri = "~{new_cohort_prefix}.vcf.gz"
+    String vcf_uri = "~{new_cohort_prefix}.vcf.gz"
 
     command {
         set -euo pipefail
 
-        bcftools view -S ~{sample_file} --no-update -Oz -o ~{subset_vcf_uri} ~{vcf_uri}
-        bcftools index -t ~{subset_vcf_uri}
-        somalier extract -d extracted/ --sites ~{sites_uri} -f ~{hg38_fasta} ~{subset_vcf_uri}
+        bcftools index -t ~{vcf_uri}
+        somalier extract -d extracted/ --sites ~{sites_uri} -f ~{hg38_fasta} ~{vcf_uri}
 
         somalier relate --ped ~{ped_uri} ~{infer_string} ~{unknown_flag_str} -o ~{new_cohort_prefix} extracted/*.somalier
 
