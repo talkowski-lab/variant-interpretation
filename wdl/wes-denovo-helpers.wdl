@@ -175,7 +175,6 @@ task filterIntervalsToVCF {
     bed_file = sys.argv[2]
     cores = sys.argv[3]
     mem = int(np.floor(float(sys.argv[4])))
-    bucket_id = sys.argv[5]
 
     hl.init(min_block_size=128, spark_conf={"spark.executor.cores": cores, 
                         "spark.executor.memory": f"{mem}g",
