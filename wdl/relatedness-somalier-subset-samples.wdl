@@ -206,7 +206,6 @@ task relatedness_subset {
     String infer_string = if infer_ped then "--infer" else ""
     String unknown_flag_str = if unknown_flag then "-u" else ""
     String new_cohort_prefix = basename(sample_file, '.txt')
-    String vcf_uri = "~{new_cohort_prefix}.vcf.gz"
 
     command {
         set -euo pipefail
