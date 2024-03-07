@@ -46,7 +46,8 @@ workflow scatterVCF {
                 input:
                     vcf_file=chrom_shard,
                     split_vcf_hail_script=split_vcf_hail_script,
-                    n_shards=n_shards,
+                    n_shards=select_first([n_shards]),
+                    records_per_shard=select_first([records_per_shard, 0]),
                     hail_docker=hail_docker,
                     runtime_attr_override=runtime_attr_split_into_shards
             }
