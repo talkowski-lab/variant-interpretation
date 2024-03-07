@@ -183,7 +183,7 @@ task relatedness_subset {
     command {
         set -euo pipefail
 
-        bcftools view -S ~{sample_file} --force-samples --no-update -Oz -o ~{subset_vcf_uri} ~{vcf_uri}
+        bcftools view -S ~{sample_file} --no-update -Oz -o ~{subset_vcf_uri} ~{vcf_uri}
         bcftools index -t ~{subset_vcf_uri}
         somalier extract -d extracted/ --sites ~{sites_uri} -f ~{hg38_fasta} ~{subset_vcf_uri}
 

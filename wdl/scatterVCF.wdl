@@ -17,7 +17,6 @@ workflow scatterVCF_workflow {
         File file
         String split_vcf_hail_script
         String cohort_prefix
-        String vep_hail_docker
         String hail_docker
         String sv_base_mini_docker
         Boolean localize_vcf
@@ -85,7 +84,7 @@ workflow scatterVCF_workflow {
                         split_vcf_hail_script=split_vcf_hail_script,
                         n_shards=chrom_n_shards,
                         records_per_shard=0,
-                        vep_hail_docker=vep_hail_docker,
+                        hail_docker=hail_docker,
                         runtime_attr_override=runtime_attr_split_into_shards
                 }
             }
@@ -100,7 +99,7 @@ workflow scatterVCF_workflow {
                     split_vcf_hail_script=split_vcf_hail_script,
                     n_shards=select_first([n_shards]),
                     records_per_shard=select_first([records_per_shard, 0]),
-                    vep_hail_docker=vep_hail_docker,
+                    hail_docker=hail_docker,
                     runtime_attr_override=runtime_attr_split_into_shards
                 }
             }
@@ -289,7 +288,7 @@ task scatterVCF {
         Int n_shards
         Int records_per_shard
         String split_vcf_hail_script
-        String vep_hail_docker
+        String hail_docker
         RuntimeAttr? runtime_attr_override
     }
 
@@ -318,7 +317,7 @@ task scatterVCF {
         cpu: cpu_cores
         preemptible: select_first([runtime_override.preemptible_tries, runtime_default.preemptible_tries])
         maxRetries: select_first([runtime_override.max_retries, runtime_default.max_retries])
-        docker: vep_hail_docker
+        docker: hail_docker
         bootDiskSizeGb: select_first([runtime_override.boot_disk_gb, runtime_default.boot_disk_gb])
     }
     
