@@ -30,6 +30,7 @@ workflow hailDenovoWES {
         String hail_denovo_filtering_script
         String hail_docker
         String sv_base_mini_docker
+        Boolean hail_autoscale
     }
     
     call helpers.getHailMTSize as getInputMTSize {
@@ -50,7 +51,8 @@ workflow hailDenovoWES {
             bucket_id=bucket_id,
             cohort_prefix=cohort_prefix,
             hail_annotation_script=hail_annotation_script,
-            hail_docker=hail_docker
+            hail_docker=hail_docker,
+            hail_autoscale=hail_autoscale
     }
 
     call helpers.getHailMTSize as getStep1MTSize {
@@ -68,7 +70,7 @@ workflow hailDenovoWES {
             hail_basic_filtering_script=hail_basic_filtering_script,
             hail_docker=hail_docker
     }
-    
+
     call helpers.getHailMTSize as getStep2MTSize {
         input:
             mt_uri=step2.filtered_mt,

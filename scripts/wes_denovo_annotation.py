@@ -3,6 +3,7 @@ import pandas as pd
 import hail as hl
 import numpy as np
 import sys
+import ast
 
 file = sys.argv[1]
 cohort_prefix = sys.argv[2]
@@ -14,12 +15,16 @@ purcell5k = sys.argv[7]
 cores = sys.argv[8]
 mem = int(np.floor(float(sys.argv[9])))
 bucket_id = sys.argv[10]
+hail_autoscale = ast.literal_eval(sys.argv[11].capitalize())
 
-hl.init(min_block_size=128, spark_conf={"spark.executor.cores": cores, 
-                    "spark.executor.memory": f"{mem}g",
-                    "spark.driver.cores": cores,
-                    "spark.driver.memory": f"{mem}g"
-                    }, tmp_dir="tmp", local_tmpdir="tmp")
+if hail_autoscale:
+    hl.init(tmp_dir="tmp", local_tmpdir="tmp")
+else:
+    hl.init(min_block_size=128, spark_conf={"spark.executor.cores": cores, 
+                        "spark.executor.memory": f"{mem}g",
+                        "spark.driver.cores": cores,
+                        "spark.driver.memory": f"{mem}g"
+                        }, tmp_dir="tmp", local_tmpdir="tmp")
 
 if file.split('.')[-1] == 'mt':
     mt = hl.read_matrix_table(file)

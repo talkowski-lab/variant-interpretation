@@ -21,6 +21,7 @@ workflow hailDenovoWES {
         File purcell5k
         File mpc_chr22_file
         File loeuf_file
+        Boolean hail_autoscale
         String bucket_id
         String mpc_dir
         String gnomad_ht_uri
@@ -50,7 +51,8 @@ workflow hailDenovoWES {
                 bucket_id=bucket_id,
                 cohort_prefix=cohort_prefix,
                 hail_annotation_script=hail_annotation_script,
-                hail_docker=hail_docker
+                hail_docker=hail_docker,
+                hail_autoscale=hail_autoscale
         }
 
         call helpers.getHailMTSize as getStep1MTSize {
