@@ -16,7 +16,8 @@ struct RuntimeAttr {
 workflow vepAnnotateHail {
 
     input {
-        File file
+        File? vcf_file
+        String? mt_uri
         String vep_annotate_hail_python_script
         String split_vcf_hail_script
         File hg38_fasta
@@ -36,6 +37,7 @@ workflow vepAnnotateHail {
         Boolean merge_split_vcf
         Int shards_per_chunk=10  # combine pre-sharded VCFs
         Array[File]? vcf_shards  # if scatterVCF.wdl already run before VEP
+        Array[String]? row_fields_to_keep=[]
         RuntimeAttr? runtime_attr_merge_vcfs
         RuntimeAttr? runtime_attr_vep_annotate
         ## parameters for scatterVCF
@@ -46,6 +48,7 @@ workflow vepAnnotateHail {
         # Int records_per_shard=0
     }
 
+    String file = select_first([vcf_file, mt_uri])
     # input is not a single VCF file, so merge shards in chunks, then run VEP on merged chunks
     if (merge_split_vcf) { 
         # combine pre-sharded VCFs into chunks
@@ -87,11 +90,11 @@ workflow vepAnnotateHail {
                     file=file,
                     split_vcf_hail_script=split_vcf_hail_script,
                     cohort_prefix=cohort_prefix,
-                    vep_hail_docker=vep_hail_docker,
                     hail_docker=hail_docker,
                     sv_base_mini_docker=sv_base_mini_docker,
                     split_by_chromosome=split_by_chromosome,
-                    split_into_shards=split_into_shards
+                    split_into_shards=split_into_shards,
+                    row_fields_to_keep=row_fields_to_keep
             }
         }
         Array[File] vcf_shards_ = select_first([scatterVCF.vcf_shards, vcf_shards])
