@@ -8,6 +8,7 @@ records_per_shard = int(sys.argv[3])
 prefix = sys.argv[4]
 cores = sys.argv[5]
 mem = int(np.floor(float(sys.argv[6])))
+row_fields_to_keep = sys.argv[7].split(',')
 
 hl.init(min_block_size=128, spark_conf={"spark.executor.cores": cores, 
                     "spark.executor.memory": f"{mem}g",
@@ -39,5 +40,9 @@ if records_per_shard!=0:
 
 if n_shards!=0:
     mt = mt.repartition(n_shards)
+
+# put all in INFO to be kept when exported to VCF
+for field in row_fields_to_keep:
+    mt = mt = mt.annotate_rows(info = mt.info.annotate(**{field: getattr(mt, field)}))
 
 hl.export_vcf(mt, output=prefix+'.vcf.bgz', parallel='header_per_shard', metadata=header if is_vcf else None)

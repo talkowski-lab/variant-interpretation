@@ -24,6 +24,7 @@ workflow scatterVCF {
         String hail_docker
         Int records_per_shard
         Boolean localize_vcf
+        Array[String] row_fields_to_keep=[]
         RuntimeAttr? runtime_attr_split_into_shards
     }
     if (defined(chrom_shards_file)) {
@@ -67,6 +68,7 @@ workflow scatterVCF {
                     n_shards=select_first([n_shards]),
                     records_per_shard=select_first([records_per_shard, 0]),
                     hail_docker=hail_docker,
+                    row_fields_to_keep=row_fields_to_keep,
                     runtime_attr_override=runtime_attr_split_into_shards
             }
         }

@@ -25,6 +25,7 @@ workflow scatterVCF_workflow {
         Boolean has_index=false
         Int n_shards=0
         Int records_per_shard=0
+        Array[String] row_fields_to_keep=[]
         RuntimeAttr? runtime_attr_split_by_chr
         RuntimeAttr? runtime_attr_split_into_shards
     }
@@ -118,6 +119,7 @@ workflow scatterVCF_workflow {
                     n_shards=select_first([n_shards]),
                     records_per_shard=select_first([records_per_shard, 0]),
                     hail_docker=hail_docker,
+                    row_fields_to_keep=row_fields_to_keep,
                     runtime_attr_override=runtime_attr_split_into_shards
                 }
             }
@@ -324,7 +326,7 @@ task scatterVCF {
     command <<<
         set -euo pipefail
         curl  ~{split_vcf_hail_script} > split_vcf.py
-        python3.9 split_vcf.py ~{vcf_file} ~{n_shards} ~{records_per_shard} ~{prefix} ~{cpu_cores} ~{memory}
+        python3 split_vcf.py ~{vcf_file} ~{n_shards} ~{records_per_shard} ~{prefix} ~{cpu_cores} ~{memory}
         for file in $(ls ~{prefix}.vcf.bgz | grep '.bgz'); do
             shard_num=$(echo $file | cut -d '-' -f2);
             mv ~{prefix}.vcf.bgz/$file ~{prefix}.shard_"$shard_num".vcf.bgz
@@ -344,6 +346,7 @@ task scatterVCFRemote {
         Int records_per_shard
         String split_vcf_hail_script
         String hail_docker
+        Array[String] row_fields_to_keep
         RuntimeAttr? runtime_attr_override
     }
 
@@ -378,7 +381,7 @@ task scatterVCFRemote {
     command <<<
         set -euo pipefail
         curl  ~{split_vcf_hail_script} > split_vcf.py
-        python3 split_vcf.py ~{vcf_file} ~{n_shards} ~{records_per_shard} ~{prefix} ~{cpu_cores} ~{memory}
+        python3 split_vcf.py ~{vcf_file} ~{n_shards} ~{records_per_shard} ~{prefix} ~{cpu_cores} ~{memory} ~{sep=',' row_fields_to_keep}
         for file in $(ls ~{prefix}.vcf.bgz | grep '.bgz'); do
             shard_num=$(echo $file | cut -d '-' -f2);
             mv ~{prefix}.vcf.bgz/$file ~{prefix}.shard_"$shard_num".vcf.bgz
