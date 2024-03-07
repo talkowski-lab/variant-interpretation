@@ -37,7 +37,7 @@ workflow vepAnnotateHail {
         Boolean merge_split_vcf
         Int shards_per_chunk=10  # combine pre-sharded VCFs
         Array[File]? vcf_shards  # if scatterVCF.wdl already run before VEP
-        Array[String]? row_fields_to_keep=[]
+        Array[String]? row_fields_to_keep=[false]
         RuntimeAttr? runtime_attr_merge_vcfs
         RuntimeAttr? runtime_attr_vep_annotate
         ## parameters for scatterVCF

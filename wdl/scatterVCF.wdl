@@ -25,7 +25,7 @@ workflow scatterVCF_workflow {
         Boolean has_index=false
         Int n_shards=0
         Int records_per_shard=0
-        Array[String] row_fields_to_keep=[]
+        Array[String] row_fields_to_keep=[false]
         RuntimeAttr? runtime_attr_split_by_chr
         RuntimeAttr? runtime_attr_split_into_shards
     }

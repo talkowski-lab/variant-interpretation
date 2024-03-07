@@ -12,6 +12,7 @@ struct RuntimeAttr {
     Int? max_retries
 }
 
+# TODO: fix this so it's just for VCF inputs, not MTs--make separate workflow for MT inputs because this is getting really confusing 
 workflow scatterVCF {
 
     input {
@@ -24,7 +25,7 @@ workflow scatterVCF {
         String hail_docker
         Int records_per_shard
         Boolean localize_vcf
-        Array[String] row_fields_to_keep=[]
+        Array[String] row_fields_to_keep=[false]
         RuntimeAttr? runtime_attr_split_into_shards
     }
     if (defined(chrom_shards_file)) {
@@ -41,7 +42,7 @@ workflow scatterVCF {
         String chromosome = chrom_pair.left
         File chrom_shard = chrom_pair.right
         Float chrom_n_records = contig_lengths[chromosome]
-        Int n_shards = ceil(chrom_n_records / records_per_shard)
+        Int n_shards = ceil(chrom_n_records / records_per_shard)  # TODO: pretty sure this is redundant because it's calculated in the Python script
         if (localize_vcf) {
             call scatterVCF.scatterVCF as scatterChromosomes {
                 input:
