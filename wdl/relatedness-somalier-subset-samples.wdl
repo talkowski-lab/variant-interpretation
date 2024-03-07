@@ -1,6 +1,7 @@
 version 1.0
 
 import "mergeVCFs.wdl" as mergeVCFs
+import "wes-denovo-helpers.wdl" as helpers
 
 struct RuntimeAttr {
     Float? mem_gb
@@ -17,6 +18,7 @@ workflow runSomalier {
         File hg38_fasta
         Array[File]? vep_vcf_files
         Array[File]? vep_annotated_final_vcf
+        Array[String]? mt_shards
         File? merged_vcf_file
         File ped_uri
         File bed_file
@@ -37,23 +39,42 @@ workflow runSomalier {
     }
 
     if (!defined(merged_vcf_file)) {
-        Array[File] vep_files = select_first([vep_vcf_files, vep_annotated_final_vcf])
-        
-        scatter (vcf_uri in vep_files) {
-            call subsetVCFs {
-                input:
-                    bed_file=bed_file,
-                    vcf_uri=vcf_uri,
-                    vcf_idx=vcf_uri+'.tbi',
-                    somalier_docker=somalier_docker
+        if (defined(mt_shards)) {
+            scatter (mt_uri in select_first([mt_shards])) {
+                call helpers.getHailMTSize {
+                    input:
+                        mt_uri=mt_uri,
+                        hail_docker=hail_docker
+                }
+                call helpers.filterIntervalsToVCF as filterIntervals {
+                    input:
+                        bed_file=bed_file,
+                        input_size=getHailMTSize.mt_size,
+                        mt_uri=mt_uri,
+                        hail_docker=hail_docker
+                }
+            }
+        }
+
+        if (!defined(mt_shards)) {
+            Array[File] vep_files = select_first([vep_vcf_files, vep_annotated_final_vcf])
+            
+            scatter (vcf_uri in vep_files) {
+                call subsetVCFs {
+                    input:
+                        bed_file=bed_file,
+                        vcf_uri=vcf_uri,
+                        vcf_idx=vcf_uri+'.tbi',
+                        somalier_docker=somalier_docker
+                }
             }
         }
 
         call mergeVCFs.mergeVCFs as mergeVCFs {
-        input:
-            vcf_files=subsetVCFs.subset_vcf,
-            sv_base_mini_docker=sv_base_mini_docker,
-            cohort_prefix=cohort_prefix
+            input:
+                vcf_files=select_first([filterIntervals.vcf_filt, subsetVCFs.subset_vcf]),
+                sv_base_mini_docker=sv_base_mini_docker,
+                cohort_prefix=cohort_prefix
         }
     }
 
