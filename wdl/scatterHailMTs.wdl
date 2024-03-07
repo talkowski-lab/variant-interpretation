@@ -15,7 +15,7 @@ struct RuntimeAttr {
 workflow scatterMT {
     input {
         Array[String] mt_uris
-        Array[String] contigs
+        Array[String]? contigs
         File contig_lengths_file
         Int records_per_shard
         String split_mt_hail_script

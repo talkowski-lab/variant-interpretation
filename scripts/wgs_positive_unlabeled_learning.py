@@ -20,6 +20,7 @@ cohort_prefix = sys.argv[4]
 var_type = sys.argv[5]
 numeric = sys.argv[6]
 outlier_samples = sys.argv[7].split(',')
+vsqlod_cutoff = float(sys.argv[8])
 
 # Functions
 def load_variants(vcf_metrics_tsv, ultra_rare_variants_tsv, polyx_vcf, var_type): 
@@ -74,6 +75,9 @@ def load_variants(vcf_metrics_tsv, ultra_rare_variants_tsv, polyx_vcf, var_type)
 def filter_variants(final_output, ultra_rare, final_output_raw, ultra_rare_raw):
     if (final_output['VQSLOD']!='.').sum()!=0:
         final_output = final_output[final_output['VQSLOD']!='.'].reset_index(drop=True)
+        final_output['VQSLOD'] = final_output.VQSLOD.astype(float)
+
+    final_output = final_output[final_output.VQSLOD>vsqlod_cutoff]
 
     # TODO: remove when filter-rare-variants-hail is fixed?
     # ultra_rare = ultra_rare[ultra_rare.GQ_sample>=99]
@@ -83,6 +87,7 @@ def filter_variants(final_output, ultra_rare, final_output_raw, ultra_rare_raw):
 
     try:
         ultra_rare = ultra_rare[~ultra_rare.VQSLOD.isna()]
+        ultra_rare = ultra_rare[ultra_rare.VQSLOD>vsqlod_cutoff]
     except:
         pass
     ultra_rare = ultra_rare[(~ultra_rare.VAF_sample.isna())&

@@ -27,6 +27,7 @@ workflow runBaggingPU {
         String hail_docker
         Boolean remove_regions=true  # remove repetitive regions and multiallelic
         Array[String]? numeric
+        Float vqslod_cutoff=-10
         RuntimeAttr? runtime_attr_bagging_pu
     }
 
@@ -80,12 +81,13 @@ task baggingPU {
         File ultra_rare_variants_tsv
         File ultra_rare_polyx_vcf
         Array[String] outlier_samples
+        Array[String] numeric
         String var_type
         String bagging_pu_source_script
         String run_bagging_pu_script
         String cohort_prefix
         String hail_docker
-        Array[String] numeric
+        Float vqslod_cutoff
         RuntimeAttr? runtime_attr_override
     }
 
@@ -118,7 +120,7 @@ task baggingPU {
         curl ~{run_bagging_pu_script} > run_bagging_pu.py
         curl ~{bagging_pu_source_script} > baggingPU.py
         python3 run_bagging_pu.py ~{vcf_metrics_tsv_final} ~{ultra_rare_variants_tsv} ~{ultra_rare_polyx_vcf} \
-        ~{cohort_prefix} ~{var_type} ~{sep=',' numeric} ~{sep=',' outlier_samples}
+        ~{cohort_prefix} ~{var_type} ~{sep=',' numeric} ~{sep=',' outlier_samples} ~{vqslod_cutoff}
     >>>
 
     output {
