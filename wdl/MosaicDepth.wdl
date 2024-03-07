@@ -117,7 +117,7 @@ task GetPotential{
     ## add sample cutoffs and call QC; note .potentialmosaic.rare.bed.gz is filtered but .potentialmosaic.bed.gz is not
     zcat < ~{name}.potentialmosaic.rare.bed.gz | awk '{print $1"_"$5"_"$6"\t"$2"\t"$3"\t"$4"\t"$6"\t"$5}' | sed -e 's/id/name/g' | sed -e 's/type/svtype/g' | sort -k1,1 -k2,2g > ~{name}.depth.ref.bed
     bedtools merge -d 1000 -i ~{name}.depth.ref.bed -delim "," -c 4,5,6 -o collapse > ~{name}.depth.ref.cluster.bed
-    Rscript /opt/RdTest/refDepth.R ~{name}.depth.ref.cluster.bed ~{name}.depth.ref.cluster.filt.bed ~{name}.outliers.txt
+    Rscript /opt/RdTest/refDepth2.R ~{name}.depth.ref.cluster.bed ~{name}.depth.ref.cluster.filt.bed ~{name}.outliers.txt
     bedtools intersect -v -f 0.5 -wa -wb -a ~{name}.depth.ref.cluster.filt.bed -b ~{sd_blacklist} > ~{name}.depth.ref.cluster.filt.rmSD.bed
     bedtools intersect -v -f 0.5 -wa -wb -a ~{name}.depth.ref.cluster.filt.rmSD.bed -b ~{igl_blacklist} > ~{name}.depth.ref.cluster.filt.rmSD.rmIGL.bed
     cat header.bed ~{name}.depth.ref.cluster.filt.rmSD.rmIGL.bed | sed -e 's/id/name/g' | sed -e 's/svtype/type/g' | bgzip -c > ~{name}.potentialmosaic.rare.bed.gz
