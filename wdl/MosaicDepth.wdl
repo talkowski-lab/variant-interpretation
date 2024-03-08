@@ -52,7 +52,7 @@ workflow Mosaic{
 
   output{
     File rare_potential=GetPotential.rare
-    File common_potential=GetPotential.common
+    #File common_potential=GetPotential.common
     File igvplots=RdTest.plots
     File stats=RdTest.stats
   }
