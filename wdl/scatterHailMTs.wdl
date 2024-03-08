@@ -129,7 +129,7 @@ task getMTPartitionInterval {
     mt = hl.read_matrix_table(mt_uri)
     mt = mt._filter_partitions(range(interval_start, interval_end))
 
-    dir_name = f"{bucket_id}/hail/{str(datetime.datetime.now().strftime('%Y-%m-%d_%H-%M'))}/{os.path.basename(mt_uri).split('.mt')[0]}_shard_{i}.mt"
+    dir_name = f"{bucket_id}/hail/{str(datetime.datetime.now().strftime('%Y-%m-%d_%H-%M'))}/{os.path.basename(mt_uri).split('.mt')[0]}_shard_{shard_n}.mt"
     mt.write(dir_name)
     pd.Series([dir_name]).to_csv('mt_uri.txt', index=False, header=None)
     EOF
