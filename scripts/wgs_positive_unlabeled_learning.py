@@ -176,4 +176,5 @@ results, importances_bag, estimators_bag = run_PU_bagging(merged_output, numeric
 
 results.to_csv(f"{cohort_prefix}_baggingPU_{var_type}_results.tsv", sep='\t', index=False)
 importances_bag.to_csv(f"{cohort_prefix}_{var_type}_feature_importances.tsv", sep='\t', index=False)
-pickle.dump(estimators_bag, f"{cohort_prefix}_{var_type}_estimators.pkl")
+output = open(f"{cohort_prefix}_{var_type}_estimators.pkl", 'wb')
+pickle.dump(estimators_bag, output)
