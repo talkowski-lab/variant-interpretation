@@ -51,8 +51,9 @@ workflow scatterMT {
             call getMTPartitionInterval {
                 input:
                     input_size=getHailMTSize.mt_size / n_shards,
-                    interval_start=interval[0],
-                    interval_end=interval[1],
+                    shard_n=interval[0],
+                    interval_start=interval[1],
+                    interval_end=interval[2],
                     mt_uri=mt_uri,
                     bucket_id=bucket_id,
                     hail_docker=hail_docker
