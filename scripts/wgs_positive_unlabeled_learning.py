@@ -22,6 +22,7 @@ var_type = sys.argv[5]
 numeric = sys.argv[6]
 outlier_samples = sys.argv[7].split(',')
 vsqlod_cutoff = float(sys.argv[8])
+return_estimators = ast.literal_eval(sys.argv[9].capitalize())
 
 # Functions
 def load_variants(vcf_metrics_tsv, ultra_rare_variants_tsv, polyx_vcf, var_type): 
@@ -180,5 +181,6 @@ results, importances_bag, estimators_bag = run_PU_bagging(merged_output, numeric
 
 results.to_csv(f"{cohort_prefix}_baggingPU_{var_type}_results.tsv", sep='\t', index=False)
 importances_bag.to_csv(f"{cohort_prefix}_{var_type}_feature_importances.tsv", sep='\t', index=False)
-output = open(f"{cohort_prefix}_{var_type}_estimators.pkl", 'wb')
-pickle.dump(estimators_bag, output)
+if return_estimators:
+    output = open(f"{cohort_prefix}_{var_type}_estimators.pkl", 'wb')
+    pickle.dump(estimators_bag, output)
