@@ -73,6 +73,7 @@ workflow runBaggingPU {
     output {
         File bagging_pu_results = baggingPU.bagging_pu_results
         File bagging_pu_importances = baggingPU.bagging_pu_importances
+        File bagging_pu_estimators = baggingPU.bagging_pu_estimators
     }
 }
 
