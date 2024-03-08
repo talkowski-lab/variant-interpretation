@@ -3,6 +3,7 @@ import pandas as pd
 import hail as hl
 import numpy as np
 import sys
+import os
 
 annot_mt = sys.argv[1]
 cohort_prefix = sys.argv[2]
@@ -10,6 +11,8 @@ ped_uri = sys.argv[3]
 cores = sys.argv[4]
 mem = int(np.floor(float(sys.argv[5])))
 bucket_id = sys.argv[6]
+
+prefix = os.path.basename(annot_mt).split('_wes_denovo_annot.mt')[0]
 
 hl.init(min_block_size=128, spark_conf={"spark.executor.cores": cores, 
                     "spark.executor.memory": f"{mem}g",
@@ -179,12 +182,12 @@ def sex_aware_sample_annotations(mt):
 mt = sex_aware_sample_annotations(mt)
 
 # get sample-level stats to plot
-hl.sample_qc(mt).cols().flatten().export(f"{cohort_prefix}_wes_final_annot_post_filter_qc_info.txt")
+hl.sample_qc(mt).cols().flatten().export(f"{prefix}_wes_final_annot_post_filter_qc_info.txt")
 
 # export mt
 if bucket_id == 'false':
-    mt.write(f"{cohort_prefix}_wes_denovo_basic_filtering.mt", overwrite=True)
+    mt.write(f"{prefix}_wes_denovo_basic_filtering.mt", overwrite=True)
 else:
-    filename = f"{bucket_id}/hail/{str(datetime.datetime.now().strftime('%Y-%m-%d_%H-%M'))}/{cohort_prefix}_wes_denovo_basic_filtering.mt"
+    filename = f"{bucket_id}/hail/{str(datetime.datetime.now().strftime('%Y-%m-%d_%H-%M'))}/{prefix}_wes_denovo_basic_filtering.mt"
     pd.Series([filename]).to_csv('mt_uri.txt',index=False, header=None)
     mt.write(filename, overwrite=True)

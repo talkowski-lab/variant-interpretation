@@ -4,6 +4,7 @@ import hail as hl
 import numpy as np
 import sys
 import ast
+import os
 
 file = sys.argv[1]
 cohort_prefix = sys.argv[2]
@@ -17,6 +18,7 @@ mem = int(np.floor(float(sys.argv[9])))
 bucket_id = sys.argv[10]
 hail_autoscale = ast.literal_eval(sys.argv[11].capitalize())
 
+
 if hail_autoscale:
     hl.init(tmp_dir="tmp", local_tmpdir="tmp")
 else:
@@ -28,8 +30,10 @@ else:
 
 if file.split('.')[-1] == 'mt':
     mt = hl.read_matrix_table(file)
+    prefix = os.path.basename(file).split('.mt')[0]
 else:
     mt = hl.import_vcf(file, reference_genome = 'GRCh38', array_elements_required=False, force_bgz=True)
+    prefix = os.path.basename(file).split('.vcf')[0]
 
 # Step 1: Annotations
 
@@ -68,13 +72,13 @@ mt = mt.annotate_entries(pAB = hl.or_missing(mt.GT.is_het(),
 
 # Run and export Hail's built-in sample QC function
 hl.sample_qc(mt, 'sample_qc').cols().flatten().export(
-    f"{cohort_prefix}_wes_post_annot_sample_QC_info.txt")
+    f"{prefix}_wes_post_annot_sample_QC_info.txt")
 
 ## Export mt
 if bucket_id == 'false':
-    mt.write(f"{cohort_prefix}_wes_denovo_annot.mt", overwrite=True)
+    mt.write(f"{prefix}_wes_denovo_annot.mt", overwrite=True)
 else:
-    filename = f"{bucket_id}/hail/{str(datetime.datetime.now().strftime('%Y-%m-%d_%H-%M'))}/{cohort_prefix}_wes_denovo_annot.mt"
+    filename = f"{bucket_id}/hail/{str(datetime.datetime.now().strftime('%Y-%m-%d_%H-%M'))}/{prefix}_wes_denovo_annot.mt"
     pd.Series([filename]).to_csv('mt_uri.txt',index=False, header=None)
     
     mt.write(filename, overwrite=True)

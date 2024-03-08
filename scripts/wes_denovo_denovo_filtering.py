@@ -5,6 +5,7 @@ import numpy as np
 import pandas as pd
 import ast
 import sys
+import os
 
 filtered_mt = sys.argv[1]
 cohort_prefix = sys.argv[2]
@@ -13,6 +14,8 @@ loeuf_file = sys.argv[4]
 cores = sys.argv[5]
 mem = int(np.floor(float(sys.argv[6])))
 bucket_id = sys.argv[7]
+
+prefix = os.path.basename(filtered_mt).split('_wes_denovo_basic_filtering.mt')[0]
 
 hl.init(min_block_size=128, spark_conf={"spark.executor.cores": cores, 
                     "spark.executor.memory": f"{mem}g",
@@ -69,9 +72,9 @@ samps = mt.s.collect()
 tmp_ped = tmp_ped[tmp_ped.iloc[:,1].isin(samps)]  # sample_id
 tmp_ped = tmp_ped.drop_duplicates('sample_id')    
 
-tmp_ped.to_csv(f"{cohort_prefix}.ped", sep='\t', index=False)
+tmp_ped.to_csv(f"{prefix}.ped", sep='\t', index=False)
 
-ped_uri = f"{cohort_prefix}.ped"
+ped_uri = f"{prefix}.ped"
 pedigree = hl.Pedigree.read(ped_uri, delimiter='\t')
 
 #de novo calling script by kyle, version 16
@@ -334,22 +337,22 @@ de_novo_results = kyles_de_novo_v16(mt, pedigree, pop_frequency_prior = mt.gnoma
                              max_parent_ab = 0.05, min_child_ab = 0.25, min_dp_ratio = 0.1, min_gq = 25)
 
 # TODO: output (all below)
-de_novo_results.flatten().export(f"{cohort_prefix}_wes_final_denovo.txt")
+de_novo_results.flatten().export(f"{prefix}_wes_final_denovo.txt")
 
 if bucket_id == 'false':
-    de_novo_results.write(f"{cohort_prefix}_wes_final_denovo.ht", overwrite = True)
+    de_novo_results.write(f"{prefix}_wes_final_denovo.ht", overwrite = True)
 else:
     mt_uris = []
-    filename = f"{bucket_id}/hail/{str(datetime.datetime.now().strftime('%Y-%m-%d_%H-%M'))}/{cohort_prefix}_wes_final_denovo.ht"
+    filename = f"{bucket_id}/hail/{str(datetime.datetime.now().strftime('%Y-%m-%d_%H-%M'))}/{prefix}_wes_final_denovo.ht"
     mt_uris.append(filename)
     de_novo_results.write(filename, overwrite=True)
 
 # LOEUF annotations
 
 mt = mt.semi_join_rows(de_novo_results.key_by('locus', 'alleles'))
-mt.rows().flatten().export(f"{cohort_prefix}_wes_final_denovo_vep.txt")
+mt.rows().flatten().export(f"{prefix}_wes_final_denovo_vep.txt")
 
-vep_res = pd.read_csv(f"{cohort_prefix}_wes_final_denovo_vep.txt", sep='\t')
+vep_res = pd.read_csv(f"{prefix}_wes_final_denovo_vep.txt", sep='\t')
 vep_res['alleles'] = vep_res.alleles.apply(ast.literal_eval)
 vep_res['ID'] = vep_res.locus + ':' + vep_res.alleles.str.join(':')
 vep_res.columns = vep_res.columns.str.replace('info.', '')
@@ -376,7 +379,7 @@ loeuf_tile_vals = loeuf.loc[np.intersect1d(loeuf.index, all_genes), 'LOEUF_tile'
 vep_res['LOEUF'] = vep_res.all_genes.apply(lambda gene_list: pd.Series(gene_list).map(loeuf_vals).min())
 vep_res['LOEUF_tile'] = vep_res.all_genes.apply(lambda gene_list: pd.Series(gene_list).map(loeuf_tile_vals).min())
 
-vep_res.to_csv(f"{cohort_prefix}_wes_final_denovo_vep.txt", sep='\t', index=False)
+vep_res.to_csv(f"{prefix}_wes_final_denovo_vep.txt", sep='\t', index=False)
 
 ## TDT
 
@@ -393,9 +396,9 @@ td = hl.trio_matrix(mt, pedigree, complete_trios = True)
 # TODO: output?
 # Write trio dataset
 if bucket_id == 'false':
-    td.write(f"{cohort_prefix}_trio_tdt.mt", overwrite=True)
+    td.write(f"{prefix}_trio_tdt.mt", overwrite=True)
 else:
-    filename = f"{bucket_id}/hail/{str(datetime.datetime.now().strftime('%Y-%m-%d_%H-%M'))}/{cohort_prefix}_trio_tdt.mt"
+    filename = f"{bucket_id}/hail/{str(datetime.datetime.now().strftime('%Y-%m-%d_%H-%M'))}/{prefix}_trio_tdt.mt"
     mt_uris.append(filename)
     td.write(filename, overwrite=True)
 
@@ -471,9 +474,9 @@ td = parent_aware_t_u_annotations_v3(td)
 # TODO: output?
 # Write these results to check against built-in TDT function
 if bucket_id == 'false':
-    td.write(f"{cohort_prefix}_parent_aware_trio_tdt.mt", overwrite = True)
+    td.write(f"{prefix}_parent_aware_trio_tdt.mt", overwrite = True)
 else:
-    filename = f"{bucket_id}/hail/{str(datetime.datetime.now().strftime('%Y-%m-%d_%H-%M'))}/{cohort_prefix}_parent_aware_trio_tdt.mt"
+    filename = f"{bucket_id}/hail/{str(datetime.datetime.now().strftime('%Y-%m-%d_%H-%M'))}/{prefix}_parent_aware_trio_tdt.mt"
     mt_uris.append(filename)
     pd.Series(mt_uris).to_csv('mt_uri.txt', index=False, header=None)
     td.write(filename, overwrite=True)
