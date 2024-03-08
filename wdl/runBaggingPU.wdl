@@ -26,6 +26,7 @@ workflow runBaggingPU {
         String sv_base_mini_docker
         String hail_docker
         Boolean remove_regions=true  # remove repetitive regions and multiallelic
+        Boolean return_estimators=false
         Array[String]? numeric
         Float vqslod_cutoff=-10
         RuntimeAttr? runtime_attr_bagging_pu
@@ -67,6 +68,7 @@ workflow runBaggingPU {
             hail_docker=hail_docker,
             numeric=numeric_,
             vqslod_cutoff=vqslod_cutoff,
+            return_estimators=return_estimators,
             runtime_attr_override=runtime_attr_bagging_pu
     }
 
@@ -90,6 +92,7 @@ task baggingPU {
         String cohort_prefix
         String hail_docker
         Float vqslod_cutoff
+        Boolean return_estimators
         RuntimeAttr? runtime_attr_override
     }
 
@@ -122,13 +125,13 @@ task baggingPU {
         curl ~{run_bagging_pu_script} > run_bagging_pu.py
         curl ~{bagging_pu_source_script} > baggingPU.py
         python3 run_bagging_pu.py ~{vcf_metrics_tsv_final} ~{ultra_rare_variants_tsv} ~{ultra_rare_polyx_vcf} \
-        ~{cohort_prefix} ~{var_type} ~{sep=',' numeric} ~{sep=',' outlier_samples} ~{vqslod_cutoff}
+        ~{cohort_prefix} ~{var_type} ~{sep=',' numeric} ~{sep=',' outlier_samples} ~{vqslod_cutoff} ~{return_estimators}
     >>>
 
     output {
         File bagging_pu_results = "~{cohort_prefix}_baggingPU_~{var_type}_results.tsv"
         File bagging_pu_importances = "~{cohort_prefix}_~{var_type}_feature_importances.tsv"
-        File bagging_pu_estimators = "~{cohort_prefix}_~{var_type}_estimators.pkl"
+        File bagging_pu_estimators = if return_estimators then "~{cohort_prefix}_~{var_type}_estimators.pkl" else "stderr"
     }
 }
 
