@@ -146,6 +146,8 @@ def run_PU_bagging(merged_output, numeric, n_splits=5):
     print('---- {} ----'.format('Bagging PU'))
     print(sklearn.metrics.confusion_matrix(y, y_pred_bag))
 
+    estimators_bag = pd.DataFrame(np.array([classifiers_bag[j].estimators_ for j in range(len(classifiers_bag))]))
+    
     importances_bag = pd.DataFrame(np.array([[classifiers_bag[j].estimators_[i].feature_importances_ 
         for i in range(len(classifiers_bag[j].estimators_))] 
             for j in range(len(classifiers_bag))]).reshape((len(classifiers_bag)*len(classifiers_bag[0]),len(numeric))),
@@ -155,7 +157,7 @@ def run_PU_bagging(merged_output, numeric, n_splits=5):
                             'VarKey': merged_output.iloc[X.index].VarKey,
                             'predict_proba_bag': output_bag,
                             'pred_bag': y_pred_bag.astype(int)})
-    return results, importances_bag
+    return results, importances_bag, estimators_bag
 
 final_output, ultra_rare, final_output_raw, ultra_rare_raw = load_variants(vcf_metrics_tsv, ultra_rare_variants_tsv, polyx_vcf, var_type)
 final_output, ultra_rare, merged_output = filter_variants(final_output, ultra_rare, final_output_raw, ultra_rare_raw)
@@ -169,7 +171,8 @@ elif var_type == 'SNV':
 numeric = np.intersect1d(numeric, np.intersect1d(ultra_rare.columns, final_output.columns)).tolist()
 merged_output = merged_output[~(merged_output[numeric]=='.').any(axis=1)]
 
-results, importances_bag = run_PU_bagging(merged_output, numeric)
+results, importances_bag, estimators_bag = run_PU_bagging(merged_output, numeric)
 
 results.to_csv(f"{cohort_prefix}_baggingPU_{var_type}_results.tsv", sep='\t', index=False)
-importances_bag.to_csv(f"{cohort_prefix}_{var_type}_feature_importances.tsv", sep='\t')
+importances_bag.to_csv(f"{cohort_prefix}_{var_type}_feature_importances.tsv", sep='\t', index=False)
+estimators_bag.to_csv(f"{cohort_prefix}_{var_type}_estimators.tsv", sep='\t', index=False)
