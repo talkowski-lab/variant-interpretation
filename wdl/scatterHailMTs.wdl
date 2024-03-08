@@ -119,6 +119,7 @@ task getMTPartitionInterval {
     interval_end = int(sys.argv[4])
     cores = sys.argv[5]
     mem = int(np.floor(float(sys.argv[6])))
+    bucket_id = sys.argv[7]
 
     hl.init(min_block_size=128, spark_conf={"spark.executor.cores": cores, 
                         "spark.executor.memory": f"{mem}g",
@@ -134,7 +135,7 @@ task getMTPartitionInterval {
     pd.Series([dir_name]).to_csv('mt_uri.txt', index=False, header=None)
     EOF
 
-    python3 get_mt_interval.py ~{mt_uri} ~{shard_n} ~{interval_start} ~{interval_end} ~{cpu_cores} ~{memory}    
+    python3 get_mt_interval.py ~{mt_uri} ~{shard_n} ~{interval_start} ~{interval_end} ~{cpu_cores} ~{memory} ~{bucket_id}
     >>>
 
     output {
