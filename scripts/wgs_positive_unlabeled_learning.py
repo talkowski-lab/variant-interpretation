@@ -5,6 +5,7 @@ import numpy as np
 import sklearn.metrics
 import sklearn.model_selection
 import ast
+import pickle 
 
 from sklearn.ensemble import RandomForestClassifier
 
@@ -146,10 +147,7 @@ def run_PU_bagging(merged_output, numeric, n_splits=5):
     print('---- {} ----'.format('Bagging PU'))
     print(sklearn.metrics.confusion_matrix(y, y_pred_bag))
 
-    estimators_bag = pd.DataFrame(np.array([[classifiers_bag[j].estimators_[i] 
-        for i in range(len(classifiers_bag[j].estimators_))] 
-            for j in range(len(classifiers_bag))]).reshape((len(classifiers_bag)*len(classifiers_bag[0]),len(numeric))),
-                columns=numeric)
+    estimators_bag = [classifiers_bag[j].estimators_ for j in range(len(classifiers_bag))]
     
     importances_bag = pd.DataFrame(np.array([[classifiers_bag[j].estimators_[i].feature_importances_ 
         for i in range(len(classifiers_bag[j].estimators_))] 
@@ -178,4 +176,4 @@ results, importances_bag, estimators_bag = run_PU_bagging(merged_output, numeric
 
 results.to_csv(f"{cohort_prefix}_baggingPU_{var_type}_results.tsv", sep='\t', index=False)
 importances_bag.to_csv(f"{cohort_prefix}_{var_type}_feature_importances.tsv", sep='\t', index=False)
-estimators_bag.to_csv(f"{cohort_prefix}_{var_type}_estimators.tsv", sep='\t', index=False)
+pickle.dump(estimators_bag, f"{cohort_prefix}_{var_type}_estimators.pkl")
