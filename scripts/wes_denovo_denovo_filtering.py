@@ -350,7 +350,8 @@ else:
 # LOEUF annotations
 
 mt = mt.semi_join_rows(de_novo_results.key_by('locus', 'alleles'))
-mt.rows().flatten().export(f"{prefix}_wes_final_denovo_vep.txt")
+df = mt.rows().to_pandas()
+df.to_csv(f"{prefix}_wes_final_denovo_vep.txt", sep='\t', index=False)
 
 vep_res = pd.read_csv(f"{prefix}_wes_final_denovo_vep.txt", sep='\t')
 vep_res['alleles'] = vep_res.alleles.apply(ast.literal_eval)
