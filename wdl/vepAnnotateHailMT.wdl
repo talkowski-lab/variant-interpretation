@@ -41,16 +41,17 @@ workflow vepAnnotateHailMT {
         RuntimeAttr? runtime_attr_vep_annotate
     }
 
-    if (!defined(mt_shards)) {
-        call scatterMT.scatterMT as scatterMT {
-            input:
-                mt_uris=[select_first([mt_uri])],
-                bucket_id=bucket_id,
-                hail_docker=hail_docker
-        }
-    }
+    # if (!defined(mt_shards)) {
+    #     call scatterMT.scatterMT as scatterMT {
+    #         input:
+    #             mt_uris=[select_first([mt_uri])],
+    #             bucket_id=bucket_id,
+    #             hail_docker=hail_docker
+    #     }
+    # }
 
-    Array[String] mt_shards_ = select_first([scatterMT.mt_shards, mt_shards])
+    # Array[String] mt_shards_ = select_first([scatterMT.mt_shards, mt_shards])
+    Array[String] mt_shards_ = select_first([mt_shards])
 
     scatter (shard in mt_shards_) {
         call vepAnnotateMT {
