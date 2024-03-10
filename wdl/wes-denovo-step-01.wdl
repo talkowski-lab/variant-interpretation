@@ -98,6 +98,6 @@ task hailAnnotateRemote {
 
     output {
         String annot_mt = read_lines('mt_uri.txt')[0]
-        File sample_qc_info = "~{cohort_prefix}_wes_post_annot_sample_QC_info.txt"
+        File sample_qc_info = glob("*_wes_post_annot_sample_QC_info.txt")[0]
     }
 }
