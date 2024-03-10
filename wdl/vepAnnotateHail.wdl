@@ -48,7 +48,7 @@ workflow vepAnnotateHail {
         # Int records_per_shard=0
     }
 
-    String file = select_first([vcf_file, mt_uri])
+    String file = select_first([vcf_file, mt_uri, select_first([vcf_shards])[0]])
     # input is not a single VCF file, so merge shards in chunks, then run VEP on merged chunks
     if (merge_split_vcf) { 
         # combine pre-sharded VCFs into chunks
