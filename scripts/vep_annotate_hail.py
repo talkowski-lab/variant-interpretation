@@ -36,8 +36,15 @@ def split_multi_ssc(mt):
     mt = split_ds.drop('old_locus', 'old_alleles')
     return mt
 
-header = hl.get_vcf_metadata(vcf_file) 
-mt = hl.import_vcf(vcf_file, force_bgz=True, array_elements_required=False, reference_genome='GRCh38')
+if vcf_file.split('.')[-1] == 'mt':
+    is_mt = True
+    header = None
+    mt = hl.read_matrix_table(vcf_file)
+else:
+    is_mt = False
+    header = hl.get_vcf_metadata(vcf_file) 
+    mt = hl.import_vcf(vcf_file, force_bgz=True, array_elements_required=False, reference_genome='GRCh38')
+
 mt = mt.distinct_by_row()
 try:
     mt = split_multi_ssc(mt)
@@ -49,6 +56,9 @@ except:
     pass
 
 mt = hl.vep(mt, config='vep_config.json', csq=True, tolerate_parse_error=True)
-header['info']['CSQ'] = {'Description': hl.eval(mt.vep_csq_header), 'Number': '.', 'Type': 'String'}
+
+if not is_mt:
+    header['info']['CSQ'] = {'Description': hl.eval(mt.vep_csq_header), 'Number': '.', 'Type': 'String'}
+
 mt = mt.annotate_rows(info = mt.info.annotate(CSQ=mt.vep))
 hl.export_vcf(dataset=mt, output=vep_annotated_vcf_name, metadata=header)
