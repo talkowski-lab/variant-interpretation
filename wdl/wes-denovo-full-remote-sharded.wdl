@@ -76,6 +76,7 @@ workflow hailDenovoWES {
         input:
             mt_uris=step2.filtered_mt,
             cohort_prefix=cohort_prefix,
+            bucket_id=bucket_id,
             hail_docker=hail_docker
     }
 

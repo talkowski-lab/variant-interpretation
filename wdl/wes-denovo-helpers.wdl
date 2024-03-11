@@ -272,6 +272,7 @@ task mergeMTs {
     input {
         Array[String] mt_uris
         String cohort_prefix
+        String bucket_id
         String hail_docker
         RuntimeAttr? runtime_attr_override
     }
@@ -337,7 +338,7 @@ task mergeMTs {
     pd.Series([filename]).to_csv('mt_uri.txt', index=False, header=None)
     EOF
 
-    python3 merge_mts.py ~{sep=',' mt_uris} ~{cohort_prefix}_merged ~{cpu_cores} ~{memory}
+    python3 merge_mts.py ~{sep=',' mt_uris} ~{cohort_prefix}_merged ~{cpu_cores} ~{memory} ~{bucket_id}
     >>>
 
     output {
