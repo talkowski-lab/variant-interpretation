@@ -267,3 +267,80 @@ task subsetVCFSamplesHail {
         File vcf_subset = basename(samples_file, '.txt') + '.vcf.bgz'
     }
 }
+
+task mergeMTs {
+    input {
+        Array[String] mt_uris
+        String cohort_prefix
+        String hail_docker
+        RuntimeAttr? runtime_attr_override
+    }
+
+    Float base_disk_gb = 10.0
+    Float input_disk_scale = 5.0
+
+    RuntimeAttr runtime_default = object {
+        mem_gb: 4,
+        disk_gb: ceil(base_disk_gb),
+        cpu_cores: 1,
+        preemptible_tries: 3,
+        max_retries: 1,
+        boot_disk_gb: 10
+    }
+
+    RuntimeAttr runtime_override = select_first([runtime_attr_override, runtime_default])
+
+    Float memory = select_first([runtime_override.mem_gb, runtime_default.mem_gb])
+    Int cpu_cores = select_first([runtime_override.cpu_cores, runtime_default.cpu_cores])
+    
+    runtime {
+        memory: "~{memory} GB"
+        disks: "local-disk ~{select_first([runtime_override.disk_gb, runtime_default.disk_gb])} HDD"
+        cpu: cpu_cores
+        preemptible: select_first([runtime_override.preemptible_tries, runtime_default.preemptible_tries])
+        maxRetries: select_first([runtime_override.max_retries, runtime_default.max_retries])
+        docker: hail_docker
+        bootDiskSizeGb: select_first([runtime_override.boot_disk_gb, runtime_default.boot_disk_gb])
+    }
+
+    command <<<
+    cat <<EOF > merge_mts.py
+    import datetime
+    import pandas as pd
+    import hail as hl
+    import numpy as np
+    import sys
+    import os
+
+    mt_uris = sys.argv[1].split(',')
+    merged_filename = sys.argv[2]
+    cores = sys.argv[3]
+    mem = int(np.floor(float(sys.argv[4])))
+
+    hl.init(min_block_size=128, spark_conf={"spark.executor.cores": cores, 
+                        "spark.executor.memory": f"{mem}g",
+                        "spark.driver.cores": cores,
+                        "spark.driver.memory": f"{mem}g"
+                        }, tmp_dir="tmp", local_tmpdir="tmp")
+
+    tot_mt = len(mt_uris)
+    for i, mt_uri in enumerate(mt_uris):
+        if (((i+1)%10)==0):
+            print(f"Merging MT {i+1}/{tot_mt}...")
+        if i==0:
+            mt = hl.read_matrix_table(mt_uri)
+        else:
+            mt2 = hl.read_matrix_table(mt_uri)
+            mt = mt.union_rows(mt2)
+    filename = f"{bucket_id}/hail/merged_mt/{str(datetime.datetime.now().strftime('%Y-%m-%d_%H-%M'))}/{merged_filename}.mt"
+    mt.write(filename, overwrite=True)
+    pd.Series([filename]).to_csv('mt_uri.txt', index=False, header=None)
+    EOF
+
+    python3 merge_mts.py ~{sep=',' mt_uris} ~{cohort_prefix}_merged ~{cpu_cores} ~{memory}
+    >>>
+
+    output {
+        String merged_mt = read_lines('mt_uri.txt')[0]
+    }
+}
