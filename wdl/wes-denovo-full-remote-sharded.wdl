@@ -70,33 +70,33 @@ workflow hailDenovoWES {
                 hail_basic_filtering_script=hail_basic_filtering_script,
                 hail_docker=hail_docker
         }
-    }
 
-    call helpers.mergeMTs as mergeMTs {
-        input:
-            mt_uris=step2.filtered_mt,
-            cohort_prefix=cohort_prefix,
-            bucket_id=bucket_id,
-            hail_docker=hail_docker
-    }
-
-    call helpers.getHailMTSize as getMergedMTSize {
+        call helpers.getHailMTSize as getStep2MTSize {
             input:
-                mt_uri=mergeMTs.merged_mt,
+                mt_uri=step2.filtered_mt,
                 hail_docker=hail_docker
-    }
+        }
     
-    call step3.hailDenovoFilteringRemote as step3 {
-        input:
-            filtered_mt=mergeMTs.merged_mt,
-            input_size=getMergedMTSize.mt_size,
-            ped_uri=ped_uri,
-            bucket_id=bucket_id,
-            cohort_prefix=cohort_prefix,
-            loeuf_file=loeuf_file,
-            hail_denovo_filtering_script=hail_denovo_filtering_script,
-            hail_docker=hail_docker
+        call step3.hailDenovoFilteringRemote as step3 {
+            input:
+                filtered_mt=step2.filtered_mt,
+                input_size=getStep2MTSize.mt_size,
+                ped_uri=ped_uri,
+                bucket_id=bucket_id,
+                cohort_prefix=cohort_prefix,
+                loeuf_file=loeuf_file,
+                hail_denovo_filtering_script=hail_denovo_filtering_script,
+                hail_docker=hail_docker
+        }
     }
+
+    # call helpers.mergeMTs as mergeMTs {
+    #     input:
+    #         mt_uris=step2.filtered_mt,
+    #         cohort_prefix=cohort_prefix,
+    #         bucket_id=bucket_id,
+    #         hail_docker=hail_docker
+    # }
 
     output {
         # step 1 output
@@ -106,10 +106,10 @@ workflow hailDenovoWES {
         Array[String] filtered_mt = step2.filtered_mt
         Array[File] post_filter_sample_qc_info = step2.post_filter_sample_qc_info
         # step 3 output
-        File de_novo_results = step3.de_novo_results
-        File de_novo_vep = step3.de_novo_vep
-        String de_novo_ht = step3.de_novo_ht
-        String tdt_mt = step3.tdt_mt
-        String tdt_parent_aware_mt = step3.tdt_parent_aware_mt
+        # File de_novo_results = step3.de_novo_results
+        # File de_novo_vep = step3.de_novo_vep
+        Array[String] de_novo_ht = step3.de_novo_ht
+        Array[String] tdt_mt = step3.tdt_mt
+        Array[String] tdt_parent_aware_mt = step3.tdt_parent_aware_mt
     }
 }
