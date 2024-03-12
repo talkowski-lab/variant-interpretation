@@ -85,9 +85,11 @@ task getHailMTSizes {
     }
 
     command <<<
-        for mt_uri in $(cat ~{write_lines(mt_uris)}) do;
+        touch mt_size.txt
+        for mt_uri in $(cat ~{write_lines(mt_uris)});
+        do
             gsutil du -sh $mt_uri | cut -f1 -d ' ' >> mt_size.txt;
-        done;
+        done
 
         cat <<EOF > get_sum.py
         import pandas as pd
