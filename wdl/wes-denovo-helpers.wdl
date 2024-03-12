@@ -417,10 +417,10 @@ task mergeHTs {
         
         if (((i+1)%batch_size)==0):
             print(f"Merging batch {batch}: HTs {(i+2)-batch_size} to {i+1}, out of {tot_ht} total HTs...")
-            ht.write(f"{cohort_prefix}_batch_{batch}.ht", overwrite=True)
-            ht = hl.read_table(f"{cohort_prefix}_batch_{batch}.ht")
+            ht.write(f"{merged_filename}_batch_{batch}.ht", overwrite=True)
+            ht = hl.read_table(f"{merged_filename}_batch_{batch}.ht")
             batch += 1
-            
+
     filename = f"{bucket_id}/hail/merged_ht/{str(datetime.datetime.now().strftime('%Y-%m-%d_%H-%M'))}/{merged_filename}.ht"
     ht.write(filename, overwrite=True)
     pd.Series([filename]).to_csv('ht_uri.txt', index=False, header=None)
