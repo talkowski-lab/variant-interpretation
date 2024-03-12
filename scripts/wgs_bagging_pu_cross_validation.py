@@ -134,7 +134,7 @@ def filter_variants(final_output, ultra_rare, final_output_raw, ultra_rare_raw):
 
     return final_output, ultra_rare, merged_output
 
-def BaggingPU(X, y, kf, n_jobs=-1):
+def BaggingPU(X, y, kf, model, n_jobs=-1):
     y_pred_bag = np.zeros(y.size)
     output_bag = np.zeros(y.size)
     classifiers = []
