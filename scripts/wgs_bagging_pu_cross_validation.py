@@ -30,7 +30,7 @@ numeric = sys.argv[6]
 outlier_samples = sys.argv[7].split(',')
 vqslod_cutoff = float(sys.argv[8])
 model_type = sys.argv[9]  # string 'RF', 'XGB'
-prop_dn = sys.argv[10]
+prop_dn = float(sys.argv[10])
 base_params = pd.read_csv(sys.argv[11], sep='\t', header=None, index_col=0)[1].astype(str).apply(parse).to_dict()  # dict
 params = pd.read_csv(sys.argv[12], sep='\t', header=None, index_col=0)[1].astype(str).apply(parse).to_dict()  # for cv
     
