@@ -16,19 +16,21 @@ workflow mergeHTs {
         Array[String] ht_uris
         String merged_filename
         String hail_docker
+        Float? input_size
     }
-
-    call helpers.getHailMTSizes as getHailHTSizes {
-        input:
-            mt_uris=ht_uris,
-            hail_docker=hail_docker
+    if (!defined(input_size)) {
+        call helpers.getHailMTSizes as getHailHTSizes {
+            input:
+                mt_uris=ht_uris,
+                hail_docker=hail_docker
+        }
     }
     call helpers.mergeHTs as mergeHTs {
         input:
             ht_uris=ht_uris,
             merged_filename=merged_filename,
             hail_docker=hail_docker,
-            input_size=getHailHTSizes.mt_size
+            input_size=select_first([input_size, getHailHTSizes.mt_size])
     }
 
     output {
