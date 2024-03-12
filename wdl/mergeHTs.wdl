@@ -11,23 +11,24 @@ struct RuntimeAttr {
     Int? max_retries
 }
 
-workflow mergeMTs {
+workflow mergeHTs {
     input {
-        Array[String] mt_uris
+        Array[String] ht_uris
         String cohort_prefix
         String bucket_id
         String hail_docker
     }
 
-    call helpers.mergeMTs as mergeMTs {
+    call helpers.mergeHTs as mergeHTs {
         input:
-            mt_uris=mt_uris,
+            ht_uris=ht_uris,
             cohort_prefix=cohort_prefix,
             bucket_id=bucket_id,
             hail_docker=hail_docker
     }
 
     output {
-        String merged_mt = mergeMTs.merged_mt
+        String merged_ht = mergeHTs.merged_ht
     }
 }
+

@@ -318,7 +318,7 @@ task mergeMTs {
     cores = sys.argv[3]
     mem = int(np.floor(float(sys.argv[4])))
     bucket_id = sys.argv[5]
-    
+
     hl.init(min_block_size=128, spark_conf={"spark.executor.cores": cores, 
                         "spark.executor.memory": f"{mem}g",
                         "spark.driver.cores": cores,
@@ -344,5 +344,84 @@ task mergeMTs {
 
     output {
         String merged_mt = read_lines('mt_uri.txt')[0]
+    }
+}
+
+task mergeHTs {
+    input {
+        Array[String] ht_uris
+        String cohort_prefix
+        String bucket_id
+        String hail_docker
+        RuntimeAttr? runtime_attr_override
+    }
+
+    Float base_disk_gb = 10.0
+    Float input_disk_scale = 5.0
+
+    RuntimeAttr runtime_default = object {
+        mem_gb: 4,
+        disk_gb: ceil(base_disk_gb),
+        cpu_cores: 1,
+        preemptible_tries: 3,
+        max_retries: 1,
+        boot_disk_gb: 10
+    }
+
+    RuntimeAttr runtime_override = select_first([runtime_attr_override, runtime_default])
+
+    Float memory = select_first([runtime_override.mem_gb, runtime_default.mem_gb])
+    Int cpu_cores = select_first([runtime_override.cpu_cores, runtime_default.cpu_cores])
+    
+    runtime {
+        memory: "~{memory} GB"
+        disks: "local-disk ~{select_first([runtime_override.disk_gb, runtime_default.disk_gb])} HDD"
+        cpu: cpu_cores
+        preemptible: select_first([runtime_override.preemptible_tries, runtime_default.preemptible_tries])
+        maxRetries: select_first([runtime_override.max_retries, runtime_default.max_retries])
+        docker: hail_docker
+        bootDiskSizeGb: select_first([runtime_override.boot_disk_gb, runtime_default.boot_disk_gb])
+    }
+
+    command <<<
+    cat <<EOF > merge_hts.py
+    import datetime
+    import pandas as pd
+    import hail as hl
+    import numpy as np
+    import sys
+    import os
+
+    ht_uris = sys.argv[1].split(',')
+    merged_filename = sys.argv[2]
+    cores = sys.argv[3]
+    mem = int(np.floor(float(sys.argv[4])))
+    bucket_id = sys.argv[5]
+    
+    hl.init(min_block_size=128, spark_conf={"spark.executor.cores": cores, 
+                        "spark.executor.memory": f"{mem}g",
+                        "spark.driver.cores": cores,
+                        "spark.driver.memory": f"{mem}g"
+                        }, tmp_dir="tmp", local_tmpdir="tmp")
+
+    tot_ht = len(ht_uris)
+    for i, ht_uri in enumerate(ht_uris):
+        if (((i+1)%10)==0):
+            print(f"Merging HT {i+1}/{tot_ht}...")
+        if i==0:
+            ht = hl.read_table(ht_uri)
+        else:
+            ht2 = hl.read_table(ht_uri)
+            ht = ht.union(ht2)
+    filename = f"{bucket_id}/hail/merged_ht/{str(datetime.datetime.now().strftime('%Y-%m-%d_%H-%M'))}/{merged_filename}.ht"
+    ht.write(filename, overwrite=True)
+    pd.Series([filename]).to_csv('ht_uri.txt', index=False, header=None)
+    EOF
+
+    python3 merge_hts.py ~{sep=',' ht_uris} ~{cohort_prefix}_merged ~{cpu_cores} ~{memory} ~{bucket_id}
+    >>>
+
+    output {
+        String merged_ht = read_lines('ht_uri.txt')[0]
     }
 }
