@@ -16,21 +16,21 @@ workflow getDenovoVEPandLOEUFSharded {
     input {
         File loeuf_file
         Array[String] filtered_mts
-        Array[String] denovo_hts
+        Array[String] de_novo_hts
         String merged_filename
         String hail_docker
     }
 
-    Array[Pair[String, String]] mt_ht_pairs = zip(filtered_mts, denovo_hts)
+    Array[Pair[String, String]] mt_ht_pairs = zip(filtered_mts, de_novo_hts)
 
     scatter (mt_ht_pair in mt_ht_pairs) {
         String filtered_mt = mt_ht_pair.left
-        String denovo_ht = mt_ht_pair.right
+        String de_novo_ht = mt_ht_pair.right
 
         call getDenovoVEPandLOEUF.getDenovoVEPandLOEUF as getDenovoVEPandLOEUF {
             input:
             filtered_mt=filtered_mt,
-            denovo_ht=denovo_ht,
+            de_novo_ht=de_novo_ht,
             loeuf_file=loeuf_file,
             hail_docker=hail_docker
         }

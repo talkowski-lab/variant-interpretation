@@ -15,20 +15,20 @@ workflow getDenovoVEPandLOEUF {
     input {
         File loeuf_file
         String filtered_mt
-        String denovo_ht
+        String de_novo_ht
         String hail_docker
     }
 
     call helpers.getHailMTSize as getHailMTSize {
         input:
-        mt_uri=filtered_mt,
+        mt_uri=de_novo_ht,
         hail_docker=hail_docker
     }
 
     call getDenovoVEP {
         input:
         filtered_mt=filtered_mt,
-        denovo_ht=denovo_ht,
+        de_novo_ht=de_novo_ht,
         hail_docker=hail_docker,
         input_size=getHailMTSize.mt_size
     }
@@ -48,7 +48,7 @@ workflow getDenovoVEPandLOEUF {
 task getDenovoVEP {
     input {
         String filtered_mt
-        String denovo_ht
+        String de_novo_ht
         String hail_docker
         Float input_size
         RuntimeAttr? runtime_attr_override
@@ -92,7 +92,7 @@ task getDenovoVEP {
     import os
 
     filtered_mt = sys.argv[1]
-    denovo_ht = sys.argv[2]
+    de_novo_ht = sys.argv[2]
     cores = sys.argv[3]
     mem = int(np.floor(float(sys.argv[4])))
 
@@ -105,13 +105,13 @@ task getDenovoVEP {
                     }, tmp_dir="tmp", local_tmpdir="tmp")
 
     mt = hl.read_matrix_table(filtered_mt)
-    de_novo_results = hl.read_table(denovo_ht)
+    de_novo_results = hl.read_table(de_novo_ht)
     mt = mt.semi_join_rows(de_novo_results.key_by('locus', 'alleles'))
     df = mt.rows().to_pandas()
     df.to_csv(f"{prefix}_wes_final_denovo_vep.txt", sep='\t', index=False)
     EOF
 
-    python3 get_denovo_vep.py ~{filtered_mt} ~{denovo_ht} ~{cpu_cores} ~{memory}
+    python3 get_denovo_vep.py ~{filtered_mt} ~{de_novo_ht} ~{cpu_cores} ~{memory}
     >>>
 
     output {
