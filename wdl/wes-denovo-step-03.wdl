@@ -42,8 +42,8 @@ workflow step3 {
     }
 
     output {
-        File de_novo_results = hailDenovoFilteringRemote.de_novo_results
-        File de_novo_vep = hailDenovoFilteringRemote.de_novo_vep
+        # File de_novo_results = hailDenovoFilteringRemote.de_novo_results
+        # File de_novo_vep = hailDenovoFilteringRemote.de_novo_vep
         String de_novo_ht = hailDenovoFilteringRemote.de_novo_ht
         String tdt_mt = hailDenovoFilteringRemote.tdt_mt
         String tdt_parent_aware_mt = hailDenovoFilteringRemote.tdt_parent_aware_mt
