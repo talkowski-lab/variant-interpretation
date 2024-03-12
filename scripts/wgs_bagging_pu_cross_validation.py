@@ -15,6 +15,12 @@ from baggingPU import BaggingClassifierPU
 # https://heartbeat.comet.ml/positive-and-unlabelled-learning-recovering-labels-for-data-using-machine-learning-59c1def5452f
 # https://roywrightme.wordpress.com/2017/11/16/positive-unlabeled-learning/
 
+def parse(string):
+    try:
+        return ast.literal_eval(string)
+    except:
+        return string[1:-1].split(', ')
+
 vcf_metrics_tsv = sys.argv[1]
 ultra_rare_variants_tsv = sys.argv[2]
 polyx_vcf = sys.argv[3]
@@ -25,8 +31,8 @@ outlier_samples = sys.argv[7].split(',')
 vqslod_cutoff = float(sys.argv[8])
 model_type = sys.argv[9]  # string 'RF', 'XGB'
 prop_dn = sys.argv[10]
-base_params = pd.read_csv(sys.argv[11], header=None, index_col=0)[0].apply(ast.literal_eval).to_dict()  # dict
-params = pd.read_csv(sys.argv[12], header=None, index_col=0)[0].apply(ast.literal_eval).to_dict()  # for cv
+base_params = pd.read_csv(sys.argv[11], sep='\t', header=None, index_col=0)[1].apply(parse).to_dict()  # dict
+params = pd.read_csv(sys.argv[12], sep='\t', header=None, index_col=0)[1].apply(parse).to_dict()  # for cv
     
 eval_metric = sklearn.metrics.f1_score
 

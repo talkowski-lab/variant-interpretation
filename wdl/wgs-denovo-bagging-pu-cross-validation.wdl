@@ -26,7 +26,6 @@ workflow crossValidateBaggingPU {
         String sv_base_mini_docker
         String hail_docker
         Boolean remove_regions=true  # remove repetitive regions and multiallelic
-        Boolean return_estimators=false
         Array[String]? numeric
         String model_type
         Float vqslod_cutoff=-10
