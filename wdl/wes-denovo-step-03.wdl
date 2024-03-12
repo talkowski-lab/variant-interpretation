@@ -96,8 +96,8 @@ task hailDenovoFilteringRemote {
     }
 
     output {
-        File de_novo_results = glob("*_wes_final_denovo.txt")[0]
-        File de_novo_vep = glob("*_wes_final_denovo_vep.txt")[0]
+        # File de_novo_results = glob("*_wes_final_denovo.txt")[0]
+        # File de_novo_vep = glob("*_wes_final_denovo_vep.txt")[0]
         String de_novo_ht = read_lines('mt_uri.txt')[0]
         String tdt_mt = read_lines('mt_uri.txt')[1]
         String tdt_parent_aware_mt = read_lines('mt_uri.txt')[2]
