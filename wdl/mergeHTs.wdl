@@ -17,6 +17,7 @@ workflow mergeHTs {
         String cohort_prefix
         String bucket_id
         String hail_docker
+        Int batch_size
     }
 
     call helpers.mergeHTs as mergeHTs {
@@ -24,7 +25,8 @@ workflow mergeHTs {
             ht_uris=ht_uris,
             cohort_prefix=cohort_prefix,
             bucket_id=bucket_id,
-            hail_docker=hail_docker
+            hail_docker=hail_docker,
+            batch_size=batch_size
     }
 
     output {

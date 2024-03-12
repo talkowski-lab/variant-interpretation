@@ -353,6 +353,7 @@ task mergeHTs {
         String cohort_prefix
         String bucket_id
         String hail_docker
+        Int batch_size=100
         RuntimeAttr? runtime_attr_override
     }
 
@@ -397,7 +398,8 @@ task mergeHTs {
     cores = sys.argv[3]
     mem = int(np.floor(float(sys.argv[4])))
     bucket_id = sys.argv[5]
-    
+    batch_size = int(sys.argv[6])
+
     hl.init(min_block_size=128, spark_conf={"spark.executor.cores": cores, 
                         "spark.executor.memory": f"{mem}g",
                         "spark.driver.cores": cores,
@@ -405,20 +407,26 @@ task mergeHTs {
                         }, tmp_dir="tmp", local_tmpdir="tmp")
 
     tot_ht = len(ht_uris)
+    batch=0
     for i, ht_uri in enumerate(ht_uris):
-        if (((i+1)%10)==0):
-            print(f"Merging HT {i+1}/{tot_ht}...")
         if i==0:
             ht = hl.read_table(ht_uri)
         else:
             ht2 = hl.read_table(ht_uri)
             ht = ht.union(ht2)
+        
+        if (((i+1)%batch_size)==0):
+            print(f"Merging batch {batch}: HTs {(i+2)-batch_size} to {i+1}, out of {tot_ht} total HTs...")
+            ht.write(f"{cohort_prefix}_batch_{batch}.ht", overwrite=True)
+            ht = hl.read_table(f"{cohort_prefix}_batch_{batch}.ht")
+            batch += 1
+            
     filename = f"{bucket_id}/hail/merged_ht/{str(datetime.datetime.now().strftime('%Y-%m-%d_%H-%M'))}/{merged_filename}.ht"
     ht.write(filename, overwrite=True)
     pd.Series([filename]).to_csv('ht_uri.txt', index=False, header=None)
     EOF
 
-    python3 merge_hts.py ~{sep=',' ht_uris} ~{cohort_prefix}_merged ~{cpu_cores} ~{memory} ~{bucket_id}
+    python3 merge_hts.py ~{sep=',' ht_uris} ~{cohort_prefix}_merged ~{cpu_cores} ~{memory} ~{bucket_id} ~{batch_size}
     >>>
 
     output {
