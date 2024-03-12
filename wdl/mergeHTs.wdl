@@ -14,23 +14,25 @@ struct RuntimeAttr {
 workflow mergeHTs {
     input {
         Array[String] ht_uris
-        String cohort_prefix
-        String bucket_id
+        String merged_filename
         String hail_docker
-        Int batch_size
     }
 
+    call helpers.getHailMTSizes as getHailHTSizes {
+        input:
+            mt_uris=ht_uris,
+            hail_docker=hail_docker
+    }
     call helpers.mergeHTs as mergeHTs {
         input:
             ht_uris=ht_uris,
-            cohort_prefix=cohort_prefix,
-            bucket_id=bucket_id,
+            merged_filename=merged_filename,
             hail_docker=hail_docker,
-            batch_size=batch_size
+            input_size=getHailHTSizes.mt_size
     }
 
     output {
-        String merged_ht = mergeHTs.merged_ht
+        File merged_tsv = mergeHTs.merged_tsv
     }
 }
 

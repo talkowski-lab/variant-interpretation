@@ -51,6 +51,58 @@ task getHailMTSize {
     }
 }
 
+task getHailMTSizes {
+    input {
+        Array[String] mt_uris
+        String hail_docker
+        RuntimeAttr? runtime_attr_override
+    }
+    Float base_disk_gb = 10.0
+    Float input_disk_scale = 5.0
+
+    RuntimeAttr runtime_default = object {
+        mem_gb: 4,
+        disk_gb: ceil(base_disk_gb),
+        cpu_cores: 1,
+        preemptible_tries: 3,
+        max_retries: 1,
+        boot_disk_gb: 10
+    }
+
+    RuntimeAttr runtime_override = select_first([runtime_attr_override, runtime_default])
+
+    Float memory = select_first([runtime_override.mem_gb, runtime_default.mem_gb])
+    Int cpu_cores = select_first([runtime_override.cpu_cores, runtime_default.cpu_cores])
+    
+    runtime {
+        memory: "~{memory} GB"
+        disks: "local-disk ~{select_first([runtime_override.disk_gb, runtime_default.disk_gb])} HDD"
+        cpu: cpu_cores
+        preemptible: select_first([runtime_override.preemptible_tries, runtime_default.preemptible_tries])
+        maxRetries: select_first([runtime_override.max_retries, runtime_default.max_retries])
+        docker: hail_docker
+        bootDiskSizeGb: select_first([runtime_override.boot_disk_gb, runtime_default.boot_disk_gb])
+    }
+
+    command <<<
+        for (mt_uri in $(cat ~{write_lines(mt_uris)})) do;
+            gsutil du -sh $mt_uri | cut -f1 -d ' ' >> mt_size.txt;
+        done;
+
+        cat <<EOF > get_sum.py
+        import pandas as pd
+        sizes = pd.read_csv('mt_size.txt', header=None)[0]
+        pd.Series([sizes.sum()]).to_csv('tot_size.txt', index=False, header=None)
+        EOF
+
+        python3 get_sum.py
+    >>>
+
+    output {
+        Float mt_size = read_lines('tot_size.txt')[0]
+    }
+}
+
 task filterIntervalsToMT {
     input {
         File bed_file
@@ -350,10 +402,9 @@ task mergeMTs {
 task mergeHTs {
     input {
         Array[String] ht_uris
-        String cohort_prefix
-        String bucket_id
+        String merged_filename
         String hail_docker
-        Int batch_size=100
+        Float input_size
         RuntimeAttr? runtime_attr_override
     }
 
@@ -397,8 +448,6 @@ task mergeHTs {
     merged_filename = sys.argv[2]
     cores = sys.argv[3]
     mem = int(np.floor(float(sys.argv[4])))
-    bucket_id = sys.argv[5]
-    batch_size = int(sys.argv[6])
 
     hl.init(min_block_size=128, spark_conf={"spark.executor.cores": cores, 
                         "spark.executor.memory": f"{mem}g",
@@ -408,28 +457,19 @@ task mergeHTs {
 
     tot_ht = len(ht_uris)
     batch=0
-    for i, ht_uri in enumerate(ht_uris):
-        if i==0:
-            ht = hl.read_table(ht_uri)
-        else:
-            ht2 = hl.read_table(ht_uri)
-            ht = ht.union(ht2)
-        
-        if (((i+1)%batch_size)==0):
-            print(f"Merging batch {batch}: HTs {(i+2)-batch_size} to {i+1}, out of {tot_ht} total HTs...")
-            ht.write(f"{merged_filename}_batch_{batch}.ht", overwrite=True)
-            ht = hl.read_table(f"{merged_filename}_batch_{batch}.ht")
-            batch += 1
+    merged_df = pd.DataFrame()
+    for i, uri in enumerate(ht_uris):
+        print(f"{i+1}/{tot}")
+        ht = hl.read_table(uri)
+        merged_df = pd.concat([merged_df, ht.to_pandas()])
 
-    filename = f"{bucket_id}/hail/merged_ht/{str(datetime.datetime.now().strftime('%Y-%m-%d_%H-%M'))}/{merged_filename}.ht"
-    ht.write(filename, overwrite=True)
-    pd.Series([filename]).to_csv('ht_uri.txt', index=False, header=None)
+    merged_df.to_csv(f"{merged_filename}.tsv", sep='\t', index=False)
     EOF
 
-    python3 merge_hts.py ~{sep=',' ht_uris} ~{cohort_prefix}_merged ~{cpu_cores} ~{memory} ~{bucket_id} ~{batch_size}
+    python3 merge_hts.py ~{sep=',' ht_uris} ~{merged_filename} ~{cpu_cores} ~{memory}
     >>>
 
     output {
-        String merged_ht = read_lines('ht_uri.txt')[0]
+        File merged_tsv = merged_filename + '.tsv'
     }
 }
