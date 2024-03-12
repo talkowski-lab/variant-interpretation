@@ -27,23 +27,29 @@ workflow getDenovoVEPandLOEUFSharded {
         String filtered_mt = mt_ht_pair.left
         String de_novo_ht = mt_ht_pair.right
 
-        call getDenovoVEPandLOEUF.getDenovoVEPandLOEUF as getDenovoVEPandLOEUF {
+        call getDenovoVEPandLOEUF.getDenovoVEP as getDenovoVEP {
             input:
             filtered_mt=filtered_mt,
             de_novo_ht=de_novo_ht,
-            loeuf_file=loeuf_file,
             hail_docker=hail_docker
         }
     }
 
     call helpers.mergeResults as mergeResults {
         input:
-        tsvs=getDenovoVEPandLOEUF.de_novo_vep,
+        tsvs=getDenovoVEP.de_novo_vep,
         hail_docker=hail_docker,
         merged_filename=merged_filename
     }
 
+    call getDenovoVEPandLOEUF.annotateLOEUF as annotateLOEUF {
+        input:
+        loeuf_file=loeuf_file,
+        de_novo_vep=mergeResults.merged_tsv,
+        hail_docker=hail_docker
+    }
+
     output {
-        File de_novo_vep = mergeResults.merged_tsv
+        File de_novo_vep = annotateLOEUF.de_novo_vep_loeuf
     }
 }
