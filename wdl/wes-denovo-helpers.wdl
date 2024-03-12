@@ -43,7 +43,20 @@ task getHailMTSize {
     }
 
     command <<<
-        gsutil du -sh ~{mt_uri} | cut -f1 -d ' ' > mt_size.txt
+        tot_size=$(gsutil -m du -sh ~{mt_uri} | awk -F '    ' '{ print $1 }')
+
+        cat <<EOF > convert_to_gb.py
+        import sys
+        size = sys.argv[1]
+        unit = sys.argv[2]
+        def convert_to_gib(size, unit):
+            size_dict = {"KiB": 2**10, "MiB": 2**20, "GiB": 2**30}
+            return float(size) * size_dict[unit] / size_dict["GiB"]
+        size_in_gib = convert_to_gib(size, unit)
+        print(size_in_gib)        
+        EOF
+
+        python3 convert_to_gb.py $tot_size > mt_size.txt
     >>>
 
     output {
@@ -85,19 +98,20 @@ task getHailMTSizes {
     }
 
     command <<<
-        touch mt_size.txt
-        for mt_uri in $(cat ~{write_lines(mt_uris)});
-        do
-            gsutil -m du -sh $mt_uri | cut -f1 -d ' ' >> mt_size.txt;
-        done
+        tot_size=$(gsutil -m du -shc ~{sep=' ' mt_uris} | awk -F '    ' '{ print $1 }' | tail -n 1)
 
-        cat <<EOF > get_sum.py
-        import pandas as pd
-        sizes = pd.read_csv('mt_size.txt', header=None)[0]
-        pd.Series([sizes.sum()]).to_csv('tot_size.txt', index=False, header=None)
+        cat <<EOF > convert_to_gb.py
+        import sys
+        size = sys.argv[1]
+        unit = sys.argv[2]
+        def convert_to_gib(size, unit):
+            size_dict = {"KiB": 2**10, "MiB": 2**20, "GiB": 2**30}
+            return float(size) * size_dict[unit] / size_dict["GiB"]
+        size_in_gib = convert_to_gib(size, unit)
+        print(size_in_gib)        
         EOF
 
-        python3 get_sum.py
+        python3 convert_to_gb.py $tot_size > tot_size.txt
     >>>
 
     output {
