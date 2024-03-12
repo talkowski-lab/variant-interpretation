@@ -458,10 +458,10 @@ task mergeHTs {
                         }, tmp_dir="tmp", local_tmpdir="tmp")
 
     tot_ht = len(ht_uris)
-    batch=0
     merged_df = pd.DataFrame()
+
     for i, uri in enumerate(ht_uris):
-        print(f"{i+1}/{tot}")
+        print(f"{i+1}/{tot_ht}")
         ht = hl.read_table(uri)
         merged_df = pd.concat([merged_df, ht.to_pandas()])
 
