@@ -19,7 +19,9 @@ def parse(string):
     try:
         return ast.literal_eval(string)
     except:
-        return string[1:-1].split(', ')
+        if string[0] in ['{', '[']:
+            return string[1:-1].split(', ')
+        return string
 
 vcf_metrics_tsv = sys.argv[1]
 ultra_rare_variants_tsv = sys.argv[2]
