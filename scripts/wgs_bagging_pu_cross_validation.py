@@ -42,6 +42,7 @@ if model_type == 'RF':
     model_func = RandomForestClassifier    
 if model_type == 'XGB':
     model_func = xgb.XGBClassifier
+    base_params['eval_metric'] = eval_metric
 
 # Functions
 def load_variants(vcf_metrics_tsv, ultra_rare_variants_tsv, polyx_vcf, var_type): 
