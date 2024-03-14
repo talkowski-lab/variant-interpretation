@@ -239,7 +239,7 @@ elif var_type == 'Indel':
 elif var_type == 'SNV':
     numeric = ['BaseQRankSum', 'FS', 'MQ', 'MQRankSum', 'QD', 'SOR', 'GQ_parent']
 
-numeric = np.intersect1d(numeric, np.intersect1d(ultra_rare.columns, final_output.columns)).tolist()
+# numeric = np.intersect1d(numeric, np.intersect1d(ultra_rare.columns, final_output.columns)).tolist()
 
 merged_output = merged_output[~merged_output[numeric].isna().any(axis=1)].reset_index(drop=True)
 
