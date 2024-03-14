@@ -259,7 +259,7 @@ for n_estimators, score_df in oob_scores_n_est.items():
 
 sns.violinplot(data=merged_oob_scores, y='value', x='n_estimators_rf');
 plt.title(f"{cohort_prefix} {var_type}, oob_score={metric}");
-plt.savefig(f"{cohort_prefix}_{var_type}_RF_oob_scores_n_estimators.png");
+plt.savefig(f"{cohort_prefix}_~{var_type}_~{metric}_RF_oob_scores_n_estimators.png");
 plt.show();
 
 best_n_estimators = merged_oob_scores.groupby('n_estimators_rf').value.mean().idxmax()
@@ -279,7 +279,7 @@ auc_scores = pd.DataFrame()
 for n_bags, results_df in results_n_bags.items():
     auc_scores.loc[n_bags, 'roc_auc_score'] = sklearn.metrics.roc_auc_score(results_df.label, results_df.pred_bag)
     RocCurveDisplay.from_predictions(results_df.label, results_df.pred_bag, ax=ax, name=f"n_bags={n_bags}");
-plt.savefig(f"{cohort_prefix}_{var_type}_RF_roc_auc_curve_n_bags.png");
+plt.savefig(f"{cohort_prefix}_~{var_type}_~{metric}_RF_roc_auc_curve_n_bags.png");
 plt.show(); 
 
 best_n_bags = auc_scores.roc_auc_score.idxmax()
@@ -315,7 +315,7 @@ else:
         RocCurveDisplay.from_predictions(y, y_pred, ax=ax, name=f"p_thr={round(p_thr, 2)}");
         opt_auc_scores.loc[p_thr, 'roc_auc_score'] = sklearn.metrics.roc_auc_score(results_optimized.label, y_pred)
 
-plt.savefig(f"{cohort_prefix}_{var_type}_RF_roc_auc_curve_p_thr.png");
+plt.savefig(f"{cohort_prefix}_~{var_type}_~{metric}_RF_roc_auc_curve_p_thr.png");
 plt.show();
 
 best_p_thr = round(opt_auc_scores.roc_auc_score.idxmax(), 2) 
@@ -328,7 +328,7 @@ results_optimized['pred_bag_optimized'] = [1 if x>best_p_thr else 0 for x in res
 results_optimized['features'] = ', '.join(numeric)
 results_optimized['metric'] = metric
 
-best_params.to_csv(f"{cohort_prefix}_{var_type}_RF_best_params.tsv", sep='\t', header=None)
-results_optimized.to_csv(f"{cohort_prefix}_{var_type}_RF_results.tsv", sep='\t', index=False)
-importances_optimized.to_csv(f"{cohort_prefix}_{var_type}_RF_feature_importances.tsv", sep='\t', index=False)
-oob_scores_optimized.to_csv(f"{cohort_prefix}_{var_type}_RF_oob_scores.tsv", sep='\t', index=False)
+best_params.to_csv(f"{cohort_prefix}_~{var_type}_~{metric}_RF_best_params.tsv", sep='\t', header=None)
+results_optimized.to_csv(f"{cohort_prefix}_~{var_type}_~{metric}_RF_results.tsv", sep='\t', index=False)
+importances_optimized.to_csv(f"{cohort_prefix}_~{var_type}_~{metric}_RF_feature_importances.tsv", sep='\t', index=False)
+oob_scores_optimized.to_csv(f"{cohort_prefix}_~{var_type}_~{metric}_RF_oob_scores.tsv", sep='\t', index=False)
