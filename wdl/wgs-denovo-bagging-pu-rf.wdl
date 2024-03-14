@@ -17,6 +17,7 @@ workflow BaggingPU_RF {
         File ultra_rare_variants_tsv
         File ultra_rare_polyx_vcf
         File repetitive_regions_bed
+        File rep_regions
         String var_type
         String bagging_pu_source_script
         String bagging_pu_rf_script
@@ -51,8 +52,8 @@ workflow BaggingPU_RF {
             vcf_metrics_tsv_final=vcf_metrics_tsv_final,
             ultra_rare_variants_tsv=ultra_rare_variants_tsv,
             ultra_rare_polyx_vcf=ultra_rare_polyx_vcf,
-            repetitive_regions_bed=repetitive_regions_bed,
-            ultra_rare_repetitive_regions_bed=flagRepetitiveRegions.output_bed,
+            rep_regions=rep_regions,
+            ultra_rare_rep_regions=flagRepetitiveRegions.output_bed,
             var_type=var_type,
             bagging_pu_source_script=bagging_pu_source_script,
             bagging_pu_rf_script=bagging_pu_rf_script,
@@ -80,8 +81,8 @@ task runBaggingPU_RF {
         File vcf_metrics_tsv_final
         File ultra_rare_variants_tsv
         File ultra_rare_polyx_vcf
-        File ultra_rare_repetitive_regions_bed
-        File repetitive_regions_bed
+        File ultra_rare_rep_regions
+        File rep_regions
         Array[String] numeric
         String var_type
         String bagging_pu_source_script
@@ -125,7 +126,7 @@ task runBaggingPU_RF {
         curl ~{bagging_pu_source_script} > baggingPU.py
         python3 run_bagging_pu.py ~{vcf_metrics_tsv_final} ~{ultra_rare_variants_tsv} ~{ultra_rare_polyx_vcf} \
         ~{cohort_prefix} ~{var_type} ~{sep=',' numeric} ~{vqslod_cutoff} \
-        ~{prop_dn} ~{ultra_rare_repetitive_regions_bed} ~{repetitive_regions_bed} ~{known_vars_uri} ~{metric}
+        ~{prop_dn} ~{ultra_rare_rep_regions} ~{rep_regions} ~{known_vars_uri} ~{metric}
     >>>
 
     output {
