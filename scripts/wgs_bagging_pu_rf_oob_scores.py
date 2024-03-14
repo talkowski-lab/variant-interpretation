@@ -325,6 +325,8 @@ best_params = pd.Series({'n_estimators_rf': best_n_estimators,
                            'p_thr': best_p_thr})
 
 results_optimized['pred_bag_optimized'] = [1 if x>best_p_thr else 0 for x in results_optimized.predict_proba_bag]
+results_optimized['features'] = ', '.join(numeric)
+results_optimized['metric'] = metric
 
 best_params.to_csv(f"{cohort_prefix}_{var_type}_RF_best_params.tsv", sep='\t', header=None)
 results_optimized.to_csv(f"{cohort_prefix}_{var_type}_RF_results.tsv", sep='\t', index=False)
