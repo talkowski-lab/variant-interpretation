@@ -17,7 +17,6 @@ workflow BaggingPU_RF {
         File ultra_rare_variants_tsv
         File ultra_rare_polyx_vcf
         File repetitive_regions_bed
-        File ultra_rare_repetitive_regions_bed
         String var_type
         String bagging_pu_source_script
         String bagging_pu_rf_script
