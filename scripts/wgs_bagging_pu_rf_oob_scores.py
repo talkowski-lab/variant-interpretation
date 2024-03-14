@@ -221,6 +221,15 @@ if known_vars_exist:
     known_vars = pd.read_csv(known_vars_uri, sep='\t').set_index('VarKey', drop=False)
     merged_output['is_known'] = merged_output.VarKey.isin(known_vars.VarKey)
 
+rep_reg_ur = pd.read_csv(ultra_rare_rep_regions, sep='\t', header=None)
+rep_reg = pd.read_csv(rep_regions, sep='\t', header=None)
+
+merged_output['repetitive_region'] = merged_output.VarKey.isin(pd.concat([rep_reg_ur, rep_reg])[3])
+
+merged_output['multiallelic'] = (merged_output.DPC_sample!=merged_output.DP_sample)\
+                |(merged_output.DPC_mother!=merged_output.DP_mother)\
+                |(merged_output.DPC_father!=merged_output.DP_father)
+
 if numeric != 'false':
     numeric = numeric.split(',')
 elif var_type == 'Indel':
@@ -234,15 +243,6 @@ merged_output = merged_output[~merged_output[numeric].isna().any(axis=1)].reset_
 
 X = merged_output[numeric].sample(frac=1)
 y = merged_output['label'].loc[X.index]
-
-rep_reg_ur = pd.read_csv(ultra_rare_rep_regions, sep='\t', header=None)
-rep_reg = pd.read_csv(rep_regions, sep='\t', header=None)
-
-merged_output['repetitive_region'] = merged_output.VarKey.isin(pd.concat([rep_reg_ur, rep_reg])[3])
-
-merged_output['multiallelic'] = (merged_output.DPC_sample!=merged_output.DP_sample)\
-                |(merged_output.DPC_mother!=merged_output.DP_mother)\
-                |(merged_output.DPC_father!=merged_output.DP_father)
 
 ## Get best n_estimators_rf
 
