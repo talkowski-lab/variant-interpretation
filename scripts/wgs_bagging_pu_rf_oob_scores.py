@@ -192,7 +192,7 @@ def runBaggingPU_RF(X, y, model, merged_output, numeric, n_bags=10):
                             'pred_bag': y_pred_bag.astype(int)
                             })
     if known_vars_exist:
-        results['is_known'] = merged_output.iloc[X.index].is_known
+        results['is_known'] = merged_output.iloc[X.index].is_known.astype(str)
         results.loc[results.label==1, 'is_known'] = 'ultra-rare'    
     return results, classifiers_bag
 
