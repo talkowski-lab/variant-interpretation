@@ -74,7 +74,7 @@ workflow BaggingPU_RF {
         Array[File] bagging_pu_results = flatten(runBaggingPU_RF.bagging_pu_results)
         Array[File] bagging_pu_importances = flatten(runBaggingPU_RF.bagging_pu_importances)
         Array[File] bagging_pu_oob_scores = flatten(runBaggingPU_RF.bagging_pu_oob_scores)
-        Array[File] bagging_pu_best_params = flatten(runBaggingPU_RF.bagging_pu_best_params)
+        # Array[File] bagging_pu_best_params = flatten(runBaggingPU_RF.bagging_pu_best_params)
         # Array[File] bagging_pu_figures = flatten(runBaggingPU_RF.bagging_pu_figures)
     }
 }
@@ -139,7 +139,7 @@ task runBaggingPU_RF {
         File bagging_pu_results = "~{cohort_prefix}_~{var_type}_~{metric}_RF_results.tsv"
         File bagging_pu_importances = "~{cohort_prefix}_~{var_type}_~{metric}_RF_feature_importances.tsv"
         File bagging_pu_oob_scores = "~{cohort_prefix}_~{var_type}_~{metric}_RF_oob_scores.tsv"
-        File bagging_pu_best_params = "~{cohort_prefix}_~{var_type}_~{metric}_RF_best_params.tsv"
+        # File bagging_pu_best_params = "~{cohort_prefix}_~{var_type}_~{metric}_RF_best_params.tsv"
         Array[File] bagging_pu_figures = glob('*.png')
     }
 }
