@@ -70,6 +70,7 @@ workflow BaggingPU_RF {
         File bagging_pu_results = runBaggingPU_RF.bagging_pu_results
         File bagging_pu_importances = runBaggingPU_RF.bagging_pu_importances
         File bagging_pu_oob_scores = runBaggingPU_RF.bagging_pu_oob_scores
+        File bagging_pu_best_params = runBaggingPU_RF.bagging_pu_best_params
         Array[File] bagging_pu_figures = runBaggingPU_RF.bagging_pu_figures
     }
 }
@@ -131,6 +132,7 @@ task runBaggingPU_RF {
         File bagging_pu_results = "~{cohort_prefix}_~{var_type}_RF_results.tsv"
         File bagging_pu_importances = "~{cohort_prefix}_~{var_type}_RF_feature_importances.tsv"
         File bagging_pu_oob_scores = "~{cohort_prefix}_~{var_type}_RF_oob_scores.tsv"
+        File bagging_pu_best_params = "~{cohort_prefix}_~{var_type}_RF_best_params.tsv"
         Array[File] bagging_pu_figures = glob('*.png')
     }
 }
