@@ -30,6 +30,8 @@ workflow BaggingPU_RF {
         String known_vars_uri='false'
         Float vqslod_cutoff=-10
         Float prop_dn=1
+        Int n_estimators_rf=100
+        Int n_bag=10
         RuntimeAttr? runtime_attr_bagging_pu
     }
 
@@ -61,6 +63,8 @@ workflow BaggingPU_RF {
                     vqslod_cutoff=vqslod_cutoff,
                     known_vars_uri=known_vars_uri,
                     prop_dn=prop_dn,
+                    n_estimators_rf=n_estimators_rf,
+                    n_bag=n_bag,
                     runtime_attr_override=runtime_attr_bagging_pu
             }
         }
@@ -92,6 +96,8 @@ task runBaggingPU_RF {
         String known_vars_uri
         Float vqslod_cutoff
         Float prop_dn
+        Int n_estimators_rf
+        Int n_bag
         RuntimeAttr? runtime_attr_override
     }
 
@@ -125,7 +131,8 @@ task runBaggingPU_RF {
         curl ~{bagging_pu_source_script} > baggingPU.py
         python3 run_bagging_pu.py ~{vcf_metrics_tsv_final} ~{ultra_rare_variants_tsv} ~{ultra_rare_polyx_vcf} \
         ~{cohort_prefix} ~{var_type} ~{sep=',' numeric} ~{vqslod_cutoff} \
-        ~{prop_dn} ~{ultra_rare_rep_regions} ~{rep_regions} ~{known_vars_uri} ~{metric} > stdout
+        ~{prop_dn} ~{ultra_rare_rep_regions} ~{rep_regions} ~{known_vars_uri} ~{metric} \
+        ~{n_estimators_rf} ~{n_bag} > stdout
     >>>
 
     output {

@@ -43,8 +43,6 @@ ultra_rare_rep_regions = sys.argv[9]
 rep_regions = sys.argv[10]
 known_vars_uri = sys.argv[11]
 metric = sys.argv[12]  # ['roc-auc', 'accuracy', 'f1']
-n_estimators_rf = int(sys.argv[13])
-n_bags = int(sys.argv[14])
 
 metrics_to_funcs = {'roc-auc': sklearn.metrics.roc_auc_score, 'accuracy': True, 'f1': sklearn.metrics.f1_score}
 known_vars_exist = (known_vars_uri!='false')
@@ -246,8 +244,49 @@ merged_output = merged_output[~merged_output[numeric].isna().any(axis=1)].reset_
 X = merged_output[numeric].sample(frac=1)
 y = merged_output['label'].loc[X.index]
 
-results_optimized, estimators_optimized, importances_optimized, oob_scores_optimized = get_importances_oob_scores(merged_output, numeric, 
-                                                                                                                  n_estimators_rf=n_estimators_rf, n_bags=n_bags, oob_score=metrics_to_funcs[metric])
+## Get best n_estimators_rf
+
+# find optimal n_estimators_rf, metric based on oob_score_
+results_n_est, estimators_n_est, importances_n_est, oob_scores_n_est = {}, {}, {}, {}
+for n_estimators in [10, 100, 200, 500, 1000]:
+    results_n_est[n_estimators], estimators_n_est[n_estimators], importances_n_est[n_estimators], oob_scores_n_est[n_estimators] = get_importances_oob_scores(merged_output, numeric, n_estimators_rf=n_estimators, oob_score=metrics_to_funcs[metric])
+
+merged_oob_scores = pd.DataFrame()
+for n_estimators, score_df in oob_scores_n_est.items():
+    tmp = pd.melt(score_df)
+    tmp['n_estimators_rf'] = n_estimators
+    merged_oob_scores = pd.concat([merged_oob_scores, tmp])
+
+sns.violinplot(data=merged_oob_scores, y='value', x='n_estimators_rf');
+plt.title(f"{cohort_prefix} {var_type}, oob_score={metric}");
+plt.savefig(f"{cohort_prefix}_~{var_type}_~{metric}_RF_oob_scores_n_estimators.png");
+plt.show();
+
+best_n_estimators = merged_oob_scores.groupby('n_estimators_rf').value.mean().idxmax()
+
+## Get best n_bags
+
+# best_n_estimators = 200
+results_n_bags, estimators_n_bags, importances_n_bags, oob_scores_n_bags = {}, {}, {}, {}
+for n_bags in [5, 10, 100]:
+    results_n_bags[n_bags], estimators_n_bags[n_bags], importances_n_bags[n_bags], oob_scores_n_bags[n_bags] = get_importances_oob_scores(merged_output, numeric, n_estimators_rf=best_n_estimators, n_bags=n_bags, oob_score=metrics_to_funcs[metric])
+
+from sklearn.metrics import RocCurveDisplay
+fig, ax = plt.subplots(figsize=(4,4));
+ax.set_title(f"{cohort_prefix} {var_type}, ROC-AUC based on n_bags");
+
+auc_scores = pd.DataFrame()
+for n_bags, results_df in results_n_bags.items():
+    auc_scores.loc[n_bags, 'roc_auc_score'] = sklearn.metrics.roc_auc_score(results_df.label, results_df.pred_bag)
+    RocCurveDisplay.from_predictions(results_df.label, results_df.pred_bag, ax=ax, name=f"n_bags={n_bags}");
+plt.savefig(f"{cohort_prefix}_~{var_type}_~{metric}_RF_roc_auc_curve_n_bags.png");
+plt.show(); 
+
+best_n_bags = auc_scores.roc_auc_score.idxmax()
+
+## Get best p_thr
+
+results_optimized, estimators_optimized, importances_optimized, oob_scores_optimized = get_importances_oob_scores(merged_output, numeric, n_estimators_rf=best_n_estimators, n_bags=best_n_bags, oob_score=metrics_to_funcs[metric])
 
 from sklearn.metrics import RocCurveDisplay
 opt_auc_scores = pd.DataFrame()
@@ -281,11 +320,15 @@ plt.show();
 
 best_p_thr = round(opt_auc_scores.roc_auc_score.idxmax(), 2) 
 
+best_params = pd.Series({'n_estimators_rf': best_n_estimators,
+                           'n_bags': best_n_bags,
+                           'p_thr': best_p_thr})
+
 results_optimized['pred_bag_optimized'] = [1 if x>best_p_thr else 0 for x in results_optimized.predict_proba_bag]
 results_optimized['features'] = ', '.join(numeric)
 results_optimized['metric'] = metric
-results_optimized['p_thr'] = best_p_thr
 
+best_params.to_csv(f"{cohort_prefix}_~{var_type}_~{metric}_RF_best_params.tsv", sep='\t', header=None)
 results_optimized.to_csv(f"{cohort_prefix}_~{var_type}_~{metric}_RF_results.tsv", sep='\t', index=False)
 importances_optimized.to_csv(f"{cohort_prefix}_~{var_type}_~{metric}_RF_feature_importances.tsv", sep='\t', index=False)
 oob_scores_optimized.to_csv(f"{cohort_prefix}_~{var_type}_~{metric}_RF_oob_scores.tsv", sep='\t', index=False)
