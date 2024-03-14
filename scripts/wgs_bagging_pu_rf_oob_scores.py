@@ -276,7 +276,7 @@ else:
         RocCurveDisplay.from_predictions(y, y_pred, ax=ax, name=f"p_thr={round(p_thr, 2)}");
         opt_auc_scores.loc[p_thr, 'roc_auc_score'] = sklearn.metrics.roc_auc_score(results_optimized.label, y_pred)
 
-plt.savefig(f"{cohort_prefix}_~{var_type}_~{metric}_RF_roc_auc_curve_p_thr.png");
+plt.savefig(f"{cohort_prefix}_{var_type}_{metric}_RF_roc_auc_curve_p_thr.png");
 plt.show();
 
 best_p_thr = round(opt_auc_scores.roc_auc_score.idxmax(), 2) 
@@ -286,6 +286,6 @@ results_optimized['features'] = ', '.join(numeric)
 results_optimized['metric'] = metric
 results_optimized['p_thr'] = best_p_thr
 
-results_optimized.to_csv(f"{cohort_prefix}_~{var_type}_~{metric}_RF_results.tsv", sep='\t', index=False)
-importances_optimized.to_csv(f"{cohort_prefix}_~{var_type}_~{metric}_RF_feature_importances.tsv", sep='\t', index=False)
-oob_scores_optimized.to_csv(f"{cohort_prefix}_~{var_type}_~{metric}_RF_oob_scores.tsv", sep='\t', index=False)
+results_optimized.to_csv(f"{cohort_prefix}_{var_type}_{metric}_RF_results.tsv", sep='\t', index=False)
+importances_optimized.to_csv(f"{cohort_prefix}_{var_type}_{metric}_RF_feature_importances.tsv", sep='\t', index=False)
+oob_scores_optimized.to_csv(f"{cohort_prefix}_{var_type}_{metric}_RF_oob_scores.tsv", sep='\t', index=False)
