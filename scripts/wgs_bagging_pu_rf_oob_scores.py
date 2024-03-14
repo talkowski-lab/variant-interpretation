@@ -263,7 +263,7 @@ if known_vars_exist:
         opt_auc_scores.loc[p_thr, 'roc_auc_score'] = sklearn.metrics.roc_auc_score(results_optimized.label, y_pred)
 
         y_pred_known = [1 if x>p_thr else 0 for x in results_optimized[results_optimized.is_known!='ultra-rare'].predict_proba_bag]
-        y_known = results_optimized[results_optimized.is_known!='ultra-rare'].is_known.astype(int)
+        y_known = results_optimized[results_optimized.is_known!='ultra-rare'].is_known.astype(bool).astype(int)
         RocCurveDisplay.from_predictions(y_known, y_pred_known, ax=ax[1], name=f"p_thr={round(p_thr, 2)}");
         ax[1].set(title=f"known variants vs. unknown");
 
