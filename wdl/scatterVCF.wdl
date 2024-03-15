@@ -166,7 +166,9 @@ task getChromosomeSizes {
     command <<<        
         set -euo pipefail
         if [[ "~{has_index}" == "false" ]]; then
-            tabix --verbosity 9 ~{vcf_file}
+            mkfifo /tmp/token_fifo
+            ( while true ; do curl -H "Metadata-Flavor: Google" http://metadata.google.internal/computeMetadata/v1/instance/service-accounts/default/token > /tmp/token_fifo ; done ) &
+            HTS_AUTH_LOCATION=/tmp/token_fifo tabix --verbosity 9 ~{vcf_file}
         fi;
         export GCS_OAUTH_TOKEN=`/google-cloud-sdk/bin/gcloud auth application-default print-access-token`
         bcftools index -s ~{vcf_file} | cut -f1,3 > contig_lengths.txt
@@ -217,9 +219,11 @@ task splitByChromosomeRemote {
 
     command <<<        
         set -euo pipefail
-        if [[ "~{has_index}" == "false" ]]; then
-            tabix --verbosity 9 ~{vcf_file}
-        fi;
+        # if [[ "~{has_index}" == "false" ]]; then
+        #     mkfifo /tmp/token_fifo
+        #     ( while true ; do curl -H "Metadata-Flavor: Google" http://metadata.google.internal/computeMetadata/v1/instance/service-accounts/default/token > /tmp/token_fifo ; done ) &
+        #     HTS_AUTH_LOCATION=/tmp/token_fifo tabix --verbosity 9 ~{vcf_file}
+        # fi;
         # export GCS_OAUTH_TOKEN=`/google-cloud-sdk/bin/gcloud auth application-default print-access-token`
         mkfifo /tmp/token_fifo
         ( while true ; do curl -H "Metadata-Flavor: Google" http://metadata.google.internal/computeMetadata/v1/instance/service-accounts/default/token > /tmp/token_fifo ; done ) &
