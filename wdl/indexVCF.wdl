@@ -67,9 +67,11 @@ task indexVCF_tabix {
         bootDiskSizeGb: select_first([runtime_override.boot_disk_gb, runtime_default.boot_disk_gb])
     }
 
-    command {
-        tabix --verbosity 9 ~{vcf_uri}
-    }
+    command <<<
+        mkfifo /tmp/token_fifo
+        ( while true ; do curl -H "Metadata-Flavor: Google" http://metadata.google.internal/computeMetadata/v1/instance/service-accounts/default/token > /tmp/token_fifo ; done ) &
+        HTS_AUTH_LOCATION=/tmp/token_fifo tabix --verbosity 3 ~{vcf_file}
+    >>>
 }
 
 
@@ -104,7 +106,9 @@ task indexVCF_bcftools {
         bootDiskSizeGb: select_first([runtime_override.boot_disk_gb, runtime_default.boot_disk_gb])
     }
 
-    command {
-        bcftools index -t ~{vcf_uri}
-    }
+    command <<<
+        mkfifo /tmp/token_fifo
+        ( while true ; do curl -H "Metadata-Flavor: Google" http://metadata.google.internal/computeMetadata/v1/instance/service-accounts/default/token > /tmp/token_fifo ; done ) &
+        HTS_AUTH_LOCATION=/tmp/token_fifo bcftools index -t ~{vcf_uri}
+    >>>
 }
