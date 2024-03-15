@@ -41,7 +41,11 @@ workflow vepAnnotateHail {
         RuntimeAttr? runtime_attr_vep_annotate
     }
 
-    String file = select_first([vcf_file, select_first([vcf_shards])[0]])
+    if (defined(vcf_shards)) {
+        String file_ = select_first([select_first([vcf_shards])[0]])
+    }
+    String file = select_first([file_, vcf_file])
+
     # input is not a single VCF file, so merge shards in chunks, then run VEP on merged chunks
     if (merge_split_vcf) { 
         # combine pre-sharded VCFs into chunks
