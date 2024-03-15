@@ -11,16 +11,16 @@ struct RuntimeAttr {
 
 workflow indexVCF {
     input {
-        File vcf
-        String trio_denovo_docker
+        String vcf_uri
+        String sv_base_mini_docker
         Boolean use_tabix
         RuntimeAttr? runtime_attr_index
     }
     if (use_tabix) {
         call indexVCF_tabix {
             input:
-                vcf=vcf,
-                trio_denovo_docker=trio_denovo_docker,
+                vcf_uri=vcf_uri,
+                sv_base_mini_docker=sv_base_mini_docker,
                 runtime_attr_override=runtime_attr_index
         }
     }
@@ -28,8 +28,8 @@ workflow indexVCF {
     if (!use_tabix) {
     call indexVCF_bcftools {
         input:
-            vcf=vcf,
-            trio_denovo_docker=trio_denovo_docker,
+            vcf_uri=vcf_uri,
+            sv_base_mini_docker=sv_base_mini_docker,
             runtime_attr_override=runtime_attr_index
     }
 }
@@ -38,20 +38,17 @@ workflow indexVCF {
 
 task indexVCF_tabix {
     input {
-        File vcf
-        String trio_denovo_docker
+        String vcf_uri
+        String sv_base_mini_docker
         RuntimeAttr? runtime_attr_override
     }
     
-    Float input_size = size(vcf, "GB")
     Float base_disk_gb = 10.0
-    Float base_mem_gb = 2.0
-    Float input_mem_scale = 3.0
-    Float input_disk_scale = 5.0
+    Float base_mem_gb = 4.0
     
     RuntimeAttr runtime_default = object {
-        mem_gb: base_mem_gb + input_size * input_mem_scale,
-        disk_gb: ceil(base_disk_gb + input_size * input_disk_scale),
+        mem_gb: base_mem_gb,
+        disk_gb: ceil(base_disk_gb),
         cpu_cores: 1,
         preemptible_tries: 3,
         max_retries: 1,
@@ -66,34 +63,29 @@ task indexVCF_tabix {
         cpu: select_first([runtime_override.cpu_cores, runtime_default.cpu_cores])
         preemptible: select_first([runtime_override.preemptible_tries, runtime_default.preemptible_tries])
         maxRetries: select_first([runtime_override.max_retries, runtime_default.max_retries])
-        docker: trio_denovo_docker
+        docker: sv_base_mini_docker
         bootDiskSizeGb: select_first([runtime_override.boot_disk_gb, runtime_default.boot_disk_gb])
     }
 
-    String vcf_dir = sub(vcf, basename(vcf), "")
     command {
-        tabix ~{vcf}
-        gsutil -m cp ~{vcf}.tbi ~{vcf_dir}
+        tabix ~{vcf_uri}
     }
 }
 
 
 task indexVCF_bcftools {
     input {
-        File vcf
-        String trio_denovo_docker
+        String vcf_uri
+        String sv_base_mini_docker
         RuntimeAttr? runtime_attr_override
     }
     
-    Float input_size = size(vcf, "GB")
     Float base_disk_gb = 10.0
-    Float base_mem_gb = 2.0
-    Float input_mem_scale = 3.0
-    Float input_disk_scale = 5.0
+    Float base_mem_gb = 4.0
     
     RuntimeAttr runtime_default = object {
-        mem_gb: base_mem_gb + input_size * input_mem_scale,
-        disk_gb: ceil(base_disk_gb + input_size * input_disk_scale),
+        mem_gb: base_mem_gb,
+        disk_gb: ceil(base_disk_gb),
         cpu_cores: 1,
         preemptible_tries: 3,
         max_retries: 1,
@@ -108,13 +100,11 @@ task indexVCF_bcftools {
         cpu: select_first([runtime_override.cpu_cores, runtime_default.cpu_cores])
         preemptible: select_first([runtime_override.preemptible_tries, runtime_default.preemptible_tries])
         maxRetries: select_first([runtime_override.max_retries, runtime_default.max_retries])
-        docker: trio_denovo_docker
+        docker: sv_base_mini_docker
         bootDiskSizeGb: select_first([runtime_override.boot_disk_gb, runtime_default.boot_disk_gb])
     }
 
-    String vcf_dir = sub(vcf, basename(vcf), "")
     command {
-        bcftools index -t ~{vcf}
-        gsutil -m cp ~{vcf}.tbi ~{vcf_dir}
+        bcftools index -t ~{vcf_uri}
     }
 }
