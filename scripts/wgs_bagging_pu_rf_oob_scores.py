@@ -42,11 +42,24 @@ prop_dn = float(sys.argv[8])
 ultra_rare_rep_regions = sys.argv[9]
 rep_regions = sys.argv[10]
 known_vars_uri = sys.argv[11]
-metric = sys.argv[12]  # ['roc-auc', 'accuracy', 'f1']
+metric = sys.argv[12]  # ['roc-auc', 'accuracy', 'f1', 'FP/FN ratio']
 n_estimators_rf = int(sys.argv[13])
 n_bags = int(sys.argv[14])
 
-metrics_to_funcs = {'roc-auc': sklearn.metrics.roc_auc_score, 'accuracy': True, 'f1': sklearn.metrics.f1_score}
+def fp_fn_ratio(y, y_pred):
+    FP = ((y==0) & (y_pred==1)).sum()
+    TP = ((y==1) & (y_pred==1)).sum()
+    FN = ((y==1) & (y_pred==0)).sum()
+    TN = ((y==0) & (y_pred==0)).sum()
+    FN_rate = FN / (FN + TN)
+    FP_rate = FP / (FP + TP)
+    if np.isnan(FP_rate):
+        FP_rate = FN_rate
+    return float(FP_rate / FN_rate)
+
+metrics_to_funcs = {'roc-auc': sklearn.metrics.roc_auc_score, 'accuracy': True, 'f1': sklearn.metrics.f1_score,
+                    'FP/FN ratio': fp_fn_ratio}
+
 known_vars_exist = (known_vars_uri!='false')
 
 # variable params
