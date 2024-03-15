@@ -166,7 +166,7 @@ task getChromosomeSizes {
     command <<<        
         set -euo pipefail
         if [[ "~{has_index}" == "false" ]]; then
-            tabix ~{vcf_file}
+            tabix --verbosity 9 ~{vcf_file}
         fi;
         export GCS_OAUTH_TOKEN=`/google-cloud-sdk/bin/gcloud auth application-default print-access-token`
         bcftools index -s ~{vcf_file} | cut -f1,3 > contig_lengths.txt
