@@ -68,7 +68,7 @@ task indexVCF_tabix {
     }
 
     command {
-        tabix ~{vcf_uri}
+        tabix --verbosity 9 ~{vcf_uri}
     }
 }
 
