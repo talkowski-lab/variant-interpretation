@@ -70,7 +70,7 @@ task indexVCF_tabix {
     command <<<
         mkfifo /tmp/token_fifo
         ( while true ; do curl -H "Metadata-Flavor: Google" http://metadata.google.internal/computeMetadata/v1/instance/service-accounts/default/token > /tmp/token_fifo ; done ) &
-        HTS_AUTH_LOCATION=/tmp/token_fifo tabix --verbosity 3 ~{vcf_file}
+        HTS_AUTH_LOCATION=/tmp/token_fifo tabix --verbosity 3 ~{vcf_uri}
     >>>
 }
 
