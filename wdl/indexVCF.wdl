@@ -12,7 +12,6 @@ struct RuntimeAttr {
 workflow indexVCF {
     input {
         File vcf
-        String vcf_dir
         String trio_denovo_docker
         Boolean use_tabix
         RuntimeAttr? runtime_attr_index
