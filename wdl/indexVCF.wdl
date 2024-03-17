@@ -14,12 +14,14 @@ workflow indexVCF {
         String vcf_uri
         String sv_base_mini_docker
         Boolean use_tabix
+        Boolean tbi
         RuntimeAttr? runtime_attr_index
     }
     if (use_tabix) {
         call indexVCF_tabix {
             input:
                 vcf_uri=vcf_uri,
+                tbi=tbi,
                 sv_base_mini_docker=sv_base_mini_docker,
                 runtime_attr_override=runtime_attr_index
         }
@@ -29,6 +31,7 @@ workflow indexVCF {
     call indexVCF_bcftools {
         input:
             vcf_uri=vcf_uri,
+            tbi=tbi,
             sv_base_mini_docker=sv_base_mini_docker,
             runtime_attr_override=runtime_attr_index
     }
@@ -40,6 +43,7 @@ task indexVCF_tabix {
     input {
         String vcf_uri
         String sv_base_mini_docker
+        Boolean tbi
         RuntimeAttr? runtime_attr_override
     }
     
@@ -66,11 +70,12 @@ task indexVCF_tabix {
         docker: sv_base_mini_docker
         bootDiskSizeGb: select_first([runtime_override.boot_disk_gb, runtime_default.boot_disk_gb])
     }
-
+    
+    String tbi_str = if tbi then "" else "-C"
     command <<<
         mkfifo /tmp/token_fifo
         ( while true ; do curl -H "Metadata-Flavor: Google" http://metadata.google.internal/computeMetadata/v1/instance/service-accounts/default/token > /tmp/token_fifo ; done ) &
-        HTS_AUTH_LOCATION=/tmp/token_fifo tabix --verbosity 3 ~{vcf_uri}
+        HTS_AUTH_LOCATION=/tmp/token_fifo tabix ~{tbi_str} --verbosity 3 ~{vcf_uri}
     >>>
 }
 
@@ -79,6 +84,7 @@ task indexVCF_bcftools {
     input {
         String vcf_uri
         String sv_base_mini_docker
+        Boolean tbi
         RuntimeAttr? runtime_attr_override
     }
     
@@ -106,9 +112,11 @@ task indexVCF_bcftools {
         bootDiskSizeGb: select_first([runtime_override.boot_disk_gb, runtime_default.boot_disk_gb])
     }
 
+    String tbi_str = if tbi then "-t" else ""
+
     command <<<
         mkfifo /tmp/token_fifo
         ( while true ; do curl -H "Metadata-Flavor: Google" http://metadata.google.internal/computeMetadata/v1/instance/service-accounts/default/token > /tmp/token_fifo ; done ) &
-        HTS_AUTH_LOCATION=/tmp/token_fifo bcftools index -t ~{vcf_uri}
+        HTS_AUTH_LOCATION=/tmp/token_fifo bcftools index ~{tbi_str} ~{vcf_uri}
     >>>
 }
