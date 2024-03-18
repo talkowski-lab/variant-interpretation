@@ -305,6 +305,21 @@ csq_columns_more = ["Allele","Consequence","IMPACT","SYMBOL","Gene","Feature_typ
                    "PHENO","PUBMED","MOTIF_NAME","MOTIF_POS","HIGH_INF_POS","MOTIF_SCORE_CHANGE",
                    "TRANSCRIPTION_FACTORS","LoF","LoF_filter","LoF_flags","LoF_info"]
 
+coding_variants = ['coding_sequence_variant', 'frameshift_variant', 
+        'incomplete_terminal_codon_variant', 'inframe_deletion', 'inframe_insertion',
+        'missense_variant', 'protein_altering_variant', 'splice_acceptor_variant',
+        'splice_donor_variant', 'start_lost', 'stop_gained', 'stop_lost',
+        'stop_retained_variant', 'synonymous_variant']
+
+noncoding_variants = ['3_prime_UTR_variant', '5_prime_UTR_variant',
+        'downstream_gene_variant', 'intergenic_variant', 'intron_variant', 
+        'mature_miRNA_variant', 'non_coding_transcript_exon_variant',
+        'splice_region_variant', 'upstream_gene_variant']
+
+PTVs = ['frameshift_variant', 'stop_gained', 'splice_donor_variant', 'splice_acceptor_variant', 'transcript_ablation']
+missense = ['missense_variant']
+synonymous = ['synonymous_variant', 'stop_retained_variant']
+
 final_output = pd.read_csv(vcf_metrics_uri, sep='\t')
 final_output['CSQ'] = final_output.CSQ.replace({'.':np.nan}).str.split(',')
 n_csq_fields = len(final_output[~final_output.CSQ.isna()].CSQ.iloc[0][0].split('|'))
@@ -318,4 +333,5 @@ else:
     warnings.warn("CSQ fields are messed up!")
 
 df = process_consequence_cohort(csq_columns, vcf_metrics_uri)
+df['isCoding'] = df.Consequence.isin(coding_variants)
 df.to_csv(f"{os.path.basename(vcf_metrics_uri).split('.tsv')[0]}_prioritized_csq.tsv", sep='\t',index=False)
