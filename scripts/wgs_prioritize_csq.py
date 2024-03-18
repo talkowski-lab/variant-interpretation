@@ -333,5 +333,5 @@ else:
     warnings.warn("CSQ fields are messed up!")
 
 df = process_consequence_cohort(csq_columns, vcf_metrics_uri)
-df['isCoding'] = df.Consequence.isin(coding_variants)
+df['isCoding'] = df.Consequence.apply(lambda csq: np.intersect1d(csq, coding_variants).size!=0)
 df.to_csv(f"{os.path.basename(vcf_metrics_uri).split('.tsv')[0]}_prioritized_csq.tsv", sep='\t',index=False)
