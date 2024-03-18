@@ -236,12 +236,14 @@ task splitByChromosomeRemote {
         ( while true ; do curl -H "Metadata-Flavor: Google" http://metadata.google.internal/computeMetadata/v1/instance/service-accounts/default/token > /tmp/token_fifo ; done ) &
         HTS_AUTH_LOCATION=/tmp/token_fifo tabix --verbosity 3 -h ~{vcf_file} ~{chromosome} | bgzip -c > ~{prefix}."~{chromosome}".vcf.gz
         
+        tabix ~{prefix}."~{chromosome}".vcf.gz
         # get number of records in chr
-        HTS_AUTH_LOCATION=/tmp/token_fifo bcftools index -s ~{vcf_file} | cut -f1,3 | grep -w ~{chromosome} | awk '{ print $2 }' > contig_length.txt
+        HTS_AUTH_LOCATION=/tmp/token_fifo bcftools index -n ~{prefix}."~{chromosome}".vcf.gz > contig_length.txt
     >>>
 
     output {
         File shards = "~{prefix}.~{chromosome}.vcf.gz"
+        File shards_idx = "~{prefix}.~{chromosome}.vcf.gz.tbi"
         Float contig_lengths = read_lines('contig_length.txt')[0]
     }
 }
@@ -285,12 +287,14 @@ task splitByChromosome {
         
         tabix --verbosity 3 -h ~{vcf_file} ~{chromosome} | bgzip -c > ~{prefix}."~{chromosome}".vcf.gz
         
+        tabix ~{prefix}."~{chromosome}".vcf.gz
         # get number of records in chr
-        bcftools index -s ~{vcf_file} | cut -f1,3 | grep -w ~{chromosome} | awk '{ print $2 }' > contig_length.txt
+        HTS_AUTH_LOCATION=/tmp/token_fifo bcftools index -n ~{prefix}."~{chromosome}".vcf.gz > contig_length.txt
     >>>
 
     output {
         File shards = "~{prefix}.~{chromosome}.vcf.gz"
+        File shards_idx = "~{prefix}.~{chromosome}.vcf.gz.tbi"
         Float contig_lengths = read_lines('contig_length.txt')[0]
     }
 }
