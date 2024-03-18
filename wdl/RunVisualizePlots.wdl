@@ -15,6 +15,8 @@ workflow VisualizePlots{
         File? sample_batches
         File? batch_medianfile
         File? fam_ids
+        Int? max_size
+
 
         Int ?igv_max_window
         File? rd_outliers
@@ -47,6 +49,7 @@ workflow VisualizePlots{
         RuntimeAttr? runtime_attr_reformat_sr
         RuntimeAttr? runtime_attr_update_pe_sr
     }
+    String max_size_ = select_first([max_size, 10000000])
 
     Boolean is_snv_indel_ = if defined(is_snv_indel) then select_first([is_snv_indel]) else false
 #    Boolean is_snv_indel_ = select_first([is_snv_indel])
@@ -179,6 +182,7 @@ task concatinate_plots{
         File varfile
         File pedfile
         String igv_docker
+        Int max_size_
         RuntimeAttr? runtime_attr_concatinate
     }
 
@@ -221,7 +225,7 @@ task concatinate_plots{
             ~{varfile}.noheader \
             ~{pedfile} \
             ~{prefix} \
-            10000000 \
+            ~{max_size_} \
             ~{prefix}_igv_plots \
             ~{prefix}_rd_plots/ \
             ~{prefix}_igv_rdtest_plots
