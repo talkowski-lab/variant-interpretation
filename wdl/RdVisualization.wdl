@@ -13,6 +13,7 @@ workflow RdTestVisualization{
         File outlier_samples
         File batch_bincov
         File bed
+        Int max_size
 #        File? regeno
         String sv_pipeline_rdtest_docker
         String variant_interpretation_docker
@@ -58,6 +59,7 @@ workflow RdTestVisualization{
 #                regeno = regeno,
                 batch_bincov=batch_bincov,
                 prefix=prefix,
+                max_size=max_size,
                 sv_pipeline_rdtest_docker=sv_pipeline_rdtest_docker,
                 runtime_attr_override = runtime_attr_rdtest
             }
@@ -144,6 +146,7 @@ task rdtest {
         Array[File] medianfile
         String prefix
         String sv_pipeline_rdtest_docker
+        Int max_size
         RuntimeAttr? runtime_attr_override
     }
     Float input_size = size(select_all([bed, sample_batches, batch_bincov, medianfile, ped_file]), "GB")
@@ -211,7 +214,7 @@ task rdtest {
             -a TRUE \
             -d TRUE \
             -w samples_noOutliers.txt \
-            -s 10000000
+            -s ~{max_size}
 
         mkdir rd_plots
         mv *jpg rd_plots
@@ -250,6 +253,7 @@ task rdtest_regeno {
         Array[File] medianfile
         String prefix
         String sv_pipeline_rdtest_docker
+        Int max_size
         RuntimeAttr? runtime_attr_override
     }
     Float input_size = size(select_all([bed, sample_batches, batch_bincov, medianfile, ped_file, regeno, outlier_samples]), "GB")
@@ -317,7 +321,7 @@ task rdtest_regeno {
             -a TRUE \
             -d TRUE \
             -w samples_noOutliers.txt \
-            -s 10000000 \
+            -s ~{max_size} \
             -g TRUE
             -r {regeno}
 
