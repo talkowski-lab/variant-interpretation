@@ -45,38 +45,41 @@ test_shard = test_shard.filter_rows(hl.is_snp(test_shard.alleles[0], test_shard.
 test_shard = test_shard.filter_rows(test_shard.filters.size()==0)
 test_shard = test_shard.annotate_entries(AB=test_shard.AD[1]/hl.sum(test_shard.AD))
 
-start_locus = test_shard.head(1).locus.collect()[0]
-end_locus = test_shard.tail(1).locus.collect()[0]
-end_chrom = int(end_locus.contig.split('chr')[1])
-end_pos = int(end_locus.position)
-start_chrom = int(start_locus.contig.split('chr')[1])
-start_pos = int(start_locus.position)
+if test_shard.count_rows()==0:
+    pd.DataFrame({'locus': [], 'alleles': [], 'AB': []}).to_csv(output_name, sep='\t', index=False)  
+else:
+    start_locus = test_shard.head(1).locus.collect()[0]
+    end_locus = test_shard.tail(1).locus.collect()[0]
+    end_chrom = int(end_locus.contig.split('chr')[1])
+    end_pos = int(end_locus.position)
+    start_chrom = int(start_locus.contig.split('chr')[1])
+    start_pos = int(start_locus.position)
 
-bed['chrom_int'] = bed.CHROM.str.split('chr').str[1].astype(int)
-bed['not_in_vcf'] = bed.apply(lambda row: (row.chrom_int > end_chrom) | 
-                                        ((row.chrom_int == end_chrom) & (row.START > end_pos)) |
-                                        (row.chrom_int < start_chrom) | 
-                ((row.chrom_int == start_chrom) & (row.END < start_pos)), axis=1)
+    bed['chrom_int'] = bed.CHROM.str.split('chr').str[1].replace({'X': 23, 'Y': 24}).astype(int)
+    bed['not_in_vcf'] = bed.apply(lambda row: (row.chrom_int > end_chrom) | 
+                                            ((row.chrom_int == end_chrom) & (row.START > end_pos)) |
+                                            (row.chrom_int < start_chrom) | 
+                    ((row.chrom_int == start_chrom) & (row.END < start_pos)), axis=1)
 
-def test_interval(locus_interval, sample, mt):
-    test_mt = hl.filter_intervals(mt, [hl.parse_locus_interval(locus_interval, 'GRCh38')])
-    print(f"number of SNVs in cohort at {locus_interval}: {test_mt.count_rows()}")
+    def test_interval(locus_interval, sample, mt):
+        test_mt = hl.filter_intervals(mt, [hl.parse_locus_interval(locus_interval, 'GRCh38')])
+        print(f"number of SNVs in cohort at {locus_interval}: {test_mt.count_rows()}")
 
-    test_mt = test_mt.filter_cols(test_mt.s==sample)
-    test_mt = hl.variant_qc(test_mt)
-    test_mt = test_mt.filter_rows(test_mt.variant_qc.AC[1]>0)
+        test_mt = test_mt.filter_cols(test_mt.s==sample)
+        test_mt = hl.variant_qc(test_mt)
+        test_mt = test_mt.filter_rows(test_mt.variant_qc.AC[1]>0)
 
-    print(f"number of SNVs in sample {sample} at {locus_interval}: {test_mt.count_rows()}")
+        print(f"number of SNVs in sample {sample} at {locus_interval}: {test_mt.count_rows()}")
 
-    test_ab = test_mt.AB.collect()
-    test_alleles = test_mt.alleles.collect()
-    test_locus = test_mt.locus.collect()
-    test_df = pd.DataFrame({'locus': test_locus, 'alleles': test_alleles, 'AB': test_ab})
-    test_df['locus_interval'] = locus_interval
-    test_df['SAMPLE'] = sample
-    return test_df
+        test_ab = test_mt.AB.collect()
+        test_alleles = test_mt.alleles.collect()
+        test_locus = test_mt.locus.collect()
+        test_df = pd.DataFrame({'locus': test_locus, 'alleles': test_alleles, 'AB': test_ab})
+        test_df['locus_interval'] = locus_interval
+        test_df['SAMPLE'] = sample
+        return test_df
 
-test_df = pd.DataFrame()
-for i, row in bed[~bed.not_in_vcf].iterrows():
-    test_df = pd.concat([test_df, test_interval(row.locus_interval, row.SAMPLE, test_shard)])  
-test_df.to_csv(output_name, sep='\t', index=False)  
+    test_df = pd.DataFrame()
+    for i, row in bed[~bed.not_in_vcf].iterrows():
+        test_df = pd.concat([test_df, test_interval(row.locus_interval, row.SAMPLE, test_shard)])  
+    test_df.to_csv(output_name, sep='\t', index=False)  
