@@ -17,7 +17,7 @@ hl.init(min_block_size=128, spark_conf={"spark.executor.cores": cores,
                     "spark.driver.memory": f"{mem}g"
                     }, tmp_dir="tmp", local_tmpdir="tmp")
 
-bed = pd.read_csv(bed_file, sep='\t', header=None)
+bed = pd.read_csv(bed_file, sep='\t')
 bed = bed[bed.cohort==cohort_prefix].copy()
 bed['locus_interval'] = bed.CHROM + ':' + bed.START.astype(str) + '-' + bed.END.astype(str)
 bed['interval_size'] = bed.END - bed.START
