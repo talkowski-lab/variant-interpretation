@@ -51,7 +51,7 @@ workflow PEevidence {
     }
 
   output {
-    Array [File] subset_pe_evidence = subset_pe_evidence.tloc_pe
+    Array [File] tlocs_pe_evidence = subset_pe_evidence.tloc_pe
   }
 
 }
