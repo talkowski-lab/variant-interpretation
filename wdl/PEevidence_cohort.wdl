@@ -22,7 +22,7 @@ workflow PEevidence {
 
     String docker_pe_evidence
 
-    RuntimeAttr? runtime_attr_subset_sample_roi
+    RuntimeAttr? runtime_attr_subset_tloc_roi
     RuntimeAttr? runtime_attr_subset_pe_evidence
 
   }
@@ -36,7 +36,7 @@ workflow PEevidence {
           name = tloc,
           regions = regions,
           docker_path = docker_pe_evidence,
-          runtime_attr_override = runtime_attr_subset_sample_roi
+          runtime_attr_override = runtime_attr_subset_tloc_roi
       }
 
       call subset_pe_evidence {
@@ -51,7 +51,7 @@ workflow PEevidence {
     }
 
   output {
-    Array [File] subset_sample_pe = subset_pe_evidence.sample_pe
+    Array [File] subset_pe_evidence = subset_pe_evidence.tloc_pe
   }
 
 }
@@ -128,7 +128,7 @@ task subset_pe_evidence {
     zcat ~{tloc_bed} | grep -v ^chrom > tloc_noheader.pe.bed
 
 
-    if [[ $(wc -l <sample_noheader.pe.bed) -ge 1 ]]; then
+    if [[ $(wc -l <tloc_noheader.pe.bed) -ge 1 ]]; then
       while read chr1 pos1 chr2 pos2 svname; do
         export GCS_OAUTH_TOKEN=$(gcloud auth application-default print-access-token)
 
