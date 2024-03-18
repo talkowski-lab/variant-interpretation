@@ -359,7 +359,7 @@ task downsampleVariantsPython {
         df.to_csv(output_name, sep='\t', index=False)
         EOF
 
-        python3.9 ~{full_input_tsv} ~{var_type} ~{desired_num_variants} ~{output_name} ~{chunk_size}
+        python3.9 downsample.py ~{full_input_tsv} ~{var_type} ~{desired_num_variants} ~{output_name} ~{chunk_size}
     >>>
 
     output {
