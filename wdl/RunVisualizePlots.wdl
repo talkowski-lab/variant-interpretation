@@ -49,7 +49,7 @@ workflow VisualizePlots{
         RuntimeAttr? runtime_attr_reformat_sr
         RuntimeAttr? runtime_attr_update_pe_sr
     }
-    String max_size_ = select_first([max_size, 10000000])
+    String max_size = select_first([max_size, 10000000])
 
     Boolean is_snv_indel_ = if defined(is_snv_indel) then select_first([is_snv_indel]) else false
 #    Boolean is_snv_indel_ = select_first([is_snv_indel])
@@ -80,6 +80,7 @@ workflow VisualizePlots{
                 batch_medianfile = batch_medianfile_,
                 batch_bincov=batch_bincov_,
                 bed = select_first([updateCpxBed.bed_output, varfile]),
+                max_size = max_size,
 #                regeno=regeno_file_,
                 sv_pipeline_rdtest_docker=sv_pipeline_rdtest_docker,
                 variant_interpretation_docker = variant_interpretation_docker,
@@ -160,6 +161,7 @@ workflow VisualizePlots{
                 rd_plots = RdTest_Plots_,
                 igv_plots = igv_plots_tar_gz_pe_,
                 prefix = prefix,
+                max_size = max_size,
                 varfile = select_first([updateCpxBed.bed_output, varfile]),
                 pedfile = pedfile,
                 igv_docker = igv_docker,
@@ -182,7 +184,7 @@ task concatinate_plots{
         File varfile
         File pedfile
         String igv_docker
-        Int max_size_
+        Int max_size
         RuntimeAttr? runtime_attr_concatinate
     }
 
@@ -225,7 +227,7 @@ task concatinate_plots{
             ~{varfile}.noheader \
             ~{pedfile} \
             ~{prefix} \
-            ~{max_size_} \
+            ~{max_size} \
             ~{prefix}_igv_plots \
             ~{prefix}_rd_plots/ \
             ~{prefix}_igv_rdtest_plots
