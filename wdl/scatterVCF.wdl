@@ -22,6 +22,7 @@ workflow scatterVCF_workflow {
         Boolean localize_vcf
         Boolean split_by_chromosome
         Boolean split_into_shards 
+        Boolean get_chromosome_sizes
         Boolean has_index=false
         Int n_shards=0
         Int records_per_shard=0
@@ -34,11 +35,13 @@ workflow scatterVCF_workflow {
     if (split_by_chromosome) {
         if (!localize_vcf) {
             String vcf_uri = file
-            call getChromosomeSizes {
-                input:
-                    vcf_file=vcf_uri,
-                    has_index=select_first([has_index]),
-                    sv_base_mini_docker=sv_base_mini_docker
+            if (get_chromosome_sizes) {
+                call getChromosomeSizes {
+                    input:
+                        vcf_file=vcf_uri,
+                        has_index=select_first([has_index]),
+                        sv_base_mini_docker=sv_base_mini_docker
+                }
             }
         }
 
@@ -55,12 +58,15 @@ workflow scatterVCF_workflow {
             }
             if (!localize_vcf) {
                 String vcf_uri = file
+                Float input_size_ = if (get_chromosome_sizes) then 
+                # chrom_length * ceil(n_samples*0.001) / 1000000
+                    select_first([getChromosomeSizes.contig_lengths])[chromosome] * ceil(select_first([getChromosomeSizes.n_samples])*0.001) / 1000000 
+                    else size(vcf_uri, 'GB')
                 call splitByChromosomeRemote {
                     input:
                         vcf_file=vcf_uri,
                         chromosome=chromosome,
-                        chrom_length=select_first([getChromosomeSizes.contig_lengths])[chromosome],
-                        n_samples=select_first([getChromosomeSizes.n_samples]),
+                        input_size=input_size_,
                         has_index=select_first([has_index]),
                         sv_base_mini_docker=sv_base_mini_docker,
                         runtime_attr_override=runtime_attr_split_by_chr
@@ -186,12 +192,13 @@ task splitByChromosomeRemote {
         String vcf_file
         String chromosome
         String sv_base_mini_docker
-        Float chrom_length
-        Float n_samples
+        Float input_size
+        # Float chrom_length
+        # Float n_samples
         Boolean has_index
         RuntimeAttr? runtime_attr_override
     }
-    Float input_size = chrom_length * ceil(n_samples*0.001) / 1000000  # assume ~1 million records == 1 GB for 375 samples, and sample scale is 0.001
+    # Float input_size = chrom_length * ceil(n_samples*0.001) / 1000000  # assume ~1 million records == 1 GB for 375 samples, and sample scale is 0.001
     Float base_disk_gb = 10.0
     Float input_disk_scale = 5.0
     String prefix = basename(vcf_file, ".vcf.gz")
