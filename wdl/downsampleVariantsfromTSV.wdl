@@ -16,6 +16,7 @@ workflow downsampleVariantsfromTSV {
         File hg38_reference
         File hg38_reference_dict
         File hg38_reference_fai
+        Int chunk_size=100000
         Float snv_scale=1
         Float indel_scale=1
         String jvarkit_docker
@@ -29,11 +30,12 @@ workflow downsampleVariantsfromTSV {
             sv_base_mini_docker=sv_base_mini_docker,
             var_type='SNV'
     }
-    call downsampleVariants as downsampleSNVs {
+    call downsampleVariantsPython as downsampleSNVs {
         input:
             full_input_tsv=full_input_tsv,
-            sv_base_mini_docker=sv_base_mini_docker,
+            vep_hail_docker=vep_hail_docker,
             var_type='SNV',
+            chunk_size=chunk_size,
             scale=snv_scale,
             num_variants=getNumSNVs.num_variants
     }
@@ -44,11 +46,12 @@ workflow downsampleVariantsfromTSV {
             sv_base_mini_docker=sv_base_mini_docker,
             var_type='Indel'
     }
-    call downsampleVariants as downsampleIndels {
+    call downsampleVariantsPython as downsampleIndels {
         input:
             full_input_tsv=full_input_tsv,
-            sv_base_mini_docker=sv_base_mini_docker,
+            vep_hail_docker=vep_hail_docker,
             var_type='Indel',
+            chunk_size=chunk_size,
             scale=indel_scale,
             num_variants=getNumIndels.num_variants
     }
@@ -291,5 +294,74 @@ task annotatePOLYX {
 
     output {
         File polyx_vcf = out_vcf
+    }
+}
+
+task downsampleVariantsPython {
+    input {
+        File full_input_tsv
+        String vep_hail_docker
+        String var_type
+        Int num_variants
+        Int chunk_size
+        Float scale
+        RuntimeAttr? runtime_attr_override
+    }
+
+    Float input_size = size(full_input_tsv, "GB")
+    Float base_disk_gb = 10.0
+    Float input_disk_scale = 5.0
+
+    RuntimeAttr runtime_default = object {
+        mem_gb: 4,
+        disk_gb: ceil(base_disk_gb + input_size * input_disk_scale),
+        cpu_cores: 1,
+        preemptible_tries: 3,
+        max_retries: 1,
+        boot_disk_gb: 10
+    }
+
+    RuntimeAttr runtime_override = select_first([runtime_attr_override, runtime_default])
+
+    runtime {
+        memory: "~{select_first([runtime_override.mem_gb, runtime_default.mem_gb])} GB"
+        disks: "local-disk ~{select_first([runtime_override.disk_gb, runtime_default.disk_gb])} HDD"
+        cpu: select_first([runtime_override.cpu_cores, runtime_default.cpu_cores])
+        preemptible: select_first([runtime_override.preemptible_tries, runtime_default.preemptible_tries])
+        maxRetries: select_first([runtime_override.max_retries, runtime_default.max_retries])
+        docker: vep_hail_docker
+        bootDiskSizeGb: select_first([runtime_override.boot_disk_gb, runtime_default.boot_disk_gb])
+    }
+
+    Int desired_num_variants = ceil(num_variants * scale)
+    String output_name = "~{basename(full_input_tsv, '.tsv')}_~{var_type}_downsampled.tsv"
+
+    command <<<
+        cat <<EOF > downsample.py
+        import pandas as pd
+        import os
+        import sys
+
+        full_input_tsv = sys.argv[1]
+        var_type = sys.argv[2]
+        desired_num_variants = int(sys.argv[3])
+        output_name = sys.argv[4]
+
+        chunks = []
+        for chunk in pd.read_csv(full_input_tsv, sep='\t', chunksize=chunksize):
+            chunks.append(chunk)
+
+        df = pd.concat(chunks)
+        df = df[df.TYPE==var_type].copy()
+        num_per_sample = int(desired_num_variants / df.SAMPLE.unique().size)
+        df = df.groupby('SAMPLE').apply(lambda s: s.sample(min(len(s), num_per_sample)))
+        df.to_csv(output_name, sep='\t', index=False)
+        EOF
+
+        python3.9 ~{full_input_tsv} ~{var_type} ~{desired_num_variants} ~{output_name}
+    >>>
+
+    output {
+        File downsampled_tsv = "~{basename(full_input_tsv, '.tsv')}_~{var_type}_downsampled.tsv"
     }
 }

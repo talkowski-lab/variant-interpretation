@@ -229,7 +229,8 @@ def get_importances_oob_scores(merged_output, numeric, n_estimators_rf=100, n_ba
 final_output, ultra_rare, final_output_raw, ultra_rare_raw = load_variants(vcf_metrics_tsv, ultra_rare_variants_tsv, polyx_vcf, var_type)
 
 final_output, ultra_rare, merged_output = filter_variants(final_output, ultra_rare, final_output_raw, ultra_rare_raw)
-merged_output = pd.concat([final_output, ultra_rare.sample(frac=min(1, prop_dn*final_output.shape[0]/ultra_rare.shape[0]))])\
+frac=min(1, prop_dn*final_output.shape[0]/ultra_rare.shape[0])
+merged_output = pd.concat([final_output, ultra_rare.sample(frac)])\
                 .reset_index(drop=True)
 
 if known_vars_exist:
