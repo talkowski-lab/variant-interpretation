@@ -4,6 +4,7 @@ import numpy as np
 import sys
 import os
 import warnings
+import ast
 
 vcf_metrics_uri = sys.argv[1]
 cores = sys.argv[2]
@@ -333,5 +334,5 @@ else:
     warnings.warn("CSQ fields are messed up!")
 
 df = process_consequence_cohort(csq_columns, vcf_metrics_uri)
-df['isCoding'] = df.Consequence.apply(lambda csq: csq is not None)
+df['isCoding'] = df.Consequence.astype(str).replace({'None': '[]'}).apply(ast.literal_eval).apply(lambda csq: np.intersect1d(csq, coding_variants).size!=0)
 df.to_csv(f"{os.path.basename(vcf_metrics_uri).split('.tsv')[0]}_prioritized_csq.tsv", sep='\t',index=False)
