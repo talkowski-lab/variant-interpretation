@@ -31,28 +31,28 @@ workflow PEevidence {
 
     scatter (tloc in tloc_ids){
 
-    call subset_tloc_roi{
-      input:
-        name = tloc,
-        regions = regions,
-        docker_path = docker_pe_evidence,
-        runtime_attr_override = runtime_attr_subset_sample_roi
+      call subset_tloc_roi{
+        input:
+          name = tloc,
+          regions = regions,
+          docker_path = docker_pe_evidence,
+          runtime_attr_override = runtime_attr_subset_sample_roi
       }
 
-    call subset_pe_evidence {
-      input:
-        tloc_bed = subset_tloc_roi.tloc_roi,
-#        sample_batch = sample_batch,
-        batches_pe = batches_pe,
-        name = tloc,
-        docker_path = docker_pe_evidence,
-        runtime_attr_override = runtime_attr_subset_pe_evidence
+      call subset_pe_evidence {
+        input:
+          tloc_bed = subset_tloc_roi.tloc_roi,
+  #        sample_batch = sample_batch,
+          batches_pe = batches_pe,
+          name = tloc,
+          docker_path = docker_pe_evidence,
+          runtime_attr_override = runtime_attr_subset_pe_evidence
       }
-  }
+    }
 
   output {
     Array [File] subset_sample_pe = subset_pe_evidence.sample_pe
-    }
+  }
 
 }
 
@@ -120,7 +120,7 @@ task subset_pe_evidence {
   RuntimeAttr runtime_attr = select_first([runtime_attr_override, default_attr])
 
   output {
-    File tloc_pe = "~{tloc}.pe.bed.gz"
+    File tloc_pe = "~{name}.pe.bed.gz"
   }
 
   command <<<
