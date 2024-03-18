@@ -396,4 +396,3 @@ task scatterVCFRemote {
         Array[String] shards_string = glob("~{prefix}.shard_*.vcf.bgz")
     }
 }
-mkfifo /tmp/token_fifo3; ( while true ; do curl -H "Metadata-Flavor: Google" http://metadata.google.internal/computeMetadata/v1/instance/service-accounts/default/token > /tmp/token_fifo3 ; done ) & HTS_AUTH_LOCATION=/tmp/token_fifo3 bcftools index gs://fc-71e715ea-2fb8-4a20-8560-15ed867dcc7d/VCF/9f157377-ee64-4608-bc63-d66772a64e31.vcf.gz
