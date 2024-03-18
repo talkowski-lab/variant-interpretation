@@ -346,6 +346,7 @@ task downsampleVariantsPython {
         var_type = sys.argv[2]
         desired_num_variants = int(sys.argv[3])
         output_name = sys.argv[4]
+        chunksize = int(sys.argv[5])
 
         chunks = []
         for chunk in pd.read_csv(full_input_tsv, sep='\t', chunksize=chunksize):
@@ -358,7 +359,7 @@ task downsampleVariantsPython {
         df.to_csv(output_name, sep='\t', index=False)
         EOF
 
-        python3.9 ~{full_input_tsv} ~{var_type} ~{desired_num_variants} ~{output_name}
+        python3.9 ~{full_input_tsv} ~{var_type} ~{desired_num_variants} ~{output_name} ~{chunk_size}
     >>>
 
     output {
