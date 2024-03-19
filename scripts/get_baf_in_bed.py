@@ -50,9 +50,10 @@ if test_shard.count_rows()==0:
 else:
     start_locus = test_shard.head(1).locus.collect()[0]
     end_locus = test_shard.tail(1).locus.collect()[0]
-    end_chrom = int(end_locus.contig.split('chr')[1])
+    chrom_str_to_int = {f"{i}": i for i in range(1, 23)} | {'X': 23, 'Y': 24}
+    end_chrom = chrom_str_to_int[end_locus.contig.split('chr')[1]]
     end_pos = int(end_locus.position)
-    start_chrom = int(start_locus.contig.split('chr')[1])
+    start_chrom = chrom_str_to_int[start_locus.contig.split('chr')[1]]
     start_pos = int(start_locus.position)
 
     bed['chrom_int'] = bed.CHROM.str.split('chr').str[1].replace({'X': 23, 'Y': 24}).astype(int)
