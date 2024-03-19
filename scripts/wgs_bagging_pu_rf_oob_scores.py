@@ -230,7 +230,7 @@ final_output, ultra_rare, final_output_raw, ultra_rare_raw = load_variants(vcf_m
 
 final_output, ultra_rare, merged_output = filter_variants(final_output, ultra_rare, final_output_raw, ultra_rare_raw)
 frac=min(1, prop_dn*final_output.shape[0]/ultra_rare.shape[0])
-merged_output = pd.concat([final_output, ultra_rare.sample(frac)])\
+merged_output = pd.concat([final_output, ultra_rare.sample(frac=frac)])\
                 .reset_index(drop=True)
 
 if known_vars_exist:
