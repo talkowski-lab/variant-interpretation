@@ -35,7 +35,7 @@ workflow getBAFinBED {
         input:
         tsvs=getBAF.baf_tsv,
         hail_docker=hail_docker,
-        merged_filename=cohort_prefix + '_AB_SNVs_locus_intervals.tsv'
+        merged_filename=cohort_prefix + '_AB_SNVs_locus_intervals'
     }
 
     output {
@@ -84,7 +84,7 @@ task getBAF {
 
     command <<<
     curl ~{get_baf_script} > get_baf.py
-    python3 get_baf.py ~{bed_file} ~{cohort_prefix} ~{vep_file} ~{cpu_cores} ~{memory} ~{output_name}
+    python3 get_baf.py ~{bed_file} ~{cohort_prefix} ~{vep_file} ~{cpu_cores} ~{memory} ~{output_name} > stdout
     >>>
 
     output {
