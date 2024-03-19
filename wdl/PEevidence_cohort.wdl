@@ -77,14 +77,13 @@ task subset_tloc_roi {
   RuntimeAttr runtime_attr = select_first([runtime_attr_override, default_attr])
 
   output{
-    File tloc_roi = "~{name}.bed.gz"
+    File tloc_roi = "~{name}.bed"
   }
 
   command {
     set -euo pipefail
 
-    zcat ~{regions} | \
-    grep -Ew "^chrom1|~{name}" | bgzip -c > ~{name}.bed.gz
+    grep -Ew "^chrom1|~{name}" ~{regions} > ~{name}.bed
   }
 
   runtime {
@@ -125,7 +124,7 @@ task subset_pe_evidence {
 
   command <<<
     set -ex
-    zcat ~{tloc_bed} | grep -v ^chrom > tloc_noheader.pe.bed
+    grep -v ^chrom ~{tloc_bed} > tloc_noheader.pe.bed
 
 
     if [[ $(wc -l <tloc_noheader.pe.bed) -ge 1 ]]; then
