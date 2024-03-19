@@ -107,7 +107,7 @@ task subsetVCFs {
     Float relatedness_size = size(vcf_uri, "GB") 
     Float base_disk_gb = 10.0
     RuntimeAttr runtime_default = object {
-                                      mem_gb: 16,
+                                      mem_gb: 4,
                                       disk_gb: ceil(base_disk_gb + (relatedness_size) * 5.0),
                                       cpu_cores: 1,
                                       preemptible_tries: 3,
