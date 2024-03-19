@@ -137,7 +137,7 @@ task subset_pe_evidence {
 
         awk -v OFS="\t" '{if (NR>1) print $2}' ~{batches_pe} | while read batch_id; do
           echo "Getting PE evidence for Tloc $svname Coordinates: $coords in batch $batch_id"
-          tabix $batchfile $coords | grep -w $chr2 >> ~{name}.pe.bed
+          tabix $batch_id $coords | grep -w $chr2 >> ~{name}.pe.bed
         done
       done < tloc_noheader.pe.bed
 
