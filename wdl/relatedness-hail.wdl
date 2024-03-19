@@ -14,17 +14,11 @@ struct RuntimeAttr {
 
 workflow Relatedness {
     input {
-        File sites_uri
-        File hg38_fasta
         Array[File] vep_vcf_files
         File? merged_vep_file
         File ped_uri
         File bed_file
-        File ancestry_labels_1kg
-        File somalier_1kg_tar
-        String correct_somalier_ped_python_script
         String cohort_prefix
-        String somalier_docker
         String sv_base_mini_docker
         String hail_docker
     }
