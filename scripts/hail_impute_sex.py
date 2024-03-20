@@ -73,7 +73,7 @@ sex_chrX_qc_df.columns = sex_chrX_qc_df.columns.str.replace('sample_qc', 'chrX')
 all_qc_df.columns = all_qc_df.columns.str.replace('sample_qc', 'all')
 gt_qc_df.columns = gt_qc_df.columns.str.replace('sample_qc', 'gt')
 
-sample_qc_df = pd.concat([sex_chrX_qc_df, sex_chrY_qc_df, all_qc_df], axis=1)
+sample_qc_df = pd.concat([sex_chrX_qc_df, sex_chrY_qc_df, all_qc_df, gt_qc_df], axis=1)
 sample_qc_df['hail_sex'] = sex_df.sex.astype('category')
 
 sample_qc_df['Y_ploidy'] = 2 * sample_qc_df['chrY.dp_stats.mean'] / sample_qc_df['gt.dp_stats.mean']
