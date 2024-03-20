@@ -54,7 +54,7 @@ sex_df.index.name = 'sample_id'
 
 auto_qc = hl.sample_qc(mt.filter_rows(mt.locus.in_autosome()))
 auto_qc_df = auto_qc.cols().flatten().to_pandas()
-auto_qc_df.index = auto_qc_df.s
+auto_qc_df = auto_qc_df.rename({'s': 'sample_id'}, axis=1).set_index('sample_id')
 auto_qc_df['hail_sex'] = sex_df.sex.astype('category')
 
 sex_chrX_qc = hl.sample_qc(mt.filter_rows(mt.locus.in_x_nonpar()))
@@ -93,6 +93,7 @@ ped = ped.set_index('sample_id')
 ped_qc = pd.concat([ped, sample_qc_df], axis=1).reset_index()[base_cols + np.setdiff1d(sample_qc_df.columns, base_cols).tolist()]
 ped_qc.to_csv(f"{cohort_prefix}_sex_qc.ped", sep='\t', index=False)
 
+fig, ax = plt.subplots(2, 2, figsize=(12, 10));
 sns.scatterplot(data=ped_qc, x='chrX.n_hom_var', y='chrX.n_het', hue='sex', ax=ax[0][0]);
 sns.scatterplot(data=ped_qc, x='chrX.n_hom_var', y='chrY.dp_stats.mean', hue='sex', ax=ax[0][1]);
 sns.scatterplot(data=ped_qc, x='chrX.dp_stats.mean', y='chrY.dp_stats.mean', hue='sex', ax=ax[1][0]);
