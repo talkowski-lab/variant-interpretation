@@ -48,10 +48,21 @@ workflow PEevidence {
           docker_path = docker_pe_evidence,
           runtime_attr_override = runtime_attr_subset_pe_evidence
       }
+
+      call calculate_frequencies {
+        input:
+          tloc_bed = subset_tloc_roi.tloc_roi,
+          tloc_pe_evidence = subset_pe_evidence.tloc_pe,
+          name = tloc,
+          docker_path = docker_pe_evidence,
+          runtime_attr_override = runtime_attr_subset_pe_evidence
+      }
     }
 
   output {
     Array [File] tlocs_pe_evidence = subset_pe_evidence.tloc_pe
+    Array [File] tlocs_frequencies = calculate_frequencies.tloc_freq
+    Array [File] tlocs_info = calculate_frequencies.tloc_info
   }
 
 }
@@ -100,7 +111,6 @@ task subset_tloc_roi {
 task subset_pe_evidence {
   input {
     File tloc_bed
-#    File sample_batch
     File batches_pe
     String name
     String docker_path
@@ -144,6 +154,75 @@ task subset_pe_evidence {
       bgzip ~{name}.pe.bed
 
     fi
+
+  >>>
+
+  runtime {
+    cpu: select_first([runtime_attr.cpu_cores, default_attr.cpu_cores])
+    memory: select_first([runtime_attr.mem_gb, default_attr.mem_gb]) + " GiB"
+    disks: "local-disk " + select_first([runtime_attr.disk_gb, default_attr.disk_gb]) + " HDD"
+    bootDiskSizeGb: select_first([runtime_attr.boot_disk_gb, default_attr.boot_disk_gb])
+    docker: docker_path
+    preemptible: select_first([runtime_attr.preemptible_tries, default_attr.preemptible_tries])
+    maxRetries: select_first([runtime_attr.max_retries, default_attr.max_retries])
+  }
+}
+
+task calculate_frequencies {
+  input {
+    File tloc_bed
+    File tloc_pe_evidence
+    String name
+    String docker_path
+    RuntimeAttr? runtime_attr_override
+  }
+
+  RuntimeAttr default_attr = object {
+    cpu_cores: 1,
+    mem_gb: 3.75,
+    disk_gb: 10,
+    boot_disk_gb: 10,
+    preemptible_tries: 0,
+    max_retries: 1
+  }
+
+  RuntimeAttr runtime_attr = select_first([runtime_attr_override, default_attr])
+
+  output {
+    File tloc_freq ="~{name}.freq"
+    File tloc_info ="~{name}.info"
+  }
+
+  command <<<
+    set -ex
+
+    i=1
+    cat ~{tloc_bed} | while read line
+    do
+    i=$((i+1))
+    BP1_interval=$(echo $line | awk -v OFS="\t" '{print $1":"$2-2000"-"$2+2000}')
+    BP2_interval=$(echo $line | awk -v OFS="\t" '{print $3":"$4}')
+    BP2=$(echo $line | awk -v OFS="\t" '{print $4}')
+    ID=~{name}
+    CHR2=$(echo $line | awk -v OFS="\t" '{print $3}')
+    # echo "Tloc:" $ID $BP1_interval "and" $BP2_interval
+    zcat $ID.pe.bed.gz | awk -v OFS="\t" -v var2=$CHR2 -v pos1=$(($BP2-1000)) -v pos2=$(($BP2+1000)) '{if ($4 == var2 && $5>pos1 && $5<pos2) print$0}' | awk -v OFS="\t" '{print $5}' | sort -n -k 1,1 > PE_list
+    zcat $ID.pe.bed.gz | awk -v OFS="\t" -v var2=$CHR2 -v pos1=$(($BP2-1000)) -v pos2=$(($BP2+1000)) '{if ($4 == var2 && $5>pos1 && $5<pos2) print$0}' > $ID.list
+    start=$(awk 'NR==1' PE_list)
+    end=$(awk 'END{print}' PE_list)
+    cat $ID.list | awk -v OFS="\t" '{print $7}' | sort | uniq -c | sort -nr > $ID.size
+    Sample_size=$(cat $ID.list | awk -v OFS="\t" '{print $7}' | sort | uniq -c | sort -nr | wc -l)
+    Sample_size_min4=$(cat $ID.list | awk -v OFS="\t" '{print $7}' | sort | uniq -c | sort -nr | awk '{if ($1 > 3) print $0}' | wc -l)
+    Sample_size_min10=$(cat $ID.list | awk -v OFS="\t" '{print $7}' | sort | uniq -c | sort -nr | awk '{if ($1 > 9) print $0}' | wc -l)
+    # echo "Translocation $ID distance from $CHR2 : $BP2 starts at $start ends at $end" in $Sample_size > $ID.report
+    cat $ID.list $ID.size > ~{name}.info
+    rm $ID.size
+    rm $ID.list
+    # rm $ID.report
+    awk -v line=$i -v OFS="\t" '{print $0}' ~{tloc_bed} | sed "s/$/\t$Sample_size/" | sed "s/$/\t$Sample_size_min4/" | sed "s/$/\t$Sample_size_min10/" > ~{name}.freq
+    done
+
+    rm PE_list
 
   >>>
 
