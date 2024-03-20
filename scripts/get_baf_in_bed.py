@@ -49,7 +49,7 @@ test_shard = test_shard.annotate_entries(AB=test_shard.AD[1]/hl.sum(test_shard.A
 
 if test_shard.count_rows()==0:
     print('no overlapping SNVs, outputting empty file...')
-    pd.DataFrame({'locus': [], 'alleles': [], 'AB': [], 'locus_interval': [], 'SAMPLE': []}).to_csv(output_name, sep='\t', index=False)  
+    pd.DataFrame({'locus': [], 'alleles': [], 'AB': [], 'locus_interval': [], 'SAMPLE': [], 'SV_type': []}).to_csv(output_name, sep='\t', index=False)  
 else:
     start_locus = test_shard.head(1).locus.collect()[0]
     end_locus = test_shard.tail(1).locus.collect()[0]
