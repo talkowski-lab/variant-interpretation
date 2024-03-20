@@ -46,11 +46,21 @@ workflow Relatedness {
             cohort_prefix=cohort_prefix
         }
     }
-
-    # File merged_vcf_file = select_first([merged_vep_file, mergeVCFs.merged_vcf_file])
-
-    output {
     File merged_vcf_file = select_first([merged_vep_file, mergeVCFs.merged_vcf_file])
+
+    call imputeSex {
+        input:
+        vcf_uri=merged_vcf_file,
+        bed_file=bed_file,
+        ped_uri=ped_uri,
+        cohort_prefix=cohort_prefix,
+        sex_qc_script=sex_qc_script,
+        hail_docker=hail_docker
+    }
+    output {
+        # File merged_vcf_file = select_first([merged_vep_file, mergeVCFs.merged_vcf_file])
+        File sex_qc_plots = imputeSex.sex_qc_plots
+        File ped_sex_qc = imputeSex.ped_sex_qc
     }
 }
 
