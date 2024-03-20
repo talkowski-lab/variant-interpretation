@@ -215,8 +215,8 @@ task calculate_frequencies {
     ID=~{name}
     CHR2=$(echo $line | awk -v OFS="\t" '{print $3}')
     # echo "Tloc:" $ID $BP1_interval "and" $BP2_interval
-    zcat $ID.pe.bed.gz | awk -v OFS="\t" -v var2=$CHR2 -v pos1=$(($BP2-1000)) -v pos2=$(($BP2+1000)) '{if ($4 == var2 && $5>pos1 && $5<pos2) print$0}' | awk -v OFS="\t" '{print $5}' | sort -n -k 1,1 > PE_list
-    zcat $ID.pe.bed.gz | awk -v OFS="\t" -v var2=$CHR2 -v pos1=$(($BP2-1000)) -v pos2=$(($BP2+1000)) '{if ($4 == var2 && $5>pos1 && $5<pos2) print$0}' > $ID.list
+    zcat ~{tloc_pe_evidence} | awk -v OFS="\t" -v var2=$CHR2 -v pos1=$(($BP2-1000)) -v pos2=$(($BP2+1000)) '{if ($4 == var2 && $5>pos1 && $5<pos2) print$0}' | awk -v OFS="\t" '{print $5}' | sort -n -k 1,1 > PE_list
+    zcat ~{tloc_pe_evidence} | awk -v OFS="\t" -v var2=$CHR2 -v pos1=$(($BP2-1000)) -v pos2=$(($BP2+1000)) '{if ($4 == var2 && $5>pos1 && $5<pos2) print$0}' > $ID.list
     start=$(awk 'NR==1' PE_list)
     end=$(awk 'END{print}' PE_list)
     cat $ID.list | awk -v OFS="\t" '{print $7}' | sort | uniq -c | sort -nr > $ID.size
