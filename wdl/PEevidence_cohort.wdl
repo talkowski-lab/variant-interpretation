@@ -62,9 +62,10 @@ workflow PEevidence {
     }
 
     call merge_frequencies {
-      tloc_freq_files = calculate_frequencies.tloc_freq,
-      docker_path = docker_pe_evidence,
-      runtime_attr_override = runtime_attr_merge_freq
+      input:
+        tloc_freq_files = calculate_frequencies.tloc_freq,
+        docker_path = docker_pe_evidence,
+        runtime_attr_override = runtime_attr_merge_freq
     }
 
   output {
