@@ -24,6 +24,8 @@ workflow PEevidence {
 
     RuntimeAttr? runtime_attr_subset_tloc_roi
     RuntimeAttr? runtime_attr_subset_pe_evidence
+    RuntimeAttr? runtime_attr_calculate_freq
+    RuntimeAttr? runtime_attr_merge_freq
 
   }
 
@@ -55,14 +57,20 @@ workflow PEevidence {
           tloc_pe_evidence = subset_pe_evidence.tloc_pe,
           name = tloc,
           docker_path = docker_pe_evidence,
-          runtime_attr_override = runtime_attr_subset_pe_evidence
+          runtime_attr_override = runtime_attr_calculate_freq
       }
+    }
+
+    call merge_frequencies {
+      tloc_freq_files = calculate_frequencies.tloc_freq,
+      docker_path = docker_pe_evidence,
+      runtime_attr_override = runtime_attr_merge_freq
     }
 
   output {
     Array [File] tlocs_pe_evidence = subset_pe_evidence.tloc_pe
-    Array [File] tlocs_frequencies = calculate_frequencies.tloc_freq
     Array [File] tlocs_info = calculate_frequencies.tloc_info
+    File tlocs_frequencies = merge_frequencies.tloc_merged_freq
   }
 
 }
@@ -224,6 +232,44 @@ task calculate_frequencies {
 
     rm PE_list
 
+  >>>
+
+  runtime {
+    cpu: select_first([runtime_attr.cpu_cores, default_attr.cpu_cores])
+    memory: select_first([runtime_attr.mem_gb, default_attr.mem_gb]) + " GiB"
+    disks: "local-disk " + select_first([runtime_attr.disk_gb, default_attr.disk_gb]) + " HDD"
+    bootDiskSizeGb: select_first([runtime_attr.boot_disk_gb, default_attr.boot_disk_gb])
+    docker: docker_path
+    preemptible: select_first([runtime_attr.preemptible_tries, default_attr.preemptible_tries])
+    maxRetries: select_first([runtime_attr.max_retries, default_attr.max_retries])
+  }
+}
+
+task merge_frequencies {
+  input {
+    Array[File] tloc_freq_files
+    String docker_path
+    RuntimeAttr? runtime_attr_override
+  }
+
+  RuntimeAttr default_attr = object {
+    cpu_cores: 1,
+    mem_gb: 3.75,
+    disk_gb: 10,
+    boot_disk_gb: 10,
+    preemptible_tries: 0,
+    max_retries: 1
+  }
+
+  RuntimeAttr runtime_attr = select_first([runtime_attr_override, default_attr])
+
+  output {
+    File tloc_merged_freq ="cohort.freq.gz"
+  }
+
+  command <<<
+    set -ex
+    cat ~{sep=" " tloc_freq_files} | bgzip > cohort.freq.gz
   >>>
 
   runtime {
