@@ -57,9 +57,9 @@ workflow Relatedness {
         sex_qc_script=sex_qc_script,
         hail_docker=hail_docker
     }
-    
+
     output {
-        File sex_qc_plots = imputeSex.sex_qc_plots
+        Array[File] sex_qc_plots = imputeSex.sex_qc_plots
         File ped_sex_qc = imputeSex.ped_sex_qc
     }
 }
@@ -108,7 +108,7 @@ task imputeSex {
     >>>
 
     output {
-        File sex_qc_plots = cohort_prefix + "_sex_qc.png"
+        Array[File] sex_qc_plots = glob('*.png')
         File ped_sex_qc = cohort_prefix + "_sex_qc.ped"
     }
 }
