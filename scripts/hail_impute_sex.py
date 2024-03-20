@@ -52,31 +52,34 @@ sex_df.loc[sex_df.is_female.isna(), 'sex'] = 0
 sex_df.index = sex_df.s.astype(str)
 sex_df.index.name = 'sample_id'
 
-auto_qc = hl.sample_qc(mt.filter_rows(mt.locus.in_autosome()))
-auto_qc_df = auto_qc.cols().flatten().to_pandas()
-auto_qc_df = auto_qc_df.rename({'s': 'sample_id'}, axis=1).set_index('sample_id')
-auto_qc_df['hail_sex'] = sex_df.sex.astype('category')
+all_qc = hl.sample_qc(mt)
+all_qc_df = all_qc.cols().flatten().to_pandas()
+all_qc_df = all_qc_df.rename({'s': 'sample_id'}, axis=1).set_index('sample_id')
+
+gt_qc = hl.sample_qc(mt.filter_entries(hl.is_missing(mt.GT), keep=False))
+gt_qc_df = gt_qc.cols().flatten().to_pandas()
+gt_qc_df = gt_qc_df.rename({'s': 'sample_id'}, axis=1).set_index('sample_id')
 
 sex_chrX_qc = hl.sample_qc(mt.filter_rows(mt.locus.in_x_nonpar()))
 sex_chrX_qc_df = sex_chrX_qc.cols().flatten().to_pandas()
 sex_chrX_qc_df = sex_chrX_qc_df.rename({'s': 'sample_id'}, axis=1).set_index('sample_id')
-sex_chrX_qc_df['hail_sex'] = sex_df.sex.astype('category')
 
 sex_chrY_qc = hl.sample_qc(mt.filter_rows(mt.locus.in_y_nonpar()))
 sex_chrY_qc_df = sex_chrY_qc.cols().flatten().to_pandas()
 sex_chrY_qc_df = sex_chrY_qc_df.rename({'s': 'sample_id'}, axis=1).set_index('sample_id')
-sex_chrY_qc_df['hail_sex'] = sex_df.sex.astype('category')
 
 sex_chrY_qc_df.columns = sex_chrY_qc_df.columns.str.replace('sample_qc', 'chrY')
 sex_chrX_qc_df.columns = sex_chrX_qc_df.columns.str.replace('sample_qc', 'chrX')
-auto_qc_df.columns = auto_qc_df.columns.str.replace('sample_qc', 'auto')
+all_qc_df.columns = all_qc_df.columns.str.replace('sample_qc', 'all')
+gt_qc_df.columns = gt_qc_df.columns.str.replace('sample_qc', 'gt')
 
-sample_qc_df = pd.concat([sex_chrX_qc_df, sex_chrY_qc_df, auto_qc_df], axis=1)
+sample_qc_df = pd.concat([sex_chrX_qc_df, sex_chrY_qc_df, all_qc_df], axis=1)
+sample_qc_df['hail_sex'] = sex_df.sex.astype('category')
 
-sample_qc_df['Y_ploidy'] = 2 * sample_qc_df['chrY.dp_stats.mean'] / sample_qc_df['auto.dp_stats.mean']
-sample_qc_df['X_ploidy'] = 2 * sample_qc_df['chrX.dp_stats.mean'] / sample_qc_df['auto.dp_stats.mean']
+sample_qc_df['Y_ploidy'] = 2 * sample_qc_df['chrY.dp_stats.mean'] / sample_qc_df['gt.dp_stats.mean']
+sample_qc_df['X_ploidy'] = 2 * sample_qc_df['chrX.dp_stats.mean'] / sample_qc_df['gt.dp_stats.mean']
 
-sample_qc_df = sample_qc_df.loc[:,~sample_qc_df.columns.duplicated()].copy()
+# sample_qc_df = sample_qc_df.loc[:,~sample_qc_df.columns.duplicated()].copy()
 
 fig, ax = plt.subplots(2, 2, figsize=(12, 10));
 sns.scatterplot(data=sample_qc_df, x='chrX.n_hom_var', y='chrX.n_het', hue='hail_sex', ax=ax[0][0]);
