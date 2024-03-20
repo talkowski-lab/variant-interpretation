@@ -57,8 +57,8 @@ workflow Relatedness {
         sex_qc_script=sex_qc_script,
         hail_docker=hail_docker
     }
+    
     output {
-        # File merged_vcf_file = select_first([merged_vep_file, mergeVCFs.merged_vcf_file])
         File sex_qc_plots = imputeSex.sex_qc_plots
         File ped_sex_qc = imputeSex.ped_sex_qc
     }

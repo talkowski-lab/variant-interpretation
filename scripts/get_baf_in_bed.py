@@ -65,7 +65,7 @@ else:
                                             (row.chrom_int < start_chrom) | 
                     ((row.chrom_int == start_chrom) & (row.END < start_pos)), axis=1)
 
-    def test_interval(locus_interval, sample, mt):
+    def test_interval(locus_interval, sample, sv_type, mt):
         test_mt = hl.filter_intervals(mt, [hl.parse_locus_interval(locus_interval, 'GRCh38')])
         print(f"number of SNVs in cohort at {locus_interval}: {test_mt.count_rows()}")
 
@@ -81,9 +81,10 @@ else:
         test_df = pd.DataFrame({'locus': test_locus, 'alleles': test_alleles, 'AB': test_ab})
         test_df['locus_interval'] = locus_interval
         test_df['SAMPLE'] = sample
+        test_df['SV_type'] = sv_type
         return test_df
 
     test_df = pd.DataFrame()
     for i, row in bed[~bed.not_in_vcf].iterrows():
-        test_df = pd.concat([test_df, test_interval(row.locus_interval, row.SAMPLE, test_shard)])  
+        test_df = pd.concat([test_df, test_interval(row.locus_interval, row.SAMPLE, row.TYPE, test_shard)])  
     test_df.to_csv(output_name, sep='\t', index=False)  

@@ -36,14 +36,11 @@ def split_multi_ssc(mt):
     mt = split_ds.drop('old_locus', 'old_alleles')
     return mt
 
-mt = hl.import_vcf(vcf_uri,
-                  reference_genome='GRCh38', force_bgz=True, array_elements_required=False)
-
+mt = hl.import_vcf(vcf_uri, reference_genome='GRCh38', force_bgz=True, array_elements_required=False)
 mt = split_multi_ssc(mt)
 
 # somalier sites
 intervals = hl.import_bed(bed_file, reference_genome='GRCh38')
-
 mt = mt.filter_rows(hl.is_defined(intervals[mt.locus]))
 
 imputed_sex = hl.impute_sex(mt.GT)
