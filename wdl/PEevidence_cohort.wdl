@@ -87,7 +87,7 @@ workflow PEevidence {
 
   output {
     Array [File] tlocs_pe_evidence = subset_pe_evidence.tloc_pe
-    Array [File] tlocs_info = calculate_frequencies.tloc_info
+#    Array [File] tlocs_info = calculate_frequencies.tloc_info
     File tlocs_frequencies = merge_frequencies.tloc_merged_freq
     File tlocs_summary = merge_summary.tloc_merged_summary
   }
