@@ -19,6 +19,7 @@ workflow PEevidence {
 #    File sample_batch
 #    File sample_list
     File regions
+    File regions_sample
 
     String docker_pe_evidence
 
@@ -26,6 +27,8 @@ workflow PEevidence {
     RuntimeAttr? runtime_attr_subset_pe_evidence
     RuntimeAttr? runtime_attr_calculate_freq
     RuntimeAttr? runtime_attr_merge_freq
+    RuntimeAttr? runtime_attr_summary
+    RuntimeAttr? runtime_attr_merge_summary
 
   }
 
@@ -59,6 +62,15 @@ workflow PEevidence {
           docker_path = docker_pe_evidence,
           runtime_attr_override = runtime_attr_calculate_freq
       }
+
+      call create_summary {
+        input:
+          tloc_sample_bed = regions_sample,
+          tloc_info_file = calculate_frequencies.tloc_info,
+          name = tloc,
+          docker_path = docker_pe_evidence,
+          runtime_attr_override = runtime_attr_summary
+      }
     }
 
     call merge_frequencies {
@@ -68,10 +80,18 @@ workflow PEevidence {
         runtime_attr_override = runtime_attr_merge_freq
     }
 
+    call merge_summary {
+      input:
+        tloc_summary_files = create_summary.tloc_summary,
+        docker_path = docker_pe_evidence,
+        runtime_attr_override = runtime_attr_merge_summary
+    }
+
   output {
     Array [File] tlocs_pe_evidence = subset_pe_evidence.tloc_pe
     Array [File] tlocs_info = calculate_frequencies.tloc_info
     File tlocs_frequencies = merge_frequencies.tloc_merged_freq
+    File tlocs_summary = merge_summary.tloc_merged_summary
   }
 
 }
@@ -271,6 +291,114 @@ task merge_frequencies {
   command <<<
     set -ex
     cat ~{sep=" " tloc_freq_files} | bgzip > cohort.freq.gz
+  >>>
+
+  runtime {
+    cpu: select_first([runtime_attr.cpu_cores, default_attr.cpu_cores])
+    memory: select_first([runtime_attr.mem_gb, default_attr.mem_gb]) + " GiB"
+    disks: "local-disk " + select_first([runtime_attr.disk_gb, default_attr.disk_gb]) + " HDD"
+    bootDiskSizeGb: select_first([runtime_attr.boot_disk_gb, default_attr.boot_disk_gb])
+    docker: docker_path
+    preemptible: select_first([runtime_attr.preemptible_tries, default_attr.preemptible_tries])
+    maxRetries: select_first([runtime_attr.max_retries, default_attr.max_retries])
+  }
+}
+
+task create_summary {
+  input {
+    File tloc_sample_bed
+    Array[File] tloc_info_file
+    String name
+    String docker_path
+    RuntimeAttr? runtime_attr_override
+  }
+
+  RuntimeAttr default_attr = object {
+    cpu_cores: 1,
+    mem_gb: 3.75,
+    disk_gb: 10,
+    boot_disk_gb: 10,
+    preemptible_tries: 0,
+    max_retries: 1
+  }
+
+  RuntimeAttr runtime_attr = select_first([runtime_attr_override, default_attr])
+
+  output {
+    File tloc_summary ="~{name}.summary"
+  }
+
+  command <<<
+    set -ex
+
+    grep ~{name} ~{tloc_sample_bed} > ~{name}_samples.bed
+
+    caselist=$1
+    i=0
+    cat ~{tloc_sample_bed} | while read line
+    do
+      i=$((i+1))
+      sample_ID=$(echo $line | awk -v OFS="\t" '{print $6}')
+      tloc_ID=$(echo $line | awk -v OFS="\t" '{print $5}')
+      BP1_1_plus=$(cat ~{tloc_info_file} | grep -v $sample_ID | awk '{if($3 == "+") print $2}' | sort  | awk 'NR==1 {print}')
+      BP1_2_plus=$(cat ~{tloc_info_file} | grep -v $sample_ID | awk '{if($3 == "+") print $2}' | sort  | awk 'END {print}')
+      BP1_1_minus=$(cat ~{tloc_info_file} | grep -v $sample_ID | awk '{if($3 == "-") print $2}' | sort  | awk 'NR==1 {print}')
+      BP1_2_minus=$(cat ~{tloc_info_file} | grep -v $sample_ID | awk '{if($3 == "-") print $2}' | sort  | awk 'END {print}')
+      BP1_int_plus=$((BP1_1_plus-BP1_2_plus))
+      BP1_int_minus=$((BP1_1_minus-BP1_2_minus))
+      BP2_1_plus=$(cat ~{tloc_info_file} | grep -v $sample_ID | awk '{if($6 == "+") print $5}' | sort  | awk 'NR==1 {print}')
+      BP2_2_plus=$(cat ~{tloc_info_file} | grep -v $sample_ID | awk '{if($6 == "+") print $5}' | sort  | awk 'END {print}')
+      BP2_1_minus=$(cat ~{tloc_info_file} | grep -v $sample_ID | awk '{if($6 == "-") print $5}' | sort  | awk 'NR==1 {print}')
+      BP2_2_minus=$(cat ~{tloc_info_file} | grep -v $sample_ID | awk '{if($6 == "-") print $5}' | sort  | awk 'END {print}')
+      BP2_int_plus=$((BP2_1_plus-BP2_2_plus))
+      BP2_int_minus=$((BP2_1_minus-BP2_2_minus))
+      awk -v line=$i -v OFS="\t" '{print $0}' ~{tloc_sample_bed} | \
+        sed "s/$/\t$BP1_int_plus/" | sed "s/$/\t$BP1_int_minus/" | \
+        sed "s/$/\t$BP2_int_plus/" | sed "s/$/\t$BP2_int_minus/" | \
+        sed "s/$/\t$BP1_1_plus/" | sed "s/$/\t$BP1_2_plus/" | \
+        sed "s/$/\t$BP1_1_minus/" | sed "s/$/\t$BP1_2_minus/" |  \
+        sed "s/$/\t$BP2_1_plus/" | sed "s/$/\t$BP2_2_plus/" | \
+        sed "s/$/\t$BP2_1_minus/" | sed "s/$/\t$BP2_2_minus/" > ~{name}.summary
+    done
+
+  >>>
+
+  runtime {
+    cpu: select_first([runtime_attr.cpu_cores, default_attr.cpu_cores])
+    memory: select_first([runtime_attr.mem_gb, default_attr.mem_gb]) + " GiB"
+    disks: "local-disk " + select_first([runtime_attr.disk_gb, default_attr.disk_gb]) + " HDD"
+    bootDiskSizeGb: select_first([runtime_attr.boot_disk_gb, default_attr.boot_disk_gb])
+    docker: docker_path
+    preemptible: select_first([runtime_attr.preemptible_tries, default_attr.preemptible_tries])
+    maxRetries: select_first([runtime_attr.max_retries, default_attr.max_retries])
+  }
+}
+
+task merge_summary {
+  input {
+    Array[File] tloc_summary_files
+    String docker_path
+    RuntimeAttr? runtime_attr_override
+  }
+
+  RuntimeAttr default_attr = object {
+    cpu_cores: 1,
+    mem_gb: 3.75,
+    disk_gb: 10,
+    boot_disk_gb: 10,
+    preemptible_tries: 0,
+    max_retries: 1
+  }
+
+  RuntimeAttr runtime_attr = select_first([runtime_attr_override, default_attr])
+
+  output {
+    File tloc_merged_summary ="cohort.summary.gz"
+  }
+
+  command <<<
+    set -ex
+    cat ~{sep=" " tloc_summary_files} | bgzip > cohort.summary.gz
   >>>
 
   runtime {
