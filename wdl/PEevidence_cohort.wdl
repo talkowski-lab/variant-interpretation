@@ -88,6 +88,7 @@ workflow PEevidence {
   output {
     Array [File] tlocs_pe_evidence = subset_pe_evidence.tloc_pe
     Array [File] tlocs_info = calculate_frequencies.tloc_info
+    Array [File] tlocs_info = calculate_frequencies.tloc_list
     File tlocs_frequencies = merge_frequencies.tloc_merged_freq
     File tlocs_summary = merge_summary.tloc_merged_summary
   }
@@ -218,6 +219,7 @@ task calculate_frequencies {
   output {
     File tloc_freq ="~{name}.freq"
     File tloc_info ="~{name}.info"
+    File tloc_list ="~{name}.list"
   }
 
   command <<<
@@ -331,7 +333,6 @@ task create_summary {
 
     grep ~{name} ~{tloc_sample_bed} > ~{name}_samples.bed
 
-    caselist=$1
     i=0
     cat ~{tloc_sample_bed} | while read line
     do
