@@ -334,7 +334,7 @@ task create_summary {
     grep ~{name} ~{tloc_sample_bed} > ~{name}_samples.bed
 
     i=0
-    cat ~{tloc_sample_bed} | while read line
+    cat ~{name}_samples.bed | while read line
     do
       i=$((i+1))
       sample_ID=$(echo $line | awk -v OFS="\t" '{print $6}')
