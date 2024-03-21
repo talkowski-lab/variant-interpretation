@@ -90,7 +90,7 @@ else:
         if n_sample_vars==0:
             return pd.DataFrame({col: [] for col in output_cols})
     
-        trio_mt = mt.filter_cols(mt.s.matches('|'.join(trio)))
+        trio_mt = mt.filter_cols((mt.s==sample) | (mt.s==father) | (mt.s==mother))
         trio_mt = trio_mt.filter_rows(hl.is_defined(sample_mt.rows()[trio_mt.row_key]))
         trio_mat = trio_mt.select_rows().select_entries('AB', 'GT').entries().to_pandas()
 
@@ -99,7 +99,7 @@ else:
         trio_mat['role'] = trio_mat.s.map(sample_roles)
         trio_mat['alleles'] = trio_mat.alleles.apply(':'.join)
 
-        trio_mat_new = trio_mat.pivot(index=['locus','alleles'], columns=['role'], values=['AB','GT'])
+        trio_mat_new = pd.pivot_table(trio_mat, index=['locus','alleles'], columns=['role'], values=['AB','GT'])
         trio_mat_new.columns = trio_mat_new.columns.map('_'.join)
 
         trio_mat_new = trio_mat_new.reset_index()
