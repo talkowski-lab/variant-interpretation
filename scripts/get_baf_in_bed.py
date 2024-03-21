@@ -10,12 +10,17 @@ vep_file = sys.argv[3]
 cores = sys.argv[4]
 mem = int(np.floor(float(sys.argv[5])))
 output_name = sys.argv[6]
+ped_uri = sys.argv[7]
 
 hl.init(min_block_size=128, spark_conf={"spark.executor.cores": cores, 
                     "spark.executor.memory": f"{mem}g",
                     "spark.driver.cores": cores,
                     "spark.driver.memory": f"{mem}g"
                     }, tmp_dir="tmp", local_tmpdir="tmp")
+
+ped = pd.read_csv(ped_uri, sep='\t').iloc[:,:6]
+ped.columns = ['family_id', 'sample_id', 'paternal_id', 'maternal_id', 'sex', 'phenotype']
+ped.index = ped.sample_id
 
 bed = pd.read_csv(bed_file, sep='\t')
 bed = bed[bed.cohort==cohort_prefix].copy()

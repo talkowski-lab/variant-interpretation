@@ -14,6 +14,7 @@ struct RuntimeAttr {
 workflow getBAFinBED {
     input {
         File bed_file
+        File ped_uri
         Array[File] vep_vcf_files
         String cohort_prefix
         String get_baf_script
@@ -25,6 +26,7 @@ workflow getBAFinBED {
         call getBAF {
             input:
             bed_file=bed_file,
+            ped_uri=ped_uri,
             vep_file=vep_file,
             cohort_prefix=cohort_prefix,
             get_baf_script=get_baf_script,
@@ -55,6 +57,7 @@ workflow getBAFinBED {
 task getBAF {
     input {
         File bed_file
+        File ped_uri
         File vep_file
         String cohort_prefix
         String get_baf_script
@@ -93,7 +96,7 @@ task getBAF {
 
     command <<<
     curl ~{get_baf_script} > get_baf.py
-    python3 get_baf.py ~{bed_file} ~{cohort_prefix} ~{vep_file} ~{cpu_cores} ~{memory} ~{output_name} > stdout
+    python3 get_baf.py ~{bed_file} ~{cohort_prefix} ~{vep_file} ~{cpu_cores} ~{memory} ~{output_name} ~{ped_uri} > stdout
     >>>
 
     output {
