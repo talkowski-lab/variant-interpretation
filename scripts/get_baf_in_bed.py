@@ -82,7 +82,7 @@ else:
         print(f"number of SNVs in sample {sample} at {locus_interval}: {sample_mt.count_rows()}")
 
         trio_mt = mt.filter_cols(mt.s.matches('|'.join(trio)))
-        trio_mt = trio_mt.filter_rows(hl.is_defined(sample_mt.rows()[trio_mt.row_key]))#.semi_join_rows(sample_mt.rows())
+        trio_mt = trio_mt.filter_rows(hl.is_defined(sample_mt.rows()[trio_mt.row_key]))
         trio_mat = trio_mt.select_rows().select_entries('AB', 'GT').entries().to_pandas()
 
         sample_roles = {sample: 'sample', father: 'father', mother: 'mother'}
@@ -93,6 +93,7 @@ else:
         trio_mat_new = trio_mat.pivot(index=['locus','alleles'], columns=['role'], values=['AB','GT'])
         trio_mat_new.columns = trio_mat_new.columns.map('_'.join)
 
+        trio_mat_new = trio_mat_new.reset_index()
         trio_mat_new['locus_interval'] = locus_interval
         trio_mat_new['SAMPLE'] = sample
         trio_mat_new['SV_type'] = sv_type
