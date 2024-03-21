@@ -12,7 +12,7 @@ struct RuntimeAttr {
 workflow reheaderVCF {
     input {
         File new_header
-        String vcf_uri
+        File vcf_uri
         String output_vcf_uri
         String sv_base_mini_docker
     }
@@ -29,16 +29,17 @@ workflow reheaderVCF {
 task reheaderVCF_bcftools {
     input {
         File new_header
-        String vcf_uri
+        File vcf_uri
         String output_vcf_uri
         String sv_base_mini_docker
         RuntimeAttr? runtime_attr_override
     }
+    Float input_size = size(vcf_uri, 'GB')
     Float base_disk_gb = 10.0
 
     RuntimeAttr runtime_default = object {
         mem_gb: 4,
-        disk_gb: ceil(base_disk_gb),
+        disk_gb: ceil(base_disk_gb + input_size),
         cpu_cores: 1,
         preemptible_tries: 3,
         max_retries: 1,
@@ -60,8 +61,8 @@ task reheaderVCF_bcftools {
     }
 
     command <<<
-        mkfifo /tmp/token_fifo
-        ( while true ; do curl -H "Metadata-Flavor: Google" http://metadata.google.internal/computeMetadata/v1/instance/service-accounts/default/token > /tmp/token_fifo ; done ) &
-        HTS_AUTH_LOCATION=/tmp/token_fifo bcftools reheader -h ~{new_header} -o ~{output_vcf_uri} ~{vcf_uri}
+        set -eou pipefail
+        bcftools reheader -h ~{new_header} -o ~{basename(output_vcf_uri)} ~{vcf_uri}
+        gsutil -m cp ~{basename(output_vcf_uri)} ~{output_vcf_uri}
     >>>
 }
