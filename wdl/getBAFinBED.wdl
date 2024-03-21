@@ -39,15 +39,16 @@ workflow getBAFinBED {
         merged_filename=cohort_prefix + '_AB_SNVs_locus_intervals'
     }
 
-    call plotBAF {
-        input:
-        merged_baf_tsv=mergeResults.merged_tsv,
-        hail_docker=hail_docker,
-        plot_baf_script=plot_baf_script
-    }
+    # call plotBAF {
+    #     input:
+    #     merged_baf_tsv=mergeResults.merged_tsv,
+    #     hail_docker=hail_docker,
+    #     plot_baf_script=plot_baf_script
+    # }
+
     output {
         File merged_baf_tsv = mergeResults.merged_tsv
-        Array[File] baf_plots = plotBAF.baf_plots
+        # Array[File] baf_plots = plotBAF.baf_plots
     }
 }
 
