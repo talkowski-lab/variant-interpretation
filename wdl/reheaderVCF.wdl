@@ -59,7 +59,9 @@ task reheaderVCF_bcftools {
         bootDiskSizeGb: select_first([runtime_override.boot_disk_gb, runtime_default.boot_disk_gb])
     }
 
-    command {
-        bcftools reheader -h ~{new_header} -o ~{output_vcf_uri} ~{vcf_uri}
-    }
+    command <<<
+        mkfifo /tmp/token_fifo
+        ( while true ; do curl -H "Metadata-Flavor: Google" http://metadata.google.internal/computeMetadata/v1/instance/service-accounts/default/token > /tmp/token_fifo ; done ) &
+        HTS_AUTH_LOCATION=/tmp/token_fifo bcftools reheader -h ~{new_header} -o ~{output_vcf_uri} ~{vcf_uri}
+    >>>
 }
