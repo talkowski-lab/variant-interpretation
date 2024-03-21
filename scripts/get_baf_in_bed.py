@@ -84,8 +84,12 @@ else:
         sample_mt = hl.variant_qc(sample_mt)
         sample_mt = sample_mt.filter_rows(sample_mt.variant_qc.AC[1]>0)
 
-        print(f"number of SNVs in sample {sample} at {locus_interval}: {sample_mt.count_rows()}")
+        n_sample_vars = sample_mt.count_rows()
+        print(f"number of SNVs in sample {sample} at {locus_interval}: {n_sample_vars}")
 
+        if n_sample_vars==0:
+            return pd.DataFrame({col: [] for col in output_cols})
+    
         trio_mt = mt.filter_cols(mt.s.matches('|'.join(trio)))
         trio_mt = trio_mt.filter_rows(hl.is_defined(sample_mt.rows()[trio_mt.row_key]))
         trio_mat = trio_mt.select_rows().select_entries('AB', 'GT').entries().to_pandas()
