@@ -96,6 +96,8 @@ ped = ped.set_index('sample_id')
 ped_qc = pd.concat([ped, sample_qc_df], axis=1).reset_index()[base_cols + np.setdiff1d(sample_qc_df.columns, base_cols).tolist()]
 ped_qc.to_csv(f"{cohort_prefix}_sex_qc.ped", sep='\t', index=False)
 
+ped_qc['sex'] = ped_qc.sex.astype('category')
+
 fig, ax = plt.subplots(2, 2, figsize=(12, 10));
 sns.scatterplot(data=ped_qc, x='chrX.n_hom_var', y='chrX.n_het', hue='sex', ax=ax[0][0]);
 sns.scatterplot(data=ped_qc, x='chrX.n_hom_var', y='chrY.dp_stats.mean', hue='sex', ax=ax[0][1]);
