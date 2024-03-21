@@ -99,7 +99,7 @@ else:
         trio_mat['role'] = trio_mat.s.map(sample_roles)
         trio_mat['alleles'] = trio_mat.alleles.apply(':'.join)
 
-        trio_mat_new = pd.pivot_table(trio_mat, index=['locus','alleles'], columns=['role'], values=['AB','GT'])
+        trio_mat_new = trio_mat.pivot(index=['locus','alleles'], columns=['role'], values=['AB','GT'])
         trio_mat_new.columns = trio_mat_new.columns.map('_'.join)
 
         trio_mat_new = trio_mat_new.reset_index()
