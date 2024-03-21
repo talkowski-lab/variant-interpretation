@@ -16,8 +16,6 @@ struct RuntimeAttr {
 workflow PEevidence {
   input {
     File batches_pe
-#    File sample_batch
-#    File sample_list
     File regions
     File regions_sample
 
