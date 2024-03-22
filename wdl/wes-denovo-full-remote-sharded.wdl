@@ -90,13 +90,33 @@ workflow hailDenovoWES {
         }
     }
 
-    # call helpers.mergeMTs as mergeMTs {
-    #     input:
-    #         mt_uris=step2.filtered_mt,
-    #         cohort_prefix=cohort_prefix,
-    #         bucket_id=bucket_id,
-    #         hail_docker=hail_docker
-    # }
+    call helpers.getHailMTSizes as getDenovoResultSizes {
+        input:
+        mt_uris=step3.de_novo_results,
+        hail_docker=hail_docker
+    }
+
+    call helpers.getHailMTSizes as getDenovoVEPSizes {
+        input:
+        mt_uris=step3.de_novo_vep,
+        hail_docker=hail_docker
+    }
+
+    call helpers.mergeResultsPython as mergeDenovoResults {
+        input:
+            tsvs=step3.de_novo_results,
+            hail_docker=hail_docker,
+            merged_filename=cohort_prefix + "_wes_final_denovo",
+            input_size=getDenovoResultSizes.mt_size
+    }
+
+    call helpers.mergeResultsPython as mergeDenovoVEP {
+        input:
+            tsvs=step3.de_novo_vep,
+            hail_docker=hail_docker,
+            merged_filename=cohort_prefix + "_wes_final_denovo_vep",
+            input_size=getDenovoVEPSizes.mt_size
+    }
 
     output {
         # step 1 output
@@ -106,8 +126,8 @@ workflow hailDenovoWES {
         Array[String] filtered_mt = step2.filtered_mt
         Array[File] post_filter_sample_qc_info = step2.post_filter_sample_qc_info
         # step 3 output
-        # File de_novo_results = step3.de_novo_results
-        # File de_novo_vep = step3.de_novo_vep
+        File de_novo_results = mergeDenovoResults.merged_tsv
+        File de_novo_vep = mergeDenovoVEP.merged_tsv
         Array[String] de_novo_ht = step3.de_novo_ht
         Array[String] tdt_mt = step3.tdt_mt
         Array[String] tdt_parent_aware_mt = step3.tdt_parent_aware_mt

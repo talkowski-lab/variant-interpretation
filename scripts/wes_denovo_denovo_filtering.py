@@ -343,50 +343,47 @@ de_novo_results = kyles_de_novo_v16(mt, pedigree, pop_frequency_prior = mt.gnoma
                              max_parent_ab = 0.05, min_child_ab = 0.25, min_dp_ratio = 0.1, min_gq = 25)
 
 # TODO: output (all below)
-# de_novo_results.flatten().export(f"{prefix}_wes_final_denovo.txt")
+de_novo_df = de_novo_results.rows().to_pandas()
+de_novo_df.to_csv(f"{prefix}_wes_final_denovo.txt", sep='\t', index=False)
 
-if bucket_id == 'false':
-    de_novo_results.write(f"{prefix}_wes_final_denovo.ht", overwrite = True)
-else:
-    mt_uris = []
-    filename = f"{bucket_id}/hail/{str(datetime.datetime.now().strftime('%Y-%m-%d_%H-%M'))}/{prefix}_wes_final_denovo.ht"
-    mt_uris.append(filename)
-    de_novo_results.write(filename, overwrite=True)
+mt_uris = []
+filename = f"{bucket_id}/hail/{str(datetime.datetime.now().strftime('%Y-%m-%d_%H-%M'))}/{prefix}_wes_final_denovo.ht"
+mt_uris.append(filename)
+de_novo_results.write(filename, overwrite=True)
 
 # LOEUF annotations
-
 mt = mt.semi_join_rows(de_novo_results.key_by('locus', 'alleles'))
-# df = mt.rows().to_pandas()
-# df.to_csv(f"{prefix}_wes_final_denovo_vep.txt", sep='\t', index=False)
+df = mt.rows().to_pandas()
+df.to_csv(f"{prefix}_wes_final_denovo_vep.txt", sep='\t', index=False)
 
-# vep_res = pd.read_csv(f"{prefix}_wes_final_denovo_vep.txt", sep='\t')
-# vep_res['alleles'] = vep_res.alleles.apply(ast.literal_eval)
-# vep_res['ID'] = vep_res.locus + ':' + vep_res.alleles.str.join(':')
-# vep_res.columns = vep_res.columns.str.replace('info.', '')
+vep_res = pd.read_csv(f"{prefix}_wes_final_denovo_vep.txt", sep='\t')
+vep_res['alleles'] = vep_res.alleles.apply(ast.literal_eval)
+vep_res['ID'] = vep_res.locus + ':' + vep_res.alleles.str.join(':')
+vep_res.columns = vep_res.columns.str.replace('info.', '')
 
-# loeuf = pd.read_csv(loeuf_file, sep='\t')
-# loeuf.index = loeuf.gene_name
+loeuf = pd.read_csv(loeuf_file, sep='\t')
+loeuf.index = loeuf.gene_name
 
-# def get_genes_csq(csq):
-#     genes = []
-#     for ind_csq in csq:
-#         gene = ind_csq.split('|')[3]
-#         if gene!='':
-#             genes.append(gene)
-#     return list(set(genes))
+def get_genes_csq(csq):
+    genes = []
+    for ind_csq in csq:
+        gene = ind_csq.split('|')[3]
+        if gene!='':
+            genes.append(gene)
+    return list(set(genes))
 
-# vep_res['CSQ'] = vep_res.CSQ.replace({np.nan: "[]"}).apply(ast.literal_eval)
-# vep_res['all_genes'] = vep_res.CSQ.apply(get_genes_csq)
+vep_res['CSQ'] = vep_res.CSQ.replace({np.nan: "[]"}).apply(ast.literal_eval)
+vep_res['all_genes'] = vep_res.CSQ.apply(get_genes_csq)
 
-# all_genes = vep_res.all_genes.apply(pd.Series).stack().unique()
+all_genes = vep_res.all_genes.apply(pd.Series).stack().unique()
 
-# loeuf_vals = loeuf.loc[np.intersect1d(loeuf.index, all_genes), 'LOEUF'].to_dict()
-# loeuf_tile_vals = loeuf.loc[np.intersect1d(loeuf.index, all_genes), 'LOEUF_tile'].to_dict()
+loeuf_vals = loeuf.loc[np.intersect1d(loeuf.index, all_genes), 'LOEUF'].to_dict()
+loeuf_tile_vals = loeuf.loc[np.intersect1d(loeuf.index, all_genes), 'LOEUF_tile'].to_dict()
 
-# vep_res['LOEUF'] = vep_res.all_genes.apply(lambda gene_list: pd.Series(gene_list).map(loeuf_vals).min())
-# vep_res['LOEUF_tile'] = vep_res.all_genes.apply(lambda gene_list: pd.Series(gene_list).map(loeuf_tile_vals).min())
+vep_res['LOEUF'] = vep_res.all_genes.apply(lambda gene_list: pd.Series(gene_list).map(loeuf_vals).min())
+vep_res['LOEUF_tile'] = vep_res.all_genes.apply(lambda gene_list: pd.Series(gene_list).map(loeuf_tile_vals).min())
 
-# vep_res.to_csv(f"{prefix}_wes_final_denovo_vep.txt", sep='\t', index=False)
+vep_res.to_csv(f"{prefix}_wes_final_denovo_vep.txt", sep='\t', index=False)
 
 ## TDT
 
@@ -402,12 +399,9 @@ td = hl.trio_matrix(mt, pedigree, complete_trios = True)
 
 # TODO: output?
 # Write trio dataset
-if bucket_id == 'false':
-    td.write(f"{prefix}_trio_tdt.mt", overwrite=True)
-else:
-    filename = f"{bucket_id}/hail/{str(datetime.datetime.now().strftime('%Y-%m-%d_%H-%M'))}/{prefix}_trio_tdt.mt"
-    mt_uris.append(filename)
-    td.write(filename, overwrite=True)
+filename = f"{bucket_id}/hail/{str(datetime.datetime.now().strftime('%Y-%m-%d_%H-%M'))}/{prefix}_trio_tdt.mt"
+mt_uris.append(filename)
+td.write(filename, overwrite=True)
 
 # Parent-aware TDT annotations, plus extras for use in genotype counts
 #
@@ -480,13 +474,10 @@ td = parent_aware_t_u_annotations_v3(td)
 
 # TODO: output?
 # Write these results to check against built-in TDT function
-if bucket_id == 'false':
-    td.write(f"{prefix}_parent_aware_trio_tdt.mt", overwrite = True)
-else:
-    filename = f"{bucket_id}/hail/{str(datetime.datetime.now().strftime('%Y-%m-%d_%H-%M'))}/{prefix}_parent_aware_trio_tdt.mt"
-    mt_uris.append(filename)
-    pd.Series(mt_uris).to_csv('mt_uri.txt', index=False, header=None)
-    td.write(filename, overwrite=True)
+filename = f"{bucket_id}/hail/{str(datetime.datetime.now().strftime('%Y-%m-%d_%H-%M'))}/{prefix}_parent_aware_trio_tdt.mt"
+mt_uris.append(filename)
+pd.Series(mt_uris).to_csv('mt_uri.txt', index=False, header=None)
+td.write(filename, overwrite=True)
 
 
 # TODO: idk the point of the below code...

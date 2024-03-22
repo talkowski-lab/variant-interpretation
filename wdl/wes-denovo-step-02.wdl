@@ -89,8 +89,9 @@ task hailBasicFilteringRemote {
         ~{cpu_cores} ~{memory} ~{bucket_id}
     }
 
+    String prefix = basename(annot_mt, "_wes_denovo_annot.mt")
     output {
         String filtered_mt = read_lines("mt_uri.txt")[0]
-        File post_filter_sample_qc_info = glob("*_wes_final_annot_post_filter_qc_info.txt")[0]
+        File post_filter_sample_qc_info = "~{prefix}_wes_final_annot_post_filter_qc_info.txt"
     }
 }

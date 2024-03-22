@@ -71,14 +71,14 @@ mt = mt.annotate_entries(pAB = hl.or_missing(mt.GT.is_het(),
                                              hl.binom_test(mt.AD[1], hl.sum(mt.AD), 0.5, 'two-sided')))
 
 # Run and export Hail's built-in sample QC function
+qc_filename = f"{prefix}_wes_post_annot_sample_QC_info.txt"
 hl.sample_qc(mt, 'sample_qc').cols().flatten().export(
-    f"{prefix}_wes_post_annot_sample_QC_info.txt")
+    qc_filename)
+
+pd.Series([qc_filename]).to_csv('qc_out.txt',index=False, header=None)
 
 ## Export mt
-if bucket_id == 'false':
-    mt.write(f"{prefix}_wes_denovo_annot.mt", overwrite=True)
-else:
-    filename = f"{bucket_id}/hail/{str(datetime.datetime.now().strftime('%Y-%m-%d_%H-%M'))}/{prefix}_wes_denovo_annot.mt"
-    pd.Series([filename]).to_csv('mt_uri.txt',index=False, header=None)
-    
-    mt.write(filename, overwrite=True)
+filename = f"{bucket_id}/hail/{str(datetime.datetime.now().strftime('%Y-%m-%d_%H-%M'))}/{prefix}_wes_denovo_annot.mt"
+pd.Series([filename]).to_csv('mt_uri.txt',index=False, header=None)
+
+mt.write(filename, overwrite=True)

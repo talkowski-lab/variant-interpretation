@@ -42,8 +42,8 @@ workflow step3 {
     }
 
     output {
-        # File de_novo_results = hailDenovoFilteringRemote.de_novo_results
-        # File de_novo_vep = hailDenovoFilteringRemote.de_novo_vep
+        File de_novo_results = hailDenovoFilteringRemote.de_novo_results
+        File de_novo_vep = hailDenovoFilteringRemote.de_novo_vep
         String de_novo_ht = hailDenovoFilteringRemote.de_novo_ht
         String tdt_mt = hailDenovoFilteringRemote.tdt_mt
         String tdt_parent_aware_mt = hailDenovoFilteringRemote.tdt_parent_aware_mt
@@ -95,9 +95,10 @@ task hailDenovoFilteringRemote {
         ~{cpu_cores} ~{memory} ~{bucket_id}
     }
 
+    String prefix = basename(filtered_mt, "_wes_denovo_basic_filtering.mt")
     output {
-        # File de_novo_results = glob("*_wes_final_denovo.txt")[0]
-        # File de_novo_vep = glob("*_wes_final_denovo_vep.txt")[0]
+        File de_novo_results = "~{prefix}_wes_final_denovo.txt"
+        File de_novo_vep = "~{prefix}_wes_final_denovo_vep.txt"
         String de_novo_ht = read_lines('mt_uri.txt')[0]
         String tdt_mt = read_lines('mt_uri.txt')[1]
         String tdt_parent_aware_mt = read_lines('mt_uri.txt')[2]
