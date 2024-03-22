@@ -28,6 +28,8 @@ exclude_info_filters = ast.literal_eval(sys.argv[7].capitalize())
 cores = sys.argv[8]  # string
 mem = int(np.floor(float(sys.argv[9])))
 
+prefix = os.path.basename(vcf_uri).split('.vcf')[0]
+
 hl.init(min_block_size=128, spark_conf={"spark.executor.cores": cores, 
                     "spark.executor.memory": f"{mem}g",
                     "spark.driver.cores": cores,
@@ -69,9 +71,22 @@ def trim_vcf(vcf_uri, lcr_uri, ped_uri, meta_uri, trio_uri, header_file, vcf_out
     meta = meta.annotate(s=meta.SampleID).key_by('s')
     mt = mt.annotate_cols(pheno=meta[mt.s])
     mt = mt.filter_cols(mt.pheno.Role != '', keep = True)
+
+    tmp_ped = pd.read_csv(ped_uri, sep='\t')
+    # check ped number of columns
+    if len(tmp_ped) > 6:
+        tmp_ped = tmp_ped.iloc[:,:6]
+        
+    # subset ped to samples in mt
+    samps = mt.s.collect()
+    tmp_ped = tmp_ped[tmp_ped.iloc[:,1].isin(samps)]  # sample_id
+    tmp_ped = tmp_ped.drop_duplicates('sample_id')    
+
+    tmp_ped.to_csv(f"{prefix}.ped", sep='\t', index=False)
+
     # only keep mendelian errors 
     # mendelian errors code == 2 get parents hom_ref and children het loci
-    pedigree = hl.Pedigree.read(ped_uri, delimiter='\t')
+    pedigree = hl.Pedigree.read(f"{prefix}.ped", delimiter='\t')
     all_errors, per_fam, per_sample, per_variant = hl.mendel_errors(mt['GT'], pedigree)
     mt = mt.semi_join_rows(all_errors.filter(all_errors.mendel_code == 2).key_by('locus', 'alleles'))
     # select specific entries for each variant
