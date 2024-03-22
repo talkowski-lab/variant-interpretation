@@ -164,8 +164,9 @@ task checkRelatedness {
     }
 
     command <<<
+        set -eou pipefail
         curl ~{relatedness_qc_script} > check_relatedness.py
-        python3 check_relatedness.py ~{vcf_uri} ~{bed_file} ~{cohort_prefix} ~{ped_uri} ~{cpu_cores} ~{memory}
+        python3 check_relatedness.py ~{vcf_uri} ~{bed_file} ~{cohort_prefix} ~{ped_uri} ~{cpu_cores} ~{memory} > stdout
     >>>
 
     output {
