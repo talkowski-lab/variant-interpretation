@@ -333,7 +333,7 @@ task create_summary {
 
     grep ~{name} ~{tloc_sample_bed} > ~{name}_samples.bed
 
-    Rscript ~/postdoc/cohorts/GMKF/analysis/ResolveCTX/tlocs_create_summary.R \
+    Rscript /opt/variant-interpretation/scripts/tlocs_create_summary.R \
       -s ~{name}_samples.bed \
       -i ~{tloc_info_file} \
       -o ~{name}.summary
