@@ -80,6 +80,7 @@ def trim_vcf(vcf_uri, lcr_uri, ped_uri, meta_uri, trio_uri, header_file, vcf_out
     # subset ped to samples in mt
     samps = mt.s.collect()
     tmp_ped = tmp_ped[tmp_ped.iloc[:,1].isin(samps)]  # sample_id
+    tmp_ped.columns = ['family_id', 'sample_id', 'paternal_id', 'maternal_id', 'sex', 'phenotype']
     tmp_ped = tmp_ped.drop_duplicates('sample_id')    
 
     tmp_ped.to_csv(f"{prefix}.ped", sep='\t', index=False)
