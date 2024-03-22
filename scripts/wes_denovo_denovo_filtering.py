@@ -48,6 +48,12 @@ mt = mt.annotate_entries(PL = ( hl.case()
                                     [0, mt.GQ, hl.max(mt.GQ, 3*(mt.AD[0] - mt.AD[1]))] )
                                .default(mt.PL) )
                         )
+# AD missingness
+mt = mt.annotate_entries(AD = ( hl.case()
+                            .when(mt.GT.is_hom_ref() & hl.is_missing(mt.AD), 
+                              [mt.DP, 0] )
+                               .default(mt.AD) )
+                        )
 
 ## De novo calling
 
