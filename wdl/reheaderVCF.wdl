@@ -14,7 +14,9 @@ workflow reheaderVCF {
         File new_header
         File vcf_uri
         String output_vcf_uri
+        String hail_docker
         String sv_base_mini_docker
+        Float input_size
     }
 
     call reheaderVCF_bcftools {
@@ -22,19 +24,20 @@ workflow reheaderVCF {
         new_header=new_header,
         vcf_uri=vcf_uri,
         output_vcf_uri=output_vcf_uri,
-        sv_base_mini_docker=sv_base_mini_docker
+        sv_base_mini_docker=sv_base_mini_docker,
+        input_size=input_size
     }
 }
 
 task reheaderVCF_bcftools {
     input {
         File new_header
-        File vcf_uri
+        String vcf_uri
         String output_vcf_uri
         String sv_base_mini_docker
+        Float input_size
         RuntimeAttr? runtime_attr_override
     }
-    Float input_size = size(vcf_uri, 'GB')
     Float base_disk_gb = 10.0
 
     RuntimeAttr runtime_default = object {
