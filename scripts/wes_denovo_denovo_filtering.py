@@ -343,7 +343,7 @@ de_novo_results = kyles_de_novo_v16(mt, pedigree, pop_frequency_prior = mt.gnoma
                              max_parent_ab = 0.05, min_child_ab = 0.25, min_dp_ratio = 0.1, min_gq = 25)
 
 # TODO: output (all below)
-de_novo_df = de_novo_results.rows().to_pandas()
+de_novo_df = de_novo_results.to_pandas()
 de_novo_df.to_csv(f"{prefix}_wes_final_denovo.txt", sep='\t', index=False)
 
 mt_uris = []
