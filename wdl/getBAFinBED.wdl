@@ -34,11 +34,18 @@ workflow getBAFinBED {
         }
     }
 
-    call helpers.mergeResults as mergeResults {
+    call helpers.getHailMTSizes as getTotalSize {
+        input:
+        mt_uris=getBAF.baf_tsv,
+        hail_docker=hail_docker
+    }
+
+    call helpers.mergeResultsPython as mergeResults {
         input:
         tsvs=getBAF.baf_tsv,
         hail_docker=hail_docker,
-        merged_filename=cohort_prefix + '_AB_SNVs_locus_intervals'
+        merged_filename=cohort_prefix + '_AB_SNVs_locus_intervals',
+        input_size=getTotalSize.mt_size
     }
 
     # call plotBAF {
