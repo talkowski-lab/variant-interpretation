@@ -103,7 +103,7 @@ ped_qc['pred_sex'] = ped_qc.apply(predict_sex, axis=1).astype('category')
 ped_qc = ped_qc[base_cols + ['pred_sex'] + np.setdiff1d(sample_qc_df.columns, base_cols).tolist()]
 ped_qc.to_csv(f"{cohort_prefix}_sex_qc.ped", sep='\t', index=False)
 
-ped_qc['sex'] = ped_qc.sex.astype('category')
+ped_qc['sex'] = ped_qc.sex.replace({np.nan: -9}).astype('category')
 
 fig, ax = plt.subplots(2, 2, figsize=(12, 10));
 sns.scatterplot(data=ped_qc, x='chrX.n_hom_var', y='chrX.n_het', hue='pred_sex', ax=ax[0][0]);
