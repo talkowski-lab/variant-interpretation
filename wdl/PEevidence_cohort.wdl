@@ -246,7 +246,7 @@ task calculate_frequencies {
     # echo "Translocation $ID distance from $CHR2 : $BP2 starts at $start ends at $end" in $Sample_size > $ID.report
     cat $ID.list $ID.size > ~{name}.info
     rm $ID.size
-    rm $ID.list
+    #rm $ID.list
     # rm $ID.report
     awk -v line=$i -v OFS="\t" '{print $0}' ~{tloc_bed} | sed "s/$/\t$Sample_size/" | sed "s/$/\t$Sample_size_min4/" | sed "s/$/\t$Sample_size_min10/" > ~{name}.freq
     done
