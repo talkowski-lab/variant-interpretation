@@ -11,7 +11,7 @@ cohort_prefix = sys.argv[2]
 # bucket = storage_client.get_bucket(ped_uri.split('/')[2])
 # bucket = storage_client.get_bucket(bucket_id.replace('gs://', ''))
 
-ped = pd.read_csv(ped_uri, sep='\t')
+ped = pd.read_csv(ped_uri, sep='\t').iloc[:,:6]
 
 try:
     float(ped.columns[-1])  # no header
