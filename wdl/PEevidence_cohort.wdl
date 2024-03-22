@@ -333,32 +333,10 @@ task create_summary {
 
     grep ~{name} ~{tloc_sample_bed} > ~{name}_samples.bed
 
-    i=0
-    cat ~{name}_samples.bed | while read line
-    do
-      i=$((i+1))
-      sample_ID=$(echo $line | awk -v OFS="\t" '{print $6}')
-      tloc_ID=$(echo $line | awk -v OFS="\t" '{print $5}')
-      BP1_1_plus=$(cat ~{tloc_info_file} | grep $sample_ID | awk '{if($3 == "+") print $2}' | sort  | awk 'NR==1 {print}')
-      BP1_2_plus=$(cat ~{tloc_info_file} | grep $sample_ID | awk '{if($3 == "+") print $2}' | sort  | awk 'END {print}')
-      BP1_1_minus=$(cat ~{tloc_info_file} | grep $sample_ID | awk '{if($3 == "-") print $2}' | sort  | awk 'NR==1 {print}')
-      BP1_2_minus=$(cat ~{tloc_info_file} | grep $sample_ID | awk '{if($3 == "-") print $2}' | sort  | awk 'END {print}')
-      BP1_int_plus=$((BP1_1_plus-BP1_2_plus))
-      BP1_int_minus=$((BP1_1_minus-BP1_2_minus))
-      BP2_1_plus=$(cat ~{tloc_info_file} | grep $sample_ID | awk '{if($6 == "+") print $5}' | sort  | awk 'NR==1 {print}')
-      BP2_2_plus=$(cat ~{tloc_info_file} | grep $sample_ID | awk '{if($6 == "+") print $5}' | sort  | awk 'END {print}')
-      BP2_1_minus=$(cat ~{tloc_info_file} | grep $sample_ID | awk '{if($6 == "-") print $5}' | sort  | awk 'NR==1 {print}')
-      BP2_2_minus=$(cat ~{tloc_info_file} | grep $sample_ID | awk '{if($6 == "-") print $5}' | sort  | awk 'END {print}')
-      BP2_int_plus=$((BP2_1_plus-BP2_2_plus))
-      BP2_int_minus=$((BP2_1_minus-BP2_2_minus))
-      awk -v line=$i -v OFS="\t" '{print $0}' ~{name}_samples.bed | \
-        sed "s/$/\t$BP1_int_plus/" | sed "s/$/\t$BP1_int_minus/" | \
-        sed "s/$/\t$BP2_int_plus/" | sed "s/$/\t$BP2_int_minus/" | \
-        sed "s/$/\t$BP1_1_plus/" | sed "s/$/\t$BP1_2_plus/" | \
-        sed "s/$/\t$BP1_1_minus/" | sed "s/$/\t$BP1_2_minus/" |  \
-        sed "s/$/\t$BP2_1_plus/" | sed "s/$/\t$BP2_2_plus/" | \
-        sed "s/$/\t$BP2_1_minus/" | sed "s/$/\t$BP2_2_minus/" > ~{name}.summary
-    done
+    Rscript ~/postdoc/cohorts/GMKF/analysis/ResolveCTX/tlocs_create_summary.R \
+      -s ~{name}_samples.bed \
+      -i ~{tloc_info_file} \
+      -o ~{name}.summary
 
   >>>
 
