@@ -351,7 +351,7 @@ task create_summary {
       BP2_2_minus=$(cat ~{tloc_info_file} | grep $sample_ID | awk '{if($6 == "-") print $5}' | sort  | awk 'END {print}')
       BP2_int_plus=$((BP2_1_plus-BP2_2_plus))
       BP2_int_minus=$((BP2_1_minus-BP2_2_minus))
-      awk -v line=$i -v OFS="\t" '{print $0}' ~{tloc_sample_bed} | \
+      awk -v line=$i -v OFS="\t" '{print $0}' ~{name}_samples.bed | \
         sed "s/$/\t$BP1_int_plus/" | sed "s/$/\t$BP1_int_minus/" | \
         sed "s/$/\t$BP2_int_plus/" | sed "s/$/\t$BP2_int_minus/" | \
         sed "s/$/\t$BP1_1_plus/" | sed "s/$/\t$BP1_2_plus/" | \
