@@ -55,6 +55,42 @@ test_shard = test_shard.annotate_entries(AB=test_shard.AD[1]/hl.sum(test_shard.A
 roles = ['sample','father','mother']
 output_cols = ['locus', 'alleles', 'locus_interval', 'SV_type', 'SAMPLE'] + [f"AB_{role}" for role in roles] + [f"GT_{role}" for role in roles] 
 
+def test_interval(locus_interval, sample, sv_type, mt):
+    mt = hl.filter_intervals(mt, [hl.parse_locus_interval(locus_interval, 'GRCh38')])
+    print(f"number of SNVs in cohort at {locus_interval}: {mt.count_rows()}")
+
+    father, mother = ped.loc[sample, ['paternal_id','maternal_id']].tolist()
+    trio = [sample, father, mother]
+
+    sample_mt = mt.filter_cols(mt.s==sample)
+    sample_mt = hl.variant_qc(sample_mt)
+    sample_mt = sample_mt.filter_rows(sample_mt.variant_qc.AC[1]>0)
+
+    n_sample_vars = sample_mt.count_rows()
+    print(f"number of SNVs in sample {sample} at {locus_interval}: {n_sample_vars}")
+
+    if n_sample_vars==0:
+        return pd.DataFrame({col: [] for col in output_cols})
+
+    trio_mt = mt.filter_cols((mt.s==sample) | (mt.s==father) | (mt.s==mother))
+    trio_mt = trio_mt.filter_rows(hl.is_defined(sample_mt.rows()[trio_mt.row_key]))
+    trio_mat = trio_mt.select_rows().select_entries('AB', 'GT').entries().to_pandas()
+
+    sample_roles = {sample: 'sample', father: 'father', mother: 'mother'}
+
+    trio_mat['role'] = trio_mat.s.map(sample_roles)
+    trio_mat['alleles'] = trio_mat.alleles.apply(':'.join)
+
+    trio_mat_new = trio_mat.pivot(index=['locus','alleles'], columns=['role'], values=['AB','GT'])
+    trio_mat_new.columns = trio_mat_new.columns.map('_'.join)
+
+    trio_mat_new = trio_mat_new.reset_index()
+    trio_mat_new['locus_interval'] = locus_interval
+    trio_mat_new['SAMPLE'] = sample
+    trio_mat_new['SV_type'] = sv_type
+
+    return trio_mat_new
+
 if test_shard.count_rows()==0:
     print('no overlapping SNVs, outputting empty file...')
     pd.DataFrame({col: [] for col in output_cols}).to_csv(output_name, sep='\t', index=False)  
@@ -72,44 +108,8 @@ else:
                                             ((row.chrom_int == end_chrom) & (row.START > end_pos)) |
                                             (row.chrom_int < start_chrom) | 
                     ((row.chrom_int == start_chrom) & (row.END < start_pos)), axis=1)
-
-    def test_interval(locus_interval, sample, sv_type, mt):
-        mt = hl.filter_intervals(mt, [hl.parse_locus_interval(locus_interval, 'GRCh38')])
-        print(f"number of SNVs in cohort at {locus_interval}: {mt.count_rows()}")
-
-        father, mother = ped.loc[sample, ['paternal_id','maternal_id']].tolist()
-        trio = [sample, father, mother]
-
-        sample_mt = mt.filter_cols(mt.s==sample)
-        sample_mt = hl.variant_qc(sample_mt)
-        sample_mt = sample_mt.filter_rows(sample_mt.variant_qc.AC[1]>0)
-
-        n_sample_vars = sample_mt.count_rows()
-        print(f"number of SNVs in sample {sample} at {locus_interval}: {n_sample_vars}")
-
-        if n_sample_vars==0:
-            return pd.DataFrame({col: [] for col in output_cols})
-    
-        trio_mt = mt.filter_cols((mt.s==sample) | (mt.s==father) | (mt.s==mother))
-        trio_mt = trio_mt.filter_rows(hl.is_defined(sample_mt.rows()[trio_mt.row_key]))
-        trio_mat = trio_mt.select_rows().select_entries('AB', 'GT').entries().to_pandas()
-
-        sample_roles = {sample: 'sample', father: 'father', mother: 'mother'}
-
-        trio_mat['role'] = trio_mat.s.map(sample_roles)
-        trio_mat['alleles'] = trio_mat.alleles.apply(':'.join)
-
-        trio_mat_new = trio_mat.pivot(index=['locus','alleles'], columns=['role'], values=['AB','GT'])
-        trio_mat_new.columns = trio_mat_new.columns.map('_'.join)
-
-        trio_mat_new = trio_mat_new.reset_index()
-        trio_mat_new['locus_interval'] = locus_interval
-        trio_mat_new['SAMPLE'] = sample
-        trio_mat_new['SV_type'] = sv_type
-
-        return trio_mat_new
     
     test_df = pd.DataFrame()
     for i, row in bed[~bed.not_in_vcf].iterrows():
         test_df = pd.concat([test_df, test_interval(row.locus_interval, row.SAMPLE, row.TYPE, test_shard)])  
-    test_df[output_cols].to_csv(output_name, sep='\t', index=False)  
+    test_df[np.intersect1d(output_cols, test_df.columns)].to_csv(output_name, sep='\t', index=False)  
