@@ -13,7 +13,7 @@ workflow reheaderVCF {
     input {
         File new_header
         File vcf_uri
-        String output_vcf_uri
+        String output_vcf_name
         # String hail_docker
         String sv_base_mini_docker
         Float input_size
@@ -23,9 +23,13 @@ workflow reheaderVCF {
         input:
         new_header=new_header,
         vcf_uri=vcf_uri,
-        output_vcf_uri=output_vcf_uri,
+        output_vcf_name=output_vcf_name,
         sv_base_mini_docker=sv_base_mini_docker,
         input_size=input_size
+    }
+
+    output {
+        File reheadered_vcf = reheaderVCF_bcftools.reheadered_vcf
     }
 }
 
@@ -33,7 +37,7 @@ task reheaderVCF_bcftools {
     input {
         File new_header
         String vcf_uri
-        String output_vcf_uri
+        String output_vcf_name
         String sv_base_mini_docker
         Float input_size
         RuntimeAttr? runtime_attr_override
@@ -67,7 +71,10 @@ task reheaderVCF_bcftools {
         set -eou pipefail
         mkfifo /tmp/token_fifo
         ( while true ; do curl -H "Metadata-Flavor: Google" http://metadata.google.internal/computeMetadata/v1/instance/service-accounts/default/token > /tmp/token_fifo ; done ) &
-        HTS_AUTH_LOCATION=/tmp/token_fifo bcftools reheader -h ~{new_header} -o ~{basename(output_vcf_uri)} ~{vcf_uri}
-        gsutil -m cp ~{basename(output_vcf_uri)} ~{output_vcf_uri}
+        HTS_AUTH_LOCATION=/tmp/token_fifo bcftools reheader -h ~{new_header} -o ~{output_vcf_name} ~{vcf_uri}
     >>>
+
+    output {
+        File reheadered_vcf = output_vcf_name
+    }
 }
