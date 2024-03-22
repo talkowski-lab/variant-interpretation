@@ -106,10 +106,10 @@ ped_qc.to_csv(f"{cohort_prefix}_sex_qc.ped", sep='\t', index=False)
 ped_qc['sex'] = ped_qc.sex.astype('category')
 
 fig, ax = plt.subplots(2, 2, figsize=(12, 10));
-sns.scatterplot(data=sample_qc_df, x='chrX.n_hom_var', y='chrX.n_het', hue='pred_sex', ax=ax[0][0]);
-sns.scatterplot(data=sample_qc_df, x='chrX.n_hom_var', y='chrY.dp_stats.mean', hue='pred_sex', ax=ax[0][1]);
-sns.scatterplot(data=sample_qc_df, x='chrX.dp_stats.mean', y='chrY.dp_stats.mean', hue='pred_sex', ax=ax[1][0]);
-sns.scatterplot(data=sample_qc_df, x='X_ploidy', y='Y_ploidy', hue='pred_sex', ax=ax[1][1]);
+sns.scatterplot(data=ped_qc, x='chrX.n_hom_var', y='chrX.n_het', hue='pred_sex', ax=ax[0][0]);
+sns.scatterplot(data=ped_qc, x='chrX.n_hom_var', y='chrY.dp_stats.mean', hue='pred_sex', ax=ax[0][1]);
+sns.scatterplot(data=ped_qc, x='chrX.dp_stats.mean', y='chrY.dp_stats.mean', hue='pred_sex', ax=ax[1][0]);
+sns.scatterplot(data=ped_qc, x='X_ploidy', y='Y_ploidy', hue='pred_sex', ax=ax[1][1]);
 plt.savefig(f"{cohort_prefix}_sex_qc_imputed.png");
 
 fig, ax = plt.subplots(2, 2, figsize=(12, 10));
