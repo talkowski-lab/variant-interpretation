@@ -53,26 +53,78 @@ rel = rel.annotate(relationship = relatedness.get_relationship_expr(rel.kin, rel
                                                    ibd1_50_thresholds=(0.275, 0.75), ibd1_100_min=0.75, ibd2_0_max=0.125, 
                                                    ibd2_25_thresholds=(0.1, 0.5), ibd2_100_thresholds=(0.75, 1.25))
 )
-
-rel_df = rel.to_pandas()
+rel = rel.key_by()
+rel = rel.annotate(i=rel.i.s, j=rel.j.s).key_by('i','j')
 
 ped = pd.read_csv(ped_uri, sep='\t').iloc[:, :6]
 ped.columns = ['family_id', 'sample_id', 'paternal_id', 'maternal_id', 'sex', 'phenotype']
 ped.index = ped.sample_id
+try:
+    ped['sex'] = ped.sex.astype(str).str.lower().replace({'male': 1, 'female': 2})
+    ped.loc[~ped.sex.isin([1,2,'1','2']), 'sex'] = 0
+    ped['sex'] = ped.sex.astype(int)
+except Exception as e:
+    print(str(e))
+    pass
+ped[['family_id', 'sample_id', 'paternal_id', 'maternal_id']] = ped[['family_id', 'sample_id', 'paternal_id', 'maternal_id']].astype(str)
 
+def get_sample_role(row):
+    if (row.maternal_id=='0') & (row.paternal_id=='0'):
+        if row.sex==1:
+            role = 'Father'
+        elif row.sex==2:
+            role = 'Mother'
+        else:
+            role = 'Unknown'
+    else:
+        role = 'Proband'
+    return role
+
+ped['role'] = ped.apply(get_sample_role, axis=1)
+
+ped_ht = hl.Table.from_pandas(ped)
+
+dad_temp = ped_ht.key_by('sample_id','paternal_id')
+dad_temp2 = ped_ht.key_by('paternal_id','sample_id')
+
+all_dad_ht = dad_temp.join(rel.semi_join(dad_temp)).key_by().union(dad_temp2.join(rel.semi_join(dad_temp2)).key_by(), unify=True)
+all_dad_ht = all_dad_ht.annotate(father_status=all_dad_ht.relationship).drop('relationship')
+
+mom_temp = ped_ht.key_by('sample_id','maternal_id')
+mom_temp2 = ped_ht.key_by('maternal_id','sample_id')
+
+all_mom_ht = mom_temp.join(rel.semi_join(mom_temp)).key_by().union(mom_temp2.join(rel.semi_join(mom_temp2)).key_by(), unify=True)
+all_mom_ht = all_mom_ht.annotate(mother_status=all_mom_ht.relationship).drop('relationship')
+
+mom_df = all_mom_ht.to_pandas()
+dad_df = all_dad_ht.to_pandas()
+
+rename_cols = ['kin', 'ibd0', 'ibd1', 'ibd2']
+mom_df = mom_df.rename({col: 'mother_'+col for col in rename_cols}, axis=1).copy()
+dad_df = dad_df.rename({col: 'father_'+col for col in rename_cols}, axis=1).copy()
+
+all_df = mom_df.merge(dad_df, how='outer')
+
+# get duplicates
+ped['sample_rank'] = 4 - (ped.sex.isin([1,2]).astype(int) + (ped.paternal_id!='0').astype(int) + (ped.maternal_id!='0').astype(int))
 vcf_samps = mt.s.collect()
 
-for s, row in ped[ped.role=='Proband'].iterrows():
-    proband, father, mother = row[['sample_id', 'paternal_id', 'maternal_id']]
-    if father=='0':
-        dad_df = rel_df[(rel_df['i.s']==proband) | (rel_df['j.s']==proband)]
-#         break
-    else:
-        ped.loc[s,'father_status'] = rel_df[((rel_df['i.s']==proband) & (rel_df['j.s']==father)) 
-           | ((rel_df['i.s']==father) & (rel_df['j.s']==proband))].relationship.item()
-    if mother=='0':
-        mom_df = rel_df[(rel_df['i.s']==proband) | (rel_df['j.s']==proband)]
-#         break
-    else:
-        ped.loc[s,'mother_status'] = rel_df[((rel_df['i.s']==proband) & (rel_df['j.s']==mother)) 
-           | ((rel_df['i.s']==mother) & (rel_df['j.s']==proband))].relationship.item()
+for s in np.setdiff1d(vcf_samps, ped.sample_id):
+    ped.at[s, 'sample_id'] = s
+    ped.loc[s, 'sample_rank'] = 4
+
+# smaller rank is better
+rank_ht = hl.Table.from_pandas(ped[['sample_id','sample_rank']]).key_by('sample_id')
+
+merged_rel_df = pd.concat([ped, all_df.set_index('sample_id')], axis=1)
+merged_rel_df = merged_rel_df.loc[:,~merged_rel_df.columns.duplicated()].copy()
+
+dups = relatedness.get_duplicated_samples(rel, i_col='i', j_col='j', rel_col='relationship')
+if len(dups)>0:
+    dup_ht = relatedness.get_duplicated_samples_ht(dups, rank_ht,  rank_ann='sample_rank')
+    dup_df = dup_ht.to_pandas()
+    merged_rel_df['duplicate_samples'] = merged_rel_df.sample_id.map(dup_df.set_index('kept').filtered.to_dict())
+else:
+    merged_rel_df['duplicate_samples'] = np.nan
+
+merged_rel_df.to_csv(f"{cohort_prefix}_relatedness_qc.ped", sep='\t', index=False)
