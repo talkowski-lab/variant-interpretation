@@ -57,7 +57,9 @@ task mergeResultsPython {
         for i, tsv in enumerate(tsvs):
             if (i+1)%100==0:
                 print(f"Loading tsv {i+1}/{tot}...")
-            dfs.append(pd.read_csv(tsv, sep='\t'))
+            df = pd.read_csv(tsv, sep='\t')
+            if not df.empty:
+                dfs.append(df)
         merged_df = pd.concat(dfs)
         merged_df.to_csv(merged_filename, sep='\t', index=False)
         EOF
