@@ -20,13 +20,15 @@ workflow step6 {
         String filter_final_tsv_script
         String prioritize_csq_script
         String hail_docker
+        RuntimeAttr? runtime_attr_prioritize
     }
 
     call prioritizeCSQ.annotateMostSevereCSQ as prioritizeCSQ {
         input:
         vcf_metrics_tsv=vcf_metrics_tsv_annot,
         prioritize_csq_script=prioritize_csq_script,
-        hail_docker=hail_docker
+        hail_docker=hail_docker,
+        runtime_attr_override=runtime_attr_prioritize
     }
 
     call filterFinalTSV {
