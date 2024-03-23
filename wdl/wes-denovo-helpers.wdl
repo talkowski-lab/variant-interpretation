@@ -49,7 +49,7 @@ task mergeResultsPython {
         import numpy as np
         import sys
 
-        tsvs = sys.argv[1].split(',')
+        tsvs = pd.read_csv(sys.argv[1], header=None)[0].tolist()
         merged_filename = sys.argv[2]
 
         dfs = []
@@ -64,7 +64,7 @@ task mergeResultsPython {
         merged_df.to_csv(merged_filename+'.tsv', sep='\t', index=False)
         EOF
 
-        python3 merge_tsvs.py ~{sep=',' tsvs} ~{merged_filename} > stdout
+        python3 merge_tsvs.py ~{write_lines(tsvs)} ~{merged_filename} > stdout
     >>>
 
     output {
