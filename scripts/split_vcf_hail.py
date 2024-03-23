@@ -23,7 +23,7 @@ is_vcf = file.split('.')[-1] != 'mt'
 if not is_vcf:
     mt = hl.read_matrix_table(file)
 else:
-    mt = hl.import_vcf(file, force_bgz=True, array_elements_required=False, reference_genome='GRCh38')
+    mt = hl.import_vcf(file, force_bgz=True, array_elements_required=False, reference_genome='GRCh38', find_replace=('nan', '.'))
     header = hl.get_vcf_metadata(file) 
 
 try:
