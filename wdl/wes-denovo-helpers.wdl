@@ -61,7 +61,7 @@ task mergeResultsPython {
             if not df.empty:
                 dfs.append(df)
         merged_df = pd.concat(dfs)
-        merged_df.to_csv(merged_filename, sep='\t', index=False)
+        merged_df.to_csv(merged_filename+'.tsv', sep='\t', index=False)
         EOF
 
         python3 merge_tsvs.py ~{sep=',' tsvs} ~{merged_filename} > stdout
