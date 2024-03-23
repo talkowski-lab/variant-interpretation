@@ -20,8 +20,8 @@ opt_parser <- OptionParser(option_list=option_list)
 opt <- parse_args(opt_parser)
 
 #Read files
-samples <- fread("~/tmp/debug3/mg_batch03.chr7.final_cleanup_CTX_chr7_1_samples.bed")
-info <- fread("~/tmp/debug3/mg_batch03.chr7.final_cleanup_CTX_chr7_1.info")
+samples <- fread(opt$samples)
+info <- fread("opt$info")
 out <- opt$out
 
 #Create summary table
