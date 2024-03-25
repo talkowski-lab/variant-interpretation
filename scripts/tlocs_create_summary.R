@@ -29,29 +29,31 @@ summary_df <- do.call(rbind, apply(samples, 1, function(row){
   sample_ID <- row['V6']
   tloc_ID <- row['V5']
 
-  BP1_1_plus <- min(subset(info, V7 == sample_ID & V3 == "+")$V2)
-  BP1_2_plus <- max(subset(info, V7 == sample_ID & V3 == "+")$V2)
-  BP1_1_minus <- min(subset(info, V7 == sample_ID & V3 == "-")$V2)
-  BP1_2_minus <- max(subset(info, V7 == sample_ID & V3 == "-")$V2)
+  info_sample <- subset(info, V7 == sample_ID)
+
+  BP1_1_plus <- min(subset(info_sample, V3 == "+")$V2)
+  BP1_2_plus <- max(subset(info_sample, V3 == "+")$V2)
+  BP1_1_minus <- min(subset(info_sample, V3 == "-")$V2)
+  BP1_2_minus <- max(subset(info_sample, V3 == "-")$V2)
   BP1_int_plus <- BP1_1_plus-BP1_2_plus
   BP1_int_minus <- BP1_1_minus-BP1_2_minus
-  BP2_1_plus <- min(subset(info, V7 == sample_ID & V6 == "+")$V5)
-  BP2_2_plus <- max(subset(info, V7 == sample_ID & V6 == "+")$V5)
-  BP2_1_minus <- min(subset(info, V7 == sample_ID & V6 == "-")$V5)
-  BP2_2_minus <- max(subset(info, V7 == sample_ID & V6 == "-")$V5)
+  BP2_1_plus <- min(subset(info_sample, V6 == "+")$V5)
+  BP2_2_plus <- max(subset(info_sample, V6 == "+")$V5)
+  BP2_1_minus <- min(subset(info_sample, V6 == "-")$V5)
+  BP2_2_minus <- max(subset(info_sample, V6 == "-")$V5)
   BP2_int_plus <- BP2_1_plus-BP2_2_plus
   BP2_int_minus <- BP2_1_minus-BP2_2_minus
 
-  First_PE_dir <- info[order(info$V2),]$V3[1]
-  PE <- nrow(info)
-  Count1 <- nrow(subset(info, V3 == "+" & V6 == "+"))
-  Count2 <- nrow(subset(info, V3 == "+" & V6 == "-"))
-  Count3 <- nrow(subset(info, V3 == "-" & V6 == "+"))
-  Count4 <- nrow(subset(info, V3 == "-" & V6 == "-"))
+  First_PE_dir <- info_sample[order(info_sample$V2),]$V3[1]
+  PE <- nrow(info_sample)
+  Count1 <- nrow(subset(info_sample, V3 == "+" & V6 == "+"))
+  Count2 <- nrow(subset(info_sample, V3 == "+" & V6 == "-"))
+  Count3 <- nrow(subset(info_sample, V3 == "-" & V6 == "+"))
+  Count4 <- nrow(subset(info_sample, V3 == "-" & V6 == "-"))
 
-  if(info[order(info$V2),]$V3[1] == "-"){
+  if(info_sample[order(info_sample$V2),]$V3[1] == "-"){
     count <- 0
-    vector <- info[order(info$V2),]$V3
+    vector <- info_sample[order(info_sample$V2),]$V3
     for (i in 1:(length(vector) - 1)) {
       if (vector[i] == "-" && vector[i + 1] == "-") {
         count <- count + 1
