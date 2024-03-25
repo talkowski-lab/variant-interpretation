@@ -76,10 +76,10 @@ summary_df <- do.call(rbind, apply(samples, 1, function(row){
 #Append to main samples table
 samples_summary <- cbind(samples, summary_df)
 
-samples_summary$pass1 <- lapply(1:nrow(samples_summary), function(i) if ((as.numeric(samples_summary$BP1_int_plus[i])*-1) > 50) {"1"} else {"0"})
-samples_summary$pass2 <- lapply(1:nrow(samples_summary), function(i) if ((as.numeric(samples_summary$BP1_int_minus[i])*-1) > 50) {"1"} else {"0"})
-samples_summary$pass3 <- lapply(1:nrow(samples_summary), function(i) if ((as.numeric(samples_summary$BP2_int_plus[i])*-1) > 50) {"1"} else {"0"})
-samples_summary$pass4 <- lapply(1:nrow(samples_summary), function(i) if ((as.numeric(samples_summary$BP2_int_minus[i])*-1) > 50) {"1"} else {"0"})
+samples_summary$pass1 <- lapply(1:nrow(samples_summary), function(i) if ((as.numeric(samples_summary$BP1_int_plus[i])) > 50) {"1"} else {"0"})
+samples_summary$pass2 <- lapply(1:nrow(samples_summary), function(i) if ((as.numeric(samples_summary$BP1_int_minus[i])) > 50) {"1"} else {"0"})
+samples_summary$pass3 <- lapply(1:nrow(samples_summary), function(i) if ((as.numeric(samples_summary$BP2_int_plus[i])) > 50) {"1"} else {"0"})
+samples_summary$pass4 <- lapply(1:nrow(samples_summary), function(i) if ((as.numeric(samples_summary$BP2_int_minus[i])) > 50) {"1"} else {"0"})
 samples_summary$Total_pass<-  lapply(1:nrow(samples_summary), function(i) ( sum(as.numeric(unlist(samples_summary$pass1[i])), as.numeric(unlist(samples_summary$pass2[i])),
                                                                                 as.numeric(unlist(samples_summary$pass3[i])), as.numeric(unlist(samples_summary$pass4[i])))))
 
