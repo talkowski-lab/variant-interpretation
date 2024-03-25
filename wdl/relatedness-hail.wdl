@@ -23,6 +23,7 @@ workflow Relatedness {
         String sex_qc_script
         String sv_base_mini_docker
         String hail_docker
+        String bucket_id
     }
 
     if (!defined(merged_vep_file)) {
@@ -66,13 +67,15 @@ workflow Relatedness {
         ped_uri=ped_uri,
         cohort_prefix=cohort_prefix,
         relatedness_qc_script=relatedness_qc_script,
-        hail_docker=hail_docker
+        hail_docker=hail_docker,
+        bucket_id=bucket_id
     }
 
     output {
         Array[File] sex_qc_plots = imputeSex.sex_qc_plots
         File ped_sex_qc = imputeSex.ped_sex_qc
         File relatedness_qc = checkRelatedness.relatedness_qc
+        String relatedness_ht = checkRelatedness.relatedness_ht
     }
 }
 
@@ -133,6 +136,7 @@ task checkRelatedness {
         String cohort_prefix
         String relatedness_qc_script
         String hail_docker
+        String bucket_id
         RuntimeAttr? runtime_attr_override
     }
 
@@ -166,10 +170,11 @@ task checkRelatedness {
     command <<<
         set -eou pipefail
         curl ~{relatedness_qc_script} > check_relatedness.py
-        python3 check_relatedness.py ~{vcf_uri} ~{bed_file} ~{cohort_prefix} ~{ped_uri} ~{cpu_cores} ~{memory} > stdout
+        python3 check_relatedness.py ~{vcf_uri} ~{bed_file} ~{cohort_prefix} ~{ped_uri} ~{cpu_cores} ~{memory} ~{bucket_id} > stdout
     >>>
 
     output {
         File relatedness_qc = cohort_prefix + "_relatedness_qc.ped"
+        String relatedness_ht = read_lines('mt_uri.txt')[0]
     }
 }

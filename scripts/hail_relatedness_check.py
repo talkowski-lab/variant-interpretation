@@ -6,6 +6,7 @@ import matplotlib.pyplot as plt
 import sys
 import os
 import ast
+import datetime
 from gnomad.resources.grch38 import gnomad
 from gnomad.sample_qc import relatedness
 
@@ -15,6 +16,7 @@ cohort_prefix = sys.argv[3]
 ped_uri = sys.argv[4]
 cores = sys.argv[5]  # string
 mem = int(np.floor(float(sys.argv[6])))
+bucket_id = sys.argv[7]
 
 hl.init(min_block_size=128, spark_conf={"spark.executor.cores": cores, 
                     "spark.executor.memory": f"{mem}g",
@@ -55,6 +57,10 @@ rel = rel.annotate(relationship = relatedness.get_relationship_expr(rel.kin, rel
 )
 rel = rel.key_by()
 rel = rel.annotate(i=rel.i.s, j=rel.j.s).key_by('i','j')
+
+filename = f"{bucket_id}/hail/relatedness/{str(datetime.datetime.now().strftime('%Y-%m-%d_%H-%M'))}/{cohort_prefix}_pc_relate.ht"
+rel.write(filename)
+pd.Series([filename]).to_csv('mt_uri.txt', header=None, index=False)
 
 ped = pd.read_csv(ped_uri, sep='\t').iloc[:, :6]
 ped.columns = ['family_id', 'sample_id', 'paternal_id', 'maternal_id', 'sex', 'phenotype']
