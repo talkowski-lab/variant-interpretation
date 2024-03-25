@@ -83,5 +83,16 @@ samples_summary$pass4 <- lapply(1:nrow(samples_summary), function(i) if ((as.num
 samples_summary$Total_pass<-  lapply(1:nrow(samples_summary), function(i) ( sum(as.numeric(unlist(samples_summary$pass1[i])), as.numeric(unlist(samples_summary$pass2[i])),
                                                                                 as.numeric(unlist(samples_summary$pass3[i])), as.numeric(unlist(samples_summary$pass4[i])))))
 
+##Replace negative values to absolute
+replace_abs <- function(x) {
+  if (is.numeric(x)) {
+    return(abs(x))
+  } else {
+    return(x)
+  }
+}
+
+samples_summary_abs <- as.data.frame(lapply(samples_summary, replace_abs))
+
 #Write output
-write.table(samples_summary, out, sep = "\t", quote = F, row.names = F, col.names = F)
+write.table(samples_summary_abs, out, sep = "\t", quote = F, row.names = F, col.names = F)

@@ -290,7 +290,13 @@ task merge_frequencies {
 
   command <<<
     set -ex
-    cat ~{sep=" " tloc_freq_files} | bgzip > cohort.freq.gz
+
+    ##Add header
+    echo "CHR BP1 CHR2 BP2 ID min1 min4 min10" | sed -e 's/\s/\t/g' > cohort.freq
+
+    ##Concatenate freq files
+    cat ~{sep=" " tloc_freq_files} >> cohort.freq
+    bgzip cohort.freq
   >>>
 
   runtime {
@@ -375,6 +381,11 @@ task merge_summary {
 
   command <<<
     set -ex
+
+    ##Add header
+    echo "CHR BP1 CHR2 BP2 ID SAMPLE BP1_min_plus BP1_max_plus BP1_min_minus BP1_max_minus BP1_int_plus BP1_int_minus BP2_min_plus BP2_max_plus BP2_min_minus BP2_max_minus BP2_int_plus BP2_int_minus BP1_sort_dir PE_reads PP PM MP MM BP1sort_count_minplus pass1 pass2 pass3 pass4 Total_pass" | sed -e 's/\s/\t/g' > cohort.summary
+
+    ##Concatenate freq files
     cat ~{sep=" " tloc_summary_files} | bgzip > cohort.summary.gz
   >>>
 
