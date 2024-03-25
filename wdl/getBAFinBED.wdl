@@ -20,6 +20,7 @@ workflow getBAFinBED {
         String get_baf_script
         String plot_baf_script
         String hail_docker
+        Boolean het_only=true
     }
 
     scatter (vep_file in vep_vcf_files) {
@@ -48,16 +49,17 @@ workflow getBAFinBED {
         input_size=getTotalSize.mt_size
     }
 
-    # call plotBAF {
-    #     input:
-    #     merged_baf_tsv=mergeResults.merged_tsv,
-    #     hail_docker=hail_docker,
-    #     plot_baf_script=plot_baf_script
-    # }
+    call plotBAF {
+        input:
+        merged_baf_tsv=mergeResults.merged_tsv,
+        hail_docker=hail_docker,
+        het_only=het_only,
+        plot_baf_script=plot_baf_script
+    }
 
     output {
         File merged_baf_tsv = mergeResults.merged_tsv
-        # Array[File] baf_plots = plotBAF.baf_plots
+        Array[File] baf_plots = plotBAF.baf_plots
     }
 }
 
@@ -116,6 +118,7 @@ task plotBAF {
         File merged_baf_tsv
         String hail_docker
         String plot_baf_script
+        Boolean het_only
         RuntimeAttr? runtime_attr_override
     }
 
@@ -148,7 +151,7 @@ task plotBAF {
 
     command <<<
     curl ~{plot_baf_script} > plot_baf.py
-    python3 plot_baf.py ~{merged_baf_tsv}
+    python3 plot_baf.py ~{merged_baf_tsv} ~{het_only}
     >>>
 
     output {
