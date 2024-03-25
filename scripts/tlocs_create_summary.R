@@ -21,7 +21,7 @@ opt <- parse_args(opt_parser)
 
 #Read files
 samples <- fread(opt$samples)
-info <- fread("opt$info")
+info <- fread(opt$info)
 out <- opt$out
 
 #Create summary table
