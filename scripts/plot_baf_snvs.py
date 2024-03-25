@@ -70,5 +70,6 @@ for locus_interval in merged_baf.locus_interval.unique():
         ax[i].text(1.03, median_baf_below, round(median_baf_below, 3), color="indianred", transform=trans, 
             ha="left", va="center");
     locus_str = locus_interval.replace(':', '_').replace('-', '_')
+    plt.tight_layout();
     plt.savefig(f"{locus_str}_{sv_type}_{sample}_baf.png");
     plt.close();
