@@ -144,7 +144,7 @@ task overlapKnownMT {
     df = mt.entries().to_pandas()
     filename = os.path.basename(mt_uri).split('.mt')[0] + '_known_variants.tsv'
     df.to_csv(filename, sep='\t', index=False)
-    EOF 
+    EOF
 
     python3 overlap_mt.py ~{mt_uri} ~{known_vars_uri} ~{cpu_cores} ~{memory} > stdout
     >>>
