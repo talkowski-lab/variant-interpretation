@@ -101,7 +101,21 @@ task vcfToBed{
     }
 
     command <<<
-        svtk vcf2bed ~{vcf_file} --info ALL --include-filters ~{cohort_prefix}.bed.gz
+        set -euo pipefail
+
+        echo "Starting svtk"
+        svtk vcf2bed -i ALL --include-filters ~{vcf_file} - | bgzip -c > ~{cohort_prefix}.bed.gz
+        echo "svtk finished"
+
+        echo "Starting reformat of bed file"
+        zcat ~{cohort_prefix}.bed.gz | \
+            grep -E "DEL|DUP" | \
+            awk '{print $1"_"$5"\t"$2"\t"$3"\t"$4"\t"$5}' | \
+#            grep -v ^# | \
+            bgzip -c > ~{cohort_prefix}.ref.bed.gz
+        echo "Reformat finished"
+
+#        svtk vcf2bed ~{vcf_file} --info ALL --include-filters ~{cohort_prefix}.bed.gz
     >>>
 
     runtime {
