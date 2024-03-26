@@ -18,35 +18,40 @@ workflow DenovoCheckKnown {
         Array[String] annot_mt
         Array[String] filtered_mt
         String hail_docker
+        Float? input_size
     }
 
     scatter (annot_mt_uri in annot_mt) {
-        call helpers.getHailMTSize as getAnnotMTSize {
-            input:
-            mt_uri=annot_mt_uri,
-            hail_docker=hail_docker
+        if (!defined(input_size)) {
+            call helpers.getHailMTSize as getAnnotMTSize {
+                input:
+                mt_uri=annot_mt_uri,
+                hail_docker=hail_docker
+            }
         }
         call overlapKnownMT as overlapAnnotMT {
             input:
             mt_uri=annot_mt_uri,
             known_vars_uri=known_vars_uri,
             hail_docker=hail_docker,
-            input_size=getAnnotMTSize.mt_size
+            input_size=select_first([input_size, getAnnotMTSize.mt_size])
         }
     }
 
     scatter (filtered_mt_uri in filtered_mt) {
-        call helpers.getHailMTSize as getFilteredMTSize {
-            input:
-            mt_uri=filtered_mt_uri,
-            hail_docker=hail_docker
+        if (!defined(input_size)) {
+            call helpers.getHailMTSize as getFilteredMTSize {
+                input:
+                mt_uri=filtered_mt_uri,
+                hail_docker=hail_docker
+            }
         }
         call overlapKnownMT as overlapFilteredMT {
             input:
             mt_uri=filtered_mt_uri,
             known_vars_uri=known_vars_uri,
             hail_docker=hail_docker,
-            input_size=getFilteredMTSize.mt_size
+            input_size=select_first([input_size, getFilteredMTSize.mt_size])
         }
     }
 
