@@ -33,9 +33,9 @@ def get_sample_role(row):
     if fam_sizes[row.family_id]==1:
         role = 'Singleton'
     elif (row.maternal_id=='0') & (row.paternal_id=='0'):
-        if (row.sex==1) and (row.sample_id in fathers.values()):
+        if (str(row.sex)=='1') and (row.sample_id in fathers.values()):
             role = 'Father'
-        elif (row.sex==2) and (row.sample_id in mothers.values()):
+        elif (str(row.sex)=='2') and (row.sample_id in mothers.values()):
             role = 'Mother'
         else:
             role = 'Unknown'
