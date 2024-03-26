@@ -83,10 +83,11 @@ sample_qc_df['X_ploidy'] = 2 * sample_qc_df['chrX.dp_stats.mean'] / sample_qc_df
 # Somalier's sex prediction criteria
 def predict_sex(row):
     sex = -9
-    if (row['chrX.n_het'] / row['chrX.n_hom_var'] < 0.05) & (row['chrX.n_called'] > 10):
-        sex = 1
-    elif (row['chrX.n_het'] / row['chrX.n_hom_var'] > 0.4) & (row['chrX.n_called'] > 10):
-        sex = 2
+    if row['chrX.n_hom_var'] > 0:
+        if (row['chrX.n_het'] / row['chrX.n_hom_var'] < 0.05) & (row['chrX.n_called'] > 10):
+            sex = 1
+        elif (row['chrX.n_het'] / row['chrX.n_hom_var'] > 0.4) & (row['chrX.n_called'] > 10):
+            sex = 2
     if (row['chrY.n_called']>0) & (row.sex==1) & (row['Y_ploidy'] < 0.4):
         sex = -1  # apparent loss of Y with low het-ratio on X chromosome
     if (row['chrY.n_called']>0) & (row.sex==2) & (row['Y_ploidy'] > 0.4):
@@ -106,6 +107,7 @@ ped_qc.to_csv(f"{cohort_prefix}_sex_qc.ped", sep='\t', index=False)
 ped_qc['sex'] = ped_qc.sex.replace({np.nan: -9}).astype('category')
 
 fig, ax = plt.subplots(2, 2, figsize=(12, 10));
+fig.suptitle(f"{cohort_prefix}, Inferred Sex");
 sns.scatterplot(data=ped_qc, x='chrX.n_hom_var', y='chrX.n_het', hue='pred_sex', ax=ax[0][0]);
 sns.scatterplot(data=ped_qc, x='chrX.n_hom_var', y='chrY.dp_stats.mean', hue='pred_sex', ax=ax[0][1]);
 sns.scatterplot(data=ped_qc, x='chrX.dp_stats.mean', y='chrY.dp_stats.mean', hue='pred_sex', ax=ax[1][0]);
@@ -113,6 +115,7 @@ sns.scatterplot(data=ped_qc, x='X_ploidy', y='Y_ploidy', hue='pred_sex', ax=ax[1
 plt.savefig(f"{cohort_prefix}_sex_qc_imputed.png");
 
 fig, ax = plt.subplots(2, 2, figsize=(12, 10));
+fig.suptitle(f"{cohort_prefix}, Pedigree Sex");
 sns.scatterplot(data=ped_qc, x='chrX.n_hom_var', y='chrX.n_het', hue='sex', ax=ax[0][0]);
 sns.scatterplot(data=ped_qc, x='chrX.n_hom_var', y='chrY.dp_stats.mean', hue='sex', ax=ax[0][1]);
 sns.scatterplot(data=ped_qc, x='chrX.dp_stats.mean', y='chrY.dp_stats.mean', hue='sex', ax=ax[1][0]);
