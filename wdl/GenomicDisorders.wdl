@@ -10,7 +10,6 @@ workflow GenomicDisorders {
 
     input {
         File ped_input
-#        File python_config
         File vcf_file
         Array[String] contigs
         File genomic_disorder_input
@@ -19,11 +18,9 @@ workflow GenomicDisorders {
         File batch_depth_raw_file
         File sample_batches
         File batch_bincov_index
-#        Int records_per_shard
         String prefix
         File? fam_ids
         String variant_interpretation_docker
-#        String sv_pipeline_updates_docker
         String genomic_disorders_docker
         RuntimeAttr? runtime_attr_get_batched_files
         RuntimeAttr? runtime_attr_clean_ped
@@ -35,59 +32,18 @@ workflow GenomicDisorders {
         RuntimeAttr? runtime_attr_merge_gd
         RuntimeAttr? runtime_attr_reformat_vcf
         RuntimeAttr? runtime_attr_vcf_overlap
-#        RuntimeAttr? runtime_attr_denovo
-#        RuntimeAttr? runtime_attr_subset_vcf
-#        RuntimeAttr? runtime_attr_vcf_to_bed
-#        RuntimeAttr? runtime_attr_merge_final_bed_files
-#        RuntimeAttr? runtime_override_shard_vcf
-#        RuntimeAttr? runtime_attr_call_outliers
-#        RuntimeAttr? runtime_attr_batch_vcf
-#        RuntimeAttr? runtime_override_shard_vcf
-#        RuntimeAttr? runtime_attr_merge
-#        RuntimeAttr? runtime_attr_reformat_vcf
     }
 
-    #if the fam_ids input is given, subset all other input files to only include the necessary batches
-    if (defined(fam_ids)){
-        File fam_ids_ = select_first([fam_ids])
-        call getBatchedFiles{
-            input:
-                batch_raw_file = batch_raw_file,
-                batch_depth_raw_file = batch_depth_raw_file,
-                ped_input = ped_input,
-                fam_ids = fam_ids_,
-                sample_batches = sample_batches,
-                batch_bincov_index = batch_bincov_index,
-                variant_interpretation_docker=variant_interpretation_docker,
-                runtime_attr_override = runtime_attr_get_batched_files
-        }
-
-#        call getBatchedVcf.getBatchedVcf as getBatchedVcf {
-#            input:
-#                vcf_file = vcf_file,
-#                prefix = prefix,
-#                samples = getBatchedFiles.samples,
-#                records_per_shard = 10000,
-#                variant_interpretation_docker = variant_interpretation_docker,
-#                sv_pipeline_updates_docker = sv_pipeline_updates_docker,
-#                runtime_attr_batch_vcf = runtime_attr_batch_vcf,
-#                runtime_override_shard_vcf = runtime_override_shard_vcf,
-#                runtime_attr_merge = runtime_attr_merge
-#        }
-
-    }
-
-    #makes a ped file of singletons, duos, and trios for input into the de novo script (only including families of interest)
+    #Makes a ped file of singletons, duos, and trios for input into the de novo GD filtering
     call cleanPed{
         input:
             ped_input = ped_input,
-#            vcf_input = select_first([getBatchedVcf.split_vcf, vcf_file]),
             vcf_input = vcf_file,
             variant_interpretation_docker=variant_interpretation_docker,
             runtime_attr_override = runtime_attr_clean_ped
     }
 
-    #splits raw files into probands and parents and reformats to have chrom_svtype_sample as the first column for probands and chrom_svtype_famid as the first column for parents
+    #Splits raw files into probands and parents and reformats to have chrom_svtype_sample as the first column for probands and chrom_svtype_famid as the first column for parents
     call raw.reformatRawFiles as reformatRawFiles {
         input:
             contigs = contigs,
@@ -101,7 +57,7 @@ workflow GenomicDisorders {
             runtime_attr_reformat_bed = runtime_attr_raw_reformat_bed
     }
 
-    #splits raw files into probands and parents and reformats to have chrom_svtype_sample as the first column for probands and chrom_svtype_famid as the first column for parents
+    #Splits raw files into probands and parents and reformats to have chrom_svtype_sample as the first column for probands and chrom_svtype_famid as the first column for parents
     call raw.reformatRawFiles as reformatDepthRawFiles {
         input:
             contigs = contigs,
@@ -116,7 +72,7 @@ workflow GenomicDisorders {
     }
     
     scatter (i in range(length(contigs))){
-        #generates a list of genomic disorder regions in the vcf input as well as in the depth raw files
+        #Generates a list of genomic disorder regions in the vcf input as well as in the depth raw files
         call getGenomicDisorders{
             input:
                 genomic_disorder_input=genomic_disorder_input,
@@ -129,7 +85,7 @@ workflow GenomicDisorders {
                 runtime_attr_override = runtime_attr_gd
         }
     }
-    #merges the genomic disorder region output from each chromosome to compile a list of genomic disorder regions
+    #Merges the genomic disorder region output from each chromosome to compile a list of genomic disorder regions
     call mergeGenomicDisorders{
         input:
             gd_bed_to_merge=getGenomicDisorders.gd_output_from_depth_raw_files,
@@ -137,26 +93,6 @@ workflow GenomicDisorders {
             variant_interpretation_docker=variant_interpretation_docker,
             runtime_attr_override = runtime_attr_merge_gd
     }
-    
-#        #splits vcf by chromosome
-#        call subsetVcf {
-#            input:
-#                vcf_file = select_first([getBatchedVcf.split_vcf, vcf_file]),
-#                chromosome=contigs[i],
-#                variant_interpretation_docker=variant_interpretation_docker,
-#                runtime_attr_override = runtime_attr_subset_vcf
-#        }
-
-#        #shards vcf
-#        call MiniTasks.ScatterVcf as SplitVcf {
-#            input:
-#                vcf=subsetVcf.vcf_output,
-#                prefix=prefix,
-#                records_per_shard=records_per_shard,
-#                sv_pipeline_docker=sv_pipeline_updates_docker,
-#                runtime_attr_override=runtime_override_shard_vcf
-#        }
-#    }
 
     call reformatVCF{
         input:
@@ -180,9 +116,6 @@ workflow GenomicDisorders {
         File gd_depth = mergeGenomicDisorders.gd_output_from_depth
         File gd_depth_denovo = mergeGenomicDisorders.gd_denovo_output_from_depth
         File vcf_in_gds = getVCFoverlap.out_bed
-#        File gd_for_denovo = getGenomicDisorders.gd_output_for_denovo
-#        File gd_vcf = getGenomicDisorders.gd_output_from_final_vcf[1]
-        
     }
 }
 
@@ -323,8 +256,6 @@ task getGenomicDisorders{
     RuntimeAttr runtime_attr = select_first([runtime_attr_override, default_attr])
 
     output{
-#        File gd_output_from_final_vcf = "gd.variants.from.final.vcf.txt.gz"
-#        File gd_output_for_denovo = "gd.variants.from.final.vcf.names.txt"
         File gd_output_from_depth_raw_files = "~{chromosome}.gd.variants.in.depth.raw.files.txt.gz"
         File gd_output_from_depth_raw_files_denovo ="~{chromosome}.gd.variants.in.depth.raw.files.de.novo.txt.gz"
     }
