@@ -91,10 +91,13 @@ samples_summary_abs <- as.data.frame(lapply(samples_summary, replace_abs))
 
 ##Add pass counts
 samples_summary_abs$pass1 <- lapply(1:nrow(samples_summary_abs), function(i) if ((as.numeric(samples_summary_abs$BP1_int_plus[i])) > 50) {"1"} else {"0"})
-samples_summary$pass2 <- lapply(1:nrow(samples_summary_abs), function(i) if ((as.numeric(samples_summary_abs$BP1_int_minus[i])) > 50) {"1"} else {"0"})
-samples_summary$pass3 <- lapply(1:nrow(samples_summary_abs), function(i) if ((as.numeric(samples_summary_abs$BP2_int_plus[i])) > 50) {"1"} else {"0"})
-samples_summary$pass4 <- lapply(1:nrow(samples_summary_abs), function(i) if ((as.numeric(samples_summary_abs$BP2_int_minus[i])) > 50) {"1"} else {"0"})
-samples_summary$Total_pass<-  lapply(1:nrow(samples_summary_abs), function(i) ( sum(as.numeric(unlist(samples_summary_abs$pass1[i])), as.numeric(unlist(samples_summary_abs$pass2[i])),
+samples_summary_abs$pass2 <- lapply(1:nrow(samples_summary_abs), function(i) if ((as.numeric(samples_summary_abs$BP1_int_minus[i])) > 50) {"1"} else {"0"})
+samples_summary_abs$pass3 <- lapply(1:nrow(samples_summary_abs), function(i) if ((as.numeric(samples_summary_abs$BP2_int_plus[i])) > 50) {"1"} else {"0"})
+samples_summary_abs$pass4 <- lapply(1:nrow(samples_summary_abs), function(i) if ((as.numeric(samples_summary_abs$BP2_int_minus[i])) > 50) {"1"} else {"0"})
+samples_summary_abs$Total_pass<-  lapply(1:nrow(samples_summary_abs), function(i) ( sum(as.numeric(unlist(samples_summary_abs$pass1[i])), as.numeric(unlist(samples_summary_abs$pass2[i])),
                                                                                 as.numeric(unlist(samples_summary_abs$pass3[i])), as.numeric(unlist(samples_summary_abs$pass4[i])))))
+
+samples_summary_abs <- apply(samples_summary_abs,2,as.character)
+
 #Write output
 write.table(samples_summary_abs, out, sep = "\t", quote = F, row.names = F, col.names = F)
