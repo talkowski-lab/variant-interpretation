@@ -71,7 +71,7 @@ task mergeVCFs {
         bootDiskSizeGb: select_first([runtime_override.boot_disk_gb, runtime_default.boot_disk_gb])
     }
 
-    String merged_vcf_name="~{cohort_prefix}.vep.merged.vcf.gz"
+    String merged_vcf_name="~{cohort_prefix}.merged.vcf.gz"
     String sorted_vcf_name="~{cohort_prefix}.merged.sorted.vcf.gz"
 
     command <<<

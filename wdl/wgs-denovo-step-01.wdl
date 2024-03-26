@@ -85,7 +85,7 @@ workflow step1 {
             input:
                 vcf_files=preprocessVCFChunk.preprocessed_vcf,
                 sv_base_mini_docker=sv_base_mini_docker,
-                cohort_prefix=cohort_prefix,
+                cohort_prefix=cohort_prefix+'.preprocessed',
                 sort_after_merge=sort_after_merge,
                 runtime_attr_override=runtime_attr_merge_chunks
         }
@@ -118,7 +118,7 @@ workflow step1 {
             input:
                 vcf_files=preprocessVCF.preprocessed_vcf,
                 sv_base_mini_docker=sv_base_mini_docker,
-                cohort_prefix=cohort_prefix,
+                cohort_prefix=cohort_prefix+'.preprocessed',
                 sort_after_merge=sort_after_merge,
                 runtime_attr_override=runtime_attr_merge_unchunked
         }
