@@ -33,9 +33,9 @@ def get_sample_role(row):
     if fam_sizes[row.family_id]==1:
         role = 'Singleton'
     elif (row.maternal_id=='0') & (row.paternal_id=='0'):
-        if (str(row.sex)=='1') and (row.sample_id in fathers.values()):
+        if (row.sample_id in fathers.values()):
             role = 'Father'
-        elif (str(row.sex)=='2') and (row.sample_id in mothers.values()):
+        elif (row.sample_id in mothers.values()):
             role = 'Mother'
         else:
             role = 'Unknown'
@@ -55,8 +55,8 @@ for fam in ped.family_id.unique():
             if i==j:
                 continue
                 
-            if (((row_i.paternal_id == row_j.sample_id) & (row_j.role=='Father')) | ((row_i.sample_id == row_j.paternal_id) & (row_i.role=='Father'))) |\
-            (((row_i.maternal_id == row_j.sample_id) & (row_j.role=='Mother')) | ((row_i.sample_id == row_j.maternal_id) & (row_i.role=='Mother'))):                
+            if (((row_i.paternal_id == row_j.sample_id)) | ((row_i.sample_id == row_j.paternal_id))) |\
+            (((row_i.maternal_id == row_j.sample_id)) | ((row_i.sample_id == row_j.maternal_id))):                
                 ped_rels['ped_relationship'].append('parent-child')
                 related = True
             if (row_i.role not in ['Mother', 'Father']) & (row_j.role not in ['Mother', 'Father']):
