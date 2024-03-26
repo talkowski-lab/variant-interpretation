@@ -73,7 +73,7 @@ workflow GenomicDisorders {
     
     scatter (i in range(length(contigs))){
         #Generates a list of genomic disorder regions in the vcf input as well as in the depth raw files
-        call getGenomicDisorders{
+        call getGDraw{
             input:
                 genomic_disorder_input=genomic_disorder_input,
                 ped = ped_input,
@@ -88,8 +88,8 @@ workflow GenomicDisorders {
     #Merges the genomic disorder region output from each chromosome to compile a list of genomic disorder regions
     call mergeGenomicDisorders{
         input:
-            gd_bed_to_merge=getGenomicDisorders.gd_output_from_depth_raw_files,
-            gd_denovo_bed_to_merge=getGenomicDisorders.gd_output_from_depth_raw_files_denovo,
+            gd_bed_to_merge=getGDraw.gd_output_from_depth_raw_files,
+            gd_denovo_bed_to_merge=getGDraw.gd_output_from_depth_raw_files_denovo,
             variant_interpretation_docker=variant_interpretation_docker,
             runtime_attr_override = runtime_attr_merge_gd
     }
@@ -102,7 +102,7 @@ workflow GenomicDisorders {
             runtime_attr_override = runtime_attr_reformat_vcf
     }
 
-    call getVCFoverlap{
+    call getGDvcf{
         input:
           bed = reformatVCF.out_ref_bed,
           genomic_disorders = genomic_disorder_input_ref,
@@ -115,7 +115,7 @@ workflow GenomicDisorders {
         File cleaned_ped = cleanPed.cleaned_ped
         File gd_depth = mergeGenomicDisorders.gd_output_from_depth
         File gd_depth_denovo = mergeGenomicDisorders.gd_denovo_output_from_depth
-        File vcf_in_gds = getVCFoverlap.out_bed
+        File vcf_in_gds = getGDvcf.out_bed
     }
 }
 
@@ -229,9 +229,8 @@ task cleanPed{
     }
 }
 
-task getGenomicDisorders{
+task getGDraw{
     input{
-#        File vcf_file
         File ped
         File depth_raw_file_proband
         File depth_raw_file_parents
@@ -526,7 +525,7 @@ task reformatVCF {
   }
 }
 
-task getVCFoverlap {
+task getGDvcf {
   input {
     File bed
     File genomic_disorders
