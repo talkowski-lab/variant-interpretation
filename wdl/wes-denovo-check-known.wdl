@@ -141,7 +141,7 @@ task overlapKnownMT {
     mt = hl.read_matrix_table(mt_uri)
 
     mt = mt.semi_join_rows(known_ht)
-    df = mt.entries().to_pandas()
+    df = mt.rows().to_pandas()
     filename = os.path.basename(mt_uri).split('.mt')[0] + '_known_variants.tsv'
     df.to_csv(filename, sep='\t', index=False)
     EOF
