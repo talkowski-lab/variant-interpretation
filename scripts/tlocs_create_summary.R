@@ -97,7 +97,7 @@ samples_summary_abs$pass4 <- lapply(1:nrow(samples_summary_abs), function(i) if 
 samples_summary_abs$Total_pass<-  lapply(1:nrow(samples_summary_abs), function(i) ( sum(as.numeric(unlist(samples_summary_abs$pass1[i])), as.numeric(unlist(samples_summary_abs$pass2[i])),
                                                                                 as.numeric(unlist(samples_summary_abs$pass3[i])), as.numeric(unlist(samples_summary_abs$pass4[i])))))
 
-samples_summary_abs <- apply(samples_summary_abs,2,as.character)
+#samples_summary_abs <- apply(samples_summary_abs,2,as.character)
 
 #Write output
 write.table(samples_summary_abs, out, sep = "\t", quote = F, row.names = F, col.names = F)
