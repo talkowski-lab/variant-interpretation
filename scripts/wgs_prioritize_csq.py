@@ -334,7 +334,15 @@ else:
     warnings.simplefilter("error")
     warnings.warn("CSQ fields are messed up!")
 
-numeric = [col for col in final_output.columns.tolist() if col not in [sample_column, 'locus', 'alleles']]
+# numeric = [col for col in final_output.columns.tolist() if col not in [sample_column, 'locus', 'alleles']]
+numeric = []
+for col in final_output.columns:
+    try:
+        final_output[col].astype(float)
+        numeric.append(col)
+    except:
+        continue
+    
 df = process_consequence_cohort(csq_columns, vcf_metrics_uri, numeric, sample_column)
 df['isCoding'] = df.Consequence.astype(str).replace({'None': '[]'}).apply(ast.literal_eval).apply(lambda csq: np.intersect1d(csq, coding_variants).size!=0)
 df.to_csv(f"{os.path.basename(vcf_metrics_uri).split('.tsv')[0]}_prioritized_csq.tsv", sep='\t',index=False)
