@@ -9,6 +9,7 @@ import ast
 vcf_metrics_uri = sys.argv[1]
 cores = sys.argv[2]
 mem = int(np.floor(float(sys.argv[3])))
+sample_column = sys.argv[4]
 
 hl.init(min_block_size=128, spark_conf={"spark.executor.cores": cores, 
                     "spark.executor.memory": f"{mem}g",
@@ -239,20 +240,20 @@ def add_vep_annotations(mt):
     
     return(mt)
 
-def process_consequence_cohort(csq_columns, vcf_metrics_uri):
+def process_consequence_cohort(csq_columns, vcf_metrics_uri, numeric, sample_column):
     ht = hl.import_table(vcf_metrics_uri)
 
     ht = ht.annotate(locus=hl.parse_variant(ht.ID, reference_genome='GRCh38').locus,
                             alleles=hl.parse_variant(ht.ID, reference_genome='GRCh38').alleles)
 
-    numeric = ['QUAL', 'LEN', 'AC', 'AF', 'AN', 'BaseQRankSum',
-           'DP', 'FS', 'MLEAC', 'MLEAF', 'MQ', 'MQRankSum',
-           'QD', 'ReadPosRankSum', 'SOR', 'VQSLOD', 'cohort_AC',
-           'AB_sample', 'DP_sample', 'GQ_sample', 'VAF_sample',
-           'AB_father', 'DP_father', 'GQ_father', 'VAF_father',
-           'AB_mother', 'DP_mother', 'GQ_mother', 'VAF_mother', 'GQ_mean']
+    # numeric = ['QUAL', 'LEN', 'AC', 'AF', 'AN', 'BaseQRankSum',
+    #        'DP', 'FS', 'MLEAC', 'MLEAF', 'MQ', 'MQRankSum',
+    #        'QD', 'ReadPosRankSum', 'SOR', 'VQSLOD', 'cohort_AC',
+    #        'AB_sample', 'DP_sample', 'GQ_sample', 'VAF_sample',
+    #        'AB_father', 'DP_father', 'GQ_father', 'VAF_father',
+    #        'AB_mother', 'DP_mother', 'GQ_mother', 'VAF_mother', 'GQ_mean']
 
-    mt = ht.to_matrix_table_row_major(columns=numeric, entry_field_name='metrics', col_field_name='SAMPLE')
+    mt = ht.to_matrix_table_row_major(columns=numeric, entry_field_name='metrics', col_field_name=sample_column)
     mt = mt.key_rows_by(mt.locus, mt.alleles)
 
     transcript_consequences = mt.CSQ.replace("\[",'').replace("\]",'').replace("\'",'').replace(' ','').split(',').map(lambda x: x.split('\|'))
@@ -333,6 +334,7 @@ else:
     warnings.simplefilter("error")
     warnings.warn("CSQ fields are messed up!")
 
-df = process_consequence_cohort(csq_columns, vcf_metrics_uri)
+numeric = [col for col in final_output.columns.tolist() if col!=sample_column]
+df = process_consequence_cohort(csq_columns, vcf_metrics_uri, sample_column, numeric)
 df['isCoding'] = df.Consequence.astype(str).replace({'None': '[]'}).apply(ast.literal_eval).apply(lambda csq: np.intersect1d(csq, coding_variants).size!=0)
 df.to_csv(f"{os.path.basename(vcf_metrics_uri).split('.tsv')[0]}_prioritized_csq.tsv", sep='\t',index=False)

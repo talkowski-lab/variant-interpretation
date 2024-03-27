@@ -14,13 +14,15 @@ workflow prioritizeCSQ {
         File vcf_metrics_tsv
         String prioritize_csq_script
         String hail_docker
+        String sample_column
     }
     
     call annotateMostSevereCSQ {
         input:
         vcf_metrics_tsv=vcf_metrics_tsv,
         prioritize_csq_script=prioritize_csq_script,
-        hail_docker=hail_docker
+        hail_docker=hail_docker,
+        sample_column=sample_column
     }
 
     output {
@@ -33,6 +35,7 @@ task annotateMostSevereCSQ {
         File vcf_metrics_tsv
         String prioritize_csq_script
         String hail_docker
+        String sample_column
         RuntimeAttr? runtime_attr_override
     }
 
@@ -65,7 +68,7 @@ task annotateMostSevereCSQ {
     
     command <<<
         curl ~{prioritize_csq_script} > prioritize_csq.py
-        python3 prioritize_csq.py ~{vcf_metrics_tsv} ~{cpu_cores} ~{memory}
+        python3 prioritize_csq.py ~{vcf_metrics_tsv} ~{cpu_cores} ~{memory} ~{sample_column}
     >>>
 
     output {
