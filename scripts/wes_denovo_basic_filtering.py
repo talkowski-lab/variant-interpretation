@@ -12,7 +12,7 @@ cores = sys.argv[4]
 mem = int(np.floor(float(sys.argv[5])))
 bucket_id = sys.argv[6]
 lcr_uri = sys.argv[7]
-call_rate_threshold = sys.argv[8]
+call_rate_threshold = float(sys.argv[8])
 
 prefix = os.path.basename(annot_mt).split('_wes_denovo_annot.mt')[0]
 
