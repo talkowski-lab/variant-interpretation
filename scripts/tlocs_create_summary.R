@@ -100,4 +100,4 @@ samples_summary_abs$Total_pass<-  lapply(1:nrow(samples_summary_abs), function(i
 #samples_summary_abs <- apply(samples_summary_abs,2,as.character)
 
 #Write output
-write.table(samples_summary_abs, out, sep = "\t", quote = F, row.names = F, col.names = F)
+fwrite(samples_summary_abs, out, sep = "\t", quote = F, row.names = F, col.names = F)
