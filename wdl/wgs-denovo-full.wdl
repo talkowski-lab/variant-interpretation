@@ -45,6 +45,7 @@ workflow wgs_denovo_full {
             String hail_docker
             String vep_hail_docker
             String jvarkit_docker
+            String sample_column
             Boolean exclude_info_filters=false
             Boolean bad_header=false
             Boolean merge_split_vcf=false
@@ -134,7 +135,8 @@ workflow wgs_denovo_full {
             AC_threshold=AC_threshold,
             csq_af_threshold=csq_af_threshold,
             filter_final_tsv_script=filter_final_tsv_script,
-            hail_docker=hail_docker
+            hail_docker=hail_docker,
+            sample_column=sample_column
     }
 
     output {

@@ -20,6 +20,7 @@ workflow step6 {
         String filter_final_tsv_script
         String prioritize_csq_script
         String hail_docker
+        String sample_column
         RuntimeAttr? runtime_attr_prioritize
     }
 
@@ -28,6 +29,7 @@ workflow step6 {
         vcf_metrics_tsv=vcf_metrics_tsv_annot,
         prioritize_csq_script=prioritize_csq_script,
         hail_docker=hail_docker,
+        sample_column=sample_column,
         runtime_attr_override=runtime_attr_prioritize
     }
 
