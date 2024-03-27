@@ -28,7 +28,7 @@ workflow filterRareVariantsHail {
         String sv_base_mini_docker
         String cohort_prefix
         Boolean merge_split_vcf
-        Boolean exclude_info_filters=false
+        Boolean exclude_gq_filters=false
         Boolean sort_after_merge=false
         Boolean bad_header=false
         Float AF_threshold=0.005
@@ -90,7 +90,7 @@ workflow filterRareVariantsHail {
                     gq_het_threshold=gq_het_threshold,
                     gq_hom_ref_threshold=gq_hom_ref_threshold,
                     bad_header=bad_header,
-                    exclude_info_filters=exclude_info_filters,
+                    exclude_gq_filters=exclude_gq_filters,
                     runtime_attr_override=runtime_attr_filter_vcf
             }
         }
@@ -122,7 +122,7 @@ workflow filterRareVariantsHail {
                     gq_het_threshold=gq_het_threshold,
                     gq_hom_ref_threshold=gq_hom_ref_threshold,
                     bad_header=bad_header,
-                    exclude_info_filters=exclude_info_filters,
+                    exclude_gq_filters=exclude_gq_filters,
                     runtime_attr_override=runtime_attr_filter_vcf
                     }
         }
@@ -210,7 +210,7 @@ task filterRareVariants {
         Float csq_af_threshold
         Int gq_het_threshold
         Int gq_hom_ref_threshold
-        Boolean exclude_info_filters
+        Boolean exclude_gq_filters
         Boolean bad_header
         RuntimeAttr? runtime_attr_override
     }
@@ -252,7 +252,7 @@ task filterRareVariants {
         curl ~{filter_rare_variants_python_script} > filter_rare_variants.py
         python3.9 filter_rare_variants.py ~{lcr_uri} ~{ped_uri} ~{meta_uri} ~{trio_uri} ~{vcf_file} \
         ~{cohort_prefix} ~{cpu_cores} ~{memory} ~{AC_threshold} ~{AF_threshold} ~{csq_af_threshold} \
-        ~{gq_het_threshold} ~{gq_hom_ref_threshold} ~{exclude_info_filters} ~{header_filename}
+        ~{gq_het_threshold} ~{gq_hom_ref_threshold} ~{exclude_gq_filters} ~{header_filename}
 
         cp $(ls . | grep hail*.log) hail_log.txt
     >>>
