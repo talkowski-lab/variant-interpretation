@@ -84,18 +84,23 @@ mt_filtered = mt_filtered.annotate_entries(DPC=hl.sum(mt_filtered.AD),
                                            VAF=mt_filtered.AD[1]/mt_filtered.DP)
 mt_filtered = mt_filtered.filter_entries( (mt_filtered.DPC < 10) | (mt_filtered.DPC > 200), keep = False) 
 
+# row (variant INFO) level filters - GATK recommendations for short variants
+dn_snv_cond_row = (hl.is_snp(mt_filtered.alleles[0], mt_filtered.alleles[1])
+                    & (mt_filtered.qual >= 150)
+                    & (mt_filtered.info.SOR <= 2.5)
+                    & (mt_filtered.info.ReadPosRankSum >= -1.4)
+                    & (mt_filtered.info.QD >= 3.0)
+                    & (mt_filtered.info.MQ >= 50))
+dn_indel_cond_row = (hl.is_indel(mt_filtered.alleles[0], mt_filtered.alleles[1])
+                    & (mt_filtered.qual >= 150)
+                    & (mt_filtered.info.SOR <= 3)
+                    & (mt_filtered.info.ReadPosRankSum >= -1.7)
+                    & (mt_filtered.info.QD >= 4.0)
+                    & (mt_filtered.info.MQ >= 50))
+mt_filtered = mt_filtered.filter_rows(dn_snv_cond_row | dn_indel_cond_row, keep = True)
+
 if exclude_gq_filters:
-    # parents filters - homozygous
     ab = mt_filtered.AD[1]/hl.sum(mt_filtered.AD)
-    hom_snv_parents = (hl.is_snp(mt_filtered.alleles[0], mt_filtered.alleles[1])
-                    & mt_filtered.GT.is_hom_ref()
-                    & (mt_filtered.GQ >= 30.0)
-                    & (ab <= 0.05))
-    hom_indel_parents = (hl.is_indel(mt_filtered.alleles[0], mt_filtered.alleles[1])
-                    & mt_filtered.GT.is_hom_ref()
-                    & (mt_filtered.DP >= 16)
-                    & (mt_filtered.GQ >= 30.0)
-                    & (ab <= 0.05))
     # child filters - heterzygous
     het_snv_cond = (hl.is_snp(mt_filtered.alleles[0], mt_filtered.alleles[1])
                     & mt_filtered.GT.is_het()
@@ -112,15 +117,7 @@ else:
     mt_filtered = hl.variant_qc(mt_filtered)
     mt_filtered = mt_filtered.filter_rows(mt_filtered.variant_qc.gq_stats.mean >= 50, keep = True)
 
-    # parents filters - homozygous
     ab = mt_filtered.AD[1]/hl.sum(mt_filtered.AD)
-    hom_snv_parents = (hl.is_snp(mt_filtered.alleles[0], mt_filtered.alleles[1])
-                    & mt_filtered.GT.is_hom_ref()
-                    & (ab <= 0.05))
-    hom_indel_parents = (hl.is_indel(mt_filtered.alleles[0], mt_filtered.alleles[1])
-                    & mt_filtered.GT.is_hom_ref()
-                    & (mt_filtered.DP >= 16)
-                    & (ab <= 0.05))
     # child filters - heterzygous
     het_snv_cond = (hl.is_snp(mt_filtered.alleles[0], mt_filtered.alleles[1])
                     & mt_filtered.GT.is_het()
@@ -131,7 +128,7 @@ else:
                     & (ab >= 0.20)
                     & (ab <= 0.80))
 
-filter_condition = (hom_snv_parents | hom_indel_parents | het_snv_cond | het_indel_cond)
+filter_condition = (het_snv_cond | het_indel_cond)
 mt_filtered = mt_filtered.filter_entries(filter_condition, keep = True)
 # clean-up: remove AC = 0 loci
 mt_filtered = hl.variant_qc(mt_filtered)
