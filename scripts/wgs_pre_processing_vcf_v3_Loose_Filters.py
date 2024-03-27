@@ -118,7 +118,7 @@ def trim_vcf(vcf_uri, lcr_uri, ped_uri, meta_uri, trio_uri, header_file, vcf_out
                         & (mt.info.MQ >= 50))
     mt = mt.filter_rows(dn_snv_cond_row | dn_indel_cond_row, keep = True)
 
-    if not exclude_gq_filters:
+    if exclude_gq_filters:
         # parents filters - homozygous
         ab = mt.AD[1]/hl.sum(mt.AD)
         hom_snv_parents = (hl.is_snp(mt.alleles[0], mt.alleles[1])
@@ -142,6 +142,10 @@ def trim_vcf(vcf_uri, lcr_uri, ped_uri, meta_uri, trio_uri, header_file, vcf_out
                         & (ab >= 0.20)
                         & (ab <= 0.80))
     else:
+        # GQ mean filters
+        mt = hl.variant_qc(mt)
+        mt = mt.filter_rows(mt.variant_qc.gq_stats.mean >= 50, keep = True)
+
         # parents filters - homozygous
         ab = mt.AD[1]/hl.sum(mt.AD)
         hom_snv_parents = (hl.is_snp(mt.alleles[0], mt.alleles[1])
@@ -160,9 +164,6 @@ def trim_vcf(vcf_uri, lcr_uri, ped_uri, meta_uri, trio_uri, header_file, vcf_out
                         & mt.GT.is_het()
                         & (ab >= 0.20)
                         & (ab <= 0.80))
-        # GQ mean filters
-        mt = hl.variant_qc(mt)
-        mt = mt.filter_rows(mt.variant_qc.gq_stats.mean >= 50, keep = True)
 
     filter_condition = (hom_snv_parents | hom_indel_parents | het_snv_cond | het_indel_cond)
     mt = mt.filter_entries(filter_condition, keep = True)
