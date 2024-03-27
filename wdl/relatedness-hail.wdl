@@ -82,7 +82,7 @@ workflow Relatedness {
     }
 
     output {
-        Array[File] sex_qc_plots = imputeSex.sex_qc_plots
+        File sex_qc_plots = imputeSex.sex_qc_plots
         File ped_sex_qc = imputeSex.ped_sex_qc
         File relatedness_qc = checkRelatedness.relatedness_qc
         String relatedness_ht = checkRelatedness.relatedness_ht
@@ -134,7 +134,7 @@ task imputeSex {
     >>>
 
     output {
-        Array[File] sex_qc_plots = glob('*.png')
+        File sex_qc_plots = cohort_prefix + "_sex_qc.png"
         File ped_sex_qc = cohort_prefix + "_sex_qc.ped"
     }
 }
