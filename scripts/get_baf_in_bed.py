@@ -53,7 +53,7 @@ test_shard = test_shard.filter_rows(test_shard.filters.size()==0)
 test_shard = test_shard.annotate_entries(AB=test_shard.AD[1]/hl.sum(test_shard.AD))
 
 roles = ['sample','father','mother']
-output_cols = ['locus', 'alleles', 'locus_interval', 'SV_type', 'SAMPLE'] + [f"AB_{role}" for role in roles] + [f"GT_{role}" for role in roles] 
+output_cols = ['locus', 'alleles', 'locus_interval', 'SV_type', 'SAMPLE', 'vep_shard'] + [f"AB_{role}" for role in roles] + [f"GT_{role}" for role in roles] 
 
 def test_interval(locus_interval, sample, sv_type, mt):
     mt = hl.filter_intervals(mt, [hl.parse_locus_interval(locus_interval, 'GRCh38')])
@@ -88,6 +88,7 @@ def test_interval(locus_interval, sample, sv_type, mt):
     trio_mat_new['locus_interval'] = locus_interval
     trio_mat_new['SAMPLE'] = sample
     trio_mat_new['SV_type'] = sv_type
+    trio_mat_new['vep_shard'] = os.path.basename(vep_file)
 
     return trio_mat_new
 
