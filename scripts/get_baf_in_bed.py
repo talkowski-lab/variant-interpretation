@@ -22,12 +22,15 @@ ped = pd.read_csv(ped_uri, sep='\t').iloc[:,:6]
 ped.columns = ['family_id', 'sample_id', 'paternal_id', 'maternal_id', 'sex', 'phenotype']
 ped.index = ped.sample_id
 
+chroms = [f"chr{x}" for x in range(1, 23)] + ["chrX", "chrY"]
+chrom_lengths = {chrom: hl.eval(hl.contig_length(chrom, reference_genome='GRCh38')) for chrom in chroms}
+
 bed = pd.read_csv(bed_file, sep='\t')
 bed = bed[bed.cohort==cohort_prefix].copy()
 bed['locus_interval'] = bed.CHROM + ':' + bed.START.astype(str) + '-' + bed.END.astype(str)
 bed['interval_size'] = bed.END - bed.START
-bed['window_start'] = (bed.START - 0.1*bed.interval_size).apply(lambda x: int(max(x, 1)))
-bed['window_end'] = (bed.END + 0.1*bed.interval_size).astype(int)
+bed['window_start'] = (bed.START - 0.1*bed.interval_size).apply(lambda x: (int(x), 1))
+bed['window_end'] = bed.apply(lambda row: min(chrom_lengths[row.CHROM], int(row.END + 0.1*row.interval_size)), axis=1)
 bed['window_locus_interval'] = bed.CHROM + ':' + bed.window_start.astype(str) + '-' + bed.window_end.astype(str)
 
 #split-multi
