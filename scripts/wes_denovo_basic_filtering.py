@@ -11,6 +11,8 @@ ped_uri = sys.argv[3]
 cores = sys.argv[4]
 mem = int(np.floor(float(sys.argv[5])))
 bucket_id = sys.argv[6]
+lcr_uri = sys.argv[7]
+call_rate_threshold = sys.argv[8]
 
 prefix = os.path.basename(annot_mt).split('_wes_denovo_annot.mt')[0]
 
@@ -32,6 +34,13 @@ hl.init(min_block_size=128, spark_conf={"spark.executor.cores": cores,
 # - Het calls:PL(HomRef) below 25
 
 mt = hl.read_matrix_table(annot_mt)
+
+# filter low complexity regions
+try:
+    lcr = hl.import_bed(lcr_uri, reference_genome='GRCh38')
+except Exception as e:
+    lcr = hl.import_bed(lcr_uri, reference_genome='GRCh38', force_bgz=True)
+mt = mt.filter_rows(hl.is_defined(lcr[mt.locus]), keep=False)
 
 mt = mt.filter_rows((hl.len(mt.filters) == 0))
 
@@ -161,7 +170,7 @@ mt = sex_aware_variant_annotations_with_pHWE(mt)
 mt = mt.filter_rows(mt.AC > 0, keep = True)
 
 # Let's impose a modest variant call rate and pHWE filter
-mt = mt.filter_rows((mt.call_rate < 0.8) | (mt.pHWE < 0.000000000001), keep = False)
+mt = mt.filter_rows((mt.call_rate < call_rate_threshold) | (mt.pHWE < 0.000000000001), keep = False)
 
 # Define sex-aware sample call rate calculation
 def sex_aware_sample_annotations(mt):

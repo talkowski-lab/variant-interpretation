@@ -17,6 +17,7 @@ struct RuntimeAttr {
 workflow hailDenovoWES {
     input {
         Array[String] mt_uris
+        File lcr_uri
         File ped_uri
         File purcell5k
         File mpc_chr22_file
@@ -31,6 +32,7 @@ workflow hailDenovoWES {
         String hail_denovo_filtering_script
         String hail_docker
         String sv_base_mini_docker
+        Float call_rate_threshold=0.8
     }
 
     scatter (mt_uri in mt_uris) {
@@ -62,12 +64,14 @@ workflow hailDenovoWES {
         }
         call step2.hailBasicFilteringRemote as step2 {
             input:
+                lcr_uri=lcr_uri,
                 annot_mt=step1.annot_mt,
                 input_size=getStep1MTSize.mt_size,
                 ped_uri=ped_uri,
                 bucket_id=bucket_id,
                 cohort_prefix=cohort_prefix,
                 hail_basic_filtering_script=hail_basic_filtering_script,
+                call_rate_threshold=call_rate_threshold,
                 hail_docker=hail_docker
         }
 

@@ -54,6 +54,7 @@ mpc = hl.read_table(mpc_dir)
 mpc = mpc.annotate(allele_array = [mpc.alleles[0], mpc.alleles[1]])
 mpc = mpc.annotate(locus = mpc.locus_38)
 mpc = mpc.key_by(mpc.locus, mpc.allele_array)
+mpc = mpc.filter(mpc.chrom=='chr22', keep=False)
 
 mpc_chr22 = hl.import_table(mpc_chr22_file, types={"locus": hl.tlocus("GRCh38"), "alleles": hl.tarray(hl.tstr)})
 mpc_chr22 = mpc_chr22.annotate(allele_array = [mpc_chr22.alleles[0], mpc_chr22.alleles[1]])

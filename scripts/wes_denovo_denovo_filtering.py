@@ -42,12 +42,6 @@ mt = mt.annotate_entries(is_hemi = ( (mt.locus.in_x_nonpar() & (mt.is_female == 
 # Apply GQ 25 filter across the board
 mt = mt.filter_entries(mt.GQ >= 25, keep = True)
 
-#check for PL missingness
-mt = mt.annotate_entries(PL = ( hl.case()
-                               .when(mt.GT.is_hom_ref() & hl.is_missing(mt.PL), 
-                                    [0, mt.GQ, hl.max(mt.GQ, 3*(mt.AD[0] - mt.AD[1]))] )
-                               .default(mt.PL) )
-                        )
 # AD missingness
 mt = mt.annotate_entries(AD = ( hl.case()
                             .when(mt.GT.is_hom_ref() & hl.is_missing(mt.AD), 
@@ -55,6 +49,12 @@ mt = mt.annotate_entries(AD = ( hl.case()
                                .default(mt.AD) )
                         )
 
+#check for PL missingness
+mt = mt.annotate_entries(PL = ( hl.case()
+                               .when(mt.GT.is_hom_ref() & hl.is_missing(mt.PL), 
+                                    [0, mt.GQ, hl.max(mt.GQ, 3*(mt.AD[0] - mt.AD[1]))] )
+                               .default(mt.PL) )
+                        )
 ## De novo calling
 
 # Note: De novo function modified from current Hail source 1) to fix the fact that current code is broken 

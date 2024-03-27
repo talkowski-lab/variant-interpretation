@@ -14,11 +14,13 @@ struct RuntimeAttr {
 workflow step2 {
     input {
         File ped_uri
-        File annot_mt
+        File lcr_uri
+        String annot_mt
         String cohort_prefix
         String hail_basic_filtering_script
         String hail_docker
         String bucket_id
+        Float call_rate_threshold
         RuntimeAttr? runtime_attr_override
     }
 
@@ -29,6 +31,7 @@ workflow step2 {
     }
     call hailBasicFilteringRemote {
         input:
+            lcr_uri=lcr_uri,
             annot_mt=annot_mt,
             input_size=select_first([getHailMTSize.mt_size]),
             ped_uri=ped_uri,
@@ -36,6 +39,7 @@ workflow step2 {
             cohort_prefix=cohort_prefix,
             hail_basic_filtering_script=hail_basic_filtering_script,
             hail_docker=hail_docker,
+            call_rate_threshold=call_rate_threshold,
             runtime_attr_override=runtime_attr_override
     }
 
@@ -48,7 +52,9 @@ workflow step2 {
 task hailBasicFilteringRemote {
     input {
         File ped_uri
+        File lcr_uri
         Float input_size
+        Float call_rate_threshold
         String annot_mt
         String bucket_id
         String cohort_prefix
@@ -86,7 +92,7 @@ task hailBasicFilteringRemote {
     command {
         curl ~{hail_basic_filtering_script} > hail_basic_filtering_script.py
         python3 hail_basic_filtering_script.py ~{annot_mt} ~{cohort_prefix} ~{ped_uri} \
-        ~{cpu_cores} ~{memory} ~{bucket_id}
+        ~{cpu_cores} ~{memory} ~{bucket_id} ~{lcr_uri} ~{call_rate_threshold}
     }
 
     String prefix = basename(annot_mt, "_wes_denovo_annot.mt")
