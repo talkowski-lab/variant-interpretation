@@ -56,17 +56,7 @@ verbose(paste0("Family ID: ", fam))
 ##Read files and define variables##
 ###################################
 verbose("Reading annotation files")
-hpodb <- fread(hpodb_path, 
-	skip = 1, 
-	header = F, 
-	stringsAsFactors = F, 
-	col.names = c("HPO_ID", 
-		"HPO_DESCRIPTION", 
-		"ID", 
-		"GENE_SYMBOL", 
-		"INFO", 
-		"SOURCE", 
-		"DISEASE"))
+hpodb <- fread(hpodb_path)
 gdroi <- fread(gd_path, header = F)
 pli <- fread(pli_path, header = F)
 prec <- fread(prec_path, header = F)
