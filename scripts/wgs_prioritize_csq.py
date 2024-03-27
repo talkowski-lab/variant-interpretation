@@ -347,4 +347,11 @@ for col in final_output.columns:
 
 df = process_consequence_cohort(csq_columns, vcf_metrics_uri, numeric, sample_column)
 df['isCoding'] = df.Consequence.astype(str).replace({'None': '[]'}).apply(ast.literal_eval).apply(lambda csq: np.intersect1d(csq, coding_variants).size!=0)
-df.to_csv(f"{os.path.basename(vcf_metrics_uri).split('.tsv')[0]}_prioritized_csq.tsv", sep='\t',index=False)
+
+new_cols = ['SYMBOL', 'Gene',
+'transcript_id', 'HGNC_ID', 'HGVSc', 'HGVSp', 'Consequence', 'MAX_AF',
+'LoF', 'LoF_flags', 'PolyPhen', 'SIFT', 'isPTV', 'isMIS', 'isSYN',
+'isSRG', 'isSSL', 'isINF', 'SII', 'isSNP', 'isIndel', 'isCoding']
+
+final_output[new_cols] = df[new_cols]
+final_output.to_csv(f"{os.path.basename(vcf_metrics_uri).split('.tsv')[0]}_prioritized_csq.tsv", sep='\t',index=False)
