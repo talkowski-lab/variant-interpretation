@@ -26,6 +26,9 @@ bed = pd.read_csv(bed_file, sep='\t')
 bed = bed[bed.cohort==cohort_prefix].copy()
 bed['locus_interval'] = bed.CHROM + ':' + bed.START.astype(str) + '-' + bed.END.astype(str)
 bed['interval_size'] = bed.END - bed.START
+bed['window_start'] = (bed.START - 0.1*bed.interval_size).apply(lambda x: int(max(x, 1)))
+bed['window_end'] = (bed.END + 0.1*bed.interval_size).astype(int)
+bed['window_locus_interval'] = bed.CHROM + ':' + bed.window_start.astype(str) + '-' + bed.window_end.astype(str)
 
 #split-multi
 def split_multi_ssc(mt):
@@ -53,14 +56,13 @@ test_shard = test_shard.filter_rows(test_shard.filters.size()==0)
 test_shard = test_shard.annotate_entries(AB=test_shard.AD[1]/hl.sum(test_shard.AD))
 
 roles = ['sample','father','mother']
-output_cols = ['locus', 'alleles', 'locus_interval', 'SV_type', 'SAMPLE', 'vep_shard'] + [f"AB_{role}" for role in roles] + [f"GT_{role}" for role in roles] 
+output_cols = ['locus', 'alleles', 'window_locus_interval', 'locus_interval', 'SV_type', 'SAMPLE', 'vep_shard'] + [f"AB_{role}" for role in roles] + [f"GT_{role}" for role in roles] 
 
-def test_interval(locus_interval, sample, sv_type, mt):
+def test_interval(locus_interval, og_locus_interval, sample, sv_type, mt):
     mt = hl.filter_intervals(mt, [hl.parse_locus_interval(locus_interval, 'GRCh38')])
     print(f"number of SNVs in cohort at {locus_interval}: {mt.count_rows()}")
 
     father, mother = ped.loc[sample, ['paternal_id','maternal_id']].tolist()
-    trio = [sample, father, mother]
 
     sample_mt = mt.filter_cols(mt.s==sample)
     sample_mt = hl.variant_qc(sample_mt)
@@ -85,7 +87,8 @@ def test_interval(locus_interval, sample, sv_type, mt):
     trio_mat_new.columns = trio_mat_new.columns.map('_'.join)
 
     trio_mat_new = trio_mat_new.reset_index()
-    trio_mat_new['locus_interval'] = locus_interval
+    trio_mat_new['window_locus_interval'] = locus_interval
+    trio_mat_new['locus_interval'] = og_locus_interval
     trio_mat_new['SAMPLE'] = sample
     trio_mat_new['SV_type'] = sv_type
     trio_mat_new['vep_shard'] = os.path.basename(vep_file)
@@ -95,6 +98,7 @@ def test_interval(locus_interval, sample, sv_type, mt):
 if test_shard.count_rows()==0:
     print('no overlapping SNVs, outputting empty file...')
     pd.DataFrame({col: [] for col in output_cols}).to_csv(output_name, sep='\t', index=False)  
+
 else:
     start_locus = test_shard.head(1).locus.collect()[0]
     end_locus = test_shard.tail(1).locus.collect()[0]
@@ -112,5 +116,5 @@ else:
     
     test_df = pd.DataFrame()
     for i, row in bed[~bed.not_in_vcf].iterrows():
-        test_df = pd.concat([test_df, test_interval(row.locus_interval, row.SAMPLE, row.TYPE, test_shard)])  
+        test_df = pd.concat([test_df, test_interval(row.window_locus_interval, row.locus_interval, row.SAMPLE, row.TYPE, test_shard)])  
     test_df[np.intersect1d(output_cols, test_df.columns)].to_csv(output_name, sep='\t', index=False)  

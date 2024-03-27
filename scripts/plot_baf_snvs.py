@@ -42,9 +42,11 @@ merged_baf['parental_origin'] = merged_baf.apply(get_parental_origin, axis=1).as
 for locus_interval in merged_baf.locus_interval.unique():
     fig, ax = plt.subplots(1, 3, figsize=(20, 5));
     locus_int_df = merged_baf[merged_baf.locus_interval==locus_interval]
+    window_locus_interval = locus_int_df.window_locus_interval.unique()[0]
     sample = locus_int_df.SAMPLE.unique()[0]
     start, end = (int(x) for x in locus_interval.split(':')[1].split('-'))
     interval_size = human_size(end - start)
+    window_start, window_end = (int(x) for x in window_locus_interval.split(':')[1].split('-'))
     sv_type = locus_int_df.SV_type.unique()[0]
 
     fig.suptitle(f"{locus_interval} ({interval_size} {sv_type}) in {sample}");
@@ -62,6 +64,9 @@ for locus_interval in merged_baf.locus_interval.unique():
         ax[i].set(ylim=(-0.1, 1.1), title=f"AB_{role}");
         ax[i].axhline(median_baf_above, linestyle='--', color='indianred');
         ax[i].axhline(median_baf_below, linestyle='--', color='indianred');
+
+        ax[i].axvline(window_start, linestyle='--', color='maroon');
+        ax[i].axvline(window_end, linestyle='--', color='maroon');
 
         trans = transforms.blended_transform_factory(
             ax[i].get_yticklabels()[0].get_transform(), ax[i].transData)

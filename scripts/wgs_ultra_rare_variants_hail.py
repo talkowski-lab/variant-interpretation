@@ -104,12 +104,10 @@ if exclude_gq_filters:
     # child filters - heterzygous
     het_snv_cond = (hl.is_snp(mt_filtered.alleles[0], mt_filtered.alleles[1])
                     & mt_filtered.GT.is_het()
-                    & (mt_filtered.GQ >= 99.0)
                     & (ab >= 0.22)
                     & (ab <= 0.78))
     het_indel_cond = (hl.is_indel(mt_filtered.alleles[0], mt_filtered.alleles[1])
                     & mt_filtered.GT.is_het()
-                    & (mt_filtered.GQ >= 99.0)
                     & (ab >= 0.20)
                     & (ab <= 0.80))
 else:
@@ -121,10 +119,12 @@ else:
     # child filters - heterzygous
     het_snv_cond = (hl.is_snp(mt_filtered.alleles[0], mt_filtered.alleles[1])
                     & mt_filtered.GT.is_het()
+                    & (mt_filtered.GQ >= 99.0)
                     & (ab >= 0.22)
                     & (ab <= 0.78))
     het_indel_cond = (hl.is_indel(mt_filtered.alleles[0], mt_filtered.alleles[1])
                     & mt_filtered.GT.is_het()
+                    & (mt_filtered.GQ >= 99.0)
                     & (ab >= 0.20)
                     & (ab <= 0.80))
 
