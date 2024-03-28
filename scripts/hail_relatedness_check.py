@@ -74,6 +74,10 @@ except Exception as e:
     pass
 ped[['family_id', 'sample_id', 'paternal_id', 'maternal_id']] = ped[['family_id', 'sample_id', 'paternal_id', 'maternal_id']].astype(str)
 
+# subset ped to samples in VCF
+vcf_samps = mt.s.collect()
+ped = ped[ped.sample_id.isin(vcf_samps)].copy()
+
 fam_sizes = ped.family_id.value_counts().to_dict()
 fathers = ped[ped.paternal_id!='0'].set_index('sample_id').paternal_id.to_dict()
 mothers = ped[ped.maternal_id!='0'].set_index('sample_id').maternal_id.to_dict()
