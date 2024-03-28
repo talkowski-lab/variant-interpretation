@@ -90,16 +90,30 @@ workflow Relatedness {
             bucket_id=bucket_id
         }
     }
+    call helpers.getHailMTSizes as getRelatednessQCSizes {
+            input:
+            mt_uris=checkRelatedness.relatedness_qc,
+            hail_docker=hail_docker
+    }
+    call helpers.getHailMTSizes as getAnnotRelPedSizes {
+            input:
+            mt_uris=checkRelatedness.annot_rel_ped,
+            hail_docker=hail_docker
+    }
 
     call helpers.mergeResultsPython as mergeRelatednessQC {
             input:
+            input_size=getAnnotRelPedSizes.mt_size,
             tsvs=checkRelatedness.relatedness_qc,
+            merged_filename=cohort_prefix + '_relatedness_qc',
             hail_docker=hail_docker
     }
 
     call helpers.mergeResultsPython as mergeAnnotRelPed {
             input:
+            input_size=getAnnotRelPedSizes.mt_size,
             tsvs=checkRelatedness.annot_rel_ped,
+            merged_filename=cohort_prefix + '_annot_relationships',
             hail_docker=hail_docker
     }
 
