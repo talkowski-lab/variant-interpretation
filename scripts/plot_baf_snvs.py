@@ -68,8 +68,8 @@ for locus_interval in merged_baf.locus_interval.unique():
         ax[i].axvline(start, linestyle='--', color='maroon');
         ax[i].axvline(end, linestyle='--', color='maroon');
         xmin, xmax = ax[i].get_xlim()
-        ax[i].avhspan(xmin, start, facecolor='0.2', alpha=0.2)
-        ax[i].avhspan(end, xmax, facecolor='0.2', alpha=0.2)
+        ax[i].axvspan(xmin, start, facecolor='0.2', alpha=0.2)
+        ax[i].axvspan(end, xmax, facecolor='0.2', alpha=0.2)
 
         trans = transforms.blended_transform_factory(
             ax[i].get_yticklabels()[0].get_transform(), ax[i].transData)
