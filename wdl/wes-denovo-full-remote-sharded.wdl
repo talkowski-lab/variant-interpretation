@@ -4,6 +4,7 @@ import "wes-denovo-step-01.wdl" as step1
 import "wes-denovo-step-02.wdl" as step2
 import "wes-denovo-step-03.wdl" as step3
 import "wes-denovo-helpers.wdl" as helpers
+import "wes-prioritize-csq.wdl" as prioritizeCSQ
 
 struct RuntimeAttr {
     Float? mem_gb
@@ -23,6 +24,7 @@ workflow hailDenovoWES {
         File mpc_chr22_file
         File loeuf_file
         Boolean hail_autoscale
+        String sample_column
         String bucket_id
         String mpc_dir
         String gnomad_ht_uri
@@ -30,6 +32,7 @@ workflow hailDenovoWES {
         String hail_annotation_script
         String hail_basic_filtering_script
         String hail_denovo_filtering_script
+        String prioritize_csq_script
         String hail_docker
         String sv_base_mini_docker
         Float call_rate_threshold=0.8
@@ -122,6 +125,16 @@ workflow hailDenovoWES {
             input_size=getDenovoVEPSizes.mt_size
     }
 
+    call prioritizeCSQ.WESprioritizeCSQ as prioritizeCSQ {
+        input:
+            de_novo_results=mergeDenovoResults.merged_tsv,
+            de_novo_vep=mergeDenovoVEP.merged_tsv,
+            cohort_prefix=cohort_prefix,
+            prioritize_csq_script=prioritize_csq_script,
+            hail_docker=hail_docker,
+            sample_column=sample_column
+    }
+
     output {
         # step 1 output
         Array[String] annot_mt = step1.annot_mt
@@ -135,5 +148,7 @@ workflow hailDenovoWES {
         Array[String] de_novo_ht = step3.de_novo_ht
         Array[String] tdt_mt = step3.tdt_mt
         Array[String] tdt_parent_aware_mt = step3.tdt_parent_aware_mt
+        # prioritized CSQ
+        File de_novo_merged = prioritizeCSQ.de_novo_merged
     }
 }
