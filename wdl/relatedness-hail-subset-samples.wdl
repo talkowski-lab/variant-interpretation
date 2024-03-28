@@ -97,7 +97,7 @@ workflow Relatedness {
     }
     call helpers.getHailMTSizes as getAnnotRelPedSizes {
             input:
-            mt_uris=checkRelatedness.annot_rel_ped,
+            mt_uris=checkRelatedness.kinship_tsv,
             hail_docker=hail_docker
     }
 
@@ -105,21 +105,21 @@ workflow Relatedness {
             input:
             input_size=getAnnotRelPedSizes.mt_size,
             tsvs=checkRelatedness.relatedness_qc,
-            merged_filename=cohort_prefix + '_relatedness_qc.tsv',
+            merged_filename=cohort_prefix + '_relatedness_qc.ped',
             hail_docker=hail_docker
     }
 
     call helpers.mergeResultsPython as mergeAnnotRelPed {
             input:
             input_size=getAnnotRelPedSizes.mt_size,
-            tsvs=checkRelatedness.annot_rel_ped,
-            merged_filename=cohort_prefix + '_annot_relationships.ped',
+            tsvs=checkRelatedness.kinship_tsv,
+            merged_filename=cohort_prefix + '_kinship.tsv',
             hail_docker=hail_docker
     }
 
     call relatednessHail.plotRelatedness as plotRelatedness {
         input:
-        annot_rel_ped=mergeAnnotRelPed.merged_tsv,
+        kinship_tsv=mergeAnnotRelPed.merged_tsv,
         ped_uri=ped_uri,
         cohort_prefix=cohort_prefix,
         plot_relatedness_script=plot_relatedness_script,
@@ -130,7 +130,7 @@ workflow Relatedness {
         File sex_qc_plots = imputeSex.sex_qc_plots
         File ped_sex_qc = imputeSex.ped_sex_qc
         File relatedness_qc = mergeRelatednessQC.merged_tsv
-        File annot_rel_ped = mergeAnnotRelPed.merged_tsv
+        File kinship_tsv = mergeAnnotRelPed.merged_tsv
         File relatedness_plot = plotRelatedness.relatedness_plot
     }
 }
