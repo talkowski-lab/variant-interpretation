@@ -37,7 +37,7 @@ workflow familyFiltering {
     call getGenomicDisorders{
         input:
             genomic_disorder_input=genomic_disorder_input,
-            bed_file=vcfToBed.bed_output,
+            bed_file=vcfToBed.bed_output_ref,
 #            bed_file=bed_file,
             variant_interpretation_docker=variant_interpretation_docker,
             runtime_attr_override = runtime_attr_override_getGD
@@ -98,6 +98,7 @@ task vcfToBed{
 
     output{
         File bed_output = "~{cohort_prefix}.ref.bed.gz"
+        File bed_output_ref = "~{cohort_prefix}.bed.gz"
     }
 
     command <<<
