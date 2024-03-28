@@ -71,7 +71,8 @@ for locus_interval in merged_baf.locus_interval.unique():
         xmin, xmax = ax[i].get_xlim()
         ax[i].axvspan(xmin, start, facecolor='0.2', alpha=0.2)
         ax[i].axvspan(end, xmax, facecolor='0.2', alpha=0.2)
-
+        ax[i].margins(x=0)
+        
         trans = transforms.blended_transform_factory(
             ax[i].get_yticklabels()[0].get_transform(), ax[i].transData)
         ax[i].text(1.03, median_baf_above, round(median_baf_above, 3), color="indianred", transform=trans, 
