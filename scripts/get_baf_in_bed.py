@@ -59,9 +59,9 @@ test_shard = test_shard.filter_rows(test_shard.filters.size()==0)
 test_shard = test_shard.annotate_entries(AB=test_shard.AD[1]/hl.sum(test_shard.AD))
 
 roles = ['sample','father','mother']
-output_cols = ['locus', 'alleles', 'window_locus_interval', 'locus_interval', 'SV_type', 'SAMPLE', 'vep_shard'] + [f"AB_{role}" for role in roles] + [f"GT_{role}" for role in roles] 
+output_cols = ['locus', 'alleles', 'window_locus_interval', 'locus_interval', 'SV_type', 'SAMPLE', 'pipeline_id', 'vep_shard'] + [f"AB_{role}" for role in roles] + [f"GT_{role}" for role in roles] 
 
-def test_interval(locus_interval, og_locus_interval, sample, sv_type, mt):
+def test_interval(locus_interval, og_locus_interval, sample, pipeline_id, sv_type, mt):
     mt = hl.filter_intervals(mt, [hl.parse_locus_interval(locus_interval, 'GRCh38')])
     print(f"number of SNVs in cohort at {locus_interval}: {mt.count_rows()}")
 
@@ -93,6 +93,7 @@ def test_interval(locus_interval, og_locus_interval, sample, sv_type, mt):
     trio_mat_new['window_locus_interval'] = locus_interval
     trio_mat_new['locus_interval'] = og_locus_interval
     trio_mat_new['SAMPLE'] = sample
+    trio_mat_new['pipeline_id'] = pipeline_id
     trio_mat_new['SV_type'] = sv_type
     trio_mat_new['vep_shard'] = os.path.basename(vep_file)
 
@@ -119,5 +120,5 @@ else:
     
     test_df = pd.DataFrame()
     for i, row in bed[~bed.not_in_vcf].iterrows():
-        test_df = pd.concat([test_df, test_interval(row.window_locus_interval, row.locus_interval, row.SAMPLE, row.TYPE, test_shard)])  
+        test_df = pd.concat([test_df, test_interval(row.window_locus_interval, row.locus_interval, row.SAMPLE, row.pipeline_id, row.TYPE, test_shard)])  
     test_df[np.intersect1d(output_cols, test_df.columns)].to_csv(output_name, sep='\t', index=False)  

@@ -44,12 +44,13 @@ for locus_interval in merged_baf.locus_interval.unique():
     locus_int_df = merged_baf[merged_baf.locus_interval==locus_interval]
     window_locus_interval = locus_int_df.window_locus_interval.unique()[0]
     sample = locus_int_df.SAMPLE.unique()[0]
+    pipeline_id = locus_int_df.pipeline_id.unique()[0]
     start, end = (int(x) for x in locus_interval.split(':')[1].split('-'))
     interval_size = human_size(end - start)
     window_start, window_end = (int(x) for x in window_locus_interval.split(':')[1].split('-'))
     sv_type = locus_int_df.SV_type.unique()[0]
 
-    fig.suptitle(f"{locus_interval} ({interval_size} {sv_type}) in {sample}");
+    fig.suptitle(f"{locus_interval} in {pipeline_id} ({interval_size} {sv_type})");
     for i, role in enumerate(['sample','father','mother']):
         median_baf_above = locus_int_df[(locus_int_df[f"AB_{role}"]<1)&(locus_int_df[f"AB_{role}"]>0.5)][f"AB_{role}"].median()
         median_baf_below = locus_int_df[(locus_int_df[f"AB_{role}"]>0)&(locus_int_df[f"AB_{role}"]<0.5)][f"AB_{role}"].median()
@@ -79,5 +80,5 @@ for locus_interval in merged_baf.locus_interval.unique():
             ha="left", va="center");
     locus_str = locus_interval.replace(':', '_').replace('-', '_')
     plt.tight_layout();
-    plt.savefig(f"{locus_str}_{sv_type}_{sample}_baf.png");
+    plt.savefig(f"{locus_str}_{sv_type}_{pipeline_id}.baf.png");
     plt.close();
