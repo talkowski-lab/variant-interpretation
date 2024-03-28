@@ -147,7 +147,9 @@ task getChromosomeSizes {
     }
     Float base_disk_gb = 10.0
     Float input_disk_scale = 5.0
-    String prefix = basename(vcf_file, ".vcf.gz")
+        String filename = basename(vcf_file)
+    String prefix = if (sub(filename, "\\.gz", "")!=filename) then basename(vcf_file, ".vcf.gz") else basename(vcf_file, ".vcf.bgz")
+
 
     RuntimeAttr runtime_default = object {
         mem_gb: 4,
@@ -201,7 +203,9 @@ task splitByChromosomeRemote {
     # Float input_size = chrom_length * ceil(n_samples*0.001) / 1000000  # assume ~1 million records == 1 GB for 375 samples, and sample scale is 0.001
     Float base_disk_gb = 10.0
     Float input_disk_scale = 5.0
-    String prefix = basename(vcf_file, ".vcf.gz")
+        String filename = basename(vcf_file)
+    String prefix = if (sub(filename, "\\.gz", "")!=filename) then basename(vcf_file, ".vcf.gz") else basename(vcf_file, ".vcf.bgz")
+
 
     RuntimeAttr runtime_default = object {
         mem_gb: 4,
@@ -258,7 +262,8 @@ task splitByChromosome {
     Float input_size = size(vcf_file, "GB")
     Float base_disk_gb = 10.0
     Float input_disk_scale = 2.0
-    String prefix = basename(vcf_file, ".vcf.gz")
+    String filename = basename(vcf_file)
+    String prefix = if (sub(filename, "\\.gz", "")!=filename) then basename(vcf_file, ".vcf.gz") else basename(vcf_file, ".vcf.bgz")
 
     RuntimeAttr runtime_default = object {
         mem_gb: 4,
@@ -312,7 +317,9 @@ task scatterVCF {
     Float input_size = size(vcf_file, "GB") 
     Float base_disk_gb = 10.0
     Float input_disk_scale = 5.0
-    String prefix = basename(vcf_file, ".vcf.gz")
+    String filename = basename(vcf_file)
+    String prefix = if (sub(filename, "\\.gz", "")!=filename) then basename(vcf_file, ".vcf.gz") else basename(vcf_file, ".vcf.bgz")
+
 
     RuntimeAttr runtime_default = object {
         mem_gb: 4,
