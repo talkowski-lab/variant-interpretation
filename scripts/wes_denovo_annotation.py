@@ -68,7 +68,8 @@ mt = mt.annotate_rows(MPC=merged_mpc[mt.locus, mt.alleles].MPC)
 ## pAB annotations
 
 # Add pAB entry field for downstream filtering -- note, only for hets
-mt = mt.annotate_entries(pAB = hl.or_missing(mt.GT.is_het(), 
+mt = mt.annotate_entries(AB = mt.AD[1] / hl.sum(mt.AD), 
+                         pAB = hl.or_missing(mt.GT.is_het(), 
                                              hl.binom_test(mt.AD[1], hl.sum(mt.AD), 0.5, 'two-sided')))
 
 # Run and export Hail's built-in sample QC function
