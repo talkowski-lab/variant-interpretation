@@ -29,7 +29,7 @@ bed = pd.read_csv(bed_file, sep='\t')
 bed = bed[bed.cohort==cohort_prefix].copy()
 bed['locus_interval'] = bed.CHROM + ':' + bed.START.astype(str) + '-' + bed.END.astype(str)
 bed['interval_size'] = bed.END - bed.START
-bed['window_start'] = (bed.START - 0.1*bed.interval_size).apply(lambda x: (int(x), 1))
+bed['window_start'] = (bed.START - 0.1*bed.interval_size).apply(lambda x: max(int(x), 1))
 bed['window_end'] = bed.apply(lambda row: min(chrom_lengths[row.CHROM], int(row.END + 0.1*row.interval_size)), axis=1)
 bed['window_locus_interval'] = bed.CHROM + ':' + bed.window_start.astype(str) + '-' + bed.window_end.astype(str)
 
