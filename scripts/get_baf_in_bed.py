@@ -11,6 +11,7 @@ cores = sys.argv[4]
 mem = int(np.floor(float(sys.argv[5])))
 output_name = sys.argv[6]
 ped_uri = sys.argv[7]
+window_size = float(sys.argv[8])
 
 hl.init(min_block_size=128, spark_conf={"spark.executor.cores": cores, 
                     "spark.executor.memory": f"{mem}g",
@@ -29,8 +30,8 @@ bed = pd.read_csv(bed_file, sep='\t')
 bed = bed[bed.cohort==cohort_prefix].copy()
 bed['locus_interval'] = bed.CHROM + ':' + bed.START.astype(str) + '-' + bed.END.astype(str)
 bed['interval_size'] = bed.END - bed.START
-bed['window_start'] = (bed.START - 0.15*bed.interval_size).apply(lambda x: max(int(x), 1))
-bed['window_end'] = bed.apply(lambda row: min(chrom_lengths[row.CHROM], int(row.END + 0.15*row.interval_size)), axis=1)
+bed['window_start'] = (bed.START - window_size*bed.interval_size).apply(lambda x: max(int(x), 1))
+bed['window_end'] = bed.apply(lambda row: min(chrom_lengths[row.CHROM], int(row.END + window_size*row.interval_size)), axis=1)
 bed['window_locus_interval'] = bed.CHROM + ':' + bed.window_start.astype(str) + '-' + bed.window_end.astype(str)
 
 #split-multi
@@ -114,9 +115,9 @@ else:
 
     bed['chrom_int'] = bed.CHROM.str.split('chr').str[1].replace({'X': 23, 'Y': 24}).astype(int)
     bed['not_in_vcf'] = bed.apply(lambda row: (row.chrom_int > end_chrom) | 
-                                            ((row.chrom_int == end_chrom) & (row.START > end_pos)) |
+                                            ((row.chrom_int == end_chrom) & (row.window_start > end_pos)) |
                                             (row.chrom_int < start_chrom) | 
-                    ((row.chrom_int == start_chrom) & (row.END < start_pos)), axis=1)
+                    ((row.chrom_int == start_chrom) & (row.window_end < start_pos)), axis=1)
     
     test_df = pd.DataFrame()
     for i, row in bed[~bed.not_in_vcf].iterrows():

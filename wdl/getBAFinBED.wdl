@@ -21,6 +21,7 @@ workflow getBAFinBED {
         String plot_baf_script
         String hail_docker
         Boolean het_only=true
+        Float window_size=0.15
     }
 
     scatter (vep_file in vep_vcf_files) {
@@ -30,6 +31,7 @@ workflow getBAFinBED {
             ped_uri=ped_uri,
             vep_file=vep_file,
             cohort_prefix=cohort_prefix,
+            window_size=window_size,
             get_baf_script=get_baf_script,
             hail_docker=hail_docker
         }
@@ -71,6 +73,7 @@ task getBAF {
         String cohort_prefix
         String get_baf_script
         String hail_docker
+        Float window_size
         RuntimeAttr? runtime_attr_override
     }
 
@@ -105,7 +108,7 @@ task getBAF {
 
     command <<<
     curl ~{get_baf_script} > get_baf.py
-    python3 get_baf.py ~{bed_file} ~{cohort_prefix} ~{vep_file} ~{cpu_cores} ~{memory} ~{output_name} ~{ped_uri} > stdout
+    python3 get_baf.py ~{bed_file} ~{cohort_prefix} ~{vep_file} ~{cpu_cores} ~{memory} ~{output_name} ~{ped_uri} ~{window_size} > stdout
     >>>
 
     output {
