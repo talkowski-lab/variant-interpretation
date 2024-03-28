@@ -266,7 +266,6 @@ task SVfamilyFiltering{
             -o ~{family}.filt.txt \
             -v
     >>>
-
     runtime {
         cpu: select_first([runtime_attr.cpu, default_attr.cpu])
         memory: select_first([runtime_attr.mem_gb, default_attr.mem_gb]) + " GiB"
