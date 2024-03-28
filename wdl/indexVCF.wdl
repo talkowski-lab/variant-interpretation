@@ -115,7 +115,7 @@ task indexVCF_tabix {
     >>>
 
     output {
-        File vcf_idx = basename(vcf_uri) + tbi_ext
+        File vcf_idx = vcf_uri + tbi_ext
     }
 }
 
@@ -161,7 +161,7 @@ task indexVCF_bcftools {
     >>>
 
     output {
-        File vcf_idx = basename(vcf_uri) + tbi_ext
+        File vcf_idx = vcf_uri + tbi_ext
     }
 }
 
