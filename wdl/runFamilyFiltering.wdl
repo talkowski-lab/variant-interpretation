@@ -97,8 +97,8 @@ task vcfToBed{
     RuntimeAttr runtime_attr = select_first([runtime_attr_override, default_attr])
 
     output{
-        File bed_output = "~{cohort_prefix}.ref.bed.gz"
-        File bed_output_ref = "~{cohort_prefix}.bed.gz"
+        File bed_output = "~{cohort_prefix}.bed.gz"
+        File bed_output_ref = "~{cohort_prefix}.ref.bed.gz"
     }
 
     command <<<
