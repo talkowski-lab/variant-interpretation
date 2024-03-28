@@ -110,7 +110,7 @@ workflow hailDenovoWES {
         input:
             tsvs=step3.de_novo_results,
             hail_docker=hail_docker,
-            merged_filename=cohort_prefix + "_wes_final_denovo",
+            merged_filename=cohort_prefix + "_wes_final_denovo.tsv",
             input_size=getDenovoResultSizes.mt_size
     }
 
@@ -118,7 +118,7 @@ workflow hailDenovoWES {
         input:
             tsvs=step3.de_novo_vep,
             hail_docker=hail_docker,
-            merged_filename=cohort_prefix + "_wes_final_denovo_vep",
+            merged_filename=cohort_prefix + "_wes_final_denovo_vep.tsv",
             input_size=getDenovoVEPSizes.mt_size
     }
 

@@ -70,14 +70,14 @@ workflow DenovoCheckKnown {
         input:
         tsvs=overlapAnnotMT.known_tsv,
         hail_docker=hail_docker,
-        merged_filename=cohort_prefix + '_annot_mt_known_variants',
+        merged_filename=cohort_prefix + '_annot_mt_known_variants.tsv',
         input_size=getTotalAnnotMTSize.mt_size
     }
     call helpers.mergeResultsPython as mergeFilteredMT {
         input:
         tsvs=overlapFilteredMT.known_tsv,
         hail_docker=hail_docker,
-        merged_filename=cohort_prefix + '_filtered_mt_known_variants',
+        merged_filename=cohort_prefix + '_filtered_mt_known_variants.tsv',
         input_size=getTotalFilteredMTSize.mt_size
     }
 

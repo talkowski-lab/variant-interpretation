@@ -47,7 +47,7 @@ workflow getBAFinBED {
         input:
         tsvs=getBAF.baf_tsv,
         hail_docker=hail_docker,
-        merged_filename=cohort_prefix + '_AB_SNVs_locus_intervals',
+        merged_filename=cohort_prefix + '_AB_SNVs_locus_intervals.tsv',
         input_size=getTotalSize.mt_size
     }
 

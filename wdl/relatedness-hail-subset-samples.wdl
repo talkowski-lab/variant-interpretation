@@ -105,7 +105,7 @@ workflow Relatedness {
             input:
             input_size=getAnnotRelPedSizes.mt_size,
             tsvs=checkRelatedness.relatedness_qc,
-            merged_filename=cohort_prefix + '_relatedness_qc',
+            merged_filename=cohort_prefix + '_relatedness_qc.tsv',
             hail_docker=hail_docker
     }
 
@@ -113,7 +113,7 @@ workflow Relatedness {
             input:
             input_size=getAnnotRelPedSizes.mt_size,
             tsvs=checkRelatedness.annot_rel_ped,
-            merged_filename=cohort_prefix + '_annot_relationships',
+            merged_filename=cohort_prefix + '_annot_relationships.ped',
             hail_docker=hail_docker
     }
 

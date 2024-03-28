@@ -131,14 +131,14 @@ task mergeResultsPython {
             if not df.empty:
                 dfs.append(df)
         merged_df = pd.concat(dfs)
-        merged_df.to_csv(merged_filename+'.tsv', sep='\t', index=False)
+        merged_df.to_csv(merged_filename, sep='\t', index=False)
         EOF
 
         python3 merge_tsvs.py ~{write_lines(tsvs)} ~{merged_filename} > stdout
     >>>
 
     output {
-        File merged_tsv = merged_filename + '.tsv'
+        File merged_tsv = merged_filename 
     }   
 }
 
@@ -178,12 +178,12 @@ task mergeResults {
     }
 
     command <<<
-        head -n 1 ~{tsvs[0]} > "~{merged_filename}.tsv"; 
-        tail -n +2 -q ~{sep=' ' tsvs} >> "~{merged_filename}.tsv"
+        head -n 1 ~{tsvs[0]} > ~{merged_filename}; 
+        tail -n +2 -q ~{sep=' ' tsvs} >> ~{merged_filename}
     >>>
 
     output {
-        File merged_tsv = merged_filename + '.tsv'
+        File merged_tsv = merged_filename
     }
 }
 

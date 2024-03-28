@@ -2,6 +2,7 @@ version 1.0
 
 import "mergeSplitVCF.wdl" as mergeSplitVCF
 import "mergeVCFs.wdl" as mergeVCFs
+import "wes-denovo-helpers.wdl" as helpers
 
 struct RuntimeAttr {
     Float? mem_gb
@@ -94,11 +95,11 @@ workflow filterRareVariantsHail {
                     runtime_attr_override=runtime_attr_filter_vcf
             }
         }
-        call mergeResults as mergeResults_merged {
+        call helpers.mergeResultsPython as mergeResults_merged {
             input:
-                ultra_rare_variants_tsvs=filterRareVariants.ultra_rare_variants_tsv,
-                vep_hail_docker=vep_hail_docker,
-                cohort_prefix=cohort_prefix,
+                tsvs=filterRareVariants.ultra_rare_variants_tsv,
+                hail_docker=hail_docker,
+                merged_filename=cohort_prefix+'_ultra_rare_variants.tsv',
                 runtime_attr_override=runtime_attr_merge_results
         }
     }
@@ -126,16 +127,16 @@ workflow filterRareVariantsHail {
                     runtime_attr_override=runtime_attr_filter_vcf
                     }
         }
-        call mergeResults as mergeResults_sharded {
+        call helpers.mergeResults as mergeResults_sharded {
             input:
-                ultra_rare_variants_tsvs=filterRareVariants_sharded.ultra_rare_variants_tsv,
-                vep_hail_docker=vep_hail_docker,
-                cohort_prefix=cohort_prefix,
+                tsvs=filterRareVariants_sharded.ultra_rare_variants_tsv,
+                hail_docker=hail_docker,
+                merged_filename=cohort_prefix+'_ultra_rare_variants.tsv',
                 runtime_attr_override=runtime_attr_merge_results
         }
     }
 
-    File merged_ultra_rare_variants_tsv = select_first([mergeResults_merged.ultra_rare_variants_tsv, mergeResults_sharded.ultra_rare_variants_tsv])
+    File merged_ultra_rare_variants_tsv = select_first([mergeResults_merged.merged_tsv, mergeResults_sharded.merged_tsv])
 
     output {
         # File hail_log = filterRareVariants.hail_log
@@ -259,50 +260,6 @@ task filterRareVariants {
 
     output {
         File hail_log = "hail_log.txt"
-        File ultra_rare_variants_tsv = cohort_prefix + '_ultra_rare_variants.tsv'
-    }
-}
-
-task mergeResults {
-    input {
-        Array[File] ultra_rare_variants_tsvs
-        String vep_hail_docker
-        String cohort_prefix
-        RuntimeAttr? runtime_attr_override
-    }
-
-    Float input_size = size(ultra_rare_variants_tsvs, "GB")
-    Float base_disk_gb = 10.0
-    Float input_disk_scale = 5.0
-    RuntimeAttr runtime_default = object {
-        mem_gb: 4,
-        disk_gb: ceil(base_disk_gb + input_size * input_disk_scale),
-        cpu_cores: 1,
-        preemptible_tries: 3,
-        max_retries: 1,
-        boot_disk_gb: 10
-    }
-
-    RuntimeAttr runtime_override = select_first([runtime_attr_override, runtime_default])
-    Float memory = select_first([runtime_override.mem_gb, runtime_default.mem_gb])
-    Int cpu_cores = select_first([runtime_override.cpu_cores, runtime_default.cpu_cores])
-
-    runtime {
-        memory: "~{memory} GB"
-        disks: "local-disk ~{select_first([runtime_override.disk_gb, runtime_default.disk_gb])} HDD"
-        cpu: cpu_cores
-        preemptible: select_first([runtime_override.preemptible_tries, runtime_default.preemptible_tries])
-        maxRetries: select_first([runtime_override.max_retries, runtime_default.max_retries])
-        docker: vep_hail_docker
-        bootDiskSizeGb: select_first([runtime_override.boot_disk_gb, runtime_default.boot_disk_gb])
-    }
-
-    command <<<
-        head -n 1 ~{ultra_rare_variants_tsvs[0]} > "~{cohort_prefix}_ultra_rare_variants.tsv"; 
-        tail -n +2 -q ~{sep=' ' ultra_rare_variants_tsvs} >> "~{cohort_prefix}_ultra_rare_variants.tsv"
-    >>>
-
-    output {
         File ultra_rare_variants_tsv = cohort_prefix + '_ultra_rare_variants.tsv'
     }
 }
