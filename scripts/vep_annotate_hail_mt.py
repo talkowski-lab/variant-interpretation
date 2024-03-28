@@ -42,11 +42,11 @@ def split_multi_ssc(mt):
     return mt
 
 mt = hl.read_matrix_table(mt_uri)
-mt = mt.distinct_by_row()
+# mt = mt.distinct_by_row()
 
 try:
     mt = split_multi_ssc(mt)
-    mt = mt.distinct_by_row()
+    # mt = mt.distinct_by_row()
     # annotate cohort ac to INFO field (after splitting multiallelic)
     mt = mt.annotate_rows(info=mt.info.annotate(cohort_AC=mt.info.AC[mt.a_index - 1],
                                                 cohort_AF=mt.info.AF[mt.a_index - 1]))
