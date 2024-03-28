@@ -145,7 +145,7 @@ merged_rel_df.to_csv(f"{cohort_prefix}_relatedness_qc.ped", sep='\t', index=Fals
 ped_rels = {'i':[], 'j': [], 'ped_relationship': [], 'family_id': []}
 
 for fam in ped.family_id.unique():
-    fam_df = ped[ped.family_id==fam].reset_index()
+    fam_df = ped[ped.family_id==fam].reset_index(drop=True)
     for i, row_i in fam_df.iterrows():
         for j, row_j in fam_df.iterrows():
             related = False
