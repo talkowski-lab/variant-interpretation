@@ -74,7 +74,7 @@ workflow Relatedness {
 
     call plotRelatedness {
         input:
-        relatedness_ht=checkRelatedness.relatedness_ht,
+        annot_rel_ped=checkRelatedness.annot_rel_ped,
         ped_uri=ped_uri,
         cohort_prefix=cohort_prefix,
         plot_relatedness_script=plot_relatedness_script,
@@ -85,7 +85,7 @@ workflow Relatedness {
         File sex_qc_plots = imputeSex.sex_qc_plots
         File ped_sex_qc = imputeSex.ped_sex_qc
         File relatedness_qc = checkRelatedness.relatedness_qc
-        String relatedness_ht = checkRelatedness.relatedness_ht
+        File annot_rel_ped = checkRelatedness.annot_rel_ped
         File relatedness_plot = plotRelatedness.relatedness_plot
     }
 }
@@ -186,13 +186,13 @@ task checkRelatedness {
 
     output {
         File relatedness_qc = cohort_prefix + "_relatedness_qc.ped"
-        String relatedness_ht = read_lines('mt_uri.txt')[0]
+        File annot_rel_ped = cohort_prefix + "_annot_relationships.ped"
     }
 }
 
 task plotRelatedness {
     input {
-        String relatedness_ht
+        File annot_rel_ped
         File ped_uri
         String cohort_prefix
         String plot_relatedness_script
@@ -230,7 +230,7 @@ task plotRelatedness {
     command <<<
         set -eou pipefail
         curl ~{plot_relatedness_script} > plot_relatedness.py
-        python3 plot_relatedness.py ~{relatedness_ht} ~{cohort_prefix} ~{ped_uri} ~{cpu_cores} ~{memory} > stdout
+        python3 plot_relatedness.py ~{annot_rel_ped} ~{cohort_prefix} ~{ped_uri} ~{cpu_cores} ~{memory} > stdout
     >>>
 
     output {

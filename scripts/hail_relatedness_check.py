@@ -58,9 +58,9 @@ rel = rel.annotate(relationship = relatedness.get_relationship_expr(rel.kin, rel
 rel = rel.key_by()
 rel = rel.annotate(i=rel.i.s, j=rel.j.s).key_by('i','j')
 
-filename = f"{bucket_id}/hail/relatedness/{str(datetime.datetime.now().strftime('%Y-%m-%d_%H-%M'))}/{cohort_prefix}_pc_relate.ht"
-rel.write(filename)
-pd.Series([filename]).to_csv('mt_uri.txt', header=None, index=False)
+# filename = f"{bucket_id}/hail/relatedness/{str(datetime.datetime.now().strftime('%Y-%m-%d_%H-%M'))}/{cohort_prefix}_pc_relate.ht"
+# rel.write(filename)
+# pd.Series([filename]).to_csv('mt_uri.txt', header=None, index=False)
 
 ped = pd.read_csv(ped_uri, sep='\t').iloc[:, :6]
 ped.columns = ['family_id', 'sample_id', 'paternal_id', 'maternal_id', 'sex', 'phenotype']
@@ -74,11 +74,17 @@ except Exception as e:
     pass
 ped[['family_id', 'sample_id', 'paternal_id', 'maternal_id']] = ped[['family_id', 'sample_id', 'paternal_id', 'maternal_id']].astype(str)
 
+fam_sizes = ped.family_id.value_counts().to_dict()
+fathers = ped[ped.paternal_id!='0'].set_index('sample_id').paternal_id.to_dict()
+mothers = ped[ped.maternal_id!='0'].set_index('sample_id').maternal_id.to_dict()
+
 def get_sample_role(row):
-    if (row.maternal_id=='0') & (row.paternal_id=='0'):
-        if row.sex==1:
+    if fam_sizes[row.family_id]==1:
+        role = 'Singleton'
+    elif (row.maternal_id=='0') & (row.paternal_id=='0'):
+        if (row.sample_id in fathers.values()):
             role = 'Father'
-        elif row.sex==2:
+        elif (row.sample_id in mothers.values()):
             role = 'Mother'
         else:
             role = 'Unknown'
@@ -134,3 +140,53 @@ else:
     merged_rel_df['duplicate_samples'] = np.nan
 
 merged_rel_df.to_csv(f"{cohort_prefix}_relatedness_qc.ped", sep='\t', index=False)
+
+# annotate ped
+ped_rels = {'i':[], 'j': [], 'ped_relationship': [], 'family_id': []}
+
+for fam in ped.family_id.unique():
+    fam_df = ped[ped.family_id==fam].reset_index()
+    for i, row_i in fam_df.iterrows():
+        for j, row_j in fam_df.iterrows():
+            related = False
+            if i==j:
+                continue
+                
+            if (((row_i.paternal_id == row_j.sample_id)) | ((row_i.sample_id == row_j.paternal_id))) |\
+            (((row_i.maternal_id == row_j.sample_id)) | ((row_i.sample_id == row_j.maternal_id))):                
+                ped_rels['ped_relationship'].append('parent-child')
+                related = True
+            if (row_i.role not in ['Mother', 'Father']) & (row_j.role not in ['Mother', 'Father']):
+                if (row_i.paternal_id==row_j.paternal_id) & (row_i.maternal_id==row_j.maternal_id):
+                    ped_rels['ped_relationship'].append('siblings')
+                else:
+                    ped_rels['ped_relationship'].append('related_other')      
+                related = True
+
+            if related:
+                ped_rels['i'].append(row_i.sample_id)
+                ped_rels['j'].append(row_j.sample_id)
+                ped_rels['family_id'].append(fam)
+
+
+ped_rels_df = pd.DataFrame(ped_rels)
+ped_rels_ht = hl.Table.from_pandas(ped_rels_df)
+
+ped_rels_ht_merged = ped_rels_ht.annotate(i=ped_rels_ht.j, j=ped_rels_ht.i).key_by('i', 'j').union(ped_rels_ht.key_by('i','j'))
+
+rel_merged = rel.key_by()
+rel_merged = rel_merged.annotate(i=rel_merged.j, j=rel_merged.i).key_by('i', 'j').union(rel.key_by('i','j'))
+
+related_in_ped = rel_merged.annotate(ped_relationship=ped_rels_ht_merged[rel_merged.key].ped_relationship)
+related_in_ped = related_in_ped.filter(hl.is_missing(related_in_ped.ped_relationship), keep=False)
+
+unrelated_in_ped = rel.anti_join(related_in_ped).annotate(ped_relationship='unrelated')
+
+p = 0.05
+only_related = unrelated_in_ped.filter(unrelated_in_ped.relationship!='unrelated')
+downsampled_unrelated = unrelated_in_ped.filter(unrelated_in_ped.relationship=='unrelated').sample(p)
+
+rel_total = related_in_ped.union(only_related).union(downsampled_unrelated)
+
+rel_df = rel_total.to_pandas()
+rel_df.to_csv(f"{cohort_prefix}_annot_relationships.ped", sep='\t', index=False)
