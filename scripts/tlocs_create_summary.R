@@ -51,27 +51,27 @@ summary_df <- do.call(rbind, apply(samples, 1, function(row){
   Count3 <- nrow(subset(info_sample, V3 == "-" & V6 == "+"))
   Count4 <- nrow(subset(info_sample, V3 == "-" & V6 == "-"))
 
-  if(info_sample[order(info_sample$V2),]$V3[1] == "-"){
-    count <- 0
-    vector <- info_sample[order(info_sample$V2),]$V3
-    for (i in 1:(length(vector) - 1)) {
-      if (vector[i] == "-" && vector[i + 1] == "-") {
-        count <- count + 1
-      } else if (vector[i] == "+") {
-        count <- count + 1
-        break  # Interrupt loop if "+" is encountered
-      }
-    }
-    # Output the result
-    Count_ins_PE <- count
+ # if(info_sample[order(info_sample$V2),]$V3[1] == "-"){
+ #   count <- 0
+ #   vector <- info_sample[order(info_sample$V2),]$V3
+ #   for (i in 1:(length(vector) - 1)) {
+ #     if (vector[i] == "-" && vector[i + 1] == "-") {
+ #       count <- count + 1
+ #     } else if (vector[i] == "+") {
+ #       count <- count + 1
+ #       break  # Interrupt loop if "+" is encountered
+ #     }
+ #   }
+ #   # Output the result
+ #   Count_ins_PE <- count
 
-  }else{
-    Count_ins_PE <- 0
-  }
+ # }else{
+ #   Count_ins_PE <- 0
+ # }
 
   return(data.frame(BP1_1_plus, BP1_2_plus, BP1_1_minus, BP1_2_minus, BP1_int_plus, BP1_int_minus,
                     BP2_1_plus, BP2_2_plus, BP2_1_minus, BP2_2_minus, BP2_int_plus, BP2_int_minus,
-                    First_PE_dir, PE, Count1, Count2, Count3, Count4, Count_ins_PE))
+                    First_PE_dir, PE, Count1, Count2, Count3, Count4))
 
 }))
 
