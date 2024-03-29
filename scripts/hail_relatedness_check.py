@@ -123,7 +123,6 @@ all_df = mom_df.merge(dad_df, how='outer')
 
 # get duplicates
 ped['sample_rank'] = 4 - (ped.sex.isin([1,2]).astype(int) + (ped.paternal_id!='0').astype(int) + (ped.maternal_id!='0').astype(int))
-vcf_samps = mt.s.collect()
 
 for s in np.setdiff1d(vcf_samps, ped.sample_id):
     ped.at[s, 'sample_id'] = s

@@ -1,26 +1,23 @@
 import pandas as pd
 import numpy as np
-import hail as hl
 import seaborn as sns
 import matplotlib.pyplot as plt
 import sys
 import os
 import ast
-import datetime
 
 rel_tsv = sys.argv[1]
 cohort_prefix = sys.argv[2]
 ped_uri = sys.argv[3]
-cores = sys.argv[4]  # string
-mem = int(np.floor(float(sys.argv[5])))
+chunk_size = int(sys.argv[4])
 
-hl.init(min_block_size=128, spark_conf={"spark.executor.cores": cores, 
-                    "spark.executor.memory": f"{mem}g",
-                    "spark.driver.cores": cores,
-                    "spark.driver.memory": f"{mem}g"
-                    }, tmp_dir="tmp", local_tmpdir="tmp")
-
-rel_df = pd.read_csv(rel_tsv, sep='\t')
+if chunk_size==0:
+    rel_df = pd.read_csv(rel_tsv, sep='\t')
+else:    
+    chunks = []
+    for chunk in pd.read_csv(rel_tsv, sep='\t', chunksize=chunk_size):
+        chunks.append(chunk)
+    rel_df = pd.concat(chunks)
 
 fig, ax = plt.subplots(1, 2, figsize=(12, 5));
 fig.suptitle(cohort_prefix);

@@ -18,6 +18,7 @@ workflow Relatedness {
         File? merged_vep_file
         File ped_uri
         File bed_file
+        Int chunk_size=0
         String cohort_prefix
         String relatedness_qc_script
         String plot_relatedness_script
@@ -78,7 +79,8 @@ workflow Relatedness {
         ped_uri=ped_uri,
         cohort_prefix=cohort_prefix,
         plot_relatedness_script=plot_relatedness_script,
-        hail_docker=hail_docker
+        hail_docker=hail_docker,
+        chunk_size=chunk_size
     }
 
     output {
@@ -197,6 +199,7 @@ task plotRelatedness {
         String cohort_prefix
         String plot_relatedness_script
         String hail_docker
+        Int chunk_size
         RuntimeAttr? runtime_attr_override
     }
 
@@ -230,7 +233,7 @@ task plotRelatedness {
     command <<<
         set -eou pipefail
         curl ~{plot_relatedness_script} > plot_relatedness.py
-        python3 plot_relatedness.py ~{kinship_tsv} ~{cohort_prefix} ~{ped_uri} ~{cpu_cores} ~{memory} > stdout
+        python3 plot_relatedness.py ~{kinship_tsv} ~{cohort_prefix} ~{ped_uri} ~{chunk_size} > stdout
     >>>
 
     output {

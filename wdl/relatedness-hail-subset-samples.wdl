@@ -20,6 +20,7 @@ workflow Relatedness {
         File ped_uri
         File bed_file
         Int samples_per_chunk
+        Int chunk_size=100000
         String cohort_prefix
         String relatedness_qc_script
         String plot_relatedness_script
@@ -123,7 +124,8 @@ workflow Relatedness {
         ped_uri=ped_uri,
         cohort_prefix=cohort_prefix,
         plot_relatedness_script=plot_relatedness_script,
-        hail_docker=hail_docker
+        hail_docker=hail_docker,
+        chunk_size=chunk_size
     }
 
     output {
