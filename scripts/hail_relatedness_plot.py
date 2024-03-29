@@ -27,11 +27,13 @@ sns.scatterplot(rel_df, x='ibd0', y='kin', hue='relationship', s=16, ax=ax[0],
                palette={'parent-child': 'mediumpurple', 'siblings': 'mediumseagreen', 'second degree relatives': 'skyblue', 
                         'duplicate/twins': 'indianred', 'ambiguous': 'sandybrown', 'unrelated': 'silver'});
 ax[0].set_title("Inferred relationship from VCF");
+ax[0].legend(loc='upper right');
 
 sns.scatterplot(rel_df, x='ibd0', y='kin', hue='ped_relationship', s=16, ax=ax[1],
                hue_order=['parent-child', 'siblings', 'related_other', 'unrelated'],
                palette={'parent-child': 'mediumpurple', 'siblings': 'mediumseagreen', 'related_other': 'skyblue', 'unrelated': 'silver'});
 ax[1].set_title("Relationship from pedigree");
+ax[1].legend(loc='upper right');
 
 plt.tight_layout();
 plt.savefig(f"{cohort_prefix}_relatedness_ibd0_kinship.png");
