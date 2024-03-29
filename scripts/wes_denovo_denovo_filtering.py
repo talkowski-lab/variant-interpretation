@@ -375,7 +375,10 @@ def get_genes_csq(csq):
 vep_res['CSQ'] = vep_res.CSQ.replace({np.nan: "[]"}).apply(ast.literal_eval)
 vep_res['all_genes'] = vep_res.CSQ.apply(get_genes_csq)
 
-all_genes = vep_res.all_genes.apply(pd.Series).stack().unique()
+try:
+    all_genes = vep_res.all_genes.apply(pd.Series).stack().unique()
+except:
+    all_genes = np.array([])
 
 loeuf_vals = loeuf.loc[np.intersect1d(loeuf.index, all_genes), 'LOEUF'].to_dict()
 loeuf_tile_vals = loeuf.loc[np.intersect1d(loeuf.index, all_genes), 'LOEUF_tile'].to_dict()
