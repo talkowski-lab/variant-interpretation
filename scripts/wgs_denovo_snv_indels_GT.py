@@ -22,6 +22,15 @@ hl.init(min_block_size=128, spark_conf={"spark.executor.cores": cores,
                     "spark.driver.memory": f"{mem}g"
                     }, tmp_dir="tmp", local_tmpdir="tmp")
 
+prefix = os.path.basename(vcf_file).split(file_ext)[0]
+
+tmp_ped = pd.read_csv(ped_uri, sep='\t')
+# check ped number of columns
+if len(tmp_ped) > 6:
+    tmp_ped = tmp_ped.iloc[:,:6]
+tmp_ped.to_csv(f"{prefix}.ped", sep='\t', index=False)
+
+ped_uri = f"{prefix}.ped"
 pedigree = hl.Pedigree.read(ped_uri, delimiter='\t')
 
 mt = hl.import_vcf(vcf_file, force_bgz=True, array_elements_required=False, call_fields=[], header_file=header_file, reference_genome='GRCh38')
