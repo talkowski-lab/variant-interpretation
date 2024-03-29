@@ -34,6 +34,21 @@ workflow GenomicDisorders {
         RuntimeAttr? runtime_attr_vcf_overlap
     }
 
+    #if the fam_ids input is given, subset all other input files to only include the necessary batches
+    if (defined(fam_ids)){
+        File fam_ids_ = select_first([fam_ids])
+        call getBatchedFiles{
+            input:
+                batch_raw_file = batch_raw_file,
+                batch_depth_raw_file = batch_depth_raw_file,
+                ped_input = ped_input,
+                fam_ids = fam_ids_,
+                sample_batches = sample_batches,
+                batch_bincov_index = batch_bincov_index,
+                variant_interpretation_docker=variant_interpretation_docker,
+                runtime_attr_override = runtime_attr_get_batched_files
+        }
+
     #Makes a ped file of singletons, duos, and trios for input into the de novo GD filtering
     call cleanPed{
         input:
