@@ -84,6 +84,18 @@ workflow GenomicDisorders {
                 variant_interpretation_docker=variant_interpretation_docker,
                 runtime_attr_override = runtime_attr_gd
         }
+
+        call getDenovoGDraw{
+            input:
+                ped = ped_input,
+                gd_proband_calls = getGDraw.gd_proband_calls[i],
+                gd_parent_calls = getGDraw.gd_parent_calls[i],
+                gd_coverage_proband = getGDraw.gd_coverage_proband[i],
+                gd_coverage_parents = getGDraw.gd_coverage_parents[i],
+                chromosome=contigs[i],
+                variant_interpretation_docker=variant_interpretation_docker,
+                runtime_attr_override = runtime_attr_gd
+        }
     }
     #Merges the genomic disorder region output from each chromosome to compile a list of genomic disorder regions
     call mergeGenomicDisorders{
@@ -256,7 +268,10 @@ task getGDraw{
 
     output{
         File gd_output_from_depth_raw_files = "~{chromosome}.gd.variants.in.depth.raw.files.txt.gz"
-        File gd_output_from_depth_raw_files_denovo ="~{chromosome}.gd.variants.in.depth.raw.files.de.novo.txt.gz"
+        File gd_proband_calls = "~{chromosome}.proband.GD.calls.txt"
+        File gd_parent_calls = "~{chromosome}.parent.GD.calls.txt"
+        File gd_coverage_proband = "~{chromosome}.kept.coverage.proband.txt"
+        File gd_coverage_parents = "~{chromosome}.kept.coverage.parents.txt"
     }
 
     command <<<
@@ -301,22 +316,77 @@ task getGDraw{
         #concatanate parent calls on GD site with desired overlap
         cat ~{chromosome}.gd.variants.in.depth.raw.file.parents.txt ~{chromosome}.kept.coverage.parents.txt | awk -v OFS="\t" '{print $5,$6,$7,$8,$9,$1,$2,$3,$4}' > ~{chromosome}.parent.GD.calls.txt
 
-        #get de novo only calls
-        bedtools intersect -v -wa  -f 0.3 -a ~{chromosome}.proband.GD.calls.txt -b ~{chromosome}.parent.GD.calls.txt > ~{chromosome}.proband.GD.calls.de_novo.txt
-        
         #to get all GD calls of probands+parents
         cat ~{chromosome}.proband.GD.calls.txt ~{chromosome}.parent.GD.calls.txt > ~{chromosome}.parent_and_proband.GD.calls.txt
 
-        #format the output files: remove sample/family tag from chr in final bed file        
+        #format the output files: remove sample/family tag from chr in final bed file
         cat ~{chromosome}.parent_and_proband.GD.calls.txt |\
             awk -v OFS="\t" '{sub(/_.*/, "", $1); print}' |\
             awk -v OFS="\t" '{sub(/_.*/, "", $6); print}' | sort | uniq > ~{chromosome}.gd.variants.in.depth.raw.files.txt
+
+        bgzip ~{chromosome}.gd.variants.in.depth.raw.files.txt
+    >>>
+
+    runtime {
+        cpu: select_first([runtime_attr.cpu, default_attr.cpu])
+        memory: "~{select_first([runtime_attr.mem_gb, default_attr.mem_gb])} GB"
+        disks: "local-disk ~{select_first([runtime_attr.disk_gb, default_attr.disk_gb])} HDD"
+        bootDiskSizeGb: select_first([runtime_attr.boot_disk_gb, default_attr.boot_disk_gb])
+        preemptible: select_first([runtime_attr.preemptible, default_attr.preemptible])
+        maxRetries: select_first([runtime_attr.max_retries, default_attr.max_retries])
+        docker: variant_interpretation_docker
+    }
+}
+
+task getDenovoGDraw{
+    input{
+        File ped
+        File gd_proband_calls
+        File gd_parent_calls
+        File gd_coverage_proband
+        File gd_coverage_parents
+        String chromosome
+        String variant_interpretation_docker
+        RuntimeAttr? runtime_attr_override
+    }
+
+    Float input_size = size(select_all([ped, gd_proband_calls, gd_parent_calls]), "GB")
+    Float base_mem_gb = 3.75
+
+    RuntimeAttr default_attr = object {
+                                      mem_gb: base_mem_gb,
+                                      disk_gb: ceil(10 + input_size),
+                                      cpu: 1,
+                                      preemptible: 2,
+                                      max_retries: 1,
+                                      boot_disk_gb: 8
+                                  }
+
+    RuntimeAttr runtime_attr = select_first([runtime_attr_override, default_attr])
+
+    output{
+        File gd_output_from_depth_raw_files_denovo ="~{chromosome}.gd.variants.in.depth.raw.files.de.novo.txt.gz"
+    }
+
+    command <<<
+        set -euxo pipefail
+
+        #concatanate proband calls on GD site with desired overlap
+        cat ~{gd_proband_calls} ~{gd_coverage_proband} | awk -v OFS="\t" '{print $5,$7,$8,$9,$10,$1,$2,$3,$4}' > ~{chromosome}.proband.GD.calls.txt
+
+        #concatanate parent calls on GD site with desired overlap
+        cat ~{gd_parent_calls} ~{gd_coverage_parents} | awk -v OFS="\t" '{print $5,$6,$7,$8,$9,$1,$2,$3,$4}' > ~{chromosome}.parent.GD.calls.txt
+
+        #get de novo only calls
+        bedtools intersect -v -wa  -f 0.3 -a ~{chromosome}.proband.GD.calls.txt -b ~{chromosome}.parent.GD.calls.txt > ~{chromosome}.proband.GD.calls.de_novo.txt
+
+        #to get all GD calls of probands+parents
+        cat ~{chromosome}.proband.GD.calls.txt ~{chromosome}.parent.GD.calls.txt > ~{chromosome}.parent_and_proband.GD.calls.txt
 
         cat ~{chromosome}.proband.GD.calls.de_novo.txt |\
             awk -v OFS="\t" '{sub(/_.*/, "", $1); print}' |\
             awk -v OFS="\t" '{sub(/_.*/, "", $6); print}' | sort | uniq > ~{chromosome}.gd.variants.in.depth.raw.files.de.novo.txt
 
-        bgzip ~{chromosome}.gd.variants.in.depth.raw.files.txt
         bgzip ~{chromosome}.gd.variants.in.depth.raw.files.de.novo.txt
     >>>
 
@@ -330,6 +400,7 @@ task getGDraw{
         docker: variant_interpretation_docker
     }
 }
+
 
 #task subsetVcf{
 #    input{
