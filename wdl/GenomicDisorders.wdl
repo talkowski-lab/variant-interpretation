@@ -1,8 +1,8 @@
 version 1.0
     
 import "Structs.wdl"
-import "SplitVcf.wdl" as getBatchedVcf
-import "ReformatRawFiles.wdl" as raw
+import "SplitVcf.wdl" as splitVCF
+import "ReformatRawFiles.wdl" as reformatRaw
 import "TasksMakeCohortVcf.wdl" as MiniTasks
 import "DeNovoSVsScatter.wdl" as runDeNovo
 
@@ -44,7 +44,7 @@ workflow GenomicDisorders {
     }
 
     #Splits raw files into probands and parents and reformats to have chrom_svtype_sample as the first column for probands and chrom_svtype_famid as the first column for parents
-    call raw.reformatRawFiles as reformatRawFiles {
+    call reformatRaw.reformatRawFiles as reformatRawFiles {
         input:
             contigs = contigs,
             raw_files_list = select_first([getBatchedFiles.batch_raw_files_list, batch_raw_file]),
@@ -58,7 +58,7 @@ workflow GenomicDisorders {
     }
 
     #Splits raw files into probands and parents and reformats to have chrom_svtype_sample as the first column for probands and chrom_svtype_famid as the first column for parents
-    call raw.reformatRawFiles as reformatDepthRawFiles {
+    call reformatRaw.reformatRawFiles as reformatDepthRawFiles {
         input:
             contigs = contigs,
             raw_files_list = select_first([getBatchedFiles.batch_depth_raw_files_list, batch_depth_raw_file]),
@@ -77,7 +77,7 @@ workflow GenomicDisorders {
             input:
                 genomic_disorder_input=genomic_disorder_input,
                 ped = ped_input,
-#                vcf_file = select_first([getBatchedVcf.split_vcf, vcf_file]),
+#                vcf_file = select_first([splitVCF.split_vcf, vcf_file]),
                 depth_raw_file_proband = reformatDepthRawFiles.reformatted_proband_raw_files[i],
                 depth_raw_file_parents = reformatDepthRawFiles.reformatted_parents_raw_files[i],
                 chromosome=contigs[i],
