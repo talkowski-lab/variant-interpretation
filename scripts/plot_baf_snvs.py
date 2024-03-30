@@ -10,7 +10,7 @@ merged_baf_tsv = sys.argv[1]
 het_only = ast.literal_eval(sys.argv[2].capitalize())
 
 def human_size(interval_size):
-    size_dict = {10**3: 'KB', 10**6: 'MB', 10**9: 'GB'}
+    size_dict = {1: 'BP', 10**3: 'KB', 10**6: 'MB', 10**9: 'GB'}
     for unit, unit_str in size_dict.items():
         if interval_size / unit < 1:
             break
