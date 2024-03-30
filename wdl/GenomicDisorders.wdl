@@ -48,7 +48,7 @@ workflow GenomicDisorders {
                 variant_interpretation_docker=variant_interpretation_docker,
                 runtime_attr_override = runtime_attr_get_batched_files
         }
-
+    }
     #Makes a ped file of singletons, duos, and trios for input into the de novo GD filtering
     call cleanPed{
         input:
@@ -145,7 +145,6 @@ workflow GenomicDisorders {
         File vcf_in_gds = getGDvcf.out_bed
     }
 }
-
 
 task getBatchedFiles{
     input{
