@@ -114,7 +114,8 @@ workflow GenomicDisorders {
             runtime_attr_divide_by_chrom = runtime_attr_raw_divide_by_chrom,
             runtime_attr_reformat_bed = runtime_attr_raw_reformat_bed
     }
-    
+
+
     scatter (i in range(length(contigs))){
         #generates a list of genomic disorder regions in the vcf input as well as in the depth raw files
         call getGenomicDisorders{
