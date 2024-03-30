@@ -103,10 +103,10 @@ workflow GenomicDisorders {
         call getDenovoGDraw{
             input:
                 ped = ped_input,
-                gd_proband_calls = getGDraw.gd_proband_calls[i],
-                gd_parent_calls = getGDraw.gd_parent_calls[i],
-                gd_coverage_proband = getGDraw.gd_coverage_proband[i],
-                gd_coverage_parents = getGDraw.gd_coverage_parents[i],
+                gd_proband_calls = getGDraw.gd_proband_calls_raw[i],
+                gd_parent_calls = getGDraw.gd_parent_calls_raw[i],
+                gd_coverage_proband = getGDraw.gd_coverage_proband_raw[i],
+                gd_coverage_parents = getGDraw.gd_coverage_parents_raw[i],
                 chromosome=contigs[i],
                 variant_interpretation_docker=variant_interpretation_docker,
                 runtime_attr_override = runtime_attr_gd
@@ -115,7 +115,7 @@ workflow GenomicDisorders {
     #Merges the genomic disorder region output from each chromosome to compile a list of genomic disorder regions
     call mergeGenomicDisorders{
         input:
-            gd_bed_to_merge=getGDraw.gd_output_from_depth_raw_files,
+            gd_bed_to_merge=getGDraw.gd_output_from_depth_raw_files_raw,
             gd_denovo_bed_to_merge=getDenovoGDraw.gd_output_from_depth_raw_files_denovo,
             variant_interpretation_docker=variant_interpretation_docker,
             runtime_attr_override = runtime_attr_merge_gd
@@ -281,11 +281,11 @@ task getGDraw{
     RuntimeAttr runtime_attr = select_first([runtime_attr_override, default_attr])
 
     output{
-        File gd_output_from_depth_raw_files = "~{chromosome}.gd.variants.in.depth.raw.files.txt.gz"
-        File gd_proband_calls = "~{chromosome}.proband.GD.calls.txt"
-        File gd_parent_calls = "~{chromosome}.parent.GD.calls.txt"
-        File gd_coverage_proband = "~{chromosome}.kept.coverage.proband.txt"
-        File gd_coverage_parents = "~{chromosome}.kept.coverage.parents.txt"
+        File gd_output_from_depth_raw_files_raw = "~{chromosome}.gd.variants.in.depth.raw.files.txt.gz"
+        File gd_proband_calls_raw = "~{chromosome}.proband.GD.calls.txt"
+        File gd_parent_calls_raw = "~{chromosome}.parent.GD.calls.txt"
+        File gd_coverage_proband_raw = "~{chromosome}.kept.coverage.proband.txt"
+        File gd_coverage_parents_raw = "~{chromosome}.kept.coverage.parents.txt"
     }
 
     command <<<
