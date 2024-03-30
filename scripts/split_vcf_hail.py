@@ -47,5 +47,7 @@ if n_shards!=0:
 # put all in INFO to be kept when exported to VCF--this doesn't really work because of header/metadata issues...
 # for field in row_fields_to_keep:
 #     mt = mt = mt.annotate_rows(info = mt.info.annotate(**{field: getattr(mt, field)}))
-
-hl.export_vcf(mt, output=prefix+'.vcf.bgz', parallel='header_per_shard', metadata=header if is_vcf else None)
+    
+tot_num_records = mt.count_rows()
+if tot_num_records > 0:
+    hl.export_vcf(mt, output=prefix+'.vcf.bgz', parallel='header_per_shard', metadata=header if is_vcf else None)
