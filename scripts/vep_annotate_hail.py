@@ -43,7 +43,7 @@ if vcf_file.split('.')[-1] == 'mt':
 else:
     is_mt = False
     header = hl.get_vcf_metadata(vcf_file) 
-    mt = hl.import_vcf(vcf_file, force_bgz=True, array_elements_required=False, reference_genome='GRCh38')
+    mt = hl.import_vcf(vcf_file, force_bgz=True, array_elements_required=False, call_fields=[], reference_genome='GRCh38')
 
 # mt = mt.distinct_by_row()
 if 'num_alleles' not in list(mt.row_value.keys()):
