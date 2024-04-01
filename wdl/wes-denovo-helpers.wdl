@@ -55,8 +55,8 @@ task splitFileWithHeader {
     shards_per_chunk = int(sys.argv[2])
 
     file_ext = file.split('.')[-1]
-    print(file_ext)
     base_filename = os.path.basename(file).split(f".{file_ext}")[0]
+    pd.Series([base_filename]).to_csv('base_filename.txt', index=False, header=None)
     df = pd.read_csv(file, sep='\t')
     n_chunks = np.ceil(df.shape[0]/shards_per_chunk)
     i=0
@@ -69,7 +69,7 @@ task splitFileWithHeader {
     python3 split_file.py ~{file} ~{shards_per_chunk} > stdout
     >>>
 
-    String base_filename = read_lines(stdout())
+    String base_filename = read_lines('base_filename.txt')
     output {
         Array[File] chunks = glob("~{base_filename}.shard_*")
     }
