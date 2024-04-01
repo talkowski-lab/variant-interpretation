@@ -499,12 +499,15 @@ task filterIntervalsToVCF {
         mt = hl.read_matrix_table(mt_uri)
     else:
         mt = hl.import_vcf(mt_uri, reference_genome='GRCh38', force_bgz=True, array_elements_required=False, call_fields=[])
+    
     bed_df = pd.read_csv(bed_file, sep='\t')
     try:
-        float(bed_df.columns[0])  # has header
-    except:
-        bed_file = f"{os.path.basename(bed_file).split('.bed')[0]}_no_header.bed"
-        bed_df.to_csv(bed_file, sep='\t', header=None, index=False)
+        float(bed_df.columns[0]) 
+        bed_df = pd.read_csv(bed_file, sep='\t', header=None)
+    except:  # has header
+        pass
+    bed_file = f"{os.path.basename(bed_file).split('.bed')[0]}_no_header.bed"
+    bed_df.iloc[:,:3].to_csv(bed_file, sep='\t', header=None, index=False)
     intervals = hl.import_bed(bed_file, reference_genome='GRCh38')
     mt_filt = mt.filter_rows(hl.is_defined(intervals[mt.locus]))
 
