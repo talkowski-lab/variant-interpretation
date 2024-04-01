@@ -71,4 +71,4 @@ tm_denovo = tm.filter_entries((tm.proband_entry.GT.is_het()) &
                   (tm.mother_entry.GT.is_hom_ref()))
 
 tm_denovo_df = tm_denovo.entries().to_pandas()
-tm_denovo_df.to_csv(f"{os.path.basename(vcf_file).split(file_ext)[0]}_denovo_GT_AF_filter.tsv", sep='\t', index=False)
+tm_denovo_df.to_csv(f"{os.path.basename(vcf_file).split(file_ext)[0]}_denovo_GT_AF_filter.tsv.gz", sep='\t', index=False)

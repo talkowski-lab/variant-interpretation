@@ -71,7 +71,7 @@ workflow getDenovoByGT {
             input:
                 tsvs=denovoByGTChunk.denovo_gt,
                 hail_docker=hail_docker,
-                merged_filename=cohort_prefix+'_denovo_GT_AF_filter.tsv'
+                merged_filename=cohort_prefix+'_denovo_GT_AF_filter.tsv.gz'
         }
     }
 
@@ -99,7 +99,7 @@ workflow getDenovoByGT {
             input:
                 tsvs=denovoByGT.denovo_gt,
                 hail_docker=hail_docker,
-                merged_filename=cohort_prefix+'_denovo_GT_AF_filter.tsv'
+                merged_filename=cohort_prefix+'_denovo_GT_AF_filter.tsv.gz'
         }
     }
 
@@ -153,6 +153,6 @@ task denovoByGT {
     }
 
     output {
-        File denovo_gt = "~{basename(vcf_file, file_ext)}_denovo_GT_AF_filter.tsv"
+        File denovo_gt = "~{basename(vcf_file, file_ext)}_denovo_GT_AF_filter.tsv.gz"
     }
 }
