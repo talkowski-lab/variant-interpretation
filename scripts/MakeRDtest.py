@@ -54,7 +54,7 @@ def words(STR1,STR2,outfile,n=100):
     img.save(outfile)
 
 class Variant():
-  def __init__(self,chr,start,end,name,type,samples,varname,prefix,family_id):
+  def __init__(self,chr,start,end,name,type,sample,prefix,varname):
     self.chr=chr
     self.coord=str(chr)+":"+str(start)+"-"+str(end)
     self.start=start
@@ -63,18 +63,12 @@ class Variant():
     self.type=type
     self.prefix=prefix
     self.varname=varname
-    self.sample=samples
-    self.samples=samples.split(",")
-    self.family_id=family_id
+    self.sample=sample
   def pesrplotname(self,dir):
-    if os.path.isfile(dir+self.family_id+"_"+self.name+".png"):
-      return dir+self.family_id+"_"+self.name+".png"
-    elif os.path.isfile(dir+self.family_id+"_"+self.name+".left.png") and os.path.isfile(dir+self.family_id+"_"+self.name+".right.png"):
-      left = cv2.imread(dir+self.family_id+"_"+self.name+".left.png")
-      right = cv2.imread(dir+self.family_id+"_"+self.name+".right.png")
-      horizontal_combined = hconcat_resize([left,right])
-      cv2.imwrite(dir+self.family_id+"_"+self.name+".png", horizontal_combined)
-      return dir+self.family_id+"_"+self.name+".png"
+    pattern1 = f"{dir}{self.chr}_{self.start}_{self.end}_{self.type}_{self.sample}_baf.png"
+    matching_file1 = glob.glob(pattern1)
+    if matching_file1:
+      return matching_file1[0]
     else:
       return 'Error'
   def rdplotname(self,dir,maxcutoff=float("inf")):
@@ -85,10 +79,10 @@ class Variant():
     else:
       newstart=self.start
       newend=self.end
-    pattern = f"{dir}{self.chr}_{newstart}_{newend}_{self.samples[0]}*.jpg"
-    matching_file = glob.glob(pattern)
-    if matching_file:
-      return matching_file[0]
+    pattern2 = f"{dir}{self.chr}_{newstart}_{newend}_{self.sample}*.jpg"
+    matching_file2 = glob.glob(pattern2)
+    if matching_file2:
+      return matching_file2[0]
     else:
       return 'Error'
 
@@ -189,9 +183,8 @@ class GetVariants():
       for line in f:
         if "#" not in line:
           dat=line.rstrip().split("\t")
-          [chr,start,end,name,type,samples]=dat[0:6]
-          sample=samples.split(',')[0]
-          varname=samples.split(',')[0]+'_'+name
+          [chr,start,end,name,type,sample]=dat[0:6]
+          varname=sample+'_'+name
           if "," in sample:
             raise Exception("should only have 1 sample per variant")
           prefix=self.variantinfo.getprefix(sample)
