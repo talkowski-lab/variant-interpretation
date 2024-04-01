@@ -79,6 +79,7 @@ sample_qc_df = pd.concat([sex_chrX_qc_df, sex_chrY_qc_df, all_qc_df, gt_qc_df], 
 
 sample_qc_df['Y_ploidy'] = 2 * sample_qc_df['chrY.dp_stats.mean'] / sample_qc_df['gt.dp_stats.mean']
 sample_qc_df['X_ploidy'] = 2 * sample_qc_df['chrX.dp_stats.mean'] / sample_qc_df['gt.dp_stats.mean']
+sample_qc_df = sample_qc_df.fillna(np.nan)
 
 # Somalier's sex prediction criteria
 def predict_sex(row):
