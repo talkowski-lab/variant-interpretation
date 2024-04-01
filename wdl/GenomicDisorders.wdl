@@ -114,6 +114,7 @@ workflow GenomicDisorders {
                 runtime_attr_override = runtime_attr_gd_denovo
         }
     }
+
     #Merges the genomic disorder region output from each chromosome to compile a list of genomic disorder regions
     call mergeGenomicDisorders{
         input:
