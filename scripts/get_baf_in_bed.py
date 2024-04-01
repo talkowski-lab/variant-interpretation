@@ -67,6 +67,7 @@ def test_interval(locus_interval, og_locus_interval, sample, pipeline_id, sv_typ
     n_cohort_vars = mt.count_rows()
 
     if n_cohort_vars==0:
+        print(f"No SNVs in cohort at {locus_interval}...")
         return pd.DataFrame({col: [] for col in output_cols})
 
     print(f"number of SNVs in cohort at {locus_interval}: {n_cohort_vars}")
@@ -81,6 +82,7 @@ def test_interval(locus_interval, og_locus_interval, sample, pipeline_id, sv_typ
     print(f"number of SNVs in sample {sample} at {locus_interval}: {n_sample_vars}")
 
     if n_sample_vars==0:
+        print(f"No SNVs in sample {sample} at {locus_interval}...")
         return pd.DataFrame({col: [] for col in output_cols})
 
     trio_mt = mt.filter_cols((mt.s==sample) | (mt.s==father) | (mt.s==mother))
