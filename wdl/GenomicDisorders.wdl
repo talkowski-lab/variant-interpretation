@@ -117,7 +117,7 @@ workflow GenomicDisorders {
     call mergeGenomicDisorders{
         input:
             gd_bed_to_merge=getGDraw.gd_output_from_depth_raw_files,
-            gd_denovo_bed_to_merge=getGDdenovo.gd_output_from_depth_raw_files_denovo,
+#            gd_denovo_bed_to_merge=getGDdenovo.gd_output_from_depth_raw_files_denovo,
             variant_interpretation_docker=variant_interpretation_docker,
             runtime_attr_override = runtime_attr_merge_gd
     }
@@ -142,7 +142,7 @@ workflow GenomicDisorders {
     output {
         File cleaned_ped = cleanPed.cleaned_ped
         File gd_depth = mergeGenomicDisorders.gd_output_from_depth
-        File gd_depth_denovo = mergeGenomicDisorders.gd_denovo_output_from_depth
+#        File gd_depth_denovo = mergeGenomicDisorders.gd_denovo_output_from_depth
         File vcf_in_gds = getVCFoverlap.out_bed
     }
 }
