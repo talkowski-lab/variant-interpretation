@@ -50,7 +50,7 @@ def split_multi_ssc(mt):
     mt = split_ds.drop('old_locus', 'old_alleles')
     return mt
 
-test_shard = hl.import_vcf(vep_file, reference_genome='GRCh38')
+test_shard = hl.import_vcf(vep_file, reference_genome='GRCh38', array_elements_required=False, call_fields=[])
 test_shard = split_multi_ssc(test_shard)
 
 test_shard = hl.filter_intervals(test_shard, [hl.parse_locus_interval(locus_interval, 'GRCh38') for locus_interval in bed.locus_interval])
