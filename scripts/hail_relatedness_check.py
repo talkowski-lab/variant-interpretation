@@ -151,25 +151,20 @@ for fam in ped.family_id.unique():
     fam_df = ped[ped.family_id==fam].reset_index(drop=True)
     for i, row_i in fam_df.iterrows():
         for j, row_j in fam_df.iterrows():
-            related = False
-            if i==j:
+            if (i==j) | ((row_i.role in ['Mother','Father']) & (row_j.role in ['Mother','Father'])):
                 continue
-                
+
             if (((row_i.paternal_id == row_j.sample_id)) | ((row_i.sample_id == row_j.paternal_id))) |\
             (((row_i.maternal_id == row_j.sample_id)) | ((row_i.sample_id == row_j.maternal_id))):                
                 ped_rels['ped_relationship'].append('parent-child')
-                related = True
-            if (row_i.role not in ['Mother', 'Father']) & (row_j.role not in ['Mother', 'Father']):
-                if (row_i.paternal_id==row_j.paternal_id) & (row_i.maternal_id==row_j.maternal_id):
+            elif (row_i.paternal_id==row_j.paternal_id) & (row_i.maternal_id==row_j.maternal_id):
                     ped_rels['ped_relationship'].append('siblings')
-                else:
-                    ped_rels['ped_relationship'].append('related_other')      
-                related = True
+            else:
+                ped_rels['ped_relationship'].append('related_other')      
 
-            if related:
-                ped_rels['i'].append(row_i.sample_id)
-                ped_rels['j'].append(row_j.sample_id)
-                ped_rels['family_id'].append(fam)
+            ped_rels['i'].append(row_i.sample_id)
+            ped_rels['j'].append(row_j.sample_id)
+            ped_rels['family_id'].append(fam)
 
 
 ped_rels_df = pd.DataFrame(ped_rels)
