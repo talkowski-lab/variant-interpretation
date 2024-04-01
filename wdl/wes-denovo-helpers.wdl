@@ -506,9 +506,9 @@ task filterIntervalsToVCF {
         bed_df = pd.read_csv(bed_file, sep='\t', header=None)
     except:  # has header
         pass
-    bed_file = f"{os.path.basename(bed_file).split('.bed')[0]}_no_header.bed"
-    bed_df.iloc[:,:3].to_csv(bed_file, sep='\t', header=None, index=False)
-    intervals = hl.import_bed(bed_file, reference_genome='GRCh38')
+    new_bed_file = f"{os.path.basename(bed_file).split('.bed')[0]}_no_header.bed"
+    bed_df.iloc[:,:3].to_csv(new_bed_file, sep='\t', header=None, index=False)
+    intervals = hl.import_bed(new_bed_file, reference_genome='GRCh38')
     mt_filt = mt.filter_rows(hl.is_defined(intervals[mt.locus]))
 
     filename = f"{os.path.basename(mt_uri).split('.mt')[0]}_{os.path.basename(bed_file).split('.bed')[0]}.vcf.bgz"
