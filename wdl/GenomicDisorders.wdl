@@ -1,10 +1,7 @@
 version 1.0
     
 import "Structs.wdl"
-#import "SplitVcf.wdl" as splitvcf
 import "ReformatRawFiles.wdl" as reformatRaw
-#import "TasksMakeCohortVcf.wdl" as MiniTasks
-#import "DeNovoSVsScatter.wdl" as runDeNovo
 
 workflow GenomicDisorders {
 
@@ -64,7 +61,7 @@ workflow GenomicDisorders {
     }
 
     #splits raw files into probands and parents and reformats to have chrom_svtype_sample as the first column for probands and chrom_svtype_famid as the first column for parents
-    call reformatRaw.reformatRawFiles as reformatRawFiles {
+    call reformatRaw.reformatRawFiles as reformatRaw {
         input:
             contigs = contigs,
             raw_files_list = select_first([getBatchedFiles.batch_raw_files_list, batch_raw_file]),
@@ -78,7 +75,7 @@ workflow GenomicDisorders {
     }
 
     #splits raw files into probands and parents and reformats to have chrom_svtype_sample as the first column for probands and chrom_svtype_famid as the first column for parents
-    call reformatRaw.reformatRawFiles as reformatDepthRawFiles {
+    call reformatRaw.reformatRawFiles as reformatDepthRaw {
         input:
             contigs = contigs,
             raw_files_list = select_first([getBatchedFiles.batch_depth_raw_files_list, batch_depth_raw_file]),
@@ -98,8 +95,8 @@ workflow GenomicDisorders {
                 genomic_disorder_input=genomic_disorder_input,
                 ped = ped_input,
 #                vcf_file = select_first([splitvcf.split_vcf, vcf_file]),
-                depth_raw_file_proband = reformatDepthRawFiles.reformatted_proband_raw_files[i],
-                depth_raw_file_parents = reformatDepthRawFiles.reformatted_parents_raw_files[i],
+                depth_raw_file_proband = reformatDepthRaw.reformatted_proband_raw_files[i],
+                depth_raw_file_parents = reformatDepthRaw.reformatted_parents_raw_files[i],
                 chromosome=contigs[i],
                 variant_interpretation_docker=variant_interpretation_docker,
                 runtime_attr_override = runtime_attr_gd
