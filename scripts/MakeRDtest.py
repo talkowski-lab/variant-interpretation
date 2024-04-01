@@ -6,6 +6,7 @@ from PIL import ImageFont
 from PIL import ImageDraw
 import argparse
 import cv2
+import glob
 
 #Image helper function
 #stack two or more images vertically
@@ -84,12 +85,13 @@ class Variant():
     else:
       newstart=self.start
       newend=self.end
-    if os.path.isfile(dir+self.chr+"_"+newstart+"_"+newend+"_"+self.samples[0]+"_"+self.name+"_"+self.prefix+"_"+self.samples[0]+".jpg"):
-      return dir+self.chr+"_"+newstart+"_"+newend+"_"+self.samples[0]+"_"+self.name+"_"+self.prefix+"_"+self.samples[0]+".jpg"
-    elif os.path.isfile(dir+self.chr+"_"+newstart+"_"+newend+"_"+self.samples[0]+"_"+self.name+"_"+self.prefix+"_"+self.family_id+".jpg"):
-      return dir+self.chr+"_"+newstart+"_"+newend+"_"+self.samples[0]+"_"+self.name+"_"+self.prefix+"_"+self.family_id+".jpg"
+    pattern = f"{dir}{self.chr}_{newstart}_{newend}_{self.samples[0]}*.jpg"
+    matching_file = glob.glob(pattern)
+    if matching_file:
+      return matching_file[0]
     else:
       return 'Error'
+
   def makeplot(self,pedir,rddir,outdir,flank,build="hg38"):
     if ((self.type!="INS") | (self.type!="snv") | (self.type!="indel") | (self.type!="INS:ME:SVA") |  (self.type!="INS:ME:LINE1") | (self.type!="INS:ME:ALU")):
       if int(self.end)-int(self.start)<2000:
