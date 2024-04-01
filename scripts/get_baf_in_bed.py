@@ -65,11 +65,9 @@ output_cols = ['locus', 'alleles', 'window_locus_interval', 'locus_interval', 'S
 def test_interval(locus_interval, og_locus_interval, sample, pipeline_id, sv_type, mt):
     mt = hl.filter_intervals(mt, [hl.parse_locus_interval(locus_interval, 'GRCh38')])
     n_cohort_vars = mt.count_rows()
-
     if n_cohort_vars==0:
         print(f"No SNVs in cohort at {locus_interval}...")
         return pd.DataFrame({col: [] for col in output_cols})
-
     print(f"number of SNVs in cohort at {locus_interval}: {n_cohort_vars}")
 
     father, mother = ped.loc[sample, ['paternal_id','maternal_id']].tolist()
@@ -79,11 +77,10 @@ def test_interval(locus_interval, og_locus_interval, sample, pipeline_id, sv_typ
     sample_mt = sample_mt.filter_rows(sample_mt.variant_qc.AC[1]>0)
 
     n_sample_vars = sample_mt.count_rows()
-    print(f"number of SNVs in sample {sample} at {locus_interval}: {n_sample_vars}")
-
     if n_sample_vars==0:
         print(f"No SNVs in sample {sample} at {locus_interval}...")
         return pd.DataFrame({col: [] for col in output_cols})
+    print(f"number of SNVs in sample {sample} at {locus_interval}: {n_sample_vars}")
 
     trio_mt = mt.filter_cols((mt.s==sample) | (mt.s==father) | (mt.s==mother))
     trio_mt = trio_mt.filter_rows(hl.is_defined(sample_mt.rows()[trio_mt.row_key]))

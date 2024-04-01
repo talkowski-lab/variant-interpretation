@@ -30,7 +30,7 @@ workflow getDenovoByGT {
         String denovo_snv_indels_gt_script
     }
 
-    String file_ext = if sub(basename(vep_files[0]), '.vcf', '')!=basename(vep_files[0]) then '.vcf' else '.vcf.bgz'
+    String file_ext = if sub(basename(vep_files[0]), '.vcf.gz', '')!=basename(vep_files[0]) then '.vcf.gz' else '.vcf.bgz'
     
     if (merge_split_vcf) {
         call mergeSplitVCF.splitFile as splitVEPFiles {
