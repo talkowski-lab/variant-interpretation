@@ -32,6 +32,7 @@ workflow GenomicDisorders {
         RuntimeAttr? runtime_attr_merge_gd
         RuntimeAttr? runtime_attr_reformat_vcf
         RuntimeAttr? runtime_attr_vcf_overlap
+        RuntimeAttr? runtime_attr_gd_denovo
     }
 
     #if the fam_ids input is given, subset all other input files to only include the necessary batches
@@ -107,10 +108,10 @@ workflow GenomicDisorders {
                 proband_calls = getGDraw.gd_proband_calls[i],
                 parent_calls = getGDraw.gd_parent_calls[i],
                 proband_coverage = getGDraw.gd_coverage_proband[i],
-                parent_coverage = getGDraw.gd_coverage_parents[i],
+                parents_coverage = getGDraw.gd_coverage_parents[i],
                 chromosome=contigs[i],
                 variant_interpretation_docker=variant_interpretation_docker,
-                runtime_attr_override = runtime_attr_gd
+                runtime_attr_override = runtime_attr_gd_denovo
         }
     }
     #Merges the genomic disorder region output from each chromosome to compile a list of genomic disorder regions
