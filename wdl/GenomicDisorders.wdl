@@ -51,19 +51,6 @@ workflow GenomicDisorders {
                 runtime_attr_override = runtime_attr_get_batched_files
         }
 
-#        call getBatchedVcf.getBatchedVcf as getBatchedVcf {
-#            input:
-#                vcf_file = vcf_file,
-#                prefix = prefix,
-#                samples = getBatchedFiles.samples,
-#                records_per_shard = 10000,
-#                variant_interpretation_docker = variant_interpretation_docker,
-#                sv_pipeline_updates_docker = sv_pipeline_updates_docker,
-#                runtime_attr_batch_vcf = runtime_attr_batch_vcf,
-#                runtime_override_shard_vcf = runtime_override_shard_vcf,
-#                runtime_attr_merge = runtime_attr_merge
-#        }
-
     }
 
     #makes a ped file of singletons, duos, and trios for input into the de novo script (only including families of interest)
