@@ -31,6 +31,7 @@ workflow GenomicDisorders {
         RuntimeAttr? runtime_attr_merge_gd
         RuntimeAttr? runtime_attr_reformat_vcf
         RuntimeAttr? runtime_attr_vcf_overlap
+        RuntimeAttr? runtime_attr_gd_denovo
     }
 
     #if the fam_ids input is given, subset all other input files to only include the necessary batches
@@ -90,7 +91,7 @@ workflow GenomicDisorders {
     
     scatter (i in range(length(contigs))){
         #generates a list of genomic disorder regions in the vcf input as well as in the depth raw files
-        call getGenomicDisorders{
+        call getGDraw{
             input:
                 genomic_disorder_input=genomic_disorder_input,
                 ped = ped_input,
@@ -101,12 +102,22 @@ workflow GenomicDisorders {
                 variant_interpretation_docker=variant_interpretation_docker,
                 runtime_attr_override = runtime_attr_gd
         }
+
+        call getGDdenovo{
+            input:
+                gd_proband_calls=getGDraw.gd_output_proband_calls[i],
+                gd_parent_calls=getGDraw.gd_output_parent_calls[i],
+                chromosome=contigs[i],
+                variant_interpretation_docker=variant_interpretation_docker,
+                runtime_attr_override = runtime_attr_gd_denovo
+
+        }
     }
     #merges the genomic disorder region output from each chromosome to compile a list of genomic disorder regions
     call mergeGenomicDisorders{
         input:
-            gd_bed_to_merge=getGenomicDisorders.gd_output_from_depth_raw_files,
-            gd_denovo_bed_to_merge=getGenomicDisorders.gd_output_from_depth_raw_files_denovo,
+            gd_bed_to_merge=getGDraw.gd_output_from_depth_raw_files,
+            gd_denovo_bed_to_merge=getGDraw.gd_output_from_depth_raw_files_denovo,
             variant_interpretation_docker=variant_interpretation_docker,
             runtime_attr_override = runtime_attr_merge_gd
     }
@@ -241,7 +252,7 @@ task cleanPed{
     }
 }
 
-task getGenomicDisorders{
+task getGDraw{
     input{
 #        File vcf_file
         File ped
@@ -268,10 +279,9 @@ task getGenomicDisorders{
     RuntimeAttr runtime_attr = select_first([runtime_attr_override, default_attr])
 
     output{
-#        File gd_output_from_final_vcf = "gd.variants.from.final.vcf.txt.gz"
-#        File gd_output_for_denovo = "gd.variants.from.final.vcf.names.txt"
         File gd_output_from_depth_raw_files = "~{chromosome}.gd.variants.in.depth.raw.files.txt.gz"
-        File gd_output_from_depth_raw_files_denovo ="~{chromosome}.gd.variants.in.depth.raw.files.de.novo.txt.gz"
+        File gd_output_proband_calls = "~{chromosome}.proband.GD.calls.txt"
+        File gd_output_parent_calls = "~{chromosome}.parent.GD.calls.txt"
     }
 
     command <<<
@@ -316,9 +326,6 @@ task getGenomicDisorders{
         #concatanate parent calls on GD site with desired overlap
         cat ~{chromosome}.gd.variants.in.depth.raw.file.parents.txt ~{chromosome}.kept.coverage.parents.txt | awk -v OFS="\t" '{print $5,$6,$7,$8,$9,$1,$2,$3,$4}' > ~{chromosome}.parent.GD.calls.txt
 
-        #get de novo only calls
-        bedtools intersect -v -wa  -f 0.3 -a ~{chromosome}.proband.GD.calls.txt -b ~{chromosome}.parent.GD.calls.txt > ~{chromosome}.proband.GD.calls.de_novo.txt
-        
         #to get all GD calls of probands+parents
         cat ~{chromosome}.proband.GD.calls.txt ~{chromosome}.parent.GD.calls.txt > ~{chromosome}.parent_and_proband.GD.calls.txt
 
@@ -327,12 +334,57 @@ task getGenomicDisorders{
             awk -v OFS="\t" '{sub(/_.*/, "", $1); print}' |\
             awk -v OFS="\t" '{sub(/_.*/, "", $6); print}' | sort | uniq > ~{chromosome}.gd.variants.in.depth.raw.files.txt
 
+        bgzip ~{chromosome}.gd.variants.in.depth.raw.files.txt
+    >>>
+
+    runtime {
+        cpu: select_first([runtime_attr.cpu, default_attr.cpu])
+        memory: "~{select_first([runtime_attr.mem_gb, default_attr.mem_gb])} GB"
+        disks: "local-disk ~{select_first([runtime_attr.disk_gb, default_attr.disk_gb])} HDD"
+        bootDiskSizeGb: select_first([runtime_attr.boot_disk_gb, default_attr.boot_disk_gb])
+        preemptible: select_first([runtime_attr.preemptible, default_attr.preemptible])
+        maxRetries: select_first([runtime_attr.max_retries, default_attr.max_retries])
+        docker: variant_interpretation_docker
+    }
+}
+
+task getGDdenovo{
+    input{
+        File gd_proband_calls
+        File gd_parent_calls
+        String chromosome
+        String variant_interpretation_docker
+        RuntimeAttr? runtime_attr_override
+    }
+
+    Float input_size = size(select_all([ped, genomic_disorder_input, depth_raw_file_parents, depth_raw_file_proband]), "GB")
+    Float base_mem_gb = 3.75
+
+    RuntimeAttr default_attr = object {
+                                      mem_gb: base_mem_gb,
+                                      disk_gb: ceil(10 + input_size),
+                                      cpu: 1,
+                                      preemptible: 2,
+                                      max_retries: 1,
+                                      boot_disk_gb: 8
+                                  }
+
+    RuntimeAttr runtime_attr = select_first([runtime_attr_override, default_attr])
+
+    output{
+        File gd_output_from_depth_raw_files_denovo ="~{chromosome}.gd.variants.in.depth.raw.files.de.novo.txt.gz"
+    }
+
+    command <<<
+        set -euxo pipefail
+
+        #get de novo only calls
+        bedtools intersect -v -wa  -f 0.3 -a ~{gd_proband_calls} -b ~{gd_parent_calls} > ~{chromosome}.proband.GD.calls.de_novo.txt
+
         cat ~{chromosome}.proband.GD.calls.de_novo.txt |\
             awk -v OFS="\t" '{sub(/_.*/, "", $1); print}' |\
-            awk -v OFS="\t" '{sub(/_.*/, "", $6); print}' | sort | uniq > ~{chromosome}.gd.variants.in.depth.raw.files.de.novo.txt
+            awk -v OFS="\t" '{sub(/_.*/, "", $6); print}' | sort | uniq | bgzip -c > ~{chromosome}.gd.variants.in.depth.raw.files.de.novo.txt.gz
 
-        bgzip ~{chromosome}.gd.variants.in.depth.raw.files.txt
-        bgzip ~{chromosome}.gd.variants.in.depth.raw.files.de.novo.txt
     >>>
 
     runtime {
