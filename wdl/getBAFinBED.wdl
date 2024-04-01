@@ -1,6 +1,8 @@
 version 1.0
 
 import "wes-denovo-helpers.wdl" as helpers
+import "mergeVCFs.wdl" as mergeVCFs
+import "mergeSplitVCF.wdl" as mergeSplitVCF
 
 struct RuntimeAttr {
     Float? mem_gb
@@ -20,16 +22,54 @@ workflow getBAFinBED {
         String get_baf_script
         String plot_baf_script
         String hail_docker
+        String sv_base_mini_docker
+        Int rows_per_shard
         Boolean het_only=true
         Float window_size=0.15
     }
 
     scatter (vep_file in vep_vcf_files) {
-        call getBAF {
+        call helpers.filterIntervalsToVCF as filterIntervals {
             input:
             bed_file=bed_file,
+            input_size=size(vep_file, 'GB'),
+            mt_uri=vep_file,
+            hail_docker=hail_docker
+        }
+    }
+        # call getBAF {
+        #     input:
+        #     bed_file=bed_file,
+        #     ped_uri=ped_uri,
+        #     vep_file=vep_file,
+        #     cohort_prefix=cohort_prefix,
+        #     window_size=window_size,
+        #     get_baf_script=get_baf_script,
+        #     hail_docker=hail_docker
+        # }
+    # }
+
+    call mergeVCFs.mergeVCFs as mergeVCFs {
+        input:
+        vcf_files=filterIntervals.vcf_filt,
+        sv_base_mini_docker=sv_base_mini_docker,
+        cohort_prefix=cohort_prefix
+    }
+
+    call mergeSplitVCF.splitFile as splitFile {
+        input:
+        file=bed_file,
+        shards_per_chunk=rows_per_shard,
+        cohort_prefix=cohort_prefix,
+        vep_hail_docker=hail_docker
+    }
+
+    scatter (file in splitFile.chunks) {
+        call getBAF {
+            input:
+            bed_file=file,
             ped_uri=ped_uri,
-            vep_file=vep_file,
+            vep_file=mergeVCFs.merged_vcf_file,
             cohort_prefix=cohort_prefix,
             window_size=window_size,
             get_baf_script=get_baf_script,

@@ -428,7 +428,10 @@ task filterIntervalsToVCF {
                         "spark.driver.memory": f"{mem}g"
                         }, tmp_dir="tmp", local_tmpdir="tmp")
 
-    mt = hl.read_matrix_table(mt_uri)
+    if mt_uri.split('.')[-1]=='mt':
+        mt = hl.read_matrix_table(mt_uri)
+    else:
+        mt = hl.import_vcf(mt_uri, reference_genome='GRCh38', force_bgz=True, array_elements_required=False, call_fields=[])
     intervals = hl.import_bed(bed_file, reference_genome='GRCh38')
     mt_filt = mt.filter_rows(hl.is_defined(intervals[mt.locus]))
 
