@@ -391,7 +391,7 @@ task getDenovoGDraw{
         cat ~{proband_calls} ~{proband_coverage} | awk -v OFS="\t" '{print $5,$7,$8,$9,$10,$1,$2,$3,$4}' > ~{chromosome}.proband.GD.calls.txt
 
         #concatanate parent calls on GD site with desired overlap
-        #cat ~{parent_calls} ~{parents_coverage} | awk -v OFS="\t" '{print $5,$6,$7,$8,$9,$1,$2,$3,$4}' > ~{chromosome}.parent.GD.calls.txt
+
         cat ~{parent_calls} | awk -v OFS="\t" '{print $5,$6,$7,$8,$9,$1,$2,$3,$4}' > ~{chromosome}.parent.GD.calls.txt
 
         #get de novo only calls
