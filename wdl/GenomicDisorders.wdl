@@ -142,8 +142,8 @@ workflow GenomicDisorders {
 
     output {
         File cleaned_ped = cleanPed.cleaned_ped
-        File gd_depth = mergeGenomicDisorders.gd_output_from_depth
-        File gd_depth_denovo = mergeGenomicDisorders.gd_denovo_output_from_depth
+        File gd_depth = mergeGenomicDisorders.gd_raw_merged
+        File gd_depth_denovo = mergeGenomicDisorders.gd_raw_merged_denovo
         File vcf_in_gds = getVCFoverlap.out_bed
     }
 }
@@ -333,9 +333,8 @@ task getRawGD{
         #format the output files: remove sample/family tag from chr in final bed file        
         cat ~{chromosome}.parent_and_proband.GD.calls.txt |\
             awk -v OFS="\t" '{sub(/_.*/, "", $1); print}' |\
-            awk -v OFS="\t" '{sub(/_.*/, "", $6); print}' | sort | uniq > ~{chromosome}.gd.variants.in.depth.raw.files.txt
+            awk -v OFS="\t" '{sub(/_.*/, "", $6); print}' | sort | uniq | bgzip -c > ~{chromosome}.gd.variants.in.depth.raw.files.txt.gz
 
-        bgzip ~{chromosome}.gd.variants.in.depth.raw.files.txt
     >>>
 
     runtime {
@@ -373,18 +372,18 @@ task getRawGDdenovo{
     RuntimeAttr runtime_attr = select_first([runtime_attr_override, default_attr])
 
     output{
-        File gd_raw_depth_denovo ="~{chromosome}.gd.variants.in.depth.raw.files.de.novo.txt.gz"
+        File gd_raw_depth_denovo ="~{chromosome}.gd.raw.depth.denovo.txt.gz"
     }
 
     command <<<
         set -euxo pipefail
 
         #get de novo only calls
-        bedtools intersect -v -wa  -f 0.3 -a ~{gd_proband_calls} -b ~{gd_parent_calls} > ~{chromosome}.proband.GD.calls.de_novo.txt
+        bedtools intersect -v -wa  -f 0.3 -a ~{gd_proband_calls} -b ~{gd_parent_calls} > ~{chromosome}.de_novo.txt
 
-        cat ~{chromosome}.proband.GD.calls.de_novo.txt |\
+        cat ~{chromosome}.de_novo.txt |\
             awk -v OFS="\t" '{sub(/_.*/, "", $1); print}' |\
-            awk -v OFS="\t" '{sub(/_.*/, "", $6); print}' | sort | uniq | bgzip -c > ~{chromosome}.gd.variants.in.depth.raw.files.de.novo.txt.gz
+            awk -v OFS="\t" '{sub(/_.*/, "", $6); print}' | sort | uniq | bgzip -c > ~{chromosome}.gd.raw.depth.denovo.txt.gz
 
     >>>
 
@@ -422,15 +421,15 @@ task mergeGenomicDisorders{
     RuntimeAttr runtime_attr = select_first([runtime_attr_override, default_attr])
 
     output{
-        File gd_output_from_depth = "gd.raw.files.output.ref.txt.gz"
-        File gd_denovo_output_from_depth = "gd.denovo.raw.files.output.ref.txt.gz"
+        File gd_raw_merged = "gd.raw.merged.txt.gz"
+        File gd_raw_merged_denovo = "gd.raw.merged.denovo.txt.gz"
     }
 
     command <<<
         set -euo pipefail
 
-        zcat ~{sep=" " gd_bed_to_merge} | bgzip -c > gd.raw.files.output.ref.txt.gz
-        zcat ~{sep=" " gd_denovo_bed_to_merge} | bgzip -c > gd.denovo.raw.files.output.ref.txt.gz
+        zcat ~{sep=" " gd_bed_to_merge} | bgzip -c > gd.raw.merged.txt.gz
+        zcat ~{sep=" " gd_denovo_bed_to_merge} | bgzip -c > gd.raw.merged.denovo.txt.gz
     >>>
 
     runtime {
@@ -518,7 +517,6 @@ task getVCFoverlap {
 
   output{
     File out_bed = "~{prefix}.gd.fromVCF.bed.gz"
-
   }
 
   command <<<
