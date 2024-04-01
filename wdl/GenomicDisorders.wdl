@@ -105,8 +105,8 @@ workflow GenomicDisorders {
 
         call getGDdenovo{
             input:
-                gd_proband_calls=getGDraw.gd_output_proband_calls[i],
-                gd_parent_calls=getGDraw.gd_output_parent_calls[i],
+                gd_proband_calls=getGDraw.gd_output_proband_calls,
+                gd_parent_calls=getGDraw.gd_output_parent_calls,
                 chromosome=contigs[i],
                 variant_interpretation_docker=variant_interpretation_docker,
                 runtime_attr_override = runtime_attr_gd_denovo
