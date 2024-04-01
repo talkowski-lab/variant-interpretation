@@ -52,7 +52,7 @@ task splitFileWithHeader {
     import sys
 
     file = sys.argv[1]
-    shards_per_chunk = sys.argv[2]
+    shards_per_chunk = int(sys.argv[2])
 
     file_ext = file.split('.')[-1]
     base_filename = os.path.basename(file).split(f".{file_ext}")[0]
