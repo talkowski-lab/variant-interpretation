@@ -127,6 +127,9 @@ else:
                     ((row.chrom_int == start_chrom) & (row.window_end < start_pos)), axis=1)
     
     test_df = pd.DataFrame()
+    tot = bed[~bed.not_in_vcf].shape[0]
     for i, row in bed[~bed.not_in_vcf].iterrows():
+        if ((i+1)%10==0):
+            print(f"Getting SNV BAFs for SV interval {i+1}/{tot}...")
         test_df = pd.concat([test_df, test_interval(row.window_locus_interval, row.locus_interval, row.SAMPLE, row.pipeline_id, row.TYPE, test_shard)])  
     test_df[np.intersect1d(output_cols, test_df.columns)].to_csv(output_name, sep='\t', index=False)  
