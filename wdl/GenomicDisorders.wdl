@@ -117,7 +117,7 @@ workflow GenomicDisorders {
     call mergeGenomicDisorders{
         input:
             gd_bed_to_merge=getGDraw.gd_output_from_depth_raw_files,
-#            gd_denovo_bed_to_merge=getGDdenovo.gd_output_from_depth_raw_files_denovo,
+            gd_denovo_bed_to_merge=getGDdenovo.gd_output_from_depth_raw_files_denovo,
             variant_interpretation_docker=variant_interpretation_docker,
             runtime_attr_override = runtime_attr_merge_gd
     }
