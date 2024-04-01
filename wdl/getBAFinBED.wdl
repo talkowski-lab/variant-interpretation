@@ -36,35 +36,47 @@ workflow getBAFinBED {
             mt_uri=vep_file,
             hail_docker=hail_docker
         }
-    }
 
-    call mergeVCFs.mergeVCFs as mergeVCFs {
-        input:
-        vcf_files=filterIntervals.vcf_filt,
-        sv_base_mini_docker=sv_base_mini_docker,
-        cohort_prefix=cohort_prefix
-    }
-
-    call helpers.splitFileWithHeader as splitFile {
-        input:
-        file=bed_file,
-        shards_per_chunk=rows_per_shard,
-        cohort_prefix=cohort_prefix,
-        hail_docker=hail_docker
-    }
-
-    scatter (file in splitFile.chunks) {
         call getBAF {
             input:
-            bed_file=file,
+            bed_file=bed_file,
             ped_uri=ped_uri,
-            vep_file=mergeVCFs.merged_vcf_file,
+            vep_file=filterIntervals.vcf_filt,
             cohort_prefix=cohort_prefix,
             window_size=window_size,
             get_baf_script=get_baf_script,
             hail_docker=hail_docker
         }
+
     }
+
+    # call mergeVCFs.mergeVCFs as mergeVCFs {
+    #     input:
+    #     vcf_files=filterIntervals.vcf_filt,
+    #     sv_base_mini_docker=sv_base_mini_docker,
+    #     cohort_prefix=cohort_prefix
+    # }
+
+    # call helpers.splitFileWithHeader as splitFile {
+    #     input:
+    #     file=bed_file,
+    #     shards_per_chunk=rows_per_shard,
+    #     cohort_prefix=cohort_prefix,
+    #     hail_docker=hail_docker
+    # }
+
+    # scatter (file in splitFile.chunks) {
+    #     call getBAF {
+    #         input:
+    #         bed_file=file,
+    #         ped_uri=ped_uri,
+    #         vep_file=mergeVCFs.merged_vcf_file,
+    #         cohort_prefix=cohort_prefix,
+    #         window_size=window_size,
+    #         get_baf_script=get_baf_script,
+    #         hail_docker=hail_docker
+    #     }
+    # }
 
     call helpers.getHailMTSizes as getTotalSize {
         input:
