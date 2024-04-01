@@ -5,6 +5,7 @@ import "wes-denovo-step-02.wdl" as step2
 import "wes-denovo-step-03.wdl" as step3
 import "wes-denovo-helpers.wdl" as helpers
 import "wes-prioritize-csq.wdl" as prioritizeCSQ
+import "prioritizeCSQ.wdl" as prioritizeCSQ_og
 
 struct RuntimeAttr {
     Float? mem_gb
@@ -125,14 +126,20 @@ workflow hailDenovoWES {
             input_size=getDenovoVEPSizes.mt_size
     }
 
-    call prioritizeCSQ.WESprioritizeCSQ as prioritizeCSQ {
+    call prioritizeCSQ.mergeVEPIntoResults as mergeVEPIntoResults {
         input:
-            de_novo_results=mergeDenovoResults.merged_tsv,
-            de_novo_vep=mergeDenovoVEP.merged_tsv,
-            cohort_prefix=cohort_prefix,
-            prioritize_csq_script=prioritize_csq_script,
-            hail_docker=hail_docker,
-            sample_column=sample_column
+        de_novo_results=mergeDenovoResults.merged_tsv,
+        de_novo_vep=mergeDenovoVEP.merged_tsv,
+        cohort_prefix=cohort_prefix,
+        hail_docker=hail_docker
+    }
+
+    call prioritizeCSQ_og.annotateMostSevereCSQ as annotateMostSevereCSQ {
+        input:
+        vcf_metrics_tsv=mergeVEPIntoResults.de_novo_merged,
+        prioritize_csq_script=prioritize_csq_script,
+        hail_docker=hail_docker,
+        sample_column=sample_column
     }
 
     output {
@@ -149,6 +156,6 @@ workflow hailDenovoWES {
         Array[String] tdt_mt = step3.tdt_mt
         Array[String] tdt_parent_aware_mt = step3.tdt_parent_aware_mt
         # prioritized CSQ
-        File de_novo_merged = prioritizeCSQ.de_novo_merged
+        File de_novo_merged = annotateMostSevereCSQ.vcf_metrics_tsv_prior_csq
     }
 }

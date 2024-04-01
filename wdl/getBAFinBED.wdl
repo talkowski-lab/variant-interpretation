@@ -37,17 +37,6 @@ workflow getBAFinBED {
             hail_docker=hail_docker
         }
     }
-        # call getBAF {
-        #     input:
-        #     bed_file=bed_file,
-        #     ped_uri=ped_uri,
-        #     vep_file=vep_file,
-        #     cohort_prefix=cohort_prefix,
-        #     window_size=window_size,
-        #     get_baf_script=get_baf_script,
-        #     hail_docker=hail_docker
-        # }
-    # }
 
     call mergeVCFs.mergeVCFs as mergeVCFs {
         input:
