@@ -79,7 +79,6 @@ sample_qc_df = pd.concat([sex_chrX_qc_df, sex_chrY_qc_df, all_qc_df, gt_qc_df], 
 
 sample_qc_df['Y_ploidy'] = 2 * sample_qc_df['chrY.dp_stats.mean'] / sample_qc_df['gt.dp_stats.mean']
 sample_qc_df['X_ploidy'] = 2 * sample_qc_df['chrX.dp_stats.mean'] / sample_qc_df['gt.dp_stats.mean']
-sample_qc_df = sample_qc_df.fillna(np.nan)
 
 # Somalier's sex prediction criteria
 def predict_sex(row):
@@ -101,6 +100,7 @@ ped.columns = base_cols
 ped = ped.set_index('sample_id')
 
 ped_qc = pd.concat([ped, sample_qc_df], axis=1).reset_index()
+ped_qc = ped_qc.fillna(np.nan)
 ped_qc['pred_sex'] = ped_qc.apply(predict_sex, axis=1).astype('category')
 ped_qc = ped_qc[base_cols + ['pred_sex'] + np.setdiff1d(sample_qc_df.columns, base_cols).tolist()]
 ped_qc.to_csv(f"{cohort_prefix}_sex_qc.ped", sep='\t', index=False)
