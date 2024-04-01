@@ -78,7 +78,7 @@ task concatinate_plots{
         cat ~{varfile} | gunzip | cut -f1-6 > updated_varfile.bed
         tail -n+2 updated_varfile.bed > ~{varfile}.noheader
         echo 'test'
-        python3 /src/MakeRDtest.py \
+        python3 /src/MakeRDtest_baf.py \
             ~{varfile}.noheader \
             ~{pedfile} \
             ~{prefix} \
