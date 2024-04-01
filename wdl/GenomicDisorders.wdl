@@ -1,8 +1,8 @@
 version 1.0
     
 import "Structs.wdl"
-import "SplitVcf.wdl" as getBatchedVcf
-import "ReformatRawFiles.wdl" as raw
+import "SplitVcf.wdl" as splitVCF
+import "ReformatRawFiles.wdl" as reformatRaw
 import "TasksMakeCohortVcf.wdl" as MiniTasks
 import "DeNovoSVsScatter.wdl" as runDeNovo
 
@@ -10,7 +10,6 @@ workflow GenomicDisorders {
 
     input {
         File ped_input
-#        File python_config
         File vcf_file
         Array[String] contigs
         File genomic_disorder_input
@@ -19,11 +18,9 @@ workflow GenomicDisorders {
         File batch_depth_raw_file
         File sample_batches
         File batch_bincov_index
-#        Int records_per_shard
         String prefix
         File? fam_ids
         String variant_interpretation_docker
-#        String sv_pipeline_updates_docker
         String genomic_disorders_docker
         RuntimeAttr? runtime_attr_get_batched_files
         RuntimeAttr? runtime_attr_clean_ped
@@ -35,16 +32,6 @@ workflow GenomicDisorders {
         RuntimeAttr? runtime_attr_merge_gd
         RuntimeAttr? runtime_attr_reformat_vcf
         RuntimeAttr? runtime_attr_vcf_overlap
-#        RuntimeAttr? runtime_attr_denovo
-#        RuntimeAttr? runtime_attr_subset_vcf
-#        RuntimeAttr? runtime_attr_vcf_to_bed
-#        RuntimeAttr? runtime_attr_merge_final_bed_files
-#        RuntimeAttr? runtime_override_shard_vcf
-#        RuntimeAttr? runtime_attr_call_outliers
-#        RuntimeAttr? runtime_attr_batch_vcf
-#        RuntimeAttr? runtime_override_shard_vcf
-#        RuntimeAttr? runtime_attr_merge
-#        RuntimeAttr? runtime_attr_reformat_vcf
     }
 
     #if the fam_ids input is given, subset all other input files to only include the necessary batches
@@ -61,34 +48,18 @@ workflow GenomicDisorders {
                 variant_interpretation_docker=variant_interpretation_docker,
                 runtime_attr_override = runtime_attr_get_batched_files
         }
-
-#        call getBatchedVcf.getBatchedVcf as getBatchedVcf {
-#            input:
-#                vcf_file = vcf_file,
-#                prefix = prefix,
-#                samples = getBatchedFiles.samples,
-#                records_per_shard = 10000,
-#                variant_interpretation_docker = variant_interpretation_docker,
-#                sv_pipeline_updates_docker = sv_pipeline_updates_docker,
-#                runtime_attr_batch_vcf = runtime_attr_batch_vcf,
-#                runtime_override_shard_vcf = runtime_override_shard_vcf,
-#                runtime_attr_merge = runtime_attr_merge
-#        }
-
     }
-
-    #makes a ped file of singletons, duos, and trios for input into the de novo script (only including families of interest)
+    #Makes a ped file of singletons, duos, and trios for input into the de novo GD filtering
     call cleanPed{
         input:
             ped_input = ped_input,
-#            vcf_input = select_first([getBatchedVcf.split_vcf, vcf_file]),
             vcf_input = vcf_file,
             variant_interpretation_docker=variant_interpretation_docker,
             runtime_attr_override = runtime_attr_clean_ped
     }
 
-    #splits raw files into probands and parents and reformats to have chrom_svtype_sample as the first column for probands and chrom_svtype_famid as the first column for parents
-    call raw.reformatRawFiles as reformatRawFiles {
+    #Splits raw files into probands and parents and reformats to have chrom_svtype_sample as the first column for probands and chrom_svtype_famid as the first column for parents
+    call reformatRaw.reformatRawFiles as reformatRawFiles {
         input:
             contigs = contigs,
             raw_files_list = select_first([getBatchedFiles.batch_raw_files_list, batch_raw_file]),
@@ -101,8 +72,8 @@ workflow GenomicDisorders {
             runtime_attr_reformat_bed = runtime_attr_raw_reformat_bed
     }
 
-    #splits raw files into probands and parents and reformats to have chrom_svtype_sample as the first column for probands and chrom_svtype_famid as the first column for parents
-    call raw.reformatRawFiles as reformatDepthRawFiles {
+    #Splits raw files into probands and parents and reformats to have chrom_svtype_sample as the first column for probands and chrom_svtype_famid as the first column for parents
+    call reformatRaw.reformatRawFiles as reformatDepthRawFiles {
         input:
             contigs = contigs,
             raw_files_list = select_first([getBatchedFiles.batch_depth_raw_files_list, batch_depth_raw_file]),
@@ -117,47 +88,39 @@ workflow GenomicDisorders {
 
 
     scatter (i in range(length(contigs))){
-        #generates a list of genomic disorder regions in the vcf input as well as in the depth raw files
-        call getGenomicDisorders{
+        #Generates a list of genomic disorder regions in the vcf input as well as in the depth raw files
+        call getGDraw{
             input:
                 genomic_disorder_input=genomic_disorder_input,
                 ped = ped_input,
-#                vcf_file = select_first([getBatchedVcf.split_vcf, vcf_file]),
+#                vcf_file = select_first([splitVCF.split_vcf, vcf_file]),
                 depth_raw_file_proband = reformatDepthRawFiles.reformatted_proband_raw_files[i],
                 depth_raw_file_parents = reformatDepthRawFiles.reformatted_parents_raw_files[i],
                 chromosome=contigs[i],
                 variant_interpretation_docker=variant_interpretation_docker,
                 runtime_attr_override = runtime_attr_gd
         }
+
+        call getDenovoGDraw{
+            input:
+                ped = ped_input,
+                proband_calls = getGDraw.gd_proband_calls[i],
+                parent_calls = getGDraw.gd_parent_calls[i],
+                proband_coverage = getGDraw.gd_coverage_proband[i],
+                parent_coverage = getGDraw.gd_coverage_parents[i],
+                chromosome=contigs[i],
+                variant_interpretation_docker=variant_interpretation_docker,
+                runtime_attr_override = runtime_attr_gd
+        }
     }
-    #merges the genomic disorder region output from each chromosome to compile a list of genomic disorder regions
+    #Merges the genomic disorder region output from each chromosome to compile a list of genomic disorder regions
     call mergeGenomicDisorders{
         input:
-            gd_bed_to_merge=getGenomicDisorders.gd_output_from_depth_raw_files,
-            gd_denovo_bed_to_merge=getGenomicDisorders.gd_output_from_depth_raw_files_denovo,
+            gd_bed_to_merge=getGDraw.gd_output_from_depth_raw_files,
+            gd_denovo_bed_to_merge=getDenovoGDraw.gd_output_from_depth_raw_files_denovo,
             variant_interpretation_docker=variant_interpretation_docker,
             runtime_attr_override = runtime_attr_merge_gd
     }
-    
-#        #splits vcf by chromosome
-#        call subsetVcf {
-#            input:
-#                vcf_file = select_first([getBatchedVcf.split_vcf, vcf_file]),
-#                chromosome=contigs[i],
-#                variant_interpretation_docker=variant_interpretation_docker,
-#                runtime_attr_override = runtime_attr_subset_vcf
-#        }
-
-#        #shards vcf
-#        call MiniTasks.ScatterVcf as SplitVcf {
-#            input:
-#                vcf=subsetVcf.vcf_output,
-#                prefix=prefix,
-#                records_per_shard=records_per_shard,
-#                sv_pipeline_docker=sv_pipeline_updates_docker,
-#                runtime_attr_override=runtime_override_shard_vcf
-#        }
-#    }
 
     call reformatVCF{
         input:
@@ -167,7 +130,7 @@ workflow GenomicDisorders {
             runtime_attr_override = runtime_attr_reformat_vcf
     }
 
-    call getVCFoverlap{
+    call getGDvcf{
         input:
           bed = reformatVCF.out_ref_bed,
           genomic_disorders = genomic_disorder_input_ref,
@@ -180,13 +143,9 @@ workflow GenomicDisorders {
         File cleaned_ped = cleanPed.cleaned_ped
         File gd_depth = mergeGenomicDisorders.gd_output_from_depth
         File gd_depth_denovo = mergeGenomicDisorders.gd_denovo_output_from_depth
-        File vcf_in_gds = getVCFoverlap.out_bed
-#        File gd_for_denovo = getGenomicDisorders.gd_output_for_denovo
-#        File gd_vcf = getGenomicDisorders.gd_output_from_final_vcf[1]
-        
+        File vcf_in_gds = getGDvcf.out_bed
     }
 }
-
 
 task getBatchedFiles{
     input{
@@ -297,9 +256,8 @@ task cleanPed{
     }
 }
 
-task getGenomicDisorders{
+task getGDraw{
     input{
-#        File vcf_file
         File ped
         File depth_raw_file_proband
         File depth_raw_file_parents
@@ -324,10 +282,11 @@ task getGenomicDisorders{
     RuntimeAttr runtime_attr = select_first([runtime_attr_override, default_attr])
 
     output{
-#        File gd_output_from_final_vcf = "gd.variants.from.final.vcf.txt.gz"
-#        File gd_output_for_denovo = "gd.variants.from.final.vcf.names.txt"
         File gd_output_from_depth_raw_files = "~{chromosome}.gd.variants.in.depth.raw.files.txt.gz"
-        File gd_output_from_depth_raw_files_denovo ="~{chromosome}.gd.variants.in.depth.raw.files.de.novo.txt.gz"
+        File gd_proband_calls = "~{chromosome}.proband.GD.calls.txt"
+        File gd_parent_calls = "~{chromosome}.parent.GD.calls.txt"
+        File gd_coverage_proband = "~{chromosome}.kept.coverage.proband.txt"
+        File gd_coverage_parents = "~{chromosome}.kept.coverage.parents.txt"
     }
 
     command <<<
@@ -372,22 +331,77 @@ task getGenomicDisorders{
         #concatanate parent calls on GD site with desired overlap
         cat ~{chromosome}.gd.variants.in.depth.raw.file.parents.txt ~{chromosome}.kept.coverage.parents.txt | awk -v OFS="\t" '{print $5,$6,$7,$8,$9,$1,$2,$3,$4}' > ~{chromosome}.parent.GD.calls.txt
 
-        #get de novo only calls
-        bedtools intersect -v -wa  -f 0.3 -a ~{chromosome}.proband.GD.calls.txt -b ~{chromosome}.parent.GD.calls.txt > ~{chromosome}.proband.GD.calls.de_novo.txt
-        
         #to get all GD calls of probands+parents
         cat ~{chromosome}.proband.GD.calls.txt ~{chromosome}.parent.GD.calls.txt > ~{chromosome}.parent_and_proband.GD.calls.txt
 
-        #format the output files: remove sample/family tag from chr in final bed file        
+        #format the output files: remove sample/family tag from chr in final bed file
         cat ~{chromosome}.parent_and_proband.GD.calls.txt |\
             awk -v OFS="\t" '{sub(/_.*/, "", $1); print}' |\
             awk -v OFS="\t" '{sub(/_.*/, "", $6); print}' | sort | uniq > ~{chromosome}.gd.variants.in.depth.raw.files.txt
+
+        bgzip ~{chromosome}.gd.variants.in.depth.raw.files.txt
+    >>>
+
+    runtime {
+        cpu: select_first([runtime_attr.cpu, default_attr.cpu])
+        memory: "~{select_first([runtime_attr.mem_gb, default_attr.mem_gb])} GB"
+        disks: "local-disk ~{select_first([runtime_attr.disk_gb, default_attr.disk_gb])} HDD"
+        bootDiskSizeGb: select_first([runtime_attr.boot_disk_gb, default_attr.boot_disk_gb])
+        preemptible: select_first([runtime_attr.preemptible, default_attr.preemptible])
+        maxRetries: select_first([runtime_attr.max_retries, default_attr.max_retries])
+        docker: variant_interpretation_docker
+    }
+}
+
+task getDenovoGDraw{
+    input{
+        File ped
+        File proband_calls
+        File parent_calls
+        File proband_coverage
+        File parents_coverage
+        String chromosome
+        String variant_interpretation_docker
+        RuntimeAttr? runtime_attr_override
+    }
+
+    Float input_size = size(select_all([ped, proband_calls, parent_calls]), "GB")
+    Float base_mem_gb = 3.75
+
+    RuntimeAttr default_attr = object {
+                                      mem_gb: base_mem_gb,
+                                      disk_gb: ceil(10 + input_size),
+                                      cpu: 1,
+                                      preemptible: 2,
+                                      max_retries: 1,
+                                      boot_disk_gb: 8
+                                  }
+
+    RuntimeAttr runtime_attr = select_first([runtime_attr_override, default_attr])
+
+    output{
+        File gd_output_from_depth_raw_files_denovo ="~{chromosome}.gd.variants.in.depth.raw.files.de.novo.txt.gz"
+    }
+
+    command <<<
+        set -euxo pipefail
+
+        #concatanate proband calls on GD site with desired overlap
+        cat ~{proband_calls} ~{proband_coverage} | awk -v OFS="\t" '{print $5,$7,$8,$9,$10,$1,$2,$3,$4}' > ~{chromosome}.proband.GD.calls.txt
+
+        #concatanate parent calls on GD site with desired overlap
+        cat ~{parent_calls} ~{parents_coverage} | awk -v OFS="\t" '{print $5,$6,$7,$8,$9,$1,$2,$3,$4}' > ~{chromosome}.parent.GD.calls.txt
+
+        #get de novo only calls
+        bedtools intersect -v -wa  -f 0.3 -a ~{chromosome}.proband.GD.calls.txt -b ~{chromosome}.parent.GD.calls.txt > ~{chromosome}.proband.GD.calls.de_novo.txt
+
+        #to get all GD calls of probands+parents
+        cat ~{chromosome}.proband.GD.calls.txt ~{chromosome}.parent.GD.calls.txt > ~{chromosome}.parent_and_proband.GD.calls.txt
 
         cat ~{chromosome}.proband.GD.calls.de_novo.txt |\
             awk -v OFS="\t" '{sub(/_.*/, "", $1); print}' |\
             awk -v OFS="\t" '{sub(/_.*/, "", $6); print}' | sort | uniq > ~{chromosome}.gd.variants.in.depth.raw.files.de.novo.txt
 
-        bgzip ~{chromosome}.gd.variants.in.depth.raw.files.txt
         bgzip ~{chromosome}.gd.variants.in.depth.raw.files.de.novo.txt
     >>>
 
@@ -401,6 +415,7 @@ task getGenomicDisorders{
         docker: variant_interpretation_docker
     }
 }
+
 
 #task subsetVcf{
 #    input{
@@ -596,7 +611,7 @@ task reformatVCF {
   }
 }
 
-task getVCFoverlap {
+task getGDvcf {
   input {
     File bed
     File genomic_disorders
