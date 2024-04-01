@@ -105,8 +105,8 @@ workflow GenomicDisorders {
 
         call getGDdenovo{
             input:
-#                gd_proband_calls=getGDraw.gd_output_proband_calls[i],
-#                gd_parent_calls=getGDraw.gd_output_parent_calls[i],
+                gd_proband_calls=getGDraw.gd_output_proband_calls[i],
+                gd_parent_calls=getGDraw.gd_output_parent_calls[i],
                 chromosome=contigs[i],
                 variant_interpretation_docker=variant_interpretation_docker,
                 runtime_attr_override = runtime_attr_gd_denovo
@@ -350,15 +350,15 @@ task getGDraw{
 
 task getGDdenovo{
     input{
-#        File gd_proband_calls
-#        File gd_parent_calls
+        File gd_proband_calls
+        File gd_parent_calls
         String chromosome
         String variant_interpretation_docker
         RuntimeAttr? runtime_attr_override
     }
 
-#    Float input_size = size(select_all([]), "GB")
-    Float input_size = "12 GB"
+    Float input_size = size(select_all([gd_proband_calls, gd_parent_calls]), "GB")
+#    Float input_size = "12 GB"
     Float base_mem_gb = 3.75
 
     RuntimeAttr default_attr = object {
@@ -380,7 +380,7 @@ task getGDdenovo{
         set -euxo pipefail
 
         #get de novo only calls
-        bedtools intersect -v -wa  -f 0.3 -a ~{chromosome} -b ~{chromosome} > ~{chromosome}.proband.GD.calls.de_novo.txt
+        bedtools intersect -v -wa  -f 0.3 -a ~{gd_proband_calls} -b ~{gd_parent_calls} > ~{chromosome}.proband.GD.calls.de_novo.txt
 
         cat ~{chromosome}.proband.GD.calls.de_novo.txt |\
             awk -v OFS="\t" '{sub(/_.*/, "", $1); print}' |\
