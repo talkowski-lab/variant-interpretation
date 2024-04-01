@@ -7,7 +7,6 @@ workflow GenomicDisorders {
 
     input {
         File ped_input
-#        File python_config
         File vcf_file
         Array[String] contigs
         File genomic_disorder_input
@@ -16,7 +15,6 @@ workflow GenomicDisorders {
         File batch_depth_raw_file
         File sample_batches
         File batch_bincov_index
-#        Int records_per_shard
         String prefix
         File? fam_ids
         String variant_interpretation_docker
@@ -76,7 +74,7 @@ workflow GenomicDisorders {
             runtime_attr_reformat_bed = runtime_attr_raw_reformat_bed
     }
 
-    #splits raw files into probands and parents and reformats to have chrom_svtype_sample as the first column for probands and chrom_svtype_famid as the first column for parents
+    #same than above but for raw depth files
     call reformatRaw.reformatRawFiles as reformatDepthRaw {
         input:
             contigs = contigs,
@@ -91,19 +89,18 @@ workflow GenomicDisorders {
     }
     
     scatter (i in range(length(contigs))){
-        #generates a list of genomic disorder regions in the vcf input as well as in the depth raw files
+        #gets all raw variants overlapping genomic disorder regions
         call getRawGD{
             input:
                 genomic_disorder_input=genomic_disorder_input,
                 ped = ped_input,
-#                vcf_file = select_first([splitvcf.split_vcf, vcf_file]),
                 depth_raw_file_proband = reformatDepthRaw.reformatted_proband_raw_files[i],
                 depth_raw_file_parents = reformatDepthRaw.reformatted_parents_raw_files[i],
                 chromosome=contigs[i],
                 variant_interpretation_docker=variant_interpretation_docker,
                 runtime_attr_override = runtime_attr_gd
         }
-
+        #subsets only denovo calls
         call getRawGDdenovo{
             input:
                 gd_proband_calls=getRawGD.gd_proband_calls,
@@ -114,15 +111,15 @@ workflow GenomicDisorders {
 
         }
     }
-    #merges the genomic disorder region output from each chromosome to compile a list of genomic disorder regions
-    call mergeGenomicDisorders{
+    #merges the genomic disorder and denovo outputs
+    call mergeGD{
         input:
             gd_bed_to_merge=getRawGD.gd_raw_depth,
             gd_denovo_bed_to_merge=getRawGDdenovo.gd_raw_depth_denovo,
             variant_interpretation_docker=variant_interpretation_docker,
             runtime_attr_override = runtime_attr_merge_gd
     }
-
+    #reformats VCF to bed and updates first column to sample_svtype for overlap
     call reformatVCF{
         input:
             vcf = vcf_file,
@@ -130,7 +127,7 @@ workflow GenomicDisorders {
             docker_path = genomic_disorders_docker,
             runtime_attr_override = runtime_attr_reformat_vcf
     }
-
+    #gets genomic disorder overlap from vcf file per sample and type
     call getVCFoverlap{
         input:
           bed = reformatVCF.out_ref_bed,
@@ -142,8 +139,8 @@ workflow GenomicDisorders {
 
     output {
         File cleaned_ped = cleanPed.cleaned_ped
-        File gd_depth = mergeGenomicDisorders.gd_raw_merged
-        File gd_depth_denovo = mergeGenomicDisorders.gd_raw_merged_denovo
+        File gd_depth = mergeGD.gd_raw_merged
+        File gd_depth_denovo = mergeGD.gd_raw_merged_denovo
         File vcf_in_gds = getVCFoverlap.out_bed
     }
 }
@@ -398,7 +395,7 @@ task getRawGDdenovo{
     }
 }
 
-task mergeGenomicDisorders{
+task mergeGD{
     input{
         Array[File] gd_bed_to_merge
         Array[File] gd_denovo_bed_to_merge
