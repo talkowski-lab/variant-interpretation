@@ -71,6 +71,7 @@ workflow getDenovoByGT {
             input:
                 tsvs=denovoByGTChunk.denovo_gt,
                 hail_docker=hail_docker,
+                input_size=size(denovoByGTChunk.denovo_gt, 'GB'),
                 merged_filename=cohort_prefix+'_denovo_GT_AF_filter.tsv.gz'
         }
     }
@@ -99,6 +100,7 @@ workflow getDenovoByGT {
             input:
                 tsvs=denovoByGT.denovo_gt,
                 hail_docker=hail_docker,
+                input_size=size(denovoByGT.denovo_gt, 'GB'),
                 merged_filename=cohort_prefix+'_denovo_GT_AF_filter.tsv.gz'
         }
     }
