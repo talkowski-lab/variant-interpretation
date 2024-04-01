@@ -175,15 +175,12 @@ task getBatchedFiles{
     output{
         File batch_raw_files_list = "batch_raw_files_list.txt"
         File batch_depth_raw_files_list = "batch_depth_raw_files_list.txt"
-#        File batch_bincov_index_subset = "batch_bincov_index.txt"
-#        File samples = "samples.txt"
     }
 
     command <<<
         set -euo pipefail
         grep -w -f ${fam_ids} ${ped_input} | cut -f2 | sort -u > samples.txt
         grep -w -f samples.txt ${sample_batches} | cut -f2 | sort -u > batches.txt
-#        grep -w -f batches.txt ${batch_bincov_index} > batch_bincov_index.txt
         grep -w -f batches.txt ${batch_raw_file} > batch_raw_files_list.txt
         grep -w -f batches.txt ${batch_depth_raw_file} > batch_depth_raw_files_list.txt
     >>>
