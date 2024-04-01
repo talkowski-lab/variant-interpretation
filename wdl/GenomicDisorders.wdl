@@ -357,7 +357,7 @@ task getGDdenovo{
         RuntimeAttr? runtime_attr_override
     }
 
-    Float input_size = size(select_all([ped, genomic_disorder_input, depth_raw_file_parents, depth_raw_file_proband]), "GB")
+    Float input_size = size(select_all([gd_proband_calls, gd_parent_calls]), "GB")
     Float base_mem_gb = 3.75
 
     RuntimeAttr default_attr = object {
