@@ -11,10 +11,10 @@ build = 'GRCh38'
 vcf_file = sys.argv[1]
 ped_uri = sys.argv[2]
 af_threshold = float(sys.argv[3])
-header_file = sys.argv[4]
-cores = sys.argv[5]
-mem = int(np.floor(float(sys.argv[6])))
-file_ext = sys.argv[7]
+# header_file = sys.argv[4]
+cores = sys.argv[4]
+mem = int(np.floor(float(sys.argv[5])))
+file_ext = sys.argv[6]
 
 hl.init(min_block_size=128, spark_conf={"spark.executor.cores": cores, 
                     "spark.executor.memory": f"{mem}g",
@@ -33,7 +33,7 @@ tmp_ped.to_csv(f"{prefix}.ped", sep='\t', index=False)
 ped_uri = f"{prefix}.ped"
 pedigree = hl.Pedigree.read(ped_uri, delimiter='\t')
 
-mt = hl.import_vcf(vcf_file, force_bgz=True, array_elements_required=False, call_fields=[], header_file=header_file, reference_genome='GRCh38')
+mt = hl.import_vcf(vcf_file, force_bgz=True, array_elements_required=False, call_fields=[], reference_genome='GRCh38')
 
 #split-multi
 def split_multi_ssc(mt):

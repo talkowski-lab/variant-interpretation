@@ -41,13 +41,13 @@ workflow getDenovoByGT {
                 cohort_prefix=cohort_prefix,
                 vep_hail_docker=vep_hail_docker
         }
-        call step1.saveVCFHeader as saveVCFHeaderChunk {
-            input:
-                vcf_uri=vep_files[0],
-                info_header=info_header,
-                bad_header=bad_header,
-                sv_base_mini_docker=sv_base_mini_docker
-        }
+        # call step1.saveVCFHeader as saveVCFHeaderChunk {
+        #     input:
+        #         vcf_uri=vep_files[0],
+        #         info_header=info_header,
+        #         bad_header=bad_header,
+        #         sv_base_mini_docker=sv_base_mini_docker
+        # }
         scatter (chunk_file in splitVEPFiles.chunks) {        
             call mergeVCFs.mergeVCFs as mergeChunk {
                 input:
@@ -61,7 +61,7 @@ workflow getDenovoByGT {
                     vcf_file=mergeChunk.merged_vcf_file,
                     ped_uri=ped_uri,
                     file_ext=file_ext,
-                    header_file=saveVCFHeaderChunk.header_file,
+                    # header_file=saveVCFHeaderChunk.header_file,
                     af_threshold=af_threshold,
                     vep_hail_docker=vep_hail_docker,
                     denovo_snv_indels_gt_script=denovo_snv_indels_gt_script
@@ -77,20 +77,20 @@ workflow getDenovoByGT {
     }
 
     if (!merge_split_vcf) {
-        call step1.saveVCFHeader as saveVCFHeader {
-            input:
-                vcf_uri=vep_files[0],
-                info_header=info_header,
-                bad_header=bad_header,
-                sv_base_mini_docker=sv_base_mini_docker
-        }
+        # call step1.saveVCFHeader as saveVCFHeader {
+        #     input:
+        #         vcf_uri=vep_files[0],
+        #         info_header=info_header,
+        #         bad_header=bad_header,
+        #         sv_base_mini_docker=sv_base_mini_docker
+        # }
         scatter (vcf_uri in vep_files) {
             call denovoByGT {
                 input:
                     vcf_file=vcf_uri,
                     ped_uri=ped_uri,
                     file_ext=file_ext,
-                    header_file=saveVCFHeader.header_file,
+                    # header_file=saveVCFHeader.header_file,
                     af_threshold=af_threshold,
                     vep_hail_docker=vep_hail_docker,
                     denovo_snv_indels_gt_script=denovo_snv_indels_gt_script
@@ -114,7 +114,7 @@ task denovoByGT {
     input {
         File vcf_file
         File ped_uri
-        File header_file
+        # File header_file
         String file_ext
         Float af_threshold
         String vep_hail_docker
@@ -150,8 +150,8 @@ task denovoByGT {
 
     command {
         curl ~{denovo_snv_indels_gt_script} > denovo_snv_indels.py
-        python3.9 denovo_snv_indels.py ~{vcf_file} ~{ped_uri} ~{af_threshold} ~{header_file} ~{cpu_cores} ~{memory} \
-            ~{file_ext}
+        python3.9 denovo_snv_indels.py ~{vcf_file} ~{ped_uri} ~{af_threshold} \
+        ~{cpu_cores} ~{memory} ~{file_ext}
     }
 
     output {
