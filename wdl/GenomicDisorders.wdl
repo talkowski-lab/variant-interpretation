@@ -103,15 +103,15 @@ workflow GenomicDisorders {
                 runtime_attr_override = runtime_attr_gd
         }
 
-#        call getGDdenovo{
-#            input:
-#                gd_proband_calls=getGDraw.gd_output_proband_calls[i],
-#                gd_parent_calls=getGDraw.gd_output_parent_calls[i],
-#                chromosome=contigs[i],
-#                variant_interpretation_docker=variant_interpretation_docker,
-#                runtime_attr_override = runtime_attr_gd_denovo
-#
-#        }
+        call getGDdenovo{
+            input:
+                gd_proband_calls=getGDraw.gd_output_proband_calls[i],
+                gd_parent_calls=getGDraw.gd_output_parent_calls[i],
+                chromosome=contigs[i],
+                variant_interpretation_docker=variant_interpretation_docker,
+                runtime_attr_override = runtime_attr_gd_denovo
+
+        }
     }
     #merges the genomic disorder region output from each chromosome to compile a list of genomic disorder regions
     call mergeGenomicDisorders{
