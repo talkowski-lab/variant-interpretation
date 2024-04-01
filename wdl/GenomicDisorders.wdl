@@ -106,8 +106,8 @@ workflow GenomicDisorders {
 
         call getRawGDdenovo{
             input:
-                gd_proband_calls=getRawGD.gd_output_proband_calls,
-                gd_parent_calls=getRawGD.gd_output_parent_calls,
+                gd_proband_calls=getRawGD.gd_proband_calls,
+                gd_parent_calls=getRawGD.gd_parent_calls,
                 chromosome=contigs[i],
                 variant_interpretation_docker=variant_interpretation_docker,
                 runtime_attr_override = runtime_attr_gd_denovo
@@ -117,8 +117,8 @@ workflow GenomicDisorders {
     #merges the genomic disorder region output from each chromosome to compile a list of genomic disorder regions
     call mergeGenomicDisorders{
         input:
-            gd_bed_to_merge=getRawGD.gd_output_from_depth_raw_files,
-            gd_denovo_bed_to_merge=getRawGDdenovo.gd_output_from_depth_raw_files_denovo,
+            gd_bed_to_merge=getRawGD.gd_raw_depth,
+            gd_denovo_bed_to_merge=getRawGDdenovo.gd_raw_depth_denovo,
             variant_interpretation_docker=variant_interpretation_docker,
             runtime_attr_override = runtime_attr_merge_gd
     }
@@ -143,7 +143,7 @@ workflow GenomicDisorders {
     output {
         File cleaned_ped = cleanPed.cleaned_ped
         File gd_depth = mergeGenomicDisorders.gd_output_from_depth
-#        File gd_depth_denovo = mergeGenomicDisorders.gd_denovo_output_from_depth
+        File gd_depth_denovo = mergeGenomicDisorders.gd_denovo_output_from_depth
         File vcf_in_gds = getVCFoverlap.out_bed
     }
 }
@@ -178,15 +178,15 @@ task getBatchedFiles{
     output{
         File batch_raw_files_list = "batch_raw_files_list.txt"
         File batch_depth_raw_files_list = "batch_depth_raw_files_list.txt"
-        File batch_bincov_index_subset = "batch_bincov_index.txt"
-        File samples = "samples.txt"
+#        File batch_bincov_index_subset = "batch_bincov_index.txt"
+#        File samples = "samples.txt"
     }
 
     command <<<
         set -euo pipefail
         grep -w -f ${fam_ids} ${ped_input} | cut -f2 | sort -u > samples.txt
         grep -w -f samples.txt ${sample_batches} | cut -f2 | sort -u > batches.txt
-        grep -w -f batches.txt ${batch_bincov_index} > batch_bincov_index.txt
+#        grep -w -f batches.txt ${batch_bincov_index} > batch_bincov_index.txt
         grep -w -f batches.txt ${batch_raw_file} > batch_raw_files_list.txt
         grep -w -f batches.txt ${batch_depth_raw_file} > batch_depth_raw_files_list.txt
     >>>
@@ -280,9 +280,9 @@ task getRawGD{
     RuntimeAttr runtime_attr = select_first([runtime_attr_override, default_attr])
 
     output{
-        File gd_output_from_depth_raw_files = "~{chromosome}.gd.variants.in.depth.raw.files.txt.gz"
-        File gd_output_proband_calls = "~{chromosome}.proband.GD.calls.txt"
-        File gd_output_parent_calls = "~{chromosome}.parent.GD.calls.txt"
+        File gd_raw_depth = "~{chromosome}.gd.variants.in.depth.raw.files.txt.gz"
+        File gd_proband_calls = "~{chromosome}.proband.GD.calls.txt"
+        File gd_parent_calls = "~{chromosome}.parent.GD.calls.txt"
     }
 
     command <<<
@@ -359,7 +359,6 @@ task getRawGDdenovo{
     }
 
     Float input_size = size(select_all([gd_proband_calls, gd_parent_calls]), "GB")
-#    Float input_size = "12 GB"
     Float base_mem_gb = 3.75
 
     RuntimeAttr default_attr = object {
@@ -374,7 +373,7 @@ task getRawGDdenovo{
     RuntimeAttr runtime_attr = select_first([runtime_attr_override, default_attr])
 
     output{
-        File gd_output_from_depth_raw_files_denovo ="~{chromosome}.gd.variants.in.depth.raw.files.de.novo.txt.gz"
+        File gd_raw_depth_denovo ="~{chromosome}.gd.variants.in.depth.raw.files.de.novo.txt.gz"
     }
 
     command <<<
@@ -431,12 +430,7 @@ task mergeGenomicDisorders{
         set -euo pipefail
 
         zcat ~{sep=" " gd_bed_to_merge} | bgzip -c > gd.raw.files.output.ref.txt.gz
-       # awk '{print $5"_"$8"_"$9"\t"$6"\t"$7"\t"$8"\t"$9"\t"$1"\t"$2"\t"$3"\t"$4}' gd.raw.files.output.txt | \
-       #     bgzip -c > gd.raw.files.output.ref.txt.gz
-
         zcat ~{sep=" " gd_denovo_bed_to_merge} | bgzip -c > gd.denovo.raw.files.output.ref.txt.gz
-       # awk '{print $5"_"$8"_"$9"\t"$6"\t"$7"\t"$8"\t"$9"\t"$1"\t"$2"\t"$3"\t"$4}' gd.raw.files.output.txt | \
-       #     bgzip -c > gd.denovo.raw.files.output.ref.txt.gz
     >>>
 
     runtime {
