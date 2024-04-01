@@ -21,6 +21,7 @@ workflow GenomicDisorders {
         File? fam_ids
         String variant_interpretation_docker
         String genomic_disorders_docker
+
         RuntimeAttr? runtime_attr_get_batched_files
         RuntimeAttr? runtime_attr_clean_ped
         RuntimeAttr? runtime_attr_raw_vcf_to_bed
@@ -28,10 +29,10 @@ workflow GenomicDisorders {
         RuntimeAttr? runtime_attr_raw_divide_by_chrom
         RuntimeAttr? runtime_attr_raw_reformat_bed
         RuntimeAttr? runtime_attr_gd
+        RuntimeAttr? runtime_attr_gd_denovo
         RuntimeAttr? runtime_attr_merge_gd
         RuntimeAttr? runtime_attr_reformat_vcf
         RuntimeAttr? runtime_attr_vcf_overlap
-        RuntimeAttr? runtime_attr_gd_denovo
     }
 
     #if the fam_ids input is given, subset all other input files to only include the necessary batches
@@ -91,7 +92,7 @@ workflow GenomicDisorders {
     
     scatter (i in range(length(contigs))){
         #generates a list of genomic disorder regions in the vcf input as well as in the depth raw files
-        call getGDraw{
+        call getRawGD{
             input:
                 genomic_disorder_input=genomic_disorder_input,
                 ped = ped_input,
@@ -103,10 +104,10 @@ workflow GenomicDisorders {
                 runtime_attr_override = runtime_attr_gd
         }
 
-        call getGDdenovo{
+        call getRawGDdenovo{
             input:
-                gd_proband_calls=getGDraw.gd_output_proband_calls,
-                gd_parent_calls=getGDraw.gd_output_parent_calls,
+                gd_proband_calls=getRawGD.gd_output_proband_calls,
+                gd_parent_calls=getRawGD.gd_output_parent_calls,
                 chromosome=contigs[i],
                 variant_interpretation_docker=variant_interpretation_docker,
                 runtime_attr_override = runtime_attr_gd_denovo
@@ -116,8 +117,8 @@ workflow GenomicDisorders {
     #merges the genomic disorder region output from each chromosome to compile a list of genomic disorder regions
     call mergeGenomicDisorders{
         input:
-            gd_bed_to_merge=getGDraw.gd_output_from_depth_raw_files,
-            gd_denovo_bed_to_merge=getGDdenovo.gd_output_from_depth_raw_files_denovo,
+            gd_bed_to_merge=getRawGD.gd_output_from_depth_raw_files,
+            gd_denovo_bed_to_merge=getRawGDdenovo.gd_output_from_depth_raw_files_denovo,
             variant_interpretation_docker=variant_interpretation_docker,
             runtime_attr_override = runtime_attr_merge_gd
     }
@@ -252,7 +253,7 @@ task cleanPed{
     }
 }
 
-task getGDraw{
+task getRawGD{
     input{
 #        File vcf_file
         File ped
@@ -348,7 +349,7 @@ task getGDraw{
     }
 }
 
-task getGDdenovo{
+task getRawGDdenovo{
     input{
         File gd_proband_calls
         File gd_parent_calls
