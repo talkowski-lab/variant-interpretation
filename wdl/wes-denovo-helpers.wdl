@@ -9,6 +9,73 @@ struct RuntimeAttr {
     Int? max_retries
 }
 
+task splitFileWithHeader {
+    input {
+        File file
+        Int shards_per_chunk
+        String cohort_prefix
+        String hail_docker
+        RuntimeAttr? runtime_attr_override
+    }
+    Float input_size = size(file, "GB")
+    Float base_disk_gb = 10.0
+    Float input_disk_scale = 5.0
+    
+    RuntimeAttr runtime_default = object {
+        mem_gb: 4,
+        disk_gb: ceil(base_disk_gb + input_size * input_disk_scale),
+        cpu_cores: 1,
+        preemptible_tries: 3,
+        max_retries: 1,
+        boot_disk_gb: 10
+    }
+
+    RuntimeAttr runtime_override = select_first([runtime_attr_override, runtime_default])
+    Float memory = select_first([runtime_override.mem_gb, runtime_default.mem_gb])
+    Int cpu_cores = select_first([runtime_override.cpu_cores, runtime_default.cpu_cores])
+    
+    runtime {
+        memory: "~{memory} GB"
+        disks: "local-disk ~{select_first([runtime_override.disk_gb, runtime_default.disk_gb])} HDD"
+        cpu: cpu_cores
+        preemptible: select_first([runtime_override.preemptible_tries, runtime_default.preemptible_tries])
+        maxRetries: select_first([runtime_override.max_retries, runtime_default.max_retries])
+        docker: hail_docker
+        bootDiskSizeGb: select_first([runtime_override.boot_disk_gb, runtime_default.boot_disk_gb])
+    }
+
+    command <<<
+    cat <<EOF > split_file.py
+    import pandas as pd
+    import numpy as np
+    import os
+    import sys
+
+    file = sys.argv[1]
+    shards_per_chunk = sys.argv[2]
+
+    file_ext = file.split('.')[-1]
+    base_filename = os.path.basename(file).split(f".{file_ext}")[0]
+    df = pd.read_csv(file, sep='\t')
+    n_chunks = np.ceil(df.shape[0]/shards_per_chunk)
+    i=0
+    filenames = []
+    while i<n_chunks:
+        filename = f"{base_filename}.shard_{i}.{file_ext}"
+        filenames.append(filename)
+        df.iloc[i*shards_per_chunk:(i+1)*shards_per_chunk, :].to_csv(filename, sep='\t', index=False)
+        i+=1
+    
+    pd.Series(filenames).to_csv('chunk_filenames.txt', header=None, index=False)
+    EOF
+    python3 split_file.py ~{file} ~{shards_per_chunk} > stdout
+    >>>
+
+    output {
+        Array[File] chunks = read_lines('chunk_filenames.txt')
+    }
+}
+
 task splitSamples {
     input {
         File vcf_file

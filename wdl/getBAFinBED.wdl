@@ -45,12 +45,12 @@ workflow getBAFinBED {
         cohort_prefix=cohort_prefix
     }
 
-    call mergeSplitVCF.splitFile as splitFile {
+    call helpers.splitFileWithHeader as splitFile {
         input:
         file=bed_file,
         shards_per_chunk=rows_per_shard,
         cohort_prefix=cohort_prefix,
-        vep_hail_docker=hail_docker
+        hail_docker=hail_docker
     }
 
     scatter (file in splitFile.chunks) {
