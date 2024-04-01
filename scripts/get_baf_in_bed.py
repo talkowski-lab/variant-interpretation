@@ -53,7 +53,7 @@ def split_multi_ssc(mt):
 test_shard = hl.import_vcf(vep_file, reference_genome='GRCh38')
 test_shard = split_multi_ssc(test_shard)
 
-test_shard = hl.filter_intervals(test_shard, [hl.parse_locus_interval(locus_interval, 'GRCh38') for locus_interval in bed.locus_interval])
+# test_shard = hl.filter_intervals(test_shard, [hl.parse_locus_interval(locus_interval, 'GRCh38') for locus_interval in bed.locus_interval])
 test_shard = test_shard.filter_rows(hl.is_snp(test_shard.alleles[0], test_shard.alleles[1]))
 
 test_shard = test_shard.filter_rows(test_shard.filters.size()==0)
