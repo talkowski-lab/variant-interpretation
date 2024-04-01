@@ -29,19 +29,29 @@ workflow getBAFinBED {
     }
 
     scatter (vep_file in vep_vcf_files) {
-        call helpers.filterIntervalsToVCF as filterIntervals {
-            input:
-            bed_file=bed_file,
-            input_size=size(vep_file, 'GB'),
-            mt_uri=vep_file,
-            hail_docker=hail_docker
-        }
+        # call helpers.filterIntervalsToVCF as filterIntervals {
+        #     input:
+        #     bed_file=bed_file,
+        #     input_size=size(vep_file, 'GB'),
+        #     mt_uri=vep_file,
+        #     hail_docker=hail_docker
+        # }
 
+        # call getBAF {
+        #     input:
+        #     bed_file=bed_file,
+        #     ped_uri=ped_uri,
+        #     vep_file=filterIntervals.vcf_filt,
+        #     cohort_prefix=cohort_prefix,
+        #     window_size=window_size,
+        #     get_baf_script=get_baf_script,
+        #     hail_docker=hail_docker
+        # }
         call getBAF {
             input:
             bed_file=bed_file,
             ped_uri=ped_uri,
-            vep_file=filterIntervals.vcf_filt,
+            vep_file=vep_file,
             cohort_prefix=cohort_prefix,
             window_size=window_size,
             get_baf_script=get_baf_script,

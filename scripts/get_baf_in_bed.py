@@ -53,7 +53,7 @@ def split_multi_ssc(mt):
 test_shard = hl.import_vcf(vep_file, reference_genome='GRCh38')
 test_shard = split_multi_ssc(test_shard)
 
-# test_shard = hl.filter_intervals(test_shard, [hl.parse_locus_interval(locus_interval, 'GRCh38') for locus_interval in bed.locus_interval])
+test_shard = hl.filter_intervals(test_shard, [hl.parse_locus_interval(locus_interval, 'GRCh38') for locus_interval in bed.locus_interval])
 test_shard = test_shard.filter_rows(hl.is_snp(test_shard.alleles[0], test_shard.alleles[1]))
 
 test_shard = test_shard.filter_rows(test_shard.filters.size()==0)
@@ -64,7 +64,12 @@ output_cols = ['locus', 'alleles', 'window_locus_interval', 'locus_interval', 'S
 
 def test_interval(locus_interval, og_locus_interval, sample, pipeline_id, sv_type, mt):
     mt = hl.filter_intervals(mt, [hl.parse_locus_interval(locus_interval, 'GRCh38')])
-    print(f"number of SNVs in cohort at {locus_interval}: {mt.count_rows()}")
+    n_cohort_vars = mt.count_rows()
+
+    if n_cohort_vars==0:
+        return pd.DataFrame({col: [] for col in output_cols})
+
+    print(f"number of SNVs in cohort at {locus_interval}: {n_cohort_vars}")
 
     father, mother = ped.loc[sample, ['paternal_id','maternal_id']].tolist()
 
