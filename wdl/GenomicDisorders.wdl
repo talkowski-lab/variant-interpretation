@@ -108,7 +108,7 @@ workflow GenomicDisorders {
                 proband_calls = getGDraw.gd_proband_calls[i],
                 parent_calls = getGDraw.gd_parent_calls[i],
                 proband_coverage = getGDraw.gd_coverage_proband[i],
-                parents_coverage = getGDraw.gd_coverage_parents[i],
+#                parents_coverage = getGDraw.gd_coverage_parents[i],
                 chromosome=contigs[i],
                 variant_interpretation_docker=variant_interpretation_docker,
                 runtime_attr_override = runtime_attr_gd_denovo
@@ -360,7 +360,7 @@ task getDenovoGDraw{
         File proband_calls
         File parent_calls
         File proband_coverage
-        File parents_coverage
+#        File parents_coverage
         String chromosome
         String variant_interpretation_docker
         RuntimeAttr? runtime_attr_override
@@ -391,7 +391,8 @@ task getDenovoGDraw{
         cat ~{proband_calls} ~{proband_coverage} | awk -v OFS="\t" '{print $5,$7,$8,$9,$10,$1,$2,$3,$4}' > ~{chromosome}.proband.GD.calls.txt
 
         #concatanate parent calls on GD site with desired overlap
-        cat ~{parent_calls} ~{parents_coverage} | awk -v OFS="\t" '{print $5,$6,$7,$8,$9,$1,$2,$3,$4}' > ~{chromosome}.parent.GD.calls.txt
+        #cat ~{parent_calls} ~{parents_coverage} | awk -v OFS="\t" '{print $5,$6,$7,$8,$9,$1,$2,$3,$4}' > ~{chromosome}.parent.GD.calls.txt
+        cat ~{parent_calls} | awk -v OFS="\t" '{print $5,$6,$7,$8,$9,$1,$2,$3,$4}' > ~{chromosome}.parent.GD.calls.txt
 
         #get de novo only calls
         bedtools intersect -v -wa  -f 0.3 -a ~{chromosome}.proband.GD.calls.txt -b ~{chromosome}.parent.GD.calls.txt > ~{chromosome}.proband.GD.calls.de_novo.txt
