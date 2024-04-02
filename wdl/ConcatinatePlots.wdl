@@ -75,6 +75,7 @@ task concatinate_plots{
         mkdir temp_rd_plots temp_igv_plots
         tar -zxf ~{rd_plots} --directory temp_rd_plots --strip-components=1
         tar -zxf ~{igv_plots} --directory temp_igv_plots --strip-components=1
+        mkdir ~{prefix}_igv_rdtest_plots
         cat ~{varfile} | gunzip | cut -f1-6 > updated_varfile.bed
         tail -n+2 updated_varfile.bed > ~{varfile}.noheader
         echo 'test'
