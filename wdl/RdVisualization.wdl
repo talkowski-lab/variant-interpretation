@@ -48,9 +48,7 @@ workflow RdTestVisualization{
         }
 
         if (defined(regeno)){
-
-            File regeno = select_first([regeno])
-
+            File regeno_ = select_first([regeno])
             call rdtest_regeno{
                 input:
                     bed=generatePerFamilyBed.bed_file,
@@ -59,7 +57,7 @@ workflow RdTestVisualization{
                     medianfile = generatePerFamilyBed.medianfile,
                     sample_batches=sample_batches,
                     outlier_samples=outlier_samples,
-                    regeno = regeno,
+                    regeno = regeno_,
                     batch_bincov=batch_bincov,
                     prefix=prefix,
                     sv_pipeline_rdtest_docker=sv_pipeline_rdtest_docker,
@@ -88,7 +86,6 @@ workflow RdTestVisualization{
 
     call integrate_rd_plots{
         input:
-#            rd_tar = rd_plots,
             rd_tar = select_first([rdtest_regeno.plots, rdtest.plots]),
             prefix = prefix, 
             sv_pipeline_rdtest_docker = sv_pipeline_rdtest_docker,
