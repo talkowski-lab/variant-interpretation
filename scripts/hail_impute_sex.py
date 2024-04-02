@@ -99,6 +99,10 @@ base_cols = ['family_id', 'sample_id', 'paternal_id', 'maternal_id', 'sex', 'phe
 ped.columns = base_cols
 ped = ped.set_index('sample_id')
 
+# subset ped to samples in VCF
+vcf_samps = mt.s.collect()
+ped = ped[ped.index.isin(vcf_samps)].copy()
+
 ped_qc = pd.concat([ped, sample_qc_df], axis=1).reset_index()
 ped_qc = ped_qc.fillna(np.nan)
 ped_qc['pred_sex'] = ped_qc.apply(predict_sex, axis=1).astype('category')
