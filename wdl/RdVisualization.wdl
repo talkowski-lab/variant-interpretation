@@ -93,7 +93,7 @@ workflow RdTestVisualization{
 
     output{
         File Plots = integrate_rd_plots.plot_tar
-        File median = rdtest.median_file
+        File? median = rdtest.median_file
         File? median_geno = rdtest_regeno.rd_median_geno
     }
 }
