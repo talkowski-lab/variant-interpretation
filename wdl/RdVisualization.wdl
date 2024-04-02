@@ -264,7 +264,7 @@ task rdtest_regeno {
         File sample_batches # samples, batches
         File batch_bincov # batch, bincov, index
         File outlier_samples
-        File regeno
+        File? regeno
         Array[File] medianfile
         String prefix
         String sv_pipeline_rdtest_docker
@@ -337,7 +337,7 @@ task rdtest_regeno {
             -w samples_noOutliers.txt \
             -s 10000000 \
             -g TRUE
-            -r {regeno}
+            -r ~{regeno}
 
         mkdir rd_plots
         mv *jpg rd_plots
