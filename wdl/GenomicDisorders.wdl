@@ -177,7 +177,7 @@ workflow GenomicDisorders {
         File gd_depth = mergeGD.gd_raw_merged
         File gd_depth_denovo = mergeGD.gd_raw_merged_denovo
         File vcf_in_gds = getVCFoverlap.out_bed
-        File rd_plots = RdTest.Plots
+        File? rd_plots = RdTest.Plots
     }
 }
 
