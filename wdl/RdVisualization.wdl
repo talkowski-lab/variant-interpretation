@@ -82,8 +82,6 @@ workflow RdTestVisualization{
         }
     }
 
-#    Array[File] rd_plots = if defined(regeno) then rdtest_regeno.plots else rdtest.plots
-
     call integrate_rd_plots{
         input:
             rd_tar = select_first([rdtest_regeno.plots, rdtest.plots]),
@@ -93,7 +91,7 @@ workflow RdTestVisualization{
     }
 
     output{
-        File? Plots = integrate_rd_plots.plot_tar
+        File Plots = integrate_rd_plots.plot_tar
     }
 }
 
