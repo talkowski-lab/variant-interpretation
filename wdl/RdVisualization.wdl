@@ -49,6 +49,16 @@ workflow RdTestVisualization{
 
         if (defined(regeno)){
             File regeno_ = select_first([regeno])
+
+            call generateRegenoFile{
+                input:
+                    family = family,
+                    ped_file = ped_file,
+                    regeno = regeno_,
+                    variant_interpretation_docker = variant_interpretation_docker,
+                    runtime_attr_override = runtime_attr_create_bed
+            }
+
             call rdtest_regeno{
                 input:
                     bed=generatePerFamilyBed.bed_file,
@@ -57,7 +67,7 @@ workflow RdTestVisualization{
                     medianfile = generatePerFamilyBed.medianfile,
                     sample_batches=sample_batches,
                     outlier_samples=outlier_samples,
-                    regeno = regeno_,
+                    regeno_file = generateRegenoFile.regenofile,
                     batch_bincov=batch_bincov,
                     prefix=prefix,
                     sv_pipeline_rdtest_docker=sv_pipeline_rdtest_docker,
@@ -94,7 +104,7 @@ workflow RdTestVisualization{
     output{
         File Plots = integrate_rd_plots.plot_tar
 #        Array[File] median_files = select_first([rdtest_regeno.median_file, rdtest.median_file])
-        Array[File] median_files = if (defined (regeno)) then select_all(rdtest_regeno.median_file) else select_all(rdtest.median_file)
+#        Array[File] median_files = if (defined (regeno)) then select_all(rdtest_regeno.median_file) else select_all(rdtest.median_file)
         Array[File]? median_geno = select_all(rdtest_regeno.rd_median_geno)
     }
 }
@@ -138,6 +148,7 @@ task generatePerFamilyBed {
         paste start.bed sample.bed svtype.bed > final.bed
         grep -w -f samples_in_family.txt ~{sample_batches} |awk '{print $2}' |sort -u >existing_batches.txt
         grep -w -f existing_batches.txt ~{batch_medianfile} | cut -f2 > medianfile.txt
+        grep -w -f existing_batches.txt ~{regeno} | cut -f2 > medianfile.txt
     >>>
     
     output {
@@ -156,6 +167,50 @@ task generatePerFamilyBed {
     }
 }
 
+task generateRegenoFile {
+    input{
+        String family
+        File ped_file
+        File regeno
+        String variant_interpretation_docker
+        RuntimeAttr? runtime_attr_override
+    }
+
+    Float input_size = size(select_all([ped_file, regeno]), "GB")
+    Float base_disk_gb = 10.0
+    Float base_mem_gb = 3.75
+
+    RuntimeAttr default_attr = object {
+                                      mem_gb: base_mem_gb,
+                                      disk_gb: ceil(base_disk_gb + input_size),
+                                      cpu: 1,
+                                      preemptible: 2,
+                                      max_retries: 1,
+                                      boot_disk_gb: 8
+                                  }
+
+    RuntimeAttr runtime_attr = select_first([runtime_attr_override, default_attr])
+
+    command <<<
+        set -ex
+        cat ~{ped_file} | grep -w ~{family} | cut -f2 | sort -u > samples_in_family.txt
+        grep -w -f samples_in_family.txt ~{regeno} |awk '{print $2}' |sort -u > regenofile.txt
+    >>>
+
+    output {
+        Array[File] regenofile = read_lines("regenofile.txt")
+    }
+
+    runtime {
+        cpu: select_first([runtime_attr.cpu, default_attr.cpu])
+        memory: select_first([runtime_attr.mem_gb, default_attr.mem_gb]) + " GiB"
+        disks: "local-disk " + select_first([runtime_attr.disk_gb, default_attr.disk_gb]) + " HDD"
+        bootDiskSizeGb: select_first([runtime_attr.boot_disk_gb, default_attr.boot_disk_gb])
+        docker: variant_interpretation_docker
+        preemptible: select_first([runtime_attr.preemptible, default_attr.preemptible])
+        maxRetries: select_first([runtime_attr.max_retries, default_attr.max_retries])
+    }
+}
 # Run rdtest
 task rdtest {
     input{
@@ -270,7 +325,7 @@ task rdtest_regeno {
         File sample_batches # samples, batches
         File batch_bincov # batch, bincov, index
         File outlier_samples
-        File regeno
+        Array[File] regeno_file
         Array[File] medianfile
         String prefix
         String sv_pipeline_rdtest_docker
@@ -297,8 +352,9 @@ task rdtest_regeno {
         cut -f5 test.bed |sed 's/\,/\n/g'|sort -u > samples.txt
         cat ~{ped_file} | grep -w -f samples.txt | cut -f1 | sort -u > families.txt
         cat ~{ped_file} | grep -w -f families.txt | cut -f2 | sort -u > all_samples.txt
-        fgrep -wf all_samples.txt ~{sample_batches} |awk '{print $2}' |sort -u >existing_batches.txt
+        fgrep -wf all_samples.txt ~{sample_batches} |awk '{print $2}' |sort -u > existing_batches.txt
         grep -w -f existing_batches.txt ~{batch_bincov} > bincovlist.txt
+
         paste ~{sep=" " medianfile} > medianfile.txt
 
         i=0
@@ -343,7 +399,7 @@ task rdtest_regeno {
             -w samples_noOutliers.txt \
             -s 10000000 \
             -g TRUE
-            -r ~{regeno}
+            -r ~{sep=" " regeno_file}
 
         mkdir rd_plots
         mv *jpg rd_plots
