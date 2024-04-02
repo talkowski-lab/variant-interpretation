@@ -1,0 +1,488 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<project version="4">
+  <component name="ChangeListManager">
+    <list default="true" id="170ab517-953d-415e-a9e5-9950c874bf30" name="Default Changelist" comment="Adding verbosity to reformatVCF" />
+    <option name="SHOW_DIALOG" value="false" />
+    <option name="HIGHLIGHT_CONFLICTS" value="true" />
+    <option name="HIGHLIGHT_NON_ACTIVE_CHANGELIST" value="false" />
+    <option name="LAST_RESOLUTION" value="IGNORE" />
+  </component>
+  <component name="FileTemplateManagerImpl">
+    <option name="RECENT_TEMPLATES">
+      <list>
+        <option value="Python Script" />
+      </list>
+    </option>
+  </component>
+  <component name="Git.Merge.Settings">
+    <option name="BRANCH" value="nehir_fix_denovo" />
+  </component>
+  <component name="Git.Settings">
+    <option name="RECENT_BRANCH_BY_REPOSITORY">
+      <map>
+        <entry key="$PROJECT_DIR$" value="main" />
+      </map>
+    </option>
+    <option name="RECENT_GIT_ROOT_PATH" value="$PROJECT_DIR$" />
+    <option name="RESET_MODE" value="HARD" />
+  </component>
+  <component name="GitSEFilterConfiguration">
+    <file-type-list>
+      <filtered-out-file-type name="LOCAL_BRANCH" />
+      <filtered-out-file-type name="REMOTE_BRANCH" />
+      <filtered-out-file-type name="TAG" />
+      <filtered-out-file-type name="COMMIT_BY_MESSAGE" />
+    </file-type-list>
+  </component>
+  <component name="ProjectId" id="26RDZGvk9skdp0TwF2oMIAVaYPZ" />
+  <component name="ProjectLevelVcsManager" settingsEditedManually="true" />
+  <component name="ProjectViewState">
+    <option name="hideEmptyMiddlePackages" value="true" />
+    <option name="showLibraryContents" value="true" />
+  </component>
+  <component name="PropertiesComponent">
+    <property name="RunOnceActivity.OpenProjectViewOnStart" value="true" />
+    <property name="RunOnceActivity.ShowReadmeOnStart" value="true" />
+    <property name="TODO_SCOPE" value="All Places" />
+    <property name="last_opened_file_path" value="$PROJECT_DIR$/wdl" />
+    <property name="settings.editor.selected.configurable" value="com.jetbrains.python.configuration.PyActiveSdkModuleConfigurable" />
+  </component>
+  <component name="RecentsManager">
+    <key name="CopyFile.RECENT_KEYS">
+      <recent name="$PROJECT_DIR$/wdl" />
+    </key>
+  </component>
+  <component name="SpellCheckerSettings" RuntimeDictionaries="0" Folders="0" CustomDictionaries="0" DefaultDictionary="application-level" UseSingleDictionary="true" transferred="true" />
+  <component name="TaskManager">
+    <task active="true" id="Default" summary="Default task">
+      <changelist id="170ab517-953d-415e-a9e5-9950c874bf30" name="Default Changelist" comment="" />
+      <created>1647377561236</created>
+      <option name="number" value="Default" />
+      <option name="presentableId" value="Default" />
+      <updated>1647377561236</updated>
+    </task>
+    <task id="LOCAL-00563" summary="Uncomment after testing">
+      <created>1712007505951</created>
+      <option name="number" value="00563" />
+      <option name="presentableId" value="LOCAL-00563" />
+      <option name="project" value="LOCAL" />
+      <updated>1712007505951</updated>
+    </task>
+    <task id="LOCAL-00564" summary="Remove [i]">
+      <created>1712007700992</created>
+      <option name="number" value="00564" />
+      <option name="presentableId" value="LOCAL-00564" />
+      <option name="project" value="LOCAL" />
+      <updated>1712007700992</updated>
+    </task>
+    <task id="LOCAL-00565" summary="Update task names">
+      <created>1712007942202</created>
+      <option name="number" value="00565" />
+      <option name="presentableId" value="LOCAL-00565" />
+      <option name="project" value="LOCAL" />
+      <updated>1712007942202</updated>
+    </task>
+    <task id="LOCAL-00566" summary="Update output names">
+      <created>1712008301297</created>
+      <option name="number" value="00566" />
+      <option name="presentableId" value="LOCAL-00566" />
+      <option name="project" value="LOCAL" />
+      <updated>1712008301297</updated>
+    </task>
+    <task id="LOCAL-00567" summary="Reformat file names">
+      <created>1712008743338</created>
+      <option name="number" value="00567" />
+      <option name="presentableId" value="LOCAL-00567" />
+      <option name="project" value="LOCAL" />
+      <updated>1712008743338</updated>
+    </task>
+    <task id="LOCAL-00568" summary="Updates task names">
+      <created>1712009017524</created>
+      <option name="number" value="00568" />
+      <option name="presentableId" value="LOCAL-00568" />
+      <option name="project" value="LOCAL" />
+      <updated>1712009017524</updated>
+    </task>
+    <task id="LOCAL-00569" summary="Remove commented entries">
+      <created>1712009055902</created>
+      <option name="number" value="00569" />
+      <option name="presentableId" value="LOCAL-00569" />
+      <option name="project" value="LOCAL" />
+      <updated>1712009055902</updated>
+    </task>
+    <task id="LOCAL-00570" summary="Add RD plot to GD and Fix RD bug">
+      <created>1712068087483</created>
+      <option name="number" value="00570" />
+      <option name="presentableId" value="LOCAL-00570" />
+      <option name="project" value="LOCAL" />
+      <updated>1712068087483</updated>
+    </task>
+    <task id="LOCAL-00571" summary="Update ifdefined">
+      <created>1712068936269</created>
+      <option name="number" value="00571" />
+      <option name="presentableId" value="LOCAL-00571" />
+      <option name="project" value="LOCAL" />
+      <updated>1712068936269</updated>
+    </task>
+    <task id="LOCAL-00572" summary="Update optional regeno file">
+      <created>1712069011977</created>
+      <option name="number" value="00572" />
+      <option name="presentableId" value="LOCAL-00572" />
+      <option name="project" value="LOCAL" />
+      <updated>1712069011977</updated>
+    </task>
+    <task id="LOCAL-00573" summary="Update optional integraterd task">
+      <created>1712069091806</created>
+      <option name="number" value="00573" />
+      <option name="presentableId" value="LOCAL-00573" />
+      <option name="project" value="LOCAL" />
+      <updated>1712069091806</updated>
+    </task>
+    <task id="LOCAL-00574" summary="Update optional integraterd task">
+      <created>1712069120632</created>
+      <option name="number" value="00574" />
+      <option name="presentableId" value="LOCAL-00574" />
+      <option name="project" value="LOCAL" />
+      <updated>1712069120632</updated>
+    </task>
+    <task id="LOCAL-00575" summary="Update optional integraterd task">
+      <created>1712069184667</created>
+      <option name="number" value="00575" />
+      <option name="presentableId" value="LOCAL-00575" />
+      <option name="project" value="LOCAL" />
+      <updated>1712069184667</updated>
+    </task>
+    <task id="LOCAL-00576" summary="Update optional regeno">
+      <created>1712069370031</created>
+      <option name="number" value="00576" />
+      <option name="presentableId" value="LOCAL-00576" />
+      <option name="project" value="LOCAL" />
+      <updated>1712069370031</updated>
+    </task>
+    <task id="LOCAL-00577" summary="Update optional regeno">
+      <created>1712069445852</created>
+      <option name="number" value="00577" />
+      <option name="presentableId" value="LOCAL-00577" />
+      <option name="project" value="LOCAL" />
+      <updated>1712069445852</updated>
+    </task>
+    <task id="LOCAL-00578" summary="Add selectfirst to regeno">
+      <created>1712070953464</created>
+      <option name="number" value="00578" />
+      <option name="presentableId" value="LOCAL-00578" />
+      <option name="project" value="LOCAL" />
+      <updated>1712070953464</updated>
+    </task>
+    <task id="LOCAL-00579" summary="Update regeno inputs">
+      <created>1712071318318</created>
+      <option name="number" value="00579" />
+      <option name="presentableId" value="LOCAL-00579" />
+      <option name="project" value="LOCAL" />
+      <updated>1712071318318</updated>
+    </task>
+    <task id="LOCAL-00580" summary="Update regeno inputs">
+      <created>1712071389502</created>
+      <option name="number" value="00580" />
+      <option name="presentableId" value="LOCAL-00580" />
+      <option name="project" value="LOCAL" />
+      <updated>1712071389502</updated>
+    </task>
+    <task id="LOCAL-00581" summary="Make final output optional">
+      <created>1712071878466</created>
+      <option name="number" value="00581" />
+      <option name="presentableId" value="LOCAL-00581" />
+      <option name="project" value="LOCAL" />
+      <updated>1712071878466</updated>
+    </task>
+    <task id="LOCAL-00582" summary="Make final output optional">
+      <created>1712071926468</created>
+      <option name="number" value="00582" />
+      <option name="presentableId" value="LOCAL-00582" />
+      <option name="project" value="LOCAL" />
+      <updated>1712071926468</updated>
+    </task>
+    <task id="LOCAL-00583" summary="Update if statement">
+      <created>1712072106810</created>
+      <option name="number" value="00583" />
+      <option name="presentableId" value="LOCAL-00583" />
+      <option name="project" value="LOCAL" />
+      <updated>1712072106810</updated>
+    </task>
+    <task id="LOCAL-00584" summary="Update if statement">
+      <created>1712072148114</created>
+      <option name="number" value="00584" />
+      <option name="presentableId" value="LOCAL-00584" />
+      <option name="project" value="LOCAL" />
+      <updated>1712072148114</updated>
+    </task>
+    <task id="LOCAL-00585" summary="Take array file definition out">
+      <created>1712072414725</created>
+      <option name="number" value="00585" />
+      <option name="presentableId" value="LOCAL-00585" />
+      <option name="project" value="LOCAL" />
+      <updated>1712072414725</updated>
+    </task>
+    <task id="LOCAL-00586" summary="add if defined">
+      <created>1712072599204</created>
+      <option name="number" value="00586" />
+      <option name="presentableId" value="LOCAL-00586" />
+      <option name="project" value="LOCAL" />
+      <updated>1712072599204</updated>
+    </task>
+    <task id="LOCAL-00587" summary="add if defined">
+      <created>1712072985466</created>
+      <option name="number" value="00587" />
+      <option name="presentableId" value="LOCAL-00587" />
+      <option name="project" value="LOCAL" />
+      <updated>1712072985466</updated>
+    </task>
+    <task id="LOCAL-00588" summary="add if defined">
+      <created>1712073253879</created>
+      <option name="number" value="00588" />
+      <option name="presentableId" value="LOCAL-00588" />
+      <option name="project" value="LOCAL" />
+      <updated>1712073253879</updated>
+    </task>
+    <task id="LOCAL-00589" summary="Fix regeno">
+      <created>1712073340780</created>
+      <option name="number" value="00589" />
+      <option name="presentableId" value="LOCAL-00589" />
+      <option name="project" value="LOCAL" />
+      <updated>1712073340780</updated>
+    </task>
+    <task id="LOCAL-00590" summary="Fix regeno">
+      <created>1712073433392</created>
+      <option name="number" value="00590" />
+      <option name="presentableId" value="LOCAL-00590" />
+      <option name="project" value="LOCAL" />
+      <updated>1712073433392</updated>
+    </task>
+    <task id="LOCAL-00591" summary="Fix regeno">
+      <created>1712074188222</created>
+      <option name="number" value="00591" />
+      <option name="presentableId" value="LOCAL-00591" />
+      <option name="project" value="LOCAL" />
+      <updated>1712074188222</updated>
+    </task>
+    <task id="LOCAL-00592" summary="Fix regeno">
+      <created>1712074517971</created>
+      <option name="number" value="00592" />
+      <option name="presentableId" value="LOCAL-00592" />
+      <option name="project" value="LOCAL" />
+      <updated>1712074517971</updated>
+    </task>
+    <task id="LOCAL-00593" summary="Update rd_tar">
+      <created>1712076859246</created>
+      <option name="number" value="00593" />
+      <option name="presentableId" value="LOCAL-00593" />
+      <option name="project" value="LOCAL" />
+      <updated>1712076859246</updated>
+    </task>
+    <task id="LOCAL-00594" summary="Update rd_tar">
+      <created>1712076948531</created>
+      <option name="number" value="00594" />
+      <option name="presentableId" value="LOCAL-00594" />
+      <option name="project" value="LOCAL" />
+      <updated>1712076948531</updated>
+    </task>
+    <task id="LOCAL-00595" summary="Fix gd_raw_merged">
+      <created>1712076968629</created>
+      <option name="number" value="00595" />
+      <option name="presentableId" value="LOCAL-00595" />
+      <option name="project" value="LOCAL" />
+      <updated>1712076968629</updated>
+    </task>
+    <task id="LOCAL-00596" summary="Update sample batches">
+      <created>1712077174961</created>
+      <option name="number" value="00596" />
+      <option name="presentableId" value="LOCAL-00596" />
+      <option name="project" value="LOCAL" />
+      <updated>1712077174961</updated>
+    </task>
+    <task id="LOCAL-00597" summary="Select first sv_pipeline_rdtest_docker">
+      <created>1712077226833</created>
+      <option name="number" value="00597" />
+      <option name="presentableId" value="LOCAL-00597" />
+      <option name="project" value="LOCAL" />
+      <updated>1712077226833</updated>
+    </task>
+    <task id="LOCAL-00598" summary="Select first sv_pipeline_rdtest_docker">
+      <created>1712077272194</created>
+      <option name="number" value="00598" />
+      <option name="presentableId" value="LOCAL-00598" />
+      <option name="project" value="LOCAL" />
+      <updated>1712077272194</updated>
+    </task>
+    <task id="LOCAL-00599" summary="Keep median geno in output">
+      <created>1712077671567</created>
+      <option name="number" value="00599" />
+      <option name="presentableId" value="LOCAL-00599" />
+      <option name="project" value="LOCAL" />
+      <updated>1712077671567</updated>
+    </task>
+    <task id="LOCAL-00600" summary="Make outputs optional">
+      <created>1712077722996</created>
+      <option name="number" value="00600" />
+      <option name="presentableId" value="LOCAL-00600" />
+      <option name="project" value="LOCAL" />
+      <updated>1712077722996</updated>
+    </task>
+    <task id="LOCAL-00601" summary="Make outputs array">
+      <created>1712077788658</created>
+      <option name="number" value="00601" />
+      <option name="presentableId" value="LOCAL-00601" />
+      <option name="project" value="LOCAL" />
+      <updated>1712077788658</updated>
+    </task>
+    <task id="LOCAL-00602" summary="Update median outputs">
+      <created>1712078759732</created>
+      <option name="number" value="00602" />
+      <option name="presentableId" value="LOCAL-00602" />
+      <option name="project" value="LOCAL" />
+      <updated>1712078759732</updated>
+    </task>
+    <task id="LOCAL-00603" summary="Update median outputs">
+      <created>1712078805372</created>
+      <option name="number" value="00603" />
+      <option name="presentableId" value="LOCAL-00603" />
+      <option name="project" value="LOCAL" />
+      <updated>1712078805372</updated>
+    </task>
+    <task id="LOCAL-00604" summary="Update median outputs">
+      <created>1712078864647</created>
+      <option name="number" value="00604" />
+      <option name="presentableId" value="LOCAL-00604" />
+      <option name="project" value="LOCAL" />
+      <updated>1712078864647</updated>
+    </task>
+    <task id="LOCAL-00605" summary="Remove outputs">
+      <created>1712078940393</created>
+      <option name="number" value="00605" />
+      <option name="presentableId" value="LOCAL-00605" />
+      <option name="project" value="LOCAL" />
+      <updated>1712078940393</updated>
+    </task>
+    <task id="LOCAL-00606" summary="Revert">
+      <created>1712079106151</created>
+      <option name="number" value="00606" />
+      <option name="presentableId" value="LOCAL-00606" />
+      <option name="project" value="LOCAL" />
+      <updated>1712079106151</updated>
+    </task>
+    <task id="LOCAL-00607" summary="Make rdplots optional">
+      <created>1712080102071</created>
+      <option name="number" value="00607" />
+      <option name="presentableId" value="LOCAL-00607" />
+      <option name="project" value="LOCAL" />
+      <updated>1712080102071</updated>
+    </task>
+    <task id="LOCAL-00608" summary="Keep median output">
+      <created>1712080184497</created>
+      <option name="number" value="00608" />
+      <option name="presentableId" value="LOCAL-00608" />
+      <option name="project" value="LOCAL" />
+      <updated>1712080184497</updated>
+    </task>
+    <task id="LOCAL-00609" summary="Keep median output">
+      <created>1712080254688</created>
+      <option name="number" value="00609" />
+      <option name="presentableId" value="LOCAL-00609" />
+      <option name="project" value="LOCAL" />
+      <updated>1712080254688</updated>
+    </task>
+    <task id="LOCAL-00610" summary="Remove comma">
+      <created>1712080302905</created>
+      <option name="number" value="00610" />
+      <option name="presentableId" value="LOCAL-00610" />
+      <option name="project" value="LOCAL" />
+      <updated>1712080302905</updated>
+    </task>
+    <task id="LOCAL-00611" summary="MAke it optional">
+      <created>1712080332393</created>
+      <option name="number" value="00611" />
+      <option name="presentableId" value="LOCAL-00611" />
+      <option name="project" value="LOCAL" />
+      <updated>1712080332394</updated>
+    </task>
+    <option name="localTasksCounter" value="612" />
+    <servers />
+  </component>
+  <component name="Vcs.Log.Tabs.Properties">
+    <option name="TAB_STATES">
+      <map>
+        <entry key="MAIN">
+          <value>
+            <State>
+              <option name="FILTERS">
+                <map>
+                  <entry key="branch">
+                    <value>
+                      <list>
+                        <option value="asj_gds_cohort_update" />
+                      </list>
+                    </value>
+                  </entry>
+                </map>
+              </option>
+              <option name="COLUMN_ID_WIDTH">
+                <map>
+                  <entry key="Table.Default.Author.ColumnIdWidth" value="110" />
+                  <entry key="Table.Default.Date.ColumnIdWidth" value="109" />
+                </map>
+              </option>
+            </State>
+          </value>
+        </entry>
+      </map>
+    </option>
+    <option name="RECENT_FILTERS">
+      <map>
+        <entry key="Branch">
+          <value>
+            <list>
+              <RecentGroup>
+                <option name="FILTER_VALUES">
+                  <option value="main" />
+                </option>
+              </RecentGroup>
+              <RecentGroup>
+                <option name="FILTER_VALUES">
+                  <option value="origin/main" />
+                </option>
+              </RecentGroup>
+            </list>
+          </value>
+        </entry>
+      </map>
+    </option>
+    <option name="oldMeFiltersMigrated" value="true" />
+  </component>
+  <component name="VcsManagerConfiguration">
+    <MESSAGE value="Update ifdefined" />
+    <MESSAGE value="Update optional regeno file" />
+    <MESSAGE value="Update optional integraterd task" />
+    <MESSAGE value="Update optional regeno" />
+    <MESSAGE value="Add selectfirst to regeno" />
+    <MESSAGE value="Update regeno inputs" />
+    <MESSAGE value="Make final output optional" />
+    <MESSAGE value="Update if statement" />
+    <MESSAGE value="Take array file definition out" />
+    <MESSAGE value="add if defined" />
+    <MESSAGE value="Fix regeno" />
+    <MESSAGE value="Update rd_tar" />
+    <MESSAGE value="Fix gd_raw_merged" />
+    <MESSAGE value="Update sample batches" />
+    <MESSAGE value="Select first sv_pipeline_rdtest_docker" />
+    <MESSAGE value="Keep median geno in output" />
+    <MESSAGE value="Make outputs optional" />
+    <MESSAGE value="Make outputs array" />
+    <MESSAGE value="Update median outputs" />
+    <MESSAGE value="Remove outputs" />
+    <MESSAGE value="Revert" />
+    <MESSAGE value="Make rdplots optional" />
+    <MESSAGE value="Keep median output" />
+    <MESSAGE value="Remove comma" />
+    <MESSAGE value="MAke it optional" />
+    <option name="LAST_COMMIT_MESSAGE" value="MAke it optional" />
+  </component>
+</project>
