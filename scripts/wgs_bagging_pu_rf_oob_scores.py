@@ -33,18 +33,17 @@ from sklearn.ensemble import RandomForestClassifier
 
 vcf_metrics_tsv = sys.argv[1]
 ultra_rare_variants_tsv = sys.argv[2]
-polyx_vcf = sys.argv[3]
-cohort_prefix = sys.argv[4]
-var_type = sys.argv[5]
-numeric = sys.argv[6]
-vqslod_cutoff = float(sys.argv[7])
-prop_dn = float(sys.argv[8])
-ultra_rare_rep_regions = sys.argv[9]
-rep_regions = sys.argv[10]
-known_vars_uri = sys.argv[11]
-metric = sys.argv[12]  # ['roc-auc', 'accuracy', 'f1', 'fp_fn_ratio']
-n_estimators_rf = int(sys.argv[13])
-n_bags = int(sys.argv[14])
+cohort_prefix = sys.argv[3]
+var_type = sys.argv[4]
+numeric = sys.argv[5]
+vqslod_cutoff = float(sys.argv[6])
+prop_dn = float(sys.argv[7])
+ultra_rare_rep_regions = sys.argv[8]
+rep_regions = sys.argv[9]
+known_vars_uri = sys.argv[10]
+metric = sys.argv[11]  # ['roc-auc', 'accuracy', 'f1', 'fp_fn_ratio']
+n_estimators_rf = int(sys.argv[12])
+n_bags = int(sys.argv[13])
 
 def fp_fn_ratio(y, y_pred):
     FP = ((y==0) & (y_pred==1)).sum()
@@ -72,7 +71,7 @@ known_vars_exist = (known_vars_uri!='false')
 
 # Functions
 
-def load_variants(vcf_metrics_tsv, ultra_rare_variants_tsv, polyx_vcf, var_type): 
+def load_variants(vcf_metrics_tsv, ultra_rare_variants_tsv, var_type): 
     ultra_rare = pd.read_csv(ultra_rare_variants_tsv, sep='\t')
     ultra_rare['Indel_type'] = ultra_rare.apply(lambda x: 'Insertion' if (len(x.ALT) - len(x.REF)) > 0 else 'Deletion', axis=1)
     ultra_rare.loc[ultra_rare.TYPE=='SNV', 'Indel_type'] = 'SNV'
@@ -84,9 +83,6 @@ def load_variants(vcf_metrics_tsv, ultra_rare_variants_tsv, polyx_vcf, var_type)
     final_output.loc[final_output.TYPE=='SNV', 'Indel_type'] = 'SNV'
     final_output = final_output[final_output.Indel_type==var_type]
     # final_output = final_output[~final_output.SAMPLE.isin(outlier_samples)]
-
-    polyx_df = pd.read_csv(polyx_vcf, sep='\t', comment='#', header=None)
-    ultra_rare['POLYX'] = polyx_df[7].str.split('=').str[-1].astype(int)
 
     ultra_rare = ultra_rare[(~ultra_rare.AD_father.isna()) & (~ultra_rare.AD_mother.isna())].reset_index(drop=True)
 
@@ -223,7 +219,7 @@ def get_importances_oob_scores(merged_output, numeric, n_estimators_rf=100, n_ba
 
 # Overall function
 
-final_output, ultra_rare, final_output_raw, ultra_rare_raw = load_variants(vcf_metrics_tsv, ultra_rare_variants_tsv, polyx_vcf, var_type)
+final_output, ultra_rare, final_output_raw, ultra_rare_raw = load_variants(vcf_metrics_tsv, ultra_rare_variants_tsv, var_type)
 
 final_output, ultra_rare, merged_output = filter_variants(final_output, ultra_rare, final_output_raw, ultra_rare_raw)
 frac=min(1, prop_dn*final_output.shape[0]/ultra_rare.shape[0])

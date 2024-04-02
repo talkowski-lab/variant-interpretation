@@ -15,7 +15,6 @@ workflow BaggingPU_RF {
     input {
         File vcf_metrics_tsv_final
         File ultra_rare_variants_tsv
-        File ultra_rare_polyx_vcf
         File repetitive_regions_bed
         File rep_regions
         String var_type  # Insertion, Deletion, or SNV
@@ -50,7 +49,6 @@ workflow BaggingPU_RF {
                 input:
                     vcf_metrics_tsv_final=vcf_metrics_tsv_final,
                     ultra_rare_variants_tsv=ultra_rare_variants_tsv,
-                    ultra_rare_polyx_vcf=ultra_rare_polyx_vcf,
                     rep_regions=rep_regions,
                     ultra_rare_rep_regions=flagRepetitiveRegions.output_bed,
                     var_type=var_type,
@@ -83,7 +81,6 @@ task runBaggingPU_RF {
     input {
         File vcf_metrics_tsv_final
         File ultra_rare_variants_tsv
-        File ultra_rare_polyx_vcf
         File ultra_rare_rep_regions
         File rep_regions
         Array[String] numeric
@@ -129,7 +126,7 @@ task runBaggingPU_RF {
     command <<<
         curl ~{bagging_pu_rf_script} > run_bagging_pu.py
         curl ~{bagging_pu_source_script} > baggingPU.py
-        python3 run_bagging_pu.py ~{vcf_metrics_tsv_final} ~{ultra_rare_variants_tsv} ~{ultra_rare_polyx_vcf} \
+        python3 run_bagging_pu.py ~{vcf_metrics_tsv_final} ~{ultra_rare_variants_tsv} \
         ~{cohort_prefix} ~{var_type} ~{sep=',' numeric} ~{vqslod_cutoff} \
         ~{prop_dn} ~{ultra_rare_rep_regions} ~{rep_regions} ~{known_vars_uri} ~{metric} \
         ~{n_estimators_rf} ~{n_bag} > stdout
