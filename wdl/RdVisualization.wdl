@@ -84,7 +84,8 @@ workflow RdTestVisualization{
 
     call integrate_rd_plots{
         input:
-            rd_tar = select_first([rdtest_regeno.plots, rdtest.plots]),
+#            rd_tar = select_first([rdtest_regeno.plots, rdtest.plots]),
+            rd_tar = if (defined (regeno)) then select_all(rdtest_regeno.plots) else select_all(rdtest.plots),
             prefix = prefix, 
             sv_pipeline_rdtest_docker = sv_pipeline_rdtest_docker,
             runtime_attr_override = runtime_attr_rdtest
