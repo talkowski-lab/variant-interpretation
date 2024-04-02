@@ -21,7 +21,6 @@ workflow downsampleVariantsfromTSV {
         Float indel_scale=1
         String jvarkit_docker
         String vep_hail_docker
-        String sv_base_mini_docker
     }
 
     Array[Pair[String, Float]] var_types_scales = zip(['SNV', 'Insertion', 'Deletion'], [snv_scale, indel_scale, indel_scale])
@@ -32,7 +31,7 @@ workflow downsampleVariantsfromTSV {
         call getNumVars {
         input:
             reference_tsv=reference_tsv,
-            sv_base_mini_docker=sv_base_mini_docker,
+            vep_hail_docker=vep_hail_docker,
             var_type=var_type
         }
 
@@ -68,68 +67,6 @@ workflow downsampleVariantsfromTSV {
             vep_hail_docker=vep_hail_docker
         }
     }
-    # call getNumVars as getNumSNVs {
-    #     input:
-    #         reference_tsv=reference_tsv,
-    #         sv_base_mini_docker=sv_base_mini_docker,
-    #         var_type='SNV'
-    # }
-    # call downsampleVariantsPython as downsampleSNVs {
-    #     input:
-    #         full_input_tsv=full_input_tsv,
-    #         vep_hail_docker=vep_hail_docker,
-    #         var_type='SNV',
-    #         chunk_size=chunk_size,
-    #         scale=snv_scale,
-    #         num_variants=getNumSNVs.num_variants
-    # }
-
-    # call getNumVars as getNumIns {
-    #     input:
-    #         reference_tsv=reference_tsv,
-    #         sv_base_mini_docker=sv_base_mini_docker,
-    #         var_type='Insertion'
-    # }
-    # call downsampleVariantsPython as downsampleIns {
-    #     input:
-    #         full_input_tsv=full_input_tsv,
-    #         vep_hail_docker=vep_hail_docker,
-    #         var_type='Insertion',
-    #         chunk_size=chunk_size,
-    #         scale=indel_scale,
-    #         num_variants=getNumIndels.num_variants
-    # }
-
-    # call getNumVars as getNumDel {
-    #     input:
-    #         reference_tsv=reference_tsv,
-    #         sv_base_mini_docker=sv_base_mini_docker,
-    #         var_type='Deletion'
-    # }
-    # call downsampleVariantsPython as downsampleDel {
-    #     input:
-    #         full_input_tsv=full_input_tsv,
-    #         vep_hail_docker=vep_hail_docker,
-    #         var_type='Deletion',
-    #         chunk_size=chunk_size,
-    #         scale=indel_scale,
-    #         num_variants=getNumIndels.num_variants
-    # }
-
-    # call convertTSVtoVCF {
-    #     input:
-    #     tsv=downsampleIns.downsampled_tsv,
-    #     vep_hail_docker=vep_hail_docker
-    # }
-
-    # call annotatePOLYX {
-    #     input:
-    #     vcf_file=convertTSVtoVCF.output_vcf,
-    #     hg38_reference=hg38_reference,
-    #     hg38_reference_fai=hg38_reference_fai,
-    #     hg38_reference_dict=hg38_reference_dict,
-    #     jvarkit_docker=jvarkit_docker
-    # }
 
     output {
         File downsampled_tsv_SNV = mergePOLYX.downsampled_polyx_tsv[0]
@@ -141,7 +78,7 @@ workflow downsampleVariantsfromTSV {
 task getNumVars {
     input {
         File reference_tsv
-        String sv_base_mini_docker
+        String vep_hail_docker
         String var_type
         RuntimeAttr? runtime_attr_override
     }
@@ -167,18 +104,31 @@ task getNumVars {
         cpu: select_first([runtime_override.cpu_cores, runtime_default.cpu_cores])
         preemptible: select_first([runtime_override.preemptible_tries, runtime_default.preemptible_tries])
         maxRetries: select_first([runtime_override.max_retries, runtime_default.max_retries])
-        docker: sv_base_mini_docker
+        docker: vep_hail_docker
         bootDiskSizeGb: select_first([runtime_override.boot_disk_gb, runtime_default.boot_disk_gb])
     }
 
     command <<<
-        type_col=$(cat ~{reference_tsv} | head -n 1 | awk -v name='TYPE' '{for (i=1;i<=NF;i++) if ($i==name) print i; exit}')
-        n_vars=$(cat ~{reference_tsv} | awk -v col=$type_col '{ if ($col == "~{var_type}") { print } }' | wc -l)
-        echo $n_vars > n_vars.txt
+        cat <<EOF > get_num_vars.py
+        import pandas as pd
+        import os
+        import sys
+
+        reference_tsv = sys.argv[1]
+        var_type = sys.argv[2]
+
+        df = pd.read_csv(reference_tsv, sep='\t')
+        df['Indel_type'] = df.apply(lambda x: 'Insertion' if (len(x.ALT) - len(x.REF)) > 0 else 'Deletion', axis=1)
+        df.loc[df.TYPE=='SNV', 'Indel_type'] = 'SNV'
+        df = df[df.Indel_type==var_type]
+        print(df.shape[0])
+        EOF
+
+        python3.9 get_num_vars.py ~{reference_tsv} ~{var_type} > stdout
     >>>
 
     output {
-        Int num_variants = read_lines('n_vars.txt')[0]
+        Int num_variants = read_lines(stdout())[0]
     }
 }
 
