@@ -148,7 +148,6 @@ task generatePerFamilyBed {
         paste start.bed sample.bed svtype.bed > final.bed
         grep -w -f samples_in_family.txt ~{sample_batches} |awk '{print $2}' |sort -u >existing_batches.txt
         grep -w -f existing_batches.txt ~{batch_medianfile} | cut -f2 > medianfile.txt
-        grep -w -f existing_batches.txt ~{regeno} | cut -f2 > medianfile.txt
     >>>
     
     output {
