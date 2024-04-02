@@ -179,7 +179,7 @@ workflow GenomicDisorders {
         File vcf_in_gds = getVCFoverlap.out_bed
         File? rd_plots = RdTest.Plots
         Array[File]? rd_median_files = RdTest.median_files
-#        Array[File?] median_geno_file = RdTest.median_geno
+        Array[File]? rd_median_geno_files = RdTest.median_geno
     }
 }
 

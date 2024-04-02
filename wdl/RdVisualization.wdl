@@ -95,7 +95,7 @@ workflow RdTestVisualization{
         File Plots = integrate_rd_plots.plot_tar
 #        Array[File] median_files = select_first([rdtest_regeno.median_file, rdtest.median_file])
         Array[File] median_files = if (defined (regeno)) then select_all(rdtest_regeno.median_file) else select_all(rdtest.median_file)
-#        Array[File?] median_geno = select_all(rdtest_regeno.rd_median_geno)
+        Array[File]? median_geno = select_all(rdtest_regeno.rd_median_geno)
     }
 }
 
