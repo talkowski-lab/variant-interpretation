@@ -96,6 +96,7 @@ workflow RdTestVisualization{
     }
 }
 
+
 task generatePerFamilyBed {
     input{
         File bed
