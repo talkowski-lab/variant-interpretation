@@ -47,7 +47,7 @@ workflow RdTestVisualization{
                 runtime_attr_override = runtime_attr_create_bed
         }
 
-        if (defined(regeno)) then:
+        if (defined(regeno)) then
             call rdtest_regeno{
                 input:
                     bed=generatePerFamilyBed.bed_file,
@@ -62,7 +62,7 @@ workflow RdTestVisualization{
                     sv_pipeline_rdtest_docker=sv_pipeline_rdtest_docker,
                     runtime_attr_override = runtime_attr_rdtest
                 }
-        else:
+        else
 #        if (!defined(regeno)){
             call rdtest{
                 input:
