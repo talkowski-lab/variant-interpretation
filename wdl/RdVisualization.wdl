@@ -90,7 +90,7 @@ workflow RdTestVisualization{
     }
 
     output{
-        File Plots = integrate_rd_plots.plot_tar
+        File? Plots = integrate_rd_plots.plot_tar
     }
 }
 
