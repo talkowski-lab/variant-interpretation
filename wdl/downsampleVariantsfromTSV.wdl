@@ -24,58 +24,117 @@ workflow downsampleVariantsfromTSV {
         String sv_base_mini_docker
     }
 
-    call getNumVars as getNumSNVs {
+    Array[Pair[String, Float]] var_types_scales = zip(['SNV', 'Insertion', 'Deletion'], [snv_scale, indel_scale, indel_scale])
+
+    scatter (pair in var_types_scales) {
+        String var_type = pair.left
+        Float scale = pair.right
+        call getNumVars {
         input:
             reference_tsv=reference_tsv,
             sv_base_mini_docker=sv_base_mini_docker,
-            var_type='SNV'
-    }
-    call downsampleVariantsPython as downsampleSNVs {
-        input:
+            var_type=var_type
+        }
+
+        call downsampleVariantsPython {
+            input:
             full_input_tsv=full_input_tsv,
             vep_hail_docker=vep_hail_docker,
-            var_type='SNV',
+            var_type=var_type,
             chunk_size=chunk_size,
-            scale=snv_scale,
-            num_variants=getNumSNVs.num_variants
-    }
+            scale=scale,
+            num_variants=getNumVars.num_variants
+        }
 
-    call getNumVars as getNumIndels {
-        input:
-            reference_tsv=reference_tsv,
-            sv_base_mini_docker=sv_base_mini_docker,
-            var_type='Indel'
-    }
-    call downsampleVariantsPython as downsampleIndels {
-        input:
-            full_input_tsv=full_input_tsv,
-            vep_hail_docker=vep_hail_docker,
-            var_type='Indel',
-            chunk_size=chunk_size,
-            scale=indel_scale,
-            num_variants=getNumIndels.num_variants
-    }
+        call convertTSVtoVCF {
+            input:
+            tsv=downsampleVariantsPython.downsampled_tsv,
+            vep_hail_docker=vep_hail_docker
+        }
 
-    # only annotate Indels for now
-    call convertTSVtoVCF {
-        input:
-        tsv=downsampleIndels.downsampled_tsv,
-        vep_hail_docker=vep_hail_docker
-    }
+        call annotatePOLYX {
+            input:
+            vcf_file=convertTSVtoVCF.output_vcf,
+            hg38_reference=hg38_reference,
+            hg38_reference_fai=hg38_reference_fai,
+            hg38_reference_dict=hg38_reference_dict,
+            jvarkit_docker=jvarkit_docker
+        }
 
-    call annotatePOLYX {
-        input:
-        vcf_file=convertTSVtoVCF.output_vcf,
-        hg38_reference=hg38_reference,
-        hg38_reference_fai=hg38_reference_fai,
-        hg38_reference_dict=hg38_reference_dict,
-        jvarkit_docker=jvarkit_docker
+        call mergePOLYX {
+            input:
+            polyx_vcf=annotatePOLYX.polyx_vcf,
+            tsv=downsampleVariantsPython.downsampled_tsv,
+            vep_hail_docker=vep_hail_docker
+        }
     }
+    # call getNumVars as getNumSNVs {
+    #     input:
+    #         reference_tsv=reference_tsv,
+    #         sv_base_mini_docker=sv_base_mini_docker,
+    #         var_type='SNV'
+    # }
+    # call downsampleVariantsPython as downsampleSNVs {
+    #     input:
+    #         full_input_tsv=full_input_tsv,
+    #         vep_hail_docker=vep_hail_docker,
+    #         var_type='SNV',
+    #         chunk_size=chunk_size,
+    #         scale=snv_scale,
+    #         num_variants=getNumSNVs.num_variants
+    # }
+
+    # call getNumVars as getNumIns {
+    #     input:
+    #         reference_tsv=reference_tsv,
+    #         sv_base_mini_docker=sv_base_mini_docker,
+    #         var_type='Insertion'
+    # }
+    # call downsampleVariantsPython as downsampleIns {
+    #     input:
+    #         full_input_tsv=full_input_tsv,
+    #         vep_hail_docker=vep_hail_docker,
+    #         var_type='Insertion',
+    #         chunk_size=chunk_size,
+    #         scale=indel_scale,
+    #         num_variants=getNumIndels.num_variants
+    # }
+
+    # call getNumVars as getNumDel {
+    #     input:
+    #         reference_tsv=reference_tsv,
+    #         sv_base_mini_docker=sv_base_mini_docker,
+    #         var_type='Deletion'
+    # }
+    # call downsampleVariantsPython as downsampleDel {
+    #     input:
+    #         full_input_tsv=full_input_tsv,
+    #         vep_hail_docker=vep_hail_docker,
+    #         var_type='Deletion',
+    #         chunk_size=chunk_size,
+    #         scale=indel_scale,
+    #         num_variants=getNumIndels.num_variants
+    # }
+
+    # call convertTSVtoVCF {
+    #     input:
+    #     tsv=downsampleIns.downsampled_tsv,
+    #     vep_hail_docker=vep_hail_docker
+    # }
+
+    # call annotatePOLYX {
+    #     input:
+    #     vcf_file=convertTSVtoVCF.output_vcf,
+    #     hg38_reference=hg38_reference,
+    #     hg38_reference_fai=hg38_reference_fai,
+    #     hg38_reference_dict=hg38_reference_dict,
+    #     jvarkit_docker=jvarkit_docker
+    # }
 
     output {
-        File downsampled_tsv_SNV = downsampleSNVs.downsampled_tsv
-        File downsampled_tsv_Indel = downsampleIndels.downsampled_tsv
-        File downsampled_polyx_vcf_Indel = annotatePOLYX.polyx_vcf
+        File downsampled_tsv_SNV = mergePOLYX.downsampled_polyx_tsv[0]
+        File downsampled_tsv_Insertion = mergePOLYX.downsampled_polyx_tsv[1]
+        File downsampled_tsv_Deletion = mergePOLYX.downsampled_polyx_tsv[2]
     }
 }
 
@@ -353,7 +412,9 @@ task downsampleVariantsPython {
             chunks.append(chunk)
 
         df = pd.concat(chunks)
-        df = df[df.TYPE==var_type].copy()
+        df['Indel_type'] = df.apply(lambda x: 'Insertion' if (len(x.ALT) - len(x.REF)) > 0 else 'Deletion', axis=1)
+        df.loc[df.TYPE=='SNV', 'Indel_type'] = 'SNV'
+        df = df[df.Indel_type==var_type].copy()
         num_per_sample = int(desired_num_variants / df.SAMPLE.unique().size)
         df = df.groupby('SAMPLE').apply(lambda s: s.sample(min(len(s), num_per_sample)))
         df.to_csv(output_name, sep='\t', index=False)
@@ -364,5 +425,60 @@ task downsampleVariantsPython {
 
     output {
         File downsampled_tsv = "~{basename(full_input_tsv, '.tsv')}_~{var_type}_downsampled.tsv"
+    }
+}
+
+task mergePOLYX {
+    input {
+        File polyx_vcf
+        File tsv
+        String vep_hail_docker
+        RuntimeAttr? runtime_attr_override
+    }
+    Float input_size = size([polyx_vcf, tsv], "GB")
+    Float base_disk_gb = 10.0
+    Float input_disk_scale = 5.0
+
+    RuntimeAttr runtime_default = object {
+        mem_gb: 4,
+        disk_gb: ceil(base_disk_gb + input_size * input_disk_scale),
+        cpu_cores: 1,
+        preemptible_tries: 3,
+        max_retries: 1,
+        boot_disk_gb: 10
+    }
+
+    RuntimeAttr runtime_override = select_first([runtime_attr_override, runtime_default])
+
+    runtime {
+        memory: "~{select_first([runtime_override.mem_gb, runtime_default.mem_gb])} GB"
+        disks: "local-disk ~{select_first([runtime_override.disk_gb, runtime_default.disk_gb])} HDD"
+        cpu: select_first([runtime_override.cpu_cores, runtime_default.cpu_cores])
+        preemptible: select_first([runtime_override.preemptible_tries, runtime_default.preemptible_tries])
+        maxRetries: select_first([runtime_override.max_retries, runtime_default.max_retries])
+        docker: vep_hail_docker
+        bootDiskSizeGb: select_first([runtime_override.boot_disk_gb, runtime_default.boot_disk_gb])
+    }
+
+    command <<<
+        cat <<EOF > mergePOLYX.py
+        import pandas as pd
+        import os
+        import sys
+
+        polyx_vcf = sys.argv[1]
+        tsv = sys.argv[2]
+
+        df = pd.read_csv(tsv, sep='\t')
+        polyx_df = pd.read_csv(polyx_vcf, sep='\t', comment='#', header=None)
+        df['POLYX'] = polyx_df[7].str.split('=').str[-1].astype(int)
+        df.to_csv(os.path.basename(tsv), sep='\t', index=False)
+        EOF
+
+        python3.9 mergePOLYX.py ~{polyx_vcf} ~{tsv} > stdout
+    >>>
+
+    output {
+        File downsampled_polyx_tsv = basename(tsv)
     }
 }

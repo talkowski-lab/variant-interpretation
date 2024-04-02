@@ -74,11 +74,15 @@ known_vars_exist = (known_vars_uri!='false')
 
 def load_variants(vcf_metrics_tsv, ultra_rare_variants_tsv, polyx_vcf, var_type): 
     ultra_rare = pd.read_csv(ultra_rare_variants_tsv, sep='\t')
-    ultra_rare = ultra_rare[ultra_rare.TYPE==var_type]
+    ultra_rare['Indel_type'] = ultra_rare.apply(lambda x: 'Insertion' if (len(x.ALT) - len(x.REF)) > 0 else 'Deletion', axis=1)
+    ultra_rare.loc[ultra_rare.TYPE=='SNV', 'Indel_type'] = 'SNV'
+    ultra_rare = ultra_rare[ultra_rare.Indel_type==var_type]
     # ultra_rare = ultra_rare[~ultra_rare.SAMPLE.isin(outlier_samples)]
 
     final_output = pd.read_csv(vcf_metrics_tsv, sep='\t')
-    final_output = final_output[final_output.TYPE==var_type]
+    final_output['Indel_type'] = final_output.apply(lambda x: 'Insertion' if (len(x.ALT) - len(x.REF)) > 0 else 'Deletion', axis=1)
+    final_output.loc[final_output.TYPE=='SNV', 'Indel_type'] = 'SNV'
+    final_output = final_output[final_output.Indel_type==var_type]
     # final_output = final_output[~final_output.SAMPLE.isin(outlier_samples)]
 
     polyx_df = pd.read_csv(polyx_vcf, sep='\t', comment='#', header=None)
@@ -146,13 +150,6 @@ def filter_variants(final_output, ultra_rare, final_output_raw, ultra_rare_raw):
     ultra_rare = ultra_rare[(~ultra_rare.VAF_sample.isna())&
                             (~ultra_rare.VAF_mother.isna())&
                             (~ultra_rare.VAF_father.isna())].reset_index(drop=True)
-
-    ultra_rare_counts = pd.concat([ultra_rare_raw.groupby('SAMPLE').TYPE.value_counts(), 
-               ultra_rare.groupby('SAMPLE').TYPE.value_counts()], axis=1)
-    ultra_rare_counts.columns = ['before_filtering', 'after_filtering']
-    ultra_rare_counts = pd.melt(ultra_rare_counts.reset_index(), id_vars=['SAMPLE', 'TYPE'], 
-            value_vars=['before_filtering', 'after_filtering'],
-            value_name='count', var_name='filter_status')
 
     ultra_rare['label'] = 1  # positive
     final_output['label'] = 0

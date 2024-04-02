@@ -18,7 +18,7 @@ workflow BaggingPU_RF {
         File ultra_rare_polyx_vcf
         File repetitive_regions_bed
         File rep_regions
-        String var_type
+        String var_type  # Insertion, Deletion, or SNV
         String bagging_pu_source_script
         String bagging_pu_rf_script
         String tsv_to_bed_script
