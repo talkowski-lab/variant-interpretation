@@ -13,7 +13,7 @@ workflow RdTestVisualization{
         File outlier_samples
         File batch_bincov
         File bed
-        File? regeno
+        File regeno
         String sv_pipeline_rdtest_docker
         String variant_interpretation_docker
         RuntimeAttr? runtime_attr_rdtest
@@ -83,7 +83,7 @@ workflow RdTestVisualization{
 
     call integrate_rd_plots{
         input:
-            rd_tar = select_first([rdtest.plots,rdtest_regeno.plots]),
+            rd_tar = select_first([rdtest.plots, rdtest_regeno.plots]),
             prefix = prefix, 
             sv_pipeline_rdtest_docker = sv_pipeline_rdtest_docker,
             runtime_attr_override = runtime_attr_rdtest
@@ -264,7 +264,7 @@ task rdtest_regeno {
         File sample_batches # samples, batches
         File batch_bincov # batch, bincov, index
         File outlier_samples
-        File? regeno
+        File regeno
         Array[File] medianfile
         String prefix
         String sv_pipeline_rdtest_docker
