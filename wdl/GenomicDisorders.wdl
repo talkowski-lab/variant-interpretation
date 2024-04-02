@@ -163,7 +163,7 @@ workflow GenomicDisorders {
                 fam_ids = fam_ids,
                 batch_medianfile = batch_medianfile_,
                 batch_bincov=batch_bincov_,
-                bed = mergeGD.gd_depth,
+                bed = mergeGD.gd_raw_merged,
                 regeno=regeno_file,
                 sv_pipeline_rdtest_docker=sv_pipeline_rdtest_docker,
                 variant_interpretation_docker = variant_interpretation_docker,
