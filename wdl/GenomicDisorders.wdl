@@ -155,7 +155,6 @@ workflow GenomicDisorders {
         File batch_bincov_ = select_first([batch_bincov])
         File sample_batches_ = select_first([sample_batches])
         File rd_outliers_ = select_first([rd_outliers])
-        File regeno_file_ = select_first([regeno_file])
 
         call rdtest.RdTestVisualization as RdTest{
             input:
@@ -165,7 +164,7 @@ workflow GenomicDisorders {
                 batch_medianfile = batch_medianfile_,
                 batch_bincov=batch_bincov_,
                 bed = mergeGD.gd_depth,
-                regeno=regeno_file_,
+                regeno=regeno_file,
                 sv_pipeline_rdtest_docker=sv_pipeline_rdtest_docker,
                 variant_interpretation_docker = variant_interpretation_docker,
                 outlier_samples = rd_outliers_,
