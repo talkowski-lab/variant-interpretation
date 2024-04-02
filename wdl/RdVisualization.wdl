@@ -264,7 +264,7 @@ task rdtest_regeno {
         File sample_batches # samples, batches
         File batch_bincov # batch, bincov, index
         File outlier_samples
-        File regeno
+        File? regeno
         Array[File] medianfile
         String prefix
         String sv_pipeline_rdtest_docker
