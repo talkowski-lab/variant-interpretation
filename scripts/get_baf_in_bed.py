@@ -125,7 +125,7 @@ else:
     
     test_df = pd.DataFrame()
     tot = bed[~bed.not_in_vcf].shape[0]
-    for i, row in bed[~bed.not_in_vcf].iterrows():
+    for i, row in bed[~bed.not_in_vcf].reset_index().iterrows():
         if ((i+1)%10==0):
             print(f"Getting SNV BAFs for SV interval {i+1}/{tot}...")
         test_df = pd.concat([test_df, test_interval(row.window_locus_interval, row.locus_interval, row.SAMPLE, row.pipeline_id, row.TYPE, test_shard)])  
