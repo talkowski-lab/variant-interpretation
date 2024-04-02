@@ -47,7 +47,7 @@ workflow RdTestVisualization{
                 runtime_attr_override = runtime_attr_create_bed
         }
 
-        if (defined(regeno)){
+        if (defined(regeno)) then:
             call rdtest_regeno{
                 input:
                     bed=generatePerFamilyBed.bed_file,
@@ -62,9 +62,8 @@ workflow RdTestVisualization{
                     sv_pipeline_rdtest_docker=sv_pipeline_rdtest_docker,
                     runtime_attr_override = runtime_attr_rdtest
                 }
-        }
-
-        if (!defined(regeno)){
+        else:
+#        if (!defined(regeno)){
             call rdtest{
                 input:
                     bed=generatePerFamilyBed.bed_file,
@@ -414,7 +413,7 @@ task generate_families{
 
 task integrate_rd_plots{
     input {
-        Array[File?] rd_tar
+        Array[File] rd_tar
         String prefix
         String sv_pipeline_rdtest_docker
         RuntimeAttr? runtime_attr_override
@@ -443,7 +442,7 @@ task integrate_rd_plots{
     >>>
 
     output{
-        File? plot_tar = "~{prefix}_rd_plots.tar.gz"
+        File plot_tar = "~{prefix}_rd_plots.tar.gz"
     }
 
     runtime {
