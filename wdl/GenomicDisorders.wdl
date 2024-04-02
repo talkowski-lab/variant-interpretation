@@ -2,6 +2,7 @@ version 1.0
     
 import "Structs.wdl"
 import "ReformatRawFiles.wdl" as reformatRaw
+import "RdVisualization.wdl" as rdtest
 
 workflow GenomicDisorders {
 
@@ -19,6 +20,13 @@ workflow GenomicDisorders {
         File? fam_ids
         String variant_interpretation_docker
         String genomic_disorders_docker
+        Boolean run_RD
+        File? batch_medianfile
+        File? batch_bincov
+        File? sample_batches
+        File? rd_outliers
+        File? regeno_file
+        String? sv_pipeline_rdtest_docker
 
         RuntimeAttr? runtime_attr_get_batched_files
         RuntimeAttr? runtime_attr_clean_ped
@@ -31,6 +39,7 @@ workflow GenomicDisorders {
         RuntimeAttr? runtime_attr_merge_gd
         RuntimeAttr? runtime_attr_reformat_vcf
         RuntimeAttr? runtime_attr_vcf_overlap
+        RuntimeAttr? runtime_attr_rdtest
     }
 
     #if the fam_ids input is given, subset all other input files to only include the necessary batches
@@ -111,6 +120,7 @@ workflow GenomicDisorders {
 
         }
     }
+
     #merges the genomic disorder and denovo outputs
     call mergeGD{
         input:
@@ -119,6 +129,7 @@ workflow GenomicDisorders {
             variant_interpretation_docker=variant_interpretation_docker,
             runtime_attr_override = runtime_attr_merge_gd
     }
+
     #reformats VCF to bed and updates first column to sample_svtype for overlap
     call reformatVCF{
         input:
@@ -127,6 +138,7 @@ workflow GenomicDisorders {
             docker_path = genomic_disorders_docker,
             runtime_attr_override = runtime_attr_reformat_vcf
     }
+
     #gets genomic disorder overlap from vcf file per sample and type
     call getVCFoverlap{
         input:
@@ -137,14 +149,39 @@ workflow GenomicDisorders {
           runtime_attr_override = runtime_attr_vcf_overlap
     }
 
+    #creates RD plots for DELs and DUPs
+    if(run_RD) {
+        File batch_medianfile_ = select_first([batch_medianfile])
+        File batch_bincov_ = select_first([batch_bincov])
+        File sample_batches_ = select_first([sample_batches])
+        File rd_outliers_ = select_first([rd_outliers])
+        File regeno_file_ = select_first([regeno_file])
+
+        call rdtest.RdTestVisualization as RdTest{
+            input:
+                prefix = prefix,
+                ped_file = cleanPed.cleaned_ped,
+                fam_ids = fam_ids,
+                batch_medianfile = batch_medianfile_,
+                batch_bincov=batch_bincov_,
+                bed = mergeGD.gd_depth,
+                regeno=regeno_file_,
+                sv_pipeline_rdtest_docker=sv_pipeline_rdtest_docker,
+                variant_interpretation_docker = variant_interpretation_docker,
+                outlier_samples = rd_outliers_,
+                sample_batches = sample_batches_,
+                runtime_attr_rdtest=runtime_attr_rdtest
+        }
+    }
+
     output {
         File cleaned_ped = cleanPed.cleaned_ped
         File gd_depth = mergeGD.gd_raw_merged
         File gd_depth_denovo = mergeGD.gd_raw_merged_denovo
         File vcf_in_gds = getVCFoverlap.out_bed
+        File rd_plots = RdTest.Plots
     }
 }
-
 
 task getBatchedFiles{
     input{
