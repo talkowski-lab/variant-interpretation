@@ -23,6 +23,7 @@ workflow getDenovoByGT {
         String vep_hail_docker
         String hail_docker
         String sv_base_mini_docker
+        Int chunk_size
         Int shards_per_chunk=10
         Boolean sort_after_merge=false
         Boolean merge_split_vcf=false
@@ -89,8 +90,18 @@ workflow getDenovoByGT {
         }
     }
 
+    File denovo_gt_ = select_first([mergeChunks.merged_tsv, mergeResults.merged_tsv])
+    
+    call denovoSampleCounts {
+        input:
+        denovo_gt=denovo_gt_,
+        vep_hail_docker=vep_hail_docker,
+        chunk_size=chunk_size
+    }
+
     output {
-        File denovo_gt = select_first([mergeChunks.merged_tsv, mergeResults.merged_tsv])
+        File denovo_gt = denovo_gt_
+        File denovo_gt_counts = denovoSampleCounts.denovo_gt_counts
     }
 }
 
@@ -141,3 +152,67 @@ task denovoByGT {
         File denovo_gt = "~{basename(vcf_file, file_ext)}_denovo_GT_AF_filter.tsv.gz"
     }
 }
+
+task denovoSampleCounts {
+    input {
+        File denovo_gt
+        String vep_hail_docker
+        Int chunk_size
+        RuntimeAttr? runtime_attr_override
+    }
+    Float input_size = size(denovo_gt, "GB")
+    Float base_disk_gb = 10.0
+    Float input_disk_scale = 10.0
+    RuntimeAttr runtime_default = object {
+        mem_gb: 8,
+        disk_gb: ceil(base_disk_gb + input_size * input_disk_scale),
+        cpu_cores: 1,
+        preemptible_tries: 3,
+        max_retries: 1,
+        boot_disk_gb: 10
+    }
+
+    RuntimeAttr runtime_override = select_first([runtime_attr_override, runtime_default])
+    Float memory = select_first([runtime_override.mem_gb, runtime_default.mem_gb])
+    Int cpu_cores = select_first([runtime_override.cpu_cores, runtime_default.cpu_cores])
+    
+    runtime {
+        memory: "~{memory} GB"
+        disks: "local-disk ~{select_first([runtime_override.disk_gb, runtime_default.disk_gb])} HDD"
+        cpu: cpu_cores
+        preemptible: select_first([runtime_override.preemptible_tries, runtime_default.preemptible_tries])
+        maxRetries: select_first([runtime_override.max_retries, runtime_default.max_retries])
+        docker: vep_hail_docker
+        bootDiskSizeGb: select_first([runtime_override.boot_disk_gb, runtime_default.boot_disk_gb])
+    }
+
+    command <<<
+    cat <<EOF > get_counts.py
+    import pandas as pd
+    import sys
+    import os
+    import ast
+
+    denovo_gt = sys.argv[1]
+    chunk_size = int(sys.argv[2])
+
+    chunks = []
+    for chunk in pd.read_csv(denovo_gt, sep='\t', chunksize=chunk_size):
+        chunks.append(chunk)
+    tm_denovo_df = pd.concat(chunks)
+    tm_denovo_df['REF'] = tm_denovo_df.alleles.apply(ast.literal_eval).str[0]
+    tm_denovo_df['ALT'] = tm_denovo_df.alleles.apply(ast.literal_eval).str[1]
+    tm_denovo_df['TYPE'] = tm_denovo_df.apply(lambda row: 'Indel' if abs(len(row.REF)-len(row.ALT))>0 else 'SNV', axis=1)
+    counts_df = tm_denovo_df.groupby('TYPE')['proband.s'].value_counts().reset_index()
+
+    counts_df.to_csv(f"{os.path.basename(denovo_gt).split('.tsv.gz')[0]}_sample_counts.tsv", sep='\t', index=False)
+    EOF
+
+    python3.9 get_counts.py ~{denovo_gt} ~{chunk_size}
+    >>>
+
+    output {
+        File denovo_gt_counts = "~{basename(denovo_gt, '.tsv.gz')}_denovo_GT_AF_filter_sample_counts.tsv"
+    }
+}
+
