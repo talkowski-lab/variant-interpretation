@@ -35,7 +35,7 @@ pedigree = hl.Pedigree.read(ped_uri, delimiter='\t')
 
 trio_df = pd.read_csv(trio_uri, dtype=str, sep='\t')
 
-mt = hl.import_vcf(vcf_file, force_bgz=True, array_elements_required=False, call_fields=[], header_file=header_file, reference_genome='GRCh38')
+mt = hl.import_vcf(vcf_file, force_bgz=True, array_elements_required=False, call_fields=[], reference_genome='GRCh38')
 
 #split-multi
 def split_multi_ssc(mt):
