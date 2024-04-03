@@ -75,9 +75,8 @@ meta = meta.annotate(s=meta.SampleID).key_by('s')
 mt_filtered = mt_filtered.annotate_cols(pheno=meta[mt_filtered.s])
 mt_filtered = mt_filtered.filter_cols(mt_filtered.pheno.Role != '', keep = True)
 
-# # filter for VQSR - PASS for SNVs only
-mt_filtered = mt_filtered.filter_rows((hl.is_snp(mt_filtered.alleles[0], mt_filtered.alleles[1]) &(mt_filtered.filters.size() == 0))
-                   | hl.is_indel(mt_filtered.alleles[0], mt_filtered.alleles[1]))
+# # filter for VQSR - PASS 
+mt_filtered = mt_filtered.filter_rows((mt_filtered.filters.size() == 0))
 # filter on depth
 mt_filtered = mt_filtered.annotate_entries(DPC=hl.sum(mt_filtered.AD),
                                            AB=mt_filtered.AD[1]/hl.sum(mt_filtered.AD),
