@@ -17,7 +17,7 @@ workflow BaggingPU_RF {
         File ultra_rare_variants_tsv
         File repetitive_regions_bed
         File rep_regions
-        String var_type  # Insertion, Deletion, or SNV
+        String var_type  # Indel or SNV
         String bagging_pu_source_script
         String bagging_pu_rf_script
         String tsv_to_bed_script
