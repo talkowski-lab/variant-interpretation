@@ -8,6 +8,7 @@ import pandas as pd
 import numpy as np
 import sys
 import ast
+import warnings
 
 build = 'GRCh38'
 lcr_uri = sys.argv[1]
@@ -23,8 +24,6 @@ af_threshold = float(sys.argv[10])
 csq_af_threshold = float(sys.argv[11])
 gq_het_threshold = float(sys.argv[12])
 gq_hom_ref_threshold = float(sys.argv[13])
-exclude_gq_filters = ast.literal_eval(sys.argv[14].capitalize())
-header_file = sys.argv[15]
 
 hl.init(min_block_size=128, spark_conf={"spark.executor.cores": cores, 
                     "spark.executor.memory": f"{mem}g",
@@ -98,37 +97,6 @@ dn_indel_cond_row = (hl.is_indel(mt_filtered.alleles[0], mt_filtered.alleles[1])
                     & (mt_filtered.info.MQ >= 50))
 mt_filtered = mt_filtered.filter_rows(dn_snv_cond_row | dn_indel_cond_row, keep = True)
 
-if exclude_gq_filters:
-    ab = mt_filtered.AD[1]/hl.sum(mt_filtered.AD)
-    # child filters - heterzygous
-    het_snv_cond = (hl.is_snp(mt_filtered.alleles[0], mt_filtered.alleles[1])
-                    & mt_filtered.GT.is_het()
-                    & (ab >= 0.22)
-                    & (ab <= 0.78))
-    het_indel_cond = (hl.is_indel(mt_filtered.alleles[0], mt_filtered.alleles[1])
-                    & mt_filtered.GT.is_het()
-                    & (ab >= 0.20)
-                    & (ab <= 0.80))
-else:
-    # GQ mean filters
-    mt_filtered = hl.variant_qc(mt_filtered)
-    mt_filtered = mt_filtered.filter_rows(mt_filtered.variant_qc.gq_stats.mean >= 50, keep = True)
-
-    ab = mt_filtered.AD[1]/hl.sum(mt_filtered.AD)
-    # child filters - heterzygous
-    het_snv_cond = (hl.is_snp(mt_filtered.alleles[0], mt_filtered.alleles[1])
-                    & mt_filtered.GT.is_het()
-                    & (mt_filtered.GQ >= 99.0)
-                    & (ab >= 0.22)
-                    & (ab <= 0.78))
-    het_indel_cond = (hl.is_indel(mt_filtered.alleles[0], mt_filtered.alleles[1])
-                    & mt_filtered.GT.is_het()
-                    & (mt_filtered.GQ >= 99.0)
-                    & (ab >= 0.20)
-                    & (ab <= 0.80))
-
-filter_condition = (het_snv_cond | het_indel_cond)
-mt_filtered = mt_filtered.filter_entries(filter_condition, keep = True)
 # clean-up: remove AC = 0 loci
 mt_filtered = hl.variant_qc(mt_filtered)
 mt_filtered = mt_filtered.filter_rows(mt_filtered.variant_qc.AC[1] > 0, keep = True)
@@ -221,19 +189,35 @@ csq_columns_more = ["Allele","Consequence","IMPACT","SYMBOL","Gene","Feature_typ
                    "PHENO","PUBMED","MOTIF_NAME","MOTIF_POS","HIGH_INF_POS","MOTIF_SCORE_CHANGE",
                    "TRANSCRIPTION_FACTORS","LoF","LoF_filter","LoF_flags","LoF_info"]
 
-def get_csq_max_af(csq):
-    if csq is None:
+# NEW
+def get_gnomAD_AF(csq, col_num):
+    if type(csq)==float:
         return 0
-    csq_df = pd.DataFrame(csq)[0].str.split('|', expand=True)      
-    try:
-        csq_df.columns = csq_columns_more
-    except:
-        csq_df.columns = csq_columns_less            
-    return csq_df.MAX_AF.max()
+    csqs = []
+    for ind_csq in csq:
+        af = ind_csq.split('|')[col_num]
+        if af != '':
+            csqs.append(af)
+    csqs = list(set(csqs))
+    if len(csqs)==0:
+        return 0
+    return csqs[0]
 
-ultra_rare_vars_df.loc[:,'MAX_AF'] = ultra_rare_vars_df.CSQ.apply(lambda csq: get_csq_max_af(csq)).replace({'': 0}).astype(float)
+ultra_rare_vars_df['CSQ'] = ultra_rare_vars_df.CSQ.replace({'.':np.nan}).str.split(',')
+n_csq_fields = len(ultra_rare_vars_df[~ultra_rare_vars_df.CSQ.isna()].CSQ.iloc[0][0].split('|'))
 
-ultra_rare_vars_df = ultra_rare_vars_df[ultra_rare_vars_df.MAX_AF<=csq_af_threshold]
+if n_csq_fields==len(csq_columns_more):
+    gnomad_af_str = 'gnomADe_AF'
+    csq_columns = csq_columns_more
+elif n_csq_fields==len(csq_columns_less):
+    gnomad_af_str = 'gnomAD_AF'
+    csq_columns = csq_columns_less
+else:
+    warnings.simplefilter("error")
+    warnings.warn("CSQ fields are messed up!")
+
+ultra_rare_vars_df[gnomad_af_str] = ultra_rare_vars_df.CSQ.apply(get_gnomAD_AF, col_num=csq_columns.index(gnomad_af_str)).astype(float)
+ultra_rare_vars_df = ultra_rare_vars_df[ultra_rare_vars_df[gnomad_af_str]<=csq_af_threshold]
 
 # 'POLYX' -- added after downsampling
 info_cols = ['END','AC','AF','AN','BaseQRankSum','ClippingRankSum','DP','FS','MLEAC','MLEAF','MQ','MQRankSum','QD','ReadPosRankSum','SOR','VQSLOD','cohort_AC', 'cohort_AF', 'CSQ']
