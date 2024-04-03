@@ -131,13 +131,14 @@ def filter_variants(final_output, ultra_rare, final_output_raw, ultra_rare_raw):
         final_output['VQSLOD'] = final_output.VQSLOD.astype(float)
 
     final_output = final_output[final_output.VQSLOD>vqslod_cutoff]
+    final_output = final_output[final_output.LEN<=50]
 
     # TODO: remove when filter-rare-variants-hail is fixed?
     # ultra_rare = ultra_rare[ultra_rare.GQ_sample>=99]
     # ultra_rare = ultra_rare[(ultra_rare.GQ_mother>=30)&(ultra_rare.GQ_father>=30)]
 
     ultra_rare = ultra_rare[ultra_rare.POLYX<=10]
-
+    ultra_rare = ultra_rare[ultra_rare.LEN<=50]
     try:
         ultra_rare = ultra_rare[~ultra_rare.VQSLOD.isna()]
         ultra_rare = ultra_rare[ultra_rare.VQSLOD>vqslod_cutoff]
