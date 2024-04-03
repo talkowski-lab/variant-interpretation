@@ -99,6 +99,7 @@ workflow filterRareVariantsHail {
             input:
                 tsvs=filterRareVariants.ultra_rare_variants_tsv,
                 hail_docker=hail_docker,
+                input_size=size(filterRareVariants.ultra_rare_variants_tsv, 'GB'),
                 merged_filename=cohort_prefix+'_ultra_rare_variants.tsv',
                 runtime_attr_override=runtime_attr_merge_results
         }
@@ -127,10 +128,11 @@ workflow filterRareVariantsHail {
                     runtime_attr_override=runtime_attr_filter_vcf
                     }
         }
-        call helpers.mergeResults as mergeResults_sharded {
+        call helpers.mergeResultsPython as mergeResults_sharded {
             input:
                 tsvs=filterRareVariants_sharded.ultra_rare_variants_tsv,
                 hail_docker=hail_docker,
+                input_size=size(filterRareVariants_sharded.ultra_rare_variants_tsv, 'GB'),
                 merged_filename=cohort_prefix+'_ultra_rare_variants.tsv',
                 runtime_attr_override=runtime_attr_merge_results
         }
