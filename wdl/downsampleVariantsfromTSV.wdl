@@ -23,7 +23,7 @@ workflow downsampleVariantsfromTSV {
         String vep_hail_docker
     }
 
-    Array[Pair[String, Float]] var_types_scales = zip(['SNV', 'Insertion', 'Deletion'], [snv_scale, indel_scale, indel_scale])
+    Array[Pair[String, Float]] var_types_scales = zip(['SNV', 'Indel'], [snv_scale, indel_scale])
 
     scatter (pair in var_types_scales) {
         String var_type = pair.left
@@ -70,8 +70,7 @@ workflow downsampleVariantsfromTSV {
 
     output {
         File downsampled_tsv_SNV = mergePOLYX.downsampled_polyx_tsv[0]
-        File downsampled_tsv_Insertion = mergePOLYX.downsampled_polyx_tsv[1]
-        File downsampled_tsv_Deletion = mergePOLYX.downsampled_polyx_tsv[2]
+        File downsampled_tsv_Indel = mergePOLYX.downsampled_polyx_tsv[1]
     }
 }
 
@@ -118,9 +117,7 @@ task getNumVars {
         var_type = sys.argv[2]
 
         df = pd.read_csv(reference_tsv, sep='\t')
-        df['Indel_type'] = df.apply(lambda x: 'Insertion' if (len(x.ALT) - len(x.REF)) > 0 else 'Deletion', axis=1)
-        df.loc[df.TYPE=='SNV', 'Indel_type'] = 'SNV'
-        df = df[df.Indel_type==var_type]
+        df = df[df.TYPE==var_type]
         print(df.shape[0])
         EOF
 
@@ -362,9 +359,7 @@ task downsampleVariantsPython {
             chunks.append(chunk)
 
         df = pd.concat(chunks)
-        df['Indel_type'] = df.apply(lambda x: 'Insertion' if (len(x.ALT) - len(x.REF)) > 0 else 'Deletion', axis=1)
-        df.loc[df.TYPE=='SNV', 'Indel_type'] = 'SNV'
-        df = df[df.Indel_type==var_type].copy()
+        df = df[df.TYPE==var_type].copy()
         num_per_sample = int(desired_num_variants / df.SAMPLE.unique().size)
         df = df.groupby('SAMPLE').apply(lambda s: s.sample(min(len(s), num_per_sample)))
         df.to_csv(output_name, sep='\t', index=False)
