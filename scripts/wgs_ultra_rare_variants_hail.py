@@ -161,6 +161,11 @@ for info_cat in ['AC', 'AF', 'MLEAC', 'MLEAF']:
     if info_cat in ultra_rare_vars_df.columns:
             ultra_rare_vars_df[info_cat] = ultra_rare_vars_df[info_cat].str[0]
 
+# 'POLYX' -- added after downsampling
+info_cols = ['END','AC','AF','AN','BaseQRankSum','ClippingRankSum','DP','FS','MLEAC','MLEAF','MQ','MQRankSum','QD','ReadPosRankSum','SOR','VQSLOD','cohort_AC', 'cohort_AF', 'CSQ']
+info_cols = list(np.intersect1d(info_cols, list(mt_filtered_rare.info.keys())))
+cols_to_keep = ['CHROM', 'POS', 'REF', 'ALT', 'LEN', 'TYPE', 'ID'] + info_cols + list(rename_cols.values())
+
 # CSQ AF threshold
 csq_columns_less = ['Allele', 'Consequence', 'IMPACT', 'SYMBOL', 'Gene', 'Feature_type', 'Feature', 
                     'BIOTYPE', 'EXON', 'INTRON', 'HGVSc', 'HGVSp', 'cDNA_position', 'CDS_position', 
@@ -204,24 +209,23 @@ def get_gnomAD_AF(csq, col_num):
     return csqs[0]
 
 ultra_rare_vars_df['CSQ'] = ultra_rare_vars_df.CSQ.replace({'.':np.nan}).str.split(',')
-n_csq_fields = len(ultra_rare_vars_df[~ultra_rare_vars_df.CSQ.isna()].CSQ.iloc[0][0].split('|'))
+try:
+    n_csq_fields = len(ultra_rare_vars_df[~ultra_rare_vars_df.CSQ.isna()].CSQ.iloc[0][0].split('|'))
 
-if n_csq_fields==len(csq_columns_more):
-    gnomad_af_str = 'gnomADe_AF'
-    csq_columns = csq_columns_more
-elif n_csq_fields==len(csq_columns_less):
-    gnomad_af_str = 'gnomAD_AF'
-    csq_columns = csq_columns_less
-else:
-    warnings.simplefilter("error")
-    warnings.warn("CSQ fields are messed up!")
+    if n_csq_fields==len(csq_columns_more):
+        gnomad_af_str = 'gnomADe_AF'
+        csq_columns = csq_columns_more
+    elif n_csq_fields==len(csq_columns_less):
+        gnomad_af_str = 'gnomAD_AF'
+        csq_columns = csq_columns_less
+    else:
+        warnings.simplefilter("error")
+        warnings.warn("CSQ fields are messed up!")
 
-ultra_rare_vars_df[gnomad_af_str] = ultra_rare_vars_df.CSQ.apply(get_gnomAD_AF, col_num=csq_columns.index(gnomad_af_str)).astype(float)
-ultra_rare_vars_df = ultra_rare_vars_df[ultra_rare_vars_df[gnomad_af_str]<=csq_af_threshold]
+    ultra_rare_vars_df[gnomad_af_str] = ultra_rare_vars_df.CSQ.apply(get_gnomAD_AF, col_num=csq_columns.index(gnomad_af_str)).astype(float)
+    ultra_rare_vars_df = ultra_rare_vars_df[ultra_rare_vars_df[gnomad_af_str]<=csq_af_threshold]
 
-# 'POLYX' -- added after downsampling
-info_cols = ['END','AC','AF','AN','BaseQRankSum','ClippingRankSum','DP','FS','MLEAC','MLEAF','MQ','MQRankSum','QD','ReadPosRankSum','SOR','VQSLOD','cohort_AC', 'cohort_AF', 'CSQ']
-info_cols = list(np.intersect1d(info_cols, list(mt_filtered_rare.info.keys())))
-cols_to_keep = ['CHROM', 'POS', 'REF', 'ALT', 'LEN', 'TYPE', 'ID'] + info_cols + list(rename_cols.values())
+except:
+    pass
 
 ultra_rare_vars_df[cols_to_keep].to_csv(f"{cohort_prefix}_ultra_rare_variants.tsv", sep='\t', index=False)
