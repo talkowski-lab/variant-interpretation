@@ -209,6 +209,7 @@ def get_gnomAD_AF(csq, col_num):
     return csqs[0]
 
 ultra_rare_vars_df['CSQ'] = ultra_rare_vars_df.CSQ.replace({'.':np.nan}).str.split(',')
+
 try:
     n_csq_fields = len(ultra_rare_vars_df[~ultra_rare_vars_df.CSQ.isna()].CSQ.iloc[0][0].split('|'))
 

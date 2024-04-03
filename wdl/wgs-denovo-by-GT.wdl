@@ -23,7 +23,7 @@ workflow getDenovoByGT {
         String vep_hail_docker
         String hail_docker
         String sv_base_mini_docker
-        Int chunk_size
+        Int chunk_size=100000
         Int shards_per_chunk=10
         Boolean sort_after_merge=false
         Boolean merge_split_vcf=false
@@ -212,7 +212,7 @@ task denovoSampleCounts {
     >>>
 
     output {
-        File denovo_gt_counts = "~{basename(denovo_gt, '.tsv.gz')}_denovo_GT_AF_filter_sample_counts.tsv"
+        File denovo_gt_counts = "~{basename(denovo_gt, '.tsv.gz')}_sample_counts.tsv"
     }
 }
 
