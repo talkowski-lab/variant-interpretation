@@ -143,7 +143,7 @@ tdt_table_filtered_rare = tdt_table_filtered.semi_join(mt_filtered_rare.rows())
 
 ultra_rare_vars_table = tdt_table_filtered_rare.filter((tdt_table_filtered_rare.t==1) & (tdt_table_filtered_rare.u==0))
 
-trio_mat = hl.trio_matrix(mt_filtered, pedigree, complete_trios=True).semi_join_rows(ultra_rare_vars_table)
+trio_mat = hl.trio_matrix(mt_filtered_rare, pedigree, complete_trios=True).semi_join_rows(ultra_rare_vars_table)
 
 
 trio_mat = trio_mat.filter_entries((trio_mat.proband_entry.GT.is_het() 
@@ -237,7 +237,7 @@ ultra_rare_vars_df = ultra_rare_vars_df[ultra_rare_vars_df.MAX_AF<=csq_af_thresh
 
 # 'POLYX' -- added after downsampling
 info_cols = ['END','AC','AF','AN','BaseQRankSum','ClippingRankSum','DP','FS','MLEAC','MLEAF','MQ','MQRankSum','QD','ReadPosRankSum','SOR','VQSLOD','cohort_AC', 'cohort_AF', 'CSQ']
-info_cols = list(np.intersect1d(info_cols, list(mt.info.keys())))
+info_cols = list(np.intersect1d(info_cols, list(mt_filtered_rare.info.keys())))
 cols_to_keep = ['CHROM', 'POS', 'REF', 'ALT', 'LEN', 'TYPE', 'ID'] + info_cols + list(rename_cols.values())
 
 ultra_rare_vars_df[cols_to_keep].to_csv(f"{cohort_prefix}_ultra_rare_variants.tsv", sep='\t', index=False)

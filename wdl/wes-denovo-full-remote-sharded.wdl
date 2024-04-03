@@ -98,24 +98,12 @@ workflow hailDenovoWES {
         }
     }
 
-    call helpers.getHailMTSizes as getDenovoResultSizes {
-        input:
-        mt_uris=step3.de_novo_results,
-        hail_docker=hail_docker
-    }
-
-    call helpers.getHailMTSizes as getDenovoVEPSizes {
-        input:
-        mt_uris=step3.de_novo_vep,
-        hail_docker=hail_docker
-    }
-
     call helpers.mergeResultsPython as mergeDenovoResults {
         input:
             tsvs=step3.de_novo_results,
             hail_docker=hail_docker,
             merged_filename=cohort_prefix + "_wes_final_denovo.tsv",
-            input_size=getDenovoResultSizes.mt_size
+            input_size=size(step3.de_novo_results, 'GB')
     }
 
     call helpers.mergeResultsPython as mergeDenovoVEP {
@@ -123,7 +111,7 @@ workflow hailDenovoWES {
             tsvs=step3.de_novo_vep,
             hail_docker=hail_docker,
             merged_filename=cohort_prefix + "_wes_final_denovo_vep.tsv",
-            input_size=getDenovoVEPSizes.mt_size
+            input_size=size(step3.de_novo_vep, 'GB')
     }
 
     call prioritizeCSQ.mergeVEPIntoResults as mergeVEPIntoResults {

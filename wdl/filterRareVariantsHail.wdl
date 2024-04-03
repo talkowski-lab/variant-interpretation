@@ -107,6 +107,7 @@ workflow filterRareVariantsHail {
     
     if (!merge_split_vcf) {
         scatter (vcf_file in vep_files) {
+            String file_ext = if sub(basename(vcf_file), '.vcf.gz', '')!=basename(vcf_file) then '.vcf.gz' else '.vcf.bgz'
             call filterRareVariants as filterRareVariants_sharded {
                 input:
                     vcf_file=vcf_file,
@@ -117,7 +118,7 @@ workflow filterRareVariantsHail {
                     info_header=info_header,
                     filter_rare_variants_python_script=filter_rare_variants_python_script,
                     vep_hail_docker=vep_hail_docker,
-                    cohort_prefix=basename(vcf_file),
+                    cohort_prefix=basename(vcf_file, file_ext),
                     AC_threshold=AC_threshold,
                     AF_threshold=AF_threshold,
                     csq_af_threshold=csq_af_threshold,
