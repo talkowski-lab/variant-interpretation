@@ -122,9 +122,9 @@ def process_consequences(mt: Union[hl.MatrixTable, hl.Table], vep_root: str = 'v
             .when((tc.LoF == 'HC') & (tc.LoF_flags == ''), csq_score(tc) - no_flag_score)
             .when((tc.LoF == 'HC') & (tc.LoF_flags != ''), csq_score(tc) - flag_score)
             .when(tc.LoF == 'LC', csq_score(tc) - 10)
-            .when(tc.PolyPhen == 'probably_damaging', csq_score(tc) - 0.5)
-            .when(tc.PolyPhen == 'possibly_damaging', csq_score(tc) - 0.25)
-            .when(tc.PolyPhen == 'benign', csq_score(tc) - 0.1)
+            .when(tc.PolyPhen.contains('probably_damaging'), csq_score(tc) - 0.5)  # EDITED
+            .when(tc.PolyPhen.contains('possibly_damaging'), csq_score(tc) - 0.25)
+            .when(tc.PolyPhen.contains('benign'), csq_score(tc) - 0.1)
             .default(csq_score(tc))
         ))
         return hl.or_missing(hl.len(tcl) > 0, hl.sorted(tcl, lambda x: x.csq_score)[0])
@@ -147,70 +147,71 @@ def process_consequences(mt: Union[hl.MatrixTable, hl.Table], vep_root: str = 'v
 
     return mt.annotate_rows(**{vep_root: vep_data}) if isinstance(mt, hl.MatrixTable) else mt.annotate(**{vep_root: vep_data})
 
+# EDITED
 #define VEP annotations
 def add_vep_annotations(mt):
     
     # First, annotate based on parsing VEP output
     mt = mt.annotate_rows(
         SYMBOL = hl.coalesce(
-            mt.vep.transcript_consequences.find(lambda x: (x.CANONICAL == "YES") & (x.BIOTYPE == "protein_coding") & (hl.is_defined(x.Amino_acids)) ).SYMBOL,
-            mt.vep.transcript_consequences.find(lambda x: (x.CANONICAL == "YES") & (x.BIOTYPE == "protein_coding") ).SYMBOL,
-            mt.vep.transcript_consequences.find(lambda x: (x.CANONICAL == "YES") ).SYMBOL,
+            mt.vep.transcript_consequences.find(lambda x: (x.CANONICAL == "YES") & (x.BIOTYPE == "protein_coding") & (hl.is_defined(x.Amino_acids)) &(x.Consequence.contains(mt.vep.worst_consequence_term)) ).SYMBOL,
+            mt.vep.transcript_consequences.find(lambda x: (x.CANONICAL == "YES") & (x.BIOTYPE == "protein_coding") &(x.Consequence.contains(mt.vep.worst_consequence_term)) ).SYMBOL,
+            mt.vep.transcript_consequences.find(lambda x: (x.CANONICAL == "YES") &(x.Consequence.contains(mt.vep.worst_consequence_term)) ).SYMBOL,
             mt.vep.transcript_consequences.find(lambda x: x.Consequence.contains(mt.vep.worst_consequence_term)).SYMBOL),
         Gene = hl.coalesce(
-            mt.vep.transcript_consequences.find(lambda x: (x.CANONICAL == "YES") & (x.BIOTYPE == "protein_coding") & (hl.is_defined(x.Amino_acids)) ).Gene,
-            mt.vep.transcript_consequences.find(lambda x: (x.CANONICAL == "YES") & (x.BIOTYPE == "protein_coding") ).Gene,
-            mt.vep.transcript_consequences.find(lambda x: (x.CANONICAL == "YES") ).Gene,
+            mt.vep.transcript_consequences.find(lambda x: (x.CANONICAL == "YES") & (x.BIOTYPE == "protein_coding") & (hl.is_defined(x.Amino_acids)) &(x.Consequence.contains(mt.vep.worst_consequence_term)) ).Gene,
+            mt.vep.transcript_consequences.find(lambda x: (x.CANONICAL == "YES") & (x.BIOTYPE == "protein_coding") &(x.Consequence.contains(mt.vep.worst_consequence_term)) ).Gene,
+            mt.vep.transcript_consequences.find(lambda x: (x.CANONICAL == "YES") &(x.Consequence.contains(mt.vep.worst_consequence_term)) ).Gene,
             mt.vep.transcript_consequences.find(lambda x: x.Consequence.contains(mt.vep.worst_consequence_term)).Gene),
         transcript_id = hl.coalesce(
-            mt.vep.transcript_consequences.find(lambda x: (x.CANONICAL == "YES") & (x.BIOTYPE == "protein_coding") & (hl.is_defined(x.Amino_acids)) ).Feature,
-            mt.vep.transcript_consequences.find(lambda x: (x.CANONICAL == "YES") & (x.BIOTYPE == "protein_coding") ).Feature,
-            mt.vep.transcript_consequences.find(lambda x: (x.CANONICAL == "YES") ).Feature,
+            mt.vep.transcript_consequences.find(lambda x: (x.CANONICAL == "YES") & (x.BIOTYPE == "protein_coding") & (hl.is_defined(x.Amino_acids)) &(x.Consequence.contains(mt.vep.worst_consequence_term)) ).Feature,
+            mt.vep.transcript_consequences.find(lambda x: (x.CANONICAL == "YES") & (x.BIOTYPE == "protein_coding") &(x.Consequence.contains(mt.vep.worst_consequence_term)) ).Feature,
+            mt.vep.transcript_consequences.find(lambda x: (x.CANONICAL == "YES") &(x.Consequence.contains(mt.vep.worst_consequence_term)) ).Feature,
             mt.vep.transcript_consequences.find(lambda x: x.Consequence.contains(mt.vep.worst_consequence_term)).Feature),
         HGNC_ID = hl.coalesce(
-            mt.vep.transcript_consequences.find(lambda x: (x.CANONICAL == "YES") & (x.BIOTYPE == "protein_coding") & (hl.is_defined(x.Amino_acids)) ).HGNC_ID,
-            mt.vep.transcript_consequences.find(lambda x: (x.CANONICAL == "YES") & (x.BIOTYPE == "protein_coding") ).HGNC_ID,
-            mt.vep.transcript_consequences.find(lambda x: (x.CANONICAL == "YES") ).HGNC_ID,
+            mt.vep.transcript_consequences.find(lambda x: (x.CANONICAL == "YES") & (x.BIOTYPE == "protein_coding") & (hl.is_defined(x.Amino_acids)) &(x.Consequence.contains(mt.vep.worst_consequence_term)) ).HGNC_ID,
+            mt.vep.transcript_consequences.find(lambda x: (x.CANONICAL == "YES") & (x.BIOTYPE == "protein_coding") &(x.Consequence.contains(mt.vep.worst_consequence_term)) ).HGNC_ID,
+            mt.vep.transcript_consequences.find(lambda x: (x.CANONICAL == "YES") &(x.Consequence.contains(mt.vep.worst_consequence_term)) ).HGNC_ID,
             mt.vep.transcript_consequences.find(lambda x: x.Consequence.contains(mt.vep.worst_consequence_term)).HGNC_ID),
         HGVSc = hl.coalesce(
-            mt.vep.transcript_consequences.find(lambda x: (x.CANONICAL == "YES") & (x.BIOTYPE == "protein_coding") & (hl.is_defined(x.Amino_acids)) ).HGVSc,
-            mt.vep.transcript_consequences.find(lambda x: (x.CANONICAL == "YES") & (x.BIOTYPE == "protein_coding") ).HGVSc,
-            mt.vep.transcript_consequences.find(lambda x: (x.CANONICAL == "YES") ).HGVSc,
+            mt.vep.transcript_consequences.find(lambda x: (x.CANONICAL == "YES") & (x.BIOTYPE == "protein_coding") & (hl.is_defined(x.Amino_acids)) &(x.Consequence.contains(mt.vep.worst_consequence_term)) ).HGVSc,
+            mt.vep.transcript_consequences.find(lambda x: (x.CANONICAL == "YES") & (x.BIOTYPE == "protein_coding") &(x.Consequence.contains(mt.vep.worst_consequence_term)) ).HGVSc,
+            mt.vep.transcript_consequences.find(lambda x: (x.CANONICAL == "YES") &(x.Consequence.contains(mt.vep.worst_consequence_term)) ).HGVSc,
             mt.vep.transcript_consequences.find(lambda x: x.Consequence.contains(mt.vep.worst_consequence_term)).HGVSc),
         HGVSp = hl.coalesce(
-            mt.vep.transcript_consequences.find(lambda x: (x.CANONICAL == "YES") & (x.BIOTYPE == "protein_coding") & (hl.is_defined(x.Amino_acids)) ).HGVSp,
-            mt.vep.transcript_consequences.find(lambda x: (x.CANONICAL == "YES") & (x.BIOTYPE == "protein_coding") ).HGVSp,
-            mt.vep.transcript_consequences.find(lambda x: (x.CANONICAL == "YES") ).HGVSp,
+            mt.vep.transcript_consequences.find(lambda x: (x.CANONICAL == "YES") & (x.BIOTYPE == "protein_coding") & (hl.is_defined(x.Amino_acids)) &(x.Consequence.contains(mt.vep.worst_consequence_term)) ).HGVSp,
+            mt.vep.transcript_consequences.find(lambda x: (x.CANONICAL == "YES") & (x.BIOTYPE == "protein_coding") &(x.Consequence.contains(mt.vep.worst_consequence_term)) ).HGVSp,
+            mt.vep.transcript_consequences.find(lambda x: (x.CANONICAL == "YES") &(x.Consequence.contains(mt.vep.worst_consequence_term)) ).HGVSp,
             mt.vep.transcript_consequences.find(lambda x: x.Consequence.contains(mt.vep.worst_consequence_term)).HGVSp),
         Consequence = hl.coalesce(
-            mt.vep.transcript_consequences.find(lambda x: (x.CANONICAL == "YES") & (x.BIOTYPE == "protein_coding") & (hl.is_defined(x.Amino_acids)) ).Consequence,
-            mt.vep.transcript_consequences.find(lambda x: (x.CANONICAL == "YES") & (x.BIOTYPE == "protein_coding") ).Consequence,
-            mt.vep.transcript_consequences.find(lambda x: (x.CANONICAL == "YES") ).Consequence,
+            mt.vep.transcript_consequences.find(lambda x: (x.CANONICAL == "YES") & (x.BIOTYPE == "protein_coding") & (hl.is_defined(x.Amino_acids)) &(x.Consequence.contains(mt.vep.worst_consequence_term)) ).Consequence,
+            mt.vep.transcript_consequences.find(lambda x: (x.CANONICAL == "YES") & (x.BIOTYPE == "protein_coding") &(x.Consequence.contains(mt.vep.worst_consequence_term)) ).Consequence,
+            mt.vep.transcript_consequences.find(lambda x: (x.CANONICAL == "YES") &(x.Consequence.contains(mt.vep.worst_consequence_term)) ).Consequence,
             mt.vep.transcript_consequences.find(lambda x: x.Consequence.contains(mt.vep.worst_consequence_term)).Consequence),
         MAX_AF = hl.coalesce(
-            mt.vep.transcript_consequences.find(lambda x: (x.CANONICAL == "YES") & (x.BIOTYPE == "protein_coding") & (hl.is_defined(x.Amino_acids)) ).MAX_AF,
-            mt.vep.transcript_consequences.find(lambda x: (x.CANONICAL == "YES") & (x.BIOTYPE == "protein_coding") ).MAX_AF,
-            mt.vep.transcript_consequences.find(lambda x: (x.CANONICAL == "YES") ).MAX_AF,
+            mt.vep.transcript_consequences.find(lambda x: (x.CANONICAL == "YES") & (x.BIOTYPE == "protein_coding") & (hl.is_defined(x.Amino_acids)) &(x.Consequence.contains(mt.vep.worst_consequence_term)) ).MAX_AF,
+            mt.vep.transcript_consequences.find(lambda x: (x.CANONICAL == "YES") & (x.BIOTYPE == "protein_coding") &(x.Consequence.contains(mt.vep.worst_consequence_term)) ).MAX_AF,
+            mt.vep.transcript_consequences.find(lambda x: (x.CANONICAL == "YES") &(x.Consequence.contains(mt.vep.worst_consequence_term)) ).MAX_AF,
             mt.vep.transcript_consequences.find(lambda x: x.Consequence.contains(mt.vep.worst_consequence_term)).MAX_AF),
         LoF = hl.coalesce(
-            mt.vep.transcript_consequences.find(lambda x: (x.CANONICAL == "YES") & (x.BIOTYPE == "protein_coding") & (hl.is_defined(x.Amino_acids)) ).LoF,
-            mt.vep.transcript_consequences.find(lambda x: (x.CANONICAL == "YES") & (x.BIOTYPE == "protein_coding") ).LoF,
-            mt.vep.transcript_consequences.find(lambda x: (x.CANONICAL == "YES") ).LoF,
+            mt.vep.transcript_consequences.find(lambda x: (x.CANONICAL == "YES") & (x.BIOTYPE == "protein_coding") & (hl.is_defined(x.Amino_acids)) &(x.Consequence.contains(mt.vep.worst_consequence_term)) ).LoF,
+            mt.vep.transcript_consequences.find(lambda x: (x.CANONICAL == "YES") & (x.BIOTYPE == "protein_coding") &(x.Consequence.contains(mt.vep.worst_consequence_term)) ).LoF,
+            mt.vep.transcript_consequences.find(lambda x: (x.CANONICAL == "YES") &(x.Consequence.contains(mt.vep.worst_consequence_term)) ).LoF,
             mt.vep.transcript_consequences.find(lambda x: x.Consequence.contains(mt.vep.worst_consequence_term)).LoF),
         LoF_flags = hl.coalesce(
-            mt.vep.transcript_consequences.find(lambda x: (x.CANONICAL == "YES") & (x.BIOTYPE == "protein_coding") & (hl.is_defined(x.Amino_acids)) ).LoF_flags,
-            mt.vep.transcript_consequences.find(lambda x: (x.CANONICAL == "YES") & (x.BIOTYPE == "protein_coding") ).LoF_flags,
-            mt.vep.transcript_consequences.find(lambda x: (x.CANONICAL == "YES") ).LoF_flags,
+            mt.vep.transcript_consequences.find(lambda x: (x.CANONICAL == "YES") & (x.BIOTYPE == "protein_coding") & (hl.is_defined(x.Amino_acids)) &(x.Consequence.contains(mt.vep.worst_consequence_term)) ).LoF_flags,
+            mt.vep.transcript_consequences.find(lambda x: (x.CANONICAL == "YES") & (x.BIOTYPE == "protein_coding") &(x.Consequence.contains(mt.vep.worst_consequence_term)) ).LoF_flags,
+            mt.vep.transcript_consequences.find(lambda x: (x.CANONICAL == "YES") &(x.Consequence.contains(mt.vep.worst_consequence_term)) ).LoF_flags,
             mt.vep.transcript_consequences.find(lambda x: x.Consequence.contains(mt.vep.worst_consequence_term)).LoF_flags),
         PolyPhen = hl.coalesce(
-            mt.vep.transcript_consequences.find(lambda x: (x.CANONICAL == "YES") & (x.BIOTYPE == "protein_coding") & (hl.is_defined(x.Amino_acids)) ).PolyPhen,
-            mt.vep.transcript_consequences.find(lambda x: (x.CANONICAL == "YES") & (x.BIOTYPE == "protein_coding") ).PolyPhen,
-            mt.vep.transcript_consequences.find(lambda x: (x.CANONICAL == "YES") ).PolyPhen,
+            mt.vep.transcript_consequences.find(lambda x: (x.CANONICAL == "YES") & (x.BIOTYPE == "protein_coding") & (hl.is_defined(x.Amino_acids)) &(x.Consequence.contains(mt.vep.worst_consequence_term)) ).PolyPhen,
+            mt.vep.transcript_consequences.find(lambda x: (x.CANONICAL == "YES") & (x.BIOTYPE == "protein_coding") &(x.Consequence.contains(mt.vep.worst_consequence_term)) ).PolyPhen,
+            mt.vep.transcript_consequences.find(lambda x: (x.CANONICAL == "YES") &(x.Consequence.contains(mt.vep.worst_consequence_term)) ).PolyPhen,
             mt.vep.transcript_consequences.find(lambda x: x.Consequence.contains(mt.vep.worst_consequence_term)).PolyPhen),
         SIFT = hl.coalesce(
-            mt.vep.transcript_consequences.find(lambda x: (x.CANONICAL == "YES") & (x.BIOTYPE == "protein_coding") & (hl.is_defined(x.Amino_acids)) ).SIFT,
-            mt.vep.transcript_consequences.find(lambda x: (x.CANONICAL == "YES") & (x.BIOTYPE == "protein_coding") ).SIFT,
-            mt.vep.transcript_consequences.find(lambda x: (x.CANONICAL == "YES") ).SIFT,
+            mt.vep.transcript_consequences.find(lambda x: (x.CANONICAL == "YES") & (x.BIOTYPE == "protein_coding") & (hl.is_defined(x.Amino_acids)) &(x.Consequence.contains(mt.vep.worst_consequence_term)) ).SIFT,
+            mt.vep.transcript_consequences.find(lambda x: (x.CANONICAL == "YES") & (x.BIOTYPE == "protein_coding") &(x.Consequence.contains(mt.vep.worst_consequence_term)) ).SIFT,
+            mt.vep.transcript_consequences.find(lambda x: (x.CANONICAL == "YES") &(x.Consequence.contains(mt.vep.worst_consequence_term)) ).SIFT,
             mt.vep.transcript_consequences.find(lambda x: x.Consequence.contains(mt.vep.worst_consequence_term)).SIFT) )
 
     # Now, annotate based on the "consequence" annotation
