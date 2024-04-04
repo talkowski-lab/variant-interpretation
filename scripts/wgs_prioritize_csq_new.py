@@ -72,7 +72,7 @@ CSQ_NON_CODING = [
     "intergenic_variant"
 ]
 
-CSQ_ORDER = CSQ_CODING_HIGH_IMPACT + CSQ_CODING_MEDIUM_IMPACT + CSQ_CODING_LOW_IMPACT + CSQ_NON_CODING + ['.', np.nan, 'NA']
+CSQ_ORDER = CSQ_CODING_HIGH_IMPACT + CSQ_CODING_MEDIUM_IMPACT + CSQ_CODING_LOW_IMPACT + CSQ_NON_CODING + ['.', 'NA']
 
 def filter_vep_to_canonical_transcripts(mt: Union[hl.MatrixTable, hl.Table],
                                         vep_root: str = 'vep') -> Union[hl.MatrixTable, hl.Table]:
