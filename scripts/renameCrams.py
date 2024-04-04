@@ -23,7 +23,9 @@ sample_cc = args.scc
 	#print(result.stderr)
 
 #find number of trios in ped file
-ped=pd.read_csv(ped_file,sep='\t')
+ped=pd.read_csv(ped_file,sep='\t').iloc[:,:4]
+ped.columns = ['FamilyID', 'IndividualID', 'FatherID', 'MotherID']
+
 colnames = colnames=['sample', 'crai', 'cram']
 cram=pd.read_csv(sample_cc,sep='\t',names=colnames)
 pd.options.display.max_colwidth = 500
