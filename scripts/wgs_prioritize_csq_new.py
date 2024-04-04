@@ -178,6 +178,30 @@ def process_consequence_cohort(csq_columns, vcf_metrics_uri, numeric, sample_col
     mt_csq_annotated = mt_csq.annotate_rows(worst_csq=mt_csq.vep.worst_csq)
     mt_csq_annotated = mt_csq_annotated.drop('vep')
 
+    mt_csq_annotated = mt_csq_annotated.annotate_rows(
+        isPTV = mt_csq_annotated.worst_csq.Consequence.contains('frameshift_variant') | mt_csq_annotated.worst_csq.Consequence.contains('stop_gained') |
+                mt_csq_annotated.worst_csq.Consequence.contains('splice_donor_variant') | mt_csq_annotated.worst_csq.Consequence.contains('splice_acceptor_variant') |
+                mt_csq_annotated.worst_csq.Consequence.contains('transcript_ablation'),
+        isMIS = mt_csq_annotated.worst_csq.Consequence.contains('missense_variant'),
+        isSYN = mt_csq_annotated.worst_csq.Consequence.contains('synonymous_variant') | mt_csq_annotated.worst_csq.Consequence.contains('stop_retained_variant'),
+        isSRG = mt_csq_annotated.worst_csq.Consequence.contains('splice_region_variant'),
+        isSSL = mt_csq_annotated.worst_csq.Consequence.contains('start_lost') | mt_csq_annotated.worst_csq.Consequence.contains('stop_lost'),
+        isINF = mt_csq_annotated.worst_csq.Consequence.contains('inframe_insertion') | mt_csq_annotated.worst_csq.Consequence.contains('inframe_deletion') )
+
+    # And variants have an interesting "most severe" consequence (SII = "severe is interesting")
+    mt_csq_annotated = mt_csq_annotated.annotate_rows(
+        SII = (mt_csq_annotated.worst_csq.most_severe_consequence == 'frameshift_variant') | (mt_csq_annotated.worst_csq.most_severe_consequence == 'stop_gained') |
+            (mt_csq_annotated.worst_csq.most_severe_consequence == 'splice_donor_variant') | (mt_csq_annotated.worst_csq.most_severe_consequence ==  'splice_acceptor_variant') |
+            (mt_csq_annotated.worst_csq.most_severe_consequence == 'transcript_ablation') | (mt_csq_annotated.worst_csq.most_severe_consequence == 'missense_variant') |
+            (mt_csq_annotated.worst_csq.most_severe_consequence == 'synonymous_variant') | (mt_csq_annotated.worst_csq.most_severe_consequence == 'stop_retained_variant') |
+            (mt_csq_annotated.worst_csq.most_severe_consequence == 'splice_region_variant') | (mt_csq_annotated.worst_csq.most_severe_consequence == 'start_lost') | 
+            (mt_csq_annotated.worst_csq.most_severe_consequence == 'stop_lost') | (mt_csq_annotated.worst_csq.most_severe_consequence == 'inframe_insertion') | 
+            (mt_csq_annotated.worst_csq.most_severe_consequence == 'inframe_deletion') )
+
+    # Additionally annotate SNV vs indel
+    mt_csq_annotated = mt_csq_annotated.annotate_rows(isSNV = hl.is_snp(mt_csq_annotated.alleles[0], mt_csq_annotated.alleles[1]),
+                        isIndel = hl.is_indel(mt_csq_annotated.alleles[0], mt_csq_annotated.alleles[1]))
+
     mt_csq_rows = mt_csq_annotated.rows().flatten()
     mt_csq_df = mt_csq_rows.to_pandas()
 
@@ -238,7 +262,6 @@ else:
     warnings.simplefilter("error")
     warnings.warn("CSQ fields are messed up!")
 
-# numeric = [col for col in final_output.columns.tolist() if col not in [sample_column, 'locus', 'alleles']]
 numeric = []
 for col in final_output.columns:
     if col==sample_column:
@@ -252,10 +275,4 @@ for col in final_output.columns:
 df = process_consequence_cohort(csq_columns, vcf_metrics_uri, numeric, sample_column)
 df['isCoding'] = df.Consequence.astype(str).replace({'None': '[]'}).apply(ast.literal_eval).apply(lambda csq: np.intersect1d(csq, coding_variants).size!=0)
 
-new_cols = ['SYMBOL', 'Gene',
-'transcript_id', 'HGNC_ID', 'HGVSc', 'HGVSp', 'Consequence', 'MAX_AF',
-'LoF', 'LoF_flags', 'PolyPhen', 'SIFT', 'isPTV', 'isMIS', 'isSYN',
-'isSRG', 'isSSL', 'isINF', 'SII', 'isSNP', 'isIndel', 'isCoding']
-
-final_output[new_cols] = df[new_cols]
-final_output.to_csv(f"{os.path.basename(vcf_metrics_uri).split('.tsv')[0]}_prioritized_csq.tsv", sep='\t',index=False)
+df.to_csv(f"{os.path.basename(vcf_metrics_uri).split('.tsv')[0]}_prioritized_csq.tsv", sep='\t',index=False)
