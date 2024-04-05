@@ -25,7 +25,7 @@ workflow BaggingPU_RF {
         String sv_base_mini_docker
         String hail_docker
         Array[String] metrics
-        Array[Array[String]] features
+        Array[Array[Array[String]]] features
         String known_vars_uri='false'
         Float vqslod_cutoff=-10
         Float prop_dn=1
@@ -44,6 +44,8 @@ workflow BaggingPU_RF {
     }
 
     scatter (numeric in features) {
+        Array[String] variant_features = numeric[0]
+        Array[String] sample_features = numeric[1]
         scatter (metric in metrics) {
             call runBaggingPU_RF {
                 input:
@@ -57,7 +59,8 @@ workflow BaggingPU_RF {
                     cohort_prefix=cohort_prefix,
                     hail_docker=hail_docker,
                     metric=metric,
-                    numeric=numeric,
+                    variant_features=variant_features,
+                    sample_features=sample_features,
                     vqslod_cutoff=vqslod_cutoff,
                     known_vars_uri=known_vars_uri,
                     prop_dn=prop_dn,
@@ -71,7 +74,7 @@ workflow BaggingPU_RF {
     output {
         Array[File] bagging_pu_results = flatten(runBaggingPU_RF.bagging_pu_results)
         Array[File] bagging_pu_importances = flatten(runBaggingPU_RF.bagging_pu_importances)
-        Array[File] bagging_pu_oob_scores = flatten(runBaggingPU_RF.bagging_pu_oob_scores)
+        # Array[File] bagging_pu_oob_scores = flatten(runBaggingPU_RF.bagging_pu_oob_scores)
         # Array[File] bagging_pu_best_params = flatten(runBaggingPU_RF.bagging_pu_best_params)
         # Array[File] bagging_pu_figures = flatten(runBaggingPU_RF.bagging_pu_figures)
     }
@@ -83,7 +86,8 @@ task runBaggingPU_RF {
         File ultra_rare_variants_tsv
         File ultra_rare_rep_regions
         File rep_regions
-        Array[String] numeric
+        Array[String] variant_features
+        Array[String] sample_features
         String var_type
         String bagging_pu_source_script
         String bagging_pu_rf_script
@@ -127,7 +131,7 @@ task runBaggingPU_RF {
         curl ~{bagging_pu_rf_script} > run_bagging_pu.py
         curl ~{bagging_pu_source_script} > baggingPU.py
         python3 run_bagging_pu.py ~{vcf_metrics_tsv_final} ~{ultra_rare_variants_tsv} \
-        ~{cohort_prefix} ~{var_type} ~{sep=',' numeric} ~{vqslod_cutoff} \
+        ~{cohort_prefix} ~{var_type} ~{sep=',' variant_features} ~{sep=',' sample_features} ~{vqslod_cutoff} \
         ~{prop_dn} ~{ultra_rare_rep_regions} ~{rep_regions} ~{known_vars_uri} ~{metric} \
         ~{n_estimators_rf} ~{n_bag} > stdout
     >>>
@@ -135,9 +139,9 @@ task runBaggingPU_RF {
     output {
         File bagging_pu_results = "~{cohort_prefix}_~{var_type}_~{metric}_RF_results.tsv"
         File bagging_pu_importances = "~{cohort_prefix}_~{var_type}_~{metric}_RF_feature_importances.tsv"
-        File bagging_pu_oob_scores = "~{cohort_prefix}_~{var_type}_~{metric}_RF_oob_scores.tsv"
+        # File bagging_pu_oob_scores = "~{cohort_prefix}_~{var_type}_~{metric}_RF_oob_scores.tsv"
         # File bagging_pu_best_params = "~{cohort_prefix}_~{var_type}_~{metric}_RF_best_params.tsv"
-        Array[File] bagging_pu_figures = glob('*.png')
+        # Array[File] bagging_pu_figures = glob('*.png')
     }
 }
 

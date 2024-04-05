@@ -35,15 +35,16 @@ vcf_metrics_tsv = sys.argv[1]
 ultra_rare_variants_tsv = sys.argv[2]
 cohort_prefix = sys.argv[3]
 var_type = sys.argv[4]
-numeric = sys.argv[5]
-vqslod_cutoff = float(sys.argv[6])
-prop_dn = float(sys.argv[7])
-ultra_rare_rep_regions = sys.argv[8]
-rep_regions = sys.argv[9]
-known_vars_uri = sys.argv[10]
-metric = sys.argv[11]  # ['roc-auc', 'accuracy', 'f1', 'fp_fn_ratio']
-n_estimators_rf = int(sys.argv[12])
-n_bags = int(sys.argv[13])
+variant_features = sys.argv[5].split(',')
+sample_features = sys.argv[6].split(',')
+vqslod_cutoff = float(sys.argv[7])
+prop_dn = float(sys.argv[8])
+ultra_rare_rep_regions = sys.argv[9]
+rep_regions = sys.argv[10]
+known_vars_uri = sys.argv[11]
+metric = sys.argv[12]  # ['roc-auc', 'accuracy', 'f1', 'fp_fn_ratio']
+n_estimators_rf = int(sys.argv[13])
+n_bags = int(sys.argv[14])
 
 def fp_fn_ratio(y, y_pred):
     FP = ((y==0) & (y_pred==1)).sum()
@@ -132,6 +133,7 @@ def filter_variants(final_output, ultra_rare, final_output_raw, ultra_rare_raw):
 
     final_output = final_output[final_output.VQSLOD>vqslod_cutoff]
     final_output = final_output[final_output.LEN<=50]
+    final_output = final_output[final_output.FILTER=='PASS']
 
     # TODO: remove when filter-rare-variants-hail is fixed?
     # ultra_rare = ultra_rare[ultra_rare.GQ_sample>=99]
@@ -181,7 +183,7 @@ def BaggingPU(X, y, kf, model, n_bags, n_jobs=-1):
     return y_pred_bag, output_bag, classifiers
 
 
-def runBaggingPU_RF(X, y, model, merged_output, numeric, n_bags=10):
+def runBaggingPU_RF(X, y, model, merged_output, numeric, suffix, n_bags=10):
     kf = sklearn.model_selection.KFold(n_splits=5)
     y_pred_bag, output_bag, classifiers_bag = BaggingPU(X, y, kf, model, n_bags=n_bags, n_jobs=-1)
 
@@ -195,8 +197,8 @@ def runBaggingPU_RF(X, y, model, merged_output, numeric, n_bags=10):
 
     results = pd.DataFrame({'label': y, 
                             'VarKey': merged_output.iloc[X.index].VarKey,
-                            'predict_proba_bag': output_bag,
-                            'pred_bag': y_pred_bag.astype(int)
+                            f'predict_proba_bag_{suffix}': output_bag,
+                            f'pred_bag_{suffix}': y_pred_bag.astype(int)
                             })
     if known_vars_exist:
         results['is_known'] = merged_output.iloc[X.index].is_known.astype(str)
@@ -204,9 +206,11 @@ def runBaggingPU_RF(X, y, model, merged_output, numeric, n_bags=10):
     return results, classifiers_bag
 
 
-def get_importances_oob_scores(merged_output, numeric, n_estimators_rf=100, n_bags=10, oob_score=True):
+
+
+def get_importances_oob_scores(X, y, merged_output, numeric, suffix, n_estimators_rf=100, n_bags=10, oob_score=True):
     model = RandomForestClassifier(warm_start=True, oob_score=oob_score, n_estimators=n_estimators_rf)
-    results, estimators = runBaggingPU_RF(X, y, model, merged_output, numeric, n_bags=n_bags)
+    results, estimators = runBaggingPU_RF(X, y, model, merged_output, numeric, suffix, n_bags=n_bags)
 
     importances = pd.DataFrame(np.array([[estimators[j].estimators_[i].feature_importances_ 
                 for i in range(len(estimators[j].estimators_))] 
@@ -217,6 +221,55 @@ def get_importances_oob_scores(merged_output, numeric, n_estimators_rf=100, n_ba
                     for j in range(len(estimators))]).T)
     
     return results, estimators, importances, oob_scores
+
+
+from sklearn.metrics import RocCurveDisplay
+
+def run_baggingPU_level_features(X, y, merged_output, numeric,
+                                 n_estimators_rf, n_bags, metric, suffix):
+    
+    results_optimized, estimators_optimized, importances_optimized, oob_scores_optimized = get_importances_oob_scores(X, y, merged_output, numeric, suffix,
+                                                                                                                      n_estimators_rf=n_estimators_rf, n_bags=n_bags, oob_score=metrics_to_funcs[metric])
+
+    opt_auc_scores = pd.DataFrame()
+
+    if known_vars_exist:
+#         fig, ax = plt.subplots(1, 2, figsize=(10,4));
+#         fig.suptitle(f"{cohort_prefix} {var_type}");
+
+        for p_thr in np.arange(0, 0.5, 0.05): 
+            y_pred = [1 if x>p_thr else 0 for x in results_optimized[f'predict_proba_bag_{suffix}']]
+#             RocCurveDisplay.from_predictions(y, y_pred, ax=ax[0], name=f"p_thr={round(p_thr, 2)}");
+#             ax[0].set(title=f"unlabeled vs. ultra-rare");
+            opt_auc_scores.loc[p_thr, 'roc_auc_score'] = sklearn.metrics.roc_auc_score(results_optimized.label, y_pred)
+
+            y_pred_known = [1 if x>p_thr else 0 for x in results_optimized[results_optimized.is_known!='ultra-rare'][f'predict_proba_bag_{suffix}']]
+            y_known = results_optimized[results_optimized.is_known!='ultra-rare'].is_known.apply(ast.literal_eval).astype(int)
+#             RocCurveDisplay.from_predictions(y_known, y_pred_known, ax=ax[1], name=f"p_thr={round(p_thr, 2)}");
+#             ax[1].set(title=f"known variants vs. unknown");
+
+    else: 
+#         fig, ax = plt.subplots(figsize=(4,4));
+#         ax.set_title(f"{cohort_prefix} {var_type},\nunlabeled vs. ultra-rare");
+
+        for p_thr in np.arange(0, 0.5, 0.05): 
+            y_pred = [1 if x>p_thr else 0 for x in results_optimized[f'predict_proba_bag_{suffix}']]
+#             RocCurveDisplay.from_predictions(y, y_pred, ax=ax, name=f"p_thr={round(p_thr, 2)}");
+            opt_auc_scores.loc[p_thr, 'roc_auc_score'] = sklearn.metrics.roc_auc_score(results_optimized.label, y_pred)
+
+#     plt.savefig(f"{cohort_prefix}_{var_type}_{metric}_RF_roc_auc_curve_p_thr.png");
+#     plt.show();
+
+    best_p_thr = round(opt_auc_scores.roc_auc_score.idxmax(), 2) 
+
+    results_optimized[f'pred_bag_optimized_{suffix}'] = [1 if x>best_p_thr else 0 for x in results_optimized[f'predict_proba_bag_{suffix}']]
+    results_optimized[f'features_{suffix}'] = ', '.join(numeric)
+    results_optimized['metric'] = metric
+    results_optimized[f'p_thr_{suffix}'] = best_p_thr
+
+    return results_optimized, estimators_optimized, importances_optimized, oob_scores_optimized
+
+# Run
 
 # Overall function
 
@@ -240,60 +293,43 @@ merged_output['multiallelic'] = (merged_output.DPC_sample!=merged_output.DP_samp
                 |(merged_output.DPC_mother!=merged_output.DP_mother)\
                 |(merged_output.DPC_father!=merged_output.DP_father)
 
-if numeric != 'false':
-    numeric = numeric.split(',')
-elif var_type == 'Indel':
-    numeric = ['BaseQRankSum', 'MQ', 'MQRankSum', 'QD', 'GQ_parent'] 
-elif var_type == 'SNV':
-    numeric = ['BaseQRankSum', 'FS', 'MQ', 'MQRankSum', 'QD', 'SOR', 'GQ_parent']
+# variant-level features
+if len(variant_features) > 0:
+    numeric = variant_features
 
-# numeric = np.intersect1d(numeric, np.intersect1d(ultra_rare.columns, final_output.columns)).tolist()
+    merged_output = merged_output[~merged_output[numeric].isna().any(axis=1)].reset_index(drop=True)
 
-merged_output = merged_output[~merged_output[numeric].isna().any(axis=1)].reset_index(drop=True)
+    X = merged_output[numeric].sample(frac=1)
+    y = merged_output['label'].loc[X.index]
 
-X = merged_output[numeric].sample(frac=1)
-y = merged_output['label'].loc[X.index]
+    results_variant_level, estimators_variant_level, importances_variant_level, oob_scores_variant_level = run_baggingPU_level_features(X, y, merged_output, numeric,
+                                     n_estimators_rf, n_bags, metric, 'variant_level')
+else:
+    results_variant_level, importances_variant_level, oob_scores_variant_level = (pd.DataFrame() for _ in range(3))
 
-results_optimized, estimators_optimized, importances_optimized, oob_scores_optimized = get_importances_oob_scores(merged_output, numeric, 
-                                                                                                                  n_estimators_rf=n_estimators_rf, n_bags=n_bags, oob_score=metrics_to_funcs[metric])
+# sample-level features
+if len(sample_features) > 0:
+    passes_variant_features = results_variant_level[(results_variant_level.label==0) & (results_variant_level.pred_bag_optimized_variant_level==1)].VarKey
+    merged_output = merged_output[merged_output.VarKey.isin(passes_variant_features) | (merged_output.label==1)].reset_index(drop=True)
 
-from sklearn.metrics import RocCurveDisplay
-opt_auc_scores = pd.DataFrame()
+    numeric = sample_features
 
-if known_vars_exist:
-    fig, ax = plt.subplots(1, 2, figsize=(10,4));
-    fig.suptitle(f"{cohort_prefix} {var_type}");
+    merged_output = merged_output[~merged_output[numeric].isna().any(axis=1)].reset_index(drop=True)
 
-    for p_thr in np.arange(0, 0.5, 0.05): 
-        y_pred = [1 if x>p_thr else 0 for x in results_optimized.predict_proba_bag]
-        RocCurveDisplay.from_predictions(y, y_pred, ax=ax[0], name=f"p_thr={round(p_thr, 2)}");
-        ax[0].set(title=f"unlabeled vs. ultra-rare");
-        opt_auc_scores.loc[p_thr, 'roc_auc_score'] = sklearn.metrics.roc_auc_score(results_optimized.label, y_pred)
+    X = merged_output[numeric].sample(frac=1)
+    y = merged_output['label'].loc[X.index]
 
-        y_pred_known = [1 if x>p_thr else 0 for x in results_optimized[results_optimized.is_known!='ultra-rare'].predict_proba_bag]
-        y_known = results_optimized[results_optimized.is_known!='ultra-rare'].is_known.apply(ast.literal_eval).astype(int)
-        RocCurveDisplay.from_predictions(y_known, y_pred_known, ax=ax[1], name=f"p_thr={round(p_thr, 2)}");
-        ax[1].set(title=f"known variants vs. unknown");
+    results_sample_level, estimators_sample_level, importances_sample_level, oob_scores_sample_level = run_baggingPU_level_features(X, y, merged_output, numeric,
+                                     n_estimators_rf, n_bags, metric, 'sample_level')
+else:
+    results_sample_level, importances_sample_level, oob_scores_sample_level = (pd.DataFrame() for _ in range(3))
 
-else: 
-    fig, ax = plt.subplots(figsize=(4,4));
-    ax.set_title(f"{cohort_prefix} {var_type},\nunlabeled vs. ultra-rare");
+results_optimized = pd.concat([results_variant_level.set_index('VarKey', drop=False), 
+           results_sample_level.set_index('VarKey', drop=False)[np.setdiff1d(results_sample_level.columns, results_variant_level.columns)]], axis=1)
 
-    for p_thr in np.arange(0, 0.5, 0.05): 
-        y_pred = [1 if x>p_thr else 0 for x in results_optimized.predict_proba_bag]
-        RocCurveDisplay.from_predictions(y, y_pred, ax=ax, name=f"p_thr={round(p_thr, 2)}");
-        opt_auc_scores.loc[p_thr, 'roc_auc_score'] = sklearn.metrics.roc_auc_score(results_optimized.label, y_pred)
+importances_optimized = pd.concat([importances_variant_level, importances_sample_level], axis=1)
 
-plt.savefig(f"{cohort_prefix}_{var_type}_{metric}_RF_roc_auc_curve_p_thr.png");
-plt.show();
-
-best_p_thr = round(opt_auc_scores.roc_auc_score.idxmax(), 2) 
-
-results_optimized['pred_bag_optimized'] = [1 if x>best_p_thr else 0 for x in results_optimized.predict_proba_bag]
-results_optimized['features'] = ', '.join(numeric)
-results_optimized['metric'] = metric
-results_optimized['p_thr'] = best_p_thr
 
 results_optimized.to_csv(f"{cohort_prefix}_{var_type}_{metric}_RF_results.tsv", sep='\t', index=False)
 importances_optimized.to_csv(f"{cohort_prefix}_{var_type}_{metric}_RF_feature_importances.tsv", sep='\t', index=False)
-oob_scores_optimized.to_csv(f"{cohort_prefix}_{var_type}_{metric}_RF_oob_scores.tsv", sep='\t', index=False)
+# oob_scores_optimized.to_csv(f"{cohort_prefix}_{var_type}_{metric}_RF_oob_scores.tsv", sep='\t', index=False)
