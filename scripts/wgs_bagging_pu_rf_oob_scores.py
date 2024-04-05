@@ -328,7 +328,7 @@ results_optimized = pd.concat([results_variant_level.set_index('VarKey', drop=Fa
            results_sample_level.set_index('VarKey', drop=False)[np.setdiff1d(results_sample_level.columns, results_variant_level.columns)]], axis=1)
 
 feature_cols = [col for col in results_optimized.columns if 'feature' in col]
-results_optimized['features'] = results_optimized[feature_cols].agg(', '.join, axis=1)
+results_optimized['features'] = results_optimized[feature_cols].astype(str).agg(', '.join, axis=1)
 
 importances_optimized = pd.concat([importances_variant_level, importances_sample_level], axis=1)
 
