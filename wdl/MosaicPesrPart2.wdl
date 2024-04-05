@@ -121,7 +121,7 @@ task rdtest {
       -n ~{prefix} \
       -c local_coverage.bed.gz \
       -m ~{median_file} \
-      -f ~{fam_file} 
+      -f ~{fam_file} \
       -p TRUE
     mkdir plots
     mv *jpg plots
