@@ -229,7 +229,8 @@ def run_baggingPU_level_features(X, y, merged_output, numeric,
                                  n_estimators_rf, n_bags, metric, suffix):
     
     results_optimized, estimators_optimized, importances_optimized, oob_scores_optimized = get_importances_oob_scores(X, y, merged_output, numeric, suffix,
-                                                                                                                      n_estimators_rf=n_estimators_rf, n_bags=n_bags, oob_score=metrics_to_funcs[metric])
+                                                                                                                      n_estimators_rf=n_estimators_rf, n_bags=n_bags, 
+                                                                                                                      oob_score=metrics_to_funcs[metric] if metric in metrics_to_funcs.keys() else metric)
 
     opt_auc_scores = pd.DataFrame()
 
