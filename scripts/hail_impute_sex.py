@@ -105,8 +105,9 @@ ped = ped[ped.index.isin(vcf_samps)].copy()
 
 ped_qc = pd.concat([ped, sample_qc_df], axis=1).reset_index()
 ped_qc = ped_qc.fillna(np.nan)
-ped_qc['pred_sex'] = ped_qc.apply(predict_sex, axis=1).astype('category')
-ped_qc = ped_qc[base_cols + ['pred_sex'] + np.setdiff1d(sample_qc_df.columns, base_cols).tolist()]
+ped_qc['ped_sex'] = ped_qc.sex
+ped_qc['sex'] = ped_qc.apply(predict_sex, axis=1).astype('category')
+ped_qc = ped_qc[base_cols + ['ped_sex'] + np.setdiff1d(sample_qc_df.columns, base_cols).tolist()]
 ped_qc.to_csv(f"{cohort_prefix}_sex_qc.ped", sep='\t', index=False)
 
 ped_qc['sex'] = ped_qc.sex.replace({np.nan: -9}).astype('category')
