@@ -137,7 +137,7 @@ task runBaggingPU_RF {
         File bagging_pu_importances = "~{cohort_prefix}_~{var_type}_~{metric}_RF_feature_importances.tsv"
         File bagging_pu_oob_scores = "~{cohort_prefix}_~{var_type}_~{metric}_RF_oob_scores.tsv"
         # File bagging_pu_best_params = "~{cohort_prefix}_~{var_type}_~{metric}_RF_best_params.tsv"
-        Array[File] bagging_pu_figures = glob('*.png')
+        # Array[File] bagging_pu_figures = glob('*.png')
     }
 }
 
