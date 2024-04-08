@@ -88,9 +88,9 @@ def predict_sex(row):
             sex = 1
         elif (row['chrX.n_het'] / row['chrX.n_hom_var'] > 0.4) & (row['chrX.n_called'] > 10):
             sex = 2
-    if (row['chrY.n_called']>0) & (row.sex==1) & (row['Y_ploidy'] < 0.4):
+    if (row['chrY.n_called']>0) & (row.sex!=2) & (row['Y_ploidy'] < 0.4):
         sex = -1  # apparent loss of Y with low het-ratio on X chromosome
-    if (row['chrY.n_called']>0) & (row.sex==2) & (row['Y_ploidy'] > 0.4):
+    if (row['chrY.n_called']>0) & (row.sex!=1) & (row['Y_ploidy'] > 0.4):
         sex = -2  # apparent Y with high het-ratio on X chromosome
     return sex
 
@@ -110,7 +110,7 @@ ped_qc['sex'] = ped_qc.apply(predict_sex, axis=1).astype('category')
 ped_qc = ped_qc[base_cols + ['ped_sex'] + np.setdiff1d(sample_qc_df.columns, base_cols).tolist()]
 ped_qc.to_csv(f"{cohort_prefix}_sex_qc.ped", sep='\t', index=False)
 
-ped_qc['sex'] = ped_qc.sex.replace({np.nan: -9}).astype('category')
+ped_qc['ped_sex'] = ped_qc.ped_sex.replace({np.nan: -9}).astype('category')
 
 fig = plt.figure(layout="constrained", figsize=(22, 10))
 subfigs = fig.subfigures(1, 2, wspace=0.07, width_ratios=[1, 1])
