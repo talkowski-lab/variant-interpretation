@@ -58,7 +58,8 @@ def fp_fn_ratio(y, y_pred):
     return float(FP_rate / FN_rate)
 
 metrics_to_funcs = {'roc-auc': sklearn.metrics.roc_auc_score, 'accuracy': True, 'f1': sklearn.metrics.f1_score,
-                    'fp_fn_ratio': fp_fn_ratio}
+                    'fp_fn_ratio': fp_fn_ratio, 'neg_log_loss': sklearn.metrics.log_loss, 
+                    'recall': sklearn.metrics.recall_score, 'precision': sklearn.metrics.precision_score}
 
 known_vars_exist = (known_vars_uri!='false')
 
@@ -230,7 +231,7 @@ def run_baggingPU_level_features(X, y, merged_output, numeric,
     
     results_optimized, estimators_optimized, importances_optimized, oob_scores_optimized = get_importances_oob_scores(X, y, merged_output, numeric, suffix,
                                                                                                                       n_estimators_rf=n_estimators_rf, n_bags=n_bags, 
-                                                                                                                      oob_score=metrics_to_funcs[metric] if metric in metrics_to_funcs.keys() else metric)
+                                                                                                                      oob_score=metrics_to_funcs[metric])
 
     opt_auc_scores = pd.DataFrame()
 
