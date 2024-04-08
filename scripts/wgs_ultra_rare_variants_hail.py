@@ -9,6 +9,7 @@ import numpy as np
 import sys
 import ast
 import warnings
+import os
 
 build = 'GRCh38'
 lcr_uri = sys.argv[1]
@@ -31,11 +32,28 @@ hl.init(min_block_size=128, spark_conf={"spark.executor.cores": cores,
                     "spark.driver.memory": f"{mem}g"
                     }, tmp_dir="tmp", local_tmpdir="tmp")
 
-pedigree = hl.Pedigree.read(ped_uri, delimiter='\t')
-
 trio_df = pd.read_csv(trio_uri, dtype=str, sep='\t')
 
+prefix = os.path.basename(vcf_file).split('.vcf')[0]
 mt = hl.import_vcf(vcf_file, force_bgz=True, array_elements_required=False, call_fields=[], reference_genome='GRCh38')
+
+tmp_ped = pd.read_csv(ped_uri, sep='\t')
+# check ped number of columns
+if len(tmp_ped) > 6:
+    tmp_ped = tmp_ped.iloc[:,:6]
+    
+# subset ped to samples in mt
+samps = mt.s.collect()
+tmp_ped = tmp_ped[tmp_ped.iloc[:,1].isin(samps)]  # sample_id
+tmp_ped.columns = ['family_id', 'sample_id', 'paternal_id', 'maternal_id', 'sex', 'phenotype']
+tmp_ped = tmp_ped.drop_duplicates('sample_id')    
+tmp_ped = tmp_ped.replace({np.nan: 0})
+
+tmp_ped.to_csv(f"{prefix}.ped", sep='\t', index=False)
+
+# only keep mendelian errors 
+# mendelian errors code == 2 get parents hom_ref and children het loci
+pedigree = hl.Pedigree.read(f"{prefix}.ped", delimiter='\t')
 
 #split-multi
 def split_multi_ssc(mt):
