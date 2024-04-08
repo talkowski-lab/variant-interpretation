@@ -309,8 +309,8 @@ else:
 
 # sample-level features
 if len(sample_features) > 0:
-    passes_variant_features = results_variant_level[(results_variant_level.label==0) & (results_variant_level.pred_bag_optimized_variant_level==1)].VarKey
-    merged_output = merged_output[merged_output.VarKey.isin(passes_variant_features) | (merged_output.label==1)].reset_index(drop=True)
+    passes_variant_features = results_variant_level[(results_variant_level.pred_bag_optimized_variant_level==1)].VarKey
+    merged_output = merged_output[merged_output.VarKey.isin(passes_variant_features)].reset_index(drop=True)
 
     numeric = sample_features
 
