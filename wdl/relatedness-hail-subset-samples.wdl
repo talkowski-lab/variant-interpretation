@@ -176,6 +176,7 @@ task HailPCA {
     cat <<EOF > hail_pca.py
     import hail as hl
     import pandas as pd
+    import numpy as np
     import os
     import sys
 
