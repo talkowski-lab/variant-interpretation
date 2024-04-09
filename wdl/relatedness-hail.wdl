@@ -150,6 +150,7 @@ task checkRelatedness {
         String relatedness_qc_script
         String hail_docker
         String bucket_id
+        String score_table=false
         RuntimeAttr? runtime_attr_override
     }
 
@@ -183,7 +184,7 @@ task checkRelatedness {
     command <<<
         set -eou pipefail
         curl ~{relatedness_qc_script} > check_relatedness.py
-        python3 check_relatedness.py ~{vcf_uri} ~{bed_file} ~{cohort_prefix} ~{ped_uri} ~{cpu_cores} ~{memory} ~{bucket_id} > stdout
+        python3 check_relatedness.py ~{vcf_uri} ~{bed_file} ~{cohort_prefix} ~{ped_uri} ~{cpu_cores} ~{memory} ~{bucket_id} ~{score_table} > stdout
     >>>
 
     output {

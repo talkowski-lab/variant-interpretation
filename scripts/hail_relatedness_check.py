@@ -17,6 +17,7 @@ ped_uri = sys.argv[4]
 cores = sys.argv[5]  # string
 mem = int(np.floor(float(sys.argv[6])))
 bucket_id = sys.argv[7]
+score_table = sys.argv[8]
 
 hl.init(min_block_size=128, spark_conf={"spark.executor.cores": cores, 
                     "spark.executor.memory": f"{mem}g",
@@ -47,7 +48,12 @@ mt = split_multi_ssc(mt)
 intervals = hl.import_bed(bed_file, reference_genome='GRCh38')
 mt = mt.filter_rows(hl.is_defined(intervals[mt.locus]))
 
-rel = hl.pc_relate(mt.GT, 0.01, k=10)
+if score_table=='false':
+    rel = hl.pc_relate(mt.GT, 0.01, k=10)
+else:
+    score_table_som = hl.read_table(score_table)
+    mt = mt.annotate_cols(scores=score_table_som[mt.s].scores)
+    rel = hl.pc_relate(mt.GT, 0.01, scores_expr=mt.scores)
 
 rel = rel.annotate(relationship = relatedness.get_relationship_expr(rel.kin, rel.ibd0, rel.ibd1, rel.ibd2, 
                                                    first_degree_kin_thresholds=(0.19, 0.4), second_degree_min_kin=0.1, 
