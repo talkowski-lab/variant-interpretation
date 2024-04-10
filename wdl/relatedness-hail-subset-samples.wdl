@@ -179,6 +179,7 @@ task HailPCA {
     import numpy as np
     import os
     import sys
+    import datetime
 
     merged_vcf_file = sys.argv[1]
     cohort_prefix = sys.argv[2]
