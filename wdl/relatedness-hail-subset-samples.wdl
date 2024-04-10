@@ -28,6 +28,7 @@ workflow Relatedness {
         String sv_base_mini_docker
         String hail_docker
         String bucket_id
+        Int chunk_size=100000
     }
 
     if (!defined(merged_vep_file)) {
@@ -117,9 +118,17 @@ workflow Relatedness {
             hail_docker=hail_docker
     }
 
-    call relatednessHail.plotRelatedness as plotRelatedness {
+    call removeDuplicates {
         input:
         kinship_tsv=mergeKinshipTSV.merged_tsv,
+        relatedness_qc=mergeRelatednessQC.merged_tsv,
+        hail_docker=hail_docker,
+        chunk_size=chunk_size
+    }
+
+    call relatednessHail.plotRelatedness as plotRelatedness {
+        input:
+        kinship_tsv=removeDuplicates.kinship_tsv_unique,
         ped_uri=ped_uri,
         cohort_prefix=cohort_prefix,
         plot_relatedness_script=plot_relatedness_script,
@@ -130,8 +139,8 @@ workflow Relatedness {
     output {
         File sex_qc_plots = imputeSex.sex_qc_plots
         File ped_sex_qc = imputeSex.ped_sex_qc
-        File relatedness_qc = mergeRelatednessQC.merged_tsv
-        File kinship_tsv = mergeKinshipTSV.merged_tsv
+        File relatedness_qc = removeDuplicates.relatedness_qc_unique
+        File kinship_tsv = removeDuplicates.kinship_tsv_unique
         File relatedness_plot = plotRelatedness.relatedness_plot
     }
 }
@@ -205,5 +214,76 @@ task HailPCA {
 
     output {
         String score_table = read_lines('table.txt')[0]
+    }
+}
+
+task removeDuplicates {
+    input {
+        File kinship_tsv
+        File relatedness_qc
+        String hail_docker
+        Int chunk_size
+        RuntimeAttr? runtime_attr_override
+    }
+
+    Float input_size = size([kinship_tsv, relatedness_qc], "GB")
+    Float base_disk_gb = 10.0
+    Float input_disk_scale = 5.0
+
+    RuntimeAttr runtime_default = object {
+        mem_gb: 4,
+        disk_gb: ceil(base_disk_gb + input_size * input_disk_scale),
+        cpu_cores: 1,
+        preemptible_tries: 3,
+        max_retries: 1,
+        boot_disk_gb: 10
+    }
+
+    RuntimeAttr runtime_override = select_first([runtime_attr_override, runtime_default])
+    Float memory = select_first([runtime_override.mem_gb, runtime_default.mem_gb])
+    Int cpu_cores = select_first([runtime_override.cpu_cores, runtime_default.cpu_cores])
+    
+    runtime {
+        memory: "~{memory} GB"
+        disks: "local-disk ~{select_first([runtime_override.disk_gb, runtime_default.disk_gb])} HDD"
+        cpu: cpu_cores
+        preemptible: select_first([runtime_override.preemptible_tries, runtime_default.preemptible_tries])
+        maxRetries: select_first([runtime_override.max_retries, runtime_default.max_retries])
+        docker: hail_docker
+        bootDiskSizeGb: select_first([runtime_override.boot_disk_gb, runtime_default.boot_disk_gb])
+    }
+
+    command <<<
+    cat <<EOF > remove_duplicates.py
+    import pandas as pd
+    import numpy as np
+    import os
+    import sys
+
+    kinship_tsv = sys.argv[1]
+    relatedness_qc = sys.argv[2]
+    chunk_size = int(sys.argv[3])
+
+    chunks = []
+    for chunk in pd.read_csv(kinship_tsv, sep='\t', chunksize=chunk_size):
+        chunks.append(chunk)
+    kinship_df = pd.concat(chunks)
+    kinship_df['pair'] = kinship_df[['i','j']].astype(str).agg(lambda lst: ','.join(sorted(lst)), axis=1)
+    kinship_df = kinship_df.sort_values('kin', ascending=False).drop_duplicates('pair')
+
+    rel_df = pd.read_csv(relatedness_qc, sep='\t')
+    rel_df['pair'] = rel_df[['i','j']].astype(str).agg(lambda lst: ','.join(sorted(lst)), axis=1)
+    rel_df = rel_df.sort_values('kin', ascending=False).drop_duplicates('pair')
+
+    kinship_df.to_csv(os.path.basename(kinship_tsv), sep='\t', index=False)
+    rel_df.to_csv(os.path.basename(relatedness_qc), sep='\t', index=False)
+    EOF
+
+    python3 remove_duplicates.py ~{kinship_tsv} ~{relatedness_qc} ~{chunk_size} 
+    >>>
+
+    output {
+        File kinship_tsv_unique = basename(kinship_tsv)
+        File relatedness_qc_unique = basename(relatedness_qc)
     }
 }
