@@ -84,6 +84,7 @@ workflow Relatedness {
     }
 
     output {
+        File somalier_vcf_file = merged_vcf_file
         File sex_qc_plots = imputeSex.sex_qc_plots
         File ped_sex_qc = imputeSex.ped_sex_qc
         File relatedness_qc = checkRelatedness.relatedness_qc
