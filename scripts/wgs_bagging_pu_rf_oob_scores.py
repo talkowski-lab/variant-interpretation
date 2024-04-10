@@ -295,25 +295,8 @@ merged_output['multiallelic'] = (merged_output.DPC_sample!=merged_output.DP_samp
                 |(merged_output.DPC_mother!=merged_output.DP_mother)\
                 |(merged_output.DPC_father!=merged_output.DP_father)
 
-# variant-level features
-if len(variant_features) > 0:
-    numeric = variant_features
-
-    merged_output = merged_output[~merged_output[numeric].isna().any(axis=1)].reset_index(drop=True)
-
-    X = merged_output[numeric].sample(frac=1)
-    y = merged_output['label'].loc[X.index]
-
-    results_variant_level, estimators_variant_level, importances_variant_level, oob_scores_variant_level = run_baggingPU_level_features(X, y, merged_output, numeric,
-                                     n_estimators_rf, n_bags, metric, 'variant_level')
-else:
-    results_variant_level, importances_variant_level, oob_scores_variant_level = (pd.DataFrame() for _ in range(3))
-
 # sample-level features
 if len(sample_features) > 0:
-    passes_variant_features = results_variant_level[(results_variant_level.pred_bag_optimized_variant_level==1)].VarKey
-    merged_output = merged_output[merged_output.VarKey.isin(passes_variant_features)].reset_index(drop=True)
-
     numeric = sample_features
 
     merged_output = merged_output[~merged_output[numeric].isna().any(axis=1)].reset_index(drop=True)
@@ -326,13 +309,30 @@ if len(sample_features) > 0:
 else:
     results_sample_level, importances_sample_level, oob_scores_sample_level = (pd.DataFrame() for _ in range(3))
 
+# variant-level features
+if len(variant_features) > 0:
+    passes_variant_features = results_sample_level[(results_sample_level.pred_bag_optimized_sample_level==1)].VarKey
+    merged_output = merged_output[merged_output.VarKey.isin(passes_variant_features)].reset_index(drop=True)
+
+    numeric = sample_features
+
+    merged_output = merged_output[~merged_output[numeric].isna().any(axis=1)].reset_index(drop=True)
+
+    X = merged_output[numeric].sample(frac=1)
+    y = merged_output['label'].loc[X.index]
+
+    results_variant_level, estimators_variant_level, importances_variant_level, oob_scores_variant_level = run_baggingPU_level_features(X, y, merged_output, numeric,
+                                     n_estimators_rf, n_bags, metric, 'variant_level')
+else:
+    results_variant_level, importances_variant_level, oob_scores_variant_level = (pd.DataFrame() for _ in range(3))
+
 results_optimized = pd.concat([results_variant_level.set_index('VarKey', drop=False), 
-           results_sample_level.set_index('VarKey', drop=False)[np.setdiff1d(results_sample_level.columns, results_variant_level.columns)]], axis=1)
+           results_variant_level.set_index('VarKey', drop=False)[np.setdiff1d(results_variant_level.columns, results_variant_level.columns)]], axis=1)
 
 feature_cols = [col for col in results_optimized.columns if 'feature' in col]
 results_optimized['features'] = results_optimized[feature_cols].astype(str).agg(', '.join, axis=1)
 
-importances_optimized = pd.concat([importances_variant_level, importances_sample_level], axis=1)
+importances_optimized = pd.concat([importances_variant_level, importances_variant_level], axis=1)
 
 results_optimized.to_csv(f"{cohort_prefix}_{var_type}_{metric}_RF_results.tsv", sep='\t', index=False)
 importances_optimized.to_csv(f"{cohort_prefix}_{var_type}_{metric}_RF_feature_importances.tsv", sep='\t', index=False)
