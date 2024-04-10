@@ -203,7 +203,7 @@ task HailPCA {
                         "spark.driver.memory": f"{mem}g"
                         }, tmp_dir="tmp", local_tmpdir="tmp")
 
-    mt = hl.import_vcf(merged_vcf_file, reference_genome='GRCh38', array_elements_required=False, force_bgz=True)
+    mt = hl.import_vcf(merged_vcf_file, reference_genome='GRCh38', call_fields=[], array_elements_required=False, force_bgz=True)
     eigenvalues, score_table, loading_table = hl.hwe_normalized_pca(mt.GT, k=10, compute_loadings=True)
     score_table_file = f"{bucket_id}/hail/{str(datetime.datetime.now().strftime('%Y-%m-%d_%H-%M'))}/{cohort_prefix}_wes_pca_score_table_som.ht"
     score_table.write(score_table_file, overwrite=True)
