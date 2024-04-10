@@ -272,8 +272,7 @@ task removeDuplicates {
     kinship_df = kinship_df.sort_values('kin', ascending=False).drop_duplicates('pair')
 
     rel_df = pd.read_csv(relatedness_qc, sep='\t')
-    rel_df['pair'] = rel_df[['i','j']].astype(str).agg(lambda lst: ','.join(sorted(lst)), axis=1)
-    rel_df = rel_df.sort_values('kin', ascending=False).drop_duplicates('pair')
+    rel_df = rel_df.sort_values(['mother_kin','father_kin'], ascending=False).drop_duplicates('sample_id')
 
     kinship_df.to_csv(os.path.basename(kinship_tsv), sep='\t', index=False)
     rel_df.to_csv(os.path.basename(relatedness_qc), sep='\t', index=False)
