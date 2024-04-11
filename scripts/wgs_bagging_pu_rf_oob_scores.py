@@ -314,7 +314,7 @@ if len(variant_features) > 0:
     passes_variant_features = results_sample_level[(results_sample_level.pred_bag_optimized_sample_level==1)].VarKey
     merged_output = merged_output[merged_output.VarKey.isin(passes_variant_features)].reset_index(drop=True)
 
-    numeric = sample_features
+    numeric = variant_features
 
     merged_output = merged_output[~merged_output[numeric].isna().any(axis=1)].reset_index(drop=True)
 
