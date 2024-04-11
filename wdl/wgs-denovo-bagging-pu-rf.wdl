@@ -31,6 +31,7 @@ workflow BaggingPU_RF {
         Float prop_dn=1
         Int n_estimators_rf=100
         Int n_bag=10
+        Boolean filter_pass_before=false
         RuntimeAttr? runtime_attr_bagging_pu
     }
 
@@ -66,6 +67,7 @@ workflow BaggingPU_RF {
                     prop_dn=prop_dn,
                     n_estimators_rf=n_estimators_rf,
                     n_bag=n_bag,
+                    filter_pass_before=filter_pass_before,
                     runtime_attr_override=runtime_attr_bagging_pu
             }
         }
@@ -99,6 +101,7 @@ task runBaggingPU_RF {
         Float prop_dn
         Int n_estimators_rf
         Int n_bag
+        Boolean filter_pass_before
         RuntimeAttr? runtime_attr_override
     }
 
@@ -133,7 +136,7 @@ task runBaggingPU_RF {
         python3 run_bagging_pu.py ~{vcf_metrics_tsv_final} ~{ultra_rare_variants_tsv} \
         ~{cohort_prefix} ~{var_type} ~{sep=',' variant_features} ~{sep=',' sample_features} ~{vqslod_cutoff} \
         ~{prop_dn} ~{ultra_rare_rep_regions} ~{rep_regions} ~{known_vars_uri} ~{metric} \
-        ~{n_estimators_rf} ~{n_bag} > stdout
+        ~{n_estimators_rf} ~{n_bag} ~{filter_pass_before} > stdout
     >>>
 
     output {

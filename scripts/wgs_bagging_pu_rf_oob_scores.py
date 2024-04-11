@@ -45,6 +45,7 @@ known_vars_uri = sys.argv[11]
 metric = sys.argv[12]  # ['roc-auc', 'accuracy', 'f1', 'fp_fn_ratio']
 n_estimators_rf = int(sys.argv[13])
 n_bags = int(sys.argv[14])
+filter_pass_before = ast.literal_eval(sys.argv[15].capitalize())
 
 def fp_fn_ratio(y, y_pred):
     FP = ((y==0) & (y_pred==1)).sum()
@@ -134,7 +135,8 @@ def filter_variants(final_output, ultra_rare, final_output_raw, ultra_rare_raw):
 
     final_output = final_output[final_output.VQSLOD>vqslod_cutoff]
     final_output = final_output[final_output.LEN<=50]
-    final_output = final_output[final_output.FILTER=='PASS']
+    if filter_pass_before:
+        final_output = final_output[final_output.FILTER=='PASS']
 
     # TODO: remove when filter-rare-variants-hail is fixed?
     # ultra_rare = ultra_rare[ultra_rare.GQ_sample>=99]
@@ -190,11 +192,6 @@ def runBaggingPU_RF(X, y, model, merged_output, numeric, suffix, n_bags=10):
 
     print('---- {} ----'.format('Bagging PU'))
     print(sklearn.metrics.confusion_matrix(y, y_pred_bag))
-
-    importances_bag = pd.DataFrame(np.array([[classifiers_bag[j].estimators_[i].feature_importances_ 
-            for i in range(len(classifiers_bag[j].estimators_))] 
-                for j in range(len(classifiers_bag))]).reshape((len(classifiers_bag)*len(classifiers_bag[0]),len(numeric))),
-                    columns=numeric)
 
     results = pd.DataFrame({'label': y, 
                             'VarKey': merged_output.iloc[X.index].VarKey,

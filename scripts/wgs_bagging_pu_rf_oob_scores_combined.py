@@ -44,6 +44,7 @@ known_vars_uri = sys.argv[10]
 metric = sys.argv[11]  # ['roc-auc', 'accuracy', 'f1', 'fp_fn_ratio']
 n_estimators_rf = int(sys.argv[12])
 n_bags = int(sys.argv[13])
+filter_pass_before = ast.literal_eval(sys.argv[14].capitalize())
 
 def fp_fn_ratio(y, y_pred):
     FP = ((y==0) & (y_pred==1)).sum()
@@ -133,6 +134,8 @@ def filter_variants(final_output, ultra_rare, final_output_raw, ultra_rare_raw):
     final_output = final_output[final_output.VQSLOD>vqslod_cutoff]
     final_output = final_output[final_output.LEN<=50]
 
+    if filter_pass_before:
+        final_output = final_output[final_output.FILTER=='PASS']
     # TODO: remove when filter-rare-variants-hail is fixed?
     # ultra_rare = ultra_rare[ultra_rare.GQ_sample>=99]
     # ultra_rare = ultra_rare[(ultra_rare.GQ_mother>=30)&(ultra_rare.GQ_father>=30)]
@@ -187,11 +190,6 @@ def runBaggingPU_RF(X, y, model, merged_output, numeric, n_bags=10):
 
     print('---- {} ----'.format('Bagging PU'))
     print(sklearn.metrics.confusion_matrix(y, y_pred_bag))
-
-    importances_bag = pd.DataFrame(np.array([[classifiers_bag[j].estimators_[i].feature_importances_ 
-            for i in range(len(classifiers_bag[j].estimators_))] 
-                for j in range(len(classifiers_bag))]).reshape((len(classifiers_bag)*len(classifiers_bag[0]),len(numeric))),
-                    columns=numeric)
 
     results = pd.DataFrame({'label': y, 
                             'VarKey': merged_output.iloc[X.index].VarKey,
@@ -261,19 +259,19 @@ from sklearn.metrics import RocCurveDisplay
 opt_auc_scores = pd.DataFrame()
 
 if known_vars_exist:
-    fig, ax = plt.subplots(1, 2, figsize=(10,4));
-    fig.suptitle(f"{cohort_prefix} {var_type}");
+    # fig, ax = plt.subplots(1, 2, figsize=(10,4));
+    # fig.suptitle(f"{cohort_prefix} {var_type}");
 
     for p_thr in np.arange(0, 0.5, 0.05): 
         y_pred = [1 if x>p_thr else 0 for x in results_optimized.predict_proba_bag]
-        RocCurveDisplay.from_predictions(y, y_pred, ax=ax[0], name=f"p_thr={round(p_thr, 2)}");
-        ax[0].set(title=f"unlabeled vs. ultra-rare");
+        # RocCurveDisplay.from_predictions(y, y_pred, ax=ax[0], name=f"p_thr={round(p_thr, 2)}");
+        # ax[0].set(title=f"unlabeled vs. ultra-rare");
         opt_auc_scores.loc[p_thr, 'roc_auc_score'] = sklearn.metrics.roc_auc_score(results_optimized.label, y_pred)
 
         y_pred_known = [1 if x>p_thr else 0 for x in results_optimized[results_optimized.is_known!='ultra-rare'].predict_proba_bag]
         y_known = results_optimized[results_optimized.is_known!='ultra-rare'].is_known.apply(ast.literal_eval).astype(int)
-        RocCurveDisplay.from_predictions(y_known, y_pred_known, ax=ax[1], name=f"p_thr={round(p_thr, 2)}");
-        ax[1].set(title=f"known variants vs. unknown");
+        # RocCurveDisplay.from_predictions(y_known, y_pred_known, ax=ax[1], name=f"p_thr={round(p_thr, 2)}");
+        # ax[1].set(title=f"known variants vs. unknown");
 
 else: 
     fig, ax = plt.subplots(figsize=(4,4));
@@ -281,11 +279,11 @@ else:
 
     for p_thr in np.arange(0, 0.5, 0.05): 
         y_pred = [1 if x>p_thr else 0 for x in results_optimized.predict_proba_bag]
-        RocCurveDisplay.from_predictions(y, y_pred, ax=ax, name=f"p_thr={round(p_thr, 2)}");
+        # RocCurveDisplay.from_predictions(y, y_pred, ax=ax, name=f"p_thr={round(p_thr, 2)}");
         opt_auc_scores.loc[p_thr, 'roc_auc_score'] = sklearn.metrics.roc_auc_score(results_optimized.label, y_pred)
 
-plt.savefig(f"{cohort_prefix}_{var_type}_{metric}_RF_roc_auc_curve_p_thr.png");
-plt.show();
+# plt.savefig(f"{cohort_prefix}_{var_type}_{metric}_RF_roc_auc_curve_p_thr.png");
+# plt.show();
 
 best_p_thr = round(opt_auc_scores.roc_auc_score.idxmax(), 2) 
 
