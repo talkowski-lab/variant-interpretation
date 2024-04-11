@@ -151,6 +151,14 @@ task mergeVCFs {
         set -euo pipefail
         VCFS="~{write_lines(vcf_files)}"
         cat $VCFS | awk -F '/' '{print $NF"\t"$0}' | sort -k1,1V | awk '{print $2}' > vcfs_sorted.list
+
+        for vcf in $(cat vcfs_sorted.list);
+        do
+            mkfifo /tmp/token_fifo
+            ( while true ; do curl -H "Metadata-Flavor: Google" http://metadata.google.internal/computeMetadata/v1/instance/service-accounts/default/token > /tmp/token_fifo ; done ) &
+            HTS_AUTH_LOCATION=/tmp/token_fifo bcftools index -t $vcf
+        done
+
         mkfifo /tmp/token_fifo
         ( while true ; do curl -H "Metadata-Flavor: Google" http://metadata.google.internal/computeMetadata/v1/instance/service-accounts/default/token > /tmp/token_fifo ; done ) &
         HTS_AUTH_LOCATION=/tmp/token_fifo bcftools merge --no-version -Oz --file-list vcfs_sorted.list --output ~{merged_filename}.vcf.gz
