@@ -327,7 +327,7 @@ else:
     results_variant_level, importances_variant_level, oob_scores_variant_level = (pd.DataFrame() for _ in range(3))
 
 results_optimized = pd.concat([results_sample_level.set_index('VarKey', drop=False), 
-           results_variant_level.set_index('VarKey', drop=False)[np.setdiff1d(results_sample_level.columns, results_variant_level.columns)]], axis=1)
+           results_variant_level.set_index('VarKey', drop=False)[np.setdiff1d(results_variant_level.columns, results_sample_level.columns)]], axis=1)
 
 feature_cols = [col for col in results_optimized.columns if 'feature' in col]
 results_optimized['features'] = results_optimized[feature_cols].astype(str).agg(', '.join, axis=1)
