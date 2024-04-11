@@ -15,12 +15,11 @@ struct RuntimeAttr {
 
 workflow Relatedness {
     input {
-        Array[File] vep_vcf_files
+        Array[File]? vep_vcf_files
         File? merged_vep_file
         File ped_uri
         File bed_file
         Int samples_per_chunk
-        Int chunk_size=100000
         String cohort_prefix
         String relatedness_qc_script
         String plot_relatedness_script
@@ -28,12 +27,13 @@ workflow Relatedness {
         String sv_base_mini_docker
         String hail_docker
         String bucket_id
+        Boolean sort_after_merge=false
         Int chunk_size=100000
     }
 
     if (!defined(merged_vep_file)) {
         
-        scatter (vcf_uri in vep_vcf_files) {
+        scatter (vcf_uri in select_first([vep_vcf_files])) {
             String filename = basename(vcf_uri)
             String prefix = if (sub(filename, ".gz", "")!=filename) then basename(filename, ".vcf.gz") else basename(filename, ".vcf.bgz")
             call helpers.subsetVCFs as subsetVCFs {
@@ -50,7 +50,8 @@ workflow Relatedness {
         input:
             vcf_files=subsetVCFs.subset_vcf,
             sv_base_mini_docker=sv_base_mini_docker,
-            cohort_prefix=cohort_prefix
+            cohort_prefix=cohort_prefix,
+            sort_after_merge=sort_after_merge
         }
     }
     File merged_vcf_file = select_first([merged_vep_file, mergeVCFs.merged_vcf_file])
