@@ -156,7 +156,7 @@ task mergeVCFs {
         do
             mkfifo /tmp/token_fifo
             ( while true ; do curl -H "Metadata-Flavor: Google" http://metadata.google.internal/computeMetadata/v1/instance/service-accounts/default/token > /tmp/token_fifo ; done ) &
-            HTS_AUTH_LOCATION=/tmp/token_fifo bcftools index -t $vcf
+            HTS_AUTH_LOCATION=/tmp/token_fifo tabix $vcf
         done
 
         mkfifo /tmp/token_fifo
