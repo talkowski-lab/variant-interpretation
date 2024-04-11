@@ -12,7 +12,7 @@ struct RuntimeAttr {
     Int? max_retries
 }
 
-workflow Relatedness {
+workflow RelatednessCohortSet {
     input {
         Array[File] somalier_vcf_file
         Array[File] ped_uri
@@ -66,6 +66,7 @@ workflow Relatedness {
             hail_docker=hail_docker,
             bucket_id=bucket_id,
             chunk_size=chunk_size,
+            sort_after_merge=sort_after_merge,
             runtime_attr_subset_vcfs=runtime_attr_subset_vcfs,
             runtime_attr_merge_vcfs=runtime_attr_merge_vcfs,
             runtime_attr_impute_sex=runtime_attr_impute_sex,
@@ -89,6 +90,7 @@ workflow Relatedness {
             hail_docker=hail_docker,
             bucket_id=bucket_id,
             chunk_size=chunk_size,
+            sort_after_merge=sort_after_merge,
             runtime_attr_subset_vcfs=runtime_attr_subset_vcfs,
             runtime_attr_merge_vcfs=runtime_attr_merge_vcfs,
             runtime_attr_impute_sex=runtime_attr_impute_sex,
