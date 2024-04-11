@@ -221,6 +221,7 @@ task mergePeds {
             if not df.empty:
                 dfs.append(df)
         merged_df = pd.concat(dfs)
+        merged_df = merged_df.drop_duplicates('IndividualID')
         merged_df.to_csv(merged_filename, sep='\t', index=False)
         EOF
 
