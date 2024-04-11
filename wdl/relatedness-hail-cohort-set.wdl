@@ -155,11 +155,10 @@ task mergeVCFs {
         do
             tabix $vcf
         done
-        bcftools merge --no-version -Oz --file-list vcfs_sorted.list --output ~{merged_filename}_merged.vcf.gz
+        bcftools merge -m none --no-version -Oz --file-list vcfs_sorted.list --output ~{merged_filename}_merged.vcf.gz
         
         mkdir -p tmp
         bcftools sort ~{merged_filename}_merged.vcf.gz -Oz --output ~{merged_filename}_sorted.vcf.gz -T tmp/
-        bcftools norm ~{merged_filename}_sorted.vcf.gz -m- -Oz --output ~{merged_filename}_merged_sorted.vcf.gz
     >>>
 
     output {
