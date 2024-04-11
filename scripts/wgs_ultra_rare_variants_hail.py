@@ -93,7 +93,8 @@ mt_filtered = mt_filtered.annotate_cols(pheno=meta[mt_filtered.s])
 mt_filtered = mt_filtered.filter_cols(mt_filtered.pheno.Role != '', keep = True)
 
 # # filter for VQSR - PASS 
-mt_filtered = mt_filtered.filter_rows((mt_filtered.filters.size() == 0))
+mt_filtered = mt_filtered.filter_rows((mt_filtered.filters.size() == 0)
+                                      & (hl.is_snp(mt_filtered.alleles[0], mt_filtered.alleles[1])))
 # filter on depth
 mt_filtered = mt_filtered.annotate_entries(DPC=hl.sum(mt_filtered.AD),
                                            AB=mt_filtered.AD[1]/hl.sum(mt_filtered.AD),
@@ -163,7 +164,7 @@ parent_format_fields = ['GT','AD','DP','DPC','GQ','VAF','AB']
 rename_cols = {f"mother_entry.{field}": f"{field}_mother" for field in parent_format_fields if f"mother_entry.{field}" in ultra_rare_vars_df.columns} |\
     {f"father_entry.{field}": f"{field}_father" for field in parent_format_fields if f"father_entry.{field}" in ultra_rare_vars_df.columns} |\
     {f"proband_entry.{field}": f"{field}_sample" for field in child_format_fields if f"proband_entry.{field}" in ultra_rare_vars_df.columns} |\
-    {'qual': 'QUAL', 'proband.s': 'SAMPLE'}
+    {'qual': 'QUAL', 'proband.s': 'SAMPLE', 'filters': 'FILTER'}
 ultra_rare_vars_df = ultra_rare_vars_df.rename(rename_cols, axis=1)
 
 ultra_rare_vars_df['CHROM'] = ultra_rare_vars_df.locus.astype(str).str.split(':').str[0]
@@ -182,7 +183,7 @@ for info_cat in ['AC', 'AF', 'MLEAC', 'MLEAF']:
 # 'POLYX' -- added after downsampling
 info_cols = ['END','AC','AF','AN','BaseQRankSum','ClippingRankSum','DP','FS','MLEAC','MLEAF','MQ','MQRankSum','QD','ReadPosRankSum','SOR','VQSLOD','cohort_AC', 'cohort_AF', 'CSQ']
 info_cols = list(np.intersect1d(info_cols, list(mt_filtered_rare.info.keys())))
-cols_to_keep = ['CHROM', 'POS', 'REF', 'ALT', 'LEN', 'TYPE', 'ID'] + info_cols + list(rename_cols.values())
+cols_to_keep = ['CHROM', 'POS', 'REF', 'ALT', 'LEN', 'TYPE', 'ID', 'FILTER'] + info_cols + list(rename_cols.values())
 
 # CSQ AF threshold
 csq_columns_less = ['Allele', 'Consequence', 'IMPACT', 'SYMBOL', 'Gene', 'Feature_type', 'Feature', 
