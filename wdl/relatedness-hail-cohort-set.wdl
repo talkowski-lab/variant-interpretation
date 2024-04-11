@@ -162,7 +162,7 @@ task mergeVCFs {
     >>>
 
     output {
-        File merged_vcf_file = "~{merged_filename}_merged_sorted.vcf.gz"
+        File merged_vcf_file = "~{merged_filename}_sorted.vcf.gz"
     }
 }
 
