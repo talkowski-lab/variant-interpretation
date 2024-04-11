@@ -26,13 +26,22 @@ workflow Relatedness {
         String bucket_id
         Int chunk_size=0
         Int samples_per_chunk=0
+        Boolean sort_after_merge=false
+        RuntimeAttr? runtime_attr_subset_vcfs
+        RuntimeAttr? runtime_attr_merge_vcfs
+        RuntimeAttr? runtime_attr_impute_sex
+        RuntimeAttr? runtime_attr_hail_pca
+        RuntimeAttr? runtime_attr_check_relatedness
+        RuntimeAttr? runtime_attr_plot_relatedness
+        RuntimeAttr? runtime_attr_merge_results
     }
 
     call mergeVCFs {
         input:
             vcf_files=somalier_vcf_file,
             sv_base_mini_docker=sv_base_mini_docker,
-            merged_filename=merged_filename
+            merged_filename=merged_filename,
+            runtime_attr_override=runtime_attr_merge_vcfs
     }
     
     call mergePeds {
@@ -56,7 +65,12 @@ workflow Relatedness {
             sv_base_mini_docker=sv_base_mini_docker,
             hail_docker=hail_docker,
             bucket_id=bucket_id,
-            chunk_size=chunk_size
+            chunk_size=chunk_size,
+            runtime_attr_subset_vcfs=runtime_attr_subset_vcfs,
+            runtime_attr_merge_vcfs=runtime_attr_merge_vcfs,
+            runtime_attr_impute_sex=runtime_attr_impute_sex,
+            runtime_attr_check_relatedness=runtime_attr_check_relatedness,
+            runtime_attr_plot_relatedness=runtime_attr_plot_relatedness
         }
     }
 
@@ -74,7 +88,14 @@ workflow Relatedness {
             sex_qc_script=sex_qc_script,
             hail_docker=hail_docker,
             bucket_id=bucket_id,
-            chunk_size=chunk_size
+            chunk_size=chunk_size,
+            runtime_attr_subset_vcfs=runtime_attr_subset_vcfs,
+            runtime_attr_merge_vcfs=runtime_attr_merge_vcfs,
+            runtime_attr_impute_sex=runtime_attr_impute_sex,
+            runtime_attr_hail_pca=runtime_attr_hail_pca,
+            runtime_attr_check_relatedness=runtime_attr_check_relatedness,
+            runtime_attr_plot_relatedness=runtime_attr_plot_relatedness,
+            runtime_attr_merge_results=runtime_attr_merge_results
         }
     }
 

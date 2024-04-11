@@ -27,6 +27,11 @@ workflow Relatedness {
         String bucket_id
         Int chunk_size=0
         Boolean sort_after_merge=false
+        RuntimeAttr? runtime_attr_subset_vcfs
+        RuntimeAttr? runtime_attr_merge_vcfs
+        RuntimeAttr? runtime_attr_impute_sex
+        RuntimeAttr? runtime_attr_check_relatedness
+        RuntimeAttr? runtime_attr_plot_relatedness
     }
 
     if (!defined(merged_vep_file)) {
@@ -40,7 +45,8 @@ workflow Relatedness {
                     vcf_uri=vcf_uri,
                     vcf_idx=vcf_uri+'.tbi',
                     output_name=prefix + '.somalier.subset.vcf.gz',
-                    sv_base_mini_docker=sv_base_mini_docker
+                    sv_base_mini_docker=sv_base_mini_docker,
+                    runtime_attr_override=runtime_attr_subset_vcfs
             }
         }
 
@@ -49,7 +55,8 @@ workflow Relatedness {
             vcf_files=subsetVCFs.subset_vcf,
             sv_base_mini_docker=sv_base_mini_docker,
             cohort_prefix=cohort_prefix,
-            sort_after_merge=sort_after_merge
+            sort_after_merge=sort_after_merge,
+            runtime_attr_override=runtime_attr_merge_vcfs
         }
     }
     File merged_vcf_file = select_first([merged_vep_file, mergeVCFs.merged_vcf_file])
@@ -61,7 +68,8 @@ workflow Relatedness {
         ped_uri=ped_uri,
         cohort_prefix=cohort_prefix,
         sex_qc_script=sex_qc_script,
-        hail_docker=hail_docker
+        hail_docker=hail_docker,
+        runtime_attr_override=runtime_attr_impute_sex
     }
 
     call checkRelatedness {
@@ -72,7 +80,8 @@ workflow Relatedness {
         cohort_prefix=cohort_prefix,
         relatedness_qc_script=relatedness_qc_script,
         hail_docker=hail_docker,
-        bucket_id=bucket_id
+        bucket_id=bucket_id,
+        runtime_attr_override=runtime_attr_check_relatedness
     }
 
     call plotRelatedness {
@@ -82,7 +91,8 @@ workflow Relatedness {
         cohort_prefix=cohort_prefix,
         plot_relatedness_script=plot_relatedness_script,
         hail_docker=hail_docker,
-        chunk_size=chunk_size
+        chunk_size=chunk_size,
+        runtime_attr_override=runtime_attr_plot_relatedness
     }
 
     output {

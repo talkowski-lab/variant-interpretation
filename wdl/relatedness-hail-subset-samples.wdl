@@ -29,6 +29,13 @@ workflow Relatedness {
         String bucket_id
         Boolean sort_after_merge=false
         Int chunk_size=100000
+        RuntimeAttr? runtime_attr_subset_vcfs
+        RuntimeAttr? runtime_attr_merge_vcfs
+        RuntimeAttr? runtime_attr_impute_sex
+        RuntimeAttr? runtime_attr_hail_pca
+        RuntimeAttr? runtime_attr_check_relatedness
+        RuntimeAttr? runtime_attr_plot_relatedness
+        RuntimeAttr? runtime_attr_merge_results
     }
 
     if (!defined(merged_vep_file)) {
@@ -42,7 +49,8 @@ workflow Relatedness {
                     vcf_uri=vcf_uri,
                     vcf_idx=vcf_uri+'.tbi',
                     output_name=prefix + '.somalier.subset.vcf.gz',
-                    sv_base_mini_docker=sv_base_mini_docker
+                    sv_base_mini_docker=sv_base_mini_docker,
+                    runtime_attr_override=runtime_attr_subset_vcfs
             }
         }
 
@@ -51,7 +59,8 @@ workflow Relatedness {
             vcf_files=subsetVCFs.subset_vcf,
             sv_base_mini_docker=sv_base_mini_docker,
             cohort_prefix=cohort_prefix,
-            sort_after_merge=sort_after_merge
+            sort_after_merge=sort_after_merge,
+            runtime_attr_override=runtime_attr_merge_vcfs
         }
     }
     File merged_vcf_file = select_first([merged_vep_file, mergeVCFs.merged_vcf_file])
@@ -63,7 +72,8 @@ workflow Relatedness {
         ped_uri=ped_uri,
         cohort_prefix=cohort_prefix,
         sex_qc_script=sex_qc_script,
-        hail_docker=hail_docker
+        hail_docker=hail_docker,
+        runtime_attr_override=runtime_attr_impute_sex
     }
 
     call helpers.splitSamples as splitSamples {
@@ -79,7 +89,8 @@ workflow Relatedness {
         merged_vcf_file=merged_vcf_file,
         cohort_prefix=cohort_prefix,
         bucket_id=bucket_id,
-        hail_docker=hail_docker
+        hail_docker=hail_docker,
+        runtime_attr_override=runtime_attr_hail_pca
     }
 
     scatter (sample_file in splitSamples.sample_shard_files) {
@@ -99,7 +110,8 @@ workflow Relatedness {
             relatedness_qc_script=relatedness_qc_script,
             hail_docker=hail_docker,
             bucket_id=bucket_id,
-            score_table=HailPCA.score_table
+            score_table=HailPCA.score_table,
+            runtime_attr_override=runtime_attr_check_relatedness
         }
     }
 
@@ -108,7 +120,8 @@ workflow Relatedness {
             input_size=size(checkRelatedness.relatedness_qc, 'GB'),
             tsvs=checkRelatedness.relatedness_qc,
             merged_filename=cohort_prefix + '_relatedness_qc.ped',
-            hail_docker=hail_docker
+            hail_docker=hail_docker,
+            runtime_attr_override=runtime_attr_merge_results
     }
 
     call helpers.mergeResultsPython as mergeKinshipTSV {
@@ -116,7 +129,8 @@ workflow Relatedness {
             input_size=size(checkRelatedness.kinship_tsv, 'GB'),
             tsvs=checkRelatedness.kinship_tsv,
             merged_filename=cohort_prefix + '_kinship.tsv',
-            hail_docker=hail_docker
+            hail_docker=hail_docker,
+            runtime_attr_override=runtime_attr_merge_results
     }
 
     call removeDuplicates {
@@ -124,7 +138,8 @@ workflow Relatedness {
         kinship_tsv=mergeKinshipTSV.merged_tsv,
         relatedness_qc=mergeRelatednessQC.merged_tsv,
         hail_docker=hail_docker,
-        chunk_size=chunk_size
+        chunk_size=chunk_size,
+        runtime_attr_override=runtime_attr_merge_results
     }
 
     call relatednessHail.plotRelatedness as plotRelatedness {
@@ -134,7 +149,8 @@ workflow Relatedness {
         cohort_prefix=cohort_prefix,
         plot_relatedness_script=plot_relatedness_script,
         hail_docker=hail_docker,
-        chunk_size=chunk_size
+        chunk_size=chunk_size,
+        runtime_attr_override=runtime_attr_plot_relatedness
     }
 
     output {
