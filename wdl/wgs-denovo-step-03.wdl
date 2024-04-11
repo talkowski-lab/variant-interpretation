@@ -166,6 +166,7 @@ task uberSplit_v3 {
     }
 
     command {
+        set -eou pipefail
         mkdir -p ~{cohort_prefix}
         curl ~{uberSplit_v3_script} > uberSplit_v3.py
         python3 uberSplit_v3.py ~{ped_uri} ~{vcf_file} ~{cohort_prefix} ~{stats_file} ~{batch_size}
