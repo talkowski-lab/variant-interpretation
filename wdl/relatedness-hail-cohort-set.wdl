@@ -159,7 +159,7 @@ task mergeVCFs {
         
         mkdir -p tmp
         bcftools sort ~{merged_filename}_merged.vcf.gz -Oz --output ~{merged_filename}_sorted.vcf.gz -T tmp/
-        bcftools norm ~{merged_filename}_sorted.vcf.gz -m+ -Oz --output ~{merged_filename}_merged_sorted.vcf.gz
+        bcftools norm ~{merged_filename}_sorted.vcf.gz -m- -Oz --output ~{merged_filename}_merged_sorted.vcf.gz
     >>>
 
     output {
