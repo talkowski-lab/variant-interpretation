@@ -114,7 +114,7 @@ workflow RelatednessCohortSet {
 
 task mergeVCFs {
     input {
-        Array[String] vcf_files
+        Array[File] vcf_files
         String merged_filename
         String sv_base_mini_docker
         RuntimeAttr? runtime_attr_override
@@ -154,14 +154,10 @@ task mergeVCFs {
 
         for vcf in $(cat vcfs_sorted.list);
         do
-            mkfifo /tmp/token_fifo
-            ( while true ; do curl -H "Metadata-Flavor: Google" http://metadata.google.internal/computeMetadata/v1/instance/service-accounts/default/token > /tmp/token_fifo ; done ) &
-            HTS_AUTH_LOCATION=/tmp/token_fifo tabix $vcf
+            tabix $vcf
         done
 
-        mkfifo /tmp/token_fifo
-        ( while true ; do curl -H "Metadata-Flavor: Google" http://metadata.google.internal/computeMetadata/v1/instance/service-accounts/default/token > /tmp/token_fifo ; done ) &
-        HTS_AUTH_LOCATION=/tmp/token_fifo bcftools merge --no-version -Oz --file-list vcfs_sorted.list --output ~{merged_filename}.vcf.gz
+        bcftools merge --no-version -Oz --file-list vcfs_sorted.list --output ~{merged_filename}.vcf.gz
     >>>
 
     output {
