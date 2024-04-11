@@ -81,8 +81,9 @@ def main():
             mother = item[3]
 
             try:
-                pheno = int(item[-1])
+                pheno = int(float(item[-1]))
             except Exception as e:
+                print(str(e))
                 continue
 
             #
@@ -93,7 +94,7 @@ def main():
             if father != '0' and mother != '0':
                 myTotalTrio += 1
 
-                pheno = int(item[-1])
+                pheno = int(float(item[-1]))
                 if pheno == 2: # see https://gatk.broadinstitute.org/hc/en-us/articles/360035531972-PED-Pedigree-format
                     #proband
                     fam = famBasic + '_trio_' + samp # fam is a uid for the trio (in a case where multiple trios are possible)
