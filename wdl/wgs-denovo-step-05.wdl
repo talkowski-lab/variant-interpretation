@@ -17,7 +17,7 @@ workflow step5 {
         String merge_vcf_to_tsv_fullQC_script
         String trio_denovo_docker
         String cohort_prefix
-
+        RuntimeAttr? runtime_attr_step5
     }
 
     call merge_vcf_to_tsv_fullQC {
@@ -27,7 +27,8 @@ workflow step5 {
             trio_denovo_vcf=trio_denovo_vcf,
             merge_vcf_to_tsv_fullQC_script=merge_vcf_to_tsv_fullQC_script,
             trio_denovo_docker=trio_denovo_docker,
-            cohort_prefix=cohort_prefix
+            cohort_prefix=cohort_prefix,
+            runtime_attr_override=runtime_attr_step5
     }
 
     output {
