@@ -226,7 +226,7 @@ def get_gnomAD_AF(csq, col_num):
         return 0
     return csqs[0]
 
-ultra_rare_vars_df['CSQ'] = ultra_rare_vars_df.CSQ.replace({'.':np.nan}).str.split(',')
+# ultra_rare_vars_df['CSQ'] = ultra_rare_vars_df.CSQ.replace({'.':np.nan}).str.split(',')
 
 try:
     n_csq_fields = len(ultra_rare_vars_df[~ultra_rare_vars_df.CSQ.isna()].CSQ.iloc[0][0].split('|'))
@@ -244,7 +244,8 @@ try:
     ultra_rare_vars_df[gnomad_af_str] = ultra_rare_vars_df.CSQ.apply(get_gnomAD_AF, col_num=csq_columns.index(gnomad_af_str)).astype(float)
     ultra_rare_vars_df = ultra_rare_vars_df[ultra_rare_vars_df[gnomad_af_str]<=csq_af_threshold]
 
-except:
-    pass
+except Exception as e:
+    print(str(e))
+    # pass
 
 ultra_rare_vars_df[cols_to_keep].to_csv(f"{cohort_prefix}_ultra_rare_variants.tsv", sep='\t', index=False)
