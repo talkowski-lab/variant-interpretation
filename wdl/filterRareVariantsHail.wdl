@@ -242,7 +242,7 @@ task filterRareVariants {
         curl ~{filter_rare_variants_python_script} > filter_rare_variants.py
         python3.9 filter_rare_variants.py ~{lcr_uri} ~{ped_uri} ~{meta_uri} ~{trio_uri} ~{vcf_file} \
         ~{cohort_prefix} ~{cpu_cores} ~{memory} ~{AC_threshold} ~{AF_threshold} ~{csq_af_threshold} \
-        ~{gq_het_threshold} ~{gq_hom_ref_threshold} 
+        ~{gq_het_threshold} ~{gq_hom_ref_threshold} > stdout
 
         cp $(ls . | grep hail*.log) hail_log.txt
     >>>
