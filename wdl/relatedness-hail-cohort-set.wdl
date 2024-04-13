@@ -24,7 +24,7 @@ workflow RelatednessCohortSet {
         String sv_base_mini_docker
         String hail_docker
         String bucket_id
-        Int chunk_size=0
+        Int chunk_size=100000
         Int samples_per_chunk=0
         Boolean sort_after_merge=false
         RuntimeAttr? runtime_attr_subset_vcfs
