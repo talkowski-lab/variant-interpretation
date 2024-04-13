@@ -243,10 +243,10 @@ try:
 
     ultra_rare_vars_df[gnomad_af_str] = ultra_rare_vars_df.CSQ.apply(get_gnomAD_AF, col_num=csq_columns.index(gnomad_af_str)).astype(float)
     ultra_rare_vars_df = ultra_rare_vars_df[ultra_rare_vars_df[gnomad_af_str]<=csq_af_threshold]
+    cols_to_keep.append(gnomad_af_str)
 
 except Exception as e:
     print(str(e))
     # pass
 
-cols_to_keep.append(gnomad_af_str)
 ultra_rare_vars_df[cols_to_keep].to_csv(f"{cohort_prefix}_ultra_rare_variants.tsv", sep='\t', index=False)
