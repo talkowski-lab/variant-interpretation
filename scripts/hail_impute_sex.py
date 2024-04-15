@@ -8,7 +8,7 @@ import os
 import ast
 
 vcf_uri = sys.argv[1]
-bed_file = sys.argv[2]
+somalier_vcf = sys.argv[2]
 cohort_prefix = sys.argv[3]
 ped_uri = sys.argv[4]
 cores = sys.argv[5]  # string
@@ -40,8 +40,8 @@ mt = hl.import_vcf(vcf_uri, reference_genome='GRCh38', force_bgz=True, call_fiel
 mt = split_multi_ssc(mt)
 
 # somalier sites
-intervals = hl.import_bed(bed_file, reference_genome='GRCh38')
-mt = mt.filter_rows(hl.is_defined(intervals[mt.locus]))
+som_mt = hl.import_vcf(somalier_vcf, reference_genome='GRCh38', force_bgz=True)
+mt = mt.semi_join_rows(som_mt.rows())
 
 mt = mt.annotate_entries(AB=mt.AD[1]/hl.sum(mt.AD))
 mt = mt.annotate_entries(GT=hl.or_missing(mt.DP!=0, mt.GT))
