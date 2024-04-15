@@ -150,6 +150,14 @@ trio_mat = trio_mat.filter_entries(hl.if_else(trio_mat.father_entry.GT.is_het(),
                                                 trio_mat.mother_entry.AB<=0.05) 
                                     & ((trio_mat.proband_entry.AB>=0.2) & (trio_mat.proband_entry.AB<=0.8)))
 
+# get random sample's GQ
+mt_ultra_rare = mt.semi_join_rows(trio_mat)
+mt_ultra_rare = mt_ultra_rare.filter_entries((mt_ultra_rare.GT.is_hom_ref()) & (mt_ultra_rare.GQ>=gq_hom_ref_threshold))
+mt_ultra_rare = mt_ultra_rare.annotate_rows(all_GQs=hl.array(hl.agg.collect_as_set(mt_ultra_rare.GQ)))
+mt_ultra_rare = mt_ultra_rare.annotate_rows(GQ_random=hl.shuffle(mt_ultra_rare.all_GQs)[0])
+
+trio_mat = trio_mat.annotate_rows(GQ_random=mt_ultra_rare.rows()[trio_mat.row_key].GQ_random)
+
 ultra_rare_vars_df = trio_mat.entries().to_pandas()
 
 ultra_rare_vars_df = ultra_rare_vars_df[ultra_rare_vars_df['proband.s'].isin(trio_df.SampleID)]
@@ -182,7 +190,7 @@ for info_cat in ['AC', 'AF', 'MLEAC', 'MLEAF']:
 # 'POLYX' -- added after downsampling
 info_cols = ['END','AC','AF','AN','BaseQRankSum','ClippingRankSum','DP','FS','MLEAC','MLEAF','MQ','MQRankSum','QD','ReadPosRankSum','SOR','VQSLOD','cohort_AC', 'cohort_AF', 'CSQ']
 info_cols = list(np.intersect1d(info_cols, list(mt_filtered_rare.info.keys())))
-cols_to_keep = ['CHROM', 'POS', 'REF', 'ALT', 'LEN', 'TYPE', 'ID', 'VarKey'] + info_cols + list(rename_cols.values())
+cols_to_keep = ['CHROM', 'POS', 'REF', 'ALT', 'LEN', 'TYPE', 'ID', 'VarKey', 'GQ_random'] + info_cols + list(rename_cols.values())
 
 # CSQ AF threshold
 csq_columns_less = ['Allele', 'Consequence', 'IMPACT', 'SYMBOL', 'Gene', 'Feature_type', 'Feature', 
