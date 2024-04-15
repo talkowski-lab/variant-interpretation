@@ -82,7 +82,7 @@ workflow filterRareParentsVariantsHail {
             tsvs=filterRareParentsVariants_sharded.ultra_rare_parents_tsv,
             hail_docker=hail_docker,
             input_size=size(filterRareParentsVariants_sharded.ultra_rare_parents_tsv, 'GB'),
-            merged_filename=cohort_prefix+'_ultra_rare_variants.tsv',
+            merged_filename=cohort_prefix+'_ultra_rare_variants.tsv.gz',
             runtime_attr_override=runtime_attr_merge_results
     }
 
@@ -184,6 +184,6 @@ task filterRareParentsVariants {
 
     output {
         File hail_log = "hail_log.txt"
-        File ultra_rare_parents_tsv = cohort_prefix + '_ultra_rare_variants.tsv'
+        File ultra_rare_parents_tsv = cohort_prefix + '_ultra_rare_variants.tsv.gz'
     }
 }

@@ -245,4 +245,4 @@ except Exception as e:
     # pass
 
 ultra_rare_vars_df['VarKey'] = ultra_rare_vars_df[['ID', 'REF', 'ALT']].astype(str).agg(':'.join, axis=1)
-ultra_rare_vars_df[cols_to_keep].to_csv(f"{cohort_prefix}_ultra_rare_variants.tsv", sep='\t', index=False)
+ultra_rare_vars_df[cols_to_keep].to_csv(f"{cohort_prefix}_ultra_rare_variants.tsv.gz", sep='\t', index=False)

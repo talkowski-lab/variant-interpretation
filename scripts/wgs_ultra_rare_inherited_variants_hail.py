@@ -182,7 +182,7 @@ for info_cat in ['AC', 'AF', 'MLEAC', 'MLEAF']:
 # 'POLYX' -- added after downsampling
 info_cols = ['END','AC','AF','AN','BaseQRankSum','ClippingRankSum','DP','FS','MLEAC','MLEAF','MQ','MQRankSum','QD','ReadPosRankSum','SOR','VQSLOD','cohort_AC', 'cohort_AF', 'CSQ']
 info_cols = list(np.intersect1d(info_cols, list(mt_filtered_rare.info.keys())))
-cols_to_keep = ['CHROM', 'POS', 'REF', 'ALT', 'LEN', 'TYPE', 'ID'] + info_cols + list(rename_cols.values())
+cols_to_keep = ['CHROM', 'POS', 'REF', 'ALT', 'LEN', 'TYPE', 'ID', 'VarKey'] + info_cols + list(rename_cols.values())
 
 # CSQ AF threshold
 csq_columns_less = ['Allele', 'Consequence', 'IMPACT', 'SYMBOL', 'Gene', 'Feature_type', 'Feature', 
@@ -249,4 +249,5 @@ except Exception as e:
     print(str(e))
     # pass
 
-ultra_rare_vars_df[cols_to_keep].to_csv(f"{cohort_prefix}_ultra_rare_variants.tsv", sep='\t', index=False)
+ultra_rare_vars_df['VarKey'] = ultra_rare_vars_df[['ID', 'REF', 'ALT']].astype(str).agg(':'.join, axis=1)
+ultra_rare_vars_df[cols_to_keep].to_csv(f"{cohort_prefix}_ultra_rare_variants.tsv.gz", sep='\t', index=False)
