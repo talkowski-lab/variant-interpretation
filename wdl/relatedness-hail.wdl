@@ -17,7 +17,7 @@ workflow Relatedness {
         Array[File]? vep_vcf_files
         File? merged_vep_file
         File ped_uri
-        File bed_file
+        File somalier_vcf
         String cohort_prefix
         String relatedness_qc_script
         String plot_relatedness_script
@@ -41,7 +41,7 @@ workflow Relatedness {
             String prefix = if (sub(filename, ".gz", "")!=filename) then basename(filename, ".vcf.gz") else basename(filename, ".vcf.bgz")
             call helpers.subsetVCFs as subsetVCFs {
                 input:
-                    bed_file=bed_file,
+                    somalier_vcf=somalier_vcf,
                     vcf_uri=vcf_uri,
                     vcf_idx=vcf_uri+'.tbi',
                     output_name=prefix + '.somalier.subset.vcf.gz',
@@ -64,7 +64,7 @@ workflow Relatedness {
     call imputeSex {
         input:
         vcf_uri=merged_vcf_file,
-        bed_file=bed_file,
+        somalier_vcf=somalier_vcf,
         ped_uri=ped_uri,
         cohort_prefix=cohort_prefix,
         sex_qc_script=sex_qc_script,
@@ -75,7 +75,7 @@ workflow Relatedness {
     call checkRelatedness {
         input:
         vcf_uri=merged_vcf_file,
-        bed_file=bed_file,
+        somalier_vcf=somalier_vcf,
         ped_uri=ped_uri,
         cohort_prefix=cohort_prefix,
         relatedness_qc_script=relatedness_qc_script,
@@ -109,7 +109,7 @@ task imputeSex {
     input {
         File vcf_uri
         File ped_uri
-        File bed_file
+        File somalier_vcf
         String cohort_prefix
         String sex_qc_script
         String hail_docker
@@ -145,7 +145,7 @@ task imputeSex {
 
     command <<<
         curl ~{sex_qc_script} > impute_sex.py
-        python3 impute_sex.py ~{vcf_uri} ~{bed_file} ~{cohort_prefix} ~{ped_uri} ~{cpu_cores} ~{memory}
+        python3 impute_sex.py ~{vcf_uri} ~{somalier_vcf} ~{cohort_prefix} ~{ped_uri} ~{cpu_cores} ~{memory}
     >>>
 
     output {
@@ -158,7 +158,7 @@ task checkRelatedness {
     input {
         File vcf_uri
         File ped_uri
-        File bed_file
+        File somalier_vcf
         String cohort_prefix
         String relatedness_qc_script
         String hail_docker
@@ -197,7 +197,7 @@ task checkRelatedness {
     command <<<
         set -eou pipefail
         curl ~{relatedness_qc_script} > check_relatedness.py
-        python3 check_relatedness.py ~{vcf_uri} ~{bed_file} ~{cohort_prefix} ~{ped_uri} ~{cpu_cores} ~{memory} ~{bucket_id} ~{score_table} > stdout
+        python3 check_relatedness.py ~{vcf_uri} ~{somalier_vcf} ~{cohort_prefix} ~{ped_uri} ~{cpu_cores} ~{memory} ~{bucket_id} ~{score_table} > stdout
     >>>
 
     output {

@@ -16,7 +16,7 @@ workflow RelatednessCohortSet {
     input {
         Array[File] somalier_vcf_file
         Array[File] ped_uri
-        File bed_file
+        File somalier_vcf
         String merged_filename  # no file extension
         String relatedness_qc_script
         String plot_relatedness_script
@@ -57,7 +57,7 @@ workflow RelatednessCohortSet {
             input:
             merged_vep_file=mergeVCFs.merged_vcf_file,
             ped_uri=mergePeds.merged_ped_file,
-            bed_file=bed_file,
+            somalier_vcf=somalier_vcf,
             cohort_prefix=merged_filename,
             relatedness_qc_script=relatedness_qc_script,
             plot_relatedness_script=plot_relatedness_script,
@@ -80,7 +80,7 @@ workflow RelatednessCohortSet {
             input:
             merged_vep_file=mergeVCFs.merged_vcf_file,
             ped_uri=mergePeds.merged_ped_file,
-            bed_file=bed_file,
+            somalier_vcf=somalier_vcf,
             samples_per_chunk=samples_per_chunk,
             cohort_prefix=merged_filename,
             relatedness_qc_script=relatedness_qc_script,
