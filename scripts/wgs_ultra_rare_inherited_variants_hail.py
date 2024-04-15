@@ -153,10 +153,17 @@ trio_mat = trio_mat.filter_entries(hl.if_else(trio_mat.father_entry.GT.is_het(),
 # get random sample's GQ
 mt_ultra_rare = mt.semi_join_rows(trio_mat.rows())
 mt_ultra_rare = mt_ultra_rare.filter_entries((mt_ultra_rare.GT.is_hom_ref()) & (mt_ultra_rare.GQ>=gq_hom_ref_threshold))
+
+# clean-up: remove AC = 0 loci
+mt_ultra_rare = hl.variant_qc(mt_ultra_rare)
+mt_ultra_rare = mt_ultra_rare.filter_rows(mt_ultra_rare.variant_qc.AC[0] > 0, keep = True) 
+mt_ultra_rare = mt_ultra_rare.drop('variant_qc')
+
 mt_ultra_rare = mt_ultra_rare.annotate_rows(all_GQs=hl.array(hl.agg.collect_as_set(mt_ultra_rare.GQ)))
 mt_ultra_rare = mt_ultra_rare.annotate_rows(GQ_random=hl.shuffle(mt_ultra_rare.all_GQs)[0])
 
 trio_mat = trio_mat.annotate_rows(GQ_random=mt_ultra_rare.rows()[trio_mat.row_key].GQ_random)
+trio_mat = trio_mat.filter_rows(hl.is_defined(trio_mat.GQ_random))
 
 ultra_rare_vars_df = trio_mat.entries().to_pandas()
 
