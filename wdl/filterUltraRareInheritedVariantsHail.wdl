@@ -15,21 +15,17 @@ struct RuntimeAttr {
 
 workflow filterUltraRareInheritedVariantsHail {
     input {
-        Array[File]? vep_vcf_files
-        Array[File]? vep_annotated_final_vcf
+        Array[File] vep_vcf_files
         File lcr_uri
         File ped_uri
         File? meta_uri
         File? trio_uri
-        File info_header
         String python_trio_sample_script
         String filter_rare_inherited_python_script
         String hail_docker
         String vep_hail_docker
         String sv_base_mini_docker
         String cohort_prefix
-        Boolean merge_split_vcf
-        Boolean sort_after_merge=false
         Float AF_threshold=0.005
         Int AC_threshold=2
         Float csq_af_threshold=0.01
@@ -52,91 +48,38 @@ workflow filterUltraRareInheritedVariantsHail {
     }
     File meta_uri_ = select_first([meta_uri, makeTrioSampleFiles.meta_uri])
     File trio_uri_ = select_first([trio_uri, makeTrioSampleFiles.trio_uri])
-
-    Array[File] vep_files = select_first([vep_vcf_files, vep_annotated_final_vcf])
-
-    if (merge_split_vcf) {
-        call mergeSplitVCF.splitFile as splitVEPFiles {
-            input:
-                file=write_lines(vep_files),
-                shards_per_chunk=shards_per_chunk,
-                cohort_prefix=cohort_prefix,
-                vep_hail_docker=vep_hail_docker
-        }
-        scatter (chunk_file in splitVEPFiles.chunks) {        
-            call mergeVCFs.mergeVCFs as mergeChunk {
-                input:
-                    vcf_files=read_lines(chunk_file),
-                    sv_base_mini_docker=sv_base_mini_docker,
-                    cohort_prefix=basename(chunk_file),
-                    sort_after_merge=sort_after_merge,
-                    runtime_attr_override=runtime_attr_merge_chunk
-            }
-            call filterUltraRareInheritedVariants {
-                input:
-                    vcf_file=mergeChunk.merged_vcf_file,
-                    lcr_uri=lcr_uri,
-                    ped_uri=ped_uri,
-                    meta_uri=meta_uri_,
-                    trio_uri=trio_uri_,
-                    info_header=info_header,
-                    filter_rare_inherited_python_script=filter_rare_inherited_python_script,
-                    vep_hail_docker=vep_hail_docker,
-                    cohort_prefix=cohort_prefix,
-                    AC_threshold=AC_threshold,
-                    AF_threshold=AF_threshold,
-                    csq_af_threshold=csq_af_threshold,
-                    gq_het_threshold=gq_het_threshold,
-                    gq_hom_ref_threshold=gq_hom_ref_threshold,
-                    runtime_attr_override=runtime_attr_filter_vcf
-            }
-        }
-        call helpers.mergeResultsPython as mergeResults_merged {
-            input:
-                tsvs=filterUltraRareInheritedVariants.ultra_rare_inherited_tsv,
-                hail_docker=hail_docker,
-                input_size=size(filterUltraRareInheritedVariants.ultra_rare_inherited_tsv, 'GB'),
-                merged_filename=cohort_prefix+'_ultra_rare_variants.tsv',
-                runtime_attr_override=runtime_attr_merge_results
-        }
-    }
     
-    if (!merge_split_vcf) {
-        scatter (vcf_file in vep_files) {
-            String file_ext = if sub(basename(vcf_file), '.vcf.gz', '')!=basename(vcf_file) then '.vcf.gz' else '.vcf.bgz'
-            call filterUltraRareInheritedVariants as filterUltraRareInheritedVariants_sharded {
-                input:
-                    vcf_file=vcf_file,
-                    lcr_uri=lcr_uri,
-                    ped_uri=ped_uri,
-                    meta_uri=meta_uri_,
-                    trio_uri=trio_uri_,
-                    info_header=info_header,
-                    filter_rare_inherited_python_script=filter_rare_inherited_python_script,
-                    vep_hail_docker=vep_hail_docker,
-                    cohort_prefix=basename(vcf_file, file_ext),
-                    AC_threshold=AC_threshold,
-                    AF_threshold=AF_threshold,
-                    csq_af_threshold=csq_af_threshold,
-                    gq_het_threshold=gq_het_threshold,
-                    gq_hom_ref_threshold=gq_hom_ref_threshold,
-                    runtime_attr_override=runtime_attr_filter_vcf
-                    }
-        }
-        call helpers.mergeResultsPython as mergeResults_sharded {
+    scatter (vcf_file in vep_vcf_files) {
+        String file_ext = if sub(basename(vcf_file), '.vcf.gz', '')!=basename(vcf_file) then '.vcf.gz' else '.vcf.bgz'
+        call filterUltraRareInheritedVariants as filterUltraRareInheritedVariants_sharded {
             input:
-                tsvs=filterUltraRareInheritedVariants_sharded.ultra_rare_inherited_tsv,
-                hail_docker=hail_docker,
-                input_size=size(filterUltraRareInheritedVariants_sharded.ultra_rare_inherited_tsv, 'GB'),
-                merged_filename=cohort_prefix+'_ultra_rare_variants.tsv',
-                runtime_attr_override=runtime_attr_merge_results
-        }
+                vcf_file=vcf_file,
+                lcr_uri=lcr_uri,
+                ped_uri=ped_uri,
+                meta_uri=meta_uri_,
+                trio_uri=trio_uri_,
+                filter_rare_inherited_python_script=filter_rare_inherited_python_script,
+                vep_hail_docker=vep_hail_docker,
+                cohort_prefix=basename(vcf_file, file_ext),
+                AC_threshold=AC_threshold,
+                AF_threshold=AF_threshold,
+                csq_af_threshold=csq_af_threshold,
+                gq_het_threshold=gq_het_threshold,
+                gq_hom_ref_threshold=gq_hom_ref_threshold,
+                runtime_attr_override=runtime_attr_filter_vcf
+                }
     }
-
-    File merged_ultra_rare_inherited_tsv = select_first([mergeResults_merged.merged_tsv, mergeResults_sharded.merged_tsv])
+    call helpers.mergeResultsPython as mergeResults_sharded {
+        input:
+            tsvs=filterUltraRareInheritedVariants_sharded.ultra_rare_inherited_tsv,
+            hail_docker=hail_docker,
+            input_size=size(filterUltraRareInheritedVariants_sharded.ultra_rare_inherited_tsv, 'GB'),
+            merged_filename=cohort_prefix+'_ultra_rare_variants.tsv',
+            runtime_attr_override=runtime_attr_merge_results
+    }
 
     output {
-        File ultra_rare_inherited_tsv = merged_ultra_rare_inherited_tsv
+        File ultra_rare_inherited_tsv = mergeResults_sharded.merged_tsv
     }
 }
 
@@ -164,33 +107,6 @@ task makeTrioSampleFiles {
     }
 }
 
-task saveVCFHeader {
-    input {
-        File vcf_uri
-        File info_header
-        String sv_base_mini_docker
-        Boolean bad_header
-    }
-
-    runtime {
-        docker: sv_base_mini_docker
-    }
-
-    String header_filename = basename(vcf_uri, '.vcf.gz') + '_header.txt'
-
-    command <<<
-    bcftools head ~{vcf_uri} > ~{header_filename}
-    if [[ "~{bad_header}" == "true" ]]; then
-        bcftools head ~{vcf_uri} | grep -v "INFO=" > no_info_header.txt
-        cat no_info_header.txt ~{info_header} | sort > ~{header_filename}
-    fi
-    >>>
-
-    output {
-        File header_file = header_filename
-    }
-}
-
 task filterUltraRareInheritedVariants {
     input {
         File vcf_file
@@ -198,7 +114,6 @@ task filterUltraRareInheritedVariants {
         File ped_uri
         File meta_uri
         File trio_uri
-        File info_header
         String filter_rare_inherited_python_script
         String vep_hail_docker
         String cohort_prefix
