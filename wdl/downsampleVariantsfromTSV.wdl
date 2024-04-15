@@ -21,6 +21,7 @@ workflow downsampleVariantsfromTSV {
         Float indel_scale=1
         String jvarkit_docker
         String vep_hail_docker
+        RuntimeAttr? runtime_attr_downsample
     }
 
     Array[Pair[String, Float]] var_types_scales = zip(['SNV', 'Indel'], [snv_scale, indel_scale])
@@ -42,7 +43,8 @@ workflow downsampleVariantsfromTSV {
             var_type=var_type,
             chunk_size=chunk_size,
             scale=scale,
-            num_variants=getNumVars.num_variants
+            num_variants=getNumVars.num_variants,
+            runtime_attr_override=runtime_attr_downsample
         }
 
         call convertTSVtoVCF {

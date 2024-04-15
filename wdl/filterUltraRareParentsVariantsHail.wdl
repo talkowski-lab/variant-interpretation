@@ -3,6 +3,7 @@ version 1.0
 import "mergeSplitVCF.wdl" as mergeSplitVCF
 import "mergeVCFs.wdl" as mergeVCFs
 import "wes-denovo-helpers.wdl" as helpers
+import "downsampleVariantsfromTSV.wdl" as downsampleVariantsfromTSV
 
 struct RuntimeAttr {
     Float? mem_gb
@@ -20,8 +21,13 @@ workflow filterRareParentsVariantsHail {
         File ped_uri
         File? meta_uri
         File? trio_uri
+        File vcf_metrics_tsv_final
+        File hg38_reference
+        File hg38_reference_dict
+        File hg38_reference_fai
         String python_trio_sample_script
         String filter_rare_parents_python_script
+        String jvarkit_docker
         String hail_docker
         String vep_hail_docker
         String sv_base_mini_docker
@@ -80,8 +86,21 @@ workflow filterRareParentsVariantsHail {
             runtime_attr_override=runtime_attr_merge_results
     }
 
+    call downsampleVariantsfromTSV.downsampleVariantsfromTSV as downsampleVariantsfromTSV {
+        input:
+        reference_tsv=vcf_metrics_tsv_final,
+        full_input_tsv=mergeResults_sharded.merged_tsv,
+        hg38_reference=hg38_reference,
+        hg38_reference_dict=hg38_reference_dict,
+        hg38_reference_fai=hg38_reference_fai,
+        jvarkit_docker=jvarkit_docker,
+        vep_hail_docker=vep_hail_docker
+    }
+
     output {
         File ultra_rare_parents_tsv = mergeResults_sharded.merged_tsv
+        File downsampled_ultra_rare_parents_SNV = downsampleVariantsfromTSV.downsampled_tsv_SNV
+        File downsampled_ultra_rare_parents_Indel = downsampleVariantsfromTSV.downsampled_tsv_Indel
     }
 }
 
