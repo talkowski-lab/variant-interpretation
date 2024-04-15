@@ -177,7 +177,7 @@ for info_cat in ['AC', 'AF', 'MLEAC', 'MLEAF']:
 # 'POLYX' -- added after downsampling
 info_cols = ['END','AC','AF','AN','BaseQRankSum','ClippingRankSum','DP','FS','MLEAC','MLEAF','MQ','MQRankSum','QD','ReadPosRankSum','SOR','VQSLOD','cohort_AC', 'cohort_AF', 'CSQ']
 info_cols = list(np.intersect1d(info_cols, list(mt_filtered_rare.info.keys())))
-cols_to_keep = ['CHROM', 'POS', 'REF', 'ALT', 'LEN', 'TYPE', 'ID'] + info_cols + list(rename_cols.values())
+cols_to_keep = ['CHROM', 'POS', 'REF', 'ALT', 'LEN', 'TYPE', 'ID', 'VarKey'] + info_cols + list(rename_cols.values())
 
 # CSQ AF threshold
 csq_columns_less = ['Allele', 'Consequence', 'IMPACT', 'SYMBOL', 'Gene', 'Feature_type', 'Feature', 
@@ -237,11 +237,12 @@ try:
         warnings.warn("CSQ fields are messed up!")
 
     ultra_rare_vars_df[gnomad_af_str] = ultra_rare_vars_df.CSQ.apply(get_gnomAD_AF, col_num=csq_columns.index(gnomad_af_str)).astype(float)
-    ultra_rare_vars_df = ultra_rare_vars_df[(ultra_rare_vars_df[gnomad_af_str]>0)&(ultra_rare_vars_df[gnomad_af_str]<=csq_af_threshold)]
+    ultra_rare_vars_df = ultra_rare_vars_df[(ultra_rare_vars_df[gnomad_af_str]<=csq_af_threshold)]
     cols_to_keep.append(gnomad_af_str)
 
 except Exception as e:
     print(str(e))
     # pass
 
+ultra_rare_vars_df['VarKey'] = ultra_rare_vars_df[['ID', 'REF', 'ALT']].astype(str).agg(':'.join, axis=1)
 ultra_rare_vars_df[cols_to_keep].to_csv(f"{cohort_prefix}_ultra_rare_variants.tsv", sep='\t', index=False)

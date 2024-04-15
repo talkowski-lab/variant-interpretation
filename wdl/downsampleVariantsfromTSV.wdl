@@ -21,6 +21,7 @@ workflow downsampleVariantsfromTSV {
         Float indel_scale=1
         String jvarkit_docker
         String vep_hail_docker
+        Boolean prioritize_gnomad=false
         RuntimeAttr? runtime_attr_downsample
     }
 
@@ -44,7 +45,8 @@ workflow downsampleVariantsfromTSV {
             chunk_size=chunk_size,
             scale=scale,
             num_variants=getNumVars.num_variants,
-            runtime_attr_override=runtime_attr_downsample
+            runtime_attr_override=runtime_attr_downsample,
+            prioritize_gnomad=prioritize_gnomad
         }
 
         call convertTSVtoVCF {
@@ -313,6 +315,7 @@ task downsampleVariantsPython {
         Int num_variants
         Int chunk_size
         Float scale
+        Boolean prioritize_gnomad
         RuntimeAttr? runtime_attr_override
     }
 
@@ -347,14 +350,17 @@ task downsampleVariantsPython {
     command <<<
         cat <<EOF > downsample.py
         import pandas as pd
+        import numpy as np
         import os
         import sys
+        import ast
 
         full_input_tsv = sys.argv[1]
         var_type = sys.argv[2]
         desired_num_variants = int(sys.argv[3])
         output_name = sys.argv[4]
         chunksize = int(sys.argv[5])
+        prioritize_gnomad = ast.literal_eval(sys.argv[6].capitalize())
 
         chunks = []
         for chunk in pd.read_csv(full_input_tsv, sep='\t', chunksize=chunksize):
@@ -362,12 +368,21 @@ task downsampleVariantsPython {
 
         df = pd.concat(chunks)
         df = df[df.TYPE==var_type].copy()
-        num_per_sample = int(desired_num_variants / df.SAMPLE.unique().size)
-        df = df.groupby('SAMPLE').apply(lambda s: s.sample(min(len(s), num_per_sample)))
+
+        if prioritize_gnomad:
+            gnomad_str = np.intersect1d(df.columns, ['gnomADe_AF', 'gnomAD_AF'])[0]
+            in_gnomad = df[df[gnomad_str]>0].reset_index(drop=True)
+            not_in_gnomad = df[df[gnomad_str]==0].reset_index(drop=True)
+            num_per_sample = int((desired_num_variants-in_gnomad.shape[0]) / not_in_gnomad.SAMPLE.unique().size)
+            not_in_gnomad = not_in_gnomad.groupby('SAMPLE').apply(lambda s: s.sample(min(len(s), num_per_sample))).reset_index(drop=True)
+            df = pd.concat([not_in_gnomad, in_gnomad])
+        else:
+            num_per_sample = int(desired_num_variants / df.SAMPLE.unique().size)
+            df = df.groupby('SAMPLE').apply(lambda s: s.sample(min(len(s), num_per_sample)))
         df.to_csv(output_name, sep='\t', index=False)
         EOF
 
-        python3.9 downsample.py ~{full_input_tsv} ~{var_type} ~{desired_num_variants} ~{output_name} ~{chunk_size}
+        python3.9 downsample.py ~{full_input_tsv} ~{var_type} ~{desired_num_variants} ~{output_name} ~{chunk_size} ~{prioritize_gnomad}
     >>>
 
     output {
