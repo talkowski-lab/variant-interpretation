@@ -13,7 +13,7 @@ struct RuntimeAttr {
     Int? max_retries
 }
 
-workflow filterRareVariantsHail {
+workflow filterRareParentsVariantsHail {
     input {
         Array[File]? vep_vcf_files
         Array[File]? vep_annotated_final_vcf
@@ -23,7 +23,7 @@ workflow filterRareVariantsHail {
         File? trio_uri
         File info_header
         String python_trio_sample_script
-        String filter_rare_variants_python_script
+        String filter_rare_parents_python_script
         String hail_docker
         String vep_hail_docker
         String sv_base_mini_docker
@@ -31,8 +31,8 @@ workflow filterRareVariantsHail {
         Boolean merge_split_vcf
         Boolean sort_after_merge=false
         Float AF_threshold=0.005
-        Int AC_threshold=2
-        Float csq_af_threshold=0.01
+        Int AC_threshold=1
+        Float csq_af_threshold=0.00001
         Int gq_het_threshold=99
         Int gq_hom_ref_threshold=30
         Int shards_per_chunk=10
@@ -72,7 +72,7 @@ workflow filterRareVariantsHail {
                     sort_after_merge=sort_after_merge,
                     runtime_attr_override=runtime_attr_merge_chunk
             }
-            call filterRareVariants {
+            call filterRareParentsVariants {
                 input:
                     vcf_file=mergeChunk.merged_vcf_file,
                     lcr_uri=lcr_uri,
@@ -80,7 +80,7 @@ workflow filterRareVariantsHail {
                     meta_uri=meta_uri_,
                     trio_uri=trio_uri_,
                     info_header=info_header,
-                    filter_rare_variants_python_script=filter_rare_variants_python_script,
+                    filter_rare_parents_python_script=filter_rare_parents_python_script,
                     vep_hail_docker=vep_hail_docker,
                     cohort_prefix=cohort_prefix,
                     AC_threshold=AC_threshold,
@@ -93,9 +93,9 @@ workflow filterRareVariantsHail {
         }
         call helpers.mergeResultsPython as mergeResults_merged {
             input:
-                tsvs=filterRareVariants.ultra_rare_variants_tsv,
+                tsvs=filterRareParentsVariants.ultra_rare_parents_tsv,
                 hail_docker=hail_docker,
-                input_size=size(filterRareVariants.ultra_rare_variants_tsv, 'GB'),
+                input_size=size(filterRareParentsVariants.ultra_rare_parents_tsv, 'GB'),
                 merged_filename=cohort_prefix+'_ultra_rare_variants.tsv',
                 runtime_attr_override=runtime_attr_merge_results
         }
@@ -104,7 +104,7 @@ workflow filterRareVariantsHail {
     if (!merge_split_vcf) {
         scatter (vcf_file in vep_files) {
             String file_ext = if sub(basename(vcf_file), '.vcf.gz', '')!=basename(vcf_file) then '.vcf.gz' else '.vcf.bgz'
-            call filterRareVariants as filterRareVariants_sharded {
+            call filterRareParentsVariants as filterRareParentsVariants_sharded {
                 input:
                     vcf_file=vcf_file,
                     lcr_uri=lcr_uri,
@@ -112,7 +112,7 @@ workflow filterRareVariantsHail {
                     meta_uri=meta_uri_,
                     trio_uri=trio_uri_,
                     info_header=info_header,
-                    filter_rare_variants_python_script=filter_rare_variants_python_script,
+                    filter_rare_parents_python_script=filter_rare_parents_python_script,
                     vep_hail_docker=vep_hail_docker,
                     cohort_prefix=basename(vcf_file, file_ext),
                     AC_threshold=AC_threshold,
@@ -125,19 +125,19 @@ workflow filterRareVariantsHail {
         }
         call helpers.mergeResultsPython as mergeResults_sharded {
             input:
-                tsvs=filterRareVariants_sharded.ultra_rare_variants_tsv,
+                tsvs=filterRareParentsVariants_sharded.ultra_rare_parents_tsv,
                 hail_docker=hail_docker,
-                input_size=size(filterRareVariants_sharded.ultra_rare_variants_tsv, 'GB'),
+                input_size=size(filterRareParentsVariants_sharded.ultra_rare_parents_tsv, 'GB'),
                 merged_filename=cohort_prefix+'_ultra_rare_variants.tsv',
                 runtime_attr_override=runtime_attr_merge_results
         }
     }
 
-    File merged_ultra_rare_variants_tsv = select_first([mergeResults_merged.merged_tsv, mergeResults_sharded.merged_tsv])
+    File merged_ultra_rare_parents_tsv = select_first([mergeResults_merged.merged_tsv, mergeResults_sharded.merged_tsv])
 
     output {
-        # File hail_log = filterRareVariants.hail_log
-        File ultra_rare_variants_tsv = merged_ultra_rare_variants_tsv
+        # File hail_log = filterRareParentsVariants.hail_log
+        File ultra_rare_parents_tsv = merged_ultra_rare_parents_tsv
     }
 }
 
@@ -192,7 +192,7 @@ task saveVCFHeader {
     }
 }
 
-task filterRareVariants {
+task filterRareParentsVariants {
     input {
         File vcf_file
         File lcr_uri
@@ -200,7 +200,7 @@ task filterRareVariants {
         File meta_uri
         File trio_uri
         File info_header
-        String filter_rare_variants_python_script
+        String filter_rare_parents_python_script
         String vep_hail_docker
         String cohort_prefix
         Int AC_threshold
@@ -239,7 +239,7 @@ task filterRareVariants {
 
 
     command <<<
-        curl ~{filter_rare_variants_python_script} > filter_rare_variants.py
+        curl ~{filter_rare_parents_python_script} > filter_rare_variants.py
         python3.9 filter_rare_variants.py ~{lcr_uri} ~{ped_uri} ~{meta_uri} ~{trio_uri} ~{vcf_file} \
         ~{cohort_prefix} ~{cpu_cores} ~{memory} ~{AC_threshold} ~{AF_threshold} ~{csq_af_threshold} \
         ~{gq_het_threshold} ~{gq_hom_ref_threshold} > stdout
@@ -249,6 +249,6 @@ task filterRareVariants {
 
     output {
         File hail_log = "hail_log.txt"
-        File ultra_rare_variants_tsv = cohort_prefix + '_ultra_rare_variants.tsv'
+        File ultra_rare_parents_tsv = cohort_prefix + '_ultra_rare_variants.tsv'
     }
 }
