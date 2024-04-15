@@ -45,7 +45,7 @@ mt = hl.import_vcf(vcf_uri, reference_genome='GRCh38', force_bgz=True, call_fiel
 mt = split_multi_ssc(mt)
 
 # somalier sites
-som_mt = hl.import_vcf(somalier_vcf, reference_genome='GRCh38', force_bgz=True)
+som_mt = hl.import_vcf(somalier_vcf, reference_genome='GRCh38', force_bgz=True, call_fields=[], array_elements_required=False)
 mt = mt.semi_join_rows(som_mt.rows())
 
 if score_table=='false':
