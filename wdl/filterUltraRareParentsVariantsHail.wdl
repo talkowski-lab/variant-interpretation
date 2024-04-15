@@ -94,7 +94,8 @@ workflow filterRareParentsVariantsHail {
         hg38_reference_dict=hg38_reference_dict,
         hg38_reference_fai=hg38_reference_fai,
         jvarkit_docker=jvarkit_docker,
-        vep_hail_docker=vep_hail_docker
+        vep_hail_docker=vep_hail_docker,
+        prioritize_gnomad=true
     }
 
     output {
