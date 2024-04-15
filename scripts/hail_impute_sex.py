@@ -114,20 +114,45 @@ for col in ped_qc.columns[:6]:
 ped_qc.to_csv(f"{cohort_prefix}_sex_qc.ped", sep='\t', index=False)
 
 ped_qc['ped_sex'] = ped_qc.ped_sex.replace({np.nan: -9}).astype('category')
+ped_qc['sex'] = ped_qc.sex.astype('category')
 
 fig = plt.figure(layout="constrained", figsize=(22, 10))
 subfigs = fig.subfigures(1, 2, wspace=0.07, width_ratios=[1, 1])
 ax = subfigs[0].subplots(2, 2);
 subfigs[0].suptitle(f"{cohort_prefix}, Inferred Sex");
-sns.scatterplot(data=ped_qc, x='chrX.n_hom_var', y='chrX.n_het', hue='sex', ax=ax[0][0]);
-sns.scatterplot(data=ped_qc, x='chrX.n_hom_var', y='chrY.dp_stats.mean', hue='sex', ax=ax[0][1]);
-sns.scatterplot(data=ped_qc, x='chrX.dp_stats.mean', y='chrY.dp_stats.mean', hue='sex', ax=ax[1][0]);
-sns.scatterplot(data=ped_qc, x='X_ploidy', y='Y_ploidy', hue='sex', ax=ax[1][1]);
+sns.scatterplot(data=ped_qc, x='chrX.n_hom_var', y='chrX.n_het', hue='sex',
+               hue_order=np.intersect1d(ped_qc.sex.cat.categories, [2, 1, -1, -2, -9]), 
+               palette={2: 'mediumpurple', 1: 'mediumseagreen', -1: 'skyblue', 
+                        -2: 'palevioletred', -9: 'slategray'}, ax=ax[0][0]);
+sns.scatterplot(data=ped_qc, x='chrX.n_hom_var', y='chrY.dp_stats.mean', hue='sex', 
+               hue_order=np.intersect1d(ped_qc.sex.cat.categories, [2, 1, -1, -2, -9]), 
+               palette={2: 'mediumpurple', 1: 'mediumseagreen', -1: 'skyblue', 
+                        -2: 'palevioletred', -9: 'slategray'}, ax=ax[0][1]);
+sns.scatterplot(data=ped_qc, x='chrX.dp_stats.mean', y='chrY.dp_stats.mean', hue='sex', 
+               hue_order=np.intersect1d(ped_qc.sex.cat.categories, [2, 1, -1, -2, -9]), 
+               palette={2: 'mediumpurple', 1: 'mediumseagreen', -1: 'skyblue', 
+                        -2: 'palevioletred', -9: 'slategray'}, ax=ax[1][0]);
+sns.scatterplot(data=ped_qc, x='X_ploidy', y='Y_ploidy', hue='sex', 
+               hue_order=np.intersect1d(ped_qc.sex.cat.categories, [2, 1, -1, -2, -9]), 
+               palette={2: 'mediumpurple', 1: 'mediumseagreen', -1: 'skyblue', 
+                        -2: 'palevioletred', -9: 'slategray'}, ax=ax[1][1]);
 
 ax = subfigs[1].subplots(2, 2);
 subfigs[1].suptitle(f"{cohort_prefix}, Pedigree Sex");
-sns.scatterplot(data=ped_qc, x='chrX.n_hom_var', y='chrX.n_het', hue='ped_sex', ax=ax[0][0]);
-sns.scatterplot(data=ped_qc, x='chrX.n_hom_var', y='chrY.dp_stats.mean', hue='ped_sex', ax=ax[0][1]);
-sns.scatterplot(data=ped_qc, x='chrX.dp_stats.mean', y='chrY.dp_stats.mean', hue='ped_sex', ax=ax[1][0]);
-sns.scatterplot(data=ped_qc, x='X_ploidy', y='Y_ploidy', hue='ped_sex', ax=ax[1][1]);
+sns.scatterplot(data=ped_qc, x='chrX.n_hom_var', y='chrX.n_het', hue='ped_sex', 
+               hue_order=np.intersect1d(ped_qc.ped_sex.cat.categories, [2, 1, -1, -2, -9]), 
+               palette={2: 'mediumpurple', 1: 'mediumseagreen', -1: 'skyblue', 
+                        -2: 'palevioletred', -9: 'slategray'}, ax=ax[0][0]);
+sns.scatterplot(data=ped_qc, x='chrX.n_hom_var', y='chrY.dp_stats.mean', hue='ped_sex', 
+               hue_order=np.intersect1d(ped_qc.ped_sex.cat.categories, [2, 1, -1, -2, -9]), 
+               palette={2: 'mediumpurple', 1: 'mediumseagreen', -1: 'skyblue', 
+                        -2: 'palevioletred', -9: 'slategray'}, ax=ax[0][1]);
+sns.scatterplot(data=ped_qc, x='chrX.dp_stats.mean', y='chrY.dp_stats.mean', hue='ped_sex', 
+               hue_order=np.intersect1d(ped_qc.ped_sex.cat.categories, [2, 1, -1, -2, -9]), 
+               palette={2: 'mediumpurple', 1: 'mediumseagreen', -1: 'skyblue', 
+                        -2: 'palevioletred', -9: 'slategray'}, ax=ax[1][0]);
+sns.scatterplot(data=ped_qc, x='X_ploidy', y='Y_ploidy', hue='ped_sex', 
+               hue_order=np.intersect1d(ped_qc.ped_sex.cat.categories, [2, 1, -1, -2, -9]), 
+               palette={2: 'mediumpurple', 1: 'mediumseagreen', -1: 'skyblue', 
+                        -2: 'palevioletred', -9: 'slategray'}, ax=ax[1][1]);
 plt.savefig(f"{cohort_prefix}_sex_qc.png");
