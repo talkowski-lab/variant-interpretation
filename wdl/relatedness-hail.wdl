@@ -18,6 +18,7 @@ workflow Relatedness {
         File? merged_vep_file
         File ped_uri
         File somalier_vcf
+        File bed_file
         String cohort_prefix
         String relatedness_qc_script
         String plot_relatedness_script
@@ -41,7 +42,7 @@ workflow Relatedness {
             String prefix = if (sub(filename, ".gz", "")!=filename) then basename(filename, ".vcf.gz") else basename(filename, ".vcf.bgz")
             call helpers.subsetVCFs as subsetVCFs {
                 input:
-                    somalier_vcf=somalier_vcf,
+                    bed_file=bed_file,
                     vcf_uri=vcf_uri,
                     vcf_idx=vcf_uri+'.tbi',
                     output_name=prefix + '.somalier.subset.vcf.gz',
