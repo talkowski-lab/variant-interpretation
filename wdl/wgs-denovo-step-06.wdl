@@ -42,7 +42,7 @@ workflow step6 {
             csq_af_threshold=csq_af_threshold,
             filter_final_tsv_script=filter_final_tsv_script,
             hail_docker=hail_docker,
-            runtime_attr_filter_final=runtime_attr_filter_final
+            runtime_attr_override=runtime_attr_filter_final
     }
 
     output {
