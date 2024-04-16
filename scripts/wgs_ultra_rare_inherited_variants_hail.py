@@ -157,19 +157,19 @@ trio_mat = trio_mat.filter_entries(((hl.is_indel(trio_mat.alleles[0], trio_mat.a
                                    | (hl.is_snp(trio_mat.alleles[0], trio_mat.alleles[1])))
 
 # get random sample's GQ
-# mt_ultra_rare = mt.semi_join_rows(trio_mat.rows())
-# mt_ultra_rare = mt_ultra_rare.filter_entries((mt_ultra_rare.GT.is_hom_ref()) & (mt_ultra_rare.GQ>=gq_hom_ref_threshold))
+mt_ultra_rare = mt.semi_join_rows(trio_mat.rows())
+mt_ultra_rare = mt_ultra_rare.filter_entries((mt_ultra_rare.GT.is_hom_ref()) & (mt_ultra_rare.GQ>=gq_hom_ref_threshold))
 
-# # clean-up: remove AC = 0 loci
-# mt_ultra_rare = hl.variant_qc(mt_ultra_rare)
-# mt_ultra_rare = mt_ultra_rare.filter_rows(mt_ultra_rare.variant_qc.AC[0] > 0, keep = True) 
-# mt_ultra_rare = mt_ultra_rare.drop('variant_qc')
+# clean-up: remove AC = 0 loci
+mt_ultra_rare = hl.variant_qc(mt_ultra_rare)
+mt_ultra_rare = mt_ultra_rare.filter_rows(mt_ultra_rare.variant_qc.AC[0] > 0, keep = True) 
+mt_ultra_rare = mt_ultra_rare.drop('variant_qc')
 
-# mt_ultra_rare = mt_ultra_rare.annotate_rows(all_GQs=hl.array(hl.agg.collect_as_set(mt_ultra_rare.GQ)))
-# mt_ultra_rare = mt_ultra_rare.annotate_rows(GQ_random=hl.shuffle(mt_ultra_rare.all_GQs)[0])
+mt_ultra_rare = mt_ultra_rare.annotate_rows(all_GQs=hl.array(hl.agg.collect_as_set(mt_ultra_rare.GQ)))
+mt_ultra_rare = mt_ultra_rare.annotate_rows(GQ_random=hl.shuffle(mt_ultra_rare.all_GQs)[0])
 
-# trio_mat = trio_mat.annotate_rows(GQ_random=mt_ultra_rare.rows()[trio_mat.row_key].GQ_random)
-# trio_mat = trio_mat.filter_rows(hl.is_defined(trio_mat.GQ_random))
+trio_mat = trio_mat.annotate_rows(GQ_random=mt_ultra_rare.rows()[trio_mat.row_key].GQ_random)
+trio_mat = trio_mat.filter_rows(hl.is_defined(trio_mat.GQ_random))
 
 ultra_rare_vars_df = trio_mat.entries().to_pandas()
 
@@ -203,8 +203,8 @@ for info_cat in ['AC', 'AF', 'MLEAC', 'MLEAF']:
 # 'POLYX' -- added after downsampling
 info_cols = ['END','AC','AF','AN','BaseQRankSum','ClippingRankSum','DP','FS','MLEAC','MLEAF','MQ','MQRankSum','QD','ReadPosRankSum','SOR','VQSLOD','cohort_AC', 'cohort_AF', 'CSQ']
 info_cols = list(np.intersect1d(info_cols, list(mt_filtered_rare.info.keys())))
-# cols_to_keep = ['CHROM', 'POS', 'REF', 'ALT', 'LEN', 'TYPE', 'ID', 'VarKey', 'GQ_random'] + info_cols + list(rename_cols.values())
-cols_to_keep = ['CHROM', 'POS', 'REF', 'ALT', 'LEN', 'TYPE', 'ID', 'VarKey'] + info_cols + list(rename_cols.values())
+cols_to_keep = ['CHROM', 'POS', 'REF', 'ALT', 'LEN', 'TYPE', 'ID', 'VarKey', 'GQ_random'] + info_cols + list(rename_cols.values())
+# cols_to_keep = ['CHROM', 'POS', 'REF', 'ALT', 'LEN', 'TYPE', 'ID', 'VarKey'] + info_cols + list(rename_cols.values())
 
 # CSQ AF threshold
 csq_columns_less = ['Allele', 'Consequence', 'IMPACT', 'SYMBOL', 'Gene', 'Feature_type', 'Feature', 
