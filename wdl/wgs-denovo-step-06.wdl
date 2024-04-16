@@ -22,6 +22,7 @@ workflow step6 {
         String hail_docker
         String sample_column
         RuntimeAttr? runtime_attr_prioritize
+        RuntimeAttr? runtime_attr_filter_final
     }
 
     call prioritizeCSQ.annotateMostSevereCSQ as prioritizeCSQ {
