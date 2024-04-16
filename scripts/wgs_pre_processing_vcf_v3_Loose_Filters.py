@@ -58,7 +58,12 @@ def trim_vcf(vcf_uri, lcr_uri, ped_uri, meta_uri, trio_uri, header_file, vcf_out
     mt = hl.import_vcf(vcf_uri, array_elements_required=False, reference_genome=build, force_bgz=True, call_fields=[], header_file=header_file, find_replace=('nul', '.'))
     mt = split_multi_ssc(mt)
     # annotate cohort ac to INFO field; cohortAC filter set to 100 
-    mt = mt.annotate_rows(info=mt.info.annotate(cohort_AC=mt.info.AC[mt.a_index - 1]))
+    mt = mt.annotate_rows(info=mt.info.annotate(cohort_AC=mt.info.AC[mt.a_index - 1],
+                                           cohort_AF=mt.info.AF[mt.a_index - 1]))
+    mt = mt.annotate_entries(DPC=hl.sum(mt.AD),
+                                           AB=mt.AD[1]/hl.sum(mt.AD),
+                                           VAF=mt.AD[1]/mt.DP)
+    
     mt = mt.filter_rows(mt.info.cohort_AC < 20 , keep=True)
     # filter low complexity regions
     try:
@@ -103,7 +108,7 @@ def trim_vcf(vcf_uri, lcr_uri, ped_uri, meta_uri, trio_uri, header_file, vcf_out
     mt = mt.filter_rows((hl.is_snp(mt.alleles[0], mt.alleles[1]) &(mt.filters.size() == 0))
                        | hl.is_indel(mt.alleles[0], mt.alleles[1]))
     # filter on depth
-    mt = mt.filter_entries( (mt.DP < 10) | (mt.DP > 200), keep = False) 
+    mt = mt.filter_entries( (mt.DPC < 10) | (mt.DPC > 200), keep = False) 
     # row (variant INFO) level filters - GATK recommendations for short variants
     dn_snv_cond_row = (hl.is_snp(mt.alleles[0], mt.alleles[1])
                         & (mt.qual >= 150)
@@ -127,7 +132,7 @@ def trim_vcf(vcf_uri, lcr_uri, ped_uri, meta_uri, trio_uri, header_file, vcf_out
                         & (ab <= 0.05))
         hom_indel_parents = (hl.is_indel(mt.alleles[0], mt.alleles[1])
                         & mt.GT.is_hom_ref()
-                        & (mt.DP >= 16)
+                        & (mt.DPC >= 16)
                         & (ab <= 0.05))
         # child filters - heterzygous
         het_snv_cond = (hl.is_snp(mt.alleles[0], mt.alleles[1])
@@ -152,7 +157,7 @@ def trim_vcf(vcf_uri, lcr_uri, ped_uri, meta_uri, trio_uri, header_file, vcf_out
                         & (ab <= 0.05))
         hom_indel_parents = (hl.is_indel(mt.alleles[0], mt.alleles[1])
                         & mt.GT.is_hom_ref()
-                        & (mt.DP >= 16)
+                        & (mt.DPC >= 16)
                         & (mt.GQ >= 30.0)
                         & (ab <= 0.05))
         # child filters - heterzygous
