@@ -244,5 +244,9 @@ except Exception as e:
     print(str(e))
     # pass
 
-ultra_rare_vars_df['VarKey'] = ultra_rare_vars_df[['ID', 'REF', 'ALT']].astype(str).agg(':'.join, axis=1)
+try:
+    ultra_rare_vars_df['VarKey'] = ultra_rare_vars_df[['ID', 'REF', 'ALT']].astype(str).agg(':'.join, axis=1)
+except:
+    print(str(e))
+    ultra_rare_vars_df['VarKey'] = np.nan
 ultra_rare_vars_df[cols_to_keep].to_csv(f"{cohort_prefix}_ultra_rare_variants.tsv.gz", sep='\t', index=False)
