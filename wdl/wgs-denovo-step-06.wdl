@@ -41,7 +41,8 @@ workflow step6 {
             AC_threshold=AC_threshold,
             csq_af_threshold=csq_af_threshold,
             filter_final_tsv_script=filter_final_tsv_script,
-            hail_docker=hail_docker
+            hail_docker=hail_docker,
+            runtime_attr_filter_final=runtime_attr_filter_final
     }
 
     output {
