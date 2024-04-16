@@ -91,6 +91,6 @@ task filterFinalTSV {
     }
 
     output {
-        File vcf_metrics_tsv_final = basename(vcf_metrics_tsv_annot, '.tsv') + '_filtered.tsv'
+        File vcf_metrics_tsv_final = basename(vcf_metrics_tsv_annot, '.tsv.gz') + '_filtered.tsv.gz'
     }
 }

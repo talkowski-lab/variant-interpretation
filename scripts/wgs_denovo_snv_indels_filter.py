@@ -104,4 +104,4 @@ else:
 final_output[gnomad_af_str] = final_output.CSQ.apply(get_gnomAD_AF, col_num=csq_columns.index(gnomad_af_str)).astype(float)
 final_output = final_output[final_output[gnomad_af_str]<=csq_af_threshold]
 
-final_output.to_csv(os.path.basename(vcf_metrics_uri).split('.tsv')[0]+'_filtered.tsv', sep='\t', index=False)
+final_output.to_csv(os.path.basename(vcf_metrics_uri).split('.tsv')[0]+'_filtered.tsv.gz', sep='\t', index=False)
