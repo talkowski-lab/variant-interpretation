@@ -149,6 +149,12 @@ trio_mat = trio_mat.filter_entries(hl.if_else(trio_mat.father_entry.GT.is_het(),
                                                 trio_mat.mother_entry.AB<=0.05) 
                                     & ((trio_mat.proband_entry.AB<=0.05)))
 
+# DP filter for indels
+trio_mat = trio_mat.filter_entries(((hl.is_indel(trio_mat.alleles[0], trio_mat.alleles[1])) 
+                                        & (trio_mat.mother_entry.DPC>=16) 
+                                        & (trio_mat.father_entry.DPC>=16)) 
+                                   | (hl.is_snp(trio_mat.alleles[0], trio_mat.alleles[1])))
+
 ultra_rare_vars_df = trio_mat.entries().to_pandas()
 
 ultra_rare_vars_df = ultra_rare_vars_df[ultra_rare_vars_df['proband.s'].isin(trio_df.SampleID)]

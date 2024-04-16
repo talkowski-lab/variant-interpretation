@@ -150,6 +150,12 @@ trio_mat = trio_mat.filter_entries(hl.if_else(trio_mat.father_entry.GT.is_het(),
                                                 trio_mat.mother_entry.AB<=0.05) 
                                     & ((trio_mat.proband_entry.AB>=0.2) & (trio_mat.proband_entry.AB<=0.8)))
 
+# DP filter for indels
+trio_mat = trio_mat.filter_entries(((hl.is_indel(trio_mat.alleles[0], trio_mat.alleles[1])) 
+                                        & (trio_mat.mother_entry.DPC>=16) 
+                                        & (trio_mat.father_entry.DPC>=16)) 
+                                   | (hl.is_snp(trio_mat.alleles[0], trio_mat.alleles[1])))
+
 # get random sample's GQ
 mt_ultra_rare = mt.semi_join_rows(trio_mat.rows())
 mt_ultra_rare = mt_ultra_rare.filter_entries((mt_ultra_rare.GT.is_hom_ref()) & (mt_ultra_rare.GQ>=gq_hom_ref_threshold))
