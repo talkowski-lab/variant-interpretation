@@ -155,7 +155,10 @@ def process_consequences(mt: Union[hl.MatrixTable, hl.Table], vep_root: str = 'v
 
 
 def process_consequence_cohort(csq_columns, vcf_metrics_uri, numeric, sample_column):
-    ht = hl.import_table(vcf_metrics_uri)
+    try:
+        mt = hl.import_table(vcf_metrics_uri)
+    except:
+        mt = hl.import_table(vcf_metrics_uri, force_bgz=True)
 
     ht = ht.annotate(locus=hl.parse_variant(ht.ID, reference_genome='GRCh38').locus,
                             alleles=hl.parse_variant(ht.ID, reference_genome='GRCh38').alleles)
@@ -276,4 +279,4 @@ df = process_consequence_cohort(csq_columns, vcf_metrics_uri, numeric, sample_co
 df['isCoding'] = df.Consequence.astype(str).replace({'None': '[]'}).apply(ast.literal_eval).apply(lambda csq: np.intersect1d(csq, coding_variants).size!=0)
 
 df = pd.concat([final_output, df[np.setdiff1d(df.columns, final_output.columns)]], axis=1)
-df.to_csv(f"{os.path.basename(vcf_metrics_uri).split('.tsv')[0]}_prioritized_csq.tsv", sep='\t',index=False)
+df.to_csv(f"{os.path.basename(vcf_metrics_uri).split('.tsv')[0]}_prioritized_csq.tsv.gz", sep='\t',index=False)
