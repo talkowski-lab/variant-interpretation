@@ -76,7 +76,7 @@ task merge_vcf_to_tsv_fullQC {
         input_dir=$(dirname ~{split_trio_vcfs[0]})
         output_dir=$(dirname ~{trio_denovo_vcf[0]})
         curl ~{merge_vcf_to_tsv_fullQC_script} > merge_vcf_to_tsv_fullQC.py
-        python3 merge_vcf_to_tsv_fullQC.py -d $output_dir -i $input_dir -p ~{ped_uri} -o ~{cohort_prefix}_dnm.tsv.gz > stdout
+        python3 merge_vcf_to_tsv_fullQC.py -d $output_dir -i $input_dir -p ~{ped_uri} -o ~{cohort_prefix}_dnm.tsv > stdout
     }
 
     output {
