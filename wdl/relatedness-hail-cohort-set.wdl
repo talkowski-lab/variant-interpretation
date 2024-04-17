@@ -61,6 +61,7 @@ workflow RelatednessCohortSet {
     if (samples_per_chunk==0) {
         call relatedness_hail.Relatedness as Relatedness {
             input:
+            vep_vcf_files=[],
             somalier_vcf_file_=merged_vcf_file,
             ped_uri=mergePeds.merged_ped_file,
             sites_uri=sites_uri,
@@ -85,6 +86,7 @@ workflow RelatednessCohortSet {
     if (samples_per_chunk>0) {
         call relatedness_hail_subset_samples.Relatedness as Relatedness_subsetSamples {
             input:
+            vep_vcf_files=[],
             somalier_vcf_file_=merged_vcf_file,
             ped_uri=mergePeds.merged_ped_file,
             sites_uri=sites_uri,
