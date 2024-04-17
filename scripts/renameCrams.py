@@ -28,6 +28,8 @@ ped[['FamilyID','IndividualID','MotherID','FatherID']] = ped[['FamilyID','Indivi
 
 colnames = colnames=['sample', 'crai', 'cram']
 cram=pd.read_csv(sample_cc,sep='\t',names=colnames)
+cram[colnames] = cram[colnames].astype(str)
+
 pd.options.display.max_colwidth = 500
 
 #change to cromwell root so they can be moved
@@ -51,7 +53,6 @@ crai_file_mom_prefix = crai_file_mom.split(crai_file_mom_suffix)[0]
 #mv(crai_file_mom, 'mother.cram.crai')
 cram.loc[cram['sample'].isin(maternal_list), 'new_cram'] = cram_file_mom_prefix + 'MOTHER.' + str(cram_file_mom_suffix)
 cram.loc[cram['sample'].isin(maternal_list), 'new_crai'] = crai_file_mom_prefix + 'MOTHER.' + str(crai_file_mom_suffix)
-
 
 paternal_list = [i for i in paternal_list if i != '0']
 print("Number of dads: ", len(paternal_list))
@@ -136,7 +137,6 @@ affected_list = {
 }
 
 affected_df = pd.DataFrame(affected_list)
-
 
 #mat_df.to_csv(path_or_buf='mothers.txt', mode='a', index=False, sep='\t', header=False)
 #pat_df.to_csv(path_or_buf='fathers.txt', mode='a', index=False, sep='\t', header=False)
