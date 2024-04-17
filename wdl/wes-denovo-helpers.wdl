@@ -208,7 +208,6 @@ task mergeResultsPython {
     }   
 }
 
-# TODO remove from other workflows
 task mergeResults {
     input {
         Array[File] tsvs
@@ -579,6 +578,16 @@ task subsetVCFSamplesHail {
 
     mt = hl.import_vcf(vcf_file, reference_genome = 'GRCh38', array_elements_required=False, force_bgz=True)
     samples = pd.read_csv(samples_file, header=None)[0].tolist()
+    try:
+        # for haploid (e.g. chrY)
+        mt = mt.annotate_entries(
+            GT = hl.if_else(
+                    mt.GT.ploidy == 1, 
+                    hl.call(mt.GT[0], mt.GT[0]),
+                    mt.GT)
+        )
+    except:
+        pass
 
     mt_filt = mt.filter_cols(hl.array(samples).contains(mt.s))
     hl.export_vcf(mt_filt, os.path.basename(samples_file).split('.txt')[0]+'.vcf.bgz')
