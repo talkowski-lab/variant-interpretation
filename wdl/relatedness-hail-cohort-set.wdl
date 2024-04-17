@@ -15,7 +15,7 @@ struct RuntimeAttr {
 workflow RelatednessCohortSet {
     input {
         Array[File]? somalier_vcf_files
-        File somalier_vcf_file_
+        File? somalier_vcf_file_
         Array[File] ped_uri
         File sites_uri
         File bed_file
