@@ -158,7 +158,10 @@ def process_consequence_cohort(csq_columns, vcf_metrics_uri, numeric, sample_col
     try:
         mt = hl.import_table(vcf_metrics_uri)
     except:
-        mt = hl.import_table(vcf_metrics_uri, force_bgz=True)
+        tmp_df = pd.read_csv(vcf_metrics_uri, sep='\t')
+        new_path = os.path.basename(vcf_metrics_uri).split('.gz')[0]
+        tmp_df.to_csv(new_path, sep='\t', index=False)
+        mt = hl.import_table(new_path)
 
     ht = ht.annotate(locus=hl.parse_variant(ht.ID, reference_genome='GRCh38').locus,
                             alleles=hl.parse_variant(ht.ID, reference_genome='GRCh38').alleles)
