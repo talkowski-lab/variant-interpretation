@@ -80,7 +80,7 @@ task annotateMPCandLOEUF {
     }
 
     output {
-        File vcf_metrics_tsv_annot = basename(vcf_metrics_tsv, '.tsv.gz') + '_with_mpc_loeuf.tsv.gz'
+        File vcf_metrics_tsv_annot = basename(vcf_metrics_tsv, '.tsv') + '_with_mpc_loeuf.tsv.gz'
     }
 }
 

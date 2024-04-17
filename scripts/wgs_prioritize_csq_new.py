@@ -155,9 +155,9 @@ def process_consequences(mt: Union[hl.MatrixTable, hl.Table], vep_root: str = 'v
 
 
 def process_consequence_cohort(csq_columns, vcf_metrics_uri, numeric, sample_column):
-    try:
+    if '.gz' not in vcf_metrics_uri:
         mt = hl.import_table(vcf_metrics_uri)
-    except:
+    else:
         tmp_df = pd.read_csv(vcf_metrics_uri, sep='\t')
         new_path = os.path.basename(vcf_metrics_uri).split('.gz')[0]
         tmp_df.to_csv(new_path, sep='\t', index=False)

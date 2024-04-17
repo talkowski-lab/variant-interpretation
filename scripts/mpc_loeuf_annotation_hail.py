@@ -17,13 +17,7 @@ hl.init(min_block_size=128, spark_conf={"spark.executor.cores": cores,
                     "spark.driver.memory": f"{mem}g"
                     }, tmp_dir="tmp", local_tmpdir="tmp")
 
-try:
-    mt = hl.import_table(vcf_metrics_tsv)
-except:
-    tmp_df = pd.read_csv(vcf_metrics_tsv, sep='\t')
-    new_path = os.path.basename(vcf_metrics_tsv).split('.gz')[0]
-    tmp_df.to_csv(new_path, sep='\t', index=False)
-    mt = hl.import_table(new_path)
+mt = hl.import_table(vcf_metrics_tsv)
 keys = hl.parse_variant(mt.ID, reference_genome='GRCh38')
 mt = mt.annotate(alleles=keys.alleles, locus=keys.locus)
 

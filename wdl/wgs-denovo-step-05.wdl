@@ -80,6 +80,6 @@ task merge_vcf_to_tsv_fullQC {
     }
 
     output {
-        File output_tsv = cohort_prefix + '_dnm.tsv.gz'
+        File output_tsv = cohort_prefix + '_dnm.tsv'
     }
 }
