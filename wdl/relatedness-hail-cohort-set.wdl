@@ -14,9 +14,10 @@ struct RuntimeAttr {
 
 workflow RelatednessCohortSet {
     input {
-        Array[File] somalier_vcf_file
+        Array[File]? somalier_vcf_files
+        File somalier_vcf_file_
         Array[File] ped_uri
-        File somalier_vcf
+        File sites_uri
         File bed_file
         String merged_filename  # no file extension
         String relatedness_qc_script
@@ -37,14 +38,18 @@ workflow RelatednessCohortSet {
         RuntimeAttr? runtime_attr_merge_results
     }
 
-    call mergeVCFs {
-        input:
-            vcf_files=somalier_vcf_file,
-            sv_base_mini_docker=sv_base_mini_docker,
-            merged_filename=merged_filename,
-            runtime_attr_override=runtime_attr_merge_vcfs
+    if (!defined(somalier_vcf_file_)) {
+        call mergeVCFs {
+            input:
+                vcf_files=select_first([somalier_vcf_files]),
+                sv_base_mini_docker=sv_base_mini_docker,
+                merged_filename=merged_filename,
+                runtime_attr_override=runtime_attr_merge_vcfs
+        }
     }
-    
+
+    File merged_vcf_file = select_first([somalier_vcf_file_, mergeVCFs.merged_vcf_file])
+
     call mergePeds {
         input:
             ped_uris=ped_uri,
@@ -56,9 +61,9 @@ workflow RelatednessCohortSet {
     if (samples_per_chunk==0) {
         call relatedness_hail.Relatedness as Relatedness {
             input:
-            merged_vep_file=mergeVCFs.merged_vcf_file,
+            somalier_vcf_file_=merged_vcf_file,
             ped_uri=mergePeds.merged_ped_file,
-            somalier_vcf=somalier_vcf,
+            sites_uri=sites_uri,
             bed_file=bed_file,
             cohort_prefix=merged_filename,
             relatedness_qc_script=relatedness_qc_script,
@@ -80,9 +85,9 @@ workflow RelatednessCohortSet {
     if (samples_per_chunk>0) {
         call relatedness_hail_subset_samples.Relatedness as Relatedness_subsetSamples {
             input:
-            merged_vep_file=mergeVCFs.merged_vcf_file,
+            somalier_vcf_file_=merged_vcf_file,
             ped_uri=mergePeds.merged_ped_file,
-            somalier_vcf=somalier_vcf,
+            sites_uri=sites_uri,
             bed_file=bed_file,
             samples_per_chunk=samples_per_chunk,
             cohort_prefix=merged_filename,
@@ -106,7 +111,7 @@ workflow RelatednessCohortSet {
 
     output {
         String cohort_prefix = merged_filename
-        File somalier_vcf_file = mergeVCFs.merged_vcf_file
+        File somalier_vcf_file = merged_vcf_file
         File sex_qc_plots = select_first([Relatedness.sex_qc_plots, Relatedness_subsetSamples.sex_qc_plots])
         File ped_sex_qc = select_first([Relatedness.ped_sex_qc, Relatedness_subsetSamples.ped_sex_qc])
         File relatedness_qc = select_first([Relatedness.relatedness_qc, Relatedness_subsetSamples.relatedness_qc])

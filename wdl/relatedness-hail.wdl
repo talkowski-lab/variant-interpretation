@@ -15,9 +15,9 @@ struct RuntimeAttr {
 workflow Relatedness {
     input {
         Array[File]? vep_vcf_files
-        File? merged_vep_file
+        File? somalier_vcf_file_
         File ped_uri
-        File somalier_vcf
+        File sites_uri
         File bed_file
         String cohort_prefix
         String relatedness_qc_script
@@ -35,7 +35,7 @@ workflow Relatedness {
         RuntimeAttr? runtime_attr_plot_relatedness
     }
 
-    if (!defined(merged_vep_file)) {
+    if (!defined(somalier_vcf_file_)) {
         
         scatter (vcf_uri in select_first([vep_vcf_files])) {
             String filename = basename(vcf_uri)
@@ -60,12 +60,12 @@ workflow Relatedness {
             runtime_attr_override=runtime_attr_merge_vcfs
         }
     }
-    File merged_vcf_file = select_first([merged_vep_file, mergeVCFs.merged_vcf_file])
+    File merged_vcf_file = select_first([somalier_vcf_file_, mergeVCFs.merged_vcf_file])
 
     call imputeSex {
         input:
         vcf_uri=merged_vcf_file,
-        somalier_vcf=somalier_vcf,
+        sites_uri=sites_uri,
         ped_uri=ped_uri,
         cohort_prefix=cohort_prefix,
         sex_qc_script=sex_qc_script,
@@ -76,7 +76,7 @@ workflow Relatedness {
     call checkRelatedness {
         input:
         vcf_uri=merged_vcf_file,
-        somalier_vcf=somalier_vcf,
+        sites_uri=sites_uri,
         ped_uri=ped_uri,
         cohort_prefix=cohort_prefix,
         relatedness_qc_script=relatedness_qc_script,
@@ -110,7 +110,7 @@ task imputeSex {
     input {
         File vcf_uri
         File ped_uri
-        File somalier_vcf
+        File sites_uri
         String cohort_prefix
         String sex_qc_script
         String hail_docker
@@ -146,7 +146,7 @@ task imputeSex {
 
     command <<<
         curl ~{sex_qc_script} > impute_sex.py
-        python3 impute_sex.py ~{vcf_uri} ~{somalier_vcf} ~{cohort_prefix} ~{ped_uri} ~{cpu_cores} ~{memory}
+        python3 impute_sex.py ~{vcf_uri} ~{sites_uri} ~{cohort_prefix} ~{ped_uri} ~{cpu_cores} ~{memory}
     >>>
 
     output {
@@ -159,7 +159,7 @@ task checkRelatedness {
     input {
         File vcf_uri
         File ped_uri
-        File somalier_vcf
+        File sites_uri
         String cohort_prefix
         String relatedness_qc_script
         String hail_docker
@@ -198,7 +198,7 @@ task checkRelatedness {
     command <<<
         set -eou pipefail
         curl ~{relatedness_qc_script} > check_relatedness.py
-        python3 check_relatedness.py ~{vcf_uri} ~{somalier_vcf} ~{cohort_prefix} ~{ped_uri} ~{cpu_cores} ~{memory} ~{bucket_id} ~{score_table} > stdout
+        python3 check_relatedness.py ~{vcf_uri} ~{sites_uri} ~{cohort_prefix} ~{ped_uri} ~{cpu_cores} ~{memory} ~{bucket_id} ~{score_table} > stdout
     >>>
 
     output {
