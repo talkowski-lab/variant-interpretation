@@ -22,6 +22,11 @@ sample_qc = hl.sample_qc(mt).cols().flatten().to_pandas()
 sample_qc.index = sample_qc.s
 sample_qc.columns = sample_qc.columns.str.replace('sample_qc.','')
 
+ped_qc['sex_error'] = ped_qc['sex']!=ped_qc['ped_sex']
+
+rel_df['maternal_error'] = (rel_df.role=='Proband')&(~rel_df.mother_status.isin(['parent-child','ambiguous',np.nan]))
+rel_df['paternal_error'] = (rel_df.role=='Proband')&(~rel_df.father_status.isin(['parent-child','ambiguous',np.nan]))
+
 rel_df['missing_parent'] = (((rel_df[['maternal_id','paternal_id']]=='0')
             | (rel_df[['maternal_id','paternal_id']].isna())).sum(axis=1)==1)
 
