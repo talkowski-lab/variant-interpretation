@@ -170,9 +170,6 @@ task RdTest {
     /opt/RdTest/localize_bincov.sh rdtest.bed ~{coverage_file}
     awk -v OFS="\t" '{print $1,$2,$3,$4,$6,$5}' rdtest.bed > test.bed
 
-## added 4/17/2024 to test if passing final qc'd bed through RdTest.R will only generate desired plots; delete
-    gsutil cat gs://fc-545eca01-311b-4271-bc2f-a7dce28387c5/mosaic_params/qc.test.bed > test.bed
-
     mkdir plots
     Rscript /opt/RdTest/RdTest.R \
       -b test.bed \
