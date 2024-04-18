@@ -125,6 +125,9 @@ task GetPotential{
     bedtools intersect -v -f 0.5 -wa -wb -a ~{name}.depth.ref.cluster.filt.rmSD.bed -b ~{igl_blacklist} > ~{name}.depth.ref.cluster.filt.rmSD.rmIGL.bed
     cat header.bed ~{name}.depth.ref.cluster.filt.rmSD.rmIGL.bed | sed -e 's/id/name/g' | sed -e 's/svtype/type/g' | bgzip -c > ~{name}.potentialmosaic.rare.bed.gz
 
+    ## experimental step delete 4/17/2024
+    gsutil cp gs://fc-545eca01-311b-4271-bc2f-a7dce28387c5/mosaic_params/test2.qc.bed.gz > ~{name}.potentialmosaic.rare.bed.gz
+
   >>>
   runtime {
     cpu: select_first([runtime_attr.cpu_cores, default_attr.cpu_cores])
