@@ -17,7 +17,7 @@ struct RuntimeAttr {
 workflow getDenovoByGT {
     input {
         Array[File] vep_files
-        File ped_uri
+        File ped_sex_qc
         Float af_threshold=0.01
         String cohort_prefix
         String vep_hail_docker
@@ -27,7 +27,6 @@ workflow getDenovoByGT {
         Int shards_per_chunk=10
         Boolean sort_after_merge=false
         Boolean merge_split_vcf=false
-        Boolean bad_header=false
         String denovo_snv_indels_gt_script
     }
 
@@ -53,7 +52,7 @@ workflow getDenovoByGT {
             call denovoByGT as denovoByGTChunk {
                 input:
                     vcf_file=mergeChunk.merged_vcf_file,
-                    ped_uri=ped_uri,
+                    ped_sex_qc=ped_sex_qc,
                     file_ext=file_ext,
                     af_threshold=af_threshold,
                     vep_hail_docker=vep_hail_docker,
@@ -74,7 +73,7 @@ workflow getDenovoByGT {
             call denovoByGT {
                 input:
                     vcf_file=vcf_uri,
-                    ped_uri=ped_uri,
+                    ped_sex_qc=ped_sex_qc,
                     file_ext=file_ext,
                     af_threshold=af_threshold,
                     vep_hail_docker=vep_hail_docker,
@@ -108,7 +107,7 @@ workflow getDenovoByGT {
 task denovoByGT {
     input {
         File vcf_file
-        File ped_uri
+        File ped_sex_qc
         String file_ext
         Float af_threshold
         String vep_hail_docker
@@ -144,7 +143,7 @@ task denovoByGT {
 
     command {
         curl ~{denovo_snv_indels_gt_script} > denovo_snv_indels.py
-        python3.9 denovo_snv_indels.py ~{vcf_file} ~{ped_uri} ~{af_threshold} \
+        python3.9 denovo_snv_indels.py ~{vcf_file} ~{ped_sex_qc} ~{af_threshold} \
         ~{cpu_cores} ~{memory} ~{file_ext}
     }
 
