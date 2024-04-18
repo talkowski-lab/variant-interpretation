@@ -42,4 +42,5 @@ mt = hl.variant_qc(mt)
 mt = mt.filter_rows(mt.variant_qc.AC[1] > 0, keep = True)
 mt = mt.drop('variant_qc')
 
+sample_qc.to_csv(f"{os.path.basename(mt).split('.vcf')[0]}.sample_qc.txt", sep='\t', index=False)
 hl.export_vcf(mt, os.path.basename(mt).split('.vcf')[0]+'_removed_outliers.vcf.bgz')

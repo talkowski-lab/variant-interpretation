@@ -34,6 +34,7 @@ workflow step2 {
 
     output {
         File merged_preprocessed_vcf_file_filtered = removeOutliers.merged_preprocessed_vcf_file_filtered
+        File merged_preprocessed_sample_qc = removeOutliers.merged_preprocessed_sample_qc
     }
 }
 
@@ -80,5 +81,6 @@ task removeOutliers {
 
     output {
         File merged_preprocessed_vcf_file_filtered = basename(merged_preprocessed_vcf_file, '.vcf.gz') + '_removed_outliers.vcf.bgz' 
+        File merged_preprocessed_sample_qc = basename(merged_preprocessed_vcf_file, '.vcf.gz') + '.sample_qc.txt' 
     }
 }
