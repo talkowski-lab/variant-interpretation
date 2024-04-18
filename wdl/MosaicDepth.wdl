@@ -125,9 +125,25 @@ task GetPotential{
     bedtools intersect -v -f 0.5 -wa -wb -a ~{name}.depth.ref.cluster.filt.rmSD.bed -b ~{igl_blacklist} > ~{name}.depth.ref.cluster.filt.rmSD.rmIGL.bed
     cat header.bed ~{name}.depth.ref.cluster.filt.rmSD.rmIGL.bed | sed -e 's/id/name/g' | sed -e 's/svtype/type/g' | bgzip -c > ~{name}.potentialmosaic.rare.bed.gz
 
-    ## experimental step delete 4/17/2024
-    gsutil cp gs://fc-545eca01-311b-4271-bc2f-a7dce28387c5/mosaic_params/test2.qc.bed.gz . 
-    mv test2.qc.bed.gz ~{name}.potentialmosaic.rare.bed.gz
+    ## experimental step delete 4/17/2024 ## split.sh
+    #gsutil cp gs://fc-545eca01-311b-4271-bc2f-a7dce28387c5/mosaic_params/test2.qc.bed.gz . 
+    #mv test2.qc.bed.gz ~{name}.potentialmosaic.rare.bed.gz
+    gunzip ~{name}.potentialmosaic.rare.bed.gz
+    while read -r line; do \
+      chr=$(echo "$line" | cut -f1) \
+      start=$(echo "$line" | cut -f2) \
+      end=$(echo "$line" | cut -f3) \
+      id=$(echo "$line" | cut -f4) \
+      type=$(echo "$line" | cut -f5) \
+      samples=$(echo "$line" | cut -f6 | tr ',' '\n') \
+      
+      for sample in $samples; do \
+        echo -e "$chr\t$start\t$end\t$id\t$type\t$sample" 
+      done
+    done < ~{name}.potentialmosaic.rare.bed  > ~{name}.potentialmosaic.rare2.bed
+    mv ~{name}.potentialmosaic.rare2.bed ~{name}.potentialmosaic.rare.bed
+    bgzip ~{name}.potentialmosaic.rare.bed
+    ## fin
 
   >>>
   runtime {
