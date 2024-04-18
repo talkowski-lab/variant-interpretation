@@ -66,7 +66,7 @@ workflow wgs_denovo_full {
             python_trio_sample_script=python_trio_sample_script,
             python_preprocess_script=python_preprocess_script,
             lcr_uri=lcr_uri,
-            ped_uri=ped_sex_qc,
+            ped_sex_qc=ped_sex_qc,
             info_header=info_header,
             vep_files=vep_files,
             sv_base_mini_docker=sv_base_mini_docker,
@@ -90,7 +90,7 @@ workflow wgs_denovo_full {
     call step3.step3 as step3 {
         input:
             trio_uri=trio_uri,
-            ped_uri=ped_sex_qc,
+            ped_sex_qc=ped_sex_qc,
             merged_preprocessed_vcf_file=step2.merged_preprocessed_vcf_file_filtered,
             hail_docker=hail_docker,
             cohort_prefix=cohort_prefix,
@@ -111,7 +111,7 @@ workflow wgs_denovo_full {
 
     call step4.step4 as step4 {
         input:
-            ped_uri=step1.ped_uri_no_header,
+            ped_sex_qc=step1.ped_sex_qc_no_header,
             split_trio_vcfs=step3.split_trio_vcfs,
             get_sample_pedigree_script=get_sample_pedigree_script,
             trio_denovo_docker=trio_denovo_docker,
@@ -120,7 +120,7 @@ workflow wgs_denovo_full {
 
     call step5.step5 as step5 {
         input:
-            ped_uri=ped_sex_qc,
+            ped_sex_qc=ped_sex_qc,
             split_trio_vcfs=annotateHPandVAF.split_trio_annot_vcfs,
             trio_denovo_vcf=step4.trio_denovo_vcf,
             merge_vcf_to_tsv_fullQC_script=merge_vcf_to_tsv_fullQC_script,
@@ -152,7 +152,7 @@ workflow wgs_denovo_full {
     output {
         File meta_uri = step1.meta_uri
         File trio_uri = step1.trio_uri
-        File ped_uri_no_header = step1.ped_uri_no_header
+        File ped_sex_qc_no_header = step1.ped_sex_qc_no_header
         File merged_preprocessed_vcf_file = step1.merged_preprocessed_vcf_file
         File merged_preprocessed_vcf_idx = step1.merged_preprocessed_vcf_idx
         File merged_preprocessed_vcf_file_filtered = step2.merged_preprocessed_vcf_file_filtered

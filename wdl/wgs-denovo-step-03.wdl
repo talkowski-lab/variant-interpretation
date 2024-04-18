@@ -12,7 +12,7 @@ struct RuntimeAttr {
 workflow step3 {
     input {
         File trio_uri
-        File ped_uri
+        File ped_sex_qc
         File merged_preprocessed_vcf_file
         String hail_docker
         String cohort_prefix
@@ -28,18 +28,18 @@ workflow step3 {
     if (subset_ped) {
         call subsetPed {
             input:
-                ped_uri=ped_uri,
+                ped_sex_qc=ped_sex_qc,
                 vcf_file=merged_preprocessed_vcf_file,
                 trio_denovo_docker=trio_denovo_docker,
                 subset_ped_script=subset_ped_script
         }
     }
 
-    File new_ped_uri = select_first([subsetPed.new_ped_uri, ped_uri])
+    File new_ped_sex_qc = select_first([subsetPed.new_ped_sex_qc, ped_sex_qc])
 
     call uberSplit_v3 {
         input:
-            ped_uri=new_ped_uri,
+            ped_sex_qc=new_ped_sex_qc,
             vcf_file=merged_preprocessed_vcf_file,
             hail_docker=hail_docker,
             cohort_prefix=cohort_prefix,
@@ -56,7 +56,7 @@ workflow step3 {
 
 task subsetPed {
     input {
-        File ped_uri
+        File ped_sex_qc
         File vcf_file
         String subset_ped_script
         String trio_denovo_docker
@@ -91,11 +91,11 @@ task subsetPed {
     command <<<
         bcftools query -l ~{vcf_file} > samples.txt
         curl ~{subset_ped_script} > subset_ped_script.py
-        python3 subset_ped_script.py samples.txt ~{ped_uri} > stdout
+        python3 subset_ped_script.py samples.txt ~{ped_sex_qc} > stdout
     >>>
 
     output {
-        File new_ped_uri = basename(ped_uri, '.ped')+'_subset.ped'
+        File new_ped_sex_qc = basename(ped_sex_qc, '.ped')+'_subset.ped'
     }
 }
 
@@ -152,7 +152,7 @@ task splitTrioVCFs {
 
 task uberSplit_v3 {
     input {
-        File ped_uri
+        File ped_sex_qc
         File vcf_file
         String hail_docker
         String cohort_prefix
@@ -169,7 +169,7 @@ task uberSplit_v3 {
         set -eou pipefail
         mkdir -p ~{cohort_prefix}
         curl ~{uberSplit_v3_script} > uberSplit_v3.py
-        python3 uberSplit_v3.py ~{ped_uri} ~{vcf_file} ~{cohort_prefix} ~{stats_file} ~{batch_size}
+        python3 uberSplit_v3.py ~{ped_sex_qc} ~{vcf_file} ~{cohort_prefix} ~{stats_file} ~{batch_size}
     }
 
     output {

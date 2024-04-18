@@ -17,7 +17,7 @@ workflow step1 {
         String python_trio_sample_script
         String python_preprocess_script
         File lcr_uri
-        File ped_uri
+        File ped_sex_qc
         File info_header
         Array[File] vep_files
         String hail_docker
@@ -38,7 +38,7 @@ workflow step1 {
     call makeTrioSampleFiles {
         input:
             python_trio_sample_script=python_trio_sample_script,
-            ped_uri=ped_uri,
+            ped_sex_qc=ped_sex_qc,
             cohort_prefix=cohort_prefix,
             hail_docker=hail_docker
     }
@@ -71,7 +71,7 @@ workflow step1 {
                 input:
                     python_preprocess_script=python_preprocess_script,
                     lcr_uri=lcr_uri,
-                    ped_uri=ped_uri,
+                    ped_sex_qc=ped_sex_qc,
                     vcf_uri=mergeChunk.merged_vcf_file,
                     meta_uri=makeTrioSampleFiles.meta_uri,
                     trio_uri=makeTrioSampleFiles.trio_uri,
@@ -104,7 +104,7 @@ workflow step1 {
                 input:
                     python_preprocess_script=python_preprocess_script,
                     lcr_uri=lcr_uri,
-                    ped_uri=ped_uri,
+                    ped_sex_qc=ped_sex_qc,
                     vcf_uri=vcf_uri,
                     meta_uri=makeTrioSampleFiles.meta_uri,
                     trio_uri=makeTrioSampleFiles.trio_uri,
@@ -127,7 +127,7 @@ workflow step1 {
     output {
         File meta_uri = makeTrioSampleFiles.meta_uri
         File trio_uri = makeTrioSampleFiles.trio_uri
-        File ped_uri_no_header = makeTrioSampleFiles.ped_uri_no_header
+        File ped_sex_qc_no_header = makeTrioSampleFiles.ped_sex_qc_no_header
         File merged_preprocessed_vcf_file = select_first([mergeChunks.merged_vcf_file, mergeVCFs.merged_vcf_file])
         File merged_preprocessed_vcf_idx = select_first([mergeChunks.merged_vcf_idx, mergeVCFs.merged_vcf_idx])
     }
@@ -136,7 +136,7 @@ workflow step1 {
 task makeTrioSampleFiles {
     input {
         String python_trio_sample_script
-        File ped_uri
+        File ped_sex_qc
         String cohort_prefix
         String hail_docker
     }
@@ -147,13 +147,13 @@ task makeTrioSampleFiles {
 
     command <<<
     curl ~{python_trio_sample_script} > python_trio_sample_script.py
-    python3 python_trio_sample_script.py ~{ped_uri} ~{cohort_prefix} 
+    python3 python_trio_sample_script.py ~{ped_sex_qc} ~{cohort_prefix} 
     >>>
     
     output {
         File meta_uri = "~{cohort_prefix}_sample_list.txt"
         File trio_uri = "~{cohort_prefix}_trio_list.txt"
-        File ped_uri_no_header = "~{cohort_prefix}_no_header.ped"
+        File ped_sex_qc_no_header = "~{cohort_prefix}_no_header.ped"
     }
 }
 
@@ -188,7 +188,7 @@ task preprocessVCF {
     input {
         String python_preprocess_script
         File lcr_uri
-        File ped_uri
+        File ped_sex_qc
         File vcf_uri
         File meta_uri
         File trio_uri
@@ -229,7 +229,7 @@ task preprocessVCF {
     String preprocessed_vcf_out = '~{prefix}.preprocessed.vcf.bgz'
     command <<<
         curl ~{python_preprocess_script} > python_preprocess_script.py
-        python3.9 python_preprocess_script.py ~{lcr_uri} ~{ped_uri} ~{meta_uri} ~{trio_uri} ~{vcf_uri} ~{header_file} \
+        python3.9 python_preprocess_script.py ~{lcr_uri} ~{ped_sex_qc} ~{meta_uri} ~{trio_uri} ~{vcf_uri} ~{header_file} \
         ~{exclude_gq_filters} ~{cpu_cores} ~{memory}
         /opt/vep/bcftools/bcftools index -t ~{preprocessed_vcf_out}
     >>>

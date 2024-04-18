@@ -11,7 +11,7 @@ struct RuntimeAttr {
 
 workflow step4 {
     input {
-        File ped_uri
+        File ped_sex_qc
         Array[File] split_trio_vcfs
         String get_sample_pedigree_script
         String trio_denovo_docker
@@ -20,7 +20,7 @@ workflow step4 {
     scatter (vcf_file in split_trio_vcfs) {
         call trio_denovo {
             input:
-                ped_uri=ped_uri,
+                ped_sex_qc=ped_sex_qc,
                 vcf_file=vcf_file,
                 get_sample_pedigree_script=get_sample_pedigree_script,
                 trio_denovo_docker=trio_denovo_docker,
@@ -40,7 +40,7 @@ workflow step4 {
 
 task trio_denovo {
     input {
-        File ped_uri
+        File ped_sex_qc
         File vcf_file
         String get_sample_pedigree_script
         String trio_denovo_docker
@@ -55,7 +55,7 @@ task trio_denovo {
         sample=$(basename ~{vcf_file} '.vcf' | awk -F "_trio_" '{print $2}') 
         sample="${sample//_HP_VAF/}"
         curl ~{get_sample_pedigree_script} > get_sample_pedigree_script.py
-        python3 get_sample_pedigree_script.py ~{ped_uri} $sample
+        python3 get_sample_pedigree_script.py ~{ped_sex_qc} $sample
         /src/wgs_denovo/triodenovo/triodenovo-fix/src/triodenovo --ped "$sample".ped \
             --in_vcf ~{vcf_file} \
             --out_vcf ~{basename(vcf_file, '.vcf') + '.denovos.vcf'} \
