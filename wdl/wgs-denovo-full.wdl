@@ -91,7 +91,7 @@ workflow wgs_denovo_full {
         input:
             trio_uri=trio_uri,
             ped_sex_qc=ped_sex_qc,
-            merged_preprocessed_vcf_file=step2.merged_preprocessed_vcf_file_filtered,
+            merged_preprocessed_vcf_file_filtered=step2.merged_preprocessed_vcf_file_filtered,
             hail_docker=hail_docker,
             cohort_prefix=cohort_prefix,
             trio_denovo_docker=trio_denovo_docker,

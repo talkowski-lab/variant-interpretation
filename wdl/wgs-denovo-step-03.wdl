@@ -13,7 +13,7 @@ workflow step3 {
     input {
         File trio_uri
         File ped_sex_qc
-        File merged_preprocessed_vcf_file
+        File merged_preprocessed_vcf_file_filtered
         String hail_docker
         String cohort_prefix
         String trio_denovo_docker
@@ -29,7 +29,7 @@ workflow step3 {
         call subsetPed {
             input:
                 ped_sex_qc=ped_sex_qc,
-                vcf_file=merged_preprocessed_vcf_file,
+                vcf_file=merged_preprocessed_vcf_file_filtered,
                 trio_denovo_docker=trio_denovo_docker,
                 subset_ped_script=subset_ped_script
         }
@@ -40,7 +40,7 @@ workflow step3 {
     call uberSplit_v3 {
         input:
             ped_sex_qc=new_ped_sex_qc,
-            vcf_file=merged_preprocessed_vcf_file,
+            vcf_file=merged_preprocessed_vcf_file_filtered,
             hail_docker=hail_docker,
             cohort_prefix=cohort_prefix,
             stats_file=stats_file,
