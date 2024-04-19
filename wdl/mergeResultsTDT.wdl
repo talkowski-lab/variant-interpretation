@@ -19,7 +19,7 @@ workflow mergeTDT {
         RuntimeAttr? runtime_attr_merge_tdt
     }
 
-    call helpers.getHailMTSizes {
+    call helpers.getHailMTSizes as getSize {
         input:
         mt_uris=tdt_mt,
         hail_docker=hail_docker
@@ -28,6 +28,7 @@ workflow mergeTDT {
     call mergeResultsTDT {
         input:
         tdt_mt=tdt_mt,
+        input_size=getSize.mt_size,
         cohort_prefix=cohort_prefix,
         hail_docker=hail_docker,
         runtime_attr_override=runtime_attr_merge_tdt
