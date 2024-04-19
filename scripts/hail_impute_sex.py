@@ -120,7 +120,7 @@ for sex_type in ped_qc.ped_sex.unique():
     except:
         sex_str.append(sex_type)
 
-ped_qc['ped_sex'] = ped_qc.ped_sex.replace({np.nan: -9} | {sex_type: -9 for sex_type in sex_str}).astype('category')
+ped_qc['ped_sex'] = ped_qc.ped_sex.replace({np.nan: -9} | {sex_type: -9 for sex_type in sex_str}).astype(int).astype('category')
 ped_qc['sex'] = ped_qc.sex.astype('category')
 
 fig = plt.figure(layout="constrained", figsize=(22, 10))

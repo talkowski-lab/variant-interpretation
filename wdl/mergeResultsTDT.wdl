@@ -90,7 +90,7 @@ task mergeResultsTDT {
         tdt_df = pd.concat([tdt_df, tdt_mt.rows().to_pandas()])    
     tdt_df.to_csv(f"{cohort_prefix}_trio_tdt_merged.tsv", sep='\t', index=False)    
     EOF
-    python3 merge_tdt.py ~{sep=',' tdt_mt} ~{cohort_prefix}
+    python3 merge_tdt.py ~{sep=',' tdt_mt} ~{cohort_prefix} > stdout
     >>>
 
     output {
