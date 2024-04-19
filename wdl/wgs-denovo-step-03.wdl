@@ -51,6 +51,7 @@ workflow step3 {
     }
 
     output {
+        File ped_uri_trios = new_ped_sex_qc
         Array[File] split_trio_vcfs = uberSplit_v3.split_trio_vcfs
         File stats_files = uberSplit_v3.stats_file_out
     }
