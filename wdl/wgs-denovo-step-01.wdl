@@ -127,7 +127,6 @@ workflow step1 {
     output {
         File meta_uri = makeTrioSampleFiles.meta_uri
         File trio_uri = makeTrioSampleFiles.trio_uri
-        File ped_sex_qc_no_header = makeTrioSampleFiles.ped_sex_qc_no_header
         File merged_preprocessed_vcf_file = select_first([mergeChunks.merged_vcf_file, mergeVCFs.merged_vcf_file])
         File merged_preprocessed_vcf_idx = select_first([mergeChunks.merged_vcf_idx, mergeVCFs.merged_vcf_idx])
     }
@@ -153,7 +152,6 @@ task makeTrioSampleFiles {
     output {
         File meta_uri = "~{cohort_prefix}_sample_list.txt"
         File trio_uri = "~{cohort_prefix}_trio_list.txt"
-        File ped_sex_qc_no_header = "~{cohort_prefix}_no_header.ped"
     }
 }
 
