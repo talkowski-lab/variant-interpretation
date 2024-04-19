@@ -113,7 +113,14 @@ for col in ped_qc.columns[:6]:
     ped_qc[col] = ped_qc[col].replace({np.nan: -9})
 ped_qc.to_csv(f"{cohort_prefix}_sex_qc.ped", sep='\t', index=False)
 
-ped_qc['ped_sex'] = ped_qc.ped_sex.replace({np.nan: -9}).astype('category')
+sex_str = []
+for sex_type in ped_qc.ped_sex.unique():
+    try:
+        float(sex_type)
+    except:
+        sex_str.append(sex_type)
+
+ped_qc['ped_sex'] = ped_qc.ped_sex.replace({np.nan: -9} | {sex_type: -9 for sex_type in sex_str}).astype('category')
 ped_qc['sex'] = ped_qc.sex.astype('category')
 
 fig = plt.figure(layout="constrained", figsize=(22, 10))
