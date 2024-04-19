@@ -98,6 +98,8 @@ def get_sample_role(row):
             role = 'Mother'
         else:
             role = 'Unknown'
+    elif (row.maternal_id=='-9') & (row.paternal_id=='-9'):
+        role = 'Unknown'
     else:
         role = 'Proband'
     return role
