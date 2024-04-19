@@ -74,21 +74,21 @@ task mergeResultsTDT {
 
     command <<<
     cat << EOF > merge_tdt.py
-        import hail as hl
-        import pandas as pd
-        import numpy as np
-        import os
-        import sys
+    import hail as hl
+    import pandas as pd
+    import numpy as np
+    import os
+    import sys
 
-        mt_list = sys.argv[1].split(',')
-        cohort_prefix = sys.argv[2]
+    mt_list = sys.argv[1].split(',')
+    cohort_prefix = sys.argv[2]
 
-        tdt_df = pd.DataFrame()
-        for i, uri in enumerate(mt_list):
-            print(i)
-            tdt_mt = hl.read_matrix_table(uri)
-            tdt_df = pd.concat([tdt_df, tdt_mt.rows().to_pandas()])    
-        tdt_df.to_csv(f"{cohort_prefix}_trio_tdt_merged.tsv", sep='\t', index=False)    
+    tdt_df = pd.DataFrame()
+    for i, uri in enumerate(mt_list):
+        print(i)
+        tdt_mt = hl.read_matrix_table(uri)
+        tdt_df = pd.concat([tdt_df, tdt_mt.rows().to_pandas()])    
+    tdt_df.to_csv(f"{cohort_prefix}_trio_tdt_merged.tsv", sep='\t', index=False)    
     EOF
     python3 merge_tdt.py ~{sep=',' tdt_mt} ~{cohort_prefix}
     >>>
