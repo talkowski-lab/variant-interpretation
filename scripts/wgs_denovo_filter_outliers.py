@@ -47,5 +47,11 @@ mt = hl.variant_qc(mt)
 mt = mt.filter_rows(mt.variant_qc.AC[1] > 0, keep = True)
 mt = mt.drop('variant_qc')
 
+# reorder FORMAT fields so that PL is last!
+all_format_fields = list(mt.entry)
+all_format_fields = sorted([x for x in all_format_fields if x!='PL']) + ['PL']
+
+mt = mt.select_entries(*[getattr(mt, field) for field in all_format_fields])
+
 sample_qc.to_csv(f"{os.path.basename(vcf_file).split('.vcf')[0]}.sample_qc.txt", sep='\t', index=False)
 hl.export_vcf(mt, os.path.basename(vcf_file).split('.vcf')[0]+'_removed_outliers.vcf.bgz')
