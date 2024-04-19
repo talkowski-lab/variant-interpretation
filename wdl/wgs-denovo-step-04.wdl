@@ -52,6 +52,7 @@ task trio_denovo {
     }
 
     command <<<
+        set -eou pipefail
         sample=$(basename ~{vcf_file} '.vcf' | awk -F "_trio_" '{print $2}') 
         sample="${sample//_HP_VAF/}"
         curl ~{get_sample_pedigree_script} > get_sample_pedigree_script.py
