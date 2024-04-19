@@ -49,7 +49,7 @@ mt = mt.drop('variant_qc')
 
 # reorder FORMAT fields so that PL is last!
 all_format_fields = list(mt.entry)
-all_format_fields = sorted([x for x in all_format_fields if x!='PL']) + ['PL']
+all_format_fields = ['GT'] + sorted([x for x in all_format_fields if x not in ['GT', 'PL']]) + ['PL']
 
 mt = mt.select_entries(*[getattr(mt, field) for field in all_format_fields])
 
