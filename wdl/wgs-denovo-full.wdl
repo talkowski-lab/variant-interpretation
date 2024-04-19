@@ -111,7 +111,7 @@ workflow wgs_denovo_full {
 
     call step4.step4 as step4 {
         input:
-            ped_sex_qc=step1.ped_sex_qc_no_header,
+            ped_sex_qc_no_header=step1.ped_sex_qc_no_header,
             split_trio_vcfs=step3.split_trio_vcfs,
             get_sample_pedigree_script=get_sample_pedigree_script,
             trio_denovo_docker=trio_denovo_docker,
