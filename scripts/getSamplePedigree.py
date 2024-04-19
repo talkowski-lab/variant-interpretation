@@ -3,7 +3,7 @@ import pandas as pd
 import sys
 
 ped_uri = sys.argv[1]
-ped = pd.read_csv(ped_uri, sep='\t', dtype={i: str for i in range(4)}, header=None)
+ped = pd.read_csv(ped_uri, sep='\t', dtype={i: str for i in range(4)}).iloc[:,:6]
 ped.columns = ['family_id', 'sample_id', 'paternal_id', 'maternal_id', 'sex', 'phenotype']
 ped.index = ped.sample_id
 

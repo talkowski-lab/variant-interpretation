@@ -111,7 +111,7 @@ workflow wgs_denovo_full {
 
     call step4.step4 as step4 {
         input:
-            ped_sex_qc_no_header=step1.ped_sex_qc_no_header,
+            ped_sex_qc=ped_sex_qc,
             split_trio_vcfs=step3.split_trio_vcfs,
             get_sample_pedigree_script=get_sample_pedigree_script,
             trio_denovo_docker=trio_denovo_docker,
@@ -152,7 +152,7 @@ workflow wgs_denovo_full {
     output {
         File meta_uri = step1.meta_uri
         File trio_uri = step1.trio_uri
-        File ped_sex_qc_no_header = step1.ped_sex_qc_no_header
+        File ped_sex_qc = step1.ped_sex_qc
         File merged_preprocessed_vcf_file = step1.merged_preprocessed_vcf_file
         File merged_preprocessed_vcf_idx = step1.merged_preprocessed_vcf_idx
         File merged_preprocessed_vcf_file_filtered = step2.merged_preprocessed_vcf_file_filtered
