@@ -128,6 +128,7 @@ task GetPotential{
     ## experimental step delete 4/17/2024 ## split.sh
     #gsutil cp gs://fc-545eca01-311b-4271-bc2f-a7dce28387c5/mosaic_params/test2.qc.bed.gz . 
     #mv test2.qc.bed.gz ~{name}.potentialmosaic.rare.bed.gz
+    rm ~{name}.potentialmosaic.rare.bed
     gunzip ~{name}.potentialmosaic.rare.bed.gz
     while read -r line; do \
       chr=$(echo "$line" | cut -f1) \
@@ -141,6 +142,7 @@ task GetPotential{
         echo -e "$chr\t$start\t$end\t$id\t$type\t$sample" 
       done
     done < ~{name}.potentialmosaic.rare.bed  > ~{name}.potentialmosaic.rare2.bed
+    rm ~{name}.potentialmosaic.rare.bed
     mv ~{name}.potentialmosaic.rare2.bed ~{name}.potentialmosaic.rare.bed
     bgzip ~{name}.potentialmosaic.rare.bed
     ## fin
