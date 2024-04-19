@@ -51,6 +51,9 @@ if 'num_alleles' not in list(mt.row_value.keys()):
 mt = mt.annotate_rows(info=mt.info.annotate(cohort_AC=mt.info.AC[mt.a_index - 1],
                                             cohort_AF=mt.info.AF[mt.a_index - 1]))
 
+if 'vep' in list(mt.row):
+    mt = mt.annotate_rows(original_vep=mt.vep)
+    
 mt = hl.vep(mt, config='vep_config.json', csq=True, tolerate_parse_error=True)
 mt = mt.annotate_rows(info = mt.info.annotate(CSQ=mt.vep))
 

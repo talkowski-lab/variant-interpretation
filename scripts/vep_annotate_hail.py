@@ -36,14 +36,8 @@ def split_multi_ssc(mt):
     mt = split_ds.drop('old_locus', 'old_alleles')
     return mt
 
-if vcf_file.split('.')[-1] == 'mt':
-    is_mt = True
-    header = None
-    mt = hl.read_matrix_table(vcf_file)
-else:
-    is_mt = False
-    header = hl.get_vcf_metadata(vcf_file) 
-    mt = hl.import_vcf(vcf_file, force_bgz=True, array_elements_required=False, call_fields=[], reference_genome='GRCh38')
+header = hl.get_vcf_metadata(vcf_file) 
+mt = hl.import_vcf(vcf_file, force_bgz=True, array_elements_required=False, call_fields=[], reference_genome='GRCh38')
 
 # mt = mt.distinct_by_row()
 if 'num_alleles' not in list(mt.row_value.keys()):
@@ -54,9 +48,7 @@ mt = mt.annotate_rows(info=mt.info.annotate(cohort_AC=mt.info.AC[mt.a_index - 1]
                                             cohort_AF=mt.info.AF[mt.a_index - 1]))
 
 mt = hl.vep(mt, config='vep_config.json', csq=True, tolerate_parse_error=True)
-
-if not is_mt:
-    header['info']['CSQ'] = {'Description': hl.eval(mt.vep_csq_header), 'Number': '.', 'Type': 'String'}
+header['info']['CSQ'] = {'Description': hl.eval(mt.vep_csq_header), 'Number': '.', 'Type': 'String'}
 
 mt = mt.annotate_rows(info = mt.info.annotate(CSQ=mt.vep))
 hl.export_vcf(dataset=mt, output=vep_annotated_vcf_name, metadata=header)
