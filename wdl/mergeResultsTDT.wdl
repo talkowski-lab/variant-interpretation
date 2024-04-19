@@ -32,6 +32,10 @@ workflow mergeTDT {
         hail_docker=hail_docker,
         runtime_attr_override=runtime_attr_merge_tdt
     }
+
+    output {
+        File tdt_tsv_merged = mergeResultsTDT.tdt_tsv_merged
+    }
 }
 
 task mergeResultsTDT {
