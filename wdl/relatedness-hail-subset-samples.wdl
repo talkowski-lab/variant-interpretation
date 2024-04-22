@@ -291,7 +291,10 @@ task removeDuplicates {
     kinship_df = kinship_df.sort_values('kin', ascending=False).drop_duplicates('pair')
 
     rel_df = pd.read_csv(relatedness_qc, sep='\t')
-    rel_df = rel_df.sort_values(['mother_kin','father_kin'], ascending=False).drop_duplicates('sample_id')
+
+    rel_df['role_rank'] = rel_df.role.map({'Proband': 1, 'Mother': 1, 'Father': 1, 'Singleton': 0, 'Unknown': 0})
+    rel_df = rel_df.sort_values(['role_rank','mother_kin','father_kin'], ascending=False).drop_duplicates('sample_id')
+    rel_df = rel_df.drop(['role_rank'], axis=1)
 
     kinship_df.to_csv(os.path.basename(kinship_tsv), sep='\t', index=False)
     rel_df.to_csv(os.path.basename(relatedness_qc), sep='\t', index=False)
