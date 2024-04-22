@@ -121,7 +121,7 @@ workflow wgs_denovo_full {
     call step5.step5 as step5 {
         input:
             ped_sex_qc=ped_sex_qc,
-            split_trio_vcfs=annotateHPandVAF.split_trio_annot_vcfs,
+            split_trio_annot_vcfs=annotateHPandVAF.split_trio_annot_vcfs,
             trio_denovo_vcf=step4.trio_denovo_vcf,
             merge_vcf_to_tsv_fullQC_script=merge_vcf_to_tsv_fullQC_script,
             trio_denovo_docker=trio_denovo_docker,

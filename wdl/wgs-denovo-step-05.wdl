@@ -12,7 +12,7 @@ struct RuntimeAttr {
 workflow step5 {
     input {
         File ped_sex_qc
-        Array[File] split_trio_vcfs  # for input directory (from step 4)
+        Array[File] split_trio_annot_vcfs  # for input directory (from step 4)
         Array[File] trio_denovo_vcf  # for output directory
         String merge_vcf_to_tsv_fullQC_script
         String trio_denovo_docker
@@ -23,7 +23,7 @@ workflow step5 {
     call merge_vcf_to_tsv_fullQC {
         input:
             ped_sex_qc=ped_sex_qc,
-            split_trio_vcfs=split_trio_vcfs,
+            split_trio_annot_vcfs=split_trio_annot_vcfs,
             trio_denovo_vcf=trio_denovo_vcf,
             merge_vcf_to_tsv_fullQC_script=merge_vcf_to_tsv_fullQC_script,
             trio_denovo_docker=trio_denovo_docker,
@@ -40,14 +40,14 @@ task merge_vcf_to_tsv_fullQC {
     input {
         File ped_sex_qc
         String merge_vcf_to_tsv_fullQC_script
-        Array[File] split_trio_vcfs 
+        Array[File] split_trio_annot_vcfs 
         Array[File] trio_denovo_vcf
         String trio_denovo_docker
         String cohort_prefix
         RuntimeAttr? runtime_attr_override
     }
 
-    Float input_size = size(split_trio_vcfs, "GB") + size(trio_denovo_vcf, "GB")
+    Float input_size = size(split_trio_annot_vcfs, "GB") + size(trio_denovo_vcf, "GB")
     Float base_disk_gb = 10.0
     Float input_disk_scale = 5.0
     
@@ -73,7 +73,7 @@ task merge_vcf_to_tsv_fullQC {
     }
 
     command {
-        input_dir=$(dirname ~{split_trio_vcfs[0]})
+        input_dir=$(dirname ~{split_trio_annot_vcfs[0]})
         output_dir=$(dirname ~{trio_denovo_vcf[0]})
         curl ~{merge_vcf_to_tsv_fullQC_script} > merge_vcf_to_tsv_fullQC.py
         python3 merge_vcf_to_tsv_fullQC.py -d $output_dir -i $input_dir -p ~{ped_sex_qc} -o ~{cohort_prefix}_dnm.tsv > stdout
