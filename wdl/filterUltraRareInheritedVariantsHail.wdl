@@ -18,9 +18,9 @@ workflow filterUltraRareInheritedVariantsHail {
     input {
         Array[File] vep_vcf_files
         File lcr_uri
-        File ped_uri
-        File? meta_uri
-        File? trio_uri
+        File ped_uri_trios
+        File meta_uri
+        File trio_uri
         File vcf_metrics_tsv_final
         File hg38_reference
         File hg38_reference_dict
@@ -43,17 +43,17 @@ workflow filterUltraRareInheritedVariantsHail {
         RuntimeAttr? runtime_attr_merge_results
     }  
 
-    if (!defined(meta_uri)) {
-        call makeTrioSampleFiles {
-            input:
-                python_trio_sample_script=python_trio_sample_script,
-                ped_uri=ped_uri,
-                cohort_prefix=cohort_prefix,
-                hail_docker=hail_docker
-        }        
-    }
-    File meta_uri_ = select_first([meta_uri, makeTrioSampleFiles.meta_uri])
-    File trio_uri_ = select_first([trio_uri, makeTrioSampleFiles.trio_uri])
+    # if (!defined(meta_uri)) {
+    #     call makeTrioSampleFiles {
+    #         input:
+    #             python_trio_sample_script=python_trio_sample_script,
+    #             ped_uri_trios=ped_uri_trios,
+    #             cohort_prefix=cohort_prefix,
+    #             hail_docker=hail_docker
+    #     }        
+    # }
+    # File meta_uri_ = select_first([meta_uri, makeTrioSampleFiles.meta_uri])
+    # File trio_uri_ = select_first([trio_uri, makeTrioSampleFiles.trio_uri])
     
     scatter (vcf_file in vep_vcf_files) {
         String file_ext = if sub(basename(vcf_file), '.vcf.gz', '')!=basename(vcf_file) then '.vcf.gz' else '.vcf.bgz'
@@ -61,9 +61,9 @@ workflow filterUltraRareInheritedVariantsHail {
             input:
                 vcf_file=vcf_file,
                 lcr_uri=lcr_uri,
-                ped_uri=ped_uri,
-                meta_uri=meta_uri_,
-                trio_uri=trio_uri_,
+                ped_uri_trios=ped_uri_trios,
+                meta_uri=meta_uri,
+                trio_uri=trio_uri,
                 filter_rare_inherited_python_script=filter_rare_inherited_python_script,
                 vep_hail_docker=vep_hail_docker,
                 cohort_prefix=basename(vcf_file, file_ext),
@@ -105,7 +105,7 @@ workflow filterUltraRareInheritedVariantsHail {
 task makeTrioSampleFiles {
     input {
         String python_trio_sample_script
-        File ped_uri
+        File ped_uri_trios
         String cohort_prefix
         String hail_docker
     }
@@ -116,7 +116,7 @@ task makeTrioSampleFiles {
 
     command <<<
     curl ~{python_trio_sample_script} > python_trio_sample_script.py
-    python3 python_trio_sample_script.py ~{ped_uri} ~{cohort_prefix} 
+    python3 python_trio_sample_script.py ~{ped_uri_trios} ~{cohort_prefix} 
     >>>
     
     output {
@@ -130,7 +130,7 @@ task filterUltraRareInheritedVariants {
     input {
         File vcf_file
         File lcr_uri
-        File ped_uri
+        File ped_uri_trios
         File meta_uri
         File trio_uri
         String filter_rare_inherited_python_script
@@ -173,7 +173,7 @@ task filterUltraRareInheritedVariants {
 
     command <<<
         curl ~{filter_rare_inherited_python_script} > filter_rare_variants.py
-        python3.9 filter_rare_variants.py ~{lcr_uri} ~{ped_uri} ~{meta_uri} ~{trio_uri} ~{vcf_file} \
+        python3.9 filter_rare_variants.py ~{lcr_uri} ~{ped_uri_trios} ~{meta_uri} ~{trio_uri} ~{vcf_file} \
         ~{cohort_prefix} ~{cpu_cores} ~{memory} ~{AC_threshold} ~{AF_threshold} ~{csq_af_threshold} \
         ~{gq_het_threshold} ~{gq_hom_ref_threshold} > stdout
 
