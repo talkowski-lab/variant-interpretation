@@ -102,7 +102,7 @@ workflow wgs_denovo_full {
     call annotateHPandVAF.annotateHPandVAF as annotateHPandVAF {
         input:
             split_trio_vcfs=step3.split_trio_vcfs,
-            vep_annotated_final_vcf_single=vep_files[0],
+            vep_vcf_files=vep_files,
             hg38_reference=hg38_reference,
             hg38_reference_fai=hg38_reference_fai,
             hg38_reference_dict=hg38_reference_dict,

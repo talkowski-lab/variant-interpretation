@@ -12,7 +12,7 @@ struct RuntimeAttr {
 workflow annotateHPandVAF {
     input {
         Array[File] split_trio_vcfs
-        File vep_annotated_final_vcf_single
+        Array[File] vep_vcf_files
         File hg38_reference
         File hg38_reference_fai
         File hg38_reference_dict
@@ -23,7 +23,7 @@ workflow annotateHPandVAF {
         call annotateVCF {
             input:
                 trio_vcf=trio_vcf,
-                vep_annotated_final_vcf_single=vep_annotated_final_vcf_single,
+                vep_vcf_file=vep_vcf_files[0],
                 hg38_reference=hg38_reference,
                 hg38_reference_fai=hg38_reference_fai,
                 hg38_reference_dict=hg38_reference_dict,
@@ -44,7 +44,7 @@ workflow annotateHPandVAF {
 task annotateVCF {
     input {
         File trio_vcf
-        File vep_annotated_final_vcf_single
+        File vep_vcf_file
         File hg38_reference
         File hg38_reference_fai
         File hg38_reference_dict
@@ -84,7 +84,7 @@ task annotateVCF {
     String out_vcf = basename(trio_vcf, '.vcf')+'_HP_VAF.vcf'
 
     command <<<
-        bcftools head ~{vep_annotated_final_vcf_single} > og_header.txt
+        bcftools head ~{vep_vcf_file} > og_header.txt
         grep "FILTER=" og_header.txt > new_header.txt
         bcftools annotate -h new_header.txt -o ~{clean_vcf} ~{trio_vcf}
 
