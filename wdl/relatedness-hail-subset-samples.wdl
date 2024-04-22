@@ -288,7 +288,9 @@ task removeDuplicates {
         chunks.append(chunk)
     kinship_df = pd.concat(chunks)
     kinship_df['pair'] = kinship_df[['i','j']].astype(str).agg(lambda lst: ','.join(sorted(lst)), axis=1)
-    kinship_df = kinship_df.sort_values('kin', ascending=False).drop_duplicates('pair')
+    kinship_df['rel_rank'] = kinship_df.ped_relationship.map({'parent-child': 4, 'siblings': 3, 'related_other': 2, 'unrelated': 1})    
+    kinship_df = kinship_df.sort_values(['rel_rank','kin'], ascending=False).drop_duplicates('pair')
+    kinship_df = kinship_df.drop(['rel_rank'], axis=1)
 
     rel_df = pd.read_csv(relatedness_qc, sep='\t')
 
