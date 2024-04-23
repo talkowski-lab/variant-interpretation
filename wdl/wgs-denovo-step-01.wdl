@@ -28,7 +28,6 @@ workflow step1 {
         Boolean exclude_gq_filters=false
         Boolean sort_after_merge=false
         Boolean merge_split_vcf=false
-        Boolean bad_header=false
         RuntimeAttr? runtime_attr_preprocess
         RuntimeAttr? runtime_attr_merge_chunk
         RuntimeAttr? runtime_attr_merge_chunks
@@ -51,13 +50,6 @@ workflow step1 {
                 cohort_prefix=cohort_prefix,
                 vep_hail_docker=vep_hail_docker
         }
-        call saveVCFHeader as saveVCFHeaderChunk {
-            input:
-                vcf_uri=vep_files[0],
-                info_header=info_header,
-                bad_header=bad_header,
-                sv_base_mini_docker=sv_base_mini_docker
-        }
         scatter (chunk_file in splitVEPFiles.chunks) {        
             call mergeVCFs.mergeVCFs as mergeChunk {
                 input:
@@ -76,7 +68,6 @@ workflow step1 {
                     meta_uri=makeTrioSampleFiles.meta_uri,
                     trio_uri=makeTrioSampleFiles.trio_uri,
                     vep_hail_docker=vep_hail_docker,
-                    header_file=saveVCFHeaderChunk.header_file,
                     exclude_gq_filters=exclude_gq_filters,
                     runtime_attr_override=runtime_attr_preprocess
             }
@@ -92,13 +83,6 @@ workflow step1 {
     }
 
     if (!merge_split_vcf) {
-        call saveVCFHeader {
-            input:
-                vcf_uri=vep_files[0],
-                info_header=info_header,
-                bad_header=bad_header,
-                sv_base_mini_docker=sv_base_mini_docker
-        }
         scatter (vcf_uri in vep_files) {
             call preprocessVCF {
                 input:
@@ -109,7 +93,6 @@ workflow step1 {
                     meta_uri=makeTrioSampleFiles.meta_uri,
                     trio_uri=makeTrioSampleFiles.trio_uri,
                     vep_hail_docker=vep_hail_docker,
-                    header_file=saveVCFHeader.header_file,
                     exclude_gq_filters=exclude_gq_filters,
                     runtime_attr_override=runtime_attr_preprocess
             }
@@ -160,7 +143,6 @@ task saveVCFHeader {
         File vcf_uri
         File info_header
         String sv_base_mini_docker
-        Boolean bad_header
     }
 
     runtime {
@@ -171,10 +153,6 @@ task saveVCFHeader {
 
     command <<<
     bcftools head ~{vcf_uri} > ~{header_filename}
-    if [[ "~{bad_header}" == "true" ]]; then
-        bcftools head ~{vcf_uri} | grep -v "INFO=" > no_info_header.txt
-        cat no_info_header.txt ~{info_header} | sort > ~{header_filename}
-    fi
     >>>
 
     output {
@@ -190,7 +168,6 @@ task preprocessVCF {
         File vcf_uri
         File meta_uri
         File trio_uri
-        File header_file
         String vep_hail_docker
         Boolean exclude_gq_filters
         RuntimeAttr? runtime_attr_override
@@ -227,7 +204,7 @@ task preprocessVCF {
     String preprocessed_vcf_out = '~{prefix}.preprocessed.vcf.bgz'
     command <<<
         curl ~{python_preprocess_script} > python_preprocess_script.py
-        python3.9 python_preprocess_script.py ~{lcr_uri} ~{ped_sex_qc} ~{meta_uri} ~{trio_uri} ~{vcf_uri} ~{header_file} \
+        python3.9 python_preprocess_script.py ~{lcr_uri} ~{ped_sex_qc} ~{meta_uri} ~{trio_uri} ~{vcf_uri} \
         ~{exclude_gq_filters} ~{cpu_cores} ~{memory}
         /opt/vep/bcftools/bcftools index -t ~{preprocessed_vcf_out}
     >>>

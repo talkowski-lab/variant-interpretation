@@ -49,7 +49,6 @@ workflow wgs_denovo_full {
             String jvarkit_docker
             String sample_column
             Boolean exclude_gq_filters=false
-            Boolean bad_header=false
             Boolean merge_split_vcf=false
             Int shards_per_chunk=10
             Int batch_size
@@ -74,7 +73,6 @@ workflow wgs_denovo_full {
             hail_docker=hail_docker,
             vep_hail_docker=vep_hail_docker,
             exclude_gq_filters=exclude_gq_filters,
-            bad_header=bad_header,
             merge_split_vcf=merge_split_vcf,
             shards_per_chunk=shards_per_chunk
     }
