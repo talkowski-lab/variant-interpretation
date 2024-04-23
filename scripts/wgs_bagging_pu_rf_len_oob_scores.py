@@ -281,12 +281,11 @@ small_indels_var = runBaggingPU_level_features(merged_output_small_indels_var, v
 small_passes_variant_level = small_indels_var[(small_indels_var['pred_bag_optimized_variant_level']==1)].VarKey
 big_passes_variant_level = big_indels_var[(big_indels_var['pred_bag_optimized_variant_level']==1)].VarKey
 
-rep_reg = pd.read_csv(rep_regions, sep='\t', header=None)
-
 final_output = pd.read_csv(vcf_metrics_tsv, sep='\t')
 final_output['Indel_type'] = final_output.apply(lambda x: 'Insertion' if (len(x.ALT) - len(x.REF)) > 0 else 'Deletion', axis=1)
 final_output.loc[final_output.TYPE=='SNV', 'Indel_type'] = 'SNV'
 
+rep_reg = pd.read_csv(rep_regions, sep='\t', header=None)
 final_output['repetitive_region'] = final_output.VarKey.isin(rep_reg[3])
 final_output['multiallelic'] = (final_output.DPC_sample!=final_output.DP_sample)\
                 |(final_output.DPC_mother!=final_output.DP_mother)\
