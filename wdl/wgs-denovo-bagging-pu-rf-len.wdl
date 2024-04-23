@@ -28,7 +28,6 @@ workflow BaggingPU_RF {
         Array[String] sample_features
         Array[String] variant_features
         Float vqslod_cutoff=-10
-        Float prop_dn=1
         Int n_estimators_rf=100
         Int n_bag=10
         Boolean filter_pass_before=false
@@ -59,7 +58,6 @@ workflow BaggingPU_RF {
             variant_features=variant_features,
             sample_features=sample_features,
             vqslod_cutoff=vqslod_cutoff,
-            prop_dn=prop_dn,
             n_estimators_rf=n_estimators_rf,
             n_bag=n_bag,
             filter_pass_before=filter_pass_before,
@@ -86,7 +84,6 @@ task runBaggingPU_RF {
         String hail_docker
         String metric
         Float vqslod_cutoff
-        Float prop_dn
         Int n_estimators_rf
         Int n_bag
         Boolean filter_pass_before
@@ -123,8 +120,7 @@ task runBaggingPU_RF {
         curl ~{bagging_pu_source_script} > baggingPU.py
         python3 run_bagging_pu.py ~{vcf_metrics_tsv_final} ~{ultra_rare_inherited_tsv} \
         ~{cohort_prefix} ~{var_type} ~{sep=',' variant_features} ~{sep=',' sample_features} ~{vqslod_cutoff} \
-        ~{prop_dn} ~{rep_regions} ~{metric} \
-        ~{n_estimators_rf} ~{n_bag} ~{filter_pass_before} > stdout
+        ~{rep_regions} ~{metric} ~{n_estimators_rf} ~{n_bag} ~{filter_pass_before} > stdout
     >>>
 
     output {

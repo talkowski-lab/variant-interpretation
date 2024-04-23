@@ -39,12 +39,11 @@ var_type = sys.argv[5]
 variant_features = sys.argv[6].split(',')
 sample_features = sys.argv[7].split(',')
 vqslod_cutoff = float(sys.argv[8])
-prop_dn = float(sys.argv[9])
-rep_regions = sys.argv[10]
-metric = sys.argv[11]  # ['roc-auc', 'accuracy', 'f1', 'fp_fn_ratio']
-n_estimators_rf = int(sys.argv[12])
-n_bags = int(sys.argv[13])
-filter_pass_before = ast.literal_eval(sys.argv[14].capitalize())
+rep_regions = sys.argv[9]
+metric = sys.argv[10]  # ['roc-auc', 'accuracy', 'f1', 'fp_fn_ratio']
+n_estimators_rf = int(sys.argv[11])
+n_bags = int(sys.argv[12])
+filter_pass_before = ast.literal_eval(sys.argv[13].capitalize())
 
 def fp_fn_ratio(y, y_pred):
     FP = ((y==0) & (y_pred==1)).sum()
