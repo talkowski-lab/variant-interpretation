@@ -237,7 +237,7 @@ final_output, ultra_rare, final_output_raw, ultra_rare_raw = load_variants(vcf_m
 final_output, ultra_rare, merged_output = filter_variants(final_output, ultra_rare, 
                                                           final_output_raw, ultra_rare_raw, filter_pass=filter_pass_before)
 # variant-level training (ultra-rare only in one parent)
-final_output_var, ultra_rare_var, final_output_var_raw, ultra_rare_var_raw = load_variants(vcf_metrics_tsv, ultra_rare_parents_tsv, var_type)
+final_output_var, ultra_rare_var, final_output_var_raw, ultra_rare_var_raw = load_variants(vcf_metrics_tsv, ultra_rare_parents_tsv, var_type, pl_filter=False)
 
 final_output_var, ultra_rare_var, merged_output_var = filter_variants(final_output_var, ultra_rare_var, 
                                                           final_output_var_raw, ultra_rare_var_raw, filter_pass=False)
