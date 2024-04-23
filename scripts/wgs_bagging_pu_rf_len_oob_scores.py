@@ -242,41 +242,55 @@ final_output_var, ultra_rare_var, final_output_var_raw, ultra_rare_var_raw = loa
 final_output_var, ultra_rare_var, merged_output_var = filter_variants(final_output_var, ultra_rare_var, 
                                                           final_output_var_raw, ultra_rare_var_raw, filter_pass=False)
 
-# Big indels: LEN>3
-# sample-level
-print("---------------------- Running Large Indels (LEN>3) sample-level ----------------------")
-merged_output_big_indels = merged_output[merged_output.LEN>3].reset_index(drop=True)
-big_indels = runBaggingPU_level_features(merged_output_big_indels, sample_features, n_estimators_rf, n_bags, 
-                                        suffix='_sample_level')
-# variant-level
-print("---------------------- Running Large Indels (LEN>3) variant-level ----------------------")
-passes_sample_level = big_indels[(big_indels['pred_bag_optimized_sample_level']==1)].VarKey
+if var_type=='Indel':
+    # Big indels: LEN>3
+    # sample-level
+    print("---------------------- Running Large Indels (LEN>3) sample-level ----------------------")
+    merged_output_big_indels = merged_output[merged_output.LEN>3].reset_index(drop=True)
+    big_indels = runBaggingPU_level_features(merged_output_big_indels, sample_features, n_estimators_rf, n_bags, 
+                                            suffix='_sample_level')
+    # variant-level
+    print("---------------------- Running Large Indels (LEN>3) variant-level ----------------------")
+    passes_sample_level = big_indels[(big_indels['pred_bag_optimized_sample_level']==1)].VarKey
 
-merged_output_big_indels_var = merged_output_var[(merged_output_var.LEN>3)
-                                                 & ((merged_output_var.label==1) | (merged_output_var.VarKey.isin(passes_sample_level)))].reset_index(drop=True)
+    merged_output_big_indels_var = merged_output_var[(merged_output_var.LEN>3)
+                                                    & ((merged_output_var.label==1) | (merged_output_var.VarKey.isin(passes_sample_level)))].reset_index(drop=True)
 
-big_indels_var = runBaggingPU_level_features(merged_output_big_indels_var, variant_features, n_estimators_rf, n_bags, 
-                                        suffix='_variant_level')
+    big_indels_var = runBaggingPU_level_features(merged_output_big_indels_var, variant_features, n_estimators_rf, n_bags, 
+                                            suffix='_variant_level')
 
-# small indels: LEN<=3
-# sample-level
-print("---------------------- Running Small Indels (LEN<=3) sample-level ----------------------")
-merged_output_small_indels = merged_output[merged_output.LEN<=3].reset_index(drop=True)
-small_indels = runBaggingPU_level_features(merged_output_small_indels, sample_features, n_estimators_rf, n_bags, 
-                                        suffix='_sample_level')
-# variant-level
-print("---------------------- Running Small Indels (LEN<=3) variant-level ----------------------")
-passes_sample_level = small_indels[(small_indels['pred_bag_optimized_sample_level']==1)].VarKey
+    # small indels: LEN<=3
+    # sample-level
+    print("---------------------- Running Small Indels (LEN<=3) sample-level ----------------------")
+    merged_output_small_indels = merged_output[merged_output.LEN<=3].reset_index(drop=True)
+    small_indels = runBaggingPU_level_features(merged_output_small_indels, sample_features, n_estimators_rf, n_bags, 
+                                            suffix='_sample_level')
+    # variant-level
+    print("---------------------- Running Small Indels (LEN<=3) variant-level ----------------------")
+    passes_sample_level = small_indels[(small_indels['pred_bag_optimized_sample_level']==1)].VarKey
 
-merged_output_small_indels_var = merged_output_var[(merged_output_var.LEN<=3)
-                                                 & ((merged_output_var.label==1) | (merged_output_var.VarKey.isin(passes_sample_level)))].reset_index(drop=True)
+    merged_output_small_indels_var = merged_output_var[(merged_output_var.LEN<=3)
+                                                    & ((merged_output_var.label==1) | (merged_output_var.VarKey.isin(passes_sample_level)))].reset_index(drop=True)
 
-small_indels_var = runBaggingPU_level_features(merged_output_small_indels_var, variant_features, n_estimators_rf, n_bags, 
-                                        suffix='_variant_level')
+    small_indels_var = runBaggingPU_level_features(merged_output_small_indels_var, variant_features, n_estimators_rf, n_bags, 
+                                            suffix='_variant_level')
 
-# merge with step06 output
-small_passes_variant_level = small_indels_var[(small_indels_var['pred_bag_optimized_variant_level']==1)].VarKey
-big_passes_variant_level = big_indels_var[(big_indels_var['pred_bag_optimized_variant_level']==1)].VarKey
+    # merge with step06 output
+    small_passes_variant_level = small_indels_var[(small_indels_var['pred_bag_optimized_variant_level']==1)].VarKey
+    big_passes_variant_level = big_indels_var[(big_indels_var['pred_bag_optimized_variant_level']==1)].VarKey
+    passes_variant_level = pd.concat([small_passes_variant_level, big_passes_variant_level])
+
+if var_type=='SNV':
+    print("---------------------- Running SNVs sample-level ----------------------")
+    all_snvs = runBaggingPU_level_features(merged_output, sample_features, n_estimators_rf, n_bags, 
+                                            suffix='_sample_level')
+    # variant-level
+    print("---------------------- Running SNVs variant-level ----------------------")
+    passes_sample_level = all_snvs[(all_snvs['pred_bag_optimized_sample_level']==1)].VarKey
+    merged_output_var = merged_output_var[((merged_output_var.label==1) | (merged_output_var.VarKey.isin(passes_sample_level)))].reset_index(drop=True)
+    all_snvs_var = runBaggingPU_level_features(merged_output_var, variant_features, n_estimators_rf, n_bags, 
+                                            suffix='_variant_level')
+    passes_variant_level = all_snvs_var[(all_snvs_var['pred_bag_optimized_variant_level']==1)].VarKey
 
 final_output = pd.read_csv(vcf_metrics_tsv, sep='\t')
 final_output['Indel_type'] = final_output.apply(lambda x: 'Insertion' if (len(x.ALT) - len(x.REF)) > 0 else 'Deletion', axis=1)
@@ -288,8 +302,7 @@ final_output['multiallelic'] = (final_output.DPC_sample!=final_output.DP_sample)
                 |(final_output.DPC_mother!=final_output.DP_mother)\
                 |(final_output.DPC_father!=final_output.DP_father)
 
-final_output = final_output[(final_output.VarKey.isin(small_passes_variant_level))
-                            | (final_output.VarKey.isin(big_passes_variant_level))
+final_output = final_output[(final_output.VarKey.isin(passes_variant_level))
                             | (final_output.TYPE!=var_type)]
 
 base_filename = os.path.basename(vcf_metrics_tsv).split('.tsv.gz')[0]
