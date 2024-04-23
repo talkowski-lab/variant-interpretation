@@ -247,10 +247,12 @@ final_output_var, ultra_rare_var, merged_output_var = filter_variants(final_outp
 
 # Big indels: LEN>3
 # sample-level
+print("---------------------- Running Large Indels (LEN>3) sample-level ----------------------")
 merged_output_big_indels = merged_output[merged_output.LEN>3].reset_index(drop=True)
 big_indels = runBaggingPU_level_features(merged_output_big_indels, sample_features, n_estimators_rf, n_bags, 
                                         suffix='_sample_level')
 # variant-level
+print("---------------------- Running Large Indels (LEN>3) variant-level ----------------------")
 passes_sample_level = big_indels[(big_indels['pred_bag_optimized_sample_level']==1)].VarKey
 
 merged_output_big_indels_var = merged_output_var[(merged_output_var.LEN>3)
@@ -261,10 +263,12 @@ big_indels_var = runBaggingPU_level_features(merged_output_big_indels_var, varia
 
 # small indels: LEN<=3
 # sample-level
+print("---------------------- Running Small Indels (LEN<=3) sample-level ----------------------")
 merged_output_small_indels = merged_output[merged_output.LEN<=3].reset_index(drop=True)
 small_indels = runBaggingPU_level_features(merged_output_small_indels, sample_features, n_estimators_rf, n_bags, 
                                         suffix='_sample_level')
 # variant-level
+print("---------------------- Running Small Indels (LEN<=3) variant-level ----------------------")
 passes_sample_level = small_indels[(small_indels['pred_bag_optimized_sample_level']==1)].VarKey
 
 merged_output_small_indels_var = merged_output_var[(merged_output_var.LEN<=3)
