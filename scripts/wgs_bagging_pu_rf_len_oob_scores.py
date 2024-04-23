@@ -184,9 +184,6 @@ def runBaggingPU_RF(X, y, model, merged_output, features, suffix, n_bags=10):
                             f'predict_proba_bag{suffix}': output_bag,
                             f'pred_bag{suffix}': y_pred_bag.astype(int)
                             })
-    if known_vars_exist:
-        results['is_known'] = merged_output.iloc[X.index].is_known.astype(str)
-        results.loc[results.label==1, 'is_known'] = 'ultra-rare'    
     return results, classifiers_bag
 
 def get_importances_oob_scores(X, y, merged_output, features, suffix, n_estimators_rf=100, n_bags=10, oob_score=True):
