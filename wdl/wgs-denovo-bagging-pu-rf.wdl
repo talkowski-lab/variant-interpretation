@@ -16,7 +16,7 @@ workflow BaggingPU_RF {
         File vcf_metrics_tsv_final
         File ultra_rare_variants_tsv
         File repetitive_regions_bed
-        File rep_regions
+        File rep_regions  # TODO: add this to WDL
         String var_type  # Indel or SNV
         String bagging_pu_source_script
         String bagging_pu_rf_script

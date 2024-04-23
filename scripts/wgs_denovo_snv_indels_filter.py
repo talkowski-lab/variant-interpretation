@@ -12,7 +12,7 @@ csq_af_threshold = float(sys.argv[4])
 
 final_output = pd.read_csv(vcf_metrics_uri, sep='\t')
 
-final_output = final_output[final_output.PL_sample!='.']
+final_output = final_output[(final_output.PL_sample!='.')&(~final_output.PL_sample.str.contains('\.'))]
 final_output[['PL_sample_0.0', 'PL_sample_0.1', 'PL_sample_1.1']] = final_output.PL_sample.str.split(",", expand=True).astype(int)
 
 for samp in ['sample', 'mother', 'father']:
