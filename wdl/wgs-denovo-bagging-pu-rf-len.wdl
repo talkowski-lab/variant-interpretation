@@ -118,7 +118,7 @@ task runBaggingPU_RF {
     command <<<
         curl ~{bagging_pu_rf_len_script} > run_bagging_pu.py
         curl ~{bagging_pu_source_script} > baggingPU.py
-        python3 run_bagging_pu.py ~{vcf_metrics_tsv_final} ~{ultra_rare_inherited_tsv} \
+        python3 run_bagging_pu.py ~{vcf_metrics_tsv_final} ~{ultra_rare_inherited_tsv} ~{ultra_rare_parents_tsv} \
         ~{cohort_prefix} ~{var_type} ~{sep=',' variant_features} ~{sep=',' sample_features} ~{vqslod_cutoff} \
         ~{rep_regions} ~{metric} ~{n_estimators_rf} ~{n_bag} ~{filter_pass_before} > stdout
     >>>
