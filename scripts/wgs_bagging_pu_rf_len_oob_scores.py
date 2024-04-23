@@ -291,5 +291,5 @@ final_output['multiallelic'] = (final_output.DPC_sample!=final_output.DP_sample)
 final_output = final_output[final_output.VarKey.isin(small_passes_variant_level) 
                             | final_output.VarKey.isin(big_passes_variant_level)]
 
-base_filename = os.path.basename(vcf_metrics_tsv).str.split('.tsv.gz')[0]
+base_filename = os.path.basename(vcf_metrics_tsv).split('.tsv.gz')[0]
 final_output.to_csv(f"{base_filename}_pu_{var_type}.tsv", sep='\t', index=False)
