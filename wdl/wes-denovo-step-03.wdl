@@ -13,7 +13,7 @@ struct RuntimeAttr {
 
 workflow step3 {
     input {
-        File ped_uri
+        File ped_sex_qc
         File filtered_mt
         File loeuf_file
         String cohort_prefix
@@ -32,7 +32,7 @@ workflow step3 {
         input:
             input_size=select_first([getHailMTSize.mt_size]),
             filtered_mt=filtered_mt,
-            ped_uri=ped_uri,
+            ped_sex_qc=ped_sex_qc,
             bucket_id=bucket_id,
             cohort_prefix=cohort_prefix,
             loeuf_file=loeuf_file,
@@ -52,7 +52,7 @@ workflow step3 {
 
 task hailDenovoFilteringRemote {
     input {
-        File ped_uri
+        File ped_sex_qc
         Float input_size
         String filtered_mt
         String bucket_id
@@ -91,7 +91,7 @@ task hailDenovoFilteringRemote {
 
     command {
         curl ~{hail_denovo_filtering_script} > hail_denovo_filtering_script.py
-        python3 hail_denovo_filtering_script.py ~{filtered_mt} ~{cohort_prefix} ~{ped_uri} ~{loeuf_file} \
+        python3 hail_denovo_filtering_script.py ~{filtered_mt} ~{cohort_prefix} ~{ped_sex_qc} ~{loeuf_file} \
         ~{cpu_cores} ~{memory} ~{bucket_id}
     }
 

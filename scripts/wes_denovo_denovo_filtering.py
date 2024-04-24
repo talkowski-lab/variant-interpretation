@@ -69,15 +69,39 @@ from hail.typecheck import typecheck, numeric
 from hail.methods.misc import require_biallelic
 
 tmp_ped = pd.read_csv(ped_uri, sep='\t')
-# check ped number of columns
+# check tmp_ped number of columns
 if len(tmp_ped) > 6:
     tmp_ped = tmp_ped.iloc[:,:6]
     
-# subset ped to samples in mt
+# subset tmp_ped to samples in mt
 samps = mt.s.collect()
 tmp_ped = tmp_ped[tmp_ped.iloc[:,1].isin(samps)]  # sample_id
 tmp_ped = tmp_ped.drop_duplicates('sample_id')    
 
+fam_sizes = tmp_ped.family_id.value_counts().to_dict()
+fathers = tmp_ped[~tmp_ped.paternal_id.isin(['0','-9'])].set_index('sample_id').paternal_id.to_dict()
+mothers = tmp_ped[~tmp_ped.maternal_id.isin(['0','-9'])].set_index('sample_id').maternal_id.to_dict()
+
+def get_sample_role(row):
+    if fam_sizes[row.family_id]==1:
+        role = 'Singleton'
+    elif (row.maternal_id=='0') & (row.paternal_id=='0'):
+        if (row.sample_id in fathers.values()):
+            role = 'Father'
+        elif (row.sample_id in mothers.values()):
+            role = 'Mother'
+        else:
+            role = 'Unknown'
+    elif (row.maternal_id in mothers.values()) & (row.paternal_id in fathers.values()):
+        role = 'Proband'
+    else:
+        role = 'Unknown'
+    return role
+
+tmp_ped['role'] = tmp_ped.apply(get_sample_role, axis=1)
+
+# filter to only complete trios in ped
+tmp_ped = tmp_ped[tmp_ped.role.isin(['Proband', 'Mother', 'Father'])]
 tmp_ped.to_csv(f"{prefix}.ped", sep='\t', index=False)
 
 ped_uri = f"{prefix}.ped"
@@ -414,7 +438,7 @@ td.write(filename, overwrite=True)
 # Requires trio dataset and, like Hail's TDT function, does not cover the Y
 #
 # Also note:
-# 1) Uses sexes from ped and assumes fathers are male and mothers are female
+# 1) Uses sexes from tmp_ped and assumes fathers are male and mothers are female
 # 2) Does not allow fathers to be het when they should be hemizygous
 # 3) To match Jack's function, requires fathers to have a genotype even when considering regions where 
 #    proband is hemizygous
@@ -425,7 +449,7 @@ def parent_aware_t_u_annotations_v3(td):
             .when(td.locus.in_autosome() | td.locus.in_x_par() | (td.is_female == True), True)
             .when(td.locus.in_x_nonpar() & (td.is_female == False), False)
             .default(hl.missing('bool')) ) )
-    # Note: the above uses the "is_female" from the ped and not from the dataset itself
+    # Note: the above uses the "is_female" from the tmp_ped and not from the dataset itself
     
     # Now annotate t & u values
     td = td.annotate_entries(

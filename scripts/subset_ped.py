@@ -14,8 +14,8 @@ ped.index = ped.sample_id
 ped = ped.loc[np.intersect1d(ped.index, samples)]
 
 fam_sizes = ped.family_id.value_counts().to_dict()
-fathers = ped[ped.paternal_id!='0'].set_index('sample_id').paternal_id.to_dict()
-mothers = ped[ped.maternal_id!='0'].set_index('sample_id').maternal_id.to_dict()
+fathers = ped[~ped.paternal_id.isin(['0','-9'])].set_index('sample_id').paternal_id.to_dict()
+mothers = ped[~ped.maternal_id.isin(['0','-9'])].set_index('sample_id').maternal_id.to_dict()
 
 def get_sample_role(row):
     if fam_sizes[row.family_id]==1:
@@ -27,10 +27,10 @@ def get_sample_role(row):
             role = 'Mother'
         else:
             role = 'Unknown'
-    elif (row.maternal_id=='-9') & (row.paternal_id=='-9'):
-        role = 'Unknown'
-    else:
+    elif (row.maternal_id in mothers.values()) & (row.paternal_id in fathers.values()):
         role = 'Proband'
+    else:
+        role = 'Unknown'
     return role
 
 ped['role'] = ped.apply(get_sample_role, axis=1)

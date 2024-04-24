@@ -20,7 +20,7 @@ workflow hailDenovoWES {
     input {
         Array[String] mt_uris
         File lcr_uri
-        File ped_uri
+        File ped_sex_qc
         File purcell5k
         File mpc_chr22_file
         File loeuf_file
@@ -49,7 +49,7 @@ workflow hailDenovoWES {
             input:
                 vcf_file=mt_uri,
                 input_size=getInputMTSize.mt_size,
-                ped_uri=ped_uri,
+                ped_sex_qc=ped_sex_qc,
                 purcell5k=purcell5k,
                 mpc_chr22_file=mpc_chr22_file,
                 mpc_dir=mpc_dir,
@@ -71,7 +71,7 @@ workflow hailDenovoWES {
                 lcr_uri=lcr_uri,
                 annot_mt=step1.annot_mt,
                 input_size=getStep1MTSize.mt_size,
-                ped_uri=ped_uri,
+                ped_sex_qc=ped_sex_qc,
                 bucket_id=bucket_id,
                 cohort_prefix=cohort_prefix,
                 hail_basic_filtering_script=hail_basic_filtering_script,
@@ -89,7 +89,7 @@ workflow hailDenovoWES {
             input:
                 filtered_mt=step2.filtered_mt,
                 input_size=getStep2MTSize.mt_size,
-                ped_uri=ped_uri,
+                ped_sex_qc=ped_sex_qc,
                 bucket_id=bucket_id,
                 cohort_prefix=cohort_prefix,
                 loeuf_file=loeuf_file,

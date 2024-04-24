@@ -68,8 +68,19 @@ mt = mt.drop('variant_qc')
 # - Any call on the Y in females
 # - Any autosomal or PAR call in a male with depth less than 10
 # - Het calls in males in hemizygous regions
+tmp_ped = pd.read_csv(ped_uri, sep='\t')
+# check tmp_ped number of columns
+if len(tmp_ped) > 6:
+    tmp_ped = tmp_ped.iloc[:,:6]
+    
+# subset tmp_ped to samples in mt
+samps = mt.s.collect()
+tmp_ped = tmp_ped[tmp_ped.iloc[:,1].isin(samps)]  # sample_id
+tmp_ped = tmp_ped.drop_duplicates('sample_id')    
+tmp_ped.to_csv(f"{prefix}.ped", sep='\t', index=False)
 
-ped = hl.import_table(ped_uri, impute=True)
+ped_uri = f"{prefix}.ped"
+ped = hl.import_table(ped_uri, impute=True, delimiter='\t')
 
 original_cols = list(ped.row.keys())
 new_cols = ['family_id', 'sample_id', 'paternal_id', 'maternal_id', 'sex', 'phenotype']
