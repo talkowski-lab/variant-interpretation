@@ -125,7 +125,7 @@ task GetPotential{
     bedtools intersect -v -f 0.5 -wa -wb -a ~{name}.depth.ref.cluster.filt.rmSD.bed -b ~{igl_blacklist} > ~{name}.depth.ref.cluster.filt.rmSD.rmIGL.bed
     cat header.bed ~{name}.depth.ref.cluster.filt.rmSD.rmIGL.bed | sed -e 's/id/name/g' | sed -e 's/svtype/type/g' | bgzip -c > ~{name}.potentialmosaic.rare.bed.gz
 
-    ## experimental step delete 4/17/2024 ## split.sh
+    ## experimental step delete 4/17/2024 ## split.sh ## split clustered SVs
     #gsutil cp gs://fc-545eca01-311b-4271-bc2f-a7dce28387c5/mosaic_params/test2.qc.bed.gz . 
     #mv test2.qc.bed.gz ~{name}.potentialmosaic.rare.bed.gz
     rm ~{name}.potentialmosaic.rare.bed
@@ -145,7 +145,7 @@ task GetPotential{
     rm ~{name}.potentialmosaic.rare.bed
     mv ~{name}.potentialmosaic.rare2.bed ~{name}.potentialmosaic.rare.bed
     bgzip ~{name}.potentialmosaic.rare.bed
-    ## fin
+    ## fin    
 
   >>>
   runtime {
@@ -192,6 +192,10 @@ task RdTest {
     /opt/RdTest/localize_bincov.sh rdtest.bed ~{coverage_file}
     awk -v OFS="\t" '{print $1,$2,$3,$4,$6,$5}' rdtest.bed > test.bed
 
+    ## experimental step 2 4/24/2024 create sample QC whitelist for plotting
+     gsutil cp gs://fc-545eca01-311b-4271-bc2f-a7dce28387c5/mosaic_params/sbd.mosaic.whitelist.apr2024.tsv .
+
+
     mkdir plots
     Rscript /opt/RdTest/RdTest.R \
       -b test.bed \
@@ -201,7 +205,7 @@ task RdTest {
       -f ~{fam_file} \
       -o plots \
       -d TRUE \
-      -w whitelist.bed \ ## remember to generate whitelist
+      -w sbd.mosaic.whitelist.apr2024.tsv \
       -p TRUE
     mv plots/~{prefix}.metrics .
     tar -czf mosaic.tar.gz plots/
