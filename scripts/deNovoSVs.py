@@ -388,7 +388,7 @@ vcf_metrics    """
     bed['is_large_cnv'] = (bed['SVLEN'] >= large_cnv_size) & ((bed['svtype'] == 'DEL') | (bed['svtype'] == 'DUP'))
     bed['is_small_cnv'] = (bed['SVLEN'] < large_cnv_size) & ((bed['svtype'] == 'DEL') | (bed['svtype'] == 'DUP'))
     bed['is_depth_only'] = (bed['EVIDENCE'] == "RD")
-    bed['is_depth_only_small'] = (bed['svtype'] == "DUP") & (bed['ALGORITHMS'] == "depth") & (bed['SVLEN'] <= depth_only_size)
+    bed['is_depth_only_small'] = (bed['svtype'] == "DUP") & (bed['ALGORITHMS'] == "depth") & (bed['SVLEN'] <= depth_only_size) ##BUG?
     end = time.time()
     delta = end - start
     print("Took %f seconds to process" % delta)
