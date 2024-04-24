@@ -200,6 +200,8 @@ task RdTest {
       -m ~{median_file} \
       -f ~{fam_file} \
       -o plots \
+      -d TRUE \
+      -w whitelist.bed \ ## remember to generate whitelist
       -p TRUE
     mv plots/~{prefix}.metrics .
     tar -czf mosaic.tar.gz plots/
