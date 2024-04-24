@@ -397,7 +397,7 @@ task rdtest_regeno {
             -d TRUE \
             -w samples_noOutliers.txt \
             -s 10000000 \
-            -g TRUE
+            -g TRUE \
             -r ~{sep=" " regeno_file}
 
         mkdir rd_plots
