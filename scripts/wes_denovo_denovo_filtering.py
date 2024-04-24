@@ -102,6 +102,7 @@ tmp_ped['role'] = tmp_ped.apply(get_sample_role, axis=1)
 
 # filter to only complete trios in ped
 tmp_ped = tmp_ped[tmp_ped.role.isin(['Proband', 'Mother', 'Father'])]
+tmp_ped = tmp_ped.drop(['role'], axis=1)
 tmp_ped.to_csv(f"{prefix}.ped", sep='\t', index=False)
 
 ped_uri = f"{prefix}.ped"
