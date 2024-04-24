@@ -208,7 +208,7 @@ def process_consequence_cohort(csq_columns, vcf_metrics_uri, numeric, sample_col
     mt_csq_annotated = mt_csq_annotated.annotate_rows(isSNV = hl.is_snp(mt_csq_annotated.alleles[0], mt_csq_annotated.alleles[1]),
                         isIndel = hl.is_indel(mt_csq_annotated.alleles[0], mt_csq_annotated.alleles[1]))
 
-    mt_csq_rows = mt_csq_annotated.rows().flatten()
+    mt_csq_rows = mt_csq_annotated.drop(sample_column).rows().flatten()
     mt_csq_df = mt_csq_rows.to_pandas()
 
     vcf_metrics = mt_csq_df.rename({col: col.split('worst_csq.')[1] for col in mt_csq_df.columns if 'worst_csq' in col}, axis=1)
