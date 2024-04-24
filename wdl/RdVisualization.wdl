@@ -55,6 +55,7 @@ workflow RdTestVisualization{
                     family = family,
                     ped_file = ped_file,
                     regeno = regeno_,
+                    sample_batches=sample_batches,
                     variant_interpretation_docker = variant_interpretation_docker,
                     runtime_attr_override = runtime_attr_create_bed
             }
@@ -170,6 +171,7 @@ task generateRegenoFile {
     input{
         String family
         File ped_file
+        File sample_batches
         File regeno
         String variant_interpretation_docker
         RuntimeAttr? runtime_attr_override
@@ -193,7 +195,8 @@ task generateRegenoFile {
     command <<<
         set -ex
         cat ~{ped_file} | grep -w ~{family} | cut -f2 | sort -u > samples_in_family.txt
-        grep -w -f samples_in_family.txt ~{regeno} |awk '{print $2}' |sort -u > regenofile.txt
+        grep -w -f samples_in_family.txt phase4_gregor_sample_batches.txt| awk '{print $2}' > family_batches.txt
+        grep -w -f family_batches.txt ~{regeno} |awk '{print $2}' |sort -u > regenofile.txt
     >>>
 
     output {
