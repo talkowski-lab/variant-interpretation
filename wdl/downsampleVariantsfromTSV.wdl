@@ -197,7 +197,7 @@ task convertTSVtoVCF {
         python3.9 tsv_to_vcf.py ~{tsv} ~{cpu_cores} ~{memory}
     >>>
 
-    String file_ext = if sub(basename(tsv), '\.gz', '')==basename(tsv) then '.tsv' else '.tsv.gz'
+    String file_ext = if sub(basename(tsv), '\\.gz', '')==basename(tsv) then '.tsv' else '.tsv.gz'
     output {
         File output_vcf = basename(tsv, file_ext) + '.vcf'
     }

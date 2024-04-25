@@ -66,7 +66,7 @@ task annotateMostSevereCSQ {
         bootDiskSizeGb: select_first([runtime_override.boot_disk_gb, runtime_default.boot_disk_gb])
     }
     
-    String file_ext = if sub(basename(vcf_metrics_tsv), '\.gz', '')==basename(vcf_metrics_tsv) then '.tsv' else '.tsv.gz'
+    String file_ext = if sub(basename(vcf_metrics_tsv), '\\.gz', '')==basename(vcf_metrics_tsv) then '.tsv' else '.tsv.gz'
     command <<<
         curl ~{prioritize_csq_script} > prioritize_csq.py
         python3 prioritize_csq.py ~{vcf_metrics_tsv} ~{cpu_cores} ~{memory} ~{sample_column}

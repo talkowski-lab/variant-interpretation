@@ -177,7 +177,7 @@ task preprocessVCF {
         bootDiskSizeGb: select_first([runtime_override.boot_disk_gb, runtime_default.boot_disk_gb])
     }
     String filename = basename(vcf_uri)
-    String prefix = if (sub(filename, "\.gz", "")!=filename) then basename(vcf_uri, ".vcf.gz") else basename(vcf_uri, ".vcf.bgz")
+    String prefix = if (sub(filename, "\\.gz", "")!=filename) then basename(vcf_uri, ".vcf.gz") else basename(vcf_uri, ".vcf.bgz")
 
     String preprocessed_vcf_out = '~{prefix}.preprocessed.vcf.bgz'
     command <<<
