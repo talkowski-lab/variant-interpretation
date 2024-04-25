@@ -53,5 +53,5 @@ ht, model = assign_population_pcs(
     apply_model_func = apply_onnx_classification_model,
 )
 
-df = ht.union(gnomad_pcs_ht).to_pandas()
+df = ht.to_pandas()
 df.to_csv(cohort_prefix + '_inferred_ancestry.tsv', sep='\t', index=False)
