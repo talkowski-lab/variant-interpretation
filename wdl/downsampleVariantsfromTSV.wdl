@@ -197,7 +197,7 @@ task convertTSVtoVCF {
         python3.9 tsv_to_vcf.py ~{tsv} ~{cpu_cores} ~{memory}
     >>>
 
-    String file_ext = if sub(basename(tsv), '.gz', '')==basename(tsv) then '.tsv' else '.tsv.gz'
+    String file_ext = if sub(basename(tsv), '\.gz', '')==basename(tsv) then '.tsv' else '.tsv.gz'
     output {
         File output_vcf = basename(tsv, file_ext) + '.vcf'
     }
@@ -288,7 +288,7 @@ task downsampleVariantsPython {
     }
 
     Int desired_num_variants = ceil(num_variants * scale)
-    String file_ext = if sub(basename(full_input_tsv), '.gz', '')==basename(full_input_tsv) then '.tsv' else '.tsv.gz'
+    String file_ext = if sub(.*, '.gz', '')==basename(full_input_tsv) then '.tsv' else '.tsv.gz'
     String output_name = "~{basename(full_input_tsv, file_ext)}_~{var_type}_downsampled.tsv.gz"
 
     command <<<

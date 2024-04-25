@@ -74,7 +74,7 @@ task convertTSVtoBED {
         curl ~{tsv_to_bed_script} > tsv_to_bed.py
         python3 tsv_to_bed.py ~{tsv}
     }
-    String file_ext = if sub(basename(tsv), '.gz', '')==basename(tsv) then '.tsv' else '.tsv.gz'
+    String file_ext = if sub(basename(tsv), '\.gz', '')==basename(tsv) then '.tsv' else '.tsv.gz'
     output {
         File bed_file = basename(tsv, file_ext) + '.bed'
     }

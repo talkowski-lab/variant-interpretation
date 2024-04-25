@@ -79,7 +79,7 @@ task annotateMPCandLOEUF {
         python3 annotate_mpc_loeuf_script.py ~{vcf_metrics_tsv} ~{mpc_dir} ~{mpc_chr22_file} ~{loeuf_file} ~{cpu_cores} ~{memory}
     }
 
-    String file_ext = if sub(basename(vcf_metrics_tsv), '.gz', '')==basename(vcf_metrics_tsv) then '.tsv' else '.tsv.gz'
+    String file_ext = if sub(basename(vcf_metrics_tsv), '\.gz', '')==basename(vcf_metrics_tsv) then '.tsv' else '.tsv.gz'
     output {
         File vcf_metrics_tsv_annot = basename(vcf_metrics_tsv, file_ext) + '_with_mpc_loeuf.tsv.gz'
     }
