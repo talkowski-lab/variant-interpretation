@@ -14,7 +14,8 @@ struct RuntimeAttr {
 
 workflow AncestryInference {
     input {
-        Array[File] vep_vcf_files
+        Array[File]? vep_vcf_files
+        File? ancestry_vcf_file_
         File gnomad_vcf_uri
         File gnomad_rf_onnx
         File pop_labels_tsv
@@ -33,26 +34,30 @@ workflow AncestryInference {
         RuntimeAttr? runtime_attr_infer_ancestry
     }
 
-    scatter (vcf_uri in vep_vcf_files) {
-        call subsetVCFgnomAD {
+    if (!defined(ancestry_vcf_file_)) {
+        scatter (vcf_uri in select_first([vep_vcf_files])) {
+            call subsetVCFgnomAD {
+                input:
+                vcf_uri=vcf_uri,
+                hail_docker=hail_docker,
+                runtime_attr_override=runtime_attr_subset_vcfs
+            }
+        }
+
+        call mergeVCFs.mergeVCFs as mergeVCFs {
             input:
-            vcf_uri=vcf_uri,
-            hail_docker=hail_docker,
-            runtime_attr_override=runtime_attr_subset_vcfs
+            vcf_files=subsetVCFgnomAD.subset_vcf,
+            sv_base_mini_docker=sv_base_mini_docker,
+            cohort_prefix=cohort_prefix+'_gnomad_pca_sites',
+            runtime_attr_override=runtime_attr_merge_vcfs
         }
     }
 
-    call mergeVCFs.mergeVCFs as mergeVCFs {
-        input:
-        vcf_files=subsetVCFgnomAD.subset_vcf,
-        sv_base_mini_docker=sv_base_mini_docker,
-        cohort_prefix=cohort_prefix+'_gnomad_pca_sites',
-        runtime_attr_override=runtime_attr_merge_vcfs
-    }
+    File vcf_uri = select_first([ancestry_vcf_file_, mergeVCFs.merged_vcf_file])
 
     call inferAncestry {
         input:
-            vcf_uri=mergeVCFs.merged_vcf_file,
+            vcf_uri=vcf_uri,
             gnomad_vcf_uri=gnomad_vcf_uri,
             gnomad_rf_onnx=gnomad_rf_onnx,
             pop_labels_tsv=pop_labels_tsv,
@@ -65,8 +70,7 @@ workflow AncestryInference {
             runtime_attr_override=runtime_attr_infer_ancestry
     }
     output {
-        File ancestry_vcf_file = mergeVCFs.merged_vcf_file
-        File ancestry_vcf_idx = mergeVCFs.merged_vcf_idx
+        File ancestry_vcf_file = vcf_uri
         File ancestry_tsv = inferAncestry.ancestry_tsv
     }
 }
