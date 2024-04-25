@@ -41,6 +41,11 @@ workflow AncestryInference {
         sv_base_mini_docker=sv_base_mini_docker,
         cohort_prefix=cohort_prefix+'_gnomad_pca_sites'
     }
+
+    output {
+        File ancestry_vcf_file = mergeVCFs.merged_vcf_file
+        File ancestry_vcf_idx = mergeVCFs.merged_vcf_idx
+    }
 }
 
 task subsetVCFgnomAD {
