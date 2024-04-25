@@ -15,15 +15,11 @@ struct RuntimeAttr {
 workflow AncestryInference {
     input {
         Array[File] vep_vcf_files
-        File bed_file
         String cohort_prefix
         String hail_docker
         String sv_base_mini_docker
         RuntimeAttr? runtime_attr_subset_vcfs
         RuntimeAttr? runtime_attr_merge_vcfs
-        RuntimeAttr? runtime_attr_impute_sex
-        RuntimeAttr? runtime_attr_check_relatedness
-        RuntimeAttr? runtime_attr_plot_relatedness
     }
 
     scatter (vcf_uri in vep_vcf_files) {
@@ -102,11 +98,7 @@ task subsetVCFgnomAD {
                         }, tmp_dir="tmp", local_tmpdir="tmp")
 
     mt = hl.import_vcf(vcf_uri, reference_genome='GRCh38', force_bgz=True, call_fields=[], array_elements_required=False)
-    v3_loading_ht = hl.experimental.load_dataset(name='gnomad_pca_variant_loadings',
-                                  version='3.1',
-                                  reference_genome='GRCh38',
-                                  region='us-central1',
-                                  cloud='gcp')
+    v3_loading_ht = hl.read_table("gs://gcp-public-data--gnomad/release/3.1/pca/gnomad.v3.1.pca_loadings.ht")
     mt = mt.filter_rows(hl.is_defined(v3_loading_ht[mt.row_key]))
     output_filename = os.path.basename(vcf_uri).split('.vcf')[0] + '_gnomad_pca_sites.vcf.bgz'
     hl.export_vcf(mt, output_filename)
