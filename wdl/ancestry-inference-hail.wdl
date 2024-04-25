@@ -46,7 +46,8 @@ workflow AncestryInference {
         input:
         vcf_files=subsetVCFgnomAD.subset_vcf,
         sv_base_mini_docker=sv_base_mini_docker,
-        cohort_prefix=cohort_prefix+'_gnomad_pca_sites'
+        cohort_prefix=cohort_prefix+'_gnomad_pca_sites',
+        runtime_attr_override=runtime_attr_merge_vcfs
     }
 
     call inferAncestry {
