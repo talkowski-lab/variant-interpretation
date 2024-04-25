@@ -153,7 +153,7 @@ task generatePerFamilyBed {
     
     output {
         File bed_file = "final.bed"
-        Array[File] medianfile = read_lines("medianfile.txt")
+        Array[String] medianfile = read_lines("medianfile.txt")
     }
     
     runtime {
@@ -200,7 +200,7 @@ task generateRegenoFile {
     >>>
 
     output {
-        Array[File] regenofile = read_lines("regenofile.txt")
+        Array[String] regenofile = read_lines("regenofile.txt")
     }
 
     runtime {
