@@ -138,28 +138,6 @@ task makeTrioSampleFiles {
     }
 }
 
-task saveVCFHeader {
-    input {
-        File vcf_uri
-        File info_header
-        String sv_base_mini_docker
-    }
-
-    runtime {
-        docker: sv_base_mini_docker
-    }
-
-    String header_filename = basename(vcf_uri, '.vcf.gz') + '_header.txt'
-
-    command <<<
-    bcftools head ~{vcf_uri} > ~{header_filename}
-    >>>
-
-    output {
-        File header_file = header_filename
-    }
-}
-
 task preprocessVCF {
     input {
         String python_preprocess_script
@@ -199,7 +177,7 @@ task preprocessVCF {
         bootDiskSizeGb: select_first([runtime_override.boot_disk_gb, runtime_default.boot_disk_gb])
     }
     String filename = basename(vcf_uri)
-    String prefix = if (sub(filename, ".gz", "")!=filename) then basename(filename, ".vcf.gz") else basename(filename, ".vcf.bgz")
+    String prefix = if (sub(filename, ".gz", "")!=filename) then basename(vcf_uri, ".vcf.gz") else basename(vcf_uri, ".vcf.bgz")
 
     String preprocessed_vcf_out = '~{prefix}.preprocessed.vcf.bgz'
     command <<<
