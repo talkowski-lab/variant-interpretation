@@ -40,7 +40,7 @@ pop_labels_ht = hl.import_table(pop_labels_tsv)
 pop_labels_ht = pop_labels_ht.annotate(s=pop_labels_ht.Sample).key_by('s')
 
 gnomad_pcs_ht = hl.experimental.pc_project(
-    mt.GT, gnomad_loading_ht.loadings, gnomad_loading_ht.pca_af,
+    mt.GT, loading_ht.loadings, loading_ht.pca_af,
 )
 
 gnomad_pcs_ht = gnomad_pcs_ht.annotate(known_pop=pop_labels_ht[gnomad_pcs_ht.key].SuperPop)
