@@ -217,7 +217,7 @@ def get_optimized_results(features, results, suffix, metric='fp_fn_ratio'):
     return results
 
 def runBaggingPU_level_features(merged_output_subset, features, n_estimators_rf, n_bags, suffix=''):
-    merged_output_subset = merged_output_subset[~merged_output_subset[features].isna().any(axis=1)]
+    merged_output_subset = merged_output_subset[~merged_output_subset[features].isna().any(axis=1)].reset_index(drop=True)
     X = merged_output_subset[features].sample(frac=1)
     y = merged_output_subset['label'].astype(int).loc[X.index]
     results, estimators_optimized, importances_optimized, oob_scores_optimized = get_importances_oob_scores(X, y, merged_output_subset, features, 
