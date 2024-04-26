@@ -207,9 +207,12 @@ task RdTest {
         echo -e "$chr\t$start\t$end\t$id\t$sample\t$type" 
       done
     done < test.bed  > test2.bed
-    ### remove any entries in test.bed that match the blacklist
-      awk '{print $5}' test2.bed | sort | uniq | grep -v -f sbd.mosaic.blacklist.apr2024.tsv > whitelist.bed
-    ### fin
+    ### remove any entries in test2.bed that match the blacklist
+    awk 'NR==FNR { blacklist[$1] = 1; next } !( $5 in blacklist )' sbd.mosaic.blacklist.apr2024.tsv test2.bed | sort -k1,1 -k2,2n -k3,3n > filtered_test.bed
+    bedtools groupby -i filtered_test.bed -g 1,2,3,4,6 -c 5 -o collapse -delim ',' | awk 'BEGIN {OFS="\t"} {print $1, $2, $3, $4, $6, $5}' > filtered_test2.bed  
+    rm test.bed
+    mv filtered_test2.bed test.bed
+### fin
 
     mkdir plots
     Rscript /opt/RdTest/RdTest.R \
@@ -219,8 +222,6 @@ task RdTest {
       -m ~{median_file} \
       -f ~{fam_file} \
       -o plots \
-      -d TRUE \
-      -w whitelist.bed \
       -p TRUE
     mv plots/~{prefix}.metrics .
     tar -czf mosaic.tar.gz plots/
