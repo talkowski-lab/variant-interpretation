@@ -29,6 +29,9 @@ workflow AncestryInference {
         Int num_pcs=16  # for gnomADv3
         Float min_prob=0.75
 
+        Boolean infer_ancestry=true
+        Boolean use_gnomad_rf=false
+
         RuntimeAttr? runtime_attr_subset_vcfs
         RuntimeAttr? runtime_attr_merge_vcfs
         RuntimeAttr? runtime_attr_infer_ancestry
@@ -55,23 +58,26 @@ workflow AncestryInference {
 
     File vcf_uri = select_first([ancestry_vcf_file_, mergeVCFs.merged_vcf_file])
 
-    call inferAncestry {
-        input:
-            vcf_uri=vcf_uri,
-            gnomad_vcf_uri=gnomad_vcf_uri,
-            gnomad_rf_onnx=gnomad_rf_onnx,
-            pop_labels_tsv=pop_labels_tsv,
-            cohort_prefix=cohort_prefix,
-            gnomad_loading_ht=gnomad_loading_ht,
-            infer_ancestry_script=infer_ancestry_script,
-            hail_docker=hail_docker,
-            num_pcs=num_pcs,
-            min_prob=min_prob,
-            runtime_attr_override=runtime_attr_infer_ancestry
+    if (infer_ancestry) {
+        call inferAncestry {
+            input:
+                vcf_uri=vcf_uri,
+                gnomad_vcf_uri=gnomad_vcf_uri,
+                gnomad_rf_onnx=gnomad_rf_onnx,
+                pop_labels_tsv=pop_labels_tsv,
+                cohort_prefix=cohort_prefix,
+                gnomad_loading_ht=gnomad_loading_ht,
+                infer_ancestry_script=infer_ancestry_script,
+                hail_docker=hail_docker,
+                num_pcs=num_pcs,
+                min_prob=min_prob,
+                use_gnomad_rf=use_gnomad_rf,
+                runtime_attr_override=runtime_attr_infer_ancestry
+        }
     }
     output {
         File ancestry_vcf_file = vcf_uri
-        File ancestry_tsv = inferAncestry.ancestry_tsv
+        File ancestry_tsv = select_first([inferAncestry.ancestry_tsv])
     }
 }
 
@@ -159,6 +165,7 @@ task inferAncestry {
         String hail_docker
         Int num_pcs
         Float min_prob
+        Boolean use_gnomad_rf
         RuntimeAttr? runtime_attr_override
     }
 
@@ -192,7 +199,7 @@ task inferAncestry {
     command <<<
     curl ~{infer_ancestry_script} > infer_ancestry.py
     python3 infer_ancestry.py ~{vcf_uri} ~{gnomad_vcf_uri} ~{gnomad_loading_ht} ~{gnomad_rf_onnx} \
-        ~{pop_labels_tsv} ~{num_pcs} ~{min_prob} ~{cohort_prefix} ~{cpu_cores} ~{memory} > stdout
+        ~{pop_labels_tsv} ~{num_pcs} ~{min_prob} ~{cohort_prefix} ~{cpu_cores} ~{memory} ~{use_gnomad_rf} > stdout
     >>>
 
     output {

@@ -4,8 +4,9 @@ import hail as hl
 import numpy as np
 import sys
 import os
+import ast
 import onnx
-from gnomad.sample_qc.ancestry import apply_onnx_classification_model, assign_population_pcs
+from gnomad.sample_qc.ancestry import apply_onnx_classification_model, apply_sklearn_classification_model, assign_population_pcs
 from gnomad.utils.filtering import filter_to_adj
 
 vcf_uri = sys.argv[1]
@@ -18,6 +19,7 @@ min_prob = float(sys.argv[7])
 cohort_prefix = sys.argv[8]
 cores = sys.argv[9]
 mem = int(np.floor(float(sys.argv[10])))
+use_gnomad_rf = ast.literal_eval(sys.argv[11].capitalize())
 
 hl.init(min_block_size=128, spark_conf={"spark.executor.cores": cores, 
                     "spark.executor.memory": f"{mem}g",
@@ -27,6 +29,7 @@ hl.init(min_block_size=128, spark_conf={"spark.executor.cores": cores,
 
 mt = hl.import_vcf(vcf_uri, reference_genome='GRCh38', force_bgz=True, call_fields=[], array_elements_required=False)    
 gnomad_mt = hl.import_vcf(gnomad_vcf_uri, reference_genome='GRCh38', force_bgz=True, call_fields=[], array_elements_required=False)    
+
 loading_ht = hl.read_table(gnomad_loading_ht)
 with hl.hadoop_open(gnomad_rf_onnx, "rb") as f:
     onx_fit = onnx.load(f)
@@ -52,9 +55,9 @@ ht, model = assign_population_pcs(
     gnomad_pcs_ht,
     pc_cols=gnomad_pcs_ht.scores[:num_pcs],
     known_col='known_pop',
-    fit=onx_fit,
+    fit=onx_fit if use_gnomad_rf else None,
     min_prob=min_prob,
-    apply_model_func = apply_onnx_classification_model,
+    apply_model_func = apply_onnx_classification_model if use_gnomad_rf else apply_sklearn_classification_model
 )
 
 ht = ht.annotate(known_pop=gnomad_pcs_ht[ht.key].known_pop)
