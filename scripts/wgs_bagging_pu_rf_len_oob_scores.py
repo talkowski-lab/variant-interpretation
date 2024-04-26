@@ -61,7 +61,7 @@ metrics_to_funcs = {'roc-auc': sklearn.metrics.roc_auc_score, 'accuracy': True, 
                     'recall': sklearn.metrics.recall_score, 'precision': sklearn.metrics.precision_score}
 
 def load_variants(vcf_metrics_tsv, ultra_rare_inherited_tsv, var_type, use_random_gq=False, pl_filter=True): 
-    ultra_rare = pd.read_csv(ultra_rare_inherited_tsv, sep='\t')
+    ultra_rare = pd.read_csv(ultra_rare_inherited_tsv, sep='\t').replace({'.': np.nan})
     ultra_rare['Indel_type'] = ultra_rare.apply(lambda x: 'Insertion' if (len(x.ALT) - len(x.REF)) > 0 else 'Deletion', axis=1)
     ultra_rare.loc[ultra_rare.TYPE=='SNV', 'Indel_type'] = 'SNV'
     ultra_rare = ultra_rare[ultra_rare.TYPE==var_type]
