@@ -67,7 +67,7 @@ def load_variants(vcf_metrics_tsv, ultra_rare_inherited_tsv, var_type, use_rando
     ultra_rare = ultra_rare[ultra_rare.TYPE==var_type]
     # ultra_rare = ultra_rare[~ultra_rare.SAMPLE.isin(outlier_samples)]
 
-    final_output = pd.read_csv(vcf_metrics_tsv, sep='\t')
+    final_output = pd.read_csv(vcf_metrics_tsv, sep='\t').replace({'.': np.nan})
     final_output['Indel_type'] = final_output.apply(lambda x: 'Insertion' if (len(x.ALT) - len(x.REF)) > 0 else 'Deletion', axis=1)
     final_output.loc[final_output.TYPE=='SNV', 'Indel_type'] = 'SNV'
     final_output = final_output[final_output.TYPE==var_type]
