@@ -43,7 +43,7 @@ gnomad_pcs_ht = hl.experimental.pc_project(
     mt.GT, loading_ht.loadings, loading_ht.pca_af,
 )
 
-gnomad_pcs_ht = gnomad_pcs_ht.annotate(known_pop=pop_labels_ht[gnomad_pcs_ht.key].SuperPop)
+gnomad_pcs_ht = gnomad_pcs_ht.annotate(known_pop=pop_labels_ht[gnomad_pcs_ht.key].SuperPop.lower())
 
 ht, model = assign_population_pcs(
     gnomad_pcs_ht,
