@@ -118,11 +118,12 @@ def load_variants(vcf_metrics_tsv, ultra_rare_inherited_tsv, var_type, use_rando
     return final_output, ultra_rare, final_output_raw, ultra_rare_raw
 
 def filter_variants(final_output, ultra_rare, final_output_raw, ultra_rare_raw, filter_pass=True):
-    if (final_output['VQSLOD']!='.').sum()!=0:
-        final_output = final_output[final_output['VQSLOD']!='.'].reset_index(drop=True)
+    if (final_output['VQSLOD'].isna()).sum()!=0:
+        final_output = final_output[~final_output['VQSLOD'].isna()].reset_index(drop=True)
         final_output['VQSLOD'] = final_output.VQSLOD.astype(float)
-
-    final_output = final_output[final_output.VQSLOD>vqslod_cutoff]
+    if (final_output.VQSLOD>vqslod_cutoff).sum()!=0:
+        final_output = final_output[final_output.VQSLOD>vqslod_cutoff]
+        
     final_output = final_output[final_output.LEN<=50]
     if filter_pass:
         final_output = final_output[final_output.FILTER=='PASS']
