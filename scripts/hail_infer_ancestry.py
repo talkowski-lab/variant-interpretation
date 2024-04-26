@@ -69,7 +69,7 @@ ancestry_df.to_csv(cohort_prefix + '_inferred_ancestry.tsv', sep='\t', index=Fal
 
 # PLOT
 ancestry_df.index = ancestry_df.s
-pc_df = ancestry_df.pca_scores.apply(ast.literal_eval).apply(pd.Series)
+pc_df = ancestry_df.pca_scores.apply(pd.Series)
 
 ancestry_df = pd.concat([ancestry_df, pc_df.rename({i: f"PC_{i}" for i in pc_df.columns}, axis=1)], axis=1)
 
