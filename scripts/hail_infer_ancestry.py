@@ -9,6 +9,9 @@ import onnx
 from gnomad.sample_qc.ancestry import apply_onnx_classification_model, apply_sklearn_classification_model, assign_population_pcs
 from gnomad.utils.filtering import filter_to_adj
 
+import matplotlib.pyplot as plt
+import seaborn as sns
+
 vcf_uri = sys.argv[1]
 gnomad_vcf_uri = sys.argv[2]
 gnomad_loading_ht = sys.argv[3]
@@ -61,5 +64,35 @@ ht, model = assign_population_pcs(
 )
 
 ht = ht.annotate(known_pop=gnomad_pcs_ht[ht.key].known_pop)
-df = ht.to_pandas()
-df.to_csv(cohort_prefix + '_inferred_ancestry.tsv', sep='\t', index=False)
+ancestry_df = ht.to_pandas()
+ancestry_df.to_csv(cohort_prefix + '_inferred_ancestry.tsv', sep='\t', index=False)
+
+# PLOT
+ancestry_df.index = ancestry_df.s
+pc_df = ancestry_df.pca_scores.apply(ast.literal_eval).apply(pd.Series)
+
+ancestry_df = pd.concat([ancestry_df, pc_df.rename({i: f"PC_{i}" for i in pc_df.columns}, axis=1)], axis=1)
+
+POP_COLORS = {
+    "afr": "#941494",
+    "ami": "#FFC0CB",
+    "amr": "#ED1E24",
+    "asj": "#FF7F50",
+    "eas": "#108C44",
+    "eur": "#6AA5CD",
+    "fin": "#002F6C",
+    "mid": "#33CC33",
+    "nfe": "#6AA5CD",
+    "oth": "#ABB9B9",
+    "unknown": "#ABB9B9",
+    "sas": "#FF9912"}
+
+fig, ax = plt.subplots(figsize=(6, 5));
+sns.scatterplot(data=ancestry_df, x='PC_1', y='PC_2', hue='known_pop', palette=POP_COLORS, ax=ax, alpha=0.1, s=70);
+sns.scatterplot(data=ancestry_df[ancestry_df.known_pop.isna()], x='PC_1', y='PC_2', hue='pop', palette=POP_COLORS, ax=ax, legend=False);
+leg = plt.legend();
+for lh in leg.legend_handles:
+    lh.set_alpha(1);
+ax.set(title=cohort_prefix);
+plt.tight_layout();
+plt.savefig(f"{cohort_prefix}_inferred_ancestry.png");

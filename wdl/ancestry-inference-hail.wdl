@@ -78,6 +78,7 @@ workflow AncestryInference {
     output {
         File ancestry_vcf_file = vcf_uri
         File ancestry_tsv = select_first([inferAncestry.ancestry_tsv])
+        File ancestry_plot = select_first([inferAncestry.ancestry_plot])
     }
 }
 
@@ -204,5 +205,6 @@ task inferAncestry {
 
     output {
         File ancestry_tsv = cohort_prefix + '_inferred_ancestry.tsv'
+        File ancestry_plot = cohort_prefix + '_inferred_ancestry.png'
     }
 }
