@@ -191,6 +191,27 @@ task RdTest {
     zcat ~{bed} | tail -n+2 > rdtest.bed
     /opt/RdTest/localize_bincov.sh rdtest.bed ~{coverage_file}
     awk -v OFS="\t" '{print $1,$2,$3,$4,$6,$5}' rdtest.bed > test.bed
+    ### experimental step 2 4/24/2024 create sample QC whitelist for plotting
+     gsutil cp gs://fc-545eca01-311b-4271-bc2f-a7dce28387c5/mosaic_params/sbd.mosaic.blacklist.apr2024.tsv .
+    ### split test.bed
+    while read -r line; do \
+      chr=$(echo "$line" | cut -f1) \
+      start=$(echo "$line" | cut -f2) \
+      end=$(echo "$line" | cut -f3) \
+      id=$(echo "$line" | cut -f4) \
+      samples=$(echo "$line" | cut -f5 | tr ',' '\n')
+      type=$(echo "$line" | cut -f6) \
+      
+      for sample in $samples; do \
+        echo -e "$chr\t$start\t$end\t$id\t$sample\t$type" 
+      done
+    done < test.bed  > test2.bed
+    ### remove any entries in test2.bed that match the blacklist
+    awk 'NR==FNR { blacklist[$1] = 1; next } !( $5 in blacklist )' sbd.mosaic.blacklist.apr2024.tsv test2.bed | sort -k1,1 -k2,2n -k3,3n > filtered_test.bed
+    bedtools groupby -i filtered_test.bed -g 1,2,3,4,6 -c 5 -o collapse -delim ',' | awk 'BEGIN {OFS="\t"} {print $1, $2, $3, $4, $6, $5}' > filtered_test2.bed  
+    rm test.bed
+    mv filtered_test2.bed test.bed
+### fin
 
     mkdir plots
     Rscript /opt/RdTest/RdTest.R \
