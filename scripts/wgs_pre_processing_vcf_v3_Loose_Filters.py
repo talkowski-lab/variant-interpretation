@@ -63,6 +63,10 @@ def trim_vcf(vcf_uri, lcr_uri, ped_uri, meta_uri, trio_uri, vcf_out_uri, build, 
                                            AB=mt.AD[1]/hl.sum(mt.AD),
                                            VAF=mt.AD[1]/mt.DP)
     
+    # for VCFs with AS_VQSLOD and missing VQSLOD
+    if 'AS_VQSLOD' in list(mt.info):
+        mt = mt.annotate_rows(info=mt.info.annotate(VQSLOD=mt.info.AS_VQSLOD[mt.a_index - 1]))
+    
     mt = mt.filter_rows(mt.info.cohort_AC < 20 , keep=True)
     # filter low complexity regions
     try:
