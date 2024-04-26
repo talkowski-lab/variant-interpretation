@@ -39,6 +39,9 @@ mt = mt.select_entries(*common_entry_fields).union_cols(gnomad_mt.select_entries
 pop_labels_ht = hl.import_table(pop_labels_tsv)
 pop_labels_ht = pop_labels_ht.annotate(s=pop_labels_ht.Sample).key_by('s')
 
+pop_labels_ht = pop_labels_ht.annotate(SuperPop=pop_labels_ht.SuperPop.replace('CSA', 'SAS').replace('EUR', 'NFE'))
+pop_labels_ht = pop_labels_ht.filter(pop_labels_ht.SuperPop!='OCE')
+
 gnomad_pcs_ht = hl.experimental.pc_project(
     mt.GT, loading_ht.loadings, loading_ht.pca_af,
 )
