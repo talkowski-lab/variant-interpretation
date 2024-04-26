@@ -48,10 +48,12 @@ gnomad_pcs_ht = gnomad_pcs_ht.annotate(known_pop=pop_labels_ht[gnomad_pcs_ht.key
 ht, model = assign_population_pcs(
     gnomad_pcs_ht,
     pc_cols=gnomad_pcs_ht.scores[:num_pcs],
+    known_col='known_pop',
     fit=onx_fit,
     min_prob=min_prob,
     apply_model_func = apply_onnx_classification_model,
 )
 
+ht = ht.annotate(known_pop=gnomad_pcs_ht[ht.key].known_pop)
 df = ht.to_pandas()
 df.to_csv(cohort_prefix + '_inferred_ancestry.tsv', sep='\t', index=False)
