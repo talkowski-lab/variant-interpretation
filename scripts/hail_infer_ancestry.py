@@ -34,7 +34,7 @@ with hl.hadoop_open(gnomad_rf_onnx, "rb") as f:
 # Filter the MT to high quality genotypes (GQ >= 20; DP >= 10; and AB >= 0.2 for het calls)
 mt = filter_to_adj(mt)
 common_entry_fields = [x for x in list(np.intersect1d(list(gnomad_mt.entry), list(mt.entry))) if x!='PGT']
-mt = mt.select_entries(*common_entry_fields).union_cols(gnomad_mt.select_entries(*common_entry_fields), row_join_type='outer')
+mt = mt.select_entries(*common_entry_fields).union_cols(gnomad_mt.select_entries(*common_entry_fields), row_join_type='inner')
 
 pop_labels_ht = hl.import_table(pop_labels_tsv)
 pop_labels_ht = pop_labels_ht.annotate(s=pop_labels_ht.Sample).key_by('s')
