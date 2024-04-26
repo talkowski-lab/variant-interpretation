@@ -77,6 +77,10 @@ mt = mt.annotate_rows(info=mt.info.annotate(cohort_AC=mt.info.AC[mt.a_index - 1]
                                            cohort_AF=mt.info.AF[mt.a_index - 1]))
 mt = mt.annotate_rows(ID=hl.variant_str(mt.row_key))
 
+# for VCFs with AS_VQSLOD and missing VQSLOD
+if 'AS_VQSLOD' in list(mt.info):
+    mt = mt.annotate_rows(info=mt.info.annotate(VQSLOD=mt.info.AS_VQSLOD[mt.a_index - 1]))
+
 # try filtering before
 mt_filtered = mt
 mt_filtered = mt_filtered.filter_rows(mt_filtered.info.cohort_AC < 20 , keep=True)
