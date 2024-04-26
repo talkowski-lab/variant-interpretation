@@ -78,10 +78,16 @@ mt = mt.annotate_rows(info=mt.info.annotate(cohort_AC=mt.info.AC[mt.a_index - 1]
 mt = mt.annotate_rows(ID=hl.variant_str(mt.row_key))
 
 # for VCFs with AS_VQSLOD and missing VQSLOD
-if 'AS_VQSLOD' in list(mt.info):
-    all_as_fields = [col for col in list(mt.info) if 'AS_' in col]
-    mt = mt.annotate_rows(info=mt.info.annotate(**{field.split('_')[1]: getattr(mt.info, field)[mt.a_index - 1] 
-                                                   for field in all_as_fields}))    
+all_as_fields = [col for col in list(mt.info) if 'AS_' in col]
+for field in all_as_fields:
+    normal_field = field.split('_')[1]
+    n_missing_as = mt.filter_rows(hl.is_missing(getattr(mt.info, field))).count_rows()
+    if normal_field not in list(mt.info):
+        continue
+    n_missing = mt.filter_rows(hl.is_missing(getattr(mt.info, normal_field))).count_rows()
+    print(f"{field}: {n_missing_as}, {n_missing}")
+    if (n_missing_as < n_missing):
+        mt = mt.annotate_rows(info=mt.info.annotate(**{normal_field: getattr(mt.info, field)[mt.a_index - 1]}))    
 
 # try filtering before
 mt_filtered = mt
