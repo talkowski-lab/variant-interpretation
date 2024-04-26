@@ -80,7 +80,8 @@ mt = mt.annotate_rows(ID=hl.variant_str(mt.row_key))
 # for VCFs with AS_VQSLOD and missing VQSLOD
 if 'AS_VQSLOD' in list(mt.info):
     all_as_fields = [col for col in list(mt.info) if 'AS_' in col]
-    mt = mt.annotate_rows(info=mt.info.annotate(**{field.split('_')[1]: getattr(mt.info, field) for field in all_as_fields}))    
+    mt = mt.annotate_rows(info=mt.info.annotate(**{field.split('_')[1]: getattr(mt.info, field)[mt.a_index - 1] 
+                                                 for field in all_as_fields}))    
 
 # try filtering before
 mt_filtered = mt
