@@ -195,12 +195,12 @@ task generateRegenoFile {
     command <<<
         set -ex
         cat ~{ped_file} | grep -w ~{family} | cut -f2 | sort -u > samples_in_family.txt
-        grep -w -f samples_in_family.txt phase4_gregor_sample_batches.txt| awk '{print $2}' > family_batches.txt
-        grep -w -f family_batches.txt ~{regeno} |awk '{print $2}' |sort -u > regenofile.txt
+        grep -w -f samples_in_family.txt phase4_gregor_sample_batches.txt| cut -f2 > family_batches.txt
+        grep -w -f family_batches.txt ~{regeno} |awk cut -f2 |sort -u > regenofile.txt
     >>>
 
     output {
-        Array[String] regenofile = read_lines("regenofile.txt")
+        File regenofile = "regenofile.txt"
     }
 
     runtime {
