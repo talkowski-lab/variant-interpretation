@@ -117,8 +117,9 @@ task mergeAncestryVCFs {
     
     vcf_uris = sys.argv[1].split(',')
     gnomad_vcf_uri = sys.argv[2]
-    cores = sys.argv[3]
-    mem = int(np.floor(float(sys.argv[4])))
+    merged_filename = sys.arg[3]
+    cores = sys.argv[4]
+    mem = int(np.floor(float(sys.argv[5])))
 
     hl.init(min_block_size=128, spark_conf={"spark.executor.cores": cores, 
                         "spark.executor.memory": f"{mem}g",
