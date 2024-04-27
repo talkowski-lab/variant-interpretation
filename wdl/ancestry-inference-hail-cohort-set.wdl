@@ -36,10 +36,11 @@ workflow AncestryInference {
         RuntimeAttr? runtime_attr_infer_ancestry
     }
 
-    call mergeVCFs.mergeVCFSamples as mergeVCFs {
+    call mergeAncestryVCFs {
             input:
             vcf_files=ancestry_vcf_file,
-            sv_base_mini_docker=sv_base_mini_docker,
+            gnomad_vcf_uri=gnomad_vcf_uri,
+            hail_docker=hail_docker,
             merged_filename=cohort_prefix+'_gnomad_pca_sites',
             runtime_attr_override=runtime_attr_merge_vcfs
     }
@@ -48,7 +49,7 @@ workflow AncestryInference {
     if (infer_ancestry) {
         call inferAncestry {
             input:
-                vcf_uri=mergeVCFs.merged_vcf_file,
+                vcf_uri=mergeAncestryVCFs.merged_vcf_file,
                 gnomad_vcf_uri=gnomad_vcf_uri,
                 gnomad_rf_onnx=gnomad_rf_onnx,
                 pop_labels_tsv=pop_labels_tsv,
@@ -63,20 +64,22 @@ workflow AncestryInference {
         }
     }
     output {
-        File ancestry_vcf_file = mergeVCFs.merged_vcf_file
+        File ancestry_vcf_file = mergeAncestryVCFs.merged_vcf_file
         File ancestry_tsv = select_first([inferAncestry.ancestry_tsv])
         File ancestry_plot = select_first([inferAncestry.ancestry_plot])
     }
 }
 
-task subsetVCFgnomAD {
+task mergeAncestryVCFs {
     input {
-        File vcf_uri
+        Array[File] vcf_files
+        File gnomad_vcf_uri
         String hail_docker
+        String merged_filename
         RuntimeAttr? runtime_attr_override
     }
 
-    Float input_size = size(vcf_uri, "GB")
+    Float input_size = size(vcf_files, "GB")
     Float base_disk_gb = 10.0
     Float input_disk_scale = 5.0
 
@@ -104,7 +107,7 @@ task subsetVCFgnomAD {
     }
 
     command <<<
-    cat <<EOF > filter_sites.py
+    cat <<EOF > merge_vcfs.py
     import datetime
     import pandas as pd
     import hail as hl
@@ -112,9 +115,10 @@ task subsetVCFgnomAD {
     import sys
     import os
     
-    vcf_uri = sys.argv[1]
-    cores = sys.argv[2]
-    mem = int(np.floor(float(sys.argv[3])))
+    vcf_uris = sys.argv[1].split(',')
+    gnomad_vcf_uri = sys.argv[2]
+    cores = sys.argv[3]
+    mem = int(np.floor(float(sys.argv[4])))
 
     hl.init(min_block_size=128, spark_conf={"spark.executor.cores": cores, 
                         "spark.executor.memory": f"{mem}g",
@@ -122,22 +126,22 @@ task subsetVCFgnomAD {
                         "spark.driver.memory": f"{mem}g"
                         }, tmp_dir="tmp", local_tmpdir="tmp")
 
-    mt = hl.import_vcf(vcf_uri, reference_genome='GRCh38', force_bgz=True, call_fields=[], array_elements_required=False)
-    gnomad_loading_ht = hl.read_table("gs://gcp-public-data--gnomad/release/3.1/pca/gnomad.v3.1.pca_loadings.ht")
-    mt = mt.filter_rows(hl.is_defined(gnomad_loading_ht[mt.row_key]))
-    output_filename = os.path.basename(vcf_uri).split('.vcf')[0] + '_gnomad_pca_sites.vcf.bgz'
-    hl.export_vcf(mt, output_filename)
+    gnomad_mt = hl.import_vcf(gnomad_vcf_uri, reference_genome='GRCh38', force_bgz=True, call_fields=[], array_elements_required=False)
+
+    for vcf_uri in vcf_uris:
+        cohort_mt = hl.import_vcf(vcf_uri, reference_genome='GRCh38', force_bgz=True, call_fields=[], array_elements_required=False)    
+        common_entry_fields = [x for x in list(np.intersect1d(list(gnomad_mt.entry), list(cohort_mt.entry))) if x!='PGT']
+        gnomad_mt = gnomad_mt.select_entries(*common_entry_fields).union_cols(cohort_mt.select_entries(*common_entry_fields), row_join_type='inner')
+
+    hl.export_vcf(gnomad_mt, f"{merged_filename}.vcf.bgz")
     EOF
 
-    python3 filter_sites.py ~{vcf_uri} ~{cpu_cores} ~{memory} > stdout
+    python3 merge_vcfs.py ~{sep=',' vcf_files} ~{gnomad_vcf_uri} ~{cpu_cores} ~{memory} > stdout
 
     >>>
 
-    String filename = basename(vcf_uri)
-    String prefix = if (sub(filename, "\\.gz", "")!=filename) then basename(vcf_uri, ".vcf.gz") else basename(vcf_uri, ".vcf.bgz")
-
     output {
-        File subset_vcf = prefix + '_gnomad_pca_sites.vcf.bgz'
+        File merged_vcf_file = merged_filename + '.vcf.bgz'
     }
 }
 
