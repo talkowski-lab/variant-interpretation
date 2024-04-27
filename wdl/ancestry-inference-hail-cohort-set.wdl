@@ -117,7 +117,7 @@ task mergeAncestryVCFs {
     
     vcf_uris = sys.argv[1].split(',')
     gnomad_vcf_uri = sys.argv[2]
-    merged_filename = sys.arg[3]
+    merged_filename = sys.argv[3]
     cores = sys.argv[4]
     mem = int(np.floor(float(sys.argv[5])))
 
