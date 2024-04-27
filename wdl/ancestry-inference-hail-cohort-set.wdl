@@ -137,7 +137,7 @@ task mergeAncestryVCFs {
     hl.export_vcf(gnomad_mt, f"{merged_filename}.vcf.bgz")
     EOF
 
-    python3 merge_vcfs.py ~{sep=',' vcf_files} ~{gnomad_vcf_uri} ~{cpu_cores} ~{memory} > stdout
+    python3 merge_vcfs.py ~{sep=',' vcf_files} ~{gnomad_vcf_uri} ~{merged_filename} ~{cpu_cores} ~{memory} > stdout
 
     >>>
 
