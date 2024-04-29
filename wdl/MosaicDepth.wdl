@@ -209,9 +209,11 @@ task RdTest {
     done < test.bed  > test2.bed
     ### remove any entries in test2.bed that match the blacklist
     awk 'NR==FNR { blacklist[$1] = 1; next } !( $5 in blacklist )' sbd.mosaic.blacklist.apr2024.tsv test2.bed | sort -k1,1 -k2,2n -k3,3n > filtered_test.bed
-    bedtools groupby -i filtered_test.bed -g 1,2,3,4,6 -c 5 -o collapse -delim ',' | awk 'BEGIN {OFS="\t"} {print $1, $2, $3, $4, $6, $5}' > filtered_test2.bed  
+
+    ## optional: collapse calls for plotting
+    #bedtools groupby -i filtered_test.bed -g 1,2,3,4,6 -c 5 -o collapse -delim ',' | awk 'BEGIN {OFS="\t"} {print $1, $2, $3, $4, $6, $5}' > filtered_test2.bed  
     rm test.bed
-    mv filtered_test2.bed test.bed
+    mv filtered_test.bed test.bed
 ### fin
 
     mkdir plots
