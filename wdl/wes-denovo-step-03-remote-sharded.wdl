@@ -43,7 +43,10 @@ workflow step3 {
                 cohort_prefix=cohort_prefix,
                 loeuf_file=loeuf_file,
                 hail_denovo_filtering_script=hail_denovo_filtering_script,
-                hail_docker=hail_docker
+                hail_docker=hail_docker,
+                min_child_ab=min_child_ab,
+                min_dp_ratio=min_dp_ratio,
+                min_gq=min_gq
         }
     }
 
