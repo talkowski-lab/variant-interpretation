@@ -14,6 +14,9 @@ loeuf_file = sys.argv[4]
 cores = sys.argv[5]
 mem = int(np.floor(float(sys.argv[6])))
 bucket_id = sys.argv[7]
+min_child_ab = float(sys.argv[8])
+min_dp_ratio = float(sys.argv[9])
+min_gq = float(sys.argv[10])
 
 prefix = os.path.basename(filtered_mt).split('_wes_denovo_basic_filtering.mt')[0]
 

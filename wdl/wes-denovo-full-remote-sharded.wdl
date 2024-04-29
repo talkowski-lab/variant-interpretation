@@ -4,6 +4,7 @@ import "wes-denovo-step-01-remote-sharded.wdl" as step1
 import "wes-denovo-step-02-remote-sharded.wdl" as step2
 import "wes-denovo-step-03-remote-sharded.wdl" as step3
 import "wes-denovo-step-04-remote-sharded.wdl" as step4
+import "wes-denovo-step-05-remote-sharded.wdl" as step5
 import "wes-denovo-helpers.wdl" as helpers
 import "wes-prioritize-csq.wdl" as prioritizeCSQ
 import "prioritizeCSQ.wdl" as prioritizeCSQ_og
@@ -25,18 +26,30 @@ workflow hailDenovoWES {
         File purcell5k
         File mpc_chr22_file
         File loeuf_file
+
         Boolean hail_autoscale
         String sample_column
         String bucket_id
         String mpc_dir
         String gnomad_ht_uri
         String cohort_prefix
+
         String hail_annotation_script
         String hail_basic_filtering_script
         String hail_denovo_filtering_script
         String prioritize_csq_script
+        String final_filtering_script
+
         String hail_docker
         String sv_base_mini_docker
+        String hail_docker
+
+        Float min_child_ab=0.25
+        Float min_dp_ratio=0.1
+        Float min_gq=25
+        Int vqslod_cutoff_snv=-20
+        Int vqslod_cutoff_indel=-2
+        Float af_threshold=0.001
         Float call_rate_threshold=0.8
         RuntimeAttr? runtime_attr_merge_results
         RuntimeAttr? runtime_attr_prioritize
@@ -97,7 +110,10 @@ workflow hailDenovoWES {
                 cohort_prefix=cohort_prefix,
                 loeuf_file=loeuf_file,
                 hail_denovo_filtering_script=hail_denovo_filtering_script,
-                hail_docker=hail_docker
+                hail_docker=hail_docker,
+                min_child_ab=min_child_ab,
+                min_dp_ratio=min_dp_ratio,
+                min_gq=min_gq
         }
     }
 
@@ -113,6 +129,17 @@ workflow hailDenovoWES {
         runtime_attr_prioritize=runtime_attr_prioritize
     }
 
+    call step5.finalFiltering as step5 {
+        input:
+        de_novo_merged=step4.de_novo_merged,
+        cohort_prefix=cohort_prefix,
+        final_filtering_script=final_filtering_script,
+        hail_docker=hail_docker,
+        vqslod_cutoff_snv=vqslod_cutoff_snv,
+        vqslod_cutoff_indel=vqslod_cutoff_indel,
+        af_threshold=af_threshold
+    }
+
     output {
         # step 1 output
         Array[String] annot_mt = step1.annot_mt
@@ -124,9 +151,11 @@ workflow hailDenovoWES {
         Array[String] de_novo_ht = step3.de_novo_ht
         Array[String] tdt_mt = step3.tdt_mt
         Array[String] tdt_parent_aware_mt = step3.tdt_parent_aware_mt
-        # prioritized CSQ
+        # step4 output
         File de_novo_results = step4.de_novo_results
         File de_novo_vep = step4.de_novo_vep
         File de_novo_merged = step4.de_novo_merged
+        # step5 output
+        File de_novo_final = step5.de_novo_final
     }
 }
