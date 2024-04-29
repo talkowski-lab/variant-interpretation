@@ -50,7 +50,7 @@ workflow hailDenovoWES {
         }
         call step1.hailAnnotateRemote as step1 {
             input:
-                vcf_file=mt_uri,
+                mt_uri=mt_uri,
                 input_size=getInputMTSize.mt_size,
                 ped_sex_qc=ped_sex_qc,
                 purcell5k=purcell5k,

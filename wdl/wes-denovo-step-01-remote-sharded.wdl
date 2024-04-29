@@ -35,7 +35,7 @@ workflow step1 {
         }
         call hailAnnotateRemote {
             input:
-                vcf_file=mt_uri,
+                mt_uri=mt_uri,
                 input_size=getInputMTSize.mt_size,
                 ped_sex_qc=ped_sex_qc,
                 purcell5k=purcell5k,
@@ -63,7 +63,7 @@ task hailAnnotateRemote {
         File purcell5k
         File mpc_chr22_file
         Float input_size
-        String vcf_file
+        String mt_uri
         String bucket_id
         String mpc_dir
         String gnomad_ht_uri
@@ -102,7 +102,7 @@ task hailAnnotateRemote {
 
     command {
         curl ~{hail_annotation_script} > hail_annotation_script.py
-        python3 hail_annotation_script.py ~{vcf_file} ~{cohort_prefix} ~{ped_sex_qc} \
+        python3 hail_annotation_script.py ~{mt_uri} ~{cohort_prefix} ~{ped_sex_qc} \
         ~{gnomad_ht_uri} ~{mpc_dir} ~{mpc_chr22_file} ~{purcell5k} ~{cpu_cores} ~{memory} ~{bucket_id} ~{hail_autoscale}
     }
 
