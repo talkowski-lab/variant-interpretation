@@ -47,10 +47,6 @@ df = df[df.cohort_AF<= MAF_thresh]
 # Filter on gnomAD
 df = df[(df.gnomad_non_neuro_AF.isna())|(df.gnomad_non_neuro_AF<=MAF_thresh)]
 
-# Impose allele balance filter
-df = df[df['proband_entry.AB']>=0.3]  # TODO: this should be done in step3?
-df = df[(df['mother_entry.AB']<=0.05)&(df['father_entry.AB']<=0.05)] 
-
 # Pick one variant per gene per sample
 df['SAMPLE_GENE'] = df[['proband.s', 'SYMBOL']].astype(str).agg('-'.join, axis=1)
 df = df.sort_values(['SAMPLE_GENE','csq_score'], ascending=False).groupby('SAMPLE_GENE').head(1).reset_index(drop=True)
