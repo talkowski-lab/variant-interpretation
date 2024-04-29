@@ -85,7 +85,6 @@ for field in all_as_fields:
     if normal_field not in list(mt.info):
         continue
     n_missing = mt.filter_rows(hl.is_missing(getattr(mt.info, normal_field))).count_rows()
-    print(f"{field}: {n_missing_as}, {n_missing}")
     if (n_missing_as < n_missing):
         mt = mt.annotate_rows(info=mt.info.annotate(**{normal_field: getattr(mt.info, field)[mt.a_index - 1]}))    
 

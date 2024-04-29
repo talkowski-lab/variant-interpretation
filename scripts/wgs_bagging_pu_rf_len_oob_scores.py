@@ -249,7 +249,8 @@ if var_type=='Indel':
     # sample-level
     print("---------------------- Running Large Indels (LEN>3) sample-level ----------------------")
     merged_output_big_indels = merged_output[merged_output.LEN>3].reset_index(drop=True)
-    big_indels = runBaggingPU_level_features(merged_output_big_indels, sample_features, n_estimators_rf, n_bags, 
+    big_sample_features = [feature for feature in sample_features if merged_output_big_indels[feature].isna().all()==False]
+    big_indels = runBaggingPU_level_features(merged_output_big_indels, big_sample_features, n_estimators_rf, n_bags, 
                                             suffix='_sample_level')
     # variant-level
     print("---------------------- Running Large Indels (LEN>3) variant-level ----------------------")
@@ -258,14 +259,16 @@ if var_type=='Indel':
     merged_output_big_indels_var = merged_output_var[(merged_output_var.LEN>3)
                                                     & ((merged_output_var.label==1) | (merged_output_var.VarKey.isin(passes_sample_level)))].reset_index(drop=True)
 
-    big_indels_var = runBaggingPU_level_features(merged_output_big_indels_var, variant_features, n_estimators_rf, n_bags, 
+    big_variant_features = [feature for feature in variant_features if merged_output_big_indels_var[feature].isna().all()==False]
+    big_indels_var = runBaggingPU_level_features(merged_output_big_indels_var, big_variant_features, n_estimators_rf, n_bags, 
                                             suffix='_variant_level')
 
     # small indels: LEN<=3
     # sample-level
     print("---------------------- Running Small Indels (LEN<=3) sample-level ----------------------")
     merged_output_small_indels = merged_output[merged_output.LEN<=3].reset_index(drop=True)
-    small_indels = runBaggingPU_level_features(merged_output_small_indels, sample_features, n_estimators_rf, n_bags, 
+    small_sample_features = [feature for feature in sample_features if merged_output_small_indels[feature].isna().all()==False]
+    small_indels = runBaggingPU_level_features(merged_output_small_indels, small_sample_features, n_estimators_rf, n_bags, 
                                             suffix='_sample_level')
     # variant-level
     print("---------------------- Running Small Indels (LEN<=3) variant-level ----------------------")
@@ -273,8 +276,8 @@ if var_type=='Indel':
 
     merged_output_small_indels_var = merged_output_var[(merged_output_var.LEN<=3)
                                                     & ((merged_output_var.label==1) | (merged_output_var.VarKey.isin(passes_sample_level)))].reset_index(drop=True)
-
-    small_indels_var = runBaggingPU_level_features(merged_output_small_indels_var, variant_features, n_estimators_rf, n_bags, 
+    small_variant_features = [feature for feature in variant_features if merged_output_small_indels_var[feature].isna().all()==False]
+    small_indels_var = runBaggingPU_level_features(merged_output_small_indels_var, small_variant_features, n_estimators_rf, n_bags, 
                                             suffix='_variant_level')
 
     # merge with step06 output
@@ -284,12 +287,14 @@ if var_type=='Indel':
 
 if var_type=='SNV':
     print("---------------------- Running SNVs sample-level ----------------------")
+    sample_features = [feature for feature in sample_features if merged_output[feature].isna().all()==False]
     all_snvs = runBaggingPU_level_features(merged_output, sample_features, n_estimators_rf, n_bags, 
                                             suffix='_sample_level')
     # variant-level
     print("---------------------- Running SNVs variant-level ----------------------")
     passes_sample_level = all_snvs[(all_snvs['pred_bag_optimized_sample_level']==1)].VarKey
     merged_output_var = merged_output_var[((merged_output_var.label==1) | (merged_output_var.VarKey.isin(passes_sample_level)))].reset_index(drop=True)
+    variant_features = [feature for feature in variant_features if merged_output_var[feature].isna().all()==False]
     all_snvs_var = runBaggingPU_level_features(merged_output_var, variant_features, n_estimators_rf, n_bags, 
                                             suffix='_variant_level')
     passes_variant_level = all_snvs_var[(all_snvs_var['pred_bag_optimized_variant_level']==1)].VarKey

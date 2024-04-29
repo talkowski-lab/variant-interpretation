@@ -47,6 +47,17 @@ if 'num_alleles' not in list(mt.row_value.keys()):
 mt = mt.annotate_rows(info=mt.info.annotate(cohort_AC=mt.info.AC[mt.a_index - 1],
                                             cohort_AF=mt.info.AF[mt.a_index - 1]))
 
+# for VCFs with AS_VQSLOD and missing VQSLOD
+all_as_fields = [col for col in list(mt.info) if 'AS_' in col]
+for field in all_as_fields:
+    normal_field = field.split('_')[1]
+    n_missing_as = mt.filter_rows(hl.is_missing(getattr(mt.info, field))).count_rows()
+    if normal_field not in list(mt.info):
+        continue
+    n_missing = mt.filter_rows(hl.is_missing(getattr(mt.info, normal_field))).count_rows()
+    if (n_missing_as < n_missing):
+        mt = mt.annotate_rows(info=mt.info.annotate(**{normal_field: getattr(mt.info, field)[mt.a_index - 1]}))    
+
 mt = hl.vep(mt, config='vep_config.json', csq=True, tolerate_parse_error=True)
 header['info']['CSQ'] = {'Description': hl.eval(mt.vep_csq_header), 'Number': '.', 'Type': 'String'}
 
