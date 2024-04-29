@@ -1,8 +1,9 @@
 version 1.0
 
-import "wes-denovo-step-01.wdl" as step1
-import "wes-denovo-step-02.wdl" as step2
-import "wes-denovo-step-03.wdl" as step3
+import "wes-denovo-step-01-remote-sharded.wdl" as step1
+import "wes-denovo-step-02-remote-sharded.wdl" as step2
+import "wes-denovo-step-03-remote-sharded.wdl" as step3
+import "wes-denovo-step-04-remote-sharded.wdl" as step4
 import "wes-denovo-helpers.wdl" as helpers
 import "wes-prioritize-csq.wdl" as prioritizeCSQ
 import "prioritizeCSQ.wdl" as prioritizeCSQ_og
@@ -37,6 +38,8 @@ workflow hailDenovoWES {
         String hail_docker
         String sv_base_mini_docker
         Float call_rate_threshold=0.8
+        RuntimeAttr? runtime_attr_merge_results
+        RuntimeAttr? runtime_attr_prioritize
     }
 
     scatter (mt_uri in mt_uris) {
@@ -98,36 +101,16 @@ workflow hailDenovoWES {
         }
     }
 
-    call helpers.mergeResultsPython as mergeDenovoResults {
+    call step4.step4 as step4 {
         input:
-            tsvs=step3.de_novo_results,
-            hail_docker=hail_docker,
-            merged_filename=cohort_prefix + "_wes_final_denovo.tsv",
-            input_size=size(step3.de_novo_results, 'GB')
-    }
-
-    call helpers.mergeResultsPython as mergeDenovoVEP {
-        input:
-            tsvs=step3.de_novo_vep,
-            hail_docker=hail_docker,
-            merged_filename=cohort_prefix + "_wes_final_denovo_vep.tsv",
-            input_size=size(step3.de_novo_vep, 'GB')
-    }
-
-    call prioritizeCSQ.mergeVEPIntoResults as mergeVEPIntoResults {
-        input:
-        de_novo_results=mergeDenovoResults.merged_tsv,
-        de_novo_vep=mergeDenovoVEP.merged_tsv,
+        de_novo_results_sharded=step3.de_novo_results, 
+        de_novo_vep_sharded=step3.de_novo_vep,
+        sample_column=sample_column,
         cohort_prefix=cohort_prefix,
-        hail_docker=hail_docker
-    }
-
-    call prioritizeCSQ_og.annotateMostSevereCSQ as annotateMostSevereCSQ {
-        input:
-        vcf_metrics_tsv=mergeVEPIntoResults.de_novo_merged,
         prioritize_csq_script=prioritize_csq_script,
         hail_docker=hail_docker,
-        sample_column=sample_column
+        runtime_attr_merge_results=runtime_attr_merge_results,
+        runtime_attr_prioritize=runtime_attr_prioritize
     }
 
     output {
@@ -138,12 +121,12 @@ workflow hailDenovoWES {
         Array[String] filtered_mt = step2.filtered_mt
         Array[File] post_filter_sample_qc_info = step2.post_filter_sample_qc_info
         # step 3 output
-        File de_novo_results = mergeDenovoResults.merged_tsv
-        File de_novo_vep = mergeDenovoVEP.merged_tsv
         Array[String] de_novo_ht = step3.de_novo_ht
         Array[String] tdt_mt = step3.tdt_mt
         Array[String] tdt_parent_aware_mt = step3.tdt_parent_aware_mt
         # prioritized CSQ
-        File de_novo_merged = annotateMostSevereCSQ.vcf_metrics_tsv_prior_csq
+        File de_novo_results = step4.de_novo_results
+        File de_novo_vep = step4.de_novo_vep
+        File de_novo_merged = step4.de_novo_merged
     }
 }

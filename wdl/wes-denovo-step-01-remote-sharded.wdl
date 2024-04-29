@@ -1,5 +1,7 @@
 version 1.0
 
+import "wes-denovo-helpers.wdl" as helpers
+
 struct RuntimeAttr {
     Float? mem_gb
     Int? cpu_cores
@@ -11,7 +13,7 @@ struct RuntimeAttr {
 
 workflow step1 {
     input {
-        File vcf_file
+        Array[String] mt_uris
         File ped_sex_qc
         File purcell5k
         File mpc_chr22_file
@@ -25,25 +27,33 @@ workflow step1 {
         RuntimeAttr? runtime_attr_override
     }
 
-    call hailAnnotateRemote {
-        input:
-            vcf_file=vcf_file,
-            ped_sex_qc=ped_sex_qc,
-            purcell5k=purcell5k,
-            mpc_chr22_file=mpc_chr22_file,
-            mpc_dir=mpc_dir,
-            gnomad_ht_uri=gnomad_ht_uri,
-            bucket_id=bucket_id,
-            cohort_prefix=cohort_prefix,
-            hail_annotation_script=hail_annotation_script,
-            hail_docker=hail_docker,
-            hail_autoscale=hail_autoscale,
-            runtime_attr_override=runtime_attr_override
+    scatter (mt_uri in mt_uris) {
+        call helpers.getHailMTSize as getInputMTSize {
+            input:
+                mt_uri=mt_uri,
+                hail_docker=hail_docker
+        }
+        call hailAnnotateRemote {
+            input:
+                vcf_file=mt_uri,
+                input_size=getInputMTSize.mt_size,
+                ped_sex_qc=ped_sex_qc,
+                purcell5k=purcell5k,
+                mpc_chr22_file=mpc_chr22_file,
+                mpc_dir=mpc_dir,
+                gnomad_ht_uri=gnomad_ht_uri,
+                bucket_id=bucket_id,
+                cohort_prefix=cohort_prefix,
+                hail_annotation_script=hail_annotation_script,
+                hail_docker=hail_docker,
+                hail_autoscale=hail_autoscale,
+                runtime_attr_override=runtime_attr_override
+        }
     }
 
     output {
-        String annot_mt = hailAnnotateRemote.annot_mt
-        File sample_qc_info = hailAnnotateRemote.sample_qc_info
+        Array[String] annot_mt = hailAnnotateRemote.annot_mt
+        Array[File] sample_qc_info = hailAnnotateRemote.sample_qc_info
     }
 }
 

@@ -15,7 +15,7 @@ workflow step2 {
     input {
         File ped_sex_qc
         File lcr_uri
-        String annot_mt
+        Array[String] annot_mt
         String cohort_prefix
         String hail_basic_filtering_script
         String hail_docker
@@ -24,28 +24,30 @@ workflow step2 {
         RuntimeAttr? runtime_attr_override
     }
 
-    call helpers.getHailMTSize as getHailMTSize {
-        input:
-            mt_uri=annot_mt,
-            hail_docker=hail_docker
-    }
-    call hailBasicFilteringRemote {
-        input:
-            lcr_uri=lcr_uri,
-            annot_mt=annot_mt,
-            input_size=select_first([getHailMTSize.mt_size]),
-            ped_sex_qc=ped_sex_qc,
-            bucket_id=bucket_id,
-            cohort_prefix=cohort_prefix,
-            hail_basic_filtering_script=hail_basic_filtering_script,
-            hail_docker=hail_docker,
-            call_rate_threshold=call_rate_threshold,
-            runtime_attr_override=runtime_attr_override
+    scatter (mt_uri in annot_mt) {
+        call helpers.getHailMTSize as getHailMTSize {
+            input:
+                mt_uri=mt_uri,
+                hail_docker=hail_docker
+        }
+        call hailBasicFilteringRemote {
+            input:
+                lcr_uri=lcr_uri,
+                annot_mt=mt_uri,
+                input_size=select_first([getHailMTSize.mt_size]),
+                ped_sex_qc=ped_sex_qc,
+                bucket_id=bucket_id,
+                cohort_prefix=cohort_prefix,
+                hail_basic_filtering_script=hail_basic_filtering_script,
+                hail_docker=hail_docker,
+                call_rate_threshold=call_rate_threshold,
+                runtime_attr_override=runtime_attr_override
+        }
     }
 
     output {
-        String filtered_mt = hailBasicFilteringRemote.filtered_mt
-        File post_filter_sample_qc_info = hailBasicFilteringRemote.post_filter_sample_qc_info
+        Array[String] filtered_mt = hailBasicFilteringRemote.filtered_mt
+        Array[File] post_filter_sample_qc_info = hailBasicFilteringRemote.post_filter_sample_qc_info
     }
 }
 

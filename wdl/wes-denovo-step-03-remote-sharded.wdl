@@ -13,42 +13,47 @@ struct RuntimeAttr {
 
 workflow step3 {
     input {
+        Array[String] filtered_mt
         File ped_sex_qc
-        File filtered_mt
         File loeuf_file
+        Boolean hail_autoscale
+        String bucket_id
         String cohort_prefix
         String hail_denovo_filtering_script
         String hail_docker
-        String bucket_id
-        RuntimeAttr? runtime_attr_override
+        String sv_base_mini_docker
     }
 
-    call helpers.getHailMTSize as getHailMTSize {
-        input:
-            mt_uri=filtered_mt,
-            hail_docker=hail_docker
-    }
-    call hailDenovoFilteringRemote {
-        input:
-            input_size=select_first([getHailMTSize.mt_size]),
-            filtered_mt=filtered_mt,
-            ped_sex_qc=ped_sex_qc,
-            bucket_id=bucket_id,
-            cohort_prefix=cohort_prefix,
-            loeuf_file=loeuf_file,
-            hail_denovo_filtering_script=hail_denovo_filtering_script,
-            hail_docker=hail_docker,
-            runtime_attr_override=runtime_attr_override
+    scatter (mt_uri in filtered_mt) {
+        call helpers.getHailMTSize as getStep2MTSize {
+            input:
+                mt_uri=mt_uri,
+                hail_docker=hail_docker
+        }
+    
+        call hailDenovoFilteringRemote {
+            input:
+                filtered_mt=mt_uri,
+                input_size=getStep2MTSize.mt_size,
+                ped_sex_qc=ped_sex_qc,
+                bucket_id=bucket_id,
+                cohort_prefix=cohort_prefix,
+                loeuf_file=loeuf_file,
+                hail_denovo_filtering_script=hail_denovo_filtering_script,
+                hail_docker=hail_docker
+        }
     }
 
     output {
-        File de_novo_results = hailDenovoFilteringRemote.de_novo_results
-        File de_novo_vep = hailDenovoFilteringRemote.de_novo_vep
-        String de_novo_ht = hailDenovoFilteringRemote.de_novo_ht
-        String tdt_mt = hailDenovoFilteringRemote.tdt_mt
-        String tdt_parent_aware_mt = hailDenovoFilteringRemote.tdt_parent_aware_mt
+        # step 3 output
+        Array[File] de_novo_results_sharded = hailDenovoFilteringRemote.de_novo_results
+        Array[File] de_novo_vep_sharded = hailDenovoFilteringRemote.de_novo_vep
+        Array[String] de_novo_ht = hailDenovoFilteringRemote.de_novo_ht
+        Array[String] tdt_mt = hailDenovoFilteringRemote.tdt_mt
+        Array[String] tdt_parent_aware_mt = hailDenovoFilteringRemote.tdt_parent_aware_mt
     }
 }
+
 
 task hailDenovoFilteringRemote {
     input {
