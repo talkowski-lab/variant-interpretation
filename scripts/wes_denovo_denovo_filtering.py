@@ -348,7 +348,7 @@ def kyles_de_novo_v16(mt: MatrixTable,
         .when(hemi_mt, hl.bind(call_hemi_mt, kid_pp, mom_pp))
         .or_missing())
 
-    tm = tm.annotate_entries(__call=de_novo_call)
+    tm = tm.annotate_entries(__call=de_novo_call, dp_ratio=dp_ratio)
     tm = tm.filter_entries(hl.is_defined(tm.__call))
     entries = tm.entries()
     
@@ -360,6 +360,7 @@ def kyles_de_novo_v16(mt: MatrixTable,
                            'father_entry',
                            'mother_entry',
                            'is_female',
+                           'dp_ratio',
                            **entries.__call)
             .rename({'__site_freq': 'prior'}))
 
