@@ -26,6 +26,7 @@ workflow hailDenovoWES {
         File purcell5k
         File mpc_chr22_file
         File loeuf_file
+        File eval_regions
 
         Boolean hail_autoscale
         String sample_column
@@ -129,9 +130,10 @@ workflow hailDenovoWES {
         runtime_attr_prioritize=runtime_attr_prioritize
     }
 
-    call step5.finalFiltering as step5 {
+    call step5.step5 as step5 {
         input:
         de_novo_merged=step4.de_novo_merged,
+        eval_regions=eval_regions,
         cohort_prefix=cohort_prefix,
         final_filtering_script=final_filtering_script,
         hail_docker=hail_docker,

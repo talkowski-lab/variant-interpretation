@@ -10,7 +10,7 @@ struct RuntimeAttr {
     Int? max_retries
 }
 
-workflow step4 {
+workflow step5 {
     input {
         File de_novo_merged
         File eval_regions
@@ -20,6 +20,8 @@ workflow step4 {
         Int vqslod_cutoff_snv=-20
         Int vqslod_cutoff_indel=-2
         Float af_threshold=0.005
+        RuntimeAttr? runtime_attr_filter_final
+        RuntimeAttr? runtime_attr_eval_regions
     }
 
     call finalFiltering {
@@ -30,7 +32,8 @@ workflow step4 {
         hail_docker=hail_docker,
         vqslod_cutoff_snv=vqslod_cutoff_snv,
         vqslod_cutoff_indel=vqslod_cutoff_indel,
-        af_threshold=af_threshold
+        af_threshold=af_threshold,
+        runtime_attr_override=runtime_attr_filter_final
     }
 
     call annotateEvalRegions {
@@ -38,7 +41,8 @@ workflow step4 {
         de_novo_final=finalFiltering.de_novo_filtered,
         eval_regions=eval_regions,
         cohort_prefix=cohort_prefix,
-        hail_docker=hail_docker
+        hail_docker=hail_docker,
+        runtime_attr_override=runtime_attr_eval_regions
     }
 
     output {
