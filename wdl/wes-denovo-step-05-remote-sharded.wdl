@@ -18,7 +18,7 @@ workflow step4 {
         String hail_docker
         Int vqslod_cutoff_snv=-20
         Int vqslod_cutoff_indel=-2
-        Float af_threshold=0.001
+        Float af_threshold=0.005
     }
 
     call finalFiltering {

@@ -49,7 +49,7 @@ workflow hailDenovoWES {
         Float min_gq=25
         Int vqslod_cutoff_snv=-20
         Int vqslod_cutoff_indel=-2
-        Float af_threshold=0.001
+        Float af_threshold=0.005
         Float call_rate_threshold=0.8
         RuntimeAttr? runtime_attr_merge_results
         RuntimeAttr? runtime_attr_prioritize

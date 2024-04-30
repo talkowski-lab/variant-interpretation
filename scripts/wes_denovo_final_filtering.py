@@ -1,6 +1,5 @@
 import datetime
 import pandas as pd
-import hail as hl
 import numpy as np
 import pandas as pd
 import ast
@@ -14,14 +13,6 @@ vqslod_cutoff_indel = int(sys.argv[4])
 MAF_thresh = float(sys.argv[5])
 cores = sys.argv[6]
 mem = int(np.floor(float(sys.argv[7])))
-
-prefix = os.path.basename(de_novo_merged).split('_wes_denovo_basic_filtering.mt')[0]
-
-hl.init(min_block_size=128, spark_conf={"spark.executor.cores": cores, 
-                    "spark.executor.memory": f"{mem}g",
-                    "spark.driver.cores": cores,
-                    "spark.driver.memory": f"{mem}g"
-                    }, tmp_dir="tmp", local_tmpdir="tmp")
 
 df = pd.read_csv(de_novo_merged, sep='\t')
 df['VarKey'] = df[['ID', 'proband.s']].astype(str).agg(':'.join, axis=1)
