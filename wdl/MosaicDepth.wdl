@@ -223,7 +223,7 @@ task RdTest {
       -m ~{median_file} \
       -f ~{fam_file} \
       -o plots \
-      -l sbd.mosaic.blacklist.apr2024.tsv
+      -l sbd.mosaic.blacklist.apr2024.tsv \
       -p TRUE
     mv plots/~{prefix}.metrics .
     tar -czf mosaic.tar.gz plots/
