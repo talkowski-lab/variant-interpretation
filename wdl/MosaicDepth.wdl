@@ -194,6 +194,7 @@ task RdTest {
     
     ### experimental step 2 4/24/2024 create sample QC whitelist for plotting
      gsutil cp gs://fc-545eca01-311b-4271-bc2f-a7dce28387c5/mosaic_params/sbd.mosaic.blacklist.apr2024.tsv .
+     gsutil cp gs://fc-545eca01-311b-4271-bc2f-a7dce28387c5/mosaic_params/sbd.mosaic.whitelist.apr2024.tsv .
     ### split test.bed
     while read -r line; do \
       chr=$(echo "$line" | cut -f1) \
@@ -224,6 +225,7 @@ task RdTest {
       -m ~{median_file} \
       -f ~{fam_file} \
       -o plots \
+      -w sbd.mosaic.whitelist.apr2024.tsv \
       -p TRUE
     mv plots/~{prefix}.metrics .
     tar -czf mosaic.tar.gz plots/
