@@ -23,7 +23,8 @@ sample_cc = args.scc
 	#print(result.stderr)
 
 #find number of trios in ped file
-ped=pd.read_csv(ped_file,sep='\t')
+ped=pd.read_csv(ped_file,sep='\t').iloc[:,:6]
+ped.columns = ['FamilyID','IndividualID','MotherID','FatherID','Sex','Affected']
 ped[['FamilyID','IndividualID','MotherID','FatherID']] = ped[['FamilyID','IndividualID','MotherID','FatherID']].astype(str)
 
 colnames = colnames=['sample', 'crai', 'cram']

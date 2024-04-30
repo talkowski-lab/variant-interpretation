@@ -12,7 +12,6 @@ build = 'GRCh38'
 vcf_file = sys.argv[1]
 ped_uri = sys.argv[2]
 af_threshold = float(sys.argv[3])
-# header_file = sys.argv[4]
 cores = sys.argv[4]
 mem = int(np.floor(float(sys.argv[5])))
 file_ext = sys.argv[6]
