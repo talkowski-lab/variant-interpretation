@@ -25,6 +25,7 @@ af_threshold = float(sys.argv[10])
 csq_af_threshold = float(sys.argv[11])
 gq_het_threshold = float(sys.argv[12])
 gq_hom_ref_threshold = float(sys.argv[13])
+qual_threshold = int(sys.argv[14])
 
 hl.init(min_block_size=128, spark_conf={"spark.executor.cores": cores, 
                     "spark.executor.memory": f"{mem}g",
@@ -113,13 +114,13 @@ mt_filtered = mt_filtered.filter_entries( (mt_filtered.DPC < 10) | (mt_filtered.
 
 # row (variant INFO) level filters - GATK recommendations for short variants
 dn_snv_cond_row = (hl.is_snp(mt_filtered.alleles[0], mt_filtered.alleles[1])
-                    & (mt_filtered.qual >= 150)
+                    & (mt_filtered.qual >= qual_threshold)
                     & (mt_filtered.info.SOR <= 2.5)
                     & (mt_filtered.info.ReadPosRankSum >= -1.4)
                     & (mt_filtered.info.QD >= 3.0)
                     & (mt_filtered.info.MQ >= 50))
 dn_indel_cond_row = (hl.is_indel(mt_filtered.alleles[0], mt_filtered.alleles[1])
-                    & (mt_filtered.qual >= 150)
+                    & (mt_filtered.qual >= qual_threshold)
                     & (mt_filtered.info.SOR <= 3)
                     & (mt_filtered.info.ReadPosRankSum >= -1.7)
                     & (mt_filtered.info.QD >= 4.0)

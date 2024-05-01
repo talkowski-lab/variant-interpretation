@@ -39,6 +39,7 @@ workflow filterRareParentsVariantsHail {
         Float csq_af_threshold=0.00001
         Int gq_het_threshold=99
         Int gq_hom_ref_threshold=30
+        Int qual_threshold=10
         Int shards_per_chunk=10
         RuntimeAttr? runtime_attr_merge_chunk
         RuntimeAttr? runtime_attr_filter_vcf
@@ -74,6 +75,7 @@ workflow filterRareParentsVariantsHail {
                 csq_af_threshold=csq_af_threshold,
                 gq_het_threshold=gq_het_threshold,
                 gq_hom_ref_threshold=gq_hom_ref_threshold,
+                qual_threshold=qual_threshold,
                 runtime_attr_override=runtime_attr_filter_vcf
                 }
     }
@@ -144,6 +146,7 @@ task filterRareParentsVariants {
         Float csq_af_threshold
         Int gq_het_threshold
         Int gq_hom_ref_threshold
+        Int qual_threshold
         RuntimeAttr? runtime_attr_override
     }
 
@@ -178,7 +181,7 @@ task filterRareParentsVariants {
         curl ~{filter_rare_parents_python_script} > filter_rare_variants.py
         python3.9 filter_rare_variants.py ~{lcr_uri} ~{ped_uri_trios} ~{meta_uri} ~{trio_uri} ~{vcf_file} \
         ~{cohort_prefix} ~{cpu_cores} ~{memory} ~{AC_threshold} ~{AF_threshold} ~{csq_af_threshold} \
-        ~{gq_het_threshold} ~{gq_hom_ref_threshold} > stdout
+        ~{gq_het_threshold} ~{gq_hom_ref_threshold} ~{qual_threshold} > stdout
 
         cp $(ls . | grep hail*.log) hail_log.txt
     >>>
