@@ -38,9 +38,9 @@ pd.options.display.max_colwidth = 500
 #cram['crai'] = cram['crai'].str.replace('gs://', '/cromwell_root/')
 
 
-maternal_list = ped["MotherID"]
-paternal_list = ped["FatherID"]
-sample_list = ped["IndividualID"]
+maternal_list = ped["MotherID"].unique()
+paternal_list = ped["FatherID"].unique()
+sample_list = ped["IndividualID"].unique()
 
 maternal_list = [i for i in maternal_list if i != '0']
 print("Number of moms: ",len(maternal_list))
