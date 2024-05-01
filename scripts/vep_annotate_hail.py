@@ -2,11 +2,13 @@ from pyspark.sql import SparkSession
 import hail as hl
 import numpy as np
 import sys
+import ast
 
 vcf_file = sys.argv[1]
 vep_annotated_vcf_name = sys.argv[2]
 cores = sys.argv[3]  # string
 mem = int(np.floor(float(sys.argv[4])))
+reannotate_ac_af = ast.literal_eval(sys.argv[5].capitalize())
 
 hl.init(min_block_size=128, spark_conf={"spark.executor.cores": cores, 
                     "spark.executor.memory": f"{mem}g",
@@ -44,8 +46,8 @@ if 'num_alleles' not in list(mt.row_value.keys()):
     mt = split_multi_ssc(mt)
     # mt = mt.distinct_by_row()
 
-# check if AC is empty
-if (mt.filter_rows(hl.is_defined(mt.info.AC), keep=False).count_rows()==0):
+# reannotate
+if (reannotate_ac_af):
     mt = hl.variant_qc(mt)
     mt = mt.annotate_rows(info=mt.info.annotate(AC=mt.variant_qc.AC[1],
                                       AF=mt.variant_qc.AF[1]))

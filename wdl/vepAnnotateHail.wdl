@@ -34,6 +34,7 @@ workflow vepAnnotateHail {
         Boolean split_by_chromosome
         Boolean split_into_shards 
         Boolean merge_split_vcf
+        Boolean reannotate_ac_af=false
         Int shards_per_chunk=10  # combine pre-sharded VCFs
         Array[File]? vcf_shards  # if scatterVCF.wdl already run before VEP
         Array[String]? row_fields_to_keep=[false]
@@ -75,6 +76,7 @@ workflow vepAnnotateHail {
                     hg38_vep_cache=hg38_vep_cache,
                     loeuf_data=loeuf_data,
                     vep_hail_docker=vep_hail_docker,
+                    reannotate_ac_af=reannotate_ac_af,
                     runtime_attr_override=runtime_attr_vep_annotate
             }
         }
@@ -108,6 +110,7 @@ workflow vepAnnotateHail {
                     hg38_vep_cache=hg38_vep_cache,
                     loeuf_data=loeuf_data,
                     vep_hail_docker=vep_hail_docker,
+                    reannotate_ac_af=reannotate_ac_af,
                     runtime_attr_override=runtime_attr_vep_annotate
             }
         }
@@ -133,6 +136,7 @@ task vepAnnotate {
         File hg38_vep_cache
         File loeuf_data
         String vep_hail_docker
+        Boolean reannotate_ac_af
         RuntimeAttr? runtime_attr_override
     }
 
@@ -198,7 +202,7 @@ task vepAnnotate {
         }' > vep_config.json
 
         curl ~{vep_annotate_hail_python_script} > vep_annotate.py
-        python3.9 vep_annotate.py ~{vcf_file} ~{vep_annotated_vcf_name} ~{cpu_cores} ~{memory}
+        python3.9 vep_annotate.py ~{vcf_file} ~{vep_annotated_vcf_name} ~{cpu_cores} ~{memory} ~{reannotate_ac_af}
         cp $(ls . | grep hail*.log) hail_log.txt
         /opt/vep/bcftools/bcftools index -t ~{vep_annotated_vcf_name}
     >>>
