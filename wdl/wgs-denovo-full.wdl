@@ -50,8 +50,9 @@ workflow wgs_denovo_full {
             String sample_column
             Boolean exclude_gq_filters=false
             Boolean merge_split_vcf=false
-            Int shards_per_chunk=10
             Int batch_size
+            Int shards_per_chunk=10
+            Int qual_threshold=150
             Float minDQ
             Float AF_threshold=0.005
             Int AC_threshold=2
@@ -72,6 +73,7 @@ workflow wgs_denovo_full {
             cohort_prefix=cohort_prefix,
             hail_docker=hail_docker,
             vep_hail_docker=vep_hail_docker,
+            qual_threshold=qual_threshold,
             exclude_gq_filters=exclude_gq_filters,
             merge_split_vcf=merge_split_vcf,
             shards_per_chunk=shards_per_chunk

@@ -23,9 +23,10 @@ ped_uri = sys.argv[2]
 meta_uri = sys.argv[3]
 trio_uri = sys.argv[4]
 vcf_uri = sys.argv[5]
-exclude_gq_filters = ast.literal_eval(sys.argv[6].capitalize())
-cores = sys.argv[7]  # string
-mem = int(np.floor(float(sys.argv[8])))
+exclude_gq_filters = ast.literal_eval(sys.argv[6].capitalize())  # DRAGEN VCFs...
+qual_threshold = int(sys.argv[9])  # also for DRAGEN VCFs...
+cores = sys.argv[8]  # string
+mem = int(np.floor(float(sys.argv[9])))
 
 prefix = os.path.basename(vcf_uri).split('.vcf')[0]
 
@@ -121,13 +122,13 @@ def trim_vcf(vcf_uri, lcr_uri, ped_uri, meta_uri, trio_uri, vcf_out_uri, build, 
     mt = mt.filter_entries( (mt.DPC < 10) | (mt.DPC > 200), keep = False) 
     # row (variant INFO) level filters - GATK recommendations for short variants
     dn_snv_cond_row = (hl.is_snp(mt.alleles[0], mt.alleles[1])
-                        & (mt.qual >= 150)
+                        & (mt.qual >= qual_threshold)
                         & (mt.info.SOR <= 2.5)
                         & (mt.info.ReadPosRankSum >= -1.4)
                         & (mt.info.QD >= 3.0)
                         & (mt.info.MQ >= 50))
     dn_indel_cond_row = (hl.is_indel(mt.alleles[0], mt.alleles[1])
-                        & (mt.qual >= 150)
+                        & (mt.qual >= qual_threshold)
                         & (mt.info.SOR <= 3)
                         & (mt.info.ReadPosRankSum >= -1.7)
                         & (mt.info.QD >= 4.0)
