@@ -43,7 +43,15 @@ mt = hl.import_vcf(vcf_file, force_bgz=True, array_elements_required=False, call
 if 'num_alleles' not in list(mt.row_value.keys()):
     mt = split_multi_ssc(mt)
     # mt = mt.distinct_by_row()
-# annotate cohort ac to INFO field (after splitting multiallelic)
+
+# check if AC is empty
+if (mt.filter_rows(hl.is_defined(mt.info.AC), keep=False).count_rows()==0):
+    mt = hl.variant_qc(mt)
+    mt = mt.annotate_rows(info=mt.info.annotate(AC=mt.variant_qc.AC[1],
+                                      AF=mt.variant_qc.AF[1]))
+    mt = mt.drop('variant_qc')
+
+# annotate cohort AC to INFO field (after splitting multiallelic)
 mt = mt.annotate_rows(info=mt.info.annotate(cohort_AC=mt.info.AC[mt.a_index - 1],
                                             cohort_AF=mt.info.AF[mt.a_index - 1]))
 
