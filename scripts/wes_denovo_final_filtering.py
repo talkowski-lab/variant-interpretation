@@ -25,11 +25,12 @@ df = df[~df['proband_entry.GT'].isin(['1/1','1|1'])]
 # Filter out LOW confidence
 df = df[df.confidence!='LOW']
 
-# Filter SNPs on VQSLOD
-df = df[(df.isIndel)|((df.VQSLOD >= vqslod_cutoff_snv) | df.VQSLOD.isna())] 
+if 'VQSLOD' in df.columns:
+    # Filter SNPs on VQSLOD
+    df = df[(df.isIndel)|((df.VQSLOD >= vqslod_cutoff_snv) | df.VQSLOD.isna())] 
 
-# Filter indels on VQSLOD
-df = df[(df.isSNV)|((df.VQSLOD >= vqslod_cutoff_indel) | df.VQSLOD.isna())] 
+    # Filter indels on VQSLOD
+    df = df[(df.isSNV)|((df.VQSLOD >= vqslod_cutoff_indel) | df.VQSLOD.isna())] 
 
 # Set frequency threshold
 
