@@ -9,6 +9,7 @@ vep_annotated_vcf_name = sys.argv[2]
 cores = sys.argv[3]  # string
 mem = int(np.floor(float(sys.argv[4])))
 reannotate_ac_af = ast.literal_eval(sys.argv[5].capitalize())
+build = sys.argv[6]
 
 hl.init(min_block_size=128, spark_conf={"spark.executor.cores": cores, 
                     "spark.executor.memory": f"{mem}g",
@@ -39,7 +40,7 @@ def split_multi_ssc(mt):
     return mt
 
 header = hl.get_vcf_metadata(vcf_file) 
-mt = hl.import_vcf(vcf_file, force_bgz=True, array_elements_required=False, call_fields=[], reference_genome='GRCh38')
+mt = hl.import_vcf(vcf_file, force_bgz=True, array_elements_required=False, call_fields=[], reference_genome=build)
 
 # mt = mt.distinct_by_row()
 if 'num_alleles' not in list(mt.row_value.keys()):

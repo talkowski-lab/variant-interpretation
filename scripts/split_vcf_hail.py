@@ -8,6 +8,7 @@ records_per_shard = int(sys.argv[3])
 prefix = sys.argv[4]
 cores = sys.argv[5]
 mem = int(np.floor(float(sys.argv[6])))
+build = sys.argv[7]
 # row_fields_to_keep = sys.argv[7].split(',')
 
 # if row_fields_to_keep[0] == 'false':
@@ -23,7 +24,7 @@ is_vcf = file.split('.')[-1] != 'mt'
 if not is_vcf:
     mt = hl.read_matrix_table(file)
 else:
-    mt = hl.import_vcf(file, force_bgz=True, array_elements_required=False, call_fields=[], reference_genome='GRCh38', find_replace=('nan', '.'))
+    mt = hl.import_vcf(file, force_bgz=True, array_elements_required=False, call_fields=[], reference_genome=build, find_replace=('nan', '.'))
     header = hl.get_vcf_metadata(file) 
 
 try:
