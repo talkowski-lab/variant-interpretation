@@ -47,6 +47,7 @@ task removeDuplicatesVCF {
     set -e
 
     bcftools norm -D ~{input_vcf} | \
+      bcftools norm -m +any | \ ## Merge multiallelic at this stage, pre-joint-genotyping
       bcftools sort -O z -o ~{sample_id}.readgroupadded.uniq.g.vcf.gz
 
     tabix -p vcf ~{sample_id}.readgroupadded.uniq.g.vcf.gz
