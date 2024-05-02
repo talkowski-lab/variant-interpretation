@@ -46,16 +46,16 @@ if 'num_alleles' not in list(mt.row_value.keys()):
     mt = split_multi_ssc(mt)
     # mt = mt.distinct_by_row()
 
-# reannotate
-if (reannotate_ac_af):
-    mt = hl.variant_qc(mt)
-    mt = mt.annotate_rows(info=mt.info.annotate(AC=mt.variant_qc.AC[1],
-                                      AF=mt.variant_qc.AF[1]))
-    mt = mt.drop('variant_qc')
-
 # annotate cohort AC to INFO field (after splitting multiallelic)
 mt = mt.annotate_rows(info=mt.info.annotate(cohort_AC=mt.info.AC[mt.a_index - 1],
                                             cohort_AF=mt.info.AF[mt.a_index - 1]))
+
+# reannotate
+if (reannotate_ac_af):
+    mt = hl.variant_qc(mt)
+    mt = mt.annotate_rows(info=mt.info.annotate(cohort_AC=mt.variant_qc.AC[1],
+                                      cohort_AF=mt.variant_qc.AF[1]))
+    mt = mt.drop('variant_qc')
 
 # for VCFs with AS_VQSLOD and missing VQSLOD
 all_as_fields = [col for col in list(mt.info) if 'AS_' in col]
