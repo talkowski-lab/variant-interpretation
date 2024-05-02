@@ -91,6 +91,11 @@ def load_variants(vcf_metrics_tsv, ultra_rare_inherited_tsv, var_type, use_rando
     for samp in ['sample', 'mother', 'father']:
         final_output[f"DPC_{samp}"] = final_output[f"AD_{samp}"].apply(ast.literal_eval).apply(sum)
         final_output[f"AB_{samp}"] = final_output[f"AD_{samp}"].apply(ast.literal_eval).str[1] / final_output[f"DPC_{samp}"]
+    
+    # if final_output isn't the output of step06
+    parent_metrics = ['GQ', 'AB', 'DPC', 'VAF']
+    for metric in parent_metrics:
+        final_output[f'{metric}_parent'] = final_output[[f'{metric}_mother', f'{metric}_father']].min(axis=1)
 
     ultra_rare['GQ_hom'] = ultra_rare.apply(lambda row: row.GQ_mother if row.GT_mother in ['0/0', '0|0']
                                             else row.GQ_father, axis=1)
