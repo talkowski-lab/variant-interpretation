@@ -312,9 +312,9 @@ final_output.loc[final_output.TYPE=='SNV', 'Indel_type'] = 'SNV'
 
 rep_reg = pd.read_csv(rep_regions, sep='\t', header=None)
 final_output['repetitive_region'] = final_output.VarKey.isin(rep_reg[3])
-final_output['multiallelic'] = (final_output.DPC_sample!=final_output.DP_sample)\
-                |(final_output.DPC_mother!=final_output.DP_mother)\
-                |(final_output.DPC_father!=final_output.DP_father)
+# final_output['multiallelic'] = (final_output.DPC_sample!=final_output.DP_sample)\
+#                 |(final_output.DPC_mother!=final_output.DP_mother)\
+#                 |(final_output.DPC_father!=final_output.DP_father)
 
 final_output = final_output[(final_output.VarKey.isin(passes_variant_level))
                             | (final_output.TYPE!=var_type)]
