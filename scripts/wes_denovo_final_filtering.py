@@ -46,6 +46,7 @@ df = df[df['proband_entry.AD_alt']>=AD_alt_threshold]
 
 # Pick one variant per gene per sample
 df['SAMPLE_GENE'] = df[['proband.s', 'SYMBOL']].astype(str).agg('-'.join, axis=1)
-df = df.sort_values(['SAMPLE_GENE','csq_score'], ascending=False).groupby('SAMPLE_GENE').head(1).reset_index(drop=True)
+df = pd.concat([df[df.isCoding].sort_values(['SAMPLE_GENE','csq_score'], ascending=False).groupby('SAMPLE_GENE').head(1).reset_index(drop=True),
+                df[~df.isCoding]])
 
 df.to_csv(cohort_prefix+'_de_novo_filtered_final.tsv', sep='\t', index=False)
