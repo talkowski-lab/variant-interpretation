@@ -12,7 +12,7 @@ chromosome <- args[5]
 
 
 df_ori <- as.data.frame(read.table(input_gd, header = FALSE, sep="\t",stringsAsFactors=FALSE, quote=""))
-colnames(df_ori) <- c("chrom", "start", "end", "name", "annotation", "svtype")
+colnames(df_ori) <- c("chrom", "start", "end", "name", "svtype")
 df <- subset(df_ori, chrom == chromosome)
 
 df_DUP <- subset(df, svtype == 'DUP' | svtype == 'DEL;DUP')
