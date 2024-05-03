@@ -287,6 +287,7 @@ task HaplotypeCaller {
         Int? disk_space_gb
         Boolean use_ssd = false
         Int? preemptible_attempts
+        Int? boot_disk
     }
 
     String java_opt = select_first([java_options, "-XX:GCTimeLimit=50 -XX:GCHeapFreeLimit=10"])
@@ -333,6 +334,7 @@ task HaplotypeCaller {
         docker: docker
         memory: machine_mem_gb + " GB"
         disks: "local-disk " + select_first([disk_space_gb, disk_size]) + if use_ssd then " SSD" else " HDD"
+        bootDiskSizeGb: select_first([boot_disk, 16])
         preemptible: select_first([preemptible_attempts, 3])
     }
     output {
