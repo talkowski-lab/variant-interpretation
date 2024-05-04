@@ -29,7 +29,7 @@ workflow CC_Crams{
                     gatk4_jar_override = gatk4_jar_override,
                     gatk_docker = gatk_docker,
                     editRGSMjar = editRGSMjar
-            }
+            }}
 
         if (!(disable_dict_validation)){
             call CollectCountsCram as coverage_all{
@@ -45,7 +45,6 @@ workflow CC_Crams{
                     gatk_docker = gatk_docker,
                     editRGSMjar = editRGSMjar
             }
-
         }
     }
     output {
