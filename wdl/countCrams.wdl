@@ -76,7 +76,6 @@ task CollectCountsCram {
         java "-Xmx${command_mem_mb}m" -jar ${editRGSMjar} temp_file.tsv ${counts_exons_filename} ${sample_ID}
 
         rm -rf temp_file.tsv
-
     >>>
 
     runtime {
