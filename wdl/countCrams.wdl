@@ -13,7 +13,7 @@ workflow CC_Crams{
     File? gatk4_jar_override
     String gatk_docker
 
-    String? disable_dict_validation
+    Boolean? disable_dict_validation
 
     scatter (scatter_index in range(length(crams))){
         if (disable_dict_validation){
