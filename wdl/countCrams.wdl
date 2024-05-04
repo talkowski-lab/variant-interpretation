@@ -70,6 +70,7 @@ task CollectCountsCram {
             --interval-merging-rule OVERLAPPING_ONLY \
             --reference ${hg38_reference} \
             --format TSV \
+            --disable-sequence-dictionary-validation true \
             -O temp_file.tsv
 
         java "-Xmx${command_mem_mb}m" -jar ${editRGSMjar} temp_file.tsv ${counts_exons_filename} ${sample_ID}
