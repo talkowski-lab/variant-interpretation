@@ -14,6 +14,7 @@ MAF_thresh = float(sys.argv[5])
 AD_alt_threshold = int(sys.argv[6])
 cores = sys.argv[7]
 mem = int(np.floor(float(sys.argv[8])))
+single_variant = ast.literal_eval(sys.argv[9].capitalize())
 
 df = pd.read_csv(de_novo_merged, sep='\t')
 df['VarKey'] = df[['ID', 'proband.s']].astype(str).agg(':'.join, axis=1)
@@ -44,9 +45,10 @@ df = df[(df.gnomad_non_neuro_AF.isna())|(df.gnomad_non_neuro_AF<=MAF_thresh)]
 df['proband_entry.AD_alt'] = df['proband_entry.AD'].apply(ast.literal_eval).str[1].astype(int)
 df = df[df['proband_entry.AD_alt']>=AD_alt_threshold]
 
-# Pick one variant per gene per sample
-df['SAMPLE_GENE'] = df[['proband.s', 'SYMBOL']].astype(str).agg('-'.join, axis=1)
-df = pd.concat([df[df.isCoding].sort_values(['SAMPLE_GENE','csq_score'], ascending=False).groupby('SAMPLE_GENE').head(1).reset_index(drop=True),
-                df[~df.isCoding]])
+if single_variant:
+    # Pick one variant per gene per sample
+    df['SAMPLE_GENE'] = df[['proband.s', 'SYMBOL']].astype(str).agg('-'.join, axis=1)
+    df = pd.concat([df[df.isCoding].sort_values(['SAMPLE_GENE','csq_score'], ascending=False).groupby('SAMPLE_GENE').head(1).reset_index(drop=True),
+                    df[~df.isCoding]])
 
 df.to_csv(cohort_prefix+'_de_novo_filtered_final.tsv', sep='\t', index=False)

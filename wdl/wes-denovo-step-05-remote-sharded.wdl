@@ -21,6 +21,7 @@ workflow step5 {
         Int vqslod_cutoff_indel=-2
         Int AD_alt_threshold=10
         Float af_threshold=0.005
+        Boolean single_variant=true
         RuntimeAttr? runtime_attr_filter_final
         RuntimeAttr? runtime_attr_eval_regions
     }
@@ -35,6 +36,7 @@ workflow step5 {
         vqslod_cutoff_indel=vqslod_cutoff_indel,
         af_threshold=af_threshold,
         AD_alt_threshold=AD_alt_threshold,
+        single_variant=single_variant,
         runtime_attr_override=runtime_attr_filter_final
     }
 
@@ -61,7 +63,8 @@ task finalFiltering {
         Int vqslod_cutoff_snv
         Int vqslod_cutoff_indel
         Int AD_alt_threshold
-        Float af_threshold=0.001
+        Float af_threshold
+        Boolean single_variant
         RuntimeAttr? runtime_attr_override
     }
     Float input_size = size(de_novo_merged, 'GB')
@@ -95,7 +98,7 @@ task finalFiltering {
     command <<<
     curl ~{final_filtering_script} > final_filtering.py
     python3 final_filtering.py ~{de_novo_merged} ~{cohort_prefix} ~{vqslod_cutoff_snv} ~{vqslod_cutoff_indel} \
-        ~{af_threshold} ~{AD_alt_threshold} ~{cpu_cores} ~{memory} > stdout
+        ~{af_threshold} ~{AD_alt_threshold} ~{cpu_cores} ~{memory} ~{single_variant} > stdout
     >>>
 
     output {
