@@ -52,6 +52,7 @@ workflow hailDenovoWES {
         Int vqslod_cutoff_indel=-2
         Float af_threshold=0.005
         Float call_rate_threshold=0.8
+        Boolean single_variant=true
         RuntimeAttr? runtime_attr_merge_results
         RuntimeAttr? runtime_attr_prioritize
     }
@@ -139,7 +140,8 @@ workflow hailDenovoWES {
         hail_docker=hail_docker,
         vqslod_cutoff_snv=vqslod_cutoff_snv,
         vqslod_cutoff_indel=vqslod_cutoff_indel,
-        af_threshold=af_threshold
+        af_threshold=af_threshold,
+        single_variant=single_variant
     }
 
     output {
