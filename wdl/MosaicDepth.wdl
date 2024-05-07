@@ -191,11 +191,6 @@ task RdTest {
     /opt/RdTest/localize_bincov.sh rdtest.bed ~{coverage_file}
     awk -v OFS="\t" '{print $1,$2,$3,$4,$6,$5}' rdtest.bed > test.bed
     
-    ### experimental step 2 4/24/2024 create sample QC whitelist for plotting
-     gsutil cp gs://fc-545eca01-311b-4271-bc2f-a7dce28387c5/mosaic_params/sbd.mosaic.blacklist.apr2024.tsv .
-     #gsutil cp gs://fc-545eca01-311b-4271-bc2f-a7dce28387c5/mosaic_params/sbd.mosaic.whitelist.apr2024.tsv .
-    ##updated whitelist may 2024
-    gsutil cp gs://fc-545eca01-311b-4271-bc2f-a7dce28387c5/mosaic_params/sbd.mosaic.whitelist.may2024.tsv .
     ### split test.bed
     while read -r line; do \
       chr=$(echo "$line" | cut -f1) \
@@ -209,20 +204,9 @@ task RdTest {
         echo -e "$chr\t$start\t$end\t$id\t$sample\t$type" 
       done
     done < test.bed  > test2.bed
-    ### remove any entries in test2.bed that match the blacklist
-    
-    ## may05.2024 remove blacklist step to plot all events to find missing ## revert may 6 2024!
-    #awk 'NR==FNR { blacklist[$1] = 1; next } !( $5 in blacklist )' sbd.mosaic.blacklist.apr2024.tsv test2.bed | sort -k1,1 -k2,2n -k3,3n > filtered_test.bed
-
-    ## optional: collapse calls for plotting
-    #bedtools groupby -i filtered_test.bed -g 1,2,3,4,6 -c 5 -o collapse -delim ',' | awk 'BEGIN {OFS="\t"} {print $1, $2, $3, $4, $6, $5}' > filtered_test2.bed  
     rm test.bed
-## revert may 6 2024
-#    mv filtered_test.bed test.bed
-mv test2.bed test.bed
-### fin
-
-#rm -w sbd.mosaic.whitelist.may2024.tsv \
+    mv test2.bed test.bed
+    ### fin
 
     mkdir plots
     Rscript /opt/RdTest/RdTest.R \
