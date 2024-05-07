@@ -52,7 +52,7 @@ workflow Mosaic{
 
   output{
     File rare_potential=GetPotential.rare
-    #File common_potential=GetPotential.common
+    File common_potential=GetPotential.common
     File igvplots=RdTest.plots
     File stats=RdTest.stats
   }
@@ -102,17 +102,15 @@ task GetPotential{
     bash /opt/sv-pipeline/04_variant_resolution/scripts/stitch_fragmented_calls.sh -x 1 test2.vcf.gz test3.vcf.gz
     svtk vcf2bed test3.vcf.gz ~{name}.potentialmosaic.bed
 
-    ## removing rare filtering; rare and common are identical here
-    #while read chr start end id type sample;do
-    #    n=$(zfgrep "$id:" ~{lookup}|cut -f 8)||true
-    #    if [ "$n" -eq "$n" ] ;then
-    #      if [ "$n" -lt ~{rare_cutoff} ]; then
-    #        printf "$chr\t$start\t$end\t$id\t$type\t$sample\n"
-    #      fi
-    #    fi
-    #done<~{name}.potentialmosaic.bed > ~{name}.potentialmosaic.rare.bed
-
-    cp ~{name}.potentialmosaic.bed ~{name}.potentialmosaic.rare.bed
+    ## rare filtering
+    while read chr start end id type sample;do
+        n=$(zfgrep "$id:" ~{lookup}|cut -f 8)||true
+        if [ "$n" -eq "$n" ] ;then
+          if [ "$n" -lt ~{rare_cutoff} ]; then
+            printf "$chr\t$start\t$end\t$id\t$type\t$sample\n"
+          fi
+        fi
+    done<~{name}.potentialmosaic.bed > ~{name}.potentialmosaic.rare.bed
 
     echo -e "#chr\tstart\tend\tid\ttype\tsample" > header.bed
     cat header.bed ~{name}.potentialmosaic.bed | bgzip > ~{name}.potentialmosaic.bed.gz
@@ -120,15 +118,16 @@ task GetPotential{
 
     zcat < ~{name}.potentialmosaic.rare.bed.gz | awk '{print $1"_"$5"_"$6"\t"$2"\t"$3"\t"$4"\t"$6"\t"$5}' | sed -e 's/id/name/g' | sed -e 's/type/svtype/g' | sort -k1,1 -k2,2g > ~{name}.depth.ref.bed
     bedtools merge -d 1000 -i ~{name}.depth.ref.bed -delim "," -c 4,5,6 -o collapse > ~{name}.depth.ref.cluster.bed
+
+## refDepth2.R will find sample outliers but will not filter (this is done in postproc)
     Rscript /opt/RdTest/refDepth2.R ~{name}.depth.ref.cluster.bed ~{name}.depth.ref.cluster.filt.bed ~{name}.outliers.txt
+
+## excluding blacklisted calls
     bedtools intersect -v -f 0.5 -wa -wb -a ~{name}.depth.ref.cluster.filt.bed -b ~{sd_blacklist} > ~{name}.depth.ref.cluster.filt.rmSD.bed
     bedtools intersect -v -f 0.5 -wa -wb -a ~{name}.depth.ref.cluster.filt.rmSD.bed -b ~{igl_blacklist} > ~{name}.depth.ref.cluster.filt.rmSD.rmIGL.bed
     cat header.bed ~{name}.depth.ref.cluster.filt.rmSD.rmIGL.bed | sed -e 's/id/name/g' | sed -e 's/svtype/type/g' | bgzip -c > ~{name}.potentialmosaic.rare.bed.gz
 
-    ## experimental step delete 4/17/2024 ## split.sh ## split clustered SVs
-    #gsutil cp gs://fc-545eca01-311b-4271-bc2f-a7dce28387c5/mosaic_params/test2.qc.bed.gz . 
-    #mv test2.qc.bed.gz ~{name}.potentialmosaic.rare.bed.gz
-    rm ~{name}.potentialmosaic.rare.bed
+## split.sh split clustered SVs
     gunzip ~{name}.potentialmosaic.rare.bed.gz
     while read -r line; do \
       chr=$(echo "$line" | cut -f1) \
@@ -145,7 +144,7 @@ task GetPotential{
     rm ~{name}.potentialmosaic.rare.bed
     mv ~{name}.potentialmosaic.rare2.bed ~{name}.potentialmosaic.rare.bed
     bgzip ~{name}.potentialmosaic.rare.bed
-    ## fin    
+## fin    
 
   >>>
   runtime {
