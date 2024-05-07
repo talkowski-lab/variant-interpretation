@@ -143,10 +143,10 @@ workflow MosaicManualCheck{
   }
 
   output{
-    #File depth_bed = concat_depth_bed.merged_bed_file
-    #File pesr_bed = concat_pesr_bed.merged_bed_file
+    File depth_bed = concat_depth_bed.merged_bed_file
+    File pesr_bed = concat_pesr_bed.merged_bed_file
     File depth_plots = concat_depth_plots.merged_plots
-    #File pesr_plots = concat_pesr_plots.merged_plots
+    File pesr_plots = concat_pesr_plots.merged_plots
   }
 }
 
