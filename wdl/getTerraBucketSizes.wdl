@@ -15,6 +15,7 @@ workflow getTerraBucketSizes {
         String WORKSPACE
         String bucket_id
         String hail_docker
+        Boolean delete_submissions=false
     }
 
     call getBucketSizes {
@@ -42,14 +43,15 @@ workflow getTerraBucketSizes {
         hail_docker=hail_docker
     }
 
-    scatter (submissions_shard in getSubmissionsToDelete.submissions_to_delete) {
-        call deleteSubmissions {
-            input:
-            submissions_to_delete=submissions_shard,
-            hail_docker=hail_docker
+    if (delete_submissions) {
+        scatter (submissions_shard in getSubmissionsToDelete.submissions_to_delete) {
+            call deleteSubmissions {
+                input:
+                submissions_to_delete=submissions_shard,
+                hail_docker=hail_docker
+            }
         }
     }
-
     output {
         File file_sizes = getBucketSizes.file_sizes
         File submission_info = getSubmissionInfo.submission_info
