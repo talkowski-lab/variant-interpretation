@@ -16,7 +16,8 @@ workflow ReblockGVCFs {
     String? annotations_to_keep_command
     String? annotations_to_remove_command
     Boolean? move_filters_to_genotypes
-    Boolean move_bam_or_cram_files = false
+    Boolean move_bam_or_cram_files=false
+    Boolean disable_sequence_dictionary_validation=false
     String docker_image
     String gvcf_file_extension = ".g.vcf.gz"
   }
@@ -42,6 +43,7 @@ workflow ReblockGVCFs {
       ref_dict = ref_dict,
       tree_score_cutoff = tree_score_cutoff,
       annotations_to_keep_command = annotations_to_keep_command,
+      disable_sequence_dictionary_validation=disable_sequence_dictionary_validation,
       output_vcf_filename = gvcf_basename + ".rb.g.vcf.gz"
   }
 
@@ -113,6 +115,7 @@ task Reblock {
     String output_vcf_filename
     String docker_image = "us.gcr.io/broad-gatk/gatk:4.5.0.0"
     Int additional_disk = 20
+    Boolean disable_sequence_dictionary_validation
     String? annotations_to_keep_command
     Float? tree_score_cutoff
   }
@@ -129,6 +132,7 @@ task Reblock {
       -do-qual-approx \
       --floor-blocks -GQB 20 -GQB 30 -GQB 40 \
       ~{annotations_to_keep_command} \
+      ~{if disable_sequence_dictionary_validation then "--disable-sequence-dictionary-validation" else ""}
       ~{"--tree-score-threshold-to-no-call " + tree_score_cutoff} \
       -O ~{output_vcf_filename}
   }
