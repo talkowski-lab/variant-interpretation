@@ -132,7 +132,7 @@ task Reblock {
       -do-qual-approx \
       --floor-blocks -GQB 20 -GQB 30 -GQB 40 \
       ~{annotations_to_keep_command} \
-      ~{if disable_sequence_dictionary_validation then "--disable-sequence-dictionary-validation \" else ""}
+      ~{if disable_sequence_dictionary_validation then "--disable-sequence-dictionary-validation" else ""} \
       ~{"--tree-score-threshold-to-no-call " + tree_score_cutoff} \
       -O ~{output_vcf_filename}
   }
