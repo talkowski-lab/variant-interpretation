@@ -42,7 +42,7 @@ workflow ReblockGVCFs {
       ref_dict = ref_dict,
       tree_score_cutoff = tree_score_cutoff,
       annotations_to_keep_command = annotations_to_keep_command,
-      output_vcf_filename = collaborator_participant_id + ".rb.g.vcf.gz"
+      output_vcf_filename = gvcf_basename + ".rb.g.vcf.gz"
   }
 
 
@@ -97,8 +97,8 @@ task LocalizeReads {
     fi
   }
   output {
-    File output_file = basename(collaborator_participant_id) + ".gvcf.gz"
-    File output_index = basename(collaborator_participant_id) + ".gvcf.gz.tbi"
+    File output_file = basename(reads_path)
+    File output_index = basename(reads_index)
   }
 }
 
