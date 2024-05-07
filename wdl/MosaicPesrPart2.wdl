@@ -63,15 +63,16 @@ task GetPotential{
   command<<<
     set -euox pipefail
     fgrep -v -f ~{outlier} ~{potential} >potential.txt
-    #while read chr start end id type sample;do
-    #  n=$(zfgrep "$id:" ~{lookup}|cut -f 5) ||true
-    #  if [ "$n" -eq "$n" ] ;then
-    #    if [ "$n" -lt ~{rare_cutoff} ]; then
-    #      printf "$chr\t$start\t$end\t$id\t$type\t$sample\n"
-    #    fi
-    #  fi
-    #done<potential.txt > ~{name}.potentialmosaic.rare.bed
-    cp potential.txt ~{name}.potentialmosaic.rare.bed
+    while read chr start end id type sample;do
+      n=$(zfgrep "$id:" ~{lookup}|cut -f 5) ||true
+      if [ "$n" -eq "$n" ] ;then
+        if [ "$n" -lt ~{rare_cutoff} ]; then
+          printf "$chr\t$start\t$end\t$id\t$type\t$sample\n"
+        fi
+      fi
+    done<potential.txt > ~{name}.potentialmosaic.rare.bed
+    #cp potential.txt ~{name}.potentialmosaic.rare.bed
+
     echo -e "#chr\tstart\tend\tid\ttype\tsample" > header.bed
     cat header.bed ~{name}.potentialmosaic.rare.bed | bgzip > ~{name}.potentialmosaic.rare.bed.gz
   >>>
