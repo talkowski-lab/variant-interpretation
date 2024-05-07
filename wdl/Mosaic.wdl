@@ -31,6 +31,7 @@ workflow MosaicManualCheck{
     Array[File] coverage_files
     Array[File] coverage_file_idxs
     Array[File] median_files
+
     Array[File] agg_metrics
     Array[File] RF_cutoffs
 
