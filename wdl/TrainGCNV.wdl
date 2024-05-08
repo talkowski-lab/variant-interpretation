@@ -15,7 +15,7 @@ workflow TrainGCNV {
     #Array[File] count_files
 
     ## may 8 2024 if you are hard coding count_files use below
-    Array[String] count_files_list
+    File count_files_list
     
     # Common parameters
     String cohort
