@@ -308,7 +308,7 @@ task GetSubsampledIndices {
     File all_strings
     File subset_strings
     String prefix
-    String sv_pipeline_base_docker
+    String sv_pipeline_docker
     RuntimeAttr? runtime_attr_override
   }
 
