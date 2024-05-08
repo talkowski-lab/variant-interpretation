@@ -10,8 +10,13 @@ import "Utils.wdl" as util
 workflow TrainGCNV {
   input {
     Array[String] samples
-    Array[File] count_files
 
+    ## may 8 2024 if you can specify this.count_files, use below
+    #Array[File] count_files
+
+    ## may 8 2024 if you are hard coding count_files use below
+    Array[File] count_files_list
+    
     # Common parameters
     String cohort
     File reference_fasta
@@ -130,7 +135,10 @@ workflow TrainGCNV {
     String sample_ids_ = samples[i]
     call cov.CondenseReadCounts as CondenseReadCounts {
       input:
-        counts = count_files[i],
+        ## use this if using this.count_files (see workflow definition)
+        #counts = count_files[i],
+        ##use this if hard coding
+        counts = read_lines(count_files_list[i]),
         sample = samples[i],
         min_interval_size = min_interval_size,
         max_interval_size = max_interval_size,
