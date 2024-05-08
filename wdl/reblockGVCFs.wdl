@@ -130,7 +130,7 @@ task removeExtraContigs {
 
   command {
     set -eou pipefail
-    bcftools index -s ~{gvcf} | grep -Fv ~{sep=" -e " exclude_contigs} > contigs.txt
+    bcftools index -s ~{gvcf} | grep -Fv -e ~{sep=" -e " exclude_contigs} > contigs.txt
     bcftools view -r $(cat contigs.txt | cut -f1 | tr '\n' ',') -Oz -o ~{output_filename} ~{gvcf}
     bcftools index -t ~{output_filename}
   }
