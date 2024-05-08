@@ -19,6 +19,7 @@ workflow ReblockGVCFs {
     Boolean move_bam_or_cram_files=false
     Boolean disable_sequence_dictionary_validation=false
     String docker_image
+    Array[String] exclude_contigs=[]
     String gvcf_file_extension = ".g.vcf.gz"
   }
 
@@ -34,10 +35,20 @@ workflow ReblockGVCFs {
       docker_image = docker_image
     }
 
+  if (length(exclude_contigs)!=0) {
+    call removeExtraContigs {
+        input:
+        gvcf=LocalizeReads.output_file,
+        gvcf_index=LocalizeReads.output_index,
+        docker_image=docker_image,
+        exclude_contigs=exclude_contigs
+    }
+  }
+
   call Reblock {
     input:
-      gvcf = LocalizeReads.output_file,
-      gvcf_index = LocalizeReads.output_index,
+      gvcf = select_first([removeExtraContigs.output_vcf, LocalizeReads.output_file]),
+      gvcf_index = select_first([removeExtraContigs.output_vcf_index, LocalizeReads.output_index]),
       ref_fasta = ref_fasta,
       ref_fasta_index = ref_fasta_index,
       ref_dict = ref_dict,
@@ -104,6 +115,40 @@ task LocalizeReads {
   }
 }
 
+task removeExtraContigs {
+  input {
+    File gvcf
+    File gvcf_index
+    String docker_image = "us.gcr.io/broad-gatk/gatk:4.5.0.0"
+    Int additional_disk = 20
+    Array[String] exclude_contigs
+  }
+
+  Int disk_size = ceil((size(gvcf, "GiB")) * 4) + additional_disk
+  String file_ext = if sub(basename(gvcf), '\\.g\\.vcf\\.gz', '')!=basename(gvcf) then '.gz.vcf.gz' else '.gvcf.gz'
+  String output_filename = basename(gvcf, file_ext) + '.rm.extra.contigs.vcf.gz'
+
+  command {
+    set -eou pipefail
+    bcftools index -s ~{gvcf} | grep -Fv ~{sep=' -e ' exclude_contigs} > contigs.txt
+    bcftools view -r $(cat contigs.txt | cut -f1 | tr '\n' ',') -Oz -o ~{output_filename} ~{gvcf}
+    bcftools index -t ~{output_filename}
+  }
+
+  runtime {
+    memory: "3750 MiB"
+    disks: "local-disk " + disk_size + " HDD"
+    bootDiskSizeGb: 15
+    preemptible: 3
+    docker: docker_image
+  }
+
+  output {
+    File output_vcf = output_filename
+    File output_vcf_index = output_filename + '.tbi'
+  }
+}
+
 task Reblock {
 
   input {
@@ -123,7 +168,7 @@ task Reblock {
   Int disk_size = ceil((size(gvcf, "GiB")) * 4) + additional_disk
 
   command {
-    set -e
+    set -eou pipefail
 
     gatk --java-options "-Xms3000m -Xmx3000m" \
       ReblockGVCF \
