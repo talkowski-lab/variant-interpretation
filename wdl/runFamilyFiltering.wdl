@@ -258,7 +258,7 @@ task SVfamilyFiltering{
             pli_path <- '~{pli_file}'
             hpodb_path <- '~{hpo_db}'
             mim_path <- '~{mim_file}'
-            af_columns <- 'paste ~{sep="," AF_columns}'
+            af_columns <- '~{sep="," AF_columns}'
         " > config.R
 
         Rscript /scripts/variant-interpretation/scripts/familyFiltering.R \
