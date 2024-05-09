@@ -132,7 +132,7 @@ entity_outputs_to_remove['entityName:method_outputs'] = entity_outputs_to_remove
 entity_outputs_to_keep['entityName:method_outputs'] = entity_outputs_to_keep[['entityName','method_outputs']].agg(':'.join, axis=1)
 
 print("--- Check that all entities and method outputs being removed have an updated version ---")
-entity_outputs_to_remove['entityName:method_outputs'].isin(entity_outputs_to_keep['entityName:method_outputs']).value_counts()
+print(entity_outputs_to_remove['entityName:method_outputs'].isin(entity_outputs_to_keep['entityName:method_outputs']).value_counts())
 
 n_filled_in_data_table = (~cohort_df.isna()).sum()[np.intersect1d(cohort_df.columns, successful_submission_outputs.method_outputs.dropna().unique())].sum()
 print(f"Terra data table has {n_filled_in_data_table} total entries filled.")
