@@ -170,3 +170,38 @@ only_failed['sizes'] = only_failed.uri.apply(get_blob_size_directory)
 
 successful_submission_outputs.to_csv(f"{str(datetime.datetime.now().strftime('%Y-%m-%d'))}_successful_submissions.tsv", sep='\t', index=False)
 only_failed.to_csv(f"{str(datetime.datetime.now().strftime('%Y-%m-%d'))}_failed_submissions.tsv", sep='\t', index=False)
+
+def split_df_by_column_sum(df, column_name, target_sum):
+    current_sum = 0
+    current_group = 0
+    for sub_id in df.index:
+        current_sum += df.loc[sub_id, column_name]
+        df.loc[sub_id, 'group'] = current_group
+        if current_sum >= target_sum:
+            current_group += 1
+            current_sum = 0
+    return df
+
+# Chunk failed submissions
+chunk_size = 1_000_000_000  # 1 TB
+failed_submissions_to_delete = split_df_by_column_sum(only_failed, 'sizes', chunk_size)
+failed_submissions_to_delete['group'] = failed_submissions_to_delete.group.astype(int)
+for group in failed_submissions_to_delete.group.unique():
+    group_df = failed_submissions_to_delete[failed_submissions_to_delete.group==group]
+    to_delete_filename = f"failed_terra_submissions_to_delete_chunk_{group}_{str(datetime.datetime.now().strftime('%Y-%m-%d'))}.txt"
+    group_df.uri.to_csv(to_delete_filename, index=False, header=None)  # these are directories!
+
+
+# Chunk successful submissions
+successful_submissions_to_delete = successful_submission_outputs[successful_submission_outputs.in_data_table==False]
+successful_submissions_to_delete = split_df_by_column_sum(successful_submissions_to_delete, 'sizes', chunk_size)
+successful_submissions_to_delete['group'] = successful_submissions_to_delete.group.astype(int)
+for group in successful_submissions_to_delete.group.unique():
+    group_df = successful_submissions_to_delete[successful_submissions_to_delete.group==group]
+    to_delete_filename = f"terra_submissions_to_delete_chunk_{group}_{str(datetime.datetime.now().strftime('%Y-%m-%d'))}.txt"
+    group_outputs = [file if type(lst)==list else lst for lst in group_df.workflow_outputs.tolist() for file in lst]
+    pd.Series(group_outputs).to_csv(to_delete_filename, index=False, header=None)
+
+space_cleared = humansize(failed_submissions_to_delete.sizes.sum() + successful_submissions_to_delete.sizes.sum())
+with open("space_cleared.txt", "w") as text_file:
+    print(space_cleared, file=text_file)
