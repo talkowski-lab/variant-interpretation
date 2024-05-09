@@ -31,7 +31,7 @@ workflow getTerraSubmissionSizes {
     }
 
     if (delete_submissions) {
-        scatter (submissions_shard in getSubmissionSizes.submissions_to_delete) {  # TODO: new task for individual files
+        scatter (submissions_shard in getSubmissionSizes.submissions_to_delete) { 
             call deleteSubmissions as deleteSuccessfulSubmissions {
                 input:
                 submissions_to_delete=submissions_shard,
@@ -105,7 +105,7 @@ task getSubmissionSizes {
 }
 
 task deleteSubmissions {
-    input {  # TODO: skip_logs input
+    input { 
         File submissions_to_delete
         String hail_docker
         RuntimeAttr? runtime_attr_override
