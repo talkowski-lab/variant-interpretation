@@ -174,13 +174,15 @@ only_failed.to_csv(f"{str(datetime.datetime.now().strftime('%Y-%m-%d'))}_failed_
 def split_df_by_column_sum(df, column_name, target_sum):
     current_sum = 0
     current_group = 0
-    for sub_id in df.index:
-        current_sum += df.loc[sub_id, column_name]
-        df.loc[sub_id, 'group'] = current_group
+    new_df = pd.DataFrame()
+    for sub_id, submission in df.iterrows():
+        current_sum += submission[column_name]
+        submission['group'] = current_group
         if current_sum >= target_sum:
             current_group += 1
             current_sum = 0
-    return df
+        new_df = pd.concat([new_df, pd.DataFrame(submission).T])
+    return new_df
 
 # Chunk failed submissions
 chunk_size = 1_000_000_000  # 1 TB
@@ -190,7 +192,6 @@ for group in failed_submissions_to_delete.group.unique():
     group_df = failed_submissions_to_delete[failed_submissions_to_delete.group==group]
     to_delete_filename = f"failed_terra_submissions_to_delete_chunk_{group}_{str(datetime.datetime.now().strftime('%Y-%m-%d'))}.txt"
     group_df.uri.to_csv(to_delete_filename, index=False, header=None)  # these are directories!
-
 
 # Chunk successful submissions
 successful_submissions_to_delete = successful_submission_outputs[successful_submission_outputs.in_data_table==False]
