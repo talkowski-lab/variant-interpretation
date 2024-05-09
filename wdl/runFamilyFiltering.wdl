@@ -11,6 +11,8 @@ workflow familyFiltering {
         File genomic_disorder_input
         String cohort_prefix
         Array[String] families
+        Array[String] AF_columns
+
         String variant_interpretation_docker
 
         File genelist
@@ -67,6 +69,7 @@ workflow familyFiltering {
                 prec_file=prec_file,
                 pli_file=pli_file,
                 hpo_db=hpo_db,
+                AF_columns=AF_columns,
                 mim_file=mim_file,
                 variant_interpretation_docker=variant_interpretation_docker,
                 runtime_attr_override=runtime_attr_override_svFiltering
@@ -225,6 +228,8 @@ task SVfamilyFiltering{
         File hpo_db
         File mim_file
 
+        Array[String] AF_columns
+
         String variant_interpretation_docker
         RuntimeAttr? runtime_attr_override
     }
@@ -253,6 +258,7 @@ task SVfamilyFiltering{
             pli_path <- '~{pli_file}'
             hpodb_path <- '~{hpo_db}'
             mim_path <- '~{mim_file}'
+            af_columns <- 'paste ~{sep="," AF_columns}'
         " > config.R
 
         Rscript /scripts/variant-interpretation/scripts/familyFiltering.R \

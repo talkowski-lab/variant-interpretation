@@ -64,6 +64,8 @@ eo <- fread(eo_path, header = F)
 genelist <- fread(genelist_path, header = F)
 omim <- fread(mim_path, fill=TRUE)
 
+af_columns <- strsplit(af_columns, ",")[[1]]
+
 verbose("Reading manifest and variants")
 manifest <- fread(manifest_path, stringsAsFactors = F, header = T)
 fam_info <- subset(manifest, family_id == fam)
@@ -103,14 +105,29 @@ verbose("Family and frequency initial filtering")
 #Get family specific SVs
 vars_aff <- subset(vars, grepl(paste(affected, collapse = "|"), samples))
 
-#Flag if in genomic disorders
-vars_aff$IN_GD <- vars_aff$name %in% gdroi$V10
+#Replace NA for 0 in AF and AC columns
+vars_aff %>%
+  mutate_at(vars(grep("_AF", names(vars_aff), value = T)), ~replace_na(., 0)) -> vars_aff
 
-#Remove common SVs
-vars_aff_rare <- subset(vars_aff, 
-                          IN_GD |
-                          (AF <= 0.03 & (`gnomad_v2.1_sv_AF` <= 0.01 | is.na(`gnomad_v2.1_sv_AF`)))
-                        )
+#Flag if in genomic disorders
+if( exists("gdroi") ){
+  vars_aff$IN_GD <- vars_aff$name %in% gdroi$V10
+}else{
+  vars_aff$IN_GD <- ""
+}
+
+#Filter rare variants in the AF columns given as input
+vars_aff %>%
+  filter_at(vars(af_columns), all_vars(. <= 0.01)) -> vars_aff_rare
+
+#Append variants in GDs that are not rare
+if( exists("gdroi") ){
+  vars_gd_only <- subset(vars_aff, IN_GD == TRUE & !name %in% vars_aff_rare$name)
+  vars_aff_rare_gd <- rbind(vars_aff_rare, vars_gd_only)
+}else{
+  vars_aff_rare_gd <- vars_aff_rare
+}
+
 
 ############
 ##Annotate##
@@ -118,7 +135,7 @@ vars_aff_rare <- subset(vars_aff,
 verbose("Defining variables for annotation")
 
 #Genotype information
-gt_info <- data.frame(subset(vars_gt, ID %in% vars_aff_rare$name, select = c("ID", fam_samples)))
+gt_info <- data.frame(subset(vars_gt, ID %in% vars_aff_rare_gd$name, select = c("ID", fam_samples)))
 names(gt_info)[1] <- "name"
 names(gt_info) <- gsub("X__", "__", names(gt_info))
 
@@ -126,7 +143,7 @@ gt_info[,fam_samples] <- data.frame(apply(data.frame(gt_info[,fam_samples]), 2, 
 	get_sv_gt(c) 
 }))
 
-vars_aff_rare_gt <- merge(vars_aff_rare, gt_info, by = "name", all.x = T, all.y = F)
+vars_aff_rare_gt <- merge(vars_aff_rare_gd, gt_info, by = "name", all.x = T, all.y = F)
 
 #Define columns that have gene annotations
 # gene_cols <- as.vector(names(vars_aff_rare_gt)[c(19:34,37,39)])
