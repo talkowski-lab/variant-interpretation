@@ -87,7 +87,7 @@ task getSubmissionSizes {
     >>>
 
     output {
-        File successful_submissions = glob('_successful_submissions.tsv')[0]
-        File failed_submissions = glob('_failed_submissions.tsv')[0]
+        File successful_submissions = glob('*_successful_submissions.tsv')[0]
+        File failed_submissions = glob('*_failed_submissions.tsv')[0]
     }
 }
