@@ -50,7 +50,8 @@ workflow getTerraSubmissionSizes {
     output {
         File successful_submissions = getSubmissionSizes.successful_submissions
         File failed_submissions = getSubmissionSizes.failed_submissions
-        # Array[File] submissions_to_delete = getSubmissionsToDelete.submissions_to_delete
+        Array[File] submissions_to_delete = getSubmissionSizes.submissions_to_delete
+        Array[File] failed_submission_directories_to_delete = getSubmissionSizes.failed_submission_directories_to_delete
         String space_cleared = getSubmissionSizes.space_cleared
     }
 }
