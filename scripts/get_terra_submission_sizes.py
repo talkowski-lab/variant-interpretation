@@ -176,7 +176,10 @@ def split_df_by_column_sum(df, column_name, target_sum):
     current_group = 0
     new_df = pd.DataFrame()
     for sub_id, submission in df.iterrows():
-        current_sum += submission[column_name]
+        val = submission[column_name]
+        if pd.isna(val):
+            continue
+        current_sum += val
         submission['group'] = current_group
         if current_sum >= target_sum:
             current_group += 1
