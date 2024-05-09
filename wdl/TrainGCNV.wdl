@@ -108,6 +108,13 @@ workflow TrainGCNV {
     RuntimeAttr? runtime_attr_explode
   }
 
+##### if hard coding count_files
+  call ParseCountFiles {
+    input:
+      count_files_list = count_files_list
+  }
+#####
+
   if (defined(sample_ids_training_subset)) {
     call util.GetSubsampledIndices {
       input:
@@ -138,7 +145,7 @@ workflow TrainGCNV {
         ## use this if using this.count_files (see workflow definition)
         #counts = count_files[i],
         ##use this if hard coding
-        counts = read_lines(count_files_list[i]),
+        counts = ParseCountFiles.count_files[i],
         sample = samples[i],
         min_interval_size = min_interval_size,
         max_interval_size = max_interval_size,
@@ -224,3 +231,21 @@ workflow TrainGCNV {
     Array[File]? cohort_denoised_copy_ratios = CNVGermlineCohortWorkflow.denoised_copy_ratios
   }
 }
+
+##### if hard coding count_files
+task ParseCountFiles {
+  input {
+    File count_files_list
+    String sv_pipeline_docker
+  }
+  command {
+    cat ${count_files_list} > count_files.txt
+  }
+  output {
+    Array[File] count_files = read_lines("count_files.txt")
+  }
+  runtime {
+    docker: "${sv_pipeline_docker}"
+  }
+}
+#####
