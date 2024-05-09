@@ -83,7 +83,7 @@ task getSubmissionSizes {
     command <<<
         curl ~{terra_data_table_util_script} > terra_data_table_util.py
         curl ~{get_submission_sizes_script} > get_submission_sizes.py
-        python3 get_submission_sizes.py ~{BILLING_PROJECT_ID} ~{WORKSPACE} ~[bucket_id] > stdout
+        python3 get_submission_sizes.py ~{BILLING_PROJECT_ID} ~{WORKSPACE} ~{bucket_id} > stdout
     >>>
 
     output {
