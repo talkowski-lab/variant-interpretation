@@ -143,7 +143,16 @@ gt_info[,fam_samples] <- data.frame(apply(data.frame(gt_info[,fam_samples]), 2, 
 	get_sv_gt(c) 
 }))
 
-vars_aff_rare_gt <- merge(vars_aff_rare_gd, gt_info, by = "name", all.x = T, all.y = F)
+gt_info_fix <- gt_info
+
+##Fix genotypes before merging with main table
+gt_info_fix[names(gt_info_fix)[2:ncol(gt_info_fix)]] <- apply(gt_info_fix[names(gt_info_fix)[2:ncol(gt_info_fix)]], 2, function(column) 
+  gsub("1/0", "0/1", column))
+
+gt_info_fix[names(gt_info_fix)[2:ncol(gt_info_fix)]] <- apply(gt_info_fix[names(gt_info_fix)[2:ncol(gt_info_fix)]], 2, function(column) 
+  gsub("\\.\\/\\.", "0/0", column))
+
+vars_aff_rare_gt <- merge(vars_aff_rare_gd, gt_info_fix, by = "name", all.x = T, all.y = F)
 
 #Define columns that have gene annotations
 # gene_cols <- as.vector(names(vars_aff_rare_gt)[c(19:34,37,39)])
