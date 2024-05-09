@@ -128,6 +128,7 @@ task GetPotential{
     cat header.bed ~{name}.depth.ref.cluster.filt.rmSD.rmIGL.bed | sed -e 's/id/name/g' | sed -e 's/svtype/type/g' | bgzip -c > ~{name}.potentialmosaic.rare.bed.gz
 
 ## split.sh split clustered SVs
+    rm ~{name}.potentialmosaic.rare.bed
     gunzip ~{name}.potentialmosaic.rare.bed.gz
     while read -r line; do \
       chr=$(echo "$line" | cut -f1) \
