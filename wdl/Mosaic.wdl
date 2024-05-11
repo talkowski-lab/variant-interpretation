@@ -133,7 +133,7 @@ workflow MosaicManualCheck{
       sv_base_mini_docker = sv_base_mini_docker,
       runtime_attr_override = runtime_attr_concat_depth_plot
   }
-
+/*
   call ConcatPlots as concat_pesr_plots{
     input:
       shard_plots = pesr2.igvplots,
@@ -141,12 +141,12 @@ workflow MosaicManualCheck{
       sv_base_mini_docker = sv_base_mini_docker,
       runtime_attr_override = runtime_attr_concat_pesr_plot
   }
-
+*/
   output{
     File depth_bed = concat_depth_bed.merged_bed_file
-    File pesr_bed = concat_pesr_bed.merged_bed_file
+    #File pesr_bed = concat_pesr_bed.merged_bed_file
     File depth_plots = concat_depth_plots.merged_plots
-    File pesr_plots = concat_pesr_plots.merged_plots
+    #File pesr_plots = concat_pesr_plots.merged_plots
   }
 }
 
