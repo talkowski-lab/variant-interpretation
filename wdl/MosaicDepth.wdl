@@ -158,7 +158,7 @@ task GetPotential{
     maxRetries: select_first([runtime_attr.max_retries, default_attr.max_retries])
   }
   output{
-    #File common="~{name}.potentialmosaic.bed.gz"
+    File common="~{name}.potentialmosaic.bed.gz"
     File rare = "~{name}.potentialmosaic.rare.bed.gz"
   }
 }
