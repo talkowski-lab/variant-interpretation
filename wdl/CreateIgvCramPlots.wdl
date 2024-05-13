@@ -126,6 +126,7 @@ workflow IGV_all_samples {
                     reference = reference,
                     reference_index = reference_index,
                     igv_docker = igv_docker,
+                    rename_crams_localize_script = rename_crams_localize_script,
                     variant_interpretation_docker = variant_interpretation_docker,
                     runtime_attr_igv = runtime_attr_igv
             }
