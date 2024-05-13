@@ -63,15 +63,15 @@ task GetPotential{
   command<<<
     set -euox pipefail
     fgrep -v -f ~{outlier} ~{potential} >potential.txt
-    while read chr start end id type sample;do
-      n=$(zfgrep "$id:" ~{lookup}|cut -f 5) ||true
-      if [ "$n" -eq "$n" ] ;then
-        if [ "$n" -lt ~{rare_cutoff} ]; then
-          printf "$chr\t$start\t$end\t$id\t$type\t$sample\n"
-        fi
-      fi
-    done<potential.txt > ~{name}.potentialmosaic.rare.bed
-    #cp potential.txt ~{name}.potentialmosaic.rare.bed
+    #while read chr start end id type sample;do
+      #n=$(zfgrep "$id:" ~{lookup}|cut -f 5) ||true
+      #if [ "$n" -eq "$n" ] ;then
+        #if [ "$n" -lt ~{rare_cutoff} ]; then
+          #printf "$chr\t$start\t$end\t$id\t$type\t$sample\n"
+        #fi
+      #fi
+    #done<potential.txt > ~{name}.potentialmosaic.rare.bed
+    cp potential.txt ~{name}.potentialmosaic.rare.bed
 
     echo -e "#chr\tstart\tend\tid\ttype\tsample" > header.bed
     cat header.bed ~{name}.potentialmosaic.rare.bed | bgzip > ~{name}.potentialmosaic.rare.bed.gz
@@ -137,7 +137,7 @@ task rdtest {
   runtime {
     cpu: select_first([runtime_attr.cpu_cores, default_attr.cpu_cores])
     memory: select_first([runtime_attr.mem_gb, default_attr.mem_gb]) + " GiB"
-    disks: "local-disk " + select_first([runtime_attr.disk_gb, default_attr.disk_gb]) + " HDD"
+    disks: "local-disk " + (select_first([runtime_attr.disk_gb, default_attr.disk_gb]) + 100) + " HDD"  ### may 11 2024 Increased disk space for cmg and cp cohorts
     bootDiskSizeGb: select_first([runtime_attr.boot_disk_gb, default_attr.boot_disk_gb])
     docker: sv_pipeline_rdtest_docker
     preemptible: select_first([runtime_attr.preemptible_tries, default_attr.preemptible_tries])
