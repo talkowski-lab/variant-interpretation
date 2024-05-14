@@ -119,8 +119,8 @@ task GetPotential{
     zcat < ~{name}.potentialmosaic.rare.bed.gz | awk '{print $1"_"$5"_"$6"\t"$2"\t"$3"\t"$4"\t"$6"\t"$5}' | sed -e 's/id/name/g' | sed -e 's/type/svtype/g' | sort -k1,1 -k2,2g > ~{name}.depth.ref.bed
     bedtools merge -d 1000 -i ~{name}.depth.ref.bed -delim "," -c 4,5,6 -o collapse > ~{name}.depth.ref.cluster.bed
 
-## refDepth2_hardfilter10.R exists in "us.gcr.io/talkowski-sv-gnomad/asl:asl-mosaic-outliers" and adds sample level filtering only (remove samples >10 mosaic calls). this comes after iterative stich_fragmentedcalls.sh
-    Rscript /opt/RdTest/refDepth2_hardfilter10.R ~{name}.depth.ref.cluster.bed ~{name}.depth.ref.cluster.filt.bed ~{name}.outliers.txt
+## refDepth2.R
+    Rscript /opt/RdTest/refDepth2.R ~{name}.depth.ref.cluster.bed ~{name}.depth.ref.cluster.filt.bed ~{name}.outliers.txt
 
 ## excluding blacklisted calls
     bedtools intersect -v -f 0.5 -wa -wb -a ~{name}.depth.ref.cluster.filt.bed -b ~{sd_blacklist} > ~{name}.depth.ref.cluster.filt.rmSD.bed
