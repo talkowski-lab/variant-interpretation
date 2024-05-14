@@ -293,7 +293,7 @@ task getHailMTSize {
         size = sys.argv[1]
         unit = sys.argv[2]
         def convert_to_gib(size, unit):
-            size_dict = {"KiB": 2**10, "MiB": 2**20, "GiB": 2**30}
+            size_dict = {"KiB": 2**10, "MiB": 2**20, "GiB": 2**30, "TiB": 2**40}
             return float(size) * size_dict[unit] / size_dict["GiB"]
         size_in_gib = convert_to_gib(size, unit)
         print(size_in_gib)        
