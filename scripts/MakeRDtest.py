@@ -121,14 +121,21 @@ class Variant():
         outfile='info.jpg'
         words(STR1,STR2,outfile,100) # new Rd plot
         #img_v_resize = vconcat_resize([resized_igv,rd]) # combine rd pe and sr together
-        img_v_resize = vconcat_resize([igv,rd])
-        cv2.imwrite(outdir+self.varname+"_denovo.png", img_v_resize)
+        # img_v_resize = hconcat_resize([igv,rd])
+        img_h_resize = hconcat_resize([ igv, rd ])
+        cv2.imwrite(outdir+self.varname+"_denovo.png", img_h_resize)
     elif pesrplot!='Error' and rdplot=='Error':
         igv = cv2.imread(pesrplot)
         STR1=self.chr+":"+'{0:,}'.format(int(self.start))+'-'+'{0:,}'.format(int(self.end))+" (hg38)"
         outfile='info.jpg'
         words(STR1,STR2,outfile,50)
         cv2.imwrite(outdir+self.varname+"_denovo.png", igv)
+    elif pesrplot=='Error' and rdplot!='Error':
+        rd = cv2.imread(rdplot)
+        STR1=self.chr+":"+'{0:,}'.format(int(self.start))+'-'+'{0:,}'.format(int(self.end))+" (hg38)"
+        outfile='info.jpg'
+        words(STR1,STR2,outfile,50)
+        cv2.imwrite(outdir+self.varname+"_denovo.png", rd)
 
 class VariantInfo():
   def __init__(self,pedfile,prefix):
