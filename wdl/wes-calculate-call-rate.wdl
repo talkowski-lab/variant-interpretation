@@ -82,6 +82,7 @@ task calculateCallRateMT {
     command <<<
     cat <<EOF > call_rate.py
     import hail as hl
+    import numpy as np
     import os
     import sys
     import datetime
@@ -94,15 +95,22 @@ task calculateCallRateMT {
     genome_build = sys.argv[3]
     cohort_prefix = sys.argv[4]
     bucket_id = sys.argv[5]
+    cores = sys.argv[6]
+    mem = int(np.floor(float(sys.argv[7])))
 
-    hl.init()
+    hl.init(min_block_size=128, spark_conf={"spark.executor.cores": cores, 
+                        "spark.executor.memory": f"{mem}g",
+                        "spark.driver.cores": cores,
+                        "spark.driver.memory": f"{mem}g"
+                        }, tmp_dir="tmp", local_tmpdir="tmp")
+
     intervals = hl.import_locus_intervals(unpadded_intervals_file, genome_build)
     mt = hl.import_vcf(vcf_file, array_elements_required=False, 
                            reference_genome=genome_build, force_bgz=True, call_fields=[], find_replace=('nul', '.'))
     call_rate_mt = gnomad.sample_qc.platform.compute_callrate_mt(mt, intervals)
     call_rate_mt.write(f"{bucket_id}/hail/call_rate_mt/{cohort_prefix}_call_rate.mt", overwrite=True)
     EOF
-    python3 call_rate.py ~{vcf_file} ~{unpadded_intervals_file} ~{genome_build} ~{cohort_prefix} ~{bucket_id}
+    python3 call_rate.py ~{vcf_file} ~{unpadded_intervals_file} ~{genome_build} ~{cohort_prefix} ~{bucket_id} ~{cpu_cores} ~{memory}
     >>>
 
     output {

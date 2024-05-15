@@ -96,6 +96,7 @@ task inferPlatformPCA {
     cat <<EOF > infer_platform.py
     import hail as hl
     import pandas as pd
+    import numpy as np
     import os
     import sys
     import datetime
@@ -110,6 +111,15 @@ task inferPlatformPCA {
     n_pcs = int(sys.argv[5])
     hdbscan_min_cluster_size = int(sys.argv[6])
     hdbscan_min_samples = int(sys.argv[7])
+    cores = sys.argv[8]
+    mem = int(np.floor(float(sys.argv[9])))
+
+    hl.init(min_block_size=128, spark_conf={"spark.executor.cores": cores, 
+                        "spark.executor.memory": f"{mem}g",
+                        "spark.driver.cores": cores,
+                        "spark.driver.memory": f"{mem}g"
+                        }, tmp_dir="tmp", local_tmpdir="tmp")
+
 
     if hdbscan_min_cluster_size==0:
         hdbscan_min_cluster_size = None
@@ -159,7 +169,6 @@ task inferPlatformPCA {
         ht = ht.annotate(qc_platform="platform_" + hl.str(ht.qc_platform))
         return ht
 
-    hl.init()
     for i, uri in enumerate(call_rate_mts):
         if i==0:
             call_rate_mt = hl.read_matrix_table(uri)
@@ -179,7 +188,7 @@ task inferPlatformPCA {
     platform_df.to_csv(f"{cohort_set_id}_assigned_platforms.tsv", sep='\t', index=False)
     EOF
     python3 infer_platform.py ~{sep=',' call_rate_mts} ~{genome_build} ~{cohort_set_id} ~{bucket_id} \
-        ~{n_pcs} ~{hdbscan_min_cluster_size} ~{hdbscan_min_samples}
+        ~{n_pcs} ~{hdbscan_min_cluster_size} ~{hdbscan_min_samples} ~{cpu_cores} ~{memory}
     >>>
 
     output {
