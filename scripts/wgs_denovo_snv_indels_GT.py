@@ -71,4 +71,31 @@ tm_denovo = tm.filter_entries((tm.proband_entry.GT.is_het()) &
                   (tm.mother_entry.GT.is_hom_ref()))
 
 tm_denovo_df = tm_denovo.entries().to_pandas()
-tm_denovo_df.to_csv(f"{os.path.basename(vcf_file).split(file_ext)[0]}_denovo_GT_AF_filter.tsv.gz", sep='\t', index=False)
+
+child_format_fields = ['GT','AD','DP','DPC','GQ','PGT','PID','PL','VAF','AB']  
+parent_format_fields = ['GT','AD','DP','DPC','GQ','VAF','AB']  
+rename_cols = {f"mother_entry.{field}": f"{field}_mother" for field in parent_format_fields if f"mother_entry.{field}" in tm_denovo_df.columns} |\
+    {f"father_entry.{field}": f"{field}_father" for field in parent_format_fields if f"father_entry.{field}" in tm_denovo_df.columns} |\
+    {f"proband_entry.{field}": f"{field}_sample" for field in child_format_fields if f"proband_entry.{field}" in tm_denovo_df.columns} |\
+    {'qual': 'QUAL', 'proband.s': 'SAMPLE', 'filters': 'FILTER'}
+tm_denovo_df = tm_denovo_df.rename(rename_cols, axis=1)
+
+tm_denovo_df['CHROM'] = tm_denovo_df.locus.astype(str).str.split(':').str[0]
+tm_denovo_df['POS'] = tm_denovo_df.locus.astype(str).str.split(':').str[1].astype(int)
+tm_denovo_df['REF'] = tm_denovo_df.alleles.str[0]
+tm_denovo_df['ALT'] = tm_denovo_df.alleles.str[1]
+tm_denovo_df['LEN'] = abs(tm_denovo_df.REF.str.len()-tm_denovo_df.ALT.str.len())
+tm_denovo_df['TYPE'] =np.where(tm_denovo_df.LEN==0, 'SNV', 'Indel')
+
+tm_denovo_df.columns = tm_denovo_df.columns.str.replace('info.', '')
+
+for info_cat in ['AC', 'AF', 'MLEAC', 'MLEAF']:
+    if info_cat in tm_denovo_df.columns:
+            tm_denovo_df[info_cat] = tm_denovo_df[info_cat].str[0]
+
+# 'POLYX' -- added after downsampling
+info_cols = ['END','AC','AF','AN','BaseQRankSum','ClippingRankSum','DP','FS','MLEAC','MLEAF','MQ','MQRankSum','QD','ReadPosRankSum','SOR','VQSLOD','cohort_AC', 'cohort_AF', 'CSQ']
+info_cols = list(np.intersect1d(info_cols, list(mt.info.keys())))
+cols_to_keep = ['CHROM', 'POS', 'REF', 'ALT', 'LEN', 'TYPE', 'ID', 'VarKey'] + info_cols + list(rename_cols.values())
+
+tm_denovo_df[cols_to_keep].to_csv(f"{os.path.basename(vcf_file).split(file_ext)[0]}_denovo_GT_AF_filter.tsv.gz", sep='\t', index=False)
