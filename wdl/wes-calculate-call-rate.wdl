@@ -94,7 +94,7 @@ task calculateCallRateMT {
 
     hl.init()
     intervals = hl.import_locus_intervals(unpadded_intervals_file, genome_build)
-    mt = hl.import_vcf(cohort_df.loc[cohort, 'file'], array_elements_required=False, 
+    mt = hl.import_vcf(vcf_file, array_elements_required=False, 
                            reference_genome=genome_build, force_bgz=True, call_fields=[], find_replace=('nul', '.'))
     call_rate_mt = gnomad.sample_qc.platform.compute_callrate_mt(mt, intervals)
     call_rate_mt.write(f"{bucket_id}/hail/call_rate_mt/{cohort_prefix}_call_rate.mt")
