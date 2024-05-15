@@ -22,7 +22,7 @@ workflow calculateCallRate {
         String bucket_id
         String hail_docker
         String genome_build='GRCh38'
-        RuntimeAttr? runtime_attr_infer_platform
+        RuntimeAttr? runtime_attr_calculate_call_rate
     }
 
     call calculateCallRateMT {
@@ -33,7 +33,7 @@ workflow calculateCallRate {
             genome_build=genome_build,
             cohort_prefix=cohort_prefix,
             bucket_id=bucket_id,
-            runtime_attr_override=runtime_attr_infer_platform
+            runtime_attr_override=runtime_attr_calculate_call_rate
     }
 
     output {
