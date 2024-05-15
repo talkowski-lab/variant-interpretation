@@ -168,8 +168,8 @@ task inferPlatformPCA {
             call_rate_mt = call_rate_mt.union_cols(mt, row_join_type='outer')
     
     eigenvalues, scores_ht, loadings_ht = gnomad.sample_qc.platform.run_platform_pca(call_rate_mt, n_pcs=n_pcs)
-    loadings_ht.write(f"{bucket_id}/hail/infer_platform_pca/{cohort_set_id}_platform_pca_loadings.ht")
-    scores_ht.write(f"{bucket_id}/hail/infer_platform_pca/{cohort_set_id}_platform_pca_scores.ht")
+    loadings_ht.write(f"{bucket_id}/hail/infer_platform_pca/{cohort_set_id}_platform_pca_loadings.ht", overwrite=True)
+    scores_ht.write(f"{bucket_id}/hail/infer_platform_pca/{cohort_set_id}_platform_pca_scores.ht", overwrite=True)
 
     platform_ht = assign_platform_from_pcs(scores_ht.annotate(scores=scores_ht.scores[:n_pcs]), 
                                                                     pc_scores_ann='scores', 
