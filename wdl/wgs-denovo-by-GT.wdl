@@ -4,6 +4,7 @@ import "mergeSplitVCF.wdl" as mergeSplitVCF
 import "wgs-denovo-step-01.wdl" as step1
 import "mergeVCFs.wdl" as mergeVCFs
 import "wes-denovo-helpers.wdl" as helpers
+import "prioritizeCSQ.wdl" as prioritizeCSQ
 
 struct RuntimeAttr {
     Float? mem_gb
@@ -28,6 +29,9 @@ workflow getDenovoByGT {
         Boolean sort_after_merge=false
         Boolean merge_split_vcf=false
         String denovo_snv_indels_gt_script
+        String prioritize_csq_script
+        String sample_column='SAMPLE'
+        RuntimeAttr? runtime_attr_prioritize
     }
 
     String file_ext = if sub(basename(vep_files[0]), '.vcf.gz', '')!=basename(vep_files[0]) then '.vcf.gz' else '.vcf.bgz'
@@ -91,6 +95,15 @@ workflow getDenovoByGT {
 
     File denovo_gt_ = select_first([mergeChunks.merged_tsv, mergeResults.merged_tsv])
     
+    call prioritizeCSQ.annotateMostSevereCSQ as prioritizeCSQ {
+        input:
+        vcf_metrics_tsv=denovo_gt_,
+        prioritize_csq_script=prioritize_csq_script,
+        hail_docker=hail_docker,
+        sample_column=sample_column,
+        runtime_attr_override=runtime_attr_prioritize
+    }
+
     call denovoSampleCounts {
         input:
         denovo_gt=denovo_gt_,
@@ -99,7 +112,7 @@ workflow getDenovoByGT {
     }
 
     output {
-        File denovo_gt = denovo_gt_
+        File denovo_gt = prioritizeCSQ.vcf_metrics_tsv_prior_csq
         File denovo_gt_counts = denovoSampleCounts.denovo_gt_counts
     }
 }
