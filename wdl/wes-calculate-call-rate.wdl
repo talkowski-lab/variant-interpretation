@@ -85,6 +85,9 @@ task calculateCallRateMT {
     import os
     import sys
     import datetime
+    from gnomad.sample_qc.ancestry import apply_onnx_classification_model, apply_sklearn_classification_model, assign_population_pcs
+    from gnomad.utils.filtering import filter_to_adj
+    import gnomad.sample_qc.platform 
 
     vcf_file = sys.argv[1]
     unpadded_intervals_file = sys.argv[2]
