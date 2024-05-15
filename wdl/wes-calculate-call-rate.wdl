@@ -21,7 +21,6 @@ workflow calculateCallRate {
         String cohort_prefix
         String bucket_id
         String hail_docker
-        String sv_base_mini_docker
         String genome_build='GRCh38'
         RuntimeAttr? runtime_attr_infer_platform
     }
@@ -32,6 +31,7 @@ workflow calculateCallRate {
             unpadded_intervals_file=unpadded_intervals_file,
             hail_docker=hail_docker,
             genome_build=genome_build,
+            cohort_prefix=cohort_prefix,
             bucket_id=bucket_id,
             runtime_attr_override=runtime_attr_infer_platform
     }
