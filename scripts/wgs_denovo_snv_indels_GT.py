@@ -34,6 +34,7 @@ ped_uri = f"{prefix}.ped"
 pedigree = hl.Pedigree.read(ped_uri, delimiter='\t')
 
 mt = hl.import_vcf(vcf_file, force_bgz=True, array_elements_required=False, call_fields=[], reference_genome='GRCh38')
+mt = mt.annotate_rows(ID=hl.variant_str(mt.row_key))
 
 #split-multi
 def split_multi_ssc(mt):
@@ -79,6 +80,12 @@ rename_cols = {f"mother_entry.{field}": f"{field}_mother" for field in parent_fo
     {f"proband_entry.{field}": f"{field}_sample" for field in child_format_fields if f"proband_entry.{field}" in tm_denovo_df.columns} |\
     {'qual': 'QUAL', 'proband.s': 'SAMPLE', 'filters': 'FILTER'}
 tm_denovo_df = tm_denovo_df.rename(rename_cols, axis=1)
+
+try:
+    tm_denovo_df['VarKey'] = tm_denovo_df[['ID', 'REF', 'ALT']].astype(str).agg(':'.join, axis=1)
+except Exception as e:
+    print(str(e))
+    tm_denovo_df['VarKey'] = np.nan
 
 tm_denovo_df['CHROM'] = tm_denovo_df.locus.astype(str).str.split(':').str[0]
 tm_denovo_df['POS'] = tm_denovo_df.locus.astype(str).str.split(':').str[1].astype(int)
