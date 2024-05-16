@@ -13,9 +13,11 @@ struct RuntimeAttr {
 
 workflow exportVDStoVCF {
     input {
+        File sample_file
         String input_vds
         String hail_docker
         String output_vcf_filename
+        Int n_shards
     }
     
     call helpers.getHailMTSize as getInputVDSSize {
@@ -26,28 +28,32 @@ workflow exportVDStoVCF {
 
     call exportVDS {
         input:
+            sample_file=sample_file,
             input_vds=input_vds,
             output_vcf_filename=output_vcf_filename,
+            n_shards=n_shards,
             hail_docker=hail_docker,
             input_size=getInputVDSSize.mt_size
     }
 
     output {
-        File output_vcf = exportVDS.output_vcf
+        Array[File] vcf_shards = exportVDS.vcf_shards
     }
 }
 
 task exportVDS {
     input {
+        File sample_file
         String input_vds
         String output_vcf_filename
         String hail_docker
+        Int n_shards
         Float input_size
         RuntimeAttr? runtime_attr_override
     }
 
     Float base_disk_gb = 10.0
-    Float input_disk_scale = 5.0
+    Float input_disk_scale = 2.0
 
     RuntimeAttr runtime_default = object {
         mem_gb: 4,
@@ -72,29 +78,41 @@ task exportVDS {
         bootDiskSizeGb: select_first([runtime_override.boot_disk_gb, runtime_default.boot_disk_gb])
     }
 
+    String prefix = basename(output_vcf_filename, '.vcf.bgz')
+
     command <<<
     cat <<EOF > export_vds.py
+    import pandas as pd
     import hail as hl
     import os
     import sys
 
     input_vds = sys.argv[1]
     output_vcf_filename = sys.argv[2]
+    n_shards = int(sys.argv[3])
+    sample_file = sys.argv[4]
 
+    samples = pd.read_csv(sample_file, header=None)[0]
     hl.init()
 
-    vds = hl.vds.read_vds(input_vds)
+    vds = hl.vds.read_vds(input_vds, n_partitions=n_shards)
     mt = vds.variant_data
+    mt = mt.filter_cols(hl.array(samples).contains(mt.s))
     mt = mt.annotate_entries(GT=hl.vds.lgt_to_gt(mt.LGT, mt.LA))
 
     rows = mt.entries().select('rsid','gvcf_info').key_by('locus', 'alleles')
     mt = mt.annotate_rows(info=rows[mt.row_key].gvcf_info).drop('gvcf_info')
-    hl.export_vcf(mt, output_vcf_filename)
+    hl.export_vcf(mt, output_vcf_filename, parallel='header_per_shard')
     EOF
-    python3 export_vds.py ~{input_vds} ~{output_vcf_filename}
+    python3 export_vds.py ~{input_vds} ~{output_vcf_filename} ~{n_shards} ~{sample_file}
+
+    for file in $(ls ~{output_vcf_filename} | grep '.bgz'); do
+        shard_num=$(echo $file | cut -d '-' -f2);
+        mv ~{output_vcf_filename}/$file ~{prefix}.shard_"$shard_num".vcf.bgz
+    done
     >>>
 
     output {
-        File output_vcf = output_vcf_filename
+        Array[File] vcf_shards = glob("~{prefix}.shard_*.vcf.bgz")
     }
 }

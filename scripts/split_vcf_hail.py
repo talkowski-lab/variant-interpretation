@@ -22,9 +22,10 @@ hl.init(min_block_size=128, spark_conf={"spark.executor.cores": cores,
 
 is_vcf = file.split('.')[-1] != 'mt'
 if not is_vcf:
-    mt = hl.read_matrix_table(file)
+    mt = hl.read_matrix_table(file, n_partitions=n_shards if n_shards==0 else None)
 else:
-    mt = hl.import_vcf(file, force_bgz=True, array_elements_required=False, call_fields=[], reference_genome=build, find_replace=('nan', '.'))
+    mt = hl.import_vcf(file, force_bgz=True, array_elements_required=False, call_fields=[], reference_genome=build, find_replace=('nan', '.'),
+                       n_partitions=n_shards if n_shards==0 else None)
     header = hl.get_vcf_metadata(file) 
 
 try:
@@ -41,9 +42,6 @@ except:
 # if records_per_shard!=0:
 #     tot_num_records = mt.count_rows()
 #     n_shards = int(np.ceil(tot_num_records / records_per_shard))
-
-if n_shards!=0:
-    mt = mt.repartition(n_shards)
 
 # put all in INFO to be kept when exported to VCF--this doesn't really work because of header/metadata issues...
 # for field in row_fields_to_keep:

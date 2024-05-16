@@ -1,6 +1,5 @@
 version 1.0
     
-import "scatterHailMTs.wdl" as scatterMT
 import "mergeSplitVCF.wdl" as mergeSplitVCF
 import "mergeVCFs.wdl" as mergeVCFs
 import "wes-denovo-helpers.wdl" as helpers
