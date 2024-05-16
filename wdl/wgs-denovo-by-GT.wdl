@@ -108,6 +108,7 @@ workflow getDenovoByGT {
         input:
         denovo_gt=denovo_gt_,
         vep_hail_docker=vep_hail_docker,
+        sample_column=sample_column,
         chunk_size=chunk_size
     }
 
@@ -168,6 +169,7 @@ task denovoByGT {
 task denovoSampleCounts {
     input {
         File denovo_gt
+        String sample_column
         String vep_hail_docker
         Int chunk_size
         RuntimeAttr? runtime_attr_override
@@ -207,20 +209,18 @@ task denovoSampleCounts {
 
     denovo_gt = sys.argv[1]
     chunk_size = int(sys.argv[2])
+    sample_column = sys.argv[3]
 
     chunks = []
     for chunk in pd.read_csv(denovo_gt, sep='\t', chunksize=chunk_size):
         chunks.append(chunk)
     tm_denovo_df = pd.concat(chunks)
-    tm_denovo_df['REF'] = tm_denovo_df.alleles.apply(ast.literal_eval).str[0]
-    tm_denovo_df['ALT'] = tm_denovo_df.alleles.apply(ast.literal_eval).str[1]
-    tm_denovo_df['TYPE'] = tm_denovo_df.apply(lambda row: 'Indel' if abs(len(row.REF)-len(row.ALT))>0 else 'SNV', axis=1)
-    counts_df = tm_denovo_df.groupby('TYPE')['proband.s'].value_counts().reset_index()
+    counts_df = tm_denovo_df.groupby('TYPE')[sample_column].value_counts().reset_index()
 
     counts_df.to_csv(f"{os.path.basename(denovo_gt).split('.tsv.gz')[0]}_sample_counts.tsv", sep='\t', index=False)
     EOF
 
-    python3.9 get_counts.py ~{denovo_gt} ~{chunk_size}
+    python3.9 get_counts.py ~{denovo_gt} ~{chunk_size} ~{sample_column}
     >>>
 
     output {
