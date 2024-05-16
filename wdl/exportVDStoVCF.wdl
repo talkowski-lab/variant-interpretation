@@ -83,6 +83,7 @@ task exportVDS {
     command <<<
     cat <<EOF > export_vds.py
     import pandas as pd
+    import numpy as np
     import hail as hl
     import os
     import sys
