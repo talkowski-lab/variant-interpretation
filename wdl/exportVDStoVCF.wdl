@@ -91,9 +91,16 @@ task exportVDS {
     output_vcf_filename = sys.argv[2]
     n_shards = int(sys.argv[3])
     sample_file = sys.argv[4]
+    cores = sys.argv[5]  # string
+    mem = int(np.floor(float(sys.argv[6])))
+
+    hl.init(min_block_size=128, spark_conf={"spark.executor.cores": cores, 
+                        "spark.executor.memory": f"{mem}g",
+                        "spark.driver.cores": cores,
+                        "spark.driver.memory": f"{mem}g"
+                        }, tmp_dir="tmp", local_tmpdir="tmp")
 
     samples = pd.read_csv(sample_file, header=None)[0]
-    hl.init()
 
     vds = hl.vds.read_vds(input_vds, n_partitions=n_shards)
     mt = vds.variant_data
@@ -113,7 +120,7 @@ task exportVDS {
 
     hl.export_vcf(mt, output_vcf_filename, parallel='header_per_shard')
     EOF
-    python3 export_vds.py ~{input_vds} ~{output_vcf_filename} ~{n_shards} ~{sample_file}
+    python3 export_vds.py ~{input_vds} ~{output_vcf_filename} ~{n_shards} ~{sample_file} ~{cpu_cores} ~{memory}
 
     for file in $(ls ~{output_vcf_filename} | grep '.bgz'); do
         shard_num=$(echo $file | cut -d '-' -f2);
