@@ -62,10 +62,18 @@ workflow getDenovoByGT {
                     vep_hail_docker=vep_hail_docker,
                     denovo_snv_indels_gt_script=denovo_snv_indels_gt_script
             }
+            call prioritizeCSQ.annotateMostSevereCSQ as prioritizeCSQChunk {
+                input:
+                vcf_metrics_tsv=denovoByGTChunk.denovo_gt,
+                prioritize_csq_script=prioritize_csq_script,
+                hail_docker=hail_docker,
+                sample_column=sample_column,
+                runtime_attr_override=runtime_attr_prioritize
+            }
         }
         call helpers.mergeResultsPython as mergeChunks {
             input:
-                tsvs=denovoByGTChunk.denovo_gt,
+                tsvs=prioritizeCSQChunk.vcf_metrics_tsv_prior_csq,
                 hail_docker=hail_docker,
                 input_size=size(denovoByGTChunk.denovo_gt, 'GB'),
                 merged_filename=cohort_prefix+'_denovo_GT_AF_filter.tsv.gz'
@@ -83,10 +91,18 @@ workflow getDenovoByGT {
                     vep_hail_docker=vep_hail_docker,
                     denovo_snv_indels_gt_script=denovo_snv_indels_gt_script
             }
+            call prioritizeCSQ.annotateMostSevereCSQ as prioritizeCSQ {
+                input:
+                vcf_metrics_tsv=denovoByGT.denovo_gt,
+                prioritize_csq_script=prioritize_csq_script,
+                hail_docker=hail_docker,
+                sample_column=sample_column,
+                runtime_attr_override=runtime_attr_prioritize
+            }
         }
         call helpers.mergeResultsPython as mergeResults {
             input:
-                tsvs=denovoByGT.denovo_gt,
+                tsvs=prioritizeCSQ.vcf_metrics_tsv_prior_csq,
                 hail_docker=hail_docker,
                 input_size=size(denovoByGT.denovo_gt, 'GB'),
                 merged_filename=cohort_prefix+'_denovo_GT_AF_filter.tsv.gz'
@@ -94,15 +110,6 @@ workflow getDenovoByGT {
     }
 
     File denovo_gt_ = select_first([mergeChunks.merged_tsv, mergeResults.merged_tsv])
-    
-    call prioritizeCSQ.annotateMostSevereCSQ as prioritizeCSQ {
-        input:
-        vcf_metrics_tsv=denovo_gt_,
-        prioritize_csq_script=prioritize_csq_script,
-        hail_docker=hail_docker,
-        sample_column=sample_column,
-        runtime_attr_override=runtime_attr_prioritize
-    }
 
     call denovoSampleCounts {
         input:
@@ -113,7 +120,7 @@ workflow getDenovoByGT {
     }
 
     output {
-        File denovo_gt = prioritizeCSQ.vcf_metrics_tsv_prior_csq
+        File denovo_gt = denovo_gt_
         File denovo_gt_counts = denovoSampleCounts.denovo_gt_counts
     }
 }
