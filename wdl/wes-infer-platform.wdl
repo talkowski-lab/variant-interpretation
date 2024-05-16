@@ -174,7 +174,7 @@ task inferPlatformPCA {
             call_rate_mt = hl.read_matrix_table(uri)
         else:
             mt = hl.read_matrix_table(uri)
-            call_rate_mt = call_rate_mt.union_cols(mt, row_join_type='outer')
+            call_rate_mt = call_rate_mt.union_cols(mt)
     
     eigenvalues, scores_ht, loadings_ht = gnomad.sample_qc.platform.run_platform_pca(call_rate_mt, n_pcs=n_pcs)
     loadings_ht.write(f"{bucket_id}/hail/infer_platform_pca/{cohort_set_id}_platform_pca_loadings.ht", overwrite=True)
