@@ -103,6 +103,11 @@ task inferPlatformPCA {
     from gnomad.sample_qc.ancestry import apply_onnx_classification_model, apply_sklearn_classification_model, assign_population_pcs
     from gnomad.utils.filtering import filter_to_adj
     import gnomad.sample_qc.platform 
+    import logging
+    from typing import List, Optional, Tuple
+    from logging import INFO, DEBUG
+    logger = logging.getLogger()
+    logger.setLevel(INFO)
 
     call_rate_mts = sys.argv[1].split(',')
     genome_build = sys.argv[2]
@@ -124,9 +129,6 @@ task inferPlatformPCA {
     if hdbscan_min_cluster_size==0:
         hdbscan_min_cluster_size = None
     
-    import logging
-    from typing import List, Optional, Tuple
-
     def assign_platform_from_pcs(
         platform_pca_scores_ht: hl.Table,
         pc_scores_ann: str = "scores",
