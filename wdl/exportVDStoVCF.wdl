@@ -97,11 +97,20 @@ task exportVDS {
 
     vds = hl.vds.read_vds(input_vds, n_partitions=n_shards)
     mt = vds.variant_data
+    # subset samples
     mt = mt.filter_cols(hl.array(samples).contains(mt.s))
+    # convert LGT to GT
     mt = mt.annotate_entries(GT=hl.vds.lgt_to_gt(mt.LGT, mt.LA))
 
+    # remove all AC=0
+    mt = hl.variant_qc(mt)
+    mt = mt.filter_rows(mt.variant_qc.AC[1] > 0, keep = True)
+    mt = mt.drop('variant_qc')
+    
+    # move gvcf_info from entries to rows
     rows = mt.entries().select('rsid','gvcf_info').key_by('locus', 'alleles')
     mt = mt.annotate_rows(info=rows[mt.row_key].gvcf_info).drop('gvcf_info')
+
     hl.export_vcf(mt, output_vcf_filename, parallel='header_per_shard')
     EOF
     python3 export_vds.py ~{input_vds} ~{output_vcf_filename} ~{n_shards} ~{sample_file}
