@@ -258,15 +258,22 @@ synonymous = ['synonymous_variant', 'stop_retained_variant']
 
 final_output = pd.read_csv(vcf_metrics_uri, sep='\t')
 final_output['CSQ'] = final_output.CSQ.replace({'.':np.nan}).str.split(',')
-n_csq_fields = len(final_output[~final_output.CSQ.isna()].CSQ.iloc[0][0].split('|'))
 
-if n_csq_fields==len(csq_columns_more):
-    csq_columns = csq_columns_more
-elif n_csq_fields==len(csq_columns_less):
-    csq_columns = csq_columns_less
-else:
-    warnings.simplefilter("error")
-    warnings.warn("CSQ fields are messed up!")
+try:
+    n_csq_fields = len(final_output[~final_output.CSQ.isna()].CSQ.iloc[0][0].split('|'))
+
+    if n_csq_fields==len(csq_columns_more):
+        gnomad_af_str = 'gnomADe_AF'
+        csq_columns = csq_columns_more
+    elif n_csq_fields==len(csq_columns_less):
+        gnomad_af_str = 'gnomAD_AF'
+        csq_columns = csq_columns_less
+    else:
+        warnings.simplefilter("error")
+        warnings.warn("CSQ fields are messed up!")
+
+except Exception as e:
+    print(str(e))
 
 numeric = []
 for col in final_output.columns:

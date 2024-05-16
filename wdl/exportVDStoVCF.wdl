@@ -81,6 +81,7 @@ task exportVDS {
     String prefix = basename(output_vcf_filename, '.vcf.bgz')
 
     command <<<
+    set -eou pipefail
     cat <<EOF > export_vds.py
     import pandas as pd
     import numpy as np
