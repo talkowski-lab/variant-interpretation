@@ -80,6 +80,11 @@ rename_cols = {f"mother_entry.{field}": f"{field}_mother" for field in parent_fo
     {f"proband_entry.{field}": f"{field}_sample" for field in child_format_fields if f"proband_entry.{field}" in tm_denovo_df.columns} |\
     {'qual': 'QUAL', 'proband.s': 'SAMPLE', 'filters': 'FILTER'}
 tm_denovo_df = tm_denovo_df.rename(rename_cols, axis=1)
+tm_denovo_df.columns = tm_denovo_df.columns.str.replace('info.', '')
+
+for info_cat in ['AC', 'AF', 'MLEAC', 'MLEAF']:
+    if info_cat in tm_denovo_df.columns:
+            tm_denovo_df[info_cat] = tm_denovo_df[info_cat].str[0]
 
 try:
     tm_denovo_df['VarKey'] = tm_denovo_df[['ID', 'REF', 'ALT']].astype(str).agg(':'.join, axis=1)
@@ -93,12 +98,6 @@ tm_denovo_df['REF'] = tm_denovo_df.alleles.str[0]
 tm_denovo_df['ALT'] = tm_denovo_df.alleles.str[1]
 tm_denovo_df['LEN'] = abs(tm_denovo_df.REF.str.len()-tm_denovo_df.ALT.str.len())
 tm_denovo_df['TYPE'] =np.where(tm_denovo_df.LEN==0, 'SNV', 'Indel')
-
-tm_denovo_df.columns = tm_denovo_df.columns.str.replace('info.', '')
-
-for info_cat in ['AC', 'AF', 'MLEAC', 'MLEAF']:
-    if info_cat in tm_denovo_df.columns:
-            tm_denovo_df[info_cat] = tm_denovo_df[info_cat].str[0]
 
 # 'POLYX' -- added after downsampling
 info_cols = ['END','AC','AF','AN','BaseQRankSum','ClippingRankSum','DP','FS','MLEAC','MLEAF','MQ','MQRankSum','QD','ReadPosRankSum','SOR','VQSLOD','cohort_AC', 'cohort_AF', 'CSQ']
