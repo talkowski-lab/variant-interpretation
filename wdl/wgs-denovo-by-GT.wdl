@@ -31,7 +31,6 @@ workflow getDenovoByGT {
         String denovo_snv_indels_gt_script
         String prioritize_csq_script
         String sample_column='SAMPLE'
-        RuntimeAttr? runtime_attr_prioritize
     }
 
     String file_ext = if sub(basename(vep_files[0]), '.vcf.gz', '')!=basename(vep_files[0]) then '.vcf.gz' else '.vcf.bgz'
@@ -60,22 +59,16 @@ workflow getDenovoByGT {
                     file_ext=file_ext,
                     af_threshold=af_threshold,
                     vep_hail_docker=vep_hail_docker,
-                    denovo_snv_indels_gt_script=denovo_snv_indels_gt_script
-            }
-            call prioritizeCSQ.annotateMostSevereCSQ as prioritizeCSQChunk {
-                input:
-                vcf_metrics_tsv=denovoByGTChunk.denovo_gt,
-                prioritize_csq_script=prioritize_csq_script,
-                hail_docker=hail_docker,
-                sample_column=sample_column,
-                runtime_attr_override=runtime_attr_prioritize
+                    denovo_snv_indels_gt_script=denovo_snv_indels_gt_script,
+                    prioritize_csq_script=prioritize_csq_script,
+                    sample_column=sample_column
             }
         }
         call helpers.mergeResultsPython as mergeChunks {
             input:
-                tsvs=prioritizeCSQChunk.vcf_metrics_tsv_prior_csq,
+                tsvs=denovoByGTChunk.denovo_gt_csq,
                 hail_docker=hail_docker,
-                input_size=size(denovoByGTChunk.denovo_gt, 'GB'),
+                input_size=size(denovoByGTChunk.denovo_gt_csq, 'GB'),
                 merged_filename=cohort_prefix+'_denovo_GT_AF_filter.tsv.gz'
         }
     }
@@ -89,22 +82,16 @@ workflow getDenovoByGT {
                     file_ext=file_ext,
                     af_threshold=af_threshold,
                     vep_hail_docker=vep_hail_docker,
-                    denovo_snv_indels_gt_script=denovo_snv_indels_gt_script
-            }
-            call prioritizeCSQ.annotateMostSevereCSQ as prioritizeCSQ {
-                input:
-                vcf_metrics_tsv=denovoByGT.denovo_gt,
-                prioritize_csq_script=prioritize_csq_script,
-                hail_docker=hail_docker,
-                sample_column=sample_column,
-                runtime_attr_override=runtime_attr_prioritize
+                    denovo_snv_indels_gt_script=denovo_snv_indels_gt_script,
+                    prioritize_csq_script=prioritize_csq_script,
+                    sample_column=sample_column
             }
         }
         call helpers.mergeResultsPython as mergeResults {
             input:
-                tsvs=prioritizeCSQ.vcf_metrics_tsv_prior_csq,
+                tsvs=denovoByGT.denovo_gt_csq,
                 hail_docker=hail_docker,
-                input_size=size(denovoByGT.denovo_gt, 'GB'),
+                input_size=size(denovoByGT.denovo_gt_csq, 'GB'),
                 merged_filename=cohort_prefix+'_denovo_GT_AF_filter.tsv.gz'
         }
     }
@@ -133,6 +120,8 @@ task denovoByGT {
         Float af_threshold
         String vep_hail_docker
         String denovo_snv_indels_gt_script
+        String prioritize_csq_script    
+        String sample_column
         RuntimeAttr? runtime_attr_override
     }
 
@@ -161,15 +150,20 @@ task denovoByGT {
         docker: vep_hail_docker
         bootDiskSizeGb: select_first([runtime_override.boot_disk_gb, runtime_default.boot_disk_gb])
     }
+    
+    String denovo_gt = "~{basename(vcf_file, file_ext)}_denovo_GT_AF_filter.tsv.gz"
 
     command {
         curl ~{denovo_snv_indels_gt_script} > denovo_snv_indels.py
         python3.9 denovo_snv_indels.py ~{vcf_file} ~{ped_sex_qc} ~{af_threshold} \
         ~{cpu_cores} ~{memory} ~{file_ext}
+
+        curl ~{prioritize_csq_script} > prioritize_csq.py
+        python3.9 prioritize_csq.py ~{denovo_gt} ~{cpu_cores} ~{memory} ~{sample_column}
     }
 
     output {
-        File denovo_gt = "~{basename(vcf_file, file_ext)}_denovo_GT_AF_filter.tsv.gz"
+        File denovo_gt_csq = basename(denovo_gt, '.tsv.gz') + '_prioritized_csq.tsv.gz'
     }
 }
 
