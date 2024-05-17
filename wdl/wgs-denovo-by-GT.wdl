@@ -102,7 +102,7 @@ workflow getDenovoByGT {
         input:
         denovo_gt=denovo_gt_,
         vep_hail_docker=vep_hail_docker,
-        sample_column=sample_column,
+        sample_column='SAMPLE',
         chunk_size=chunk_size
     }
 
