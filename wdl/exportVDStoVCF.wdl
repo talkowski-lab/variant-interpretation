@@ -102,7 +102,7 @@ task exportVDS {
                         "spark.driver.memory": f"{mem}g"
                         }, tmp_dir="tmp", local_tmpdir="tmp")
 
-    samples = pd.read_csv(sample_file, header=None)[0]
+    samples = pd.read_csv(sample_file, header=None)[0].tolist()
 
     vds = hl.vds.read_vds(input_vds, n_partitions=n_shards)
     mt = vds.variant_data
