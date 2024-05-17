@@ -22,6 +22,14 @@ sample_qc = hl.sample_qc(mt).cols().flatten().to_pandas()
 sample_qc.index = sample_qc.s
 sample_qc.columns = sample_qc.columns.str.replace('sample_qc.','')
 
+sex_str = []
+for sex_type in ped_qc.ped_sex.unique():
+    try:
+        float(sex_type)
+    except:
+        sex_str.append(sex_type)
+ped_qc['ped_sex'] = ped_qc.ped_sex.replace({np.nan: -9} | {sex_type: -9 for sex_type in sex_str}).astype(int).astype('category')
+
 ped_qc['sex_error'] = ped_qc['sex'].astype(int).astype(str)!=ped_qc['ped_sex'].astype(int).astype(str)
 
 rel_df['maternal_error'] = (rel_df.role=='Proband')&(~rel_df.mother_status.isin(['parent-child','ambiguous',np.nan]))
