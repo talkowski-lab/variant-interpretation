@@ -120,7 +120,7 @@ task exportVDS {
 
     samples = pd.read_csv(sample_file, header=None)[0].tolist()
 
-    vds = hl.vds.read_vds(input_vds, n_partitions=n_shards)
+    vds = hl.vds.read_vds(input_vds)
     mt = vds.variant_data
 
     # get specific range of partitions
