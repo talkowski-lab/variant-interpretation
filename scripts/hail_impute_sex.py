@@ -109,7 +109,7 @@ ped_qc['ped_sex'] = ped_qc.sex
 ped_qc['sex'] = ped_qc.apply(predict_sex, axis=1).astype('category')
 ped_qc = ped_qc[base_cols + ['ped_sex'] + np.setdiff1d(sample_qc_df.columns, base_cols).tolist()]
 
-for col in ped_qc.columns[:6]:
+for col in ped_qc.columns.tolist()[:6] + ['ped_sex']:
     ped_qc[col] = ped_qc[col].replace({np.nan: -9})
 ped_qc.to_csv(f"{cohort_prefix}_sex_qc.ped", sep='\t', index=False)
 
