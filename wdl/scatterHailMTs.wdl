@@ -198,7 +198,11 @@ task getRepartitions {
                         "spark.driver.memory": f"{mem}g"
                         }, tmp_dir="tmp", local_tmpdir="tmp")
 
-    mt = hl.read_matrix_table(mt_uri)
+    if mt_uri.split('.')[-1]=='mt':
+        mt = hl.read_matrix_table(mt_uri)
+    elif mt_uri.split('.')[-1]=='vds':
+        vds = hl.vds.read_vds(mt_uri)
+        mt = vds.variant_data
 
     tot_partitions = mt.n_partitions()
     partitions_per_chunk = int(np.ceil(tot_partitions / n_shards))
