@@ -17,7 +17,10 @@ hl.init(min_block_size=128, spark_conf={"spark.executor.cores": cores,
                     "spark.driver.memory": f"{mem}g"
                     }, tmp_dir="tmp", local_tmpdir="tmp")
 
-mt = hl.import_table(vcf_metrics_tsv)
+try:
+    mt = hl.import_table(vcf_metrics_tsv)
+except:
+    mt = hl.import_table(vcf_metrics_tsv, force=True)
 keys = hl.parse_variant(mt.ID, reference_genome='GRCh38')
 mt = mt.annotate(alleles=keys.alleles, locus=keys.locus)
 
