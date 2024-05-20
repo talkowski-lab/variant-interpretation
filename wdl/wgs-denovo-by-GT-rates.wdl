@@ -5,6 +5,7 @@ import "wgs-denovo-step-01.wdl" as step1
 import "mergeVCFs.wdl" as mergeVCFs
 import "wes-denovo-helpers.wdl" as helpers
 import "prioritizeCSQ.wdl" as prioritizeCSQ
+import "annotateMPCandLOEUF.wdl" as annotateMPCandLOEUF
 
 struct RuntimeAttr {
     Float? mem_gb
@@ -19,15 +20,32 @@ workflow getDenovoByGTRates {
     input {
         File denovo_gt
         File ped_sex_qc
+
+        String mpc_dir
+        File mpc_chr22_file
+        File loeuf_file
+
         String cohort_prefix
         String hail_docker
-        String sv_base_mini_docker
+
+        String annotate_mpc_loeuf_script
+
         Int chunk_size=100000
     }  
+
+    call annotateMPCandLOEUF.annotateMPCandLOEUF as annotateMPCandLOEUF {
+        input:
+            vcf_metrics_tsv=denovo_gt,
+            mpc_dir=mpc_dir,
+            mpc_chr22_file=mpc_chr22_file,
+            loeuf_file=loeuf_file,
+            annotate_mpc_loeuf_script=annotate_mpc_loeuf_script,
+            hail_docker=hail_docker
+    }
     
     call getRates {
         input:
-        denovo_gt=denovo_gt,
+        denovo_gt=annotateMPCandLOEUF.vcf_metrics_tsv_annot,
         ped_sex_qc=ped_sex_qc,
         hail_docker=hail_docker,
         cohort_prefix=cohort_prefix,
