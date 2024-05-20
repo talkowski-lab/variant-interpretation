@@ -42,11 +42,11 @@ workflow RelatednessCohortSet {
     }
 
     if (!defined(somalier_vcf_file_)) {
-        scatter (vcf_uri in select_first([somalier_vcf_files])) {
+        scatter (pair in zip(cohort_prefixes, select_first([somalier_vcf_files]))) {
             call renameVCFSamples {
                 input:
-                    vcf_uri=vcf_uri,
-                    cohort_prefix=cohort_prefix,
+                    vcf_uri=pair.right,
+                    cohort_prefix=pair.left,
                     hail_docker=hail_docker,
                     runtime_attr_override=runtime_attr_rename_vcf
             }
