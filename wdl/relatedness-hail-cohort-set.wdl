@@ -31,6 +31,7 @@ workflow RelatednessCohortSet {
         Int chunk_size=100000
         Int samples_per_chunk=0
         Boolean sort_after_merge=false
+        RuntimeAttr? runtime_attr_rename_vcf
         RuntimeAttr? runtime_attr_subset_vcfs
         RuntimeAttr? runtime_attr_merge_vcfs
         RuntimeAttr? runtime_attr_impute_sex
@@ -41,13 +42,21 @@ workflow RelatednessCohortSet {
     }
 
     if (!defined(somalier_vcf_file_)) {
-        call mergeVCFSamples as mergeVCFs {
+        scatter (vcf_uri in select_first([somalier_vcf_files])) {
+            call renameVCFSamples {
+                input:
+                    vcf_uri=vcf_uri,
+                    cohort_prefix=cohort_prefix,
+                    hail_docker=hail_docker,
+                    runtime_attr_override=runtime_attr_rename_vcf
+            }
+        }
+        call mergeVCFs.mergeVCFSamples as mergeVCFs {
             input:
-                vcf_uris=select_first([somalier_vcf_files]),
-                cohort_prefixes=cohort_prefixes,
-                hail_docker=hail_docker,
-                merged_filename=merged_filename,
-                runtime_attr_override=runtime_attr_merge_vcfs
+            vcf_files=renameVCFSamples.renamed_vcf_file,
+            merged_filename=merged_filename,
+            sv_base_mini_docker=sv_base_mini_docker,
+            runtime_attr_override=runtime_attr_merge_vcfs
         }
     }
 
@@ -195,15 +204,14 @@ task mergePeds {
     }   
 }
 
-task mergeVCFSamples {
+task renameVCFSamples {
     input {
-        Array[File] vcf_uris
-        Array[String] cohort_prefixes
-        String merged_filename
+        File vcf_uri
+        String cohort_prefix
         String hail_docker
         RuntimeAttr? runtime_attr_override
     }
-    Float input_size = size(vcf_uris, 'GB')
+    Float input_size = size(vcf_uri, 'GB')
     Float base_disk_gb = 10.0
     Float input_disk_scale = 5.0
     RuntimeAttr runtime_default = object {
@@ -235,12 +243,12 @@ task mergeVCFSamples {
     import numpy as np
     import hail as hl
     import sys
+    import os
 
-    vcf_uris = pd.read_csv(sys.argv[1], header=None)[0].tolist()
-    cohort_prefixes = pd.read_csv(sys.argv[2], header=None)[0].tolist()
-    merged_filename = sys.argv[3]
-    cores = sys.argv[4]  # string
-    mem = int(np.floor(float(sys.argv[5])))
+    vcf_uri = sys.argv[1]
+    cohort_prefix = sys.argv[2]
+    cores = sys.argv[3]  # string
+    mem = int(np.floor(float(sys.argv[4])))
 
     hl.init(min_block_size=128, spark_conf={"spark.executor.cores": cores, 
                         "spark.executor.memory": f"{mem}g",
@@ -248,25 +256,18 @@ task mergeVCFSamples {
                         "spark.driver.memory": f"{mem}g"
                         }, tmp_dir="tmp", local_tmpdir="tmp")
 
-    for i, (cohort, vcf_uri) in enumerate(zip(cohort_prefixes, vcf_uris)):
-        if i==0:
-            mt = hl.import_vcf(vcf_uri, reference_genome='GRCh38', force_bgz=True, call_fields=[], array_elements_required=False)
-            mt = mt.key_cols_by()
-            mt = mt.annotate_cols(s=hl.str(f"{cohort}:")+mt.s).key_cols_by('s')
-        else:
-            cohort_mt = hl.import_vcf(vcf_uri, reference_genome='GRCh38', force_bgz=True, call_fields=[], array_elements_required=False)
-            cohort_mt = cohort_mt.key_cols_by()
-            cohort_mt = cohort_mt.annotate_cols(s=hl.str(f"{cohort}:")+cohort_mt.s).key_cols_by('s')
-            common_entry_fields = np.setdiff1d(np.intersect1d(list(mt.entry),list(cohort_mt.entry)), ['MIN_DP','PGT','PID'])
-            mt = mt.select_entries(*common_entry_fields).union_cols(cohort_mt.select_entries(*common_entry_fields), row_join_type='outer')
-
-    hl.export_vcf(mt, f"{merged_filename}.vcf.bgz")
+    mt = hl.import_vcf(vcf_uri, reference_genome='GRCh38', force_bgz=True, call_fields=[], array_elements_required=False)
+    mt = mt.key_cols_by()
+    mt = mt.annotate_cols(s=hl.str(f"{cohort_prefix}:")+mt.s).key_cols_by('s')
+    hl.export_vcf(mt, f"{os.path.basename(vcf_uri).split('.vcf')[0]}_new_sample_IDs.vcf.bgz")
     EOF
 
-    python3 merge_vcfs.py ~{write_lines(vcf_uris)} ~{write_lines(cohort_prefixes)} ~{merged_filename} ~{cpu_cores} ~{memory}
+    python3 merge_vcfs.py ~{vcf_uri} ~{cohort_prefix} ~{cpu_cores} ~{memory}
     >>>
 
+    String file_ext = if sub(basename(vcf_uri), '.vcf.gz', '')!=basename(vcf_uri) then '.vcf.gz' else '.vcf.bgz'
+
     output {
-        File merged_vcf_file = "~{merged_filename}.vcf.bgz"
+        File renamed_vcf_file = "~{basename(vcf_uri, file_ext)}_new_sample_IDs.vcf.bgz"
     }
 }
