@@ -37,7 +37,8 @@ workflow getDenovoByGTRates {
         input:
         tsv=denovo_gt,
         chunk_size=chunk_size,
-        hail_docker=hail_docker
+        hail_docker=hail_docker,
+        input_size=size(denovo_gt, 'GB')
     }
 
     scatter (tsv in splitTSV.tsv_shards) {
@@ -76,13 +77,13 @@ workflow getDenovoByGTRates {
 
 task splitTSV {
     input {
-        File tsv
+        String tsv
         Int chunk_size
         String hail_docker
+        Float input_size
         RuntimeAttr? runtime_attr_override
     }
 
-    Float input_size = size(tsv, 'GB')
     Float base_disk_gb = 10.0
     Float input_disk_scale = 5.0
     RuntimeAttr runtime_default = object {
