@@ -249,16 +249,16 @@ task mergeVCFSamples {
                         }, tmp_dir="tmp", local_tmpdir="tmp")
 
     for i, (cohort, vcf_uri) in enumerate(zip(cohort_prefixes, vcf_uris)):
-    if i==0:
-        mt = hl.import_vcf(vcf_uri, reference_genome='GRCh38', force_bgz=True, call_fields=[], array_elements_required=False)
-        mt = mt.key_cols_by()
-        mt = mt.annotate_cols(s=hl.str(f"{cohort}:")+mt.s).key_cols_by('s')
-    else:
-        cohort_mt = hl.import_vcf(vcf_uri, reference_genome='GRCh38', force_bgz=True, call_fields=[], array_elements_required=False)
-        cohort_mt = cohort_mt.key_cols_by()
-        cohort_mt = cohort_mt.annotate_cols(s=hl.str(f"{cohort}:")+cohort_mt.s).key_cols_by('s')
-        common_entry_fields = np.setdiff1d(np.intersect1d(list(mt.entry),list(cohort_mt.entry)), ['MIN_DP','PGT','PID'])
-        mt = mt.select_entries(*common_entry_fields).union_cols(cohort_mt.select_entries(*common_entry_fields), row_join_type='outer')
+        if i==0:
+            mt = hl.import_vcf(vcf_uri, reference_genome='GRCh38', force_bgz=True, call_fields=[], array_elements_required=False)
+            mt = mt.key_cols_by()
+            mt = mt.annotate_cols(s=hl.str(f"{cohort}:")+mt.s).key_cols_by('s')
+        else:
+            cohort_mt = hl.import_vcf(vcf_uri, reference_genome='GRCh38', force_bgz=True, call_fields=[], array_elements_required=False)
+            cohort_mt = cohort_mt.key_cols_by()
+            cohort_mt = cohort_mt.annotate_cols(s=hl.str(f"{cohort}:")+cohort_mt.s).key_cols_by('s')
+            common_entry_fields = np.setdiff1d(np.intersect1d(list(mt.entry),list(cohort_mt.entry)), ['MIN_DP','PGT','PID'])
+            mt = mt.select_entries(*common_entry_fields).union_cols(cohort_mt.select_entries(*common_entry_fields), row_join_type='outer')
 
     hl.export_vcf(mt, f"{merged_filename}.vcf.bgz")
     EOF
