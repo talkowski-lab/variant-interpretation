@@ -228,7 +228,7 @@ task getRates {
     rates_df = pd.DataFrame()
     rates_df = get_rates(cohort_prefix, n_trios, denovo_gt, rates_df)
 
-    rates_df.to_csv(f"{os.path.basename(denovo_gt).split('.tsv.gz')[0]}_rates.tsv", sep='\t')
+    rates_df.to_csv(f"{os.path.basename(denovo_gt_uri).split('.tsv.gz')[0]}_rates.tsv", sep='\t')
     EOF
 
     python3 get_counts.py ~{denovo_gt} ~{ped_sex_qc} ~{cohort_prefix} ~{chunk_size} 
