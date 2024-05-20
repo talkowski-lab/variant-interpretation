@@ -76,7 +76,7 @@ workflow getDenovoByGTRates {
 
 task splitTSV {
     input {
-        File tsv
+        String tsv
         Int chunk_size
         String hail_docker
         RuntimeAttr? runtime_attr_override
