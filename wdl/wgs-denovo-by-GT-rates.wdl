@@ -125,7 +125,7 @@ task splitTSV {
         sub_df.to_csv(f"{base_filename}_shard_{i}.tsv.gz", sep='\t', index=False)
     EOF
 
-    python3 ~{tsv} ~{chunk_size}
+    python3 split_tsv.py ~{tsv} ~{chunk_size}
     >>>
 
     output {
