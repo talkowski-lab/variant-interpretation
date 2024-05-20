@@ -76,7 +76,7 @@ workflow getDenovoByGTRates {
 
 task splitTSV {
     input {
-        String tsv
+        File tsv
         Int chunk_size
         String hail_docker
         RuntimeAttr? runtime_attr_override
@@ -120,7 +120,7 @@ task splitTSV {
 
     base_filename = os.path.basename(uri).split('.')[0]
 
-    for i, sub_df in enumerate(pd.read_csv(uri, sep='\t', chunksize=chunk_size)):
+    for i, sub_df in enumerate(pd.read_csv(uri, sep='\t', compression='gzip', chunksize=chunk_size)):
         sub_df.to_csv(f"{base_filename}_shard_{i}.tsv.gz", sep='\t', index=False)
     EOF
 
