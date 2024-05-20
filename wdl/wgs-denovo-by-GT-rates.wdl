@@ -120,8 +120,7 @@ task splitTSV {
 
     base_filename = os.path.basename(uri).split('.')[0]
 
-    df = pd.concat(pd.read_csv(uri, sep='\t', chunksize=chunk_size))
-    for i, sub_df in enumerate(np.array_split(df, chunk_size)):
+    for i, sub_df in enumerate(pd.read_csv(uri, sep='\t', chunksize=chunk_size)):
         sub_df.to_csv(f"{base_filename}_shard_{i}.tsv.gz", sep='\t', index=False)
     EOF
 
