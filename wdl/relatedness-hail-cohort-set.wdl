@@ -259,6 +259,17 @@ task renameVCFSamples {
     mt = hl.import_vcf(vcf_uri, reference_genome='GRCh38', force_bgz=True, call_fields=[], array_elements_required=False)
     mt = mt.key_cols_by()
     mt = mt.annotate_cols(s=hl.str(f"{cohort_prefix}:")+mt.s).key_cols_by('s')
+    try:
+        # for haploid (e.g. chrY)
+        mt = mt.annotate_entries(
+            GT = hl.if_else(
+                    mt.GT.ploidy == 1, 
+                    hl.call(mt.GT[0], mt.GT[0]),
+                    mt.GT)
+        )
+    except:
+        pass
+
     hl.export_vcf(mt, f"{os.path.basename(vcf_uri).split('.vcf')[0]}_new_sample_IDs.vcf.bgz")
     EOF
 
