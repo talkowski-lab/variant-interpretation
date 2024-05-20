@@ -290,7 +290,10 @@ task removeDuplicates {
     kinship_df['pair'] = kinship_df[['i','j']].astype(str).agg(lambda lst: ','.join(sorted(lst)), axis=1)
     kinship_df['ped_rel_rank'] = kinship_df.ped_relationship.map({'parent-child': 4, 'siblings': 3, 'related_other': 2, 'unrelated': 1})    
     kinship_df['inferred_rel_rank'] = kinship_df.relationship.map({'parent-child': 5, 'ambiguous': 4, 'siblings': 3, 'second degree relatives': 2, 'duplicate/twins': 1, 'unrelated': 0})    
-    kinship_df = kinship_df.sort_values(['ped_rel_rank','inferred_rel_rank','kin'], ascending=False).drop_duplicates('pair')
+    unrelated_kin = kinship_df[kinship_df.ped_relationship=='unrelated']
+    related_kin = kinship_df[kinship_df.ped_relationship!='unrelated']
+    kinship_df = pd.concat([related_kin.sort_values(['ped_rel_rank','inferred_rel_rank','kin'], ascending=False).drop_duplicates('pair'),
+                            unrelated_kin.groupby('pair').sample(1)])
     kinship_df = kinship_df.drop(['ped_rel_rank','inferred_rel_rank'], axis=1)
 
     rel_df = pd.read_csv(relatedness_qc, sep='\t')

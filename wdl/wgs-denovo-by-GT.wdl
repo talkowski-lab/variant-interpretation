@@ -21,7 +21,6 @@ workflow getDenovoByGT {
         File ped_sex_qc
         Float af_threshold=0.01
         String cohort_prefix
-        String vep_hail_docker
         String hail_docker
         String sv_base_mini_docker
         Int chunk_size=100000
@@ -41,7 +40,7 @@ workflow getDenovoByGT {
                 file=write_lines(vep_files),
                 shards_per_chunk=shards_per_chunk,
                 cohort_prefix=cohort_prefix,
-                vep_hail_docker=vep_hail_docker
+                hail_docker=hail_docker
         }
 
         scatter (chunk_file in splitVEPFiles.chunks) {        
@@ -58,7 +57,7 @@ workflow getDenovoByGT {
                     ped_sex_qc=ped_sex_qc,
                     file_ext=file_ext,
                     af_threshold=af_threshold,
-                    vep_hail_docker=vep_hail_docker,
+                    hail_docker=hail_docker,
                     denovo_snv_indels_gt_script=denovo_snv_indels_gt_script,
                     prioritize_csq_script=prioritize_csq_script,
                     sample_column=sample_column
@@ -81,7 +80,7 @@ workflow getDenovoByGT {
                     ped_sex_qc=ped_sex_qc,
                     file_ext=file_ext,
                     af_threshold=af_threshold,
-                    vep_hail_docker=vep_hail_docker,
+                    hail_docker=hail_docker,
                     denovo_snv_indels_gt_script=denovo_snv_indels_gt_script,
                     prioritize_csq_script=prioritize_csq_script,
                     sample_column=sample_column
@@ -101,7 +100,7 @@ workflow getDenovoByGT {
     call denovoSampleCounts {
         input:
         denovo_gt=denovo_gt_,
-        vep_hail_docker=vep_hail_docker,
+        hail_docker=hail_docker,
         sample_column='SAMPLE',
         chunk_size=chunk_size
     }
@@ -118,7 +117,7 @@ task denovoByGT {
         File ped_sex_qc
         String file_ext
         Float af_threshold
-        String vep_hail_docker
+        String hail_docker
         String denovo_snv_indels_gt_script
         String prioritize_csq_script    
         String sample_column
@@ -147,7 +146,7 @@ task denovoByGT {
         cpu: cpu_cores
         preemptible: select_first([runtime_override.preemptible_tries, runtime_default.preemptible_tries])
         maxRetries: select_first([runtime_override.max_retries, runtime_default.max_retries])
-        docker: vep_hail_docker
+        docker: hail_docker
         bootDiskSizeGb: select_first([runtime_override.boot_disk_gb, runtime_default.boot_disk_gb])
     }
     
@@ -155,11 +154,11 @@ task denovoByGT {
 
     command {
         curl ~{denovo_snv_indels_gt_script} > denovo_snv_indels.py
-        python3.9 denovo_snv_indels.py ~{vcf_file} ~{ped_sex_qc} ~{af_threshold} \
+        python3 denovo_snv_indels.py ~{vcf_file} ~{ped_sex_qc} ~{af_threshold} \
         ~{cpu_cores} ~{memory} ~{file_ext}
 
         curl ~{prioritize_csq_script} > prioritize_csq.py
-        python3.9 prioritize_csq.py ~{denovo_gt} ~{cpu_cores} ~{memory} ~{sample_column}
+        python3 prioritize_csq.py ~{denovo_gt} ~{cpu_cores} ~{memory} ~{sample_column}
     }
 
     output {
@@ -171,7 +170,7 @@ task denovoSampleCounts {
     input {
         File denovo_gt
         String sample_column
-        String vep_hail_docker
+        String hail_docker
         Int chunk_size
         RuntimeAttr? runtime_attr_override
     }
@@ -197,7 +196,7 @@ task denovoSampleCounts {
         cpu: cpu_cores
         preemptible: select_first([runtime_override.preemptible_tries, runtime_default.preemptible_tries])
         maxRetries: select_first([runtime_override.max_retries, runtime_default.max_retries])
-        docker: vep_hail_docker
+        docker: hail_docker
         bootDiskSizeGb: select_first([runtime_override.boot_disk_gb, runtime_default.boot_disk_gb])
     }
 
@@ -221,7 +220,7 @@ task denovoSampleCounts {
     counts_df.to_csv(f"{os.path.basename(denovo_gt).split('.tsv.gz')[0]}_sample_counts.tsv", sep='\t', index=False)
     EOF
 
-    python3.9 get_counts.py ~{denovo_gt} ~{chunk_size} ~{sample_column}
+    python3 get_counts.py ~{denovo_gt} ~{chunk_size} ~{sample_column}
     >>>
 
     output {
