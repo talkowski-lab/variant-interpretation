@@ -270,7 +270,8 @@ task renameVCFSamples {
     except:
         pass
 
-    hl.export_vcf(mt, f"{os.path.basename(vcf_uri).split('.vcf')[0]}_new_sample_IDs.vcf.bgz")
+    header = hl.get_vcf_metadata(vcf_uri) 
+    hl.export_vcf(mt, f"{os.path.basename(vcf_uri).split('.vcf')[0]}_new_sample_IDs.vcf.bgz", metadata=header)
     EOF
 
     python3 merge_vcfs.py ~{vcf_uri} ~{cohort_prefix} ~{cpu_cores} ~{memory}
