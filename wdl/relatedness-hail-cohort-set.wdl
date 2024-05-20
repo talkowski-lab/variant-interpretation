@@ -252,11 +252,11 @@ task mergeVCFSamples {
     if i==0:
         mt = hl.import_vcf(vcf_uri, reference_genome='GRCh38', force_bgz=True, call_fields=[], array_elements_required=False)
         mt = mt.key_cols_by()
-        mt = mt.annotate_cols(s=hl.str(cohort)+mt.s).key_cols_by('s')
+        mt = mt.annotate_cols(s=hl.str(f"{cohort}:")+mt.s).key_cols_by('s')
     else:
         cohort_mt = hl.import_vcf(vcf_uri, reference_genome='GRCh38', force_bgz=True, call_fields=[], array_elements_required=False)
         cohort_mt = cohort_mt.key_cols_by()
-        cohort_mt = cohort_mt.annotate_cols(s=hl.str(cohort)+cohort_mt.s).key_cols_by('s')
+        cohort_mt = cohort_mt.annotate_cols(s=hl.str(f"{cohort}:")+cohort_mt.s).key_cols_by('s')
         common_entry_fields = np.setdiff1d(np.intersect1d(list(mt.entry),list(cohort_mt.entry)), ['MIN_DP','PGT','PID'])
         mt = mt.select_entries(*common_entry_fields).union_cols(cohort_mt.select_entries(*common_entry_fields), row_join_type='outer')
 

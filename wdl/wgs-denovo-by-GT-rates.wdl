@@ -33,19 +33,36 @@ workflow getDenovoByGTRates {
         Int chunk_size=100000
     }  
 
-    call annotateMPCandLOEUF.annotateMPCandLOEUF as annotateMPCandLOEUF {
+    call splitTSV {
         input:
-            vcf_metrics_tsv=denovo_gt,
-            mpc_dir=mpc_dir,
-            mpc_chr22_file=mpc_chr22_file,
-            loeuf_file=loeuf_file,
-            annotate_mpc_loeuf_script=annotate_mpc_loeuf_script,
-            hail_docker=hail_docker
+        tsv=denovo_gt,
+        chunk_size=chunk_size,
+        hail_docker=hail_docker
     }
-    
+
+    scatter (tsv in splitTSV.tsv_shards) {
+        call annotateMPCandLOEUF.annotateMPCandLOEUF as annotateMPCandLOEUF {
+            input:
+                vcf_metrics_tsv=tsv,
+                mpc_dir=mpc_dir,
+                mpc_chr22_file=mpc_chr22_file,
+                loeuf_file=loeuf_file,
+                annotate_mpc_loeuf_script=annotate_mpc_loeuf_script,
+                hail_docker=hail_docker
+        }
+    }
+
+    call helpers.mergeResultsPython as mergeAnnotatedTSVs {
+        input:
+        tsvs=annotateMPCandLOEUF.vcf_metrics_tsv_annot,
+        input_size=size(annotateMPCandLOEUF.vcf_metrics_tsv_annot, 'GB'),
+        merged_filename=basename(denovo_gt, '.tsv.gz') + '_annot.tsv.gz',
+        hail_docker=hail_docker
+    }
+
     call getRates {
         input:
-        denovo_gt=annotateMPCandLOEUF.vcf_metrics_tsv_annot,
+        denovo_gt=mergeAnnotatedTSVs.merged_tsv,
         ped_sex_qc=ped_sex_qc,
         hail_docker=hail_docker,
         cohort_prefix=cohort_prefix,
@@ -54,6 +71,65 @@ workflow getDenovoByGTRates {
 
     output {
         File denovo_gt_rates = getRates.denovo_gt_rates
+    }
+}
+
+task splitTSV {
+    input {
+        File tsv
+        Int chunk_size
+        String hail_docker
+        RuntimeAttr? runtime_attr_override
+    }
+
+    Float input_size = size(tsv, 'GB')
+    Float base_disk_gb = 10.0
+    Float input_disk_scale = 5.0
+    RuntimeAttr runtime_default = object {
+        mem_gb: 4,
+        disk_gb: ceil(base_disk_gb + input_size * input_disk_scale),
+        cpu_cores: 1,
+        preemptible_tries: 3,
+        max_retries: 1,
+        boot_disk_gb: 10
+    }
+
+    RuntimeAttr runtime_override = select_first([runtime_attr_override, runtime_default])
+    Float memory = select_first([runtime_override.mem_gb, runtime_default.mem_gb])
+    Int cpu_cores = select_first([runtime_override.cpu_cores, runtime_default.cpu_cores])
+
+    runtime {
+        memory: "~{memory} GB"
+        disks: "local-disk ~{select_first([runtime_override.disk_gb, runtime_default.disk_gb])} HDD"
+        cpu: cpu_cores
+        preemptible: select_first([runtime_override.preemptible_tries, runtime_default.preemptible_tries])
+        maxRetries: select_first([runtime_override.max_retries, runtime_default.max_retries])
+        docker: hail_docker
+        bootDiskSizeGb: select_first([runtime_override.boot_disk_gb, runtime_default.boot_disk_gb])
+    }
+
+    command <<<
+    cat <<EOF > split_tsv.py
+    import pandas as pd
+    import numpy as np
+    import sys
+    import os
+
+    uri = sys.argv[1]
+    chunk_size = int(sys.argv[2])
+
+    base_filename = os.path.basename(uri).split('.')[0]
+
+    df = pd.concat(pd.read_csv(uri, sep='\t', chunksize=chunk_size))
+    for i, sub_df in enumerate(np.array_split(df, chunk_size)):
+        sub_df.to_csv(f"{base_filename}_shard_{i}.tsv.gz", sep='\t', index=False)
+    EOF
+
+    python3 ~{tsv} ~{chunk_size}
+    >>>
+
+    output {
+        Array[File] tsv_shards = glob("*_shard_*.tsv.gz")
     }
 }
 
