@@ -18,6 +18,7 @@ workflow RelatednessCohortSet {
         Array[File]? somalier_vcf_files
         File? somalier_vcf_file_
         Array[File] ped_uri
+        Array[String] cohort_prefixes
         File sites_uri
         File bed_file
         String merged_filename  # no file extension
@@ -40,10 +41,11 @@ workflow RelatednessCohortSet {
     }
 
     if (!defined(somalier_vcf_file_)) {
-        call mergeVCFs.mergeVCFSamples as mergeVCFs {
+        call mergeVCFSamples as mergeVCFs {
             input:
-                vcf_files=select_first([somalier_vcf_files]),
-                sv_base_mini_docker=sv_base_mini_docker,
+                vcf_uris=select_first([somalier_vcf_files]),
+                cohort_prefixes=cohort_prefixes,
+                hail_docker=hail_docker,
                 merged_filename=merged_filename,
                 runtime_attr_override=runtime_attr_merge_vcfs
         }
@@ -54,6 +56,7 @@ workflow RelatednessCohortSet {
     call mergePeds {
         input:
             ped_uris=ped_uri,
+            cohort_prefixes=cohort_prefixes,
             merged_filename=merged_filename,
             hail_docker=hail_docker,
             input_size=size(ped_uri, 'GB')
@@ -125,6 +128,7 @@ workflow RelatednessCohortSet {
 
 task mergePeds {
      input {
+        Array[String] cohort_prefixes
         Array[String] ped_uris
         String hail_docker
         String merged_filename
@@ -164,22 +168,26 @@ task mergePeds {
         import sys
 
         tsvs = pd.read_csv(sys.argv[1], header=None)[0].tolist()
-        merged_filename = sys.argv[2] + '.ped'
+        cohort_prefixes = pd.read_csv(sys.argv[2], header=None)[0].tolist()
+        merged_filename = sys.argv[3] + '.ped'
 
         dfs = []
         tot = len(tsvs)
-        for i, tsv in enumerate(tsvs):
+        for i, (cohort, tsv) in enumerate(zip(cohort_prefixes, tsvs)):
             print(f"Loading pedigree {i+1}/{tot}...")
             df = pd.read_csv(tsv, sep='\t').iloc[:, :6]
             df.columns = ['FamilyID', 'IndividualID', 'FatherID', 'MotherID', 'Sex', 'Affected']
-            if not df.empty:
-                dfs.append(df)
+            df[['FamilyID', 'IndividualID']] = f"{cohort}:" + df[['FamilyID', 'IndividualID']].astype(str)
+
+            df['FatherID'] = df.FatherID.map({samp: f"{cohort}:" + samp for samp in df[df.FatherID!='0'].FatherID.tolist()} | {'0': '0'})
+            df['MotherID'] = df.MotherID.map({samp: f"{cohort}:" + samp for samp in df[df.MotherID!='0'].MotherID.tolist()} | {'0': '0'})
+
+            dfs.append(df)
         merged_df = pd.concat(dfs)
-        merged_df = merged_df.drop_duplicates('IndividualID')
         merged_df.to_csv(merged_filename, sep='\t', index=False)
         EOF
 
-        python3 merge_peds.py ~{write_lines(ped_uris)} ~{merged_filename} > stdout
+        python3 merge_peds.py ~{write_lines(ped_uris)} ~{write_lines(cohort_prefixes)} ~{merged_filename} > stdout
     >>>
 
     output {
@@ -187,3 +195,78 @@ task mergePeds {
     }   
 }
 
+task mergeVCFSamples {
+    input {
+        Array[File] vcf_uris
+        Array[String] cohort_prefixes
+        String merged_filename
+        String hail_docker
+        RuntimeAttr? runtime_attr_override
+    }
+    Float input_size = size(vcf_uris, 'GB')
+    Float base_disk_gb = 10.0
+    Float input_disk_scale = 5.0
+    RuntimeAttr runtime_default = object {
+        mem_gb: 4,
+        disk_gb: ceil(base_disk_gb + input_size * input_disk_scale),
+        cpu_cores: 1,
+        preemptible_tries: 3,
+        max_retries: 1,
+        boot_disk_gb: 10
+    }
+
+    RuntimeAttr runtime_override = select_first([runtime_attr_override, runtime_default])
+    Float memory = select_first([runtime_override.mem_gb, runtime_default.mem_gb])
+    Int cpu_cores = select_first([runtime_override.cpu_cores, runtime_default.cpu_cores])
+
+    runtime {
+        memory: "~{memory} GB"
+        disks: "local-disk ~{select_first([runtime_override.disk_gb, runtime_default.disk_gb])} HDD"
+        cpu: cpu_cores
+        preemptible: select_first([runtime_override.preemptible_tries, runtime_default.preemptible_tries])
+        maxRetries: select_first([runtime_override.max_retries, runtime_default.max_retries])
+        docker: hail_docker
+        bootDiskSizeGb: select_first([runtime_override.boot_disk_gb, runtime_default.boot_disk_gb])
+    }
+
+    command <<<
+    cat <<EOF > merge_vcfs.py
+    import pandas as pd
+    import numpy as np
+    import hail as hl
+    import sys
+
+    vcf_uris = pd.read_csv(sys.argv[1], header=None)[0].tolist()
+    cohort_prefixes = pd.read_csv(sys.argv[2], header=None)[0].tolist()
+    merged_filename = sys.argv[3]
+    cores = sys.argv[4]  # string
+    mem = int(np.floor(float(sys.argv[5])))
+
+    hl.init(min_block_size=128, spark_conf={"spark.executor.cores": cores, 
+                        "spark.executor.memory": f"{mem}g",
+                        "spark.driver.cores": cores,
+                        "spark.driver.memory": f"{mem}g"
+                        }, tmp_dir="tmp", local_tmpdir="tmp")
+
+    for i, (cohort, vcf_uri) in enumerate(zip(cohort_prefixes, vcf_uris)):
+    if i==0:
+        mt = hl.import_vcf(vcf_uri, reference_genome='GRCh38', force_bgz=True, call_fields=[], array_elements_required=False)
+        mt = mt.key_cols_by()
+        mt = mt.annotate_cols(s=hl.str(cohort)+mt.s).key_cols_by('s')
+    else:
+        cohort_mt = hl.import_vcf(vcf_uri, reference_genome='GRCh38', force_bgz=True, call_fields=[], array_elements_required=False)
+        cohort_mt = cohort_mt.key_cols_by()
+        cohort_mt = cohort_mt.annotate_cols(s=hl.str(cohort)+cohort_mt.s).key_cols_by('s')
+        common_entry_fields = np.setdiff1d(np.intersect1d(list(mt.entry),list(cohort_mt.entry)), ['MIN_DP','PGT','PID'])
+        mt = mt.select_entries(*common_entry_fields).union_cols(cohort_mt.select_entries(*common_entry_fields), row_join_type='outer')
+
+    hl.export_vcf(mt, f"{merged_filename}.vcf.bgz")
+    EOF
+
+    python3 merge_vcfs.py ~{write_lines(vcf_uris)} ~{write_lines(cohort_prefixes)} ~{merged_filename} ~{cpu_cores} ~{memory}
+    >>>
+
+    output {
+        File merged_vcf_file = "~{merged_filename}.vcf.bgz"
+    }
+}
