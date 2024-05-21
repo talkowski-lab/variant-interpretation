@@ -25,8 +25,15 @@ trio_uri = sys.argv[4]
 vcf_uri = sys.argv[5]
 exclude_gq_filters = ast.literal_eval(sys.argv[6].capitalize())  # DRAGEN VCFs...
 qual_threshold = int(sys.argv[7])  # also for DRAGEN VCFs...
-cores = sys.argv[8]  # string
-mem = int(np.floor(float(sys.argv[9])))
+sor_threshold_indel = sys.argv[8]
+sor_threshold_snv = sys.argv[9]
+readposranksum_threshold_indel = sys.argv[10]
+readposranksum_threshold_snv = sys.argv[11]
+qd_threshold_indel = sys.argv[12]
+qd_threshold_snv = sys.argv[13]
+mq_threshold = sys.argv[14]
+cores = sys.argv[15]  # string
+mem = int(np.floor(float(sys.argv[16])))
 
 prefix = os.path.basename(vcf_uri).split('.vcf')[0]
 
@@ -123,16 +130,16 @@ def trim_vcf(vcf_uri, lcr_uri, ped_uri, meta_uri, trio_uri, vcf_out_uri, build, 
     # row (variant INFO) level filters - GATK recommendations for short variants
     dn_snv_cond_row = (hl.is_snp(mt.alleles[0], mt.alleles[1])
                         & (mt.qual >= qual_threshold)
-                        & (mt.info.SOR <= 2.5)
-                        & (mt.info.ReadPosRankSum >= -1.4)
-                        & (mt.info.QD >= 3.0)
-                        & (mt.info.MQ >= 50))
+                        & (mt.info.SOR <= sor_threshold_snv)
+                        & (mt.info.ReadPosRankSum >= readposranksum_threshold_snv)
+                        & (mt.info.QD >= qd_threshold_snv)
+                        & (mt.info.MQ >= mq_threshold))
     dn_indel_cond_row = (hl.is_indel(mt.alleles[0], mt.alleles[1])
                         & (mt.qual >= qual_threshold)
-                        & (mt.info.SOR <= 3)
-                        & (mt.info.ReadPosRankSum >= -1.7)
-                        & (mt.info.QD >= 4.0)
-                        & (mt.info.MQ >= 50))
+                        & (mt.info.SOR <= sor_threshold_indel)
+                        & (mt.info.ReadPosRankSum >= readposranksum_threshold_indel)
+                        & (mt.info.QD >= qd_threshold_indel)
+                        & (mt.info.MQ >= mq_threshold))
     mt = mt.filter_rows(dn_snv_cond_row | dn_indel_cond_row, keep = True)
 
     if exclude_gq_filters:

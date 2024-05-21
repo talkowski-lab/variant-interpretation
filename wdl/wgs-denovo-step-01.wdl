@@ -26,6 +26,13 @@ workflow step1 {
         String cohort_prefix
         Int shards_per_chunk=10
         Int qual_threshold=150  # ~30 for DRAGEN
+        Float sor_threshold_indel=3.0
+        Float sor_threshold_snv=2.5
+        Float readposranksum_threshold_indel=-1.7
+        Float readposranksum_threshold_snv=-1.4
+        Float qd_threshold_indel=4.0
+        Float qd_threshold_snv=3.0
+        Float mq_threshold=50
         Boolean exclude_gq_filters=false
         Boolean sort_after_merge=false
         Boolean merge_split_vcf=false
@@ -70,6 +77,13 @@ workflow step1 {
                     trio_uri=makeTrioSampleFiles.trio_uri,
                     vep_hail_docker=vep_hail_docker,
                     qual_threshold=qual_threshold,
+                    sor_threshold_indel=sor_threshold_indel,
+                    sor_threshold_snv=sor_threshold_snv,
+                    readposranksum_threshold_indel=readposranksum_threshold_indel,
+                    readposranksum_threshold_snv=readposranksum_threshold_snv,
+                    qd_threshold_indel=qd_threshold_indel,
+                    qd_threshold_snv=qd_threshold_snv,
+                    mq_threshold=mq_threshold,
                     exclude_gq_filters=exclude_gq_filters,
                     runtime_attr_override=runtime_attr_preprocess
             }
@@ -96,6 +110,13 @@ workflow step1 {
                     trio_uri=makeTrioSampleFiles.trio_uri,
                     vep_hail_docker=vep_hail_docker,
                     qual_threshold=qual_threshold,
+                    sor_threshold_indel=sor_threshold_indel,
+                    sor_threshold_snv=sor_threshold_snv,
+                    readposranksum_threshold_indel=readposranksum_threshold_indel,
+                    readposranksum_threshold_snv=readposranksum_threshold_snv,
+                    qd_threshold_indel=qd_threshold_indel,
+                    qd_threshold_snv=qd_threshold_snv,
+                    mq_threshold=mq_threshold,
                     exclude_gq_filters=exclude_gq_filters,
                     runtime_attr_override=runtime_attr_preprocess
             }
@@ -151,6 +172,13 @@ task preprocessVCF {
         File trio_uri
         String vep_hail_docker
         Int qual_threshold
+        Float sor_threshold_indel
+        Float sor_threshold_snv
+        Float readposranksum_threshold_indel
+        Float readposranksum_threshold_snv
+        Float qd_threshold_indel
+        Float qd_threshold_snv
+        Float mq_threshold
         Boolean exclude_gq_filters
         RuntimeAttr? runtime_attr_override
     }
@@ -187,7 +215,9 @@ task preprocessVCF {
     command <<<
         curl ~{python_preprocess_script} > python_preprocess_script.py
         python3.9 python_preprocess_script.py ~{lcr_uri} ~{ped_sex_qc} ~{meta_uri} ~{trio_uri} ~{vcf_uri} \
-        ~{exclude_gq_filters} ~{qual_threshold} ~{cpu_cores} ~{memory}
+        ~{exclude_gq_filters} ~{qual_threshold} ~{sor_threshold_indel} ~{sor_threshold_snv} \
+        ~{readposranksum_threshold_indel} ~{readposranksum_threshold_snv} ~{qd_threshold_indel} ~{qd_threshold_snv} \
+        ~{mq_threshold} ~{cpu_cores} ~{memory}
         /opt/vep/bcftools/bcftools index -t ~{preprocessed_vcf_out}
     >>>
 

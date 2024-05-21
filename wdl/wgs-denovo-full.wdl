@@ -53,6 +53,13 @@ workflow wgs_denovo_full {
             Int batch_size
             Int shards_per_chunk=10
             Int qual_threshold=150
+            Float sor_threshold_indel=3.0
+            Float sor_threshold_snv=2.5
+            Float readposranksum_threshold_indel=-1.7
+            Float readposranksum_threshold_snv=-1.4
+            Float qd_threshold_indel=4.0
+            Float qd_threshold_snv=3.0
+            Float mq_threshold=50
             Float minDQ
             Float AF_threshold=0.005
             Int AC_threshold=2
@@ -74,6 +81,13 @@ workflow wgs_denovo_full {
             hail_docker=hail_docker,
             vep_hail_docker=vep_hail_docker,
             qual_threshold=qual_threshold,
+            sor_threshold_indel=sor_threshold_indel,
+            sor_threshold_snv=sor_threshold_snv,
+            readposranksum_threshold_indel=readposranksum_threshold_indel,
+            readposranksum_threshold_snv=readposranksum_threshold_snv,
+            qd_threshold_indel=qd_threshold_indel,
+            qd_threshold_snv=qd_threshold_snv,
+            mq_threshold=mq_threshold,
             exclude_gq_filters=exclude_gq_filters,
             merge_split_vcf=merge_split_vcf,
             shards_per_chunk=shards_per_chunk
