@@ -56,7 +56,7 @@ def get_genes_csq(csq):
             genes.append(gene)
     return list(set(genes))
 
-df = df[~df.CSQ.isna()]
+df = df[df.CSQ!='']
 
 if 'genes' not in df.columns:
     df['genes'] = df.CSQ.str.split(',').apply(get_genes_csq)
