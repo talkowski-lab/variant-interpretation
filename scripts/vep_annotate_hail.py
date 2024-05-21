@@ -47,6 +47,17 @@ if 'num_alleles' not in list(mt.row_value.keys()):
     mt = split_multi_ssc(mt)
     # mt = mt.distinct_by_row()
 
+try:
+    # for haploid (e.g. chrY)
+    mt = mt.annotate_entries(
+        GT = hl.if_else(
+                mt.GT.ploidy == 1, 
+                hl.call(mt.GT[0], mt.GT[0]),
+                mt.GT)
+    )
+except:
+    pass
+
 # annotate cohort AC to INFO field (after splitting multiallelic)
 mt = mt.annotate_rows(info=mt.info.annotate(cohort_AC=mt.info.AC[mt.a_index - 1],
                                             cohort_AF=mt.info.AF[mt.a_index - 1]))
