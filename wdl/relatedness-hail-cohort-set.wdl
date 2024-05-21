@@ -186,7 +186,8 @@ task mergePeds {
             print(f"Loading pedigree {i+1}/{tot}...")
             df = pd.read_csv(tsv, sep='\t').iloc[:, :6]
             df.columns = ['FamilyID', 'IndividualID', 'FatherID', 'MotherID', 'Sex', 'Affected']
-            df[['FamilyID', 'IndividualID']] = f"{cohort}:" + df[['FamilyID', 'IndividualID']].astype(str)
+            df[['FamilyID', 'IndividualID', 'FatherID', 'MotherID']] = df[['FamilyID', 'IndividualID', 'FatherID', 'MotherID']].astype(str)
+            df[['FamilyID', 'IndividualID']] = f"{cohort}:" + df[['FamilyID', 'IndividualID']]
 
             df['FatherID'] = df.FatherID.map({samp: f"{cohort}:" + samp for samp in df[df.FatherID!='0'].FatherID.tolist()} | {'0': '0'})
             df['MotherID'] = df.MotherID.map({samp: f"{cohort}:" + samp for samp in df[df.MotherID!='0'].MotherID.tolist()} | {'0': '0'})
