@@ -27,6 +27,7 @@ workflow vepAnnotateHail {
         File gerp_conservation_scores
         File hg38_vep_cache
         File loeuf_data
+        File alpha_missense_file
         String cohort_prefix
         String hail_docker
         String vep_hail_docker
@@ -110,6 +111,7 @@ workflow vepAnnotateHail {
                     gerp_conservation_scores=gerp_conservation_scores,
                     hg38_vep_cache=hg38_vep_cache,
                     loeuf_data=loeuf_data,
+                    alpha_missense_file=alpha_missense_file,
                     vep_hail_docker=vep_hail_docker,
                     reannotate_ac_af=reannotate_ac_af,
                     genome_build=genome_build,
@@ -137,6 +139,7 @@ task vepAnnotate {
         File gerp_conservation_scores
         File hg38_vep_cache
         File loeuf_data
+        File alpha_missense_file
         String vep_hail_docker
         String genome_build
         Boolean reannotate_ac_af
@@ -179,6 +182,7 @@ task vepAnnotate {
         dir_cache=$(dirname "~{hg38_vep_cache}")
         tar xzf ~{hg38_vep_cache} -C $dir_cache
         tabix -f -s 76 -b 77 -e 78 ~{loeuf_data}
+        tabix -s 1 -b 2 -e 2 -f -S 1 ~{alpha_missense_file}
 
         echo '{"command": [
         "vep",
@@ -196,6 +200,7 @@ task vepAnnotate {
         "--assembly", "GRCh38",
         "--fasta", "~{top_level_fa}",
         "--plugin", "LOEUF,file=~{loeuf_data},match_by=transcript",
+        "--plugin", "AlphaMissense,file=~{alpha_missense_file}",
         "--plugin", "LoF,loftee_path:/opt/vep/Plugins/,human_ancestor_fa:~{human_ancestor_fa},gerp_bigwig:~{gerp_conservation_scores}",
         "-o", "STDOUT"],
         "env": {
