@@ -76,6 +76,7 @@ workflow vepAnnotateHail {
                     gerp_conservation_scores=gerp_conservation_scores,
                     hg38_vep_cache=hg38_vep_cache,
                     loeuf_data=loeuf_data,
+                    alpha_missense_file=alpha_missense_file,
                     vep_hail_docker=vep_hail_docker,
                     reannotate_ac_af=reannotate_ac_af,
                     genome_build=genome_build,
