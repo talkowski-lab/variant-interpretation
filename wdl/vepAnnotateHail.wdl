@@ -196,6 +196,7 @@ task vepAnnotate {
         "--allele_number",
         "--no_stats",
         "--cache", 
+        "--merged",
         "--offline",
         "--minimal",
         "--assembly", "GRCh38",

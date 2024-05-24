@@ -221,7 +221,7 @@ task exportVDS {
     # remove all AC=0
     mt = hl.variant_qc(mt)
     mt = mt.filter_rows(mt.variant_qc.AC[1] > 0, keep = True)
-    mt = mt.drop('variant_qc')
+    # mt = mt.drop('variant_qc')
     
     # move gvcf_info from entries to rows
     rows = mt.entries().select('rsid','gvcf_info').key_by('locus', 'alleles')
