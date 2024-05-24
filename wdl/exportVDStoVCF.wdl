@@ -210,7 +210,13 @@ task exportVDS {
         return dr._unlocalize_entries('_dense', '_var_cols', list(var.col_key))
     # FUNC END
 
-    # get specific range of partitions
+    # move gvcf_info from entries to rows before merging VDS
+    variant_mt = vds.variant_data
+    rows = variant_mt.entries().select('rsid','gvcf_info').key_by('locus', 'alleles')
+    variant_mt = variant_mt.annotate_rows(info=rows[variant_mt.row_key].gvcf_info).drop('gvcf_info')
+    vds.variant_data = variant_mt
+
+    # merge VDS with specific range of partitions
     mt = to_dense_mt(vds, interval_start, interval_end)
 
     # subset samples
@@ -221,11 +227,10 @@ task exportVDS {
     # remove all AC=0
     mt = hl.variant_qc(mt)
     mt = mt.filter_rows(mt.variant_qc.AC[1] > 0, keep = True)
-    # mt = mt.drop('variant_qc')
-    
-    # move gvcf_info from entries to rows
-    rows = mt.entries().select('rsid','gvcf_info').key_by('locus', 'alleles')
-    mt = mt.annotate_rows(info=rows[mt.row_key].gvcf_info).drop('gvcf_info')
+    mt = mt.annotate_rows(info=mt.info.annotate(AC=mt.variant_qc.AC[1:], 
+                                       AF=mt.variant_qc.AF[1:],
+                                       AN=mt.variant_qc.AN))
+    mt = mt.drop('variant_qc')
 
     hl.export_vcf(mt, f"{output_vcf_basename}_shard_{shard_n}.vcf.bgz", tabix=True)
     EOF
