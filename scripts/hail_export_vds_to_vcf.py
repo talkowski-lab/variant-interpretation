@@ -135,7 +135,7 @@ mt = mt.annotate_rows(qual=qc_ht[mt.row_key].qual, filters=qc_ht[mt.row_key].fil
 
 # get VEP info
 vep_ht = hl.read_table(vep_ht_uri)
-mt = mt.annotate_rows(info=mt.info.annotate(vep=vep_ht[mt.row_key].vep))
+mt = mt.annotate_rows(info=mt.info.annotate(vep=vep_ht[mt.row_key].vep.transcript_consequences))
 
 # remove all AC=0
 mt = hl.variant_qc(mt)
