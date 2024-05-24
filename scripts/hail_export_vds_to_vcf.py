@@ -121,6 +121,8 @@ mt = to_dense_mt(vds, interval_start, interval_end)
 mt = mt.filter_cols(hl.array(samples).contains(mt.s))
 # convert LGT to GT
 mt = mt.annotate_entries(GT=hl.vds.lgt_to_gt(mt.LGT, mt.LA))
+# split multi-allelic
+mt = hl.split_multi(mt)
 
 # get row/INFO fields from INFO HT
 info_ht = hl.read_table(info_ht_uri)
