@@ -186,7 +186,7 @@ task vepAnnotate {
         tabix -s 1 -b 2 -e 2 -f -S 1 ~{alpha_missense_file}
 
         echo '{"command": [
-        "vep",
+        "/opt/vep/ensembl-vep/vep",
         "--format", "vcf",
         "__OUTPUT_FORMAT_FLAG__",
         "--force_overwrite",
