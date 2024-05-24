@@ -144,6 +144,10 @@ mt = mt.annotate_rows(info=mt.info.annotate(AC=mt.variant_qc.AC[1:],
                                     AN=mt.variant_qc.AN))
 mt = mt.drop('variant_qc')
 
+# write MT
+mt.write(f"{output_vcf_basename}_shard_{shard_n}_tmp.mt")
+mt = hl.read_matrix_table(f"{output_vcf_basename}_shard_{shard_n}_tmp.mt")
+
 # export VCF without VEP 
 hl.export_vcf(mt, f"{output_vcf_basename}_shard_{shard_n}_tmp.vcf.bgz")
 header = hl.get_vcf_metadata(f"{output_vcf_basename}_shard_{shard_n}_tmp.vcf.bgz")
