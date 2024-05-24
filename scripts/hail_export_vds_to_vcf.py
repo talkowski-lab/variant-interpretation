@@ -4,6 +4,9 @@ import hail as hl
 import os
 import sys
 
+import gnomad
+import gnomad.utils.vep
+
 input_vds = sys.argv[1]
 output_vcf_basename = sys.argv[2]
 sample_file = sys.argv[3]
@@ -50,7 +53,7 @@ def to_dense_mt(vds: 'VariantDataset', interval_start: int, interval_end: int) -
     :class:`.MatrixTable`
         Dataset in dense MatrixTable representation.
     """
-    ref = vds.reference_data._filter_partitions((interval_start, interval_end))  # EDITED
+    ref = vds.reference_data._filter_partitions(range(interval_start, interval_end))  # EDITED
     # FIXME(chrisvittal) consider changing END semantics on VDS to make this better
     # see https://github.com/hail-is/hail/issues/13183 for why this is here and more discussion
     # we assume that END <= contig.length
@@ -59,7 +62,7 @@ def to_dense_mt(vds: 'VariantDataset', interval_start: int, interval_end: int) -
 
     to_drop = 'alleles', 'rsid', 'ref_allele', '_locus_global_pos', '_locus_pos'
     ref = ref.drop(*(x for x in to_drop if x in ref.row))
-    var = vds.variant_data._filter_partitions((interval_start, interval_end))  # EDITED
+    var = vds.variant_data._filter_partitions(range(interval_start, interval_end))  # EDITED
     refl = ref.localize_entries('_ref_entries')
     varl = var.localize_entries('_var_entries', '_var_cols')
     varl = varl.annotate(_variant_defined=True)
@@ -133,10 +136,6 @@ mt = mt.drop('gvcf_info')
 qc_ht = hl.read_table(qc_ht_uri)
 mt = mt.annotate_rows(qual=qc_ht[mt.row_key].qual, filters=qc_ht[mt.row_key].filters)
 
-# get VEP info
-vep_ht = hl.read_table(vep_ht_uri)
-mt = mt.annotate_rows(info=mt.info.annotate(vep=vep_ht[mt.row_key].vep.transcript_consequences))
-
 # remove all AC=0
 mt = hl.variant_qc(mt)
 mt = mt.filter_rows(mt.variant_qc.AC[1] > 0, keep = True)
@@ -145,4 +144,13 @@ mt = mt.annotate_rows(info=mt.info.annotate(AC=mt.variant_qc.AC[1:],
                                     AN=mt.variant_qc.AN))
 mt = mt.drop('variant_qc')
 
-hl.export_vcf(mt, f"{output_vcf_basename}_shard_{shard_n}.vcf.bgz", tabix=True)
+# export VCF without VEP 
+hl.export_vcf(mt, f"{output_vcf_basename}_shard_{shard_n}_tmp.vcf.bgz")
+header = hl.get_vcf_metadata(f"{output_vcf_basename}_shard_{shard_n}_tmp.vcf.bgz")
+header['info']['CSQ'] = {'Description': gnomad.utils.vep.VEP_CSQ_HEADER, 'Number': '.', 'Type': 'String'}
+
+# get VEP info
+vep_ht = hl.read_table(vep_ht_uri)
+mt = mt.annotate_rows(info=mt.info.annotate(CSQ=gnomad.utils.vep.vep_struct_to_csq(mt.info.vep)))
+
+hl.export_vcf(mt, f"{output_vcf_basename}_shard_{shard_n}.vcf.bgz", metadata=header, tabix=True)

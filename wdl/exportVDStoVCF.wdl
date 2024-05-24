@@ -71,9 +71,11 @@ task exportVDS {
         String qc_ht_uri
         String vep_ht_uri
         String output_vcf_basename
+
         Int shard_n
         Int interval_start
         Int interval_end
+        
         String export_vds_to_vcf_script
         String hail_docker
         Float input_size
