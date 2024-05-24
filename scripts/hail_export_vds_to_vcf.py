@@ -126,9 +126,9 @@ mt = mt.annotate_entries(GT=hl.vds.lgt_to_gt(mt.LGT, mt.LA))
 info_ht = hl.read_table(info_ht_uri)
 mt = mt.annotate_rows(info=info_ht[mt.row_key].info)
 
-#
+# get QUAL/FILTER info from QC HT
 qc_ht = hl.read_table(qc_ht_uri)
-mt = mt.annotate_rows(**{field: getattr(qc_ht[mt.row_key], field) for field in list(qc_ht[mt.row_key])})
+mt = mt.annotate_rows(qual=qc_ht[mt.row_key].qual, filters=qc_ht[mt.row_key].filters)
 
 # get VEP info
 vep_ht = hl.read_table(vep_ht_uri)
