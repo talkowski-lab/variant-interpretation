@@ -127,6 +127,7 @@ mt = hl.split_multi(mt)
 # get row/INFO fields from INFO HT
 info_ht = hl.read_table(info_ht_uri)
 mt = mt.annotate_rows(info=info_ht[mt.row_key].info)
+mt = mt.drop('gvcf_info')
 
 # get QUAL/FILTER info from QC HT
 qc_ht = hl.read_table(qc_ht_uri)
