@@ -123,7 +123,7 @@ mt = mt.filter_cols(hl.array(samples).contains(mt.s))
 mt = mt.annotate_entries(GT=hl.vds.lgt_to_gt(mt.LGT, mt.LA))
 
 # get row/INFO fields from INFO HT
-info_ht = hl.read_table(info_ht_uri).key_by('old_locus','old_alleles')
+info_ht = hl.read_table(info_ht_uri)
 mt = mt.annotate_rows(info=info_ht[mt.row_key].info)
 
 #
