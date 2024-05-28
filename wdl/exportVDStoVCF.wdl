@@ -16,9 +16,6 @@ workflow exportVDStoVCF {
     input {
         File sample_file
         String input_vds
-        String info_ht_uri
-        String qc_ht_uri
-        String vep_ht_uri
         String hail_docker
         String output_vcf_basename
         String export_vds_to_vcf_script
@@ -47,9 +44,6 @@ workflow exportVDStoVCF {
             input:
                 sample_file=sample_file,
                 input_vds=input_vds,
-                info_ht_uri=info_ht_uri,
-                qc_ht_uri=qc_ht_uri,
-                vep_ht_uri=vep_ht_uri,
                 output_vcf_basename=output_vcf_basename,
                 shard_n=interval[0],
                 interval_start=interval[1],
@@ -71,9 +65,6 @@ task exportVDS {
     input {
         File sample_file
         String input_vds
-        String info_ht_uri
-        String qc_ht_uri
-        String vep_ht_uri
         String output_vcf_basename
 
         Int shard_n
@@ -115,7 +106,7 @@ task exportVDS {
     command <<<
     set -eou pipefail
     curl ~{export_vds_to_vcf_script} > export_vds.py
-    python3 export_vds.py ~{input_vds} ~{output_vcf_basename} ~{sample_file} ~{info_ht_uri} ~{vep_ht_uri} ~{qc_ht_uri} \
+    python3 export_vds.py ~{input_vds} ~{output_vcf_basename} ~{sample_file} \
         ~{shard_n} ~{interval_start} ~{interval_end} ~{cpu_cores} ~{memory}
     >>>
 
