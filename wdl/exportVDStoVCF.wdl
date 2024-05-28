@@ -23,12 +23,15 @@ workflow exportVDStoVCF {
         String output_vcf_basename
         String export_vds_to_vcf_script
         Int n_shards
+        Float? input_size
     }
     
-    call helpers.getHailMTSize as getInputVDSSize {
-        input:
-            mt_uri=input_vds,
-            hail_docker=hail_docker
+    if (!defined(input_size)) {
+        call helpers.getHailMTSize as getInputVDSSize {
+            input:
+                mt_uri=input_vds,
+                hail_docker=hail_docker
+        }
     }
 
     call scatterHailMTs.getRepartitions as getRepartitions {
@@ -38,6 +41,7 @@ workflow exportVDStoVCF {
         hail_docker=hail_docker
     }
 
+    Float input_size_ = select_first([input_size, getInputVDSSize.mt_size])
     scatter (interval in getRepartitions.partition_intervals) {
         call exportVDS {
             input:
@@ -52,7 +56,7 @@ workflow exportVDStoVCF {
                 interval_end=interval[2],
                 hail_docker=hail_docker,
                 export_vds_to_vcf_script=export_vds_to_vcf_script,
-                input_size=getInputVDSSize.mt_size / n_shards
+                input_size=input_size_ / n_shards
         }
     }
 
@@ -75,7 +79,7 @@ task exportVDS {
         Int shard_n
         Int interval_start
         Int interval_end
-        
+
         String export_vds_to_vcf_script
         String hail_docker
         Float input_size
