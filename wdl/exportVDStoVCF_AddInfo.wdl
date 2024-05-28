@@ -43,7 +43,6 @@ workflow exportVDStoVCF {
 
 task addInfo {
     input {
-        File sample_file
         File vcf_uri
         String info_ht_uri
         String qc_ht_uri

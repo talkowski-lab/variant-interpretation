@@ -207,6 +207,7 @@ task getRepartitions {
     tot_partitions = mt.n_partitions()
     partitions_per_chunk = int(np.ceil(tot_partitions / n_shards))
     points = np.arange(0, tot_partitions, partitions_per_chunk)
+    points = np.append(points, tot_partitions+1)
     intervals = pd.DataFrame([[points[i], points[i+1]] for i in range(len(points)-1)])
 
     intervals.to_csv('partition_intervals.tsv', sep='\t', header=None)

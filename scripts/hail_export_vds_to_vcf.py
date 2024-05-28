@@ -155,6 +155,6 @@ header['info']['CSQ'] = {'Description': gnomad.utils.vep.VEP_CSQ_HEADER, 'Number
 
 # get VEP info
 vep_ht = hl.read_table(vep_ht_uri)
-mt = mt.annotate_rows(info=mt.info.annotate(CSQ=gnomad.utils.vep.vep_struct_to_csq(mt.info.vep)))
+mt = mt.annotate_rows(info=mt.info.annotate(CSQ=gnomad.utils.vep.vep_struct_to_csq(vep_ht[mt.row_key].vep)))
 
 hl.export_vcf(mt, f"{output_vcf_basename}_shard_{shard_n}.vcf.bgz", metadata=header, tabix=True)
