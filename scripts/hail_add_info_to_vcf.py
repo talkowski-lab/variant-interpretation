@@ -22,6 +22,8 @@ hl.init(min_block_size=128, spark_conf={"spark.executor.cores": cores,
 
 
 mt = hl.import_vcf(vcf_uri, reference_genome='GRCh38', force_bgz=True, call_fields=[], array_elements_required=False)
+mt = hl.split_multi(mt)
+
 header = hl.get_vcf_metadata(vcf_uri)
 header['info']['CSQ'] = {'Description': gnomad.utils.vep.VEP_CSQ_HEADER, 'Number': '.', 'Type': 'String'}
 
