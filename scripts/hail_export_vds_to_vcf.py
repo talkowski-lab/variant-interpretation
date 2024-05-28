@@ -47,7 +47,7 @@ def to_dense_mt(vds: 'VariantDataset', interval_start: int, interval_end: int) -
     :class:`.MatrixTable`
         Dataset in dense MatrixTable representation.
     """
-    ref = vds.reference_data._filter_partitions((interval_start, interval_end))  # EDITED
+    ref = vds.reference_data._filter_partitions(range(interval_start, interval_end))  # EDITED
     # FIXME(chrisvittal) consider changing END semantics on VDS to make this better
     # see https://github.com/hail-is/hail/issues/13183 for why this is here and more discussion
     # we assume that END <= contig.length
@@ -56,7 +56,7 @@ def to_dense_mt(vds: 'VariantDataset', interval_start: int, interval_end: int) -
 
     to_drop = 'alleles', 'rsid', 'ref_allele', '_locus_global_pos', '_locus_pos'
     ref = ref.drop(*(x for x in to_drop if x in ref.row))
-    var = vds.variant_data._filter_partitions((interval_start, interval_end))  # EDITED
+    var = vds.variant_data._filter_partitions(range(interval_start, interval_end))  # EDITED
     refl = ref.localize_entries('_ref_entries')
     varl = var.localize_entries('_var_entries', '_var_cols')
     varl = varl.annotate(_variant_defined=True)
