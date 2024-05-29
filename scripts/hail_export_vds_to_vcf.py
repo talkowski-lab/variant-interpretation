@@ -4,14 +4,21 @@ import hail as hl
 import os
 import sys
 
+import gnomad
+import gnomad.utils.vep
+
 input_vds = sys.argv[1]
 output_vcf_basename = sys.argv[2]
 sample_file = sys.argv[3]
-shard_n = int(sys.argv[4])
-interval_start = int(sys.argv[5])
-interval_end = int(sys.argv[6])
-cores = sys.argv[7]  # string
-mem = int(np.floor(float(sys.argv[8])))
+info_ht_uri = sys.argv[4]
+vep_ht_uri = sys.argv[5]
+qc_ht_uri = sys.argv[6]
+shard_n = int(sys.argv[7])
+interval_start = int(sys.argv[8])
+interval_end = int(sys.argv[9])
+cores = sys.argv[10]  # string
+mem = int(np.floor(float(sys.argv[11])))
+old_vcf_shard = sys.argv[12]
 
 hl.init(min_block_size=128, spark_conf={"spark.executor.cores": cores, 
                     "spark.executor.memory": f"{mem}g",
@@ -111,12 +118,6 @@ def to_dense_mt(vds: 'VariantDataset', interval_start: int, interval_end: int) -
     return dr._unlocalize_entries('_dense', '_var_cols', list(var.col_key))
 # FUNC END
 
-# move gvcf_info from entries to rows before merging VDS
-variant_mt = vds.variant_data
-rows = variant_mt.entries().select('rsid','gvcf_info').key_by('locus', 'alleles')
-variant_mt = variant_mt.annotate_rows(info=rows[variant_mt.row_key].gvcf_info).drop('gvcf_info')
-vds.variant_data = variant_mt
-
 # merge VDS with specific range of partitions
 mt = to_dense_mt(vds, interval_start, interval_end)
 
@@ -124,6 +125,17 @@ mt = to_dense_mt(vds, interval_start, interval_end)
 mt = mt.filter_cols(hl.array(samples).contains(mt.s))
 # convert LGT to GT
 mt = mt.annotate_entries(GT=hl.vds.lgt_to_gt(mt.LGT, mt.LA))
+# split multi-allelic
+mt = hl.split_multi(mt)
+
+# get row/INFO fields from INFO HT
+info_ht = hl.read_table(info_ht_uri)
+mt = mt.annotate_rows(info=info_ht[mt.row_key].info)
+mt = mt.drop('gvcf_info')
+
+# get QUAL/FILTER info from QC HT
+qc_ht = hl.read_table(qc_ht_uri)
+mt = mt.annotate_rows(qual=qc_ht[mt.row_key].qual, filters=qc_ht[mt.row_key].filters)
 
 # remove all AC=0
 mt = hl.variant_qc(mt)
@@ -133,4 +145,16 @@ mt = mt.annotate_rows(info=mt.info.annotate(AC=mt.variant_qc.AC[1:],
                                     AN=mt.variant_qc.AN))
 mt = mt.drop('variant_qc')
 
-hl.export_vcf(mt, f"{output_vcf_basename}_shard_{shard_n}.vcf.bgz", tabix=True)
+# write MT
+mt.write(f"{output_vcf_basename}_shard_{shard_n}_tmp.mt")
+mt = hl.read_matrix_table(f"{output_vcf_basename}_shard_{shard_n}_tmp.mt")
+
+# get VCF header without VEP 
+header = hl.get_vcf_metadata(old_vcf_shard)
+header['info']['CSQ'] = {'Description': gnomad.utils.vep.VEP_CSQ_HEADER, 'Number': '.', 'Type': 'String'}
+
+# get VEP info
+vep_ht = hl.read_table(vep_ht_uri)
+mt = mt.annotate_rows(info=mt.info.annotate(CSQ=gnomad.utils.vep.vep_struct_to_csq(vep_ht[mt.row_key].vep)))
+
+hl.export_vcf(mt, f"{output_vcf_basename}_shard_{shard_n}.vcf.bgz", metadata=header, tabix=True)

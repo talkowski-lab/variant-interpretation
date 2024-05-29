@@ -15,14 +15,18 @@ struct RuntimeAttr {
 workflow exportVDStoVCF {
     input {
         File sample_file
+        File old_vcf_shard
         String input_vds
+        String info_ht_uri
+        String qc_ht_uri
+        String vep_ht_uri
         String hail_docker
         String output_vcf_basename
         String export_vds_to_vcf_script
         Int n_shards
         Float? input_size
     }
-    
+
     if (!defined(input_size)) {
         call helpers.getHailMTSize as getInputVDSSize {
             input:
@@ -44,13 +48,17 @@ workflow exportVDStoVCF {
             input:
                 sample_file=sample_file,
                 input_vds=input_vds,
+                old_vcf_shard=old_vcf_shard,
+                info_ht_uri=info_ht_uri,
+                qc_ht_uri=qc_ht_uri,
+                vep_ht_uri=vep_ht_uri,
                 output_vcf_basename=output_vcf_basename,
                 shard_n=interval[0],
                 interval_start=interval[1],
                 interval_end=interval[2],
                 hail_docker=hail_docker,
                 export_vds_to_vcf_script=export_vds_to_vcf_script,
-                input_size=input_size_ / n_shards
+                input_size=input_size_
         }
     }
 
@@ -64,13 +72,17 @@ workflow exportVDStoVCF {
 task exportVDS {
     input {
         File sample_file
+        File old_vcf_shard
         String input_vds
+        String info_ht_uri
+        String qc_ht_uri
+        String vep_ht_uri
         String output_vcf_basename
 
         Int shard_n
         Int interval_start
         Int interval_end
-
+        
         String export_vds_to_vcf_script
         String hail_docker
         Float input_size
@@ -106,8 +118,8 @@ task exportVDS {
     command <<<
     set -eou pipefail
     curl ~{export_vds_to_vcf_script} > export_vds.py
-    python3 export_vds.py ~{input_vds} ~{output_vcf_basename} ~{sample_file} \
-        ~{shard_n} ~{interval_start} ~{interval_end} ~{cpu_cores} ~{memory}
+    python3 export_vds.py ~{input_vds} ~{output_vcf_basename} ~{sample_file} ~{info_ht_uri} ~{vep_ht_uri} ~{qc_ht_uri} \
+        ~{shard_n} ~{interval_start} ~{interval_end} ~{cpu_cores} ~{memory} ~{old_vcf_shard}
     >>>
 
     output {
