@@ -47,5 +47,5 @@ mt = mt.annotate_rows(qual=qc_ht[mt.row_key].qual, filters=qc_ht[mt.row_key].fil
 vep_ht = hl.read_table(vep_ht_uri)
 mt = mt.annotate_rows(info=mt.info.annotate(CSQ=gnomad.utils.vep.vep_struct_to_csq(vep_ht[mt.row_key].vep)))
 
-output_filename = os.path.basename(mt).split('.vcf.bgz')[0] + '_info.vcf.bgz'
+output_filename = os.path.basename(vcf_uri).split('.vcf.bgz')[0] + '_info.vcf.bgz'
 hl.export_vcf(mt, output_filename, metadata=header, tabix=True)
