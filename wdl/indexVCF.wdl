@@ -111,6 +111,7 @@ task indexVCF_tabix {
     String tbi_ext = if tbi then ".tbi" else ".csi"
 
     command <<<
+        mv ~{vcf_uri} .
         tabix ~{tbi_str} --verbosity 3 ~{vcf_uri}
     >>>
 
@@ -157,6 +158,7 @@ task indexVCF_bcftools {
     String tbi_ext = if tbi then ".tbi" else ".csi"
 
     command <<<
+        mv ~{vcf_uri} .
         bcftools index ~{tbi_str} ~{vcf_uri}
     >>>
 
