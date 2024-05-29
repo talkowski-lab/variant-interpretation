@@ -112,7 +112,7 @@ task indexVCF_tabix {
 
     command <<<
         mv ~{vcf_uri} .
-        tabix ~{tbi_str} --verbosity 3 ~{vcf_uri}
+        tabix ~{tbi_str} --verbosity 3 ~{basename(vcf_uri)}
     >>>
 
     output {
@@ -159,7 +159,7 @@ task indexVCF_bcftools {
 
     command <<<
         mv ~{vcf_uri} .
-        bcftools index ~{tbi_str} ~{vcf_uri}
+        bcftools index ~{tbi_str} ~{basename(vcf_uri)}
     >>>
 
     output {
