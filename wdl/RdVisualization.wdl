@@ -151,7 +151,8 @@ task rdtest {
         Int max_size
         RuntimeAttr? runtime_attr_override
     }
-    Float input_size = size(select_all([bed, sample_batches, batch_bincov, medianfile, ped_file]), "GB")
+    #Float input_size = size(select_all([bed, sample_batches, batch_bincov, medianfile, ped_file]), "GB")
+    Float input_size = size(select_all([bed, sample_batches, batch_bincov, ped_file]), "GB")
     Float base_disk_gb = 10.0
     Float base_mem_gb = 3.75
 
@@ -258,7 +259,8 @@ task rdtest_regeno {
         Int max_size
         RuntimeAttr? runtime_attr_override
     }
-    Float input_size = size(select_all([bed, sample_batches, batch_bincov, medianfile, ped_file, regeno, outlier_samples]), "GB")
+    #Float input_size = size(select_all([bed, sample_batches, batch_bincov, medianfile, ped_file, regeno, outlier_samples]), "GB")
+    Float input_size = size(select_all([bed, sample_batches, batch_bincov, ped_file, regeno, outlier_samples]), "GB")
     Float base_disk_gb = 10.0
     Float base_mem_gb = 3.75
 
