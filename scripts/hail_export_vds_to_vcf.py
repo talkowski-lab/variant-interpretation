@@ -145,10 +145,6 @@ mt = mt.annotate_rows(info=mt.info.annotate(AC=mt.variant_qc.AC[1:],
                                     AN=mt.variant_qc.AN))
 mt = mt.drop('variant_qc')
 
-# write MT
-mt.write(f"{output_vcf_basename}_shard_{shard_n}_tmp.mt")
-mt = hl.read_matrix_table(f"{output_vcf_basename}_shard_{shard_n}_tmp.mt")
-
 # get VCF header without VEP 
 header = hl.get_vcf_metadata(old_vcf_shard)
 header['info']['CSQ'] = {'Description': gnomad.utils.vep.VEP_CSQ_HEADER, 'Number': '.', 'Type': 'String'}
