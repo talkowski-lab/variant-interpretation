@@ -152,7 +152,7 @@ task combineCSQCounts {
         merged_filename = sys.argv[2]
 
         merged_df = pd.concat([pd.read_csv(uri, sep='\t') for uri in tsvs])
-        merged_df = merged_df.groupby('SYMBOL').sum()
+        merged_df = merged_df.groupby('SYMBOL').sum().reset_index()
         merged_df.to_csv(merged_filename, sep='\t', index=False)
         EOF
 
