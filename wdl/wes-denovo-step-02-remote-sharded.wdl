@@ -20,6 +20,7 @@ workflow step2 {
         String hail_basic_filtering_script
         String hail_docker
         String bucket_id
+        String genome_build
         Float call_rate_threshold
         RuntimeAttr? runtime_attr_override
     }
@@ -40,6 +41,7 @@ workflow step2 {
                 cohort_prefix=cohort_prefix,
                 hail_basic_filtering_script=hail_basic_filtering_script,
                 hail_docker=hail_docker,
+                genome_build=genome_build,
                 call_rate_threshold=call_rate_threshold,
                 runtime_attr_override=runtime_attr_override
         }
@@ -62,6 +64,7 @@ task hailBasicFilteringRemote {
         String cohort_prefix
         String hail_basic_filtering_script
         String hail_docker
+        String genome_build
         RuntimeAttr? runtime_attr_override
     }
     Float base_disk_gb = 10.0
@@ -94,7 +97,7 @@ task hailBasicFilteringRemote {
     command {
         curl ~{hail_basic_filtering_script} > hail_basic_filtering_script.py
         python3 hail_basic_filtering_script.py ~{annot_mt} ~{cohort_prefix} ~{ped_sex_qc} \
-        ~{cpu_cores} ~{memory} ~{bucket_id} ~{lcr_uri} ~{call_rate_threshold}
+        ~{cpu_cores} ~{memory} ~{bucket_id} ~{lcr_uri} ~{call_rate_threshold} ~{genome_build}
     }
 
     String prefix = basename(annot_mt, "_wes_denovo_annot.mt")

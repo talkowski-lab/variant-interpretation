@@ -37,6 +37,7 @@ info_ht = info_ht.annotate( info = info_ht.info.annotate(
                 .when(info_ht.info.AS_QUALapprox > (2**31 - 1), (2**31 - 1))
                 .default(info_ht.info.AS_QUALapprox)))
 mt = mt.annotate_rows(info=info_ht[mt.row_key].info)
+mt = mt.annotate_rows(qual=info_ht[mt.row_key].info.AS_QUALapprox)
 
 # remove all AC=0
 mt = hl.variant_qc(mt)
@@ -48,7 +49,7 @@ mt = mt.drop('variant_qc')
 
 # get QUAL/FILTER info from QC HT
 qc_ht = hl.read_table(qc_ht_uri)
-mt = mt.annotate_rows(qual=qc_ht[mt.row_key].qual, filters=qc_ht[mt.row_key].filters)
+mt = mt.annotate_rows(filters=qc_ht[mt.row_key].filters)
 
 # get VEP info
 vep_ht = hl.read_table(vep_ht_uri)

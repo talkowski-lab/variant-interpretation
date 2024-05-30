@@ -15,14 +15,13 @@ workflow step1 {
     input {
         Array[String] mt_uris
         File ped_sex_qc
-        File purcell5k
-        File mpc_chr22_file
-        String mpc_dir
+        String mpc_ht_uri
         String gnomad_ht_uri
         String cohort_prefix
         String hail_annotation_script
         String hail_docker
         String bucket_id
+        String genome_build
         Boolean hail_autoscale=false
         RuntimeAttr? runtime_attr_override
     }
@@ -38,15 +37,14 @@ workflow step1 {
                 mt_uri=mt_uri,
                 input_size=getInputMTSize.mt_size,
                 ped_sex_qc=ped_sex_qc,
-                purcell5k=purcell5k,
-                mpc_chr22_file=mpc_chr22_file,
-                mpc_dir=mpc_dir,
+                mpc_ht_uri=mpc_ht_uri,
                 gnomad_ht_uri=gnomad_ht_uri,
                 bucket_id=bucket_id,
                 cohort_prefix=cohort_prefix,
                 hail_annotation_script=hail_annotation_script,
                 hail_docker=hail_docker,
                 hail_autoscale=hail_autoscale,
+                genome_build=genome_build,
                 runtime_attr_override=runtime_attr_override
         }
     }
@@ -60,17 +58,16 @@ workflow step1 {
 task hailAnnotateRemote {
     input {
         File ped_sex_qc
-        File purcell5k
-        File mpc_chr22_file
         Float input_size
         String mt_uri
         String bucket_id
-        String mpc_dir
+        String mpc_ht_uri
         String gnomad_ht_uri
         String cohort_prefix
         String hail_annotation_script
         String hail_docker
         Boolean hail_autoscale
+        String genome_build
         RuntimeAttr? runtime_attr_override
     }
     Float base_disk_gb = 10.0
@@ -103,7 +100,8 @@ task hailAnnotateRemote {
     command {
         curl ~{hail_annotation_script} > hail_annotation_script.py
         python3 hail_annotation_script.py ~{mt_uri} ~{cohort_prefix} ~{ped_sex_qc} \
-        ~{gnomad_ht_uri} ~{mpc_dir} ~{mpc_chr22_file} ~{purcell5k} ~{cpu_cores} ~{memory} ~{bucket_id} ~{hail_autoscale}
+        ~{gnomad_ht_uri} ~{mpc_ht_uri} ~{cpu_cores} ~{memory} \
+        ~{bucket_id} ~{hail_autoscale} ~{genome_build}
     }
 
     output {

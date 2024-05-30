@@ -10,14 +10,12 @@ file = sys.argv[1]
 cohort_prefix = sys.argv[2]
 ped_uri = sys.argv[3]
 gnomad_ht_uri = sys.argv[4]
-mpc_dir = sys.argv[5]
-mpc_chr22_file = sys.argv[6]
-purcell5k = sys.argv[7]
-cores = sys.argv[8]
-mem = int(np.floor(float(sys.argv[9])))
-bucket_id = sys.argv[10]
-hail_autoscale = ast.literal_eval(sys.argv[11].capitalize())
-
+mpc_ht_uri = sys.argv[5]
+cores = sys.argv[6]
+mem = int(np.floor(float(sys.argv[7])))
+bucket_id = sys.argv[8]
+hail_autoscale = ast.literal_eval(sys.argv[9].capitalize())
+genome_build = sys.argv[10]
 
 if hail_autoscale:
     hl.init(tmp_dir="tmp", local_tmpdir="tmp")
@@ -32,7 +30,7 @@ if file.split('.')[-1] == 'mt':
     mt = hl.read_matrix_table(file)
     prefix = os.path.basename(file).split('.mt')[0]
 else:
-    mt = hl.import_vcf(file, reference_genome = 'GRCh38', array_elements_required=False, force_bgz=True)
+    mt = hl.import_vcf(file, reference_genome = genome_build, array_elements_required=False, force_bgz=True)
     prefix = os.path.basename(file).split('.vcf')[0]
 
 # Step 1: Annotations
@@ -45,21 +43,8 @@ mt = mt.annotate_rows(gnomad_non_neuro_AF =
                       gnomad_ht.index(mt.row_key).freq[hl.eval(gnomad_ht.freq_index_dict["non_neuro"])].AF)
 
 ## MPC annotations
-mpc = hl.read_table(mpc_dir)
-
-mpc = mpc.annotate(allele_array = [mpc.alleles[0], mpc.alleles[1]])
-mpc = mpc.annotate(locus = mpc.locus_38)
-mpc = mpc.key_by(mpc.locus, mpc.allele_array)
-mpc = mpc.filter(mpc.chrom=='chr22', keep=False)
-
-mpc_chr22 = hl.import_table(mpc_chr22_file, types={"locus": hl.tlocus("GRCh38"), "alleles": hl.tarray(hl.tstr)})
-mpc_chr22 = mpc_chr22.annotate(allele_array = [mpc_chr22.alleles[0], mpc_chr22.alleles[1]])
-mpc_chr22 = mpc_chr22.key_by(mpc_chr22.locus, mpc_chr22.allele_array)
-mpc_chr22 = mpc_chr22.annotate(MPC = hl.float64(mpc_chr22.MPC))
-
-merged_mpc = mpc.select(mpc.MPC).union(mpc_chr22.select(mpc_chr22.MPC))
-
-mt = mt.annotate_rows(MPC=merged_mpc[mt.locus, mt.alleles].MPC)
+mpc = hl.read_table(mpc_ht_uri).key_by('locus','alleles')
+mt = mt.annotate_rows(MPC=mpc[mt.locus, mt.alleles].mpc)
 
 ## pAB annotations
 

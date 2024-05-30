@@ -13,6 +13,7 @@ mem = int(np.floor(float(sys.argv[5])))
 bucket_id = sys.argv[6]
 lcr_uri = sys.argv[7]
 call_rate_threshold = float(sys.argv[8])
+genome_build = sys.argv[9]
 
 prefix = os.path.basename(annot_mt).split('_wes_denovo_annot.mt')[0]
 
@@ -37,9 +38,9 @@ mt = hl.read_matrix_table(annot_mt)
 
 # filter low complexity regions
 try:
-    lcr = hl.import_bed(lcr_uri, reference_genome='GRCh38')
+    lcr = hl.import_bed(lcr_uri, reference_genome=genome_build)
 except Exception as e:
-    lcr = hl.import_bed(lcr_uri, reference_genome='GRCh38', force_bgz=True)
+    lcr = hl.import_bed(lcr_uri, reference_genome=genome_build, force_bgz=True)
 mt = mt.filter_rows(hl.is_defined(lcr[mt.locus]), keep=False)
 
 mt = mt.filter_rows((hl.len(mt.filters) == 0))

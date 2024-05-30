@@ -23,17 +23,16 @@ workflow hailDenovoWES {
         Array[String] mt_uris
         File lcr_uri
         File ped_sex_qc
-        File purcell5k
-        File mpc_chr22_file
         File loeuf_file
         File eval_regions
 
         Boolean hail_autoscale
         String sample_column
         String bucket_id
-        String mpc_dir
+        String mpc_ht_uri
         String gnomad_ht_uri
         String cohort_prefix
+        String genome_build
 
         String hail_annotation_script
         String hail_basic_filtering_script
@@ -68,13 +67,12 @@ workflow hailDenovoWES {
                 mt_uri=mt_uri,
                 input_size=getInputMTSize.mt_size,
                 ped_sex_qc=ped_sex_qc,
-                purcell5k=purcell5k,
-                mpc_chr22_file=mpc_chr22_file,
-                mpc_dir=mpc_dir,
+                mpc_ht_uri=mpc_ht_uri,
                 gnomad_ht_uri=gnomad_ht_uri,
                 bucket_id=bucket_id,
                 cohort_prefix=cohort_prefix,
                 hail_annotation_script=hail_annotation_script,
+                genome_build=genome_build,
                 hail_docker=hail_docker,
                 hail_autoscale=hail_autoscale
         }
@@ -94,6 +92,7 @@ workflow hailDenovoWES {
                 cohort_prefix=cohort_prefix,
                 hail_basic_filtering_script=hail_basic_filtering_script,
                 call_rate_threshold=call_rate_threshold,
+                genome_build=genome_build,
                 hail_docker=hail_docker
         }
 
