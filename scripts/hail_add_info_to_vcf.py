@@ -29,6 +29,13 @@ header['info']['CSQ'] = {'Description': gnomad.utils.vep.VEP_CSQ_HEADER, 'Number
 
 # get row/INFO fields from INFO HT
 info_ht = hl.read_table(info_ht_uri)
+info_ht = info_ht.annotate( info = info_ht.info.annotate(
+            QUALapprox = hl.case()
+                .when(info_ht.info.QUALapprox > (2**31 - 1), (2**31 - 1))
+                .default(info_ht.info.QUALapprox),
+            AS_QUALapprox = hl.case()
+                .when(info_ht.info.AS_QUALapprox > (2**31 - 1), (2**31 - 1))
+                .default(info_ht.info.AS_QUALapprox)))
 mt = mt.annotate_rows(info=info_ht[mt.row_key].info)
 
 # remove all AC=0
