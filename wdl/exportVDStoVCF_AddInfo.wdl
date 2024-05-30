@@ -14,7 +14,6 @@ struct RuntimeAttr {
 
 workflow exportVDStoVCF {
     input {
-        File sample_file
         Array[File] vcf_shards
         String info_ht_uri
         String qc_ht_uri
@@ -54,7 +53,7 @@ task addInfo {
 
     Float input_size = size(vcf_uri, 'GB')
     Float base_disk_gb = 10.0
-    Float input_disk_scale = 2.0
+    Float input_disk_scale = 5.0
 
     RuntimeAttr runtime_default = object {
         mem_gb: 4,
