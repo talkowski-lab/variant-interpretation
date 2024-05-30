@@ -19,13 +19,13 @@ workflow vepAnnotateHail {
         File? vcf_file
         String vep_annotate_hail_python_script
         String split_vcf_hail_script
-        File hg38_fasta
-        File hg38_fasta_fai
+        File ref_fasta
+        File ref_fasta_fai
         File human_ancestor_fa
         File human_ancestor_fa_fai
         File top_level_fa
         File gerp_conservation_scores
-        File hg38_vep_cache
+        File ref_vep_cache
         File loeuf_data
         File alpha_missense_file
         String cohort_prefix
@@ -74,7 +74,7 @@ workflow vepAnnotateHail {
                     human_ancestor_fa=human_ancestor_fa,
                     human_ancestor_fa_fai=human_ancestor_fa_fai,
                     gerp_conservation_scores=gerp_conservation_scores,
-                    hg38_vep_cache=hg38_vep_cache,
+                    ref_vep_cache=ref_vep_cache,
                     loeuf_data=loeuf_data,
                     alpha_missense_file=alpha_missense_file,
                     vep_hail_docker=vep_hail_docker,
@@ -110,7 +110,7 @@ workflow vepAnnotateHail {
                     human_ancestor_fa=human_ancestor_fa,
                     human_ancestor_fa_fai=human_ancestor_fa_fai,
                     gerp_conservation_scores=gerp_conservation_scores,
-                    hg38_vep_cache=hg38_vep_cache,
+                    ref_vep_cache=ref_vep_cache,
                     loeuf_data=loeuf_data,
                     alpha_missense_file=alpha_missense_file,
                     vep_hail_docker=vep_hail_docker,
@@ -138,7 +138,7 @@ task vepAnnotate {
         File human_ancestor_fa
         File human_ancestor_fa_fai
         File gerp_conservation_scores
-        File hg38_vep_cache
+        File ref_vep_cache
         File loeuf_data
         File alpha_missense_file
         String vep_hail_docker
@@ -147,7 +147,7 @@ task vepAnnotate {
         RuntimeAttr? runtime_attr_override
     }
 
-    Float input_size = size(vcf_file, "GB") + size(hg38_vep_cache, "GB") + size(gerp_conservation_scores, "GB")
+    Float input_size = size(vcf_file, "GB") + size(ref_vep_cache, "GB") + size(gerp_conservation_scores, "GB")
     Float base_disk_gb = 10.0
     Float input_disk_scale = 10.0
     RuntimeAttr runtime_default = object {
@@ -180,8 +180,8 @@ task vepAnnotate {
     command <<<
         set -euo pipefail
 
-        dir_cache=$(dirname "~{hg38_vep_cache}")
-        tar xzf ~{hg38_vep_cache} -C $dir_cache
+        dir_cache=$(dirname "~{ref_vep_cache}")
+        tar xzf ~{ref_vep_cache} -C $dir_cache
         tabix -f -s 76 -b 77 -e 78 ~{loeuf_data}
         tabix -s 1 -b 2 -e 2 -f -S 1 ~{alpha_missense_file}
 
@@ -199,7 +199,7 @@ task vepAnnotate {
         "--merged",
         "--offline",
         "--minimal",
-        "--assembly", "GRCh38",
+        "--assembly", "~{genome_build}",
         "--fasta", "~{top_level_fa}",
         "--plugin", "LOEUF,file=~{loeuf_data},match_by=transcript",
         "--plugin", "AlphaMissense,file=~{alpha_missense_file}",
