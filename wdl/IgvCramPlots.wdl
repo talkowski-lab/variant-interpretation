@@ -250,10 +250,11 @@ task LocalizeReads {
     RuntimeAttr? runtime_attr_override
   }
 
-  Float input_size = size(reads_path, "GB")
+#  Float input_size = size(reads_path, "GB")
   RuntimeAttr runtime_default = object {
                                   mem_gb: 3.75,
-                                  disk_gb: ceil(50.0 + input_size),
+#                                  disk_gb: ceil(50.0 + input_size),
+                                  disk_gb: ceil(60.0),
                                   cpu: 2,
                                   preemptible: 3,
                                   max_retries: 1,
