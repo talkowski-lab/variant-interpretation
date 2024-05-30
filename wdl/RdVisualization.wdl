@@ -87,7 +87,9 @@ task generatePerFamilyBed {
         RuntimeAttr? runtime_attr_override
     }
 
-    Float input_size = size(select_all([bed, ped_file, batch_medianfile, sample_batches]), "GB")
+    #Float input_size = size(select_all([bed, ped_file, batch_medianfile, sample_batches]), "GB")
+    Float input_size = size(select_all([bed, ped_file, sample_batches]), "GB")
+
     Float base_disk_gb = 10.0
     Float base_mem_gb = 3.75
 
@@ -146,7 +148,9 @@ task rdtest {
         String sv_pipeline_rdtest_docker
         RuntimeAttr? runtime_attr_override
     }
-    Float input_size = size(select_all([bed, sample_batches, batch_bincov, medianfile, ped_file]), "GB")
+  #  Float input_size = size(select_all([bed, sample_batches, batch_bincov, medianfile, ped_file]), "GB")
+    Float input_size = size(select_all([bed, sample_batches, batch_bincov, ped_file]), "GB")
+
     Float base_disk_gb = 10.0
     Float base_mem_gb = 3.75
 
@@ -252,7 +256,9 @@ task rdtest_regeno {
         String sv_pipeline_rdtest_docker
         RuntimeAttr? runtime_attr_override
     }
-    Float input_size = size(select_all([bed, sample_batches, batch_bincov, medianfile, ped_file, regeno, outlier_samples]), "GB")
+   # Float input_size = size(select_all([bed, sample_batches, batch_bincov, medianfile, ped_file, regeno, outlier_samples]), "GB")
+    Float input_size = size(select_all([bed, sample_batches, batch_bincov, ped_file, regeno, outlier_samples]), "GB")
+
     Float base_disk_gb = 10.0
     Float base_mem_gb = 3.75
 
