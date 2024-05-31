@@ -272,11 +272,15 @@ task LocalizeReads {
     bootDiskSizeGb: select_first([runtime_override.boot_disk_gb, runtime_default.boot_disk_gb])
   }
 
-  Int disk_size = ceil(50 + size(reads_path, "GB"))
+#  Int disk_size = ceil(50 + size(reads_path, "GB"))
 
   command {
-    ln -s ~{reads_path}
-    ln -s ~{reads_index}
+      set -exuo pipefail
+
+      cp ~{reads_path} $(basename ~{reads_path})
+      cp ~{reads_index} $(basename ~{reads_index})
+#    ln -s ~{reads_path}
+#    ln -s ~{reads_index}
   }
   output {
     File output_file = basename(reads_path)
