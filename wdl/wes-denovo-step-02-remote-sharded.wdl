@@ -22,7 +22,6 @@ workflow step2 {
         String bucket_id
         String genome_build
         Float call_rate_threshold=0.8
-        Boolean hail_autoscale=false
         RuntimeAttr? runtime_attr_override
     }
 

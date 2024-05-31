@@ -16,7 +16,6 @@ workflow step3 {
         Array[String] filtered_mt
         File ped_sex_qc
         File loeuf_file
-        Boolean hail_autoscale
         String bucket_id
         String cohort_prefix
         String hail_denovo_filtering_script
