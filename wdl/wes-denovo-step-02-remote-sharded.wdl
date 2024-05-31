@@ -21,7 +21,7 @@ workflow step2 {
         String hail_docker
         String bucket_id
         String genome_build
-        Float call_rate_threshold
+        Float call_rate_threshold=0.8
         RuntimeAttr? runtime_attr_override
     }
 
