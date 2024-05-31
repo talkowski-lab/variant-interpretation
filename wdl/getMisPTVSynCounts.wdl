@@ -24,6 +24,7 @@ workflow getMisPTVSynCounts {
         Int gq_threshold=20
         Float ab_min=0.3
         Float ab_max=0.7
+        Float af_threshold=0.01
     }
 
     scatter (vcf_uri in vep_vcf_files) {
@@ -36,6 +37,7 @@ workflow getMisPTVSynCounts {
             gq_threshold=gq_threshold,
             ab_min=ab_min,
             ab_max=ab_max,
+            af_threshold=af_threshold,
             get_csq_counts_script=get_csq_counts_script,
             hail_docker=hail_docker
         }
@@ -63,6 +65,7 @@ task getCSQCounts {
         Int gq_threshold
         Float ab_min
         Float ab_max
+        Float af_threshold
         String get_csq_counts_script
         String hail_docker
         RuntimeAttr? runtime_attr_override
@@ -100,7 +103,7 @@ task getCSQCounts {
     command {
         curl ~{get_csq_counts_script} > get_csq_counts.py
         python3 get_csq_counts.py ~{vcf_uri} ~{mpc_ht_uri} ~{ped_uri} ~{ad_threshold} ~{gq_threshold} \
-        ~{ab_min} ~{ab_max} ~{cpu_cores} ~{memory}
+        ~{ab_min} ~{ab_max} ~{cpu_cores} ~{memory} ~{af_threshold}
     }
 
     output {

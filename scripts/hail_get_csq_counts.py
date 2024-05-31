@@ -20,6 +20,7 @@ ab_min = float(sys.argv[6])
 ab_max = float(sys.argv[7])
 cores = sys.argv[8]  # string
 mem = int(np.floor(float(sys.argv[9])))
+af_threshold = float(sys.argv[10])
 
 hl.init(min_block_size=128, spark_conf={"spark.executor.cores": cores, 
                     "spark.executor.memory": f"{mem}g",
@@ -222,6 +223,7 @@ mt_csq_filt = mt_csq_filt.filter_rows(hl.is_defined(mt_csq_filt.overall_csq_term
 mt_csq_filt_controls = mt_csq_filt.filter_cols(mt_csq_filt.phenotype=='1')
 mt_csq_filt_controls = hl.variant_qc(mt_csq_filt_controls)
 mt_csq_filt_controls = mt_csq_filt_controls.filter_rows(mt_csq_filt_controls.variant_qc.AC[1]>0)
+mt_csq_filt_controls = mt_csq_filt_controls.filter_rows(mt_csq_filt_controls.variant_qc.AF[1]<=af_threshold)
 mt_csq_controls_rows = mt_csq_filt_controls.rows()
 
 count_mt_controls = mt_csq_controls_rows.group_by(mt_csq_controls_rows.vep.worst_csq.SYMBOL)\
