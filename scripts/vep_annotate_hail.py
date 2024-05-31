@@ -10,6 +10,8 @@ cores = sys.argv[3]  # string
 mem = int(np.floor(float(sys.argv[4])))
 reannotate_ac_af = ast.literal_eval(sys.argv[5].capitalize())
 build = sys.argv[6]
+mpc_ht_uri = sys.argv[7]
+clinvar_vcf_uri = sys.argv[8]
 
 hl.init(min_block_size=128, spark_conf={"spark.executor.cores": cores, 
                     "spark.executor.memory": f"{mem}g",
@@ -80,6 +82,15 @@ for field in all_as_fields:
     if (n_missing_as < n_missing):
         mt = mt.annotate_rows(info=mt.info.annotate(**{normal_field: getattr(mt.info, field)[mt.a_index - 1]}))    
 
+# annotate MPC
+mpc = hl.read_table(mpc_ht_uri).key_by('locus','alleles')
+mt = mt.annotate_rows(info = mt.info.annotate(MPC=mpc[mt.locus, mt.alleles].mpc))
+        
+# annotate 2*+ ClinVar
+clinvar_vcf = hl.import_vcf(clinvar_vcf_uri,
+                           reference_genome='GRCh38', contig_recoding={'chrMT': 'chrM'})
+mt = mt.annotate_rows(info = mt.info.annotate(CLNSIG=clinvar_vcf[mt.row_key].info.CLNSIG))
+        
 mt = hl.vep(mt, config='vep_config.json', csq=True, tolerate_parse_error=True)
 header['info']['CSQ'] = {'Description': hl.eval(mt.vep_csq_header), 'Number': '.', 'Type': 'String'}
 
