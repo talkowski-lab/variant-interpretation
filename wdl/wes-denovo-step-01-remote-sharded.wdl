@@ -64,7 +64,6 @@ task hailAnnotateRemote {
         String cohort_prefix
         String hail_annotation_script
         String hail_docker
-        Boolean hail_autoscale
         String genome_build
         RuntimeAttr? runtime_attr_override
     }
