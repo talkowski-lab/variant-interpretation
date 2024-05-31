@@ -89,7 +89,7 @@ mt = mt.annotate_rows(info = mt.info.annotate(MPC=mpc[mt.locus, mt.alleles].mpc)
 # annotate 2*+ ClinVar
 clinvar_vcf = hl.import_vcf(clinvar_vcf_uri,
                            reference_genome='GRCh38', contig_recoding={'chrMT': 'chrM'})
-mt = mt.annotate_rows(info = mt.info.annotate(CLNSIG=clinvar_vcf[mt.row_key].info.CLNSIG))
+mt = mt.annotate_rows(info = mt.info.annotate(CLNSIG=clinvar_vcf.semi_join_rows(mt.rows()).info.CLNSIG))
         
 mt = hl.vep(mt, config='vep_config.json', csq=True, tolerate_parse_error=True)
 header['info']['CSQ'] = {'Description': hl.eval(mt.vep_csq_header), 'Number': '.', 'Type': 'String'}
