@@ -220,6 +220,8 @@ mt_csq_filt = mt_csq_filt.annotate_rows(overall_csq_term = hl.if_else(mt_csq_fil
 mt_csq_filt = mt_csq_filt.filter_rows(hl.is_defined(mt_csq_filt.overall_csq_term))
 
 mt_csq_filt_controls = mt_csq_filt.filter_cols(mt_csq_filt.phenotype=='1')
+mt_csq_filt_controls = hl.variant_qc(mt_csq_filt_controls)
+mt_csq_filt_controls = mt_csq_filt_controls.filter_rows(mt_csq_filt_controls.variant_qc.AC[1]>0)
 mt_csq_controls_rows = mt_csq_filt_controls.rows()
 
 count_mt_controls = mt_csq_controls_rows.group_by(mt_csq_controls_rows.vep.worst_csq.SYMBOL)\
@@ -228,6 +230,8 @@ count_mt_controls = mt_csq_controls_rows.group_by(mt_csq_controls_rows.vep.worst
 count_df_controls = count_mt_controls.to_pandas()
 
 mt_csq_filt_cases = mt_csq_filt.filter_cols(mt_csq_filt.phenotype=='2')
+mt_csq_filt_cases = hl.variant_qc(mt_csq_filt_cases)
+mt_csq_filt_cases = mt_csq_filt_cases.filter_rows(mt_csq_filt_cases.variant_qc.AC[1]>0)
 mt_csq_cases_rows = mt_csq_filt_cases.rows()
 
 count_mt_cases = mt_csq_cases_rows.group_by(mt_csq_cases_rows.vep.worst_csq.SYMBOL)\
