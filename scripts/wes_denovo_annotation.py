@@ -14,17 +14,13 @@ mpc_ht_uri = sys.argv[5]
 cores = sys.argv[6]
 mem = int(np.floor(float(sys.argv[7])))
 bucket_id = sys.argv[8]
-hail_autoscale = ast.literal_eval(sys.argv[9].capitalize())
-genome_build = sys.argv[10]
+genome_build = sys.argv[9]
 
-if hail_autoscale:
-    hl.init(tmp_dir="tmp", local_tmpdir="tmp")
-else:
-    hl.init(min_block_size=128, spark_conf={"spark.executor.cores": cores, 
-                        "spark.executor.memory": f"{mem}g",
-                        "spark.driver.cores": cores,
-                        "spark.driver.memory": f"{mem}g"
-                        }, tmp_dir="tmp", local_tmpdir="tmp")
+hl.init(min_block_size=128, spark_conf={"spark.executor.cores": cores, 
+                    "spark.executor.memory": f"{mem}g",
+                    "spark.driver.cores": cores,
+                    "spark.driver.memory": f"{mem}g"
+                    }, tmp_dir="tmp", local_tmpdir="tmp")
 
 if file.split('.')[-1] == 'mt':
     mt = hl.read_matrix_table(file)

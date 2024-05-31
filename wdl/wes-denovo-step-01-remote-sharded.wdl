@@ -22,7 +22,6 @@ workflow step1 {
         String hail_docker
         String bucket_id
         String genome_build
-        Boolean hail_autoscale=false
         RuntimeAttr? runtime_attr_override
     }
 
@@ -43,7 +42,6 @@ workflow step1 {
                 cohort_prefix=cohort_prefix,
                 hail_annotation_script=hail_annotation_script,
                 hail_docker=hail_docker,
-                hail_autoscale=hail_autoscale,
                 genome_build=genome_build,
                 runtime_attr_override=runtime_attr_override
         }
@@ -101,7 +99,7 @@ task hailAnnotateRemote {
         curl ~{hail_annotation_script} > hail_annotation_script.py
         python3 hail_annotation_script.py ~{mt_uri} ~{cohort_prefix} ~{ped_sex_qc} \
         ~{gnomad_ht_uri} ~{mpc_ht_uri} ~{cpu_cores} ~{memory} \
-        ~{bucket_id} ~{hail_autoscale} ~{genome_build}
+        ~{bucket_id} ~{genome_build}
     }
 
     output {

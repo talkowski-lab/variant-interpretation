@@ -26,7 +26,6 @@ workflow hailDenovoWES {
         File loeuf_file
         File eval_regions
 
-        Boolean hail_autoscale
         String sample_column
         String bucket_id
         String mpc_ht_uri
@@ -73,8 +72,7 @@ workflow hailDenovoWES {
                 cohort_prefix=cohort_prefix,
                 hail_annotation_script=hail_annotation_script,
                 genome_build=genome_build,
-                hail_docker=hail_docker,
-                hail_autoscale=hail_autoscale
+                hail_docker=hail_docker
         }
 
         call helpers.getHailMTSize as getStep1MTSize {
