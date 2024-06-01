@@ -46,7 +46,7 @@ if genome_build=='GRCh37':
     rg38 = hl.get_reference('GRCh38')  
     rg38.add_liftover('gs://hail-common/references/grch38_to_grch37.over.chain.gz', rg37)  
 
-    lcr = lcr.annotate(new_locus=hl.liftover(lcr.locus, genome_build))  
+    lcr = lcr.annotate(new_locus=hl.liftover(lcr.row_key, genome_build))  
     lcr = lcr.filter(hl.is_defined(lcr.new_locus))  
     lcr = lcr.key_by(locus=lcr.new_locus)     
 
