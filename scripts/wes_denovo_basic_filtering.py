@@ -41,6 +41,15 @@ try:
     lcr = hl.import_bed(lcr_uri, reference_genome=genome_build)
 except Exception as e:
     lcr = hl.import_bed(lcr_uri, reference_genome=genome_build, force_bgz=True)
+if genome_build=='GRCh37':
+    rg37 = hl.get_reference('GRCh37')  
+    rg38 = hl.get_reference('GRCh38')  
+    rg38.add_liftover('gs://hail-common/references/grch38_to_grch37.over.chain.gz', rg37)  
+
+    lcr = lcr.annotate(new_locus=hl.liftover(lcr.locus, genome_build))  
+    lcr = lcr.filter(hl.is_defined(lcr.new_locus))  
+    lcr = lcr.key_by(locus=lcr.new_locus)     
+
 mt = mt.filter_rows(hl.is_defined(lcr[mt.locus]), keep=False)
 
 mt = mt.filter_rows((hl.len(mt.filters) == 0))
