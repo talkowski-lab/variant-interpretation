@@ -14,7 +14,7 @@ struct RuntimeAttr {
 workflow runSomalier {
     input {
         File sites_uri
-        File hg38_fasta
+        File ref_fasta
         Array[Array[File]] vep_annotated_final_vcf
         File ped_uri
         File bed_file
@@ -79,7 +79,7 @@ workflow runSomalier {
     call relatedness {
         input:
             sites_uri=sites_uri,
-            hg38_fasta=hg38_fasta,
+            ref_fasta=ref_fasta,
             vcf_uri=splitMergeVCFs.merged_vcf_file,
             ped_uri=ped_uri,
             ancestry_labels_1kg=ancestry_labels_1kg,
@@ -156,7 +156,7 @@ task subsetVCFs {
 task relatedness {
     input {
         File sites_uri
-        File hg38_fasta
+        File ref_fasta
         File vcf_uri
         File ped_uri
         File ancestry_labels_1kg
@@ -189,7 +189,7 @@ task relatedness {
 
     command {
         bcftools index ~{vcf_uri}
-        somalier extract -d extracted/ --sites ~{sites_uri} -f ~{hg38_fasta} ~{vcf_uri}
+        somalier extract -d extracted/ --sites ~{sites_uri} -f ~{ref_fasta} ~{vcf_uri}
         somalier relate --infer --ped ~{ped_uri} -o ~{cohort_prefix} extracted/*.somalier
 
         tar -xf ~{somalier_1kg_tar}

@@ -15,7 +15,7 @@ struct RuntimeAttr {
 workflow runSomalier {
     input {
         File sites_uri
-        File hg38_fasta
+        File ref_fasta
         Array[File]? vep_vcf_files
         Array[File]? vep_annotated_final_vcf
         Array[String]? mt_shards
@@ -99,7 +99,7 @@ workflow runSomalier {
         call relatedness_subset {
             input:
                 sites_uri=sites_uri,
-                hg38_fasta=hg38_fasta,
+                ref_fasta=ref_fasta,
                 vcf_uri=subsetVCFSamplesHail.vcf_subset,
                 ped_uri=ped_uri,
                 sample_file=sample_file,
@@ -168,7 +168,7 @@ task subsetVCFs {
 task relatedness_subset {
     input {
         File sites_uri
-        File hg38_fasta
+        File ref_fasta
         File vcf_uri
         File ped_uri
         File ancestry_labels_1kg
@@ -211,7 +211,7 @@ task relatedness_subset {
         set -euo pipefail
 
         bcftools index -t ~{vcf_uri}
-        somalier extract -d extracted/ --sites ~{sites_uri} -f ~{hg38_fasta} ~{vcf_uri}
+        somalier extract -d extracted/ --sites ~{sites_uri} -f ~{ref_fasta} ~{vcf_uri}
 
         somalier relate --ped ~{ped_uri} ~{infer_string} ~{unknown_flag_str} -o ~{new_cohort_prefix} extracted/*.somalier
 
