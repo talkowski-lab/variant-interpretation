@@ -16,10 +16,9 @@ workflow runSomalier {
     input {
         File sites_uri
         File ref_fasta
-        Array[File]? vep_vcf_files
-        Array[File]? vep_annotated_final_vcf
+        Array[File] vep_vcf_files
         Array[String]? mt_shards
-        File? merged_vcf_file
+        File? somalier_vcf_file_
         File ped_uri
         File bed_file
         File ancestry_labels_1kg
@@ -38,7 +37,7 @@ workflow runSomalier {
         RuntimeAttr? runtime_attr_correct
     }
 
-    if (!defined(merged_vcf_file)) {
+    if (!defined(somalier_vcf_file_)) {
         if (defined(mt_shards)) {
             scatter (mt_uri in select_first([mt_shards])) {
                 call helpers.getHailMTSize {
@@ -57,9 +56,8 @@ workflow runSomalier {
         }
 
         if (!defined(mt_shards)) {
-            Array[File] vep_files = select_first([vep_vcf_files, vep_annotated_final_vcf])
             
-            scatter (vcf_uri in vep_files) {
+            scatter (vcf_uri in vep_vcf_files) {
                 call subsetVCFs {
                     input:
                         bed_file=bed_file,
@@ -78,11 +76,11 @@ workflow runSomalier {
         }
     }
 
-    File merged_vcf_file_ = select_first([merged_vcf_file, mergeVCFs.merged_vcf_file])
+    File merged_vcf_file = select_first([somalier_vcf_file_, mergeVCFs.merged_vcf_file])
 
     call helpers.splitSamples as splitSamples {
         input:
-            vcf_file=merged_vcf_file_,
+            vcf_file=merged_vcf_file,
             samples_per_chunk=samples_per_chunk,
             cohort_prefix=cohort_prefix,
             sv_base_mini_docker=sv_base_mini_docker
@@ -92,7 +90,7 @@ workflow runSomalier {
         call helpers.subsetVCFSamplesHail {
             input:
                 samples_file=sample_file,
-                vcf_file=merged_vcf_file_,
+                vcf_file=merged_vcf_file,
                 hail_docker=hail_docker
         }
 
@@ -121,6 +119,7 @@ workflow runSomalier {
         Array[File] out_html = relatedness_subset.out_html
         Array[File] ancestry_html = relatedness_subset.ancestry_html
         Array[File] ancestry_out = relatedness_subset.ancestry_out
+        File somalier_vcf_file = merged_vcf_file
     }
 }
 

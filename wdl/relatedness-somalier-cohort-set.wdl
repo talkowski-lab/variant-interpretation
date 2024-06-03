@@ -15,7 +15,7 @@ workflow runSomalier {
     input {
         File sites_uri
         File ref_fasta
-        Array[Array[File]] vep_annotated_final_vcf
+        Array[Array[File]] vep_vcf_files
         File ped_uri
         File bed_file
         File ancestry_labels_1kg
@@ -30,7 +30,7 @@ workflow runSomalier {
         RuntimeAttr? runtime_attr_relatedness
         RuntimeAttr? runtime_attr_correct
     }
-    scatter (cohort_vcf_files in vep_annotated_final_vcf) {
+    scatter (cohort_vcf_files in vep_vcf_files) {
         scatter (vcf_uri in cohort_vcf_files) {
             call subsetVCFs {
                 input:
@@ -197,7 +197,7 @@ task relatedness {
     }
 
     output {
-        File out_samples = cohort_prefix + ".samples.tsv" # creates a .ped like vep_annotated_final_vcf with extra QC columns
+        File out_samples = cohort_prefix + ".samples.tsv" # creates a .ped like vep_vcf_files with extra QC columns
         File out_pairs = cohort_prefix + ".pairs.tsv" # shows IBS for all possible sample pairs
         File out_groups = cohort_prefix + ".groups.tsv" # shows pairs of samples above a certain relatedness
         File out_html = cohort_prefix + ".html" # interactive html

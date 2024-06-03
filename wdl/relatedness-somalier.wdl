@@ -14,10 +14,9 @@ struct RuntimeAttr {
 workflow runSomalier {
     input {
         File sites_uri
-        File hg38_fasta
-        Array[File]? vep_vcf_files
-        Array[File]? vep_annotated_final_vcf
-        File? merged_vep_file
+        File ref_fasta
+        Array[File] vep_vcf_files
+        File? somalier_vcf_file_
         File ped_uri
         File bed_file
         File ancestry_labels_1kg
@@ -34,10 +33,9 @@ workflow runSomalier {
         RuntimeAttr? runtime_attr_correct
     }
 
-    if (!defined(merged_vep_file)) {
-        Array[File] vep_files = select_first([vep_vcf_files, vep_annotated_final_vcf])
+    if (!defined(somalier_vcf_file_)) {
         
-        scatter (vcf_uri in vep_files) {
+        scatter (vcf_uri in vep_vcf_files) {
             call subsetVCFs {
                 input:
                     bed_file=bed_file,
@@ -55,12 +53,12 @@ workflow runSomalier {
         }
     }
 
-    File merged_vcf_file = select_first([merged_vep_file, mergeVCFs.merged_vcf_file])
+    File merged_vcf_file = select_first([somalier_vcf_file_, mergeVCFs.merged_vcf_file])
 
     call relatedness {
         input:
             sites_uri=sites_uri,
-            hg38_fasta=hg38_fasta,
+            ref_fasta=ref_fasta,
             vcf_uri=merged_vcf_file,
             ped_uri=ped_uri,
             ancestry_labels_1kg=ancestry_labels_1kg,
@@ -92,6 +90,7 @@ workflow runSomalier {
         File ancestry_out = relatedness.ancestry_out
         File corrected_ped = correctPedigree.corrected_ped
         File somalier_errors = correctPedigree.somalier_errors
+        File somalier_vcf_file = merged_vcf_file
     }
 }
 
@@ -139,7 +138,7 @@ task subsetVCFs {
 task relatedness {
     input {
         File sites_uri
-        File hg38_fasta
+        File ref_fasta
         File vcf_uri
         File ped_uri
         File ancestry_labels_1kg
@@ -177,7 +176,7 @@ task relatedness {
         set -euo pipefail
 
         bcftools index -t ~{vcf_uri}
-        /somalier_test extract -d extracted/ --sites ~{sites_uri} -f ~{hg38_fasta} ~{vcf_uri}
+        /somalier_test extract -d extracted/ --sites ~{sites_uri} -f ~{ref_fasta} ~{vcf_uri}
         SOMALIER_RELATEDNESS_CUTOFF=~{relatedness_cutoff} /somalier_test relate ~{infer_string} --ped ~{ped_uri} -o ~{cohort_prefix} extracted/*.somalier
 
         tar -xf ~{somalier_1kg_tar}
