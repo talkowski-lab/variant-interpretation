@@ -82,6 +82,7 @@ workflow Relatedness {
         relatedness_qc_script=relatedness_qc_script,
         hail_docker=hail_docker,
         bucket_id=bucket_id,
+        score_table=false,
         runtime_attr_override=runtime_attr_check_relatedness
     }
 
