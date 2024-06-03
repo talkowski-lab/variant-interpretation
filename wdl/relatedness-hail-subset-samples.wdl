@@ -102,7 +102,8 @@ workflow Relatedness {
             input:
                 samples_file=sample_file,
                 vcf_file=merged_vcf_file,
-                hail_docker=hail_docker
+                hail_docker=hail_docker,
+                genome_build=genome_build
         }
 
         call relatednessHail.checkRelatedness as checkRelatedness {
