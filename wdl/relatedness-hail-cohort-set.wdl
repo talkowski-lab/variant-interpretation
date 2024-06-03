@@ -28,6 +28,7 @@ workflow RelatednessCohortSet {
         String sv_base_mini_docker
         String hail_docker
         String bucket_id
+        String genome_build
         Int chunk_size=100000
         Int samples_per_chunk=0
         Boolean sort_after_merge=false
@@ -86,6 +87,7 @@ workflow RelatednessCohortSet {
             sv_base_mini_docker=sv_base_mini_docker,
             hail_docker=hail_docker,
             bucket_id=bucket_id,
+            genome_build=genome_build,
             chunk_size=chunk_size,
             sort_after_merge=sort_after_merge,
             runtime_attr_subset_vcfs=runtime_attr_subset_vcfs,
@@ -112,6 +114,7 @@ workflow RelatednessCohortSet {
             sex_qc_script=sex_qc_script,
             hail_docker=hail_docker,
             bucket_id=bucket_id,
+            genome_build=genome_build,
             chunk_size=chunk_size,
             sort_after_merge=sort_after_merge,
             runtime_attr_subset_vcfs=runtime_attr_subset_vcfs,

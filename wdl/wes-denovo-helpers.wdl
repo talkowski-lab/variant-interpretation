@@ -526,6 +526,7 @@ task subsetVCFSamplesHail {
         File vcf_file
         File samples_file  # .txt extension  
         String hail_docker
+        String genome_build='GRCh38'
         RuntimeAttr? runtime_attr_override
     }
     Float input_size = size(vcf_file, 'GB')
@@ -569,6 +570,7 @@ task subsetVCFSamplesHail {
     samples_file = sys.argv[2]
     cores = sys.argv[3]
     mem = int(np.floor(float(sys.argv[4])))
+    genome_build = sys.argv[5]
 
     hl.init(min_block_size=128, spark_conf={"spark.executor.cores": cores, 
                         "spark.executor.memory": f"{mem}g",
@@ -576,7 +578,7 @@ task subsetVCFSamplesHail {
                         "spark.driver.memory": f"{mem}g"
                         }, tmp_dir="tmp", local_tmpdir="tmp")
 
-    mt = hl.import_vcf(vcf_file, reference_genome = 'GRCh38', array_elements_required=False, force_bgz=True)
+    mt = hl.import_vcf(vcf_file, reference_genome = genome_build, array_elements_required=False, force_bgz=True)
     samples = pd.read_csv(samples_file, header=None)[0].tolist()
     try:
         # for haploid (e.g. chrY)
@@ -593,7 +595,7 @@ task subsetVCFSamplesHail {
     hl.export_vcf(mt_filt, os.path.basename(samples_file).split('.txt')[0]+'.vcf.bgz')
     EOF
 
-    python3 subset_samples.py ~{vcf_file} ~{samples_file} ~{cpu_cores} ~{memory}
+    python3 subset_samples.py ~{vcf_file} ~{samples_file} ~{cpu_cores} ~{memory} ~{genome_build}
     >>>
 
     output {

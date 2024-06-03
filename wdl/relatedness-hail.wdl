@@ -26,6 +26,7 @@ workflow Relatedness {
         String sv_base_mini_docker
         String hail_docker
         String bucket_id
+        String genome_build
         Int chunk_size=0
         Boolean sort_after_merge=false
         RuntimeAttr? runtime_attr_subset_vcfs
@@ -69,6 +70,7 @@ workflow Relatedness {
         ped_uri=ped_uri,
         cohort_prefix=cohort_prefix,
         sex_qc_script=sex_qc_script,
+        genome_build=genome_build,
         hail_docker=hail_docker,
         runtime_attr_override=runtime_attr_impute_sex
     }
@@ -82,6 +84,7 @@ workflow Relatedness {
         relatedness_qc_script=relatedness_qc_script,
         hail_docker=hail_docker,
         bucket_id=bucket_id,
+        genome_build=genome_build,
         score_table=false,
         runtime_attr_override=runtime_attr_check_relatedness
     }
@@ -115,6 +118,7 @@ task imputeSex {
         String cohort_prefix
         String sex_qc_script
         String hail_docker
+        String genome_build
         RuntimeAttr? runtime_attr_override
     }
 
@@ -147,7 +151,7 @@ task imputeSex {
 
     command <<<
         curl ~{sex_qc_script} > impute_sex.py
-        python3 impute_sex.py ~{vcf_uri} ~{sites_uri} ~{cohort_prefix} ~{ped_uri} ~{cpu_cores} ~{memory}
+        python3 impute_sex.py ~{vcf_uri} ~{sites_uri} ~{cohort_prefix} ~{ped_uri} ~{cpu_cores} ~{memory} ~{genome_build}
     >>>
 
     output {
@@ -165,6 +169,7 @@ task checkRelatedness {
         String relatedness_qc_script
         String hail_docker
         String bucket_id
+        String genome_build
         String score_table=false
         RuntimeAttr? runtime_attr_override
     }
@@ -199,7 +204,8 @@ task checkRelatedness {
     command <<<
         set -eou pipefail
         curl ~{relatedness_qc_script} > check_relatedness.py
-        python3 check_relatedness.py ~{vcf_uri} ~{sites_uri} ~{cohort_prefix} ~{ped_uri} ~{cpu_cores} ~{memory} ~{bucket_id} ~{score_table} > stdout
+        python3 check_relatedness.py ~{vcf_uri} ~{sites_uri} ~{cohort_prefix} ~{ped_uri} ~{cpu_cores} ~{memory} \
+        ~{bucket_id} ~{score_table} ~{genome_build} > stdout
     >>>
 
     output {

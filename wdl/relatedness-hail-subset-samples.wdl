@@ -28,6 +28,7 @@ workflow Relatedness {
         String sv_base_mini_docker
         String hail_docker
         String bucket_id
+        String genome_build
         Boolean sort_after_merge=false
         Int chunk_size=100000
         RuntimeAttr? runtime_attr_subset_vcfs
@@ -74,6 +75,7 @@ workflow Relatedness {
         cohort_prefix=cohort_prefix,
         sex_qc_script=sex_qc_script,
         hail_docker=hail_docker,
+        genome_build=genome_build,
         runtime_attr_override=runtime_attr_impute_sex
     }
 
@@ -91,6 +93,7 @@ workflow Relatedness {
         cohort_prefix=cohort_prefix,
         bucket_id=bucket_id,
         hail_docker=hail_docker,
+        genome_build=genome_build,
         runtime_attr_override=runtime_attr_hail_pca
     }
 
@@ -112,6 +115,7 @@ workflow Relatedness {
             hail_docker=hail_docker,
             bucket_id=bucket_id,
             score_table=HailPCA.score_table,
+            genome_build=genome_build,
             runtime_attr_override=runtime_attr_check_relatedness
         }
     }
@@ -170,6 +174,7 @@ task HailPCA {
         String cohort_prefix
         String bucket_id
         String hail_docker
+        String genome_build
         RuntimeAttr? runtime_attr_override
     }
 
@@ -214,6 +219,7 @@ task HailPCA {
     cores = sys.argv[3]
     mem = int(np.floor(float(sys.argv[4])))
     bucket_id = sys.argv[5]
+    genome_build = sys.argv[6]
 
     hl.init(min_block_size=128, spark_conf={"spark.executor.cores": cores, 
                         "spark.executor.memory": f"{mem}g",
@@ -221,14 +227,14 @@ task HailPCA {
                         "spark.driver.memory": f"{mem}g"
                         }, tmp_dir="tmp", local_tmpdir="tmp")
 
-    mt = hl.import_vcf(merged_vcf_file, reference_genome='GRCh38', call_fields=[], array_elements_required=False, force_bgz=True)
+    mt = hl.import_vcf(merged_vcf_file, reference_genome=genome_build, call_fields=[], array_elements_required=False, force_bgz=True)
     eigenvalues, score_table, loading_table = hl.hwe_normalized_pca(mt.GT, k=10, compute_loadings=True)
     score_table_file = f"{bucket_id}/hail/{str(datetime.datetime.now().strftime('%Y-%m-%d_%H-%M'))}/{cohort_prefix}_wes_pca_score_table_som.ht"
     score_table.write(score_table_file, overwrite=True)
     pd.Series([score_table_file]).to_csv('table.txt', header=None, index=False)
     EOF
 
-    python3 hail_pca.py ~{merged_vcf_file} ~{cohort_prefix} ~{cpu_cores} ~{memory} ~{bucket_id}
+    python3 hail_pca.py ~{merged_vcf_file} ~{cohort_prefix} ~{cpu_cores} ~{memory} ~{bucket_id} ~{genome_build}
     >>>
 
     output {
