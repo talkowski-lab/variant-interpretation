@@ -11,6 +11,7 @@ workflow RdTest{
         File outlier_samples
         File batch_bincov
         File bed
+        File ped_file
         Int rd_window
         String sv_pipeline_rdtest_docker
         RuntimeAttr? runtime_attr_rdtest
@@ -25,6 +26,7 @@ workflow RdTest{
             outlier_samples = outlier_samples,
             batch_bincov = batch_bincov,
             prefix = prefix,
+            ped_file = ped_file,
             rd_window = rd_window,
             sv_pipeline_rdtest_docker = sv_pipeline_rdtest_docker,
             runtime_attr_override = runtime_attr_rdtest
@@ -42,6 +44,7 @@ task rdtest {
         File sample_batches # samples, batches
         File batch_bincov # batch, bincov, index
         File medianfile
+        File ped_file
         File outlier_samples
         Int rd_window
         String prefix
@@ -93,10 +96,13 @@ task rdtest {
 
         ##Remove outliers from RD plot except samples with the variant
         grep -vf samples.txt ~{outlier_samples} > outliers_keep.txt
-        grep -vf outliers_keep.txt allcovfile.bed.gz > samples_noOutliers.txt
+        grep -vf outliers_keep.txt all_samples.txt > samples_noOutliers.txt
+
+        ##Make output directory
+        mkdir rd_plots
 
         ##Run RD test script
-        Rscript /opt/RdTest/Rd.R \
+        Rscript /opt/RdTest/RdTest.R \
             -b input.bed \
             -n ~{prefix} \
             -c allcovfile.bed.gz \
@@ -104,11 +110,12 @@ task rdtest {
             -a TRUE \
             -d TRUE \
             -w samples_noOutliers.txt \
-            -s ~{rd_window}
+            -s ~{rd_window} \
+            -f ~{ped_file} \
+            -p TRUE \
+            -o rd_plots
 
-        mkdir rd_plots
-        mv *jpg rd_plots
-        tar -czvf rd_plots.tar.gz rd_plots/
+        tar -czvf rd_plots.tar.gz rd_plots
     >>>
 
     output {
