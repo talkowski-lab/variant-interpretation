@@ -15,7 +15,6 @@ workflow RdTest{
         Int rd_window
         String sv_pipeline_rdtest_docker
         RuntimeAttr? runtime_attr_rdtest
-        RuntimeAttr? runtime_attr_create_bed
     }
 
     call rdtest{
