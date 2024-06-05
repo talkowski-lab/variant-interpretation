@@ -6,7 +6,7 @@ import "Structs2.wdl"
 workflow RdTest{
     input{
         String prefix
-        Array[File] medianfile
+        File medianfile
         File sample_batches
         File outlier_samples
         File batch_bincov
@@ -42,7 +42,7 @@ task rdtest {
         File bed
         File sample_batches # samples, batches
         File batch_bincov # batch, bincov, index
-        Array[File] medianfile
+        File medianfile
         File outlier_samples
         Int rd_window
         String prefix
@@ -70,7 +70,6 @@ task rdtest {
         cut -f5 input.bed |sed 's/\,/\n/g'|sort -u > samples.txt
         fgrep -wf samples.txt ~{sample_batches} |awk '{print $2}' |sort -u > existing_batches.txt
         grep -w -f existing_batches.txt ~{batch_bincov} > bincovlist.txt
-        paste ~{sep=" " medianfile} > medianfile.txt
 
         i=0
         bedtools merge -i input.bed > input.merged.bed
@@ -102,7 +101,7 @@ task rdtest {
             -b input.bed \
             -n ~{prefix} \
             -c allcovfile.bed.gz \
-            -m medianfile.txt \
+            -m ~{medianfile} \
             -a TRUE \
             -d TRUE \
             -w samples_noOutliers.txt \
@@ -116,7 +115,6 @@ task rdtest {
     output {
         File plots = "rd_plots.tar.gz"
         File allcovfile = "allcovfile.bed.gz"
-        File median_file = "medianfile.txt"
         File test_bed = "input.bed"
         File samples_text = "samples_noOutliers.txt"
     }
