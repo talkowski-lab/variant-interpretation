@@ -13,7 +13,6 @@ workflow RdTest{
         File bed
         Int rd_window
         String sv_pipeline_rdtest_docker
-        String variant_interpretation_docker
         RuntimeAttr? runtime_attr_rdtest
         RuntimeAttr? runtime_attr_create_bed
     }
@@ -67,7 +66,7 @@ task rdtest {
     command <<<
         set -ex
         cat ~{bed} |egrep "DEL|DUP" | sort -k1,1 -k2,2n> input.bed
-        cut -f5 input.bed |sed 's/\,/\n/g'|sort -u > samples.txt
+        cut -f6 input.bed |sed 's/\,/\n/g'|sort -u > samples.txt
         fgrep -wf samples.txt ~{sample_batches} |awk '{print $2}' |sort -u > existing_batches.txt
         grep -w -f existing_batches.txt ~{batch_bincov} > bincovlist.txt
 
