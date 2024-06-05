@@ -71,17 +71,17 @@ task rdtest {
         grep -w -f existing_batches.txt ~{batch_bincov} > bincovlist.txt
 
         i=0
-        bedtools merge -i input.bed > input.merged.bed
+
         while read batch bincov index
         do
             let "i=$i+1"
             if [ $i -gt 1 ]
             then
                 export GCS_OAUTH_TOKEN=`gcloud auth application-default print-access-token`
-                tabix -h $bincov -R input.merged.bed | cut -f4- > covfile.$i.bed
+                tabix -h $bincov -R input.bed | cut -f4- > covfile.$i.bed
             else
                 export GCS_OAUTH_TOKEN=`gcloud auth application-default print-access-token`
-                tabix -h $bincov -R input.merged.bed > covfile.$i.bed
+                tabix -h $bincov -R input.bed > covfile.$i.bed
 
         fi
         done<bincovlist.txt
