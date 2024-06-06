@@ -106,8 +106,6 @@ task rdtest {
             -n ~{prefix} \
             -c allcovfile.bed.gz \
             -m ~{medianfile} \
-            -a TRUE \
-            -d TRUE \
             -w samples_noOutliers.txt \
             -s ~{rd_window} \
             -f ~{ped_file} \
