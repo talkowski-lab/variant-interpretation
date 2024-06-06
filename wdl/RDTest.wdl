@@ -119,9 +119,9 @@ task rdtest {
 
     output {
         File plots = "rd_plots.tar.gz"
-        File allcovfile = "allcovfile.bed.gz"
-        File test_bed = "input.bed"
-        File samples_text = "samples_noOutliers.txt"
+#        File allcovfile = "allcovfile.bed.gz"
+#        File test_bed = "input.bed"
+#        File samples_text = "samples_noOutliers.txt"
     }
 
     runtime {
