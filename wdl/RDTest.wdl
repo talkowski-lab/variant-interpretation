@@ -88,7 +88,7 @@ task rdtest {
         fi
         done<bincovlist.txt
 
-        paste covfile.*.bed | tr ' ' '\t' | bgzip > allcovfile.bed.gz
+        paste covfile.*.bed | tr ' ' '\t' | sort -k1,1 -k2,2n | bgzip > allcovfile.bed.gz
         tabix allcovfile.bed.gz
         rm covfile.*.bed
         zcat allcovfile.bed.gz | head -n 1 | cut -f 4- | tr '\t' '\n' > all_samples.txt
