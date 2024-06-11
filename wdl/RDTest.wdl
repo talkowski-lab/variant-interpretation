@@ -15,6 +15,7 @@ workflow RdTest{
         Int rd_window
         String sv_pipeline_rdtest_docker
         RuntimeAttr? runtime_attr_rdtest
+        RuntimeAttr? runtime_attr_merge
     }
 
     Array[String] variants = transpose(read_tsv(bed))[3]
@@ -36,8 +37,16 @@ workflow RdTest{
         }
     }
 
+    call merge_plots {
+        input:
+                plots = rdtest.plots,
+                prefix = prefix,
+                sv_pipeline_rdtest_docker = sv_pipeline_rdtest_docker,
+                runtime_attr_override = runtime_attr_merge
+    }
+
     output{
-        Array[File] Plots = rdtest.plots
+        File Plots = merge_plots.merged_plots
     }
 }
 
@@ -123,9 +132,49 @@ task rdtest {
 
     output {
         File plots = "~{variant}.tar.gz"
-#        File allcovfile = "allcovfile.bed.gz"
-#        File test_bed = "input.bed"
-#        File samples_text = "samples_noOutliers.txt"
+    }
+
+    runtime {
+        cpu: select_first([runtime_attr.cpu, default_attr.cpu])
+        memory: select_first([runtime_attr.mem_gb, default_attr.mem_gb]) + " GiB"
+        disks: "local-disk " + select_first([runtime_attr.disk_gb, default_attr.disk_gb]) + " HDD"
+        bootDiskSizeGb: select_first([runtime_attr.boot_disk_gb, default_attr.boot_disk_gb])
+        docker: sv_pipeline_rdtest_docker
+        preemptible: select_first([runtime_attr.preemptible, default_attr.preemptible])
+        maxRetries: select_first([runtime_attr.max_retries, default_attr.max_retries])
+    }
+}
+
+task merge_plots {
+    input{
+        Array[File] plots
+        String prefix
+        String sv_pipeline_rdtest_docker
+        RuntimeAttr? runtime_attr_override
+    }
+
+    RuntimeAttr default_attr = object {
+                                      mem_gb: 3.75,
+                                      disk_gb: 10,
+                                      cpu: 1,
+                                      preemptible: 2,
+                                      max_retries: 1,
+                                      boot_disk_gb: 8
+                                  }
+
+    RuntimeAttr runtime_attr = select_first([runtime_attr_override, default_attr])
+
+    command <<<
+        set -ex
+
+        mkdir ~{prefix}
+        for dir in *.tar.gz; do tar -xzvf $dir; done
+        mv */*jpg ~{prefix}/
+        tar -czvf ~{prefix}.tar.gz ~{prefix}
+    >>>
+
+    output {
+        File merged_plots = "~{prefix}.tar.gz"
     }
 
     runtime {
