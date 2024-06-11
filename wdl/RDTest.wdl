@@ -168,7 +168,8 @@ task merge_plots {
         set -ex
 
         mkdir ~{prefix}
-        for dir in *.tar.gz; do tar -xzvf $dir; done
+        dirs=(~{sep=" " plots})
+        for dir in $dirs; do tar -xzvf $dir; done
         mv */*jpg ~{prefix}/
         tar -czvf ~{prefix}.tar.gz ~{prefix}
     >>>
