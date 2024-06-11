@@ -17,22 +17,27 @@ workflow RdTest{
         RuntimeAttr? runtime_attr_rdtest
     }
 
-    call rdtest{
-        input:
-            bed = bed,
-            medianfile = medianfile,
-            sample_batches = sample_batches,
-            outlier_samples = outlier_samples,
-            batch_bincov = batch_bincov,
-            prefix = prefix,
-            ped_file = ped_file,
-            rd_window = rd_window,
-            sv_pipeline_rdtest_docker = sv_pipeline_rdtest_docker,
-            runtime_attr_override = runtime_attr_rdtest
+    Array[String] variants = transpose(read_tsv(bed))[4]
+
+    scatter(var in variants) {
+        call rdtest{
+            input:
+                bed = bed,
+                variant = var,
+                medianfile = medianfile,
+                sample_batches = sample_batches,
+                outlier_samples = outlier_samples,
+                batch_bincov = batch_bincov,
+                prefix = prefix,
+                ped_file = ped_file,
+                rd_window = rd_window,
+                sv_pipeline_rdtest_docker = sv_pipeline_rdtest_docker,
+                runtime_attr_override = runtime_attr_rdtest
+        }
     }
 
     output{
-        File Plots = rdtest.plots
+        Array[File] Plots = rdtest.plots
     }
 }
 
@@ -45,6 +50,7 @@ task rdtest {
         File medianfile
         File ped_file
         File outlier_samples
+        String variant
         Int rd_window
         String prefix
         String sv_pipeline_rdtest_docker
@@ -67,7 +73,7 @@ task rdtest {
 
     command <<<
         set -ex
-        cat ~{bed} |egrep "DEL|DUP" | sort -k1,1 -k2,2n> input.bed
+        cat ~{bed} | grep -w ~{variant} | sort -k1,1 -k2,2n> input.bed
         cut -f5 input.bed |sed 's/\,/\n/g'|sort -u > samples.txt
         fgrep -wf samples.txt ~{sample_batches} |awk '{print $2}' |sort -u > existing_batches.txt
         grep -w -f existing_batches.txt ~{batch_bincov} > bincovlist.txt
@@ -98,7 +104,7 @@ task rdtest {
         grep -vf outliers_keep.txt all_samples.txt > samples_noOutliers.txt
 
         ##Make output directory
-        mkdir rd_plots
+        mkdir ~{variant}
 
         ##Run RD test script
         Rscript /opt/RdTest/RdTest.R \
@@ -110,13 +116,13 @@ task rdtest {
             -s ~{rd_window} \
             -f ~{ped_file} \
             -p TRUE \
-            -o rd_plots
+            -o ~{variant}
 
-        tar -czvf rd_plots.tar.gz rd_plots
+        tar -czvf ~{variant}.tar.gz ~{variant}
     >>>
 
     output {
-        File plots = "rd_plots.tar.gz"
+        File plots = "~{variant}.tar.gz"
 #        File allcovfile = "allcovfile.bed.gz"
 #        File test_bed = "input.bed"
 #        File samples_text = "samples_noOutliers.txt"
