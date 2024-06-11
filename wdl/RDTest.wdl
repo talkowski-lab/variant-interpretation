@@ -73,7 +73,7 @@ task rdtest {
 
     command <<<
         set -ex
-        cat ~{bed} | grep -w ~{variant} | sed -e 's/CPX/DEL/g' | sort -k1,1 -k2,2n> input.bed
+        zcat ~{bed} | grep -w ~{variant} | sed -e 's/CPX/DEL/g' | sort -k1,1 -k2,2n> input.bed
         cut -f5 input.bed |sed 's/\,/\n/g'|sort -u > samples.txt
         fgrep -wf samples.txt ~{sample_batches} |awk '{print $2}' |sort -u > existing_batches.txt
         grep -w -f existing_batches.txt ~{batch_bincov} > bincovlist.txt
