@@ -17,7 +17,7 @@ workflow RdTest{
         RuntimeAttr? runtime_attr_rdtest
     }
 
-    Array[String] variants = transpose(read_tsv(bed))[4]
+    Array[String] variants = transpose(read_tsv(bed))[3]
 
     scatter(var in variants) {
         call rdtest{
