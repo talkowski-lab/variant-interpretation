@@ -165,12 +165,20 @@ task merge_plots {
     RuntimeAttr runtime_attr = select_first([runtime_attr_override, default_attr])
 
     command <<<
-        set -ex
+        set -eu
 
+        # note head -n1 stops reading early and sends SIGPIPE to zcat,
+        # so setting pipefail here would result in early termination
         mkdir ~{prefix}
-        dirs=(~{sep=" " plots})
-        for dir in $dirs; do tar -xzvf $dir; done
-        mv */*jpg ~{prefix}/
+
+        # no more early stopping
+        set -o pipefail
+
+        while read SPLIT; do
+          tar zxvf $SPLIT
+        done < ~{write_lines(plots)} \
+
+        mv */*.jpg ~{prefix}
         tar -czvf ~{prefix}.tar.gz ~{prefix}
     >>>
 
