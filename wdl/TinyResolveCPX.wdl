@@ -74,9 +74,9 @@ workflow TinyResolve {
   }
 
   output {
-    Array[File] tloc_manta_vcf = flatten(ResolveManta.cpx_vcf)
-    Array[File] tloc_manta_vcf_idx = flatten(ResolveManta.cpx_vcf_idx)
-    Array[File] tloc_manta_unresolved_vcf = flatten(ResolveManta.cpx_unresolved_vcf)
+    Array[File] cpx_manta_vcf = flatten(ResolveManta.cpx_vcf)
+    Array[File] cpx_manta_vcf_idx = flatten(ResolveManta.cpx_vcf_idx)
+    Array[File] cpx_manta_unresolved_vcf = flatten(ResolveManta.cpx_unresolved_vcf)
   }
 }
 
@@ -146,9 +146,9 @@ task ResolveManta {
   >>>
 
   output {
-    Array[File] tloc_vcf = glob("cpx_*.vcf.gz")
-    Array[File] tloc_vcf_idx = glob("cpx_*.vcf.gz.tbi")
-    Array[File] tloc_unresolved_vcf = glob("*unresolved.vcf.gz")
+    Array[File] cpx_vcf = glob("cpx_*.vcf.gz")
+    Array[File] cpx_vcf_idx = glob("cpx_*.vcf.gz.tbi")
+    Array[File] cpx_unresolved_vcf = glob("*unresolved.vcf.gz")
   }
   
   runtime {
