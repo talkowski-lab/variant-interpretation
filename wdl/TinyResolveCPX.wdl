@@ -51,14 +51,6 @@ workflow TinyResolve {
         all_items = discfile
     }
 
-#    call GetShardInputs.GetShardInputs as GetShardDiscfileIndexes {
-#      input:
-#        items_per_shard = samples_per_shard,
-#        shard_number = i,
-#        num_items = num_samples,
-#        all_items = discfile_idx
-#    }
-
     call GetShardInputs.GetShardInputs as GetShardVcfs {
       input:
         items_per_shard = samples_per_shard,
@@ -69,12 +61,12 @@ workflow TinyResolve {
 
     call ResolveManta {
       input:
-        raw_vcfs=GetShardVcfs.shard_items,
+        raw_vcfs=GetShardVcfs.shard_items, 
         samples=GetShardSamples.shard_items,
         sv_pipeline_docker = sv_pipeline_docker,
         cytoband=cytoband,
         cytoband_idx=cytoband_idx,
-        discfile=GetShardDiscfiles.shard_items,
+        discfile=GetShardDiscfiles.shard_items, 
 #        discfile_idx=GetShardDiscfileIndexes.shard_items,
         mei_bed=mei_bed,
         runtime_attr_override=runtime_attr_resolve
@@ -82,21 +74,22 @@ workflow TinyResolve {
   }
 
   output {
-    Array[File] tloc_manta_vcf = flatten(ResolveManta.tloc_vcf)
-    Array[File] tloc_manta_vcf_idx = flatten(ResolveManta.tloc_vcf_idx)
-    Array[File] tloc_manta_unresolved_vcf = flatten(ResolveManta.tloc_unresolved_vcf)
+    Array[File] tloc_manta_vcf = flatten(ResolveManta.cpx_vcf)
+    Array[File] tloc_manta_vcf_idx = flatten(ResolveManta.cpx_vcf_idx)
+    Array[File] tloc_manta_unresolved_vcf = flatten(ResolveManta.cpx_unresolved_vcf)
   }
 }
 
 
 task ResolveManta {
   input {
-    Array[File] raw_vcfs
+    Array[File] raw_vcfs ## manta individual vcfs
     Array[String] samples
     File cytoband_idx
-    Array[File] discfile
+    Array[File] discfile ## pe_disc vcfs
 #    Array[File] discfile_idx
     File cytoband
+    File cytoband_idx
     File mei_bed
     String sv_pipeline_docker
     RuntimeAttr? runtime_attr_override
@@ -127,15 +120,34 @@ task ResolveManta {
       pe=${discfiles[$i]}
       tabix -s1 -b2 -e2 $pe
       sample_no=`printf %03d $i`
-      bash /src/variant-interpretation/scripts/mantatloc_check.sh $vcf $pe ${sample_id} ~{mei_bed} ~{cytoband}
-      mv ${sample_id}.manta.complex.vcf.gz tloc_${sample_no}.${sample_id}.manta.complex.vcf.gz
-      tabix -p vcf tloc_${sample_no}.${sample_id}.manta.complex.vcf.gz
+       
+      ## bash /src/variant-interpretation/scripts/mantatloc_check.sh $vcf $pe ${sample_id} ~{mei_bed} ~{cytoband}
+
+      cat <(zcat $std_vcf|egrep ^##) \
+        < (echo "##FORMAT=<ID=manta,Number=1,Type=Integer,Description=\"manta genotype\">") \
+        < (echo "##INFO=<ID=MEMBERS,Number=.,Type=String,Description=\"IDs of cluster's constituent records.\">") \
+        < (echo "##INFO=<ID=EVIDENCE,Number=.,Type=String,Description=\"Classes of random forest support.\">") \
+        < (zcat $vcf | egrep -v ^## | awk '{if ($1!~"#")$8=$8";EVIDENCE=PE;MEMBERS="$3; print}' OFS='\t') \
+        | bgzip -c > manta.vcf.gz 
+
+      svtk resolve manta.vcf.gz \
+      ${sample_id}.manta.complex.vcf \
+      --mei-bed $meibed \
+      --cytobands $cytobands \
+      --discfile $discfile \
+      -u ${sample_id}.manta.unresolved.vcf
+
+      bgzip ${sample_id}.manta.complex.vcf
+      bgzip ${sample_id}.manta.unresolved.vcf
+
+      mv ${sample_id}.manta.complex.vcf.gz cpx_${sample_no}.${sample_id}.manta.complex.vcf.gz
+      tabix -p vcf cpx_${sample_no}.${sample_id}.manta.complex.vcf.gz
     done
   >>>
 
   output {
-    Array[File] tloc_vcf = glob("tloc_*.vcf.gz")
-    Array[File] tloc_vcf_idx = glob("tloc_*.vcf.gz.tbi")
+    Array[File] tloc_vcf = glob("cpx_*.vcf.gz")
+    Array[File] tloc_vcf_idx = glob("cpx_*.vcf.gz.tbi")
     Array[File] tloc_unresolved_vcf = glob("*unresolved.vcf.gz")
   }
   
