@@ -4,7 +4,7 @@ version 1.0
 ## modified from ResolveCTX.wdl
 
 import "Structs.wdl"
-import "TinyResolve.wdl"
+import "TinyResolveCPX.wdl"
 import "PEevidence.wdl" as PEevidence
 
 # WORKFLOW DEFINITION
