@@ -1,6 +1,8 @@
 version 1.0
 
 # IMPORT
+## modified from ResolveCTX.wdl
+
 import "Structs.wdl"
 import "TinyResolve.wdl"
 import "PEevidence.wdl" as PEevidence
@@ -8,20 +10,19 @@ import "PEevidence.wdl" as PEevidence
 # WORKFLOW DEFINITION
 workflow ResolveCTX{
     input{
-        File vcf
-        String prefix
+        String prefix # batchid
         String docker_path
         Array[String] samples
-        File manta_vcf_tar
+        File manta_vcf_tar # batch std manta tarball
         File cytoband
-        Array[File] discfile
+        Array[File] discfile # per sample pesr_disc
         File mei_bed
         Int samples_per_shard = 25
         String sv_pipeline_docker
         String linux_docker
 
-        File batches_pe
-        File sample_batch
+        File batches_pe # key file with batch ID + batch level pe.txt.gz + pe.txt.gz.tbi
+        File sample_batch # key file with batch ID + sample ID
         String docker_pe_evidence
 
         RuntimeAttr? runtime_attr_resolve
@@ -33,14 +34,6 @@ workflow ResolveCTX{
         RuntimeAttr? runtime_attr_override_ref_raw_pe
         RuntimeAttr? runtime_attr_subset_sample_roi
         RuntimeAttr? runtime_attr_subset_pe_evidence
-    }
-
-    call CtxVcf2Bed{
-        input:
-            vcf = vcf,
-            prefix = prefix,
-            docker_path = docker_path,
-            runtime_attr_override = runtime_attr_subset_ctx_vcf
     }
 
     call TinyResolve.TinyResolve as TinyResolve{
@@ -149,55 +142,6 @@ workflow ResolveCTX{
 }
 
 # TASK DEFINITIONS
-task CtxVcf2Bed {
-  input {
-    File vcf
-    String prefix
-    String docker_path
-    RuntimeAttr? runtime_attr_override
-  }
-
-  RuntimeAttr default_attr = object {
-    cpu_cores: 1,
-    mem_gb: 3.75,
-    disk_gb: 10,
-    boot_disk_gb: 10,
-    preemptible_tries: 0,
-    max_retries: 1
-  }
-
-  RuntimeAttr runtime_attr = select_first([runtime_attr_override, default_attr])
-
-  output{
-    File ctx_vcf_for_pe = "~{prefix}.ctx.refForPE.split.bed.gz"
-    File ctx_vcf_for_raw_ovl = "~{prefix}.ctx.refForOverlap.split.bed.gz"
-  }
-
-  command <<<
-    set -euo pipefail
-    bcftools view ~{vcf} | grep -E "^#|SVTYPE=CTX" | bgzip -c > ~{prefix}.ctx.vcf.gz
-    svtk vcf2bed -i ALL --include-filters ~{prefix}.ctx.vcf.gz - | bgzip -c > ~{prefix}.ctx.bed.gz
-
-    Rscript /src/variant-interpretation/scripts/subsetVCFforPE.R ~{prefix}.ctx.bed.gz ~{prefix}
-    bgzip ~{prefix}.ctx.refForPE.split.bed
-    bgzip ~{prefix}.ctx.refForOverlap.split.bed
-
-#    zcat ~{prefix}.ctx.bed.gz | awk 'BEGIN { OFS="\t" } {print $1, $2, $8, $12, $6, $36, $4}'| tail -n+2 | bgzip -c > ~{prefix}.ctx.refForPE.bed.gz
-#    zcat ~{prefix}.ctx.refForPE.bed | awk 'BEGIN { OFS="\t" } {split($5,a,",");for(i in a)if(!seen[a[i]]++)print $1, $2, $3, $4, a[i], $6, $7}' | bgzip -c > ~{prefix}.ctx.refForPE.split.bed.gz
-#    zcat ~{prefix}.ctx.refForPE.split.bed | awk 'BEGIN { OFS="\t" } {print $1"_"$5, $2-20, $2+20, substr($0, index($0,$3))}' | bgzip -c > ~{prefix}.ctx.refForOverlap.split.bed.gz
-
-  >>>
-
-  runtime {
-    cpu: select_first([runtime_attr.cpu_cores, default_attr.cpu_cores])
-    memory: select_first([runtime_attr.mem_gb, default_attr.mem_gb]) + " GiB"
-    disks: "local-disk " + select_first([runtime_attr.disk_gb, default_attr.disk_gb]) + " HDD"
-    bootDiskSizeGb: select_first([runtime_attr.boot_disk_gb, default_attr.boot_disk_gb])
-    docker: docker_path
-    preemptible: select_first([runtime_attr.preemptible_tries, default_attr.preemptible_tries])
-    maxRetries: select_first([runtime_attr.max_retries, default_attr.max_retries])
-  }
-}
 
 task reformatTinyResolve{
     input{
