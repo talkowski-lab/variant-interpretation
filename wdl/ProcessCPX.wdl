@@ -132,7 +132,7 @@ task clusterCPX{
         Array[File] input_beds
         String docker
         String prefix
-        RuntimeAttr? runtime_attr_override
+        RuntimeAttr? runtime_attr_override_cluster
     }
 
     RuntimeAttr default_attr = object {
@@ -144,7 +144,7 @@ task clusterCPX{
         max_retries: 1
     }
 
-    RuntimeAttr runtime_attr = select_first([runtime_attr_override, default_attr])
+    RuntimeAttr runtime_attr = select_first([runtime_attr_override_cluster, default_attr])
 
     output{
         File svtk_bedcluster = "~{prefix}_cpx.gz"
