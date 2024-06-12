@@ -7,7 +7,7 @@ import "Utils.wdl" as util
 # this is edited from "gatk-sv/wdl/TinyResolve.wdl"
 
 # Does prelim translocation resolve from raw manta calls
-workflow TinyResolve {
+workflow TinyResolveCPX {
   input {
     Array[String] samples         # Sample ID
     File manta_vcf_tar           # tarballed Manta VCFs
