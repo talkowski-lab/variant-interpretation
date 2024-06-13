@@ -1,5 +1,5 @@
 version 1.0
-## replaced original ResolveCTX.wdl with ProcessCPX.wdl
+
 # IMPORT
 ## modified from ResolveCTX.wdl
 
@@ -28,6 +28,8 @@ workflow ResolveCTX{
         RuntimeAttr? runtime_attr_resolve
         RuntimeAttr? runtime_attr_untar
         RuntimeAttr? runtime_attr_extract
+        RuntimeAttr? runtime_attr_cluster
+
     }
 
     call TinyResolveCPX.TinyResolveCPX as TinyResolveCPX{
@@ -62,7 +64,7 @@ workflow ResolveCTX{
             input_beds = extract_complex.cpx_formatted,
             docker = docker_path,
             prefix = prefix,
-            runtime_attr_override = runtime_attr_override_cluster
+            runtime_attr_override = runtime_attr_cluster
     }
 
     output{
