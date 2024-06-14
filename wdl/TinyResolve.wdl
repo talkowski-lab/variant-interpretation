@@ -13,7 +13,7 @@ workflow TinyResolveCPX {
     Array[String] samples         # Sample ID
     File manta_vcf_tar           # tarballed Manta VCFs
     File cytoband
-    File cytoband_idx
+    #File cytoband_idx
     Array[File] discfile
     File mei_bed
     Int samples_per_shard = 25
@@ -23,6 +23,7 @@ workflow TinyResolveCPX {
     RuntimeAttr? runtime_attr_untar
   }
 
+  File cytoband_idx = cytoband + ".tbi"
   Int num_samples = length(samples)
   Float num_samples_float = num_samples
   Int num_shards = ceil(num_samples_float / samples_per_shard)
@@ -90,7 +91,6 @@ task ResolveManta {
     Array[File] discfile ## pe_disc vcfs
 #    Array[File] discfile_idx
     File cytoband
-    File cytoband_idx
     File mei_bed
     String sv_pipeline_docker
     RuntimeAttr? runtime_attr_override
