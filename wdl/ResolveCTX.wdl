@@ -32,7 +32,7 @@ workflow ResolveCTX{
 
     }
 
-    call TinyResolve.TinyResolve as TinyResolveCPX{
+    call TinyResolve.TinyResolveCPX as TinyResolveCPX{
         input:
             samples = samples,
             manta_vcf_tar = manta_vcf_tar,
