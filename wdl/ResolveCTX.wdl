@@ -109,12 +109,24 @@ task extract_complex{
         zcat ~{input_vcf}.bed.gz | awk '{print $18}' | sort | uniq -c | \
         awk '{if ($1> 1) print}' | awk '{print $2}' | awk '$1 ~ /^UNRESOLVED/' > ~{input_vcf}_complex_events
 
+        # check if the file ~{input_vcf}_complex_events is created
+        if [ ! -s ~{input_vcf}_complex_events ]; then
+          echo "No complex events found in ~{input_vcf}" > error.log
+          exit 1
+        fi
+
         #extract calls for the interesting events
         zcat ~{input_vcf}.bed.gz | grep -f ~{input_vcf}_complex_events > ~{input_vcf}_complex_events.bed
 
+        # check if the file ~{input_vcf}_complex_events.bed is created
+        if [ ! -s ~{input_vcf}_complex_events.bed ]; then
+          echo "No extracted events found for complex events in ~{input_vcf}" > error.log
+          exit 1
+        fi
+
         cat ~{input_vcf}_complex_events.bed | awk -v OFS="\t"  '{print $1,$2,$3,$4,$6,$5}' > ~{input_vcf}_complex_events_formatted.bed
 
-        rm ~{input_vcf}_complex_events.bed
+        rm ~{input_vcf}_complex_events
         rm ~{input_vcf}.bed.gz
     >>>
 
