@@ -107,7 +107,7 @@ task extract_complex{
 
         #extract multiple events
         zcat ~{input_vcf}.bed.gz | awk '{print $18}' | sort | uniq -c | \
-        awk '{if ($1> 1) print}' | awk '{print $2}' | awk '$1 ~ /^UNRESOLVED/' > ~{input_vcf}_complex_events.bed
+        awk '{if ($1> 1) print}' | awk '{print $2}' | awk '$1 ~ /^UNRESOLVED/' > ~{input_vcf}_complex_events
 
         #extract calls for the interesting events
         zcat ~{input_vcf}.bed.gz | grep -f ~{input_vcf}_complex_events > ~{input_vcf}_complex_events.bed
