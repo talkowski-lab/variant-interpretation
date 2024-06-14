@@ -14,7 +14,7 @@ workflow ResolveCTX{
         Array[String] samples
         File manta_vcf_tar # batch std manta tarball
         File cytoband
-        File cytoband_idx
+        #File cytoband_idx
         Array[File] discfile # per sample pesr_disc
         File mei_bed
         Int samples_per_shard = 25
@@ -37,7 +37,7 @@ workflow ResolveCTX{
             samples = samples,
             manta_vcf_tar = manta_vcf_tar,
             cytoband = cytoband,
-            cytoband_idx = cytoband_idx,
+            #cytoband_idx = cytoband_idx,
             discfile = discfile,
             mei_bed = mei_bed,
             samples_per_shard = samples_per_shard,
