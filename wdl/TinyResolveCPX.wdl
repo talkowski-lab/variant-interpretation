@@ -1,5 +1,7 @@
+
 version 1.0
 
+## replaced original TinyResolve.wdl with TinyResolveCPX.wdl
 import "Structs.wdl"
 import "GetShardInputs.wdl"
 import "Utils.wdl" as util
