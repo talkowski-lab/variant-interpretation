@@ -114,29 +114,27 @@ task ResolveManta {
     vcfs=(~{sep=" " raw_vcfs})
     sample_ids=(~{sep=" " samples})
     discfiles=(~{sep=" " discfile})
-    for (( i=0; i<~{num_samples}; i++ ));
-    do
+    for (( i=0; i<~{num_samples}; i++ )); do
       vcf=${vcfs[$i]}
       tabix -p vcf $vcf
       sample_id=${sample_ids[$i]}
       pe=${discfiles[$i]}
       tabix -s1 -b2 -e2 $pe
-      sample_no=`printf %03d $i`
-       
-      ## bash /src/variant-interpretation/scripts/mantatloc_check.sh $vcf $pe ${sample_id} ~{mei_bed} ~{cytoband}
+      sample_no=$(printf %03d $i)
 
-      cat <(zcat $std_vcf|egrep ^##) \
-        < (echo "##FORMAT=<ID=manta,Number=1,Type=Integer,Description=\"manta genotype\">") \
-        < (echo "##INFO=<ID=MEMBERS,Number=.,Type=String,Description=\"IDs of cluster's constituent records.\">") \
-        < (echo "##INFO=<ID=EVIDENCE,Number=.,Type=String,Description=\"Classes of random forest support.\">") \
-        < (zcat $vcf | egrep -v ^## | awk '{if ($1!~"#")$8=$8";EVIDENCE=PE;MEMBERS="$3; print}' OFS='\t') \
-        | bgzip -c > manta.vcf.gz 
+      # Header manipulation
+      zcat $vcf | egrep ^## > manta_header.txt
+      echo "##FORMAT=<ID=manta,Number=1,Type=Integer,Description=\"manta genotype\">" >> manta_header.txt
+      echo "##INFO=<ID=MEMBERS,Number=.,Type=String,Description=\"IDs of cluster's constituent records.\">" >> manta_header.txt
+      echo "##INFO=<ID=EVIDENCE,Number=.,Type=String,Description=\"Classes of random forest support.\">" >> manta_header.txt
+      zcat $vcf | egrep -v ^## | awk '{if ($1!~"#")$8=$8";EVIDENCE=PE;MEMBERS="$3; print}' OFS='\t' >> manta_body.txt
+      cat manta_header.txt manta_body.txt | bgzip -c > manta.vcf.gz
 
       svtk resolve manta.vcf.gz \
       ${sample_id}.manta.complex.vcf \
-      --mei-bed $meibed \
-      --cytobands $cytobands \
-      --discfile $discfile \
+      --mei-bed ~{mei_bed} \
+      --cytobands ~{cytoband} \
+      --discfile $pe \
       -u ${sample_id}.manta.unresolved.vcf
 
       bgzip ${sample_id}.manta.complex.vcf
@@ -144,6 +142,9 @@ task ResolveManta {
 
       mv ${sample_id}.manta.complex.vcf.gz cpx_${sample_no}.${sample_id}.manta.complex.vcf.gz
       tabix -p vcf cpx_${sample_no}.${sample_id}.manta.complex.vcf.gz
+
+      # Clean up
+      rm manta_header.txt manta_body.txt manta.vcf.gz
     done
   >>>
 
