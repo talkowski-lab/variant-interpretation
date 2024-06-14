@@ -4,7 +4,7 @@ version 1.0
 ## modified from ResolveCTX.wdl
 
 import "Structs.wdl"
-import "TinyResolveCPX.wdl"
+import "TinyResolve.wdl"
 
 # WORKFLOW DEFINITION
 workflow ResolveCTX{
@@ -32,7 +32,7 @@ workflow ResolveCTX{
 
     }
 
-    call TinyResolveCPX.TinyResolveCPX as TinyResolveCPX{
+    call TinyResolve.TinyResolve as TinyResolveCPX{
         input:
             samples = samples,
             manta_vcf_tar = manta_vcf_tar,
