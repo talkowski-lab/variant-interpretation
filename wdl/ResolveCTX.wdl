@@ -107,7 +107,7 @@ task extract_complex{
         bgzip -c ~{input_vcf}.bed > ~{input_vcf}.bed.gz
 
         #extract multiple events
-        zcat ~{input_vcf}.bed.gz | awk '{print $18}' | sort | uniq -c | \
+        zcat ~{input_vcf}.bed.gz | awk '{print $19}' | sort | uniq -c | \
         awk '{if ($1> 1) print}' | awk '{print $2}' | awk '$1 ~ /^UNRESOLVED/' > ~{input_vcf}_complex_events
 
         # check if the file ~{input_vcf}_complex_events is created
