@@ -105,11 +105,21 @@ task extract_complex{
         echo "Starting extraction for ~{input_vcf}" >> script.log
         ls -l ~{input_vcf} >> script.log || true
 
+        # Simple test logging
+        echo "Input VCF details" >> script.log
+        zcat ~{input_vcf} | head -n 10 >> script.log || true
+        echo "Input VCF content displayed" >> script.log
+
         # Convert to bed file
-        svtk vcf2bed -i ALL --include-filters ~{input_vcf} ~{input_vcf}.bed
+        svtk vcf2bed -i ALL --include-filters ~{input_vcf} > ~{input_vcf}.bed
         bgzip -c ~{input_vcf}.bed > ~{input_vcf}.bed.gz
         echo "Converted VCF to BED: ~{input_vcf}.bed.gz" >> script.log
         ls -l ~{input_vcf}.bed.gz >> script.log || true
+
+        # Simple test logging after conversion
+        echo "Converted BED content" >> script.log
+        zcat ~{input_vcf}.bed.gz | head -n 10 >> script.log || true
+        echo "Converted BED content displayed" >> script.log
 
         # Extract multiple events
         zcat ~{input_vcf}.bed.gz | awk '{print $19}' | sort | uniq -c | \
@@ -146,9 +156,9 @@ task extract_complex{
         fi
 
         # Clean up
-        #rm ~{input_vcf}_complex_events
-        #rm ~{input_vcf}.bed.gz
-        #rm ~{input_vcf}.bed
+        rm ~{input_vcf}_complex_events
+        rm ~{input_vcf}.bed.gz
+        rm ~{input_vcf}.bed
 
         echo "Extraction completed successfully for ~{input_vcf}" >> script.log
     >>>
