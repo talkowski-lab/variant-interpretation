@@ -56,7 +56,6 @@ workflow ResolveCTX {
                 runtime_attr_override = runtime_attr_extract
         }
     }
-    Array[File] all_cpx_formatted = flatten(extract_complex.cpx_formatted)
 
     call clusterCPX {
         input:
@@ -68,6 +67,7 @@ workflow ResolveCTX {
 
     output {
         File cluster_bed = clusterCPX.svtk_bedcluster
+        Array[File] all_cpx_formatted = flatten(extract_complex.cpx_formatted)
     }
 }
 
