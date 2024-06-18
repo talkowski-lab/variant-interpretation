@@ -152,7 +152,7 @@ task clusterCPX {
         set -euo pipefail
 
         ## combine all input beds into one for per batch allele count
-        cat ~{input_beds} >> unified.bed
+        cat ~{sep=" " input_beds} >> unified.bed
         svtk bedcluster unified.bed complex_unified_cluster.bed -f 0.5
         bgzip -c complex_unified_cluster.bed > complex_unified_cluster.bed.gz
     >>>
