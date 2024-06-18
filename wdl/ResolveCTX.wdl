@@ -55,6 +55,14 @@ workflow ResolveCTX {
                 docker = docker_path,
                 runtime_attr_override = runtime_attr_extract
         }
+    output {
+        Array[File] cpx_formatted_files = extract_complex.cpx_formatted
+        Array[File] bed_files = extract_complex.bed_file
+        Array[File] bed_gz_files = extract_complex.bed_gz_file
+        Array[File] complex_events_files = extract_complex.complex_events
+        Array[File] complex_events_bed_files = extract_complex.complex_events_bed
+        Array[File] script_logs = extract_complex.script_log
+    }
     }
 
     call clusterCPX {
