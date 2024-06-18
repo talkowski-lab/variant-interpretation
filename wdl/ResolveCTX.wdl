@@ -57,9 +57,12 @@ workflow ResolveCTX {
         }
     }
 
+    # Declare an intermediate array to collect all scatter outputs
+    Array[File] all_cpx_formatted = flatten(extract_complex.cpx_formatted)
+
     call clusterCPX {
         input:
-            input_beds = extract_complex.cpx_formatted,  # Correct reference to the output of extract_complex
+            input_beds = all_cpx_formatted,  # Correct reference to the output of extract_complex
             docker = docker_path,
             prefix = prefix,
             runtime_attr_override = runtime_attr_cluster
