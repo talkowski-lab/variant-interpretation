@@ -66,8 +66,13 @@ workflow ResolveCTX {
     }
 
     output {
+        Array[File] cpx_formatted = extract_complex.cpx_formatted
+        Array[File] bed_files = extract_complex.bed_file
+        Array[File] bed_gz_files = extract_complex.bed_gz_file
+        Array[File] complex_events = extract_complex.complex_events
+        Array[File] complex_events_bed = extract_complex.complex_events_bed
+        Array[File] script_logs = extract_complex.script_log
         File cluster_bed = clusterCPX.svtk_bedcluster
-        Array[File] all_cpx_formatted = flatten(extract_complex.cpx_formatted)
     }
 }
 
