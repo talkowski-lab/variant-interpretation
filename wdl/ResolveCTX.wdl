@@ -102,33 +102,55 @@ task extract_complex{
     command <<<
         set -euo pipefail
 
-        # convert to bed file
-        svtk vcf2bed -i ALL --include-filters ~{input_vcf} ~{input_vcf}.bed
+        echo "Starting extraction for ~{input_vcf}" >> script.log
+        ls -l ~{input_vcf} >> script.log || true
+
+        # Convert to bed file
+        svtk vcf2bed -i ALL --include-filters ~{input_vcf} > ~{input_vcf}.bed
         bgzip -c ~{input_vcf}.bed > ~{input_vcf}.bed.gz
+        echo "Converted VCF to BED: ~{input_vcf}.bed.gz" >> script.log
+        ls -l ~{input_vcf}.bed.gz >> script.log || true
 
-        #extract multiple events
+        # Extract multiple events
         zcat ~{input_vcf}.bed.gz | awk '{print $19}' | sort | uniq -c | \
-        awk '{if ($1> 1) print}' | awk '{print $2}' | awk '$1 ~ /^UNRESOLVED/' > ~{input_vcf}_complex_events
+        awk '{if ($1 > 1) print}' | awk '{print $2}' | awk '$1 ~ /^UNRESOLVED/' > ~{input_vcf}_complex_events
+        echo "Extracted multiple events: ~{input_vcf}_complex_events" >> script.log
+        ls -l ~{input_vcf}_complex_events >> script.log || true
 
-        # check if the file ~{input_vcf}_complex_events is created
-        #if [ ! -s ~{input_vcf}_complex_events ]; then
-        #  echo "No complex events found in ~{input_vcf}" > error.log
-        #  exit 1
-        #fi
+        # Check if the file ~{input_vcf}_complex_events is created
+        if [ ! -s ~{input_vcf}_complex_events ]; then
+          echo "No complex events found in ~{input_vcf}" >> script.log
+          exit 1
+        fi
 
-        #extract calls for the interesting events
+        # Extract calls for the interesting events
         zcat ~{input_vcf}.bed.gz | grep -f ~{input_vcf}_complex_events > ~{input_vcf}_complex_events.bed
+        echo "Extracted calls for the interesting events: ~{input_vcf}_complex_events.bed" >> script.log
+        ls -l ~{input_vcf}_complex_events.bed >> script.log || true
 
-        # check if the file ~{input_vcf}_complex_events.bed is created
-        #if [ ! -s ~{input_vcf}_complex_events.bed ]; then
-        #  echo "No extracted events found for complex events in ~{input_vcf}" > error.log
-        #  exit 1
-        #fi
+        # Check if the file ~{input_vcf}_complex_events.bed is created
+        if [ ! -s ~{input_vcf}_complex_events.bed ]; then
+          echo "No extracted events found for complex events in ~{input_vcf}" >> script.log
+          exit 1
+        fi
 
-        cat ~{input_vcf}_complex_events.bed | awk -v OFS="\t"  '{print $1,$2,$3,$4,$6,$5}' > ~{input_vcf}_complex_events_formatted.bed
+        # Format the extracted events
+        cat ~{input_vcf}_complex_events.bed | awk -v OFS="\t" '{print $1,$2,$3,$4,$6,$5}' > ~{input_vcf}_complex_events_formatted.bed
+        echo "Formatted the extracted events: ~{input_vcf}_complex_events_formatted.bed" >> script.log
+        ls -l ~{input_vcf}_complex_events_formatted.bed >> script.log || true
 
-        rm ~{input_vcf}_complex_events
-        rm ~{input_vcf}.bed.gz
+        # Check if the output file is created
+        if [ ! -s ~{input_vcf}_complex_events_formatted.bed ]; then
+          echo "Failed to create the formatted events file: ~{input_vcf}_complex_events_formatted.bed" >> script.log
+          exit 1
+        fi
+
+        # Clean up
+        #rm ~{input_vcf}_complex_events
+        #rm ~{input_vcf}.bed.gz
+        #rm ~{input_vcf}.bed
+
+        echo "Extraction completed successfully for ~{input_vcf}" >> script.log
     >>>
 
     runtime {
