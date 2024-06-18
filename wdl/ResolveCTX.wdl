@@ -96,69 +96,66 @@ task extract_complex{
 
     RuntimeAttr runtime_attr = select_first([runtime_attr_override, default_attr])
 
-    output{
+    output {
         File cpx_formatted = "~{input_vcf}_complex_events_formatted.bed"
+        File bed_file = "~{input_vcf}.bed"
+        File bed_gz_file = "~{input_vcf}.bed.gz"
+        File complex_events = "~{input_vcf}_complex_events"
+        File complex_events_bed = "~{input_vcf}_complex_events.bed"
+        File script_log = "script.log"
     }
+
     command <<<
         set -euo pipefail
 
         echo "Starting extraction for ~{input_vcf}" >> script.log
         ls -l ~{input_vcf} >> script.log || true
 
-        # Simple test logging
-        echo "Input VCF details" >> script.log
-        zcat ~{input_vcf} | head -n 10 >> script.log || true
-        echo "Input VCF content displayed" >> script.log
-
         # Convert to bed file
-        svtk vcf2bed -i ALL --include-filters ~{input_vcf} ~{input_vcf}.bed
+        svtk vcf2bed -i ALL --include-filters ~{input_vcf} > ~{input_vcf}.bed 2>> script.log
         bgzip -c ~{input_vcf}.bed > ~{input_vcf}.bed.gz
         echo "Converted VCF to BED: ~{input_vcf}.bed.gz" >> script.log
-        ls -l ~{input_vcf}.bed.gz >> script.log || true
+        ls -l ~{input_vcf}.bed.gz >> script_log || true
 
-        # Simple test logging after conversion
-        echo "Converted BED content" >> script.log
-        zcat ~{input_vcf}.bed.gz | head -n 10 >> script.log || true
-        echo "Converted BED content displayed" >> script.log
+        # Check if the bed file is created
+        if [ ! -s ~{input_vcf}.bed.gz ]; then
+            echo "Failed to create the bed file: ~{input_vcf}.bed.gz" >> script.log
+            exit 1
+        fi
 
         # Extract multiple events
         zcat ~{input_vcf}.bed.gz | awk '{print $19}' | sort | uniq -c | \
-        awk '{if ($1 > 1) print}' | awk '{print $2}' | awk '$1 ~ /^UNRESOLVED/' > ~{input_vcf}_complex_events
+        awk '{if ($1 > 1) print}' | awk '{print $2}' | awk '$1 ~ /^UNRESOLVED/' > ~{input_vcf}_complex_events 2>> script.log
         echo "Extracted multiple events: ~{input_vcf}_complex_events" >> script.log
         ls -l ~{input_vcf}_complex_events >> script.log || true
 
         # Check if the file ~{input_vcf}_complex_events is created
         if [ ! -s ~{input_vcf}_complex_events ]; then
-          echo "No complex events found in ~{input_vcf}" >> script.log
-          exit 1
+            echo "No complex events found in ~{input_vcf}" >> script.log
+            exit 1
         fi
 
         # Extract calls for the interesting events
-        zcat ~{input_vcf}.bed.gz | grep -f ~{input_vcf}_complex_events > ~{input_vcf}_complex_events.bed
+        zcat ~{input_vcf}.bed.gz | grep -f ~{input_vcf}_complex_events > ~{input_vcf}_complex_events.bed 2>> script.log
         echo "Extracted calls for the interesting events: ~{input_vcf}_complex_events.bed" >> script.log
         ls -l ~{input_vcf}_complex_events.bed >> script.log || true
 
         # Check if the file ~{input_vcf}_complex_events.bed is created
         if [ ! -s ~{input_vcf}_complex_events.bed ]; then
-          echo "No extracted events found for complex events in ~{input_vcf}" >> script.log
-          exit 1
+            echo "No extracted events found for complex events in ~{input_vcf}" >> script.log
+            exit 1
         fi
 
         # Format the extracted events
-        cat ~{input_vcf}_complex_events.bed | awk -v OFS="\t" '{print $1,$2,$3,$4,$6,$5}' > ~{input_vcf}_complex_events_formatted.bed
+        cat ~{input_vcf}_complex_events.bed | awk -v OFS="\t" '{print $1,$2,$3,$4,$6,$5}' > ~{input_vcf}_complex_events_formatted.bed 2>> script.log
         echo "Formatted the extracted events: ~{input_vcf}_complex_events_formatted.bed" >> script.log
         ls -l ~{input_vcf}_complex_events_formatted.bed >> script.log || true
 
         # Check if the output file is created
         if [ ! -s ~{input_vcf}_complex_events_formatted.bed ]; then
-          echo "Failed to create the formatted events file: ~{input_vcf}_complex_events_formatted.bed" >> script.log
-          exit 1
+            echo "Failed to create the formatted events file: ~{input_vcf}_complex_events_formatted.bed" >> script.log
+            exit 1
         fi
-
-        # Clean up
-        #rm ~{input_vcf}_complex_events
-        #rm ~{input_vcf}.bed.gz
-        #rm ~{input_vcf}.bed
 
         echo "Extraction completed successfully for ~{input_vcf}" >> script.log
     >>>
