@@ -7,14 +7,14 @@ import "Structs.wdl"
 import "TinyResolve.wdl"
 
 # WORKFLOW DEFINITION
-workflow ResolveCTX{
-    input{
+workflow ResolveCTX {
+    input {
         String prefix # batchid
         String docker_path
         Array[String] samples
         File manta_vcf_tar # batch std manta tarball
         File cytoband
-        #File cytoband_idx
+        # File cytoband_idx
         Array[File] discfile # per sample pesr_disc
         File mei_bed
         Int samples_per_shard = 25
@@ -29,15 +29,14 @@ workflow ResolveCTX{
         RuntimeAttr? runtime_attr_untar
         RuntimeAttr? runtime_attr_extract
         RuntimeAttr? runtime_attr_cluster
-
     }
 
-    call TinyResolve.TinyResolveCPX as TinyResolveCPX{
+    call TinyResolve.TinyResolveCPX as TinyResolveCPX {
         input:
             samples = samples,
             manta_vcf_tar = manta_vcf_tar,
             cytoband = cytoband,
-            #cytoband_idx = cytoband_idx,
+            # cytoband_idx = cytoband_idx,
             discfile = discfile,
             mei_bed = mei_bed,
             samples_per_shard = samples_per_shard,
@@ -47,38 +46,35 @@ workflow ResolveCTX{
             runtime_attr_untar = runtime_attr_untar
     }
 
-    scatter (file in TinyResolveCPX.cpx_manta_unresolved_vcf){
+    scatter (file in TinyResolveCPX.cpx_manta_unresolved_vcf) {
         String file_idx = basename(file, ".tbi")
 
-        call extract_complex{
+        call extract_complex {
             input:
-                input_vcf=file,
-#                input_vcf_idx=file_idx,
+                input_vcf = file,
                 docker = docker_path,
                 runtime_attr_override = runtime_attr_extract
         }
     }
 
-    call clusterCPX{
+    call clusterCPX {
         input:
-            input_beds = extract_complex.cpx_formatted,
+            input_beds = extract_complex.cpx_formatted,  # Correct reference to the output of extract_complex
             docker = docker_path,
             prefix = prefix,
             runtime_attr_override = runtime_attr_cluster
     }
 
-    output{
+    output {
         File cluster_bed = clusterCPX.svtk_bedcluster
-
     }
 }
 
 # TASK DEFINITIONS
 
-task extract_complex{
-    input{
+task extract_complex {
+    input {
         File input_vcf
-#        File input_vcf_idx
         String docker
         RuntimeAttr? runtime_attr_override
     }
@@ -115,7 +111,7 @@ task extract_complex{
         svtk vcf2bed -i ALL --include-filters ~{input_vcf} ~{input_vcf}.bed 2>> script.log
         bgzip -c ~{input_vcf}.bed > ~{input_vcf}.bed.gz
         echo "Converted VCF to BED: ~{input_vcf}.bed.gz" >> script.log
-        ls -l ~{input_vcf}.bed.gz >> script_log || true
+        ls -l ~{input_vcf}.bed.gz >> script.log || true
 
         # Check if the bed file is created
         if [ ! -s ~{input_vcf}.bed.gz ]; then
@@ -171,8 +167,8 @@ task extract_complex{
     }
 }
 
-task clusterCPX{
-    input{
+task clusterCPX {
+    input {
         Array[File] input_beds
         String docker
         String prefix
@@ -190,9 +186,10 @@ task clusterCPX{
 
     RuntimeAttr runtime_attr = select_first([runtime_attr_override, default_attr])
 
-    output{
+    output {
         File svtk_bedcluster = "~{prefix}_cpx.gz"
     }
+
     command <<<
         set -euo pipefail
 
