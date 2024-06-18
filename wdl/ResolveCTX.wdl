@@ -111,7 +111,7 @@ task extract_complex{
         echo "Input VCF content displayed" >> script.log
 
         # Convert to bed file
-        svtk vcf2bed -i ALL --include-filters ~{input_vcf} > ~{input_vcf}.bed
+        svtk vcf2bed -i ALL --include-filters ~{input_vcf} ~{input_vcf}.bed
         bgzip -c ~{input_vcf}.bed > ~{input_vcf}.bed.gz
         echo "Converted VCF to BED: ~{input_vcf}.bed.gz" >> script.log
         ls -l ~{input_vcf}.bed.gz >> script.log || true
