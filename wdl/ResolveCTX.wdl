@@ -156,9 +156,9 @@ task extract_complex{
         fi
 
         # Clean up
-        rm ~{input_vcf}_complex_events
-        rm ~{input_vcf}.bed.gz
-        rm ~{input_vcf}.bed
+        #rm ~{input_vcf}_complex_events
+        #rm ~{input_vcf}.bed.gz
+        #rm ~{input_vcf}.bed
 
         echo "Extraction completed successfully for ~{input_vcf}" >> script.log
     >>>
