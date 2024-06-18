@@ -57,13 +57,7 @@ workflow ResolveCTX {
         }
     }
 
-    # Collect all outputs from scatter
-    Array[File] all_cpx_formatted = flatten(scatter(file in TinyResolveCPX.cpx_manta_unresolved_vcf) {
-        call extract_complex
-        output {
-            Array[File] cpx_formatted = extract_complex.cpx_formatted
-        }
-    })
+    Array[File] all_cpx_formatted = extract_complex.cpx_formatted
 
     call clusterCPX {
         input:
