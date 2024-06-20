@@ -65,6 +65,7 @@ workflow ResolveCTX {
 
     output {
         File cluster_bed = clusterCPX.svtk_bedcluster
+        Array[File] all_cpx_formatted = extract_complex.cpx_formatted
     }
 }
 
