@@ -1,6 +1,8 @@
 version 1.0
 
 # IMPORT
+## modified from ResolveCTX.wdl
+
 import "Structs.wdl"
 import "TinyResolve.wdl"
 
@@ -45,6 +47,8 @@ workflow ResolveCTX {
     }
 
     scatter (file in TinyResolveCPX.cpx_manta_unresolved_vcf) {
+        String file_idx = basename(file, ".tbi")
+
         call extract_complex {
             input:
                 input_vcf = file,
@@ -98,8 +102,6 @@ task extract_complex {
     command <<<
         set -euo pipefail
 
-        echo "Starting extract_complex task with input VCF: ~{input_vcf}" >> script.log
-
         # Convert to bed file
         svtk vcf2bed -i ALL --include-filters ~{input_vcf} ~{input_vcf}.bed
         bgzip -c ~{input_vcf}.bed > ~{input_vcf}.bed.gz
@@ -113,9 +115,6 @@ task extract_complex {
 
         # Format the extracted events
         cat ~{input_vcf}_complex_events.bed | awk -v OFS="\t" '{print $1,$2,$3,$4,$6,$5}' > ~{input_vcf}_complex_events_formatted.bed
-
-        echo "Completed extract_complex task for input VCF: ~{input_vcf}" >> script.log
-        echo "Created file: ~{input_vcf}_complex_events_formatted.bed" >> script.log
     >>>
 
     runtime {
@@ -155,14 +154,10 @@ task clusterCPX {
     command <<<
         set -euo pipefail
 
-        echo "Starting clusterCPX task with input beds: ~{sep=', ' input_beds}" >> script.log
-
         ## combine all input beds into one for per batch allele count
         cat ~{sep=" " input_beds} > unified.bed
         svtk bedcluster unified.bed complex_unified_cluster.bed -f 0.5
         bgzip -c complex_unified_cluster.bed > complex_unified_cluster.bed.gz
-
-        echo "Completed clusterCPX task for prefix: ~{prefix}" >> script.log
     >>>
 
     runtime {
