@@ -14,6 +14,7 @@ workflow RdTest{
         File ped_file
         Int rd_window
         String sv_pipeline_rdtest_docker
+        File regeno_file
         RuntimeAttr? runtime_attr_rdtest
         RuntimeAttr? runtime_attr_merge
     }
@@ -32,6 +33,7 @@ workflow RdTest{
                 prefix = prefix,
                 ped_file = ped_file,
                 rd_window = rd_window,
+                regeno_file = regeno_file,
                 sv_pipeline_rdtest_docker = sv_pipeline_rdtest_docker,
                 runtime_attr_override = runtime_attr_rdtest
         }
@@ -59,6 +61,7 @@ task rdtest {
         File medianfile
         File ped_file
         File outlier_samples
+        File regeno_file
         String variant
         Int rd_window
         String prefix
@@ -125,7 +128,10 @@ task rdtest {
             -s ~{rd_window} \
             -f ~{ped_file} \
             -p TRUE \
-            -o ~{variant}
+            -o ~{variant} \
+            -v TRUE \
+            -g TRUE \
+            -r ~{regeno_file}
 
         tar -czvf ~{variant}.tar.gz ~{variant}
     >>>
