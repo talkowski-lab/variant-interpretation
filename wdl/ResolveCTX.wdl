@@ -61,7 +61,7 @@ workflow ResolveCTX {
 
     call clusterCPX {
         input:
-            input_beds = all_cpx_formatted,
+            input_beds = extract_complex.cpx_formatted,
             docker = docker_path,
             prefix = prefix,
             runtime_attr_override = runtime_attr_cluster
