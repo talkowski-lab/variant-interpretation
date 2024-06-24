@@ -12,6 +12,7 @@ reannotate_ac_af = ast.literal_eval(sys.argv[5].capitalize())
 build = sys.argv[6]
 mpc_ht_uri = sys.argv[7]
 clinvar_vcf_uri = sys.argv[8]
+omim_uri = sys.argv[9]
 
 hl.init(min_block_size=128, spark_conf={"spark.executor.cores": cores, 
                     "spark.executor.memory": f"{mem}g",
@@ -86,14 +87,58 @@ for field in all_as_fields:
 mpc = hl.read_table(mpc_ht_uri).key_by('locus','alleles')
 mt = mt.annotate_rows(info = mt.info.annotate(MPC=mpc[mt.locus, mt.alleles].mpc))
         
-# annotate 2*+ ClinVar
+# annotate ClinVar
 if build=='GRCh38':
     clinvar_vcf = hl.import_vcf(clinvar_vcf_uri,
-                            reference_genome='GRCh38', contig_recoding={'chrMT': 'chrM'})
-    mt = mt.annotate_rows(info = mt.info.annotate(CLNSIG=clinvar_vcf.rows()[mt.row_key].info.CLNSIG))
-        
-mt = hl.vep(mt, config='vep_config.json', csq=True, tolerate_parse_error=True)
-header['info']['CSQ'] = {'Description': hl.eval(mt.vep_csq_header), 'Number': '.', 'Type': 'String'}
+                            reference_genome='GRCh38', contig_recoding={'chrMT': 'chrM'},
+                            force_bgz=clinvar_vcf_uri.split('.')[-1] in ['gz', 'bgz'])
+    mt = mt.annotate_rows(info = mt.info.annotate(CLNSIG=clinvar_vcf.rows()[mt.row_key].info.CLNSIG,
+                                                  CLNREVSTAT=clinvar_vcf.rows()[mt.row_key].info.CLNREVSTAT))
 
+# annotate SpliceAI scores
+
+# run VEP
+mt = hl.vep(mt, config='vep_config.json', csq=True, tolerate_parse_error=True)
 mt = mt.annotate_rows(info = mt.info.annotate(CSQ=mt.vep))
+
+# annotate OMIM
+csq_columns = hl.eval(mt.vep_csq_header).split('|')
+mt = mt.annotate_rows(vep=mt.info)
+transcript_consequences = mt.vep.CSQ.map(lambda x: x.split('\|'))
+
+transcript_consequences_strs = transcript_consequences.map(lambda x: hl.if_else(hl.len(x)>1, hl.struct(**
+                                                       {col: x[i] if col!='Consequence' else x[i].split('&')  
+                                                        for i, col in enumerate(csq_columns)}), 
+                                                        hl.struct(**{col: hl.missing('str') if col!='Consequence' else hl.array([hl.missing('str')])  
+                                                        for i, col in enumerate(csq_columns)})))
+
+mt = mt.annotate_rows(vep=mt.vep.annotate(transcript_consequences=transcript_consequences_strs))
+mt = mt.annotate_rows(vep=mt.vep.select('transcript_consequences'))
+
+omim = hl.import_table(omim_uri).key_by('approvedGeneSymbol')
+
+mt_by_gene = mt.explode_rows(mt.vep.transcript_consequences)
+mt_by_gene = mt_by_gene.key_rows_by(mt_by_gene.vep.transcript_consequences.SYMBOL)
+mt_by_gene = mt_by_gene.filter_rows(mt_by_gene.vep.transcript_consequences.SYMBOL=='', keep=False)
+mt_by_gene = mt_by_gene.annotate_rows(vep=mt_by_gene.vep.annotate(
+    transcript_consequences=mt_by_gene.vep.transcript_consequences.annotate(
+        OMIM_MIM_number=hl.if_else(hl.is_defined(omim[mt_by_gene.row_key]), omim[mt_by_gene.row_key].mimNumber, ''),
+        OMIM_inheritance_code=hl.if_else(hl.is_defined(omim[mt_by_gene.row_key]), omim[mt_by_gene.row_key].inheritance_code, ''))))
+
+mt_by_gene = (mt_by_gene.group_rows_by(mt_by_gene.locus, mt_by_gene.alleles)
+    .aggregate_rows(vep = hl.agg.collect(mt_by_gene.vep))).result()
+
+csq_fields_str = '|'.join(csq_columns + ['OMIM_MIM_number', 'OMIM_inheritance_code'])
+fields = list(mt_by_gene.vep.transcript_consequences[0])
+new_csq = mt_by_gene.vep.transcript_consequences.scan(lambda i, j: 
+                                      hl.str('|').join(hl.array([i]))
+                                      +','+hl.str('|').join(hl.array([j[col] if col!='Consequence' else 
+                                                                  hl.str('&').join(j[col]) 
+                                                                  for col in list(fields)])), '')[-1][1:]
+mt_by_gene = mt_by_gene.annotate_rows(CSQ=new_csq)
+mt = mt.annotate_rows(info=mt.info.annotate(CSQ=mt_by_gene.rows()[mt.row_key].CSQ))
+mt = mt.drop('vep')
+
+header['info']['CSQ'] = {'Description': csq_fields_str, 'Number': '.', 'Type': 'String'}
+
 hl.export_vcf(dataset=mt, output=vep_annotated_vcf_name, metadata=header)

@@ -30,6 +30,7 @@ workflow vepAnnotateHail {
         File alpha_missense_file
         File revel_file
         File clinvar_vcf_uri
+        File omim_uri
         String mpc_ht_uri
         String cohort_prefix
         String hail_docker
@@ -82,6 +83,7 @@ workflow vepAnnotateHail {
                     alpha_missense_file=alpha_missense_file,
                     revel_file=revel_file,
                     clinvar_vcf_uri=clinvar_vcf_uri,
+                    omim_uri=omim_uri,
                     mpc_ht_uri=mpc_ht_uri,
                     vep_hail_docker=vep_hail_docker,
                     reannotate_ac_af=reannotate_ac_af,
@@ -121,6 +123,7 @@ workflow vepAnnotateHail {
                     alpha_missense_file=alpha_missense_file,
                     revel_file=revel_file,
                     clinvar_vcf_uri=clinvar_vcf_uri,
+                    omim_uri=omim_uri,
                     mpc_ht_uri=mpc_ht_uri,
                     vep_hail_docker=vep_hail_docker,
                     reannotate_ac_af=reannotate_ac_af,
@@ -142,19 +145,22 @@ workflow vepAnnotateHail {
 task vepAnnotate {
     input {
         File vcf_file
-        String vep_annotate_hail_python_script
         File top_level_fa
         File human_ancestor_fa
         File human_ancestor_fa_fai
         File gerp_conservation_scores
         File ref_vep_cache
+
         File loeuf_data
         File alpha_missense_file
         File revel_file
         File clinvar_vcf_uri
+        File omim_uri
+
         String mpc_ht_uri
         String vep_hail_docker
         String genome_build
+        String vep_annotate_hail_python_script
         Boolean reannotate_ac_af
         RuntimeAttr? runtime_attr_override
     }
@@ -226,7 +232,7 @@ task vepAnnotate {
 
         curl ~{vep_annotate_hail_python_script} > vep_annotate.py
         python3.9 vep_annotate.py ~{vcf_file} ~{vep_annotated_vcf_name} ~{cpu_cores} ~{memory} ~{reannotate_ac_af} ~{genome_build} \
-        ~{mpc_ht_uri} ~{clinvar_vcf_uri}
+        ~{mpc_ht_uri} ~{clinvar_vcf_uri} ~{omim_uri}
         cp $(ls . | grep hail*.log) hail_log.txt
         /opt/vep/bcftools/bcftools index -t ~{vep_annotated_vcf_name}
     >>>
