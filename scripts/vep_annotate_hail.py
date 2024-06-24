@@ -90,7 +90,7 @@ mt = mt.annotate_rows(info = mt.info.annotate(MPC=mpc[mt.locus, mt.alleles].mpc)
 # annotate ClinVar
 if build=='GRCh38':
     clinvar_vcf = hl.import_vcf(clinvar_vcf_uri,
-                            reference_genome='GRCh38', contig_recoding={'chrMT': 'chrM'},
+                            reference_genome='GRCh38', contig_recoding={'MT': 'chrM', 'chrMT': 'chrM'},
                             force_bgz=clinvar_vcf_uri.split('.')[-1] in ['gz', 'bgz'])
     mt = mt.annotate_rows(info = mt.info.annotate(CLNSIG=clinvar_vcf.rows()[mt.row_key].info.CLNSIG,
                                                   CLNREVSTAT=clinvar_vcf.rows()[mt.row_key].info.CLNREVSTAT))
