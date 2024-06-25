@@ -230,7 +230,7 @@ task rdtest {
     output {
         File plots = "rd_plots.tar.gz"
         File allcovfile = "allcovfile.bed.gz"
-        File median_file = "medianfile.txt"
+#        File median_file = "medianfile.txt"
         File test_bed = "test.bed"
         File samples_text = "samples_noOutliers.txt"
     }
