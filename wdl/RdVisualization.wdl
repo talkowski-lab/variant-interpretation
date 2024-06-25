@@ -116,13 +116,13 @@ task generatePerFamilyBed {
         cat per_family_bed.bed | cut -f1-4 > start.bed
         cat per_family_bed.bed | cut -f5 > svtype.bed
         paste start.bed sample.bed svtype.bed > final.bed
-        grep -w -f samples_in_family.txt ~{sample_batches} |awk '{print $2}' |sort -u >existing_batches.txt
-        grep -w -f existing_batches.txt ~{batch_medianfile} | cut -f2 > medianfile.txt
+  #      grep -w -f samples_in_family.txt ~{sample_batches} |awk '{print $2}' |sort -u >existing_batches.txt
+  #      grep -w -f existing_batches.txt ~{batch_medianfile} | cut -f2 > medianfile.txt
     >>>
     
     output {
         File bed_file = "final.bed"
-        Array[File] medianfile = read_lines("medianfile.txt")
+  #      Array[File] medianfile = read_lines("medianfile.txt")
     }
     
     runtime {
@@ -145,7 +145,8 @@ task rdtest {
         File sample_batches # samples, batches
         File batch_bincov # batch, bincov, index
         File outlier_samples
-        Array[File] medianfile
+#        Array[File] medianfile
+        File batch_medianfile
         String prefix
         String sv_pipeline_rdtest_docker
         Int max_size
@@ -175,7 +176,7 @@ task rdtest {
         cat ~{ped_file} | grep -w -f families.txt | cut -f2 | sort -u > all_samples.txt
         fgrep -wf all_samples.txt ~{sample_batches} |awk '{print $2}' |sort -u >existing_batches.txt
         grep -w -f existing_batches.txt ~{batch_bincov} > bincovlist.txt
-        paste ~{sep=" " medianfile} > medianfile.txt
+   #     paste ~{sep=" " medianfile} > medianfile.txt
 
         i=0
         bedtools merge -i test.bed > test.merged.bed
@@ -212,7 +213,8 @@ task rdtest {
             -b test.bed \
             -n ~{prefix} \
             -c allcovfile.bed.gz \
-            -m medianfile.txt \
+      #      -m medianfile.txt \
+            -m batch_medianfile
             -f subset_families.ped \
             -a TRUE \
             -d TRUE \
