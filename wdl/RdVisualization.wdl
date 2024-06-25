@@ -215,7 +215,7 @@ task rdtest {
             -n ~{prefix} \
             -c allcovfile.bed.gz \
       #      -m medianfile.txt \
-            -m batch_medianfile
+            -m batch_medianfile \
             -f subset_families.ped \
             -a TRUE \
             -d TRUE \
@@ -325,7 +325,7 @@ task rdtest_regeno {
             -n ~{prefix} \
             -c allcovfile.bed.gz \
      #       -m medianfile.txt \
-            -m batch_medianfile
+            -m batch_medianfile \
             -f subset_families.ped \
             -a TRUE \
             -d TRUE \
