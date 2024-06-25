@@ -255,7 +255,8 @@ task rdtest_regeno {
         File batch_bincov # batch, bincov, index
         File outlier_samples
         File? regeno
-        Array[File] medianfile
+#        Array[File] medianfile
+        File batch_medianfile
         String prefix
         String sv_pipeline_rdtest_docker
         Int max_size
@@ -285,7 +286,7 @@ task rdtest_regeno {
         cat ~{ped_file} | grep -w -f families.txt | cut -f2 | sort -u > all_samples.txt
         fgrep -wf all_samples.txt ~{sample_batches} |awk '{print $2}' |sort -u >existing_batches.txt
         grep -w -f existing_batches.txt ~{batch_bincov} > bincovlist.txt
-        paste ~{sep=" " medianfile} > medianfile.txt
+  #      paste ~{sep=" " medianfile} > medianfile.txt
 
         i=0
         bedtools merge -i test.bed > test.merged.bed
@@ -322,7 +323,8 @@ task rdtest_regeno {
             -b test.bed \
             -n ~{prefix} \
             -c allcovfile.bed.gz \
-            -m medianfile.txt \
+     #       -m medianfile.txt \
+            -m batch_medianfile
             -f subset_families.ped \
             -a TRUE \
             -d TRUE \
@@ -339,7 +341,7 @@ task rdtest_regeno {
     output {
         File plots = "rd_plots.tar.gz"
         File allcovfile = "allcovfile.bed.gz"
-        File median_file = "medianfile.txt"
+    #    File median_file = "medianfile.txt"
         File test_bed = "test.bed"
         File samples_text = "samples_noOutliers.txt"
         File rd_median_geno = "~{prefix}.median_geno"
