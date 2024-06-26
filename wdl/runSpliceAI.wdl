@@ -11,7 +11,7 @@ struct RuntimeAttr {
     Int? max_retries
 }
 
-workflow annotateNonCoding {
+workflow filterRunSpliceAI {
     input {
         Array[File] vep_vcf_files
         File gene_annotation_file
