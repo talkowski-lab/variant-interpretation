@@ -96,25 +96,25 @@ task extract_complex {
     RuntimeAttr runtime_attr = select_first([runtime_attr_override, default_attr])
 
     output {
-        File cpx_formatted = "~{input_vcf}_complex_events_formatted.bed"
+        File cpx_formatted = "~{prefix}_complex_events_formatted.bed"
     }
 
     command <<<
         set -euo pipefail
 
         # Convert to bed file
-        svtk vcf2bed -i ALL --include-filters ~{input_vcf} ~{input_vcf}.bed
-        bgzip -c ~{input_vcf}.bed > ~{input_vcf}.bed.gz
+        svtk vcf2bed -i ALL --include-filters ~{input_vcf} ~{prefix}.bed
+        bgzip -c ~{prefix}.bed > ~{prefix}.bed.gz
 
         # Extract multiple events
-        zcat ~{input_vcf}.bed.gz | awk '{print $18}' | sort | uniq -c | \
-        awk '{if ($1 > 1) print}' | awk '{print $2}' | awk '$1 ~ /^UNRESOLVED/' > ~{input_vcf}_complex_events
+        zcat ~{prefix}.bed.gz | awk '{print $18}' | sort | uniq -c | \
+        awk '{if ($1 > 1) print}' | awk '{print $2}' | awk '$1 ~ /^UNRESOLVED/' > ~{prefix}_complex_events
 
         # Extract calls for the interesting events
-        zcat ~{input_vcf}.bed.gz | grep -f ~{input_vcf}_complex_events > ~{input_vcf}_complex_events.bed
+        zcat ~{prefix}.bed.gz | grep -f ~{prefix}_complex_events > ~{prefix}_complex_events.bed
 
         # Format the extracted events
-        cat ~{input_vcf}_complex_events.bed | awk -v OFS="\t" '{print $1,$2,$3,$4,$6,$5}' > ~{input_vcf}_complex_events_formatted.bed
+        cat ~{prefix}_complex_events.bed | awk -v OFS="\t" '{print $1,$2,$3,$4,$6,$5}' > ~{prefix}_complex_events_formatted.bed
     >>>
 
     runtime {
