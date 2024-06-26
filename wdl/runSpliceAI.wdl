@@ -158,6 +158,7 @@ task runSpliceAI {
     String output_filename = basename(vcf_file, file_ext) + '_spliceAI' + file_ext
 
     command {
+        set -eou pipefail
         spliceai.py -r ~{ref_fasta} -a ~{gene_annotation_file} -i ~{vcf_file} -o ~{output_filename} \
             -d ~{max_distance} ~{mask_str} --preprocessing_threads 4
     }
