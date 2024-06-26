@@ -64,6 +64,7 @@ task writeHT {
     }
 
     command <<<
+    set -eou pipefail
     cat <<EOF > write_ht.py
     from pyspark.sql import SparkSession
     import hail as hl
@@ -77,11 +78,12 @@ task writeHT {
     cores = sys.argv[3]  # string
     mem = int(np.floor(float(sys.argv[4])))
 
-    hl.init(min_block_size=128, spark_conf={"spark.executor.cores": cores, 
-                        "spark.executor.memory": f"{mem}g",
-                        "spark.driver.cores": cores,
-                        "spark.driver.memory": f"{mem}g"
-                        }, tmp_dir="tmp", local_tmpdir="tmp")
+    hl.init()
+    # hl.init(min_block_size=128, spark_conf={"spark.executor.cores": cores, 
+    #                     "spark.executor.memory": f"{mem}g",
+    #                     "spark.driver.cores": cores,
+    #                     "spark.driver.memory": f"{mem}g"
+    #                     }, tmp_dir="tmp", local_tmpdir="tmp")
 
     file_ext = vcf_file.split('.')[-1]
 
