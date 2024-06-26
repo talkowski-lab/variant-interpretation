@@ -54,7 +54,7 @@ workflow RdTestVisualization{
                 family = family,
                 ped_file = ped_file,
 #                medianfile = generatePerFamilyBed.medianfile,
-                medianfile = batch_medianfile,
+                batch_medianfile = batch_medianfile,
                 sample_batches=sample_batches,
                 outlier_samples=outlier_samples,
 #                regeno = regeno,
