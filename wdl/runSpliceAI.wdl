@@ -43,6 +43,7 @@ workflow filterRunSpliceAI {
         call runSpliceAI {
             input:
             vcf_file=filterRareSpliceImpactVariants.filtered_vcf,
+            vcf_idx=filterRareSpliceImpactVariants.filtered_vcf_idx,
             ref_fasta=ref_fasta,
             gene_annotation_file=gene_annotation_file,
             spliceAI_docker=spliceAI_docker,
@@ -111,12 +112,14 @@ task filterRareSpliceImpactVariants {
 
     output {
         File filtered_vcf = output_filename
+        File filtered_vcf_idx = output_filename + '.tbi'
     }
 }
 
 task runSpliceAI {
     input {
         File vcf_file
+        File vcf_idx
         File gene_annotation_file
         File ref_fasta
 
@@ -151,9 +154,6 @@ task runSpliceAI {
         maxRetries: select_first([runtime_override.max_retries, runtime_default.max_retries])
         docker: spliceAI_docker
         bootDiskSizeGb: select_first([runtime_override.boot_disk_gb, runtime_default.boot_disk_gb])
-        # gpuType: "nvidia-tesla-k80"
-        # gpuCount: 2
-        # nvidiaDriverVersion: "418.87.00"
     }
 
     String mask_str = if mask then '--mask' else ''
