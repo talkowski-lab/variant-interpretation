@@ -161,11 +161,12 @@ task getNonEmptyVCFs {
     }
 
     command <<<
+    set -eou pipefail
     mkdir output_vcfs
     for vcf_file in $(cat ~{write_lines(vcf_files)});
         do
         tabix $vcf_file
-        if [[ $(bcftools index -n $vcf_file) != 0 ]]; then
+        if [[ $(bcftools index -n $vcf_file".tbi") != 0 ]]; then
             mv $vcf_file output_vcfs/
             mv $vcf_file".tbi" output_vcfs/
         fi
