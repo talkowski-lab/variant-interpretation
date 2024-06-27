@@ -191,6 +191,7 @@ task runSpliceAI {
         mem_gb: 4,
         disk_gb: ceil(base_disk_gb + input_size * input_disk_scale),
         gpu_cores: 2,
+        cpu_cores: 1, 
         preemptible_tries: 3,
         max_retries: 1,
         boot_disk_gb: 10
@@ -205,6 +206,7 @@ task runSpliceAI {
     runtime {
         memory: "~{memory} GB"
         disks: "local-disk ~{select_first([runtime_override.disk_gb, runtime_default.disk_gb])} HDD"
+        cpu: cpu_cores
         gpuType: "nvidia-tesla-t4"
         gpuCount: gpu_cores
         nvidiaDriverVersion: "418.87.00"
