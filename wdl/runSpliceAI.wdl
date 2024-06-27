@@ -151,9 +151,9 @@ task runSpliceAI {
         maxRetries: select_first([runtime_override.max_retries, runtime_default.max_retries])
         docker: spliceAI_docker
         bootDiskSizeGb: select_first([runtime_override.boot_disk_gb, runtime_default.boot_disk_gb])
-        gpuType: "nvidia-tesla-k80"
-        gpuCount: 2
-        nvidiaDriverVersion: "418.87.00"
+        # gpuType: "nvidia-tesla-k80"
+        # gpuCount: 2
+        # nvidiaDriverVersion: "418.87.00"
     }
 
     String mask_str = if mask then '--mask' else ''
