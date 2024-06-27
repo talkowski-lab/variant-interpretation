@@ -148,7 +148,7 @@ task clusterCPX {
     RuntimeAttr runtime_attr = select_first([runtime_attr_override, default_attr])
 
     output {
-        File svtk_bedcluster = "~{prefix}_cpx.gz"
+        File svtk_bedcluster = "~{prefix}_cpx.bed.gz"
     }
 
     command <<<
@@ -157,7 +157,7 @@ task clusterCPX {
         ## combine all input beds into one for per batch allele count
         cat ~{sep=" " input_beds} > unified.bed
         svtk bedcluster unified.bed complex_unified_cluster.bed -f 0.5
-        bgzip -c complex_unified_cluster.bed > ~{prefix}_cpx.gz
+        bgzip -c complex_unified_cluster.bed > ~{prefix}_cpx.bed.gz
     >>>
 
     runtime {
