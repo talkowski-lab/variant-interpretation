@@ -84,7 +84,7 @@ task extract_complex {
 
     String prefix = basename(input_vcf, ".vcf.gz")
 
-    RuntimeAttr default_attr = object {
+    RuntimeAttr default_attr = {
         cpu_cores: 1,
         mem_gb: 12,
         disk_gb: 4,
