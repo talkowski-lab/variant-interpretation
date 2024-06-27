@@ -145,9 +145,6 @@ task getNonEmptyVCFs {
         memory: "~{memory} GB"
         disks: "local-disk ~{select_first([runtime_override.disk_gb, runtime_default.disk_gb])} HDD"
         cpu: cpu_cores
-        gpuType: "nvidia-tesla-t4"
-        gpuCount: 2
-        nvidiaDriverVersion: "418.87.00"
         preemptible: select_first([runtime_override.preemptible_tries, runtime_default.preemptible_tries])
         maxRetries: select_first([runtime_override.max_retries, runtime_default.max_retries])
         docker: sv_base_mini_docker
@@ -207,6 +204,9 @@ task runSpliceAI {
         memory: "~{memory} GB"
         disks: "local-disk ~{select_first([runtime_override.disk_gb, runtime_default.disk_gb])} HDD"
         cpu: cpu_cores
+        gpuType: "nvidia-tesla-t4"
+        gpuCount: 2
+        nvidiaDriverVersion: "418.87.00"
         preemptible: select_first([runtime_override.preemptible_tries, runtime_default.preemptible_tries])
         maxRetries: select_first([runtime_override.max_retries, runtime_default.max_retries])
         docker: spliceAI_docker
