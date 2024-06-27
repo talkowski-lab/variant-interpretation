@@ -40,10 +40,21 @@ workflow filterRunSpliceAI {
             gnomad_af_threshold=gnomad_af_threshold
         }
 
+    }
+    
+    call getNonEmptyVCFs {
+        input:
+        vcf_files=filterRareSpliceImpactVariants.filtered_vcf,
+        sv_base_mini_docker=sv_base_mini_docker
+    }
+
+    scatter (pair in zip(getNonEmptyVCFs.output_vcfs, getNonEmptyVCFs.output_vcfs_idx)) {
+        File vcf_file = pair.left
+        File vcf_idx = pair.right
         call runSpliceAI {
             input:
-            vcf_file=filterRareSpliceImpactVariants.filtered_vcf,
-            vcf_idx=filterRareSpliceImpactVariants.filtered_vcf_idx,
+            vcf_file=vcf_file,
+            vcf_idx=vcf_idx,
             ref_fasta=ref_fasta,
             gene_annotation_file=gene_annotation_file,
             spliceAI_docker=spliceAI_docker,
@@ -112,7 +123,58 @@ task filterRareSpliceImpactVariants {
 
     output {
         File filtered_vcf = output_filename
-        File filtered_vcf_idx = output_filename + '.tbi'
+    }
+}
+
+task getNonEmptyVCFs {
+    input {
+        Array[File] vcf_files
+        String sv_base_mini_docker
+        RuntimeAttr? runtime_attr_override
+    }
+    Float input_size = size(vcf_files, 'GB')
+    Float base_disk_gb = 10.0
+    Float input_disk_scale = 5.0
+
+    RuntimeAttr runtime_default = object {
+        mem_gb: 4,
+        disk_gb: ceil(base_disk_gb + input_size * input_disk_scale),
+        cpu_cores: 1,
+        preemptible_tries: 3,
+        max_retries: 1,
+        boot_disk_gb: 10
+    }
+
+    RuntimeAttr runtime_override = select_first([runtime_attr_override, runtime_default])
+
+    Float memory = select_first([runtime_override.mem_gb, runtime_default.mem_gb])
+    Int cpu_cores = select_first([runtime_override.cpu_cores, runtime_default.cpu_cores])
+    
+    runtime {
+        memory: "~{memory} GB"
+        disks: "local-disk ~{select_first([runtime_override.disk_gb, runtime_default.disk_gb])} HDD"
+        cpu: cpu_cores
+        preemptible: select_first([runtime_override.preemptible_tries, runtime_default.preemptible_tries])
+        maxRetries: select_first([runtime_override.max_retries, runtime_default.max_retries])
+        docker: sv_base_mini_docker
+        bootDiskSizeGb: select_first([runtime_override.boot_disk_gb, runtime_default.boot_disk_gb])
+    }
+
+    command <<<
+    mkdir output_vcfs
+    for vcf_file in $(cat ~{write_lines(vcf_files)});
+        do
+        tabix $vcf_file
+        if [[ $(bcftools index -n $vcf_file) != 0 ]]; then
+            mv $vcf_file output_vcfs/
+            mv $vcf_file".tbi" output_vcfs/
+        fi
+    done    
+    >>>
+
+    output {
+        Array[File] output_vcfs = glob('output_vcfs/*.vcf.bgz')
+        Array[File] output_vcfs_idx = glob('output_vcfs/*.vcf.bgz.tbi')
     }
 }
 

@@ -55,4 +55,4 @@ mt = mt.filter_rows(hl.any(lambda csq: hl.array(keep_vars).contains(csq), mt.all
 
 # filter PASS
 mt = mt.filter_rows(mt.filters.size()==0)
-hl.export_vcf(mt, output_filename, metadata=header, tabix=True)
+hl.export_vcf(mt, output_filename, metadata=header)
