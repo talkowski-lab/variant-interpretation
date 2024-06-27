@@ -157,7 +157,7 @@ task clusterCPX {
         ## combine all input beds into one for per batch allele count
         cat ~{sep=" " input_beds} > unified.bed
         svtk bedcluster unified.bed complex_unified_cluster.bed -f 0.5
-        bgzip -c complex_unified_cluster.bed > complex_unified_cluster.bed.gz
+        bgzip -c complex_unified_cluster.bed > ~{prefix}_cpx.gz
     >>>
 
     runtime {
