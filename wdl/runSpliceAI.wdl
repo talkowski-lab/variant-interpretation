@@ -5,6 +5,7 @@ import "mergeVCFs.wdl" as mergeVCFs
 struct RuntimeAttr {
     Float? mem_gb
     Int? cpu_cores
+    Int? gpu_cores
     Int? disk_gb
     Int? boot_disk_gb
     Int? preemptible_tries
@@ -189,7 +190,7 @@ task runSpliceAI {
     RuntimeAttr runtime_default = object {
         mem_gb: 4,
         disk_gb: ceil(base_disk_gb + input_size * input_disk_scale),
-        cpu_cores: 1,
+        gpu_cores: 2,
         preemptible_tries: 3,
         max_retries: 1,
         boot_disk_gb: 10
@@ -199,13 +200,13 @@ task runSpliceAI {
 
     Float memory = select_first([runtime_override.mem_gb, runtime_default.mem_gb])
     Int cpu_cores = select_first([runtime_override.cpu_cores, runtime_default.cpu_cores])
+    Int gpu_cores = select_first([runtime_override.gpu_cores, runtime_default.gpu_cores])
     
     runtime {
         memory: "~{memory} GB"
         disks: "local-disk ~{select_first([runtime_override.disk_gb, runtime_default.disk_gb])} HDD"
-        cpu: cpu_cores
         gpuType: "nvidia-tesla-t4"
-        gpuCount: 2
+        gpuCount: gpu_cores
         nvidiaDriverVersion: "418.87.00"
         preemptible: select_first([runtime_override.preemptible_tries, runtime_default.preemptible_tries])
         maxRetries: select_first([runtime_override.max_retries, runtime_default.max_retries])
