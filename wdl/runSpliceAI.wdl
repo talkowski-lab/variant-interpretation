@@ -40,21 +40,10 @@ workflow filterRunSpliceAI {
             gnomad_af_threshold=gnomad_af_threshold
         }
 
-    }
-    
-    call getNonEmptyVCFs {
-        input:
-        vcf_files=filterRareSpliceImpactVariants.filtered_vcf,
-        sv_base_mini_docker=sv_base_mini_docker
-    }
-
-    scatter (pair in zip(getNonEmptyVCFs.output_vcfs, getNonEmptyVCFs.output_vcfs_idx)) {
-        File vcf_file = pair.left
-        File vcf_idx = pair.right
         call runSpliceAI {
             input:
-            vcf_file=vcf_file,
-            vcf_idx=vcf_idx,
+            vcf_file=filterRareSpliceImpactVariants.filtered_vcf,
+            vcf_idx=filterRareSpliceImpactVariants.filtered_vcf_idx,
             ref_fasta=ref_fasta,
             gene_annotation_file=gene_annotation_file,
             spliceAI_docker=spliceAI_docker,
@@ -123,6 +112,7 @@ task filterRareSpliceImpactVariants {
 
     output {
         File filtered_vcf = output_filename
+        File filtered_vcf_idx = output_filename + '.tbi'
     }
 }
 
