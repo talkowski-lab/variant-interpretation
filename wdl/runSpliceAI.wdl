@@ -209,7 +209,7 @@ task runSpliceAI {
         cpu: cpu_cores
         gpuType: "nvidia-tesla-t4"
         gpuCount: gpu_cores
-        nvidiaDriverVersion: "418.87.00"
+        nvidiaDriverVersion: "450.80.02"
         preemptible: select_first([runtime_override.preemptible_tries, runtime_default.preemptible_tries])
         maxRetries: select_first([runtime_override.max_retries, runtime_default.max_retries])
         docker: spliceAI_docker
@@ -218,15 +218,16 @@ task runSpliceAI {
 
     String mask_str = if mask then '--mask' else ''
     String file_ext = if sub(basename(vcf_file), '.vcf.gz', '')!=basename(vcf_file) then '.vcf.gz' else '.vcf.bgz'
-    String output_filename = basename(vcf_file, file_ext) + '_spliceAI' + file_ext
+    String output_filename = basename(vcf_file, file_ext) + '_spliceAI.vcf'
 
     command {
         set -eou pipefail
         spliceai.py -r ~{ref_fasta} -a ~{gene_annotation_file} -i ~{vcf_file} -o ~{output_filename} \
             -d ~{max_distance} ~{mask_str} --preprocessing_threads 4
+        bgzip ~{output_filename}
     }
 
     output {
-        File spliceAI_vcf = output_filename
+        File spliceAI_vcf = output_filename + '.gz'
     }
 }

@@ -34,7 +34,7 @@ mt = mt.annotate_rows(vep=mt.vep.select('transcript_consequences'))
 
 # filter out variants containing only these consequences
 exclude_csqs = ['intergenic_variant', 'upstream_gene_variant', 'downstream_gene_variant',
-                'synonymous_variant', 'coding_sequence_variant']
+                'synonymous_variant', 'coding_sequence_variant', 'sequence_variant']
 
 mt = mt.annotate_rows(all_csqs=hl.set(hl.flatmap(lambda x: x, mt.vep.transcript_consequences.Consequence)),
                              gnomad_af=hl.or_missing(hl.array(hl.set(mt.vep.transcript_consequences.gnomADg_AF))[0]!='', 
