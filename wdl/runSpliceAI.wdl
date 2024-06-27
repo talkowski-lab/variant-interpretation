@@ -62,6 +62,7 @@ workflow filterRunSpliceAI {
 
     output {
         File filtered_spliceAI_vcf = mergeVCFs.merged_vcf_file
+        File filtered_spliceAI_vcf_idx = mergeVCFs.merged_vcf_idx
     }
 }
 
