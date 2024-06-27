@@ -85,12 +85,12 @@ task extract_complex {
     String prefix = basename(input_vcf, ".vcf.gz")
 
     RuntimeAttr default_attr = {
-        cpu_cores: 1,
-        mem_gb: 12,
-        disk_gb: 4,
-        boot_disk_gb: 8,
-        preemptible_tries: 3,
-        max_retries: 1
+        "cpu_cores": 1,
+        "mem_gb": 12,
+        "disk_gb": 4,
+        "boot_disk_gb": 8,
+        "preemptible_tries": 3,
+        "max_retries": 1
     }
 
     RuntimeAttr runtime_attr = select_first([runtime_attr_override, default_attr])
@@ -118,12 +118,12 @@ task extract_complex {
     >>>
 
     runtime {
-        cpu: runtime_attr.cpu_cores
-        memory: runtime_attr.mem_gb" GiB"
-        disks: "local-disk " + runtime_attr.disk_gb + " HDD"
-        bootDiskSizeGb: runtime_attr.boot_disk_gb
-        preemptible: runtime_attr.preemptible_tries
-        maxRetries: runtime_attr.max_retries
+        cpu: runtime_attr["cpu_cores"]
+        memory: runtime_attr["mem_gb"] + " GiB"
+        disks: "local-disk " + runtime_attr["disk_gb"] + " HDD"
+        bootDiskSizeGb: runtime_attr["boot_disk_gb"]
+        preemptible: runtime_attr["preemptible_tries"]
+        maxRetries: runtime_attr["max_retries"]
         docker: docker
     }
 }
@@ -137,12 +137,12 @@ task clusterCPX {
     }
 
     RuntimeAttr default_attr = {
-        cpu_cores: 1,
-        mem_gb: 12,
-        disk_gb: 16,
-        boot_disk_gb: 8,
-        preemptible_tries: 3,
-        max_retries: 1
+        "cpu_cores": 1,
+        "mem_gb": 12,
+        "disk_gb": 16,
+        "boot_disk_gb": 8,
+        "preemptible_tries": 3,
+        "max_retries": 1
     }
 
     RuntimeAttr runtime_attr = select_first([runtime_attr_override, default_attr])
@@ -161,12 +161,12 @@ task clusterCPX {
     >>>
 
     runtime {
-        cpu: runtime_attr.cpu_cores
-        memory: runtime_attr.mem_gb + " GiB"
-        disks: "local-disk " + runtime_attr.disk_gb + " HDD"
-        bootDiskSizeGb: runtime_attr.boot_disk_gb
-        preemptible: runtime_attr.preemptible_tries
-        maxRetries: runtime_attr.max_retries
+        cpu: runtime_attr["cpu_cores"]
+        memory: runtime_attr["mem_gb"] + " GiB"
+        disks: "local-disk " + runtime_attr["disk_gb"] + " HDD"
+        bootDiskSizeGb: runtime_attr["boot_disk_gb"]
+        preemptible: runtime_attr["preemptible_tries"]
+        maxRetries: runtime_attr["max_retries"]
         docker: docker
     }
 }
