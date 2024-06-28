@@ -13,6 +13,7 @@ build = sys.argv[6]
 mpc_ht_uri = sys.argv[7]
 clinvar_vcf_uri = sys.argv[8]
 omim_uri = sys.argv[9]
+revel_file = sys.argv[10]
 
 hl.init(min_block_size=128, spark_conf={"spark.executor.cores": cores, 
                     "spark.executor.memory": f"{mem}g",
@@ -101,6 +102,9 @@ if build=='GRCh38':
 mt = hl.vep(mt, config='vep_config.json', csq=True, tolerate_parse_error=True)
 mt = mt.annotate_rows(info = mt.info.annotate(CSQ=mt.vep))
 
+# annotate REVEL
+
+
 # annotate OMIM
 csq_columns = hl.eval(mt.vep_csq_header).split('|')
 mt = mt.annotate_rows(vep=mt.info)
@@ -119,7 +123,7 @@ omim = hl.import_table(omim_uri).key_by('approvedGeneSymbol')
 
 mt_by_gene = mt.explode_rows(mt.vep.transcript_consequences)
 mt_by_gene = mt_by_gene.key_rows_by(mt_by_gene.vep.transcript_consequences.SYMBOL)
-mt_by_gene = mt_by_gene.filter_rows(mt_by_gene.vep.transcript_consequences.SYMBOL=='', keep=False)
+# mt_by_gene = mt_by_gene.filter_rows(mt_by_gene.vep.transcript_consequences.SYMBOL=='', keep=False)
 mt_by_gene = mt_by_gene.annotate_rows(vep=mt_by_gene.vep.annotate(
     transcript_consequences=mt_by_gene.vep.transcript_consequences.annotate(
         OMIM_MIM_number=hl.if_else(hl.is_defined(omim[mt_by_gene.row_key]), omim[mt_by_gene.row_key].mimNumber, ''),
