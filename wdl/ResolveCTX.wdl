@@ -139,7 +139,7 @@ task clusterCPX {
     RuntimeAttr default_attr = {
         "cpu_cores": 1,
         "mem_gb": 12,
-        "disk_gb": 16,
+        "disk_gb": 25,
         "boot_disk_gb": 8,
         "preemptible_tries": 3,
         "max_retries": 1
