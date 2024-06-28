@@ -103,10 +103,17 @@ mt = hl.vep(mt, config='vep_config.json', csq=True, tolerate_parse_error=True)
 mt = mt.annotate_rows(info = mt.info.annotate(CSQ=mt.vep))
 
 # annotate REVEL
-
+revel_ht = hl.import_table(revel_file, force_bgz=True)
+revel_ht = revel_ht.annotate(chr='chr'+revel_ht['#chr']) 
+build_chr = 'chr' if build=='GRCh38' else '#chr'
+build_pos = 'grch38_pos' if build=='GRCh38' else 'hg19_pos'
+revel_ht = revel_ht.annotate(locus=hl.locus(revel_ht[build_chr], hl.int(revel_ht[build_pos]), build),
+                 alleles=hl.array([revel_ht.ref, revel_ht.alt]))
+revel_ht = revel_ht.key_by('locus', 'alleles')
+mt = mt.annotate_rows(info=mt.info.annotate(REVEL=revel_ht[mt.row_key].REVEL))
 
 # annotate OMIM
-csq_columns = hl.eval(mt.vep_csq_header).split('|')
+csq_columns = hl.eval(mt.vep_csq_header).split('Format: ')[1].split('|')
 mt = mt.annotate_rows(vep=mt.info)
 transcript_consequences = mt.vep.CSQ.map(lambda x: x.split('\|'))
 
@@ -132,7 +139,7 @@ mt_by_gene = mt_by_gene.annotate_rows(vep=mt_by_gene.vep.annotate(
 mt_by_gene = (mt_by_gene.group_rows_by(mt_by_gene.locus, mt_by_gene.alleles)
     .aggregate_rows(vep = hl.agg.collect(mt_by_gene.vep))).result()
 
-csq_fields_str = '|'.join(csq_columns + ['OMIM_MIM_number', 'OMIM_inheritance_code'])
+csq_fields_str = hl.eval(mt.vep_csq_header) + '|'.join(['', 'OMIM_MIM_number', 'OMIM_inheritance_code'])
 fields = list(mt_by_gene.vep.transcript_consequences[0])
 new_csq = mt_by_gene.vep.transcript_consequences.scan(lambda i, j: 
                                       hl.str('|').join(hl.array([i]))
@@ -144,5 +151,6 @@ mt = mt.annotate_rows(info=mt.info.annotate(CSQ=mt_by_gene.rows()[mt.row_key].CS
 mt = mt.drop('vep')
 
 header['info']['CSQ'] = {'Description': csq_fields_str, 'Number': '.', 'Type': 'String'}
+header['info']['REVEL'] = {'Description': 'REVEL scores.', 'Number': '.', 'Type': 'String'}
 
 hl.export_vcf(dataset=mt, output=vep_annotated_vcf_name, metadata=header)

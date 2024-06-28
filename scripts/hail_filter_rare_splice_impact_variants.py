@@ -36,7 +36,7 @@ mt = mt.annotate_rows(vep=mt.vep.select('transcript_consequences'))
 exclude_csqs = ['intergenic_variant', 'upstream_gene_variant', 'downstream_gene_variant',
                 'synonymous_variant', 'coding_sequence_variant', 'sequence_variant']
 
-mt = mt.annotate_rows(all_csqs=hl.set(hl.flatmap(lambda x: x, mt.vep.transcript_consequences.Consequence)),
+mt = mt.annotate_rows(all_csqs=hl.set(hl.flatmap(lambda x: x, mt.vep.transcript_consequences.Consequence)),  # TODO: add gnomADe_AF filter
                              gnomad_af=hl.or_missing(hl.array(hl.set(mt.vep.transcript_consequences.gnomADg_AF))[0]!='', 
                                                   hl.float(hl.array(hl.set(mt.vep.transcript_consequences.gnomADg_AF))[0])))
 mt = mt.filter_rows(hl.set(exclude_csqs).intersection(mt.all_csqs).size()!=mt.all_csqs.size())
