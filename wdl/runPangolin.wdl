@@ -170,7 +170,7 @@ task runPangolin {
     command {
         set -eou pipefail
         zcat ~{vcf_file} > ~{basename(vcf_file, file_ext)}.vcf
-        pangolin ~{basename(vcf_file, file_ext)}.vcf ~{ref_fasta} ~{gene_annotation_file} ~{output_filename}
+        pangolin ~{basename(vcf_file, file_ext)}.vcf ~{ref_fasta} ~{gene_annotation_file} ~{output_filename} \
             -d ~{max_distance} ~{mask_str} 
         bgzip ~{output_filename}.vcf
     }
