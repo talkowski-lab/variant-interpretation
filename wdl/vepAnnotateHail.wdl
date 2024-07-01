@@ -83,9 +83,11 @@ workflow vepAnnotateHail {
                     loeuf_data=loeuf_data,
                     alpha_missense_file=alpha_missense_file,
                     revel_file=revel_file,
+                    revel_file_idx=revel_file+'.tbi',
                     clinvar_vcf_uri=clinvar_vcf_uri,
                     omim_uri=omim_uri,
                     eve_data=eve_data,
+                    eve_data_idx=eve_data+'.tbi',
                     mpc_ht_uri=mpc_ht_uri,
                     vep_hail_docker=vep_hail_docker,
                     reannotate_ac_af=reannotate_ac_af,
@@ -157,9 +159,11 @@ task vepAnnotate {
         File loeuf_data
         File alpha_missense_file
         File revel_file
+        File revel_file_idx
         File clinvar_vcf_uri
         File omim_uri
         File eve_data
+        File eve_data_idx
 
         String mpc_ht_uri
         String vep_hail_docker
@@ -225,6 +229,7 @@ task vepAnnotate {
         "--plugin", "LOEUF,file=~{loeuf_data},match_by=transcript",
         "--plugin", "AlphaMissense,file=~{alpha_missense_file}",
         "--plugin", "EVE,file=~{eve_data}",
+        "--plugin", "REVEL,file=~{revel_file},no_match=1",
         "--plugin", "LoF,loftee_path:/opt/vep/Plugins/,human_ancestor_fa:~{human_ancestor_fa},gerp_bigwig:~{gerp_conservation_scores}",
         "-o", "STDOUT"],
         "env": {
