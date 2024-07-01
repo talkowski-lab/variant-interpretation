@@ -44,6 +44,7 @@ workflow vepAnnotateHail {
         Boolean reannotate_ac_af=false
         Int shards_per_chunk=10  # combine pre-sharded VCFs
         Array[File]? vcf_shards  # if scatterVCF.wdl already run before VEP
+        File? gene_list  # must end in .txt or it will be ignored
         RuntimeAttr? runtime_attr_merge_vcfs
         RuntimeAttr? runtime_attr_vep_annotate
     }
@@ -81,13 +82,16 @@ workflow vepAnnotateHail {
                     gerp_conservation_scores=gerp_conservation_scores,
                     ref_vep_cache=ref_vep_cache,
                     loeuf_data=loeuf_data,
+                    loeuf_data_idx=loeuf_data+'.tbi',
                     alpha_missense_file=alpha_missense_file,
+                    alpha_missense_file_idx=alpha_missense_file+'.tbi',
                     revel_file=revel_file,
                     revel_file_idx=revel_file+'.tbi',
                     clinvar_vcf_uri=clinvar_vcf_uri,
                     omim_uri=omim_uri,
                     eve_data=eve_data,
                     eve_data_idx=eve_data+'.tbi',
+                    gene_list=select_first([gene_list, vcf_file]),
                     mpc_ht_uri=mpc_ht_uri,
                     vep_hail_docker=vep_hail_docker,
                     reannotate_ac_af=reannotate_ac_af,
@@ -124,13 +128,16 @@ workflow vepAnnotateHail {
                     gerp_conservation_scores=gerp_conservation_scores,
                     ref_vep_cache=ref_vep_cache,
                     loeuf_data=loeuf_data,
+                    loeuf_data_idx=loeuf_data+'.tbi',
                     alpha_missense_file=alpha_missense_file,
+                    alpha_missense_file_idx=alpha_missense_file+'.tbi',
                     revel_file=revel_file,
                     revel_file_idx=revel_file+'.tbi',
                     clinvar_vcf_uri=clinvar_vcf_uri,
                     omim_uri=omim_uri,
                     eve_data=eve_data,
                     eve_data_idx=eve_data+'.tbi',
+                    gene_list=select_first([gene_list, vcf_file]),
                     mpc_ht_uri=mpc_ht_uri,
                     vep_hail_docker=vep_hail_docker,
                     reannotate_ac_af=reannotate_ac_af,
@@ -159,13 +166,16 @@ task vepAnnotate {
         File ref_vep_cache
 
         File loeuf_data
+        File loeuf_data_idx
         File alpha_missense_file
+        File alpha_missense_file_idx
         File revel_file
         File revel_file_idx
         File clinvar_vcf_uri
         File omim_uri
         File eve_data
         File eve_data_idx
+        File gene_list
 
         String mpc_ht_uri
         String vep_hail_docker
@@ -210,8 +220,6 @@ task vepAnnotate {
 
         dir_cache=$(dirname "~{ref_vep_cache}")
         tar xzf ~{ref_vep_cache} -C $dir_cache
-        tabix -f -s 76 -b 77 -e 78 ~{loeuf_data}
-        tabix -s 1 -b 2 -e 2 -f -S 1 ~{alpha_missense_file}
 
         echo '{"command": [
         "/opt/vep/ensembl-vep/vep",
@@ -242,7 +250,7 @@ task vepAnnotate {
 
         curl ~{vep_annotate_hail_python_script} > vep_annotate.py
         python3.9 vep_annotate.py ~{vcf_file} ~{vep_annotated_vcf_name} ~{cpu_cores} ~{memory} ~{reannotate_ac_af} ~{genome_build} \
-        ~{mpc_ht_uri} ~{clinvar_vcf_uri} ~{omim_uri} ~{revel_file}
+        ~{mpc_ht_uri} ~{clinvar_vcf_uri} ~{omim_uri} ~{revel_file} ~{gene_list}
         cp $(ls . | grep hail*.log) hail_log.txt
         /opt/vep/bcftools/bcftools index -t ~{vep_annotated_vcf_name}
     >>>

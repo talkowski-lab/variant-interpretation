@@ -1,8 +1,10 @@
 from pyspark.sql import SparkSession
 import hail as hl
 import numpy as np
+import pandas as pd
 import sys
 import ast
+import os
 
 vcf_file = sys.argv[1]
 vep_annotated_vcf_name = sys.argv[2]
@@ -14,6 +16,7 @@ mpc_ht_uri = sys.argv[7]
 clinvar_vcf_uri = sys.argv[8]
 omim_uri = sys.argv[9]
 revel_file = sys.argv[10]
+gene_list = sys.argv[11]
 
 hl.init(min_block_size=128, spark_conf={"spark.executor.cores": cores, 
                     "spark.executor.memory": f"{mem}g",
@@ -96,8 +99,6 @@ if build=='GRCh38':
     mt = mt.annotate_rows(info = mt.info.annotate(CLNSIG=clinvar_vcf.rows()[mt.row_key].info.CLNSIG,
                                                   CLNREVSTAT=clinvar_vcf.rows()[mt.row_key].info.CLNREVSTAT))
 
-# annotate SpliceAI scores
-
 # run VEP
 mt = hl.vep(mt, config='vep_config.json', csq=True, tolerate_parse_error=True)
 mt = mt.annotate_rows(info = mt.info.annotate(CSQ=mt.vep))
@@ -136,10 +137,20 @@ mt_by_gene = mt_by_gene.annotate_rows(vep=mt_by_gene.vep.annotate(
         OMIM_MIM_number=hl.if_else(hl.is_defined(omim[mt_by_gene.row_key]), omim[mt_by_gene.row_key].mimNumber, ''),
         OMIM_inheritance_code=hl.if_else(hl.is_defined(omim[mt_by_gene.row_key]), omim[mt_by_gene.row_key].inheritance_code, ''))))
 
+csq_fields_str = hl.eval(mt.vep_csq_header) + '|'.join(['', 'OMIM_MIM_number', 'OMIM_inheritance_code'])
+
+# annotate with gene list, if provided
+if gene_list.split('.')[-1] == 'txt':
+    genes = pd.read_csv(gene_list, sep='\t', header=None)[0].tolist()
+    gene_list_name = os.path.basename(gene_list)
+    mt_by_gene = mt_by_gene.annotate_rows(vep=mt_by_gene.vep.annotate(
+    transcript_consequences=mt_by_gene.vep.transcript_consequences.annotate(
+        gene_list=hl.if_else(hl.array(genes).contains(mt_by_gene.row_key.SYMBOL), gene_list_name, ''))))
+    csq_fields_str = csq_fields_str + '|gene_list'
+
 mt_by_gene = (mt_by_gene.group_rows_by(mt_by_gene.locus, mt_by_gene.alleles)
     .aggregate_rows(vep = hl.agg.collect(mt_by_gene.vep))).result()
 
-csq_fields_str = hl.eval(mt.vep_csq_header) + '|'.join(['', 'OMIM_MIM_number', 'OMIM_inheritance_code'])
 fields = list(mt_by_gene.vep.transcript_consequences[0])
 new_csq = mt_by_gene.vep.transcript_consequences.scan(lambda i, j: 
                                       hl.str('|').join(hl.array([i]))
