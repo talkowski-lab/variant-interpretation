@@ -239,7 +239,6 @@ task vepAnnotate {
         "--plugin", "LOEUF,file=~{loeuf_data},match_by=transcript",
         "--plugin", "AlphaMissense,file=~{alpha_missense_file}",
         "--plugin", "EVE,file=~{eve_data}",
-        "--plugin", "REVEL,file=~{revel_file},no_match=1",
         "--plugin", "LoF,loftee_path:/opt/vep/Plugins/,human_ancestor_fa:~{human_ancestor_fa},gerp_bigwig:~{gerp_conservation_scores}",
         "-o", "STDOUT"],
         "env": {
@@ -252,7 +251,7 @@ task vepAnnotate {
         python3.9 vep_annotate.py ~{vcf_file} ~{vep_annotated_vcf_name} ~{cpu_cores} ~{memory} ~{reannotate_ac_af} ~{genome_build} \
         ~{mpc_ht_uri} ~{clinvar_vcf_uri} ~{omim_uri} ~{revel_file} ~{gene_list}
         cp $(ls . | grep hail*.log) hail_log.txt
-        /opt/vep/bcftools/bcftools index -t ~{vep_annotated_vcf_name}
+        bcftools index -t ~{vep_annotated_vcf_name}
     >>>
 
     output {

@@ -79,7 +79,8 @@ workflow getRareSpliceImpactVariants {
                 vcf_files=[final_splice_vcf, filterRareSpliceImpactVariants.noncoding_impact_vcf],
                 sv_base_mini_docker=sv_base_mini_docker,
                 cohort_prefix=prefix,
-                sort_after_merge=true        
+                sort_after_merge=true,
+                naive=false   
         }
     }   
 

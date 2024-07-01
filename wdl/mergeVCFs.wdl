@@ -89,6 +89,7 @@ task mergeVCFs {
         String sv_base_mini_docker
         String cohort_prefix
         Boolean sort_after_merge
+        Boolean naive=true
         RuntimeAttr? runtime_attr_override
     }
 
@@ -124,12 +125,13 @@ task mergeVCFs {
 
     String merged_vcf_name="~{cohort_prefix}.merged.vcf.gz"
     String sorted_vcf_name="~{cohort_prefix}.merged.sorted.vcf.gz"
+    String naive_str = if naive then '-n' else ''
 
     command <<<
         set -euo pipefail
         VCFS="~{write_lines(vcf_files)}"
         cat $VCFS | awk -F '/' '{print $NF"\t"$0}' | sort -k1,1V | awk '{print $2}' > vcfs_sorted.list
-        bcftools concat -n --no-version -Oz --file-list vcfs_sorted.list --output ~{merged_vcf_name}
+        bcftools concat ~{naive_str} --no-version -Oz --file-list vcfs_sorted.list --output ~{merged_vcf_name}
         if [ "~{sort_after_merge}" = "true" ]; then
             mkdir -p tmp
             # bcftools sort ~{merged_vcf_name} -Oz --output ~{sorted_vcf_name} -T tmp/
