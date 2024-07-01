@@ -31,6 +31,7 @@ workflow vepAnnotateHail {
         File revel_file
         File clinvar_vcf_uri
         File omim_uri
+        File eve_data
         String mpc_ht_uri
         String cohort_prefix
         String hail_docker
@@ -84,6 +85,7 @@ workflow vepAnnotateHail {
                     revel_file=revel_file,
                     clinvar_vcf_uri=clinvar_vcf_uri,
                     omim_uri=omim_uri,
+                    eve_data=eve_data,
                     mpc_ht_uri=mpc_ht_uri,
                     vep_hail_docker=vep_hail_docker,
                     reannotate_ac_af=reannotate_ac_af,
@@ -124,6 +126,7 @@ workflow vepAnnotateHail {
                     revel_file=revel_file,
                     clinvar_vcf_uri=clinvar_vcf_uri,
                     omim_uri=omim_uri,
+                    eve_data=eve_data,
                     mpc_ht_uri=mpc_ht_uri,
                     vep_hail_docker=vep_hail_docker,
                     reannotate_ac_af=reannotate_ac_af,
@@ -156,6 +159,7 @@ task vepAnnotate {
         File revel_file
         File clinvar_vcf_uri
         File omim_uri
+        File eve_data
 
         String mpc_ht_uri
         String vep_hail_docker
@@ -220,6 +224,7 @@ task vepAnnotate {
         "--fasta", "~{top_level_fa}",
         "--plugin", "LOEUF,file=~{loeuf_data},match_by=transcript",
         "--plugin", "AlphaMissense,file=~{alpha_missense_file}",
+        "--plugin", "EVE,file=~{eve_data}",
         "--plugin", "LoF,loftee_path:/opt/vep/Plugins/,human_ancestor_fa:~{human_ancestor_fa},gerp_bigwig:~{gerp_conservation_scores}",
         "-o", "STDOUT"],
         "env": {
