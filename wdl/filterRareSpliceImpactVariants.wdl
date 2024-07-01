@@ -49,7 +49,6 @@ workflow getRareSpliceImpactVariants {
             call runSpliceAI {
                 input:
                 vcf_file=filterRareSpliceImpactVariants.splice_vcf,
-                vcf_idx=filterRareSpliceImpactVariants.splice_vcf_idx,
                 ref_fasta=ref_fasta,
                 gene_annotation_file=spliceAI_gene_annotation_file,
                 spliceAI_docker=spliceAI_docker,
@@ -63,7 +62,6 @@ workflow getRareSpliceImpactVariants {
             call runPangolin {
                 input:
                 vcf_file=int_splice_vcf,
-                vcf_idx=int_splice_vcf+'.tbi',
                 ref_fasta=ref_fasta,
                 gene_annotation_file=pangolin_gene_annotation_file,
                 pangolin_docker=pangolin_docker,
@@ -148,11 +146,8 @@ task filterRareSpliceImpactVariants {
 
     output {
         File clinvar_vcf = prefix + '_clinvar_variants.vcf.bgz'
-        File clinvar_vcf_idx = clinvar_vcf + '.tbi'
         File splice_vcf = prefix + '_splice_variants.vcf.bgz'
-        File splice_vcf_idx = splice_vcf + '.tbi'
         File noncoding_impact_vcf = prefix + '_noncoding_high_moderate_impact_variants.vcf.bgz'
-        File noncoding_impact_vcf_idx = noncoding_impact_vcf + '.tbi'
     }
 }
 
@@ -212,7 +207,6 @@ task getNonEmptyVCFs {
 task runSpliceAI {
     input {
         File vcf_file
-        File vcf_idx
         File gene_annotation_file
         File ref_fasta
 
@@ -260,6 +254,7 @@ task runSpliceAI {
 
     command {
         set -eou pipefail
+        tabix ~{vcf_file}
         spliceai.py -r ~{ref_fasta} -a ~{gene_annotation_file} -i ~{vcf_file} -o ~{output_filename} \
             -d ~{max_distance} ~{mask_str} --preprocessing_threads 4
         bgzip ~{output_filename}
@@ -274,7 +269,6 @@ task runSpliceAI {
 task runPangolin {
     input {
         File vcf_file
-        File vcf_idx
         File gene_annotation_file
         File ref_fasta
 
