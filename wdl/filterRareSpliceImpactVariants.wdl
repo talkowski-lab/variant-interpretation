@@ -80,14 +80,22 @@ workflow getRareSpliceImpactVariants {
             input:  
                 vcf_files=[final_splice_vcf, filterRareSpliceImpactVariants.noncoding_impact_vcf],
                 sv_base_mini_docker=sv_base_mini_docker,
-                cohort_prefix=cohort_prefix + '_filtered_splice_noncoding_high_moderate_impact_variants',
+                cohort_prefix=prefix,
                 sort_after_merge=true        
         }
     }   
 
+    call mergeVCFs.mergeVCFs as mergeClinvarVCFs {
+        input:
+        vcf_files=filterRareSpliceImpactVariants.clinvar_vcf,
+        sv_base_mini_docker=sv_base_mini_docker,
+        cohort_prefix=cohort_prefix + '_clinvar_pass_variants',
+        sort_after_merge=true        
+    }
+
     output {
-        Array[File] clinvar_vcf_files = filterRareSpliceImpactVariants.clinvar_vcf
-        Array[File] clinvar_vcf_idx = filterRareSpliceImpactVariants.clinvar_vcf_idx
+        File clinvar_vcf_file = mergeClinvarVCFs.merged_vcf_file
+        File clinvar_vcf_idx = mergeClinvarVCFs.merged_vcf_idx
         Array[File] splice_nc_impact_vcf_files = mergeSpliceWithNonCodingImpactVars.merged_vcf_file
         Array[File] splice_nc_impact_vcf_idx = mergeSpliceWithNonCodingImpactVars.merged_vcf_idx
     }
