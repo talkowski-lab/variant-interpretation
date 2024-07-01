@@ -6,7 +6,7 @@ import ast
 import os
 
 vcf_file = sys.argv[1]
-output_filename = sys.argv[2]
+prefix = sys.argv[2]
 cores = sys.argv[3]  # string
 mem = int(np.floor(float(sys.argv[4])))
 ac_threshold = int(sys.argv[5])
@@ -18,6 +18,12 @@ mt = hl.import_vcf(vcf_file, reference_genome='GRCh38', force_bgz=True, call_fie
 
 header = hl.get_vcf_metadata(vcf_file)
 csq_columns = header['info']['CSQ']['Description'].split('Format: ')[1].split('|')
+
+# filter PASS
+mt = mt.filter_rows(mt.filters.size()==0)
+
+# grab ClinVar only
+clinvar_mt = mt.filter_rows(hl.set(['Pathogenic', 'Likely_pathogenic']).intersection(hl.set(mt.info.CLNSIG)).size()!=0)
 
 # split VEP CSQ string
 mt = mt.annotate_rows(vep=mt.info)
@@ -36,9 +42,12 @@ mt = mt.annotate_rows(vep=mt.vep.select('transcript_consequences'))
 exclude_csqs = ['intergenic_variant', 'upstream_gene_variant', 'downstream_gene_variant',
                 'synonymous_variant', 'coding_sequence_variant', 'sequence_variant']
 
-mt = mt.annotate_rows(all_csqs=hl.set(hl.flatmap(lambda x: x, mt.vep.transcript_consequences.Consequence)),  # TODO: add gnomADe_AF filter
-                             gnomad_af=hl.or_missing(hl.array(hl.set(mt.vep.transcript_consequences.gnomADg_AF))[0]!='', 
-                                                  hl.float(hl.array(hl.set(mt.vep.transcript_consequences.gnomADg_AF))[0])))
+mt = mt.annotate_rows(all_csqs=hl.set(hl.flatmap(lambda x: x, mt.vep.transcript_consequences.Consequence)),  
+                             gnomADg_AF=hl.or_missing(hl.array(hl.set(mt.vep.transcript_consequences.gnomADg_AF))[0]!='', 
+                                                  hl.float(hl.array(hl.set(mt.vep.transcript_consequences.gnomADg_AF))[0])),
+                             gnomADe_AF=hl.or_missing(hl.array(hl.set(mt.vep.transcript_consequences.gnomADe_AF))[0]!='', 
+                                                  hl.float(hl.array(hl.set(mt.vep.transcript_consequences.gnomADe_AF))[0])))
+mt = mt.annotate_rows(gnomad_af=hl.max([mt.gnomADg_AF, mt.gnomADe_AF]))
 mt = mt.filter_rows(hl.set(exclude_csqs).intersection(mt.all_csqs).size()!=mt.all_csqs.size())
 
 # filter by AC and gnomAD AF
@@ -46,13 +55,15 @@ mt = mt.filter_rows(mt.info.cohort_AC<=ac_threshold)
 mt = mt.filter_rows((mt.gnomad_af<=gnomad_af_threshold) | (hl.is_missing(mt.gnomad_af)))
 
 # filter splice variants and MODERATE/HIGH impact variants
-keep_vars = ['splice_donor_5th_base_variant', 'splice_region_variant', 'splice_donor_region_variant',  # splice variants
-              'non_coding_transcript_exon_variant']
+splice_vars = ['splice_donor_5th_base_variant', 'splice_region_variant', 'splice_donor_region_variant']
+keep_vars = ['non_coding_transcript_exon_variant']
 
-mt = mt.filter_rows(hl.any(lambda csq: hl.array(keep_vars).contains(csq), mt.all_csqs) |
+splice_mt = mt.filter_rows(hl.any(lambda csq: hl.array(splice_vars).contains(csq), mt.all_csqs))
+
+nc_impact_mt = mt.filter_rows(hl.any(lambda csq: hl.array(keep_vars).contains(csq), mt.all_csqs) |
                   (hl.any(lambda impact: hl.array(['HIGH','MODERATE']).contains(impact), 
                           mt.vep.transcript_consequences.IMPACT)))
 
-# filter PASS
-mt = mt.filter_rows(mt.filters.size()==0)
-hl.export_vcf(mt, output_filename, metadata=header, tabix=True)
+hl.export_vcf(clinvar_mt, prefix+'_clinvar_variants.vcf.bgz', metadata=header, tabix=True)
+hl.export_vcf(splice_mt, prefix+'_splice_variants.vcf.bgz', metadata=header, tabix=True)
+hl.export_vcf(nc_impact_mt, prefix+'_noncoding_high_moderate_impact_variants.vcf.bgz', metadata=header, tabix=True)
