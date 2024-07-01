@@ -37,7 +37,7 @@ workflow AncestryInference {
         RuntimeAttr? runtime_attr_infer_ancestry
     }
 
-    if (!defined(ancestry_vcf_file_)) {
+    if ((!defined(ancestry_vcf_file_)) || (ancestry_vcf_file_ == '')) {
         scatter (vcf_uri in select_first([vep_vcf_files])) {
             call subsetVCFgnomAD {
                 input:
