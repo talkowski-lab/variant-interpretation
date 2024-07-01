@@ -15,7 +15,8 @@ struct RuntimeAttr {
 workflow getRareSpliceImpactVariants {
     input {
         Array[File] vep_vcf_files
-        File gene_annotation_file
+        File spliceAI_gene_annotation_file
+        File pangolin_gene_annotation_file
         File ref_fasta
 
         String cohort_prefix
@@ -50,7 +51,7 @@ workflow getRareSpliceImpactVariants {
                 vcf_file=filterRareSpliceImpactVariants.splice_vcf,
                 vcf_idx=filterRareSpliceImpactVariants.splice_vcf_idx,
                 ref_fasta=ref_fasta,
-                gene_annotation_file=gene_annotation_file,
+                gene_annotation_file=spliceAI_gene_annotation_file,
                 spliceAI_docker=spliceAI_docker,
                 max_distance=max_distance,
                 mask=mask
@@ -64,7 +65,7 @@ workflow getRareSpliceImpactVariants {
                 vcf_file=int_splice_vcf,
                 vcf_idx=int_splice_vcf+'.tbi',
                 ref_fasta=ref_fasta,
-                gene_annotation_file=gene_annotation_file,
+                gene_annotation_file=pangolin_gene_annotation_file,
                 pangolin_docker=pangolin_docker,
                 max_distance=max_distance,
                 mask=mask
