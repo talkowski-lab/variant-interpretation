@@ -64,6 +64,6 @@ nc_impact_mt = mt.filter_rows(hl.any(lambda csq: hl.array(keep_vars).contains(cs
                   (hl.any(lambda impact: hl.array(['HIGH','MODERATE']).contains(impact), 
                           mt.vep.transcript_consequences.IMPACT)))
 
-hl.export_vcf(clinvar_mt, prefix+'_clinvar_variants.vcf.bgz', metadata=header, tabix=True)
-hl.export_vcf(splice_mt, prefix+'_splice_variants.vcf.bgz', metadata=header, tabix=True)
-hl.export_vcf(nc_impact_mt, prefix+'_noncoding_high_moderate_impact_variants.vcf.bgz', metadata=header, tabix=True)
+hl.export_vcf(clinvar_mt, prefix+'_clinvar_variants.vcf.bgz', metadata=header)
+hl.export_vcf(splice_mt, prefix+'_splice_variants.vcf.bgz', metadata=header)
+hl.export_vcf(nc_impact_mt, prefix+'_noncoding_high_moderate_impact_variants.vcf.bgz', metadata=header)
