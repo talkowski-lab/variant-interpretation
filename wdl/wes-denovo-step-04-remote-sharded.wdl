@@ -18,6 +18,7 @@ workflow step4 {
     input {
         Array[File] de_novo_results_sharded 
         Array[File] de_novo_vep_sharded 
+        File vep_vcf_file
         String sample_column
         String cohort_prefix
         String prioritize_csq_script
@@ -56,6 +57,7 @@ workflow step4 {
     call prioritizeCSQ_og.annotateMostSevereCSQ as annotateMostSevereCSQ {
         input:
         vcf_metrics_tsv=mergeVEPIntoResults.de_novo_merged,
+        vep_vcf_file=vep_vcf_file,
         prioritize_csq_script=prioritize_csq_script,
         hail_docker=hail_docker,
         sample_column=sample_column,

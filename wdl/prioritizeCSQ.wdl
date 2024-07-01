@@ -12,6 +12,7 @@ struct RuntimeAttr {
 workflow prioritizeCSQ {
     input {
         File vcf_metrics_tsv
+        File vep_vcf_file
         String prioritize_csq_script
         String hail_docker
         String sample_column
@@ -20,6 +21,7 @@ workflow prioritizeCSQ {
     call annotateMostSevereCSQ {
         input:
         vcf_metrics_tsv=vcf_metrics_tsv,
+        vep_vcf_file=vep_vcf_file,
         prioritize_csq_script=prioritize_csq_script,
         hail_docker=hail_docker,
         sample_column=sample_column
@@ -33,6 +35,7 @@ workflow prioritizeCSQ {
 task annotateMostSevereCSQ {
     input {
         File vcf_metrics_tsv
+        File vep_vcf_file
         String prioritize_csq_script
         String hail_docker
         String sample_column
@@ -68,8 +71,9 @@ task annotateMostSevereCSQ {
     
     String file_ext = if sub(basename(vcf_metrics_tsv), '\\.gz', '')==basename(vcf_metrics_tsv) then '.tsv' else '.tsv.gz'
     command <<<
+        set -eou pipefail
         curl ~{prioritize_csq_script} > prioritize_csq.py
-        python3 prioritize_csq.py ~{vcf_metrics_tsv} ~{cpu_cores} ~{memory} ~{sample_column}
+        python3 prioritize_csq.py ~{vcf_metrics_tsv} ~{cpu_cores} ~{memory} ~{sample_column} ~{vep_vcf_file}
     >>>
 
     output {

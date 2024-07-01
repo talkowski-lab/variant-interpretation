@@ -120,6 +120,7 @@ workflow hailDenovoWES {
         input:
         de_novo_results_sharded=step3.de_novo_results, 
         de_novo_vep_sharded=step3.de_novo_vep,
+        vep_vcf_file=mt_uris[0],
         sample_column=sample_column,
         cohort_prefix=cohort_prefix,
         prioritize_csq_script=prioritize_csq_script,
