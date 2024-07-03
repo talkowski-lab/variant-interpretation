@@ -26,7 +26,8 @@ workflow vepAnnotateHail {
         File top_level_fa
         File gerp_conservation_scores
         File ref_vep_cache
-        File loeuf_data
+        File loeuf_v2_uri
+        File loeuf_v4_uri
         File alpha_missense_file
         File revel_file
         File clinvar_vcf_uri
@@ -81,8 +82,8 @@ workflow vepAnnotateHail {
                     human_ancestor_fa_fai=human_ancestor_fa_fai,
                     gerp_conservation_scores=gerp_conservation_scores,
                     ref_vep_cache=ref_vep_cache,
-                    loeuf_data=loeuf_data,
-                    loeuf_data_idx=loeuf_data+'.tbi',
+                    loeuf_v2_uri=loeuf_v2_uri,
+                    loeuf_v4_uri=loeuf_v4_uri,
                     alpha_missense_file=alpha_missense_file,
                     alpha_missense_file_idx=alpha_missense_file+'.tbi',
                     revel_file=revel_file,
@@ -127,8 +128,8 @@ workflow vepAnnotateHail {
                     human_ancestor_fa_fai=human_ancestor_fa_fai,
                     gerp_conservation_scores=gerp_conservation_scores,
                     ref_vep_cache=ref_vep_cache,
-                    loeuf_data=loeuf_data,
-                    loeuf_data_idx=loeuf_data+'.tbi',
+                    loeuf_v2_uri=loeuf_v2_uri,
+                    loeuf_v4_uri=loeuf_v4_uri,
                     alpha_missense_file=alpha_missense_file,
                     alpha_missense_file_idx=alpha_missense_file+'.tbi',
                     revel_file=revel_file,
@@ -165,8 +166,8 @@ task vepAnnotate {
         File gerp_conservation_scores
         File ref_vep_cache
 
-        File loeuf_data
-        File loeuf_data_idx
+        File loeuf_v2_uri
+        File loeuf_v4_uri
         File alpha_missense_file
         File alpha_missense_file_idx
         File revel_file
@@ -236,7 +237,6 @@ task vepAnnotate {
         "--minimal",
         "--assembly", "~{genome_build}",
         "--fasta", "~{top_level_fa}",
-        "--plugin", "LOEUF,file=~{loeuf_data},match_by=transcript",
         "--plugin", "AlphaMissense,file=~{alpha_missense_file}",
         "--plugin", "EVE,file=~{eve_data}",
         "--plugin", "LoF,loftee_path:/opt/vep/Plugins/,human_ancestor_fa:~{human_ancestor_fa},gerp_bigwig:~{gerp_conservation_scores}",
@@ -248,8 +248,9 @@ task vepAnnotate {
         }' > vep_config.json
 
         curl ~{vep_annotate_hail_python_script} > vep_annotate.py
-        python3.9 vep_annotate.py ~{vcf_file} ~{vep_annotated_vcf_name} ~{cpu_cores} ~{memory} ~{reannotate_ac_af} ~{genome_build} \
-        ~{mpc_ht_uri} ~{clinvar_vcf_uri} ~{omim_uri} ~{revel_file} ~{gene_list}
+        python3.9 vep_annotate.py -i ~{vcf_file} -o ~{vep_annotated_vcf_name} --cores ~{cpu_cores} --mem ~{memory} \
+        --reannotate-ac-af ~{reannotate_ac_af} --build ~{genome_build} --loeuf-v2 ~{loeuf_v2_uri} --loeuf-v4 ~{loeuf_v4_uri} \
+        --mpc ~{mpc_ht_uri} --clinvar ~{clinvar_vcf_uri} --omim ~{omim_uri} --revel ~{revel_file} --genes ~{gene_list} \
         cp $(ls . | grep hail*.log) hail_log.txt
         bcftools index -t ~{vep_annotated_vcf_name}
     >>>

@@ -5,18 +5,39 @@ import pandas as pd
 import sys
 import ast
 import os
+import argparse
 
-vcf_file = sys.argv[1]
-vep_annotated_vcf_name = sys.argv[2]
-cores = sys.argv[3]  # string
-mem = int(np.floor(float(sys.argv[4])))
-reannotate_ac_af = ast.literal_eval(sys.argv[5].capitalize())
-build = sys.argv[6]
-mpc_ht_uri = sys.argv[7]
-clinvar_vcf_uri = sys.argv[8]
-omim_uri = sys.argv[9]
-revel_file = sys.argv[10]
-gene_list = sys.argv[11]
+parser = argparse.ArgumentParser(description='Parse arguments')
+parser.add_argument('-i', dest='vcf_file', help='Input VCF file')
+parser.add_argument('-o', dest='vep_annotated_vcf_name', help='Output filename')
+parser.add_argument('--cores', dest='cores', help='CPU cores')
+parser.add_argument('--mem', dest='mem', help='Memory')
+parser.add_argument('--cores', dest='cores', help='CPU cores')
+parser.add_argument('--reannotate-ac-af', dest='reannotate_ac_af', help='Whether or not AC/AF should be recalculated by Hail')
+parser.add_argument('--build', dest='build', help='Genome build')
+parser.add_argument('--mpc', dest='mpc_ht_uri', help='MPC scores HT')
+parser.add_argument('--clinvar', dest='clinvar_vcf_uri', help='ClinVar VCF')
+parser.add_argument('--omim', dest='omim_uri', help='OMIM file')
+parser.add_argument('--revel', dest='revel_file', help='REVEL file')
+parser.add_argument('--loeuf-v2', dest='loeuf_v2_uri', help='LOEUF scores from gnomAD v2.1.1')
+parser.add_argument('--loeuf-v4', dest='loeuf_v4_uri', help='LOEUF scores from gnomAD v4.1')
+parser.add_argument('--genes', dest='gene_list', help='Gene list txt file')
+
+args = parser.parse_args()
+
+vcf_file = args.vcf_file
+vep_annotated_vcf_name = args.vep_annotated_vcf_name
+cores = args.cores  # string
+mem = int(np.floor(float(args.mem)))
+reannotate_ac_af = ast.literal_eval(args.reannotate_ac_af)
+build = args.build
+mpc_ht_uri = args.mpc_ht_uri
+clinvar_vcf_uri = args.clinvar_vcf_uri
+omim_uri = args.omim_uri
+revel_file = args.revel_file
+loeuf_v2_uri = args.loeuf_v2_uri
+loeuf_v4_uri = args.loeuf_v4_uri
+gene_list = args.gene_list
 
 hl.init(min_block_size=128, spark_conf={"spark.executor.cores": cores, 
                     "spark.executor.memory": f"{mem}g",
@@ -131,7 +152,6 @@ omim = hl.import_table(omim_uri).key_by('approvedGeneSymbol')
 
 mt_by_gene = mt.explode_rows(mt.vep.transcript_consequences)
 mt_by_gene = mt_by_gene.key_rows_by(mt_by_gene.vep.transcript_consequences.SYMBOL)
-# mt_by_gene = mt_by_gene.filter_rows(mt_by_gene.vep.transcript_consequences.SYMBOL=='', keep=False)
 mt_by_gene = mt_by_gene.annotate_rows(vep=mt_by_gene.vep.annotate(
     transcript_consequences=mt_by_gene.vep.transcript_consequences.annotate(
         OMIM_MIM_number=hl.if_else(hl.is_defined(omim[mt_by_gene.row_key]), omim[mt_by_gene.row_key].mimNumber, ''),
