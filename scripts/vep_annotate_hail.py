@@ -157,7 +157,16 @@ mt_by_gene = mt_by_gene.annotate_rows(vep=mt_by_gene.vep.annotate(
         OMIM_MIM_number=hl.if_else(hl.is_defined(omim[mt_by_gene.row_key]), omim[mt_by_gene.row_key].mimNumber, ''),
         OMIM_inheritance_code=hl.if_else(hl.is_defined(omim[mt_by_gene.row_key]), omim[mt_by_gene.row_key].inheritance_code, ''))))
 
-csq_fields_str = hl.eval(mt.vep_csq_header) + '|'.join(['', 'OMIM_MIM_number', 'OMIM_inheritance_code'])
+# annotate LOEUF from gnomAD
+loeuf_v4_ht = hl.import_table(loeuf_v4_uri).key_by('transcript')
+loeuf_v2_ht = hl.import_table(loeuf_v2_uri, force_bgz=loeuf_v2_uri.split('.')[-1] in ['bgz','gz']).key_by('transcript')
+mt_by_transcript = mt_by_gene.key_rows_by(mt_by_gene.vep.transcript_consequences.Feature)
+mt_by_transcript = mt_by_transcript.annotate_rows(vep=mt_by_transcript.vep.annotate(
+    transcript_consequences=mt_by_transcript.vep.transcript_consequences.annotate(
+        LOEUF_v2=hl.if_else(hl.is_defined(loeuf_v2_ht[mt_by_transcript.row_key]), loeuf_v2_ht[mt_by_transcript.row_key]['oe_lof_upper'], ''),
+        LOEUF_v4=hl.if_else(hl.is_defined(loeuf_v4_ht[mt_by_transcript.row_key]), loeuf_v4_ht[mt_by_transcript.row_key]['lof.oe_ci.upper'], ''))))
+
+csq_fields_str = hl.eval(mt.vep_csq_header) + '|'.join(['', 'OMIM_MIM_number', 'OMIM_inheritance_code', 'LOEUF_v2', 'LOEUF_v4'])
 
 # annotate with gene list, if provided
 if gene_list.split('.')[-1] == 'txt':
