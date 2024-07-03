@@ -114,7 +114,7 @@ task extract_complex {
         zcat ~{prefix}.bed.gz | grep -f ~{prefix}_complex_events > ~{prefix}_complex_events.bed
 
         # Format the extracted events
-        cat ~{prefix}_complex_events.bed | awk -v OFS="\t" '{print $1,$2,$3,$4,$6,$5}' > ~{prefix}_complex_events_formatted.bed
+        cat ~{prefix}_complex_events.bed | awk -v OFS="\t" '{print $1,$2,$3,$4,$6,$5,$18}' > ~{prefix}_complex_events_formatted.bed
     >>>
 
     runtime {
