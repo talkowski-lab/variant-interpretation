@@ -157,7 +157,7 @@ mt_by_gene = mt_by_gene.annotate_rows(vep=mt_by_gene.vep.annotate(
         OMIM_inheritance_code=hl.if_else(hl.is_defined(omim[mt_by_gene.row_key]), omim[mt_by_gene.row_key].inheritance_code, ''))))
 
 # annotate LOEUF from gnomAD
-loeuf_v4_ht = hl.import_table(loeuf_v4_uri).key_by('transcript')
+loeuf_v4_ht = hl.import_table(loeuf_v4_uri, force_bgz=loeuf_v4_uri.split('.')[-1] in ['bgz','gz']).key_by('transcript')
 loeuf_v2_ht = hl.import_table(loeuf_v2_uri, force_bgz=loeuf_v2_uri.split('.')[-1] in ['bgz','gz']).key_by('transcript')
 mt_by_transcript = mt_by_gene.key_rows_by(mt_by_gene.vep.transcript_consequences.Feature)
 mt_by_transcript = mt_by_transcript.annotate_rows(vep=mt_by_transcript.vep.annotate(
