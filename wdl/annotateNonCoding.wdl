@@ -1,5 +1,7 @@
 version 1.0
 
+import "mergeVCFs.wdl" as mergeVCFs
+
 struct RuntimeAttr {
     Float? mem_gb
     Int? cpu_cores
@@ -13,7 +15,10 @@ workflow annotateNonCoding {
     input {
         Array[File] vep_vcf_files
         File noncoding_bed
-        String hail_docker
+        String cohort_prefix
+        Boolean sort_after_merge
+        String sv_base_mini_docker
+        String hail_docker        
     }
     
     scatter (vcf_file in vep_vcf_files) {
@@ -25,8 +30,17 @@ workflow annotateNonCoding {
         }
     }
 
+    call mergeVCFs.mergeVCFs as mergeVCFs {
+        input:
+        vcf_files=annotateFromBed.noncoding_vcf,
+        sv_base_mini_docker=sv_base_mini_docker,
+        cohort_prefix=cohort_prefix + basename(noncoding_bed, '.bed'),
+        sort_after_merge=sort_after_merge
+    }
+
     output {
-        Array[File] noncoding_vcf_files = annotateFromBed.noncoding_vcf
+        File noncoding_vcf_file = mergeVCFs.merged_vcf_file
+        File noncoding_vcf_idx = mergeVCFs.merged_vcf_idx
     }
 }
 
@@ -89,7 +103,7 @@ task annotateFromBed {
                         "spark.driver.memory": f"{mem}g"
                         }, tmp_dir="tmp", local_tmpdir="tmp")
 
-    bed = hl.import_bed(noncoding_bed, reference_genome='GRCh38')
+    bed = hl.import_bed(noncoding_bed, reference_genome='GRCh38', skip_invalid_intervals=True)
     mt = hl.import_vcf(vcf_file, force_bgz=True, array_elements_required=False, call_fields=[], reference_genome='GRCh38')
     mt = mt.annotate_rows(info=mt.info.annotate(PREDICTED_NONCODING=bed[mt.locus].target))
 
