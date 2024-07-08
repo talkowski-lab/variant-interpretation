@@ -22,6 +22,7 @@ parser.add_argument('--revel', dest='revel_file', help='REVEL file')
 parser.add_argument('--loeuf-v2', dest='loeuf_v2_uri', help='LOEUF scores from gnomAD v2.1.1')
 parser.add_argument('--loeuf-v4', dest='loeuf_v4_uri', help='LOEUF scores from gnomAD v4.1')
 parser.add_argument('--genes', dest='gene_list', help='Gene list txt file')
+parser.add_argument('--project-id', dest='project_id', help='Google Project ID')
 
 args = parser.parse_args()
 
@@ -38,6 +39,7 @@ revel_file = args.revel_file
 loeuf_v2_uri = args.loeuf_v2_uri
 loeuf_v4_uri = args.loeuf_v4_uri
 gene_list = args.gene_list
+gcp_project = args.project_id
 
 print(os.environ)
 hl.init(min_block_size=128, spark_conf={"spark.executor.cores": cores, 
@@ -46,7 +48,7 @@ hl.init(min_block_size=128, spark_conf={"spark.executor.cores": cores,
                     "spark.driver.memory": f"{mem}g",
                     'spark.hadoop.fs.gs.requester.pays.mode': 'CUSTOM',
                     'spark.hadoop.fs.gs.requester.pays.buckets': 'hail-datasets-us-central1',
-                    'spark.hadoop.fs.gs.requester.pays.project.id': os.environ['GCP_PROJECT'],
+                    'spark.hadoop.fs.gs.requester.pays.project.id': gcp_project,
                     }, tmp_dir="tmp", local_tmpdir="tmp",
                     )
 
