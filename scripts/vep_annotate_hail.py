@@ -121,9 +121,14 @@ if build=='GRCh38':
 
 # annotate CADD
 cadd_ht = hl.experimental.load_dataset(name='CADD', version='1.6', reference_genome=build,
-                                region='us-central1', cloud='gcp')
+                                region='us', cloud='gcp')
 mt = mt.annotate_rows(info = mt.info.annotate(CADD_raw_score=cadd_ht[mt.locus, mt.alleles].raw_score,
                                               CADD_PHRED_score=cadd_ht[mt.locus, mt.alleles].PHRED_score))
+
+# annotate DANN
+dann_ht = hl.experimental.load_dataset(name='DANN', version=None, reference_genome=build,
+                                    region='us', cloud='gcp')
+mt = mt.annotate_rows(info = mt.info.annotate(DANN_score=dann_ht[mt.locus, mt.alleles].score))
 
 # run VEP
 mt = hl.vep(mt, config='vep_config.json', csq=True, tolerate_parse_error=True)
