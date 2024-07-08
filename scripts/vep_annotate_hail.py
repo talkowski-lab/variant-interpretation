@@ -119,6 +119,12 @@ if build=='GRCh38':
     mt = mt.annotate_rows(info = mt.info.annotate(CLNSIG=clinvar_vcf.rows()[mt.row_key].info.CLNSIG,
                                                   CLNREVSTAT=clinvar_vcf.rows()[mt.row_key].info.CLNREVSTAT))
 
+# annotate CADD
+cadd_ht = hl.experimental.load_dataset(name='CADD', version='1.6', reference_genome=build,
+                                region='us-central1', cloud='gcp')
+mt = mt.annotate_rows(info = mt.info.annotate(CADD_raw_score=cadd_ht[mt.locus, mt.alleles].raw_score,
+                                              CADD_PHRED_score=cadd_ht[mt.locus, mt.alleles].PHRED_score))
+
 # run VEP
 mt = hl.vep(mt, config='vep_config.json', csq=True, tolerate_parse_error=True)
 mt = mt.annotate_rows(info = mt.info.annotate(CSQ=mt.vep))
