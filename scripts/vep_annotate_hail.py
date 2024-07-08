@@ -41,8 +41,12 @@ gene_list = args.gene_list
 hl.init(min_block_size=128, spark_conf={"spark.executor.cores": cores, 
                     "spark.executor.memory": f"{mem}g",
                     "spark.driver.cores": cores,
-                    "spark.driver.memory": f"{mem}g"
-                    }, tmp_dir="tmp", local_tmpdir="tmp")
+                    "spark.driver.memory": f"{mem}g",
+                    'spark.hadoop.fs.gs.requester.pays.mode': 'CUSTOM',
+                    'spark.hadoop.fs.gs.requester.pays.buckets': 'hail-datasets-us-central1',
+                    'spark.hadoop.fs.gs.requester.pays.project.id': os.environ['WORKSPACE_NAMESPACE'],
+                    }, tmp_dir="tmp", local_tmpdir="tmp",
+                    )
 
 #split-multi
 def split_multi_ssc(mt):
@@ -120,16 +124,16 @@ if build=='GRCh38':
                                                   CLNREVSTAT=clinvar_vcf.rows()[mt.row_key].info.CLNREVSTAT))
 
 # annotate CADD
-# cadd_ht = hl.experimental.load_dataset(name='CADD', version='1.6', reference_genome=build,
-#                                 region='us', cloud='gcp')
-cadd_ht = hl.read_table(f"gs://hail-datasets-us-central1/CADD/v1.6/{build}/table.ht")
+cadd_ht = hl.experimental.load_dataset(name='CADD', version='1.6', reference_genome=build,
+                                region='us-central1', cloud='gcp')
+# cadd_ht = hl.read_table(f"gs://hail-datasets-us-central1/CADD/v1.6/{build}/table.ht")
 mt = mt.annotate_rows(info = mt.info.annotate(CADD_raw_score=cadd_ht[mt.locus, mt.alleles].raw_score,
                                               CADD_PHRED_score=cadd_ht[mt.locus, mt.alleles].PHRED_score))
 
 # annotate DANN
-# dann_ht = hl.experimental.load_dataset(name='DANN', version=None, reference_genome=build,
-#                                     region='us', cloud='gcp')
-dann_ht = hl.read_table(f"gs://hail-datasets-us-central1/DANN/{build}/table.ht")
+dann_ht = hl.experimental.load_dataset(name='DANN', version=None, reference_genome=build,
+                                    region='us', cloud='gcp')
+# dann_ht = hl.read_table(f"gs://hail-datasets-us-central1/DANN/{build}/table.ht")
 mt = mt.annotate_rows(info = mt.info.annotate(DANN_score=dann_ht[mt.locus, mt.alleles].score))
 
 # run VEP
