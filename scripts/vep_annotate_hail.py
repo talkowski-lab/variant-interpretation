@@ -39,25 +39,13 @@ loeuf_v2_uri = args.loeuf_v2_uri
 loeuf_v4_uri = args.loeuf_v4_uri
 gene_list = args.gene_list
 
-# If this is running in a cloud function, then GCP_PROJECT should be defined
-if 'GCP_PROJECT' in os.environ:
-    project_id = os.environ['GCP_PROJECT']
-
-# else if this is running locally then GOOGLE_APPLICATION_CREDENTIALS should be defined
-elif 'GOOGLE_APPLICATION_CREDENTIALS' in os.environ:
-    with open(os.environ['GOOGLE_APPLICATION_CREDENTIALS'], 'r') as fp:
-        credentials = json.load(fp)
-    project_id = credentials['project_id']
-else:
-    raise Exception('Failed to determine project_id')
-
 hl.init(min_block_size=128, spark_conf={"spark.executor.cores": cores, 
                     "spark.executor.memory": f"{mem}g",
                     "spark.driver.cores": cores,
                     "spark.driver.memory": f"{mem}g",
                     'spark.hadoop.fs.gs.requester.pays.mode': 'CUSTOM',
                     'spark.hadoop.fs.gs.requester.pays.buckets': 'hail-datasets-us-central1',
-                    'spark.hadoop.fs.gs.requester.pays.project.id': project_id,
+                    'spark.hadoop.fs.gs.requester.pays.project.id': os.environ['GOOGLE_PROJECT'],
                     }, tmp_dir="tmp", local_tmpdir="tmp",
                     )
 
