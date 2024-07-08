@@ -46,7 +46,7 @@ hl.init(min_block_size=128, spark_conf={"spark.executor.cores": cores,
                     "spark.driver.memory": f"{mem}g",
                     'spark.hadoop.fs.gs.requester.pays.mode': 'CUSTOM',
                     'spark.hadoop.fs.gs.requester.pays.buckets': 'hail-datasets-us-central1',
-                    'spark.hadoop.fs.gs.requester.pays.project.id': os.environ['GOOGLE_PROJECT'],
+                    'spark.hadoop.fs.gs.requester.pays.project.id': os.environ['GCP_PROJECT'],
                     }, tmp_dir="tmp", local_tmpdir="tmp",
                     )
 
