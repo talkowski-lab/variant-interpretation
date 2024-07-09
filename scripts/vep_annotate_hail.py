@@ -41,7 +41,6 @@ loeuf_v4_uri = args.loeuf_v4_uri
 gene_list = args.gene_list
 gcp_project = args.project_id
 
-print(os.environ)
 hl.init(min_block_size=128, spark_conf={"spark.executor.cores": cores, 
                     "spark.executor.memory": f"{mem}g",
                     "spark.driver.cores": cores,
@@ -135,7 +134,7 @@ mt = mt.annotate_rows(info = mt.info.annotate(CADD_raw_score=cadd_ht[mt.locus, m
 
 # annotate DANN
 dann_ht = hl.experimental.load_dataset(name='DANN', version=None, reference_genome=build,
-                                    region='us', cloud='gcp')
+                                    region='us-central1', cloud='gcp')
 mt = mt.annotate_rows(info = mt.info.annotate(DANN_score=dann_ht[mt.locus, mt.alleles].score))
 
 # run VEP
