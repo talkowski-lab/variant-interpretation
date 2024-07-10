@@ -92,9 +92,6 @@ try:
 except:
     pass
 
-# filter by ploidy
-mt = mt.filter_entries(mt.GT.ploidy<=2)
-
 # annotate cohort AC to INFO field (after splitting multiallelic)
 mt = mt.annotate_rows(info=mt.info.annotate(cohort_AC=mt.info.AC[mt.a_index - 1],
                                             cohort_AF=mt.info.AF[mt.a_index - 1]))

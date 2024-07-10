@@ -19,6 +19,7 @@ workflow inferPlatform {
         String bucket_id
         String hail_docker
         String genome_build='GRCh38'
+        Float binarization_threshold=0.25
         Int n_pcs=10
         Int hdbscan_min_cluster_size=0
         Int hdbscan_min_samples=50
@@ -40,6 +41,7 @@ workflow inferPlatform {
             bucket_id=bucket_id,
             input_size=getCallRateMTSizes.mt_size,
             n_pcs=n_pcs,
+            binarization_threshold=binarization_threshold,
             hdbscan_min_cluster_size=hdbscan_min_cluster_size,
             hdbscan_min_samples=hdbscan_min_samples,
             runtime_attr_override=runtime_attr_infer_platform
@@ -60,6 +62,7 @@ task inferPlatformPCA {
         String genome_build
         String bucket_id
         Float input_size
+        Float binarization_threshold
         Int n_pcs
         Int hdbscan_min_cluster_size
         Int hdbscan_min_samples
@@ -116,8 +119,9 @@ task inferPlatformPCA {
     n_pcs = int(sys.argv[5])
     hdbscan_min_cluster_size = int(sys.argv[6])
     hdbscan_min_samples = int(sys.argv[7])
-    cores = sys.argv[8]
-    mem = int(np.floor(float(sys.argv[9])))
+    binarization_threshold = float(sys.argv[8])
+    cores = sys.argv[9]
+    mem = int(np.floor(float(sys.argv[10])))
 
     hl.init(min_block_size=128, spark_conf={"spark.executor.cores": cores, 
                         "spark.executor.memory": f"{mem}g",
@@ -178,7 +182,8 @@ task inferPlatformPCA {
             mt = hl.read_matrix_table(uri)
             call_rate_mt = call_rate_mt.union_cols(mt)
     
-    eigenvalues, scores_ht, loadings_ht = gnomad.sample_qc.platform.run_platform_pca(call_rate_mt, n_pcs=n_pcs)
+    eigenvalues, scores_ht, loadings_ht = gnomad.sample_qc.platform.run_platform_pca(call_rate_mt, n_pcs=n_pcs,
+            binarization_threshold=binarization_threshold)
     loadings_ht.write(f"{bucket_id}/hail/infer_platform_pca/{cohort_set_id}_platform_pca_loadings.ht", overwrite=True)
     scores_ht.write(f"{bucket_id}/hail/infer_platform_pca/{cohort_set_id}_platform_pca_scores.ht", overwrite=True)
 
@@ -190,7 +195,7 @@ task inferPlatformPCA {
     platform_df.to_csv(f"{cohort_set_id}_assigned_platforms.tsv", sep='\t', index=False)
     EOF
     python3 infer_platform.py ~{sep=',' call_rate_mts} ~{genome_build} ~{cohort_set_id} ~{bucket_id} \
-        ~{n_pcs} ~{hdbscan_min_cluster_size} ~{hdbscan_min_samples} ~{cpu_cores} ~{memory}
+        ~{n_pcs} ~{hdbscan_min_cluster_size} ~{hdbscan_min_samples} ~{binarization_threshold} ~{cpu_cores} ~{memory}
     >>>
 
     output {
