@@ -107,6 +107,9 @@ task annotateFromBed {
     mt = hl.import_vcf(vcf_file, force_bgz=True, array_elements_required=False, call_fields=[], reference_genome='GRCh38')
     mt = mt.annotate_rows(info=mt.info.annotate(PREDICTED_NONCODING=bed[mt.locus].target))
 
+    # filter only annotated
+    mt = mt.filter_rows(hl.is_defined(mt.info.PREDICTED_NONCODING))
+    
     header = hl.get_vcf_metadata(vcf_file)
     header['info']['PREDICTED_NONCODING'] = {'Description': "Class(es) of noncoding elements disrupted by SNV/Indel.", 
                                             'Number': '.', 'Type': 'String'}
