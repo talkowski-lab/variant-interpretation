@@ -69,6 +69,7 @@ workflow ResolveCTX {
 
     output {
         File cluster_bed = clusterCPX.svtk_bedcluster
+        Array[File] all_cpx_dictionary = extract_complex.cpx_dictionary
         Array[File] all_cpx_formatted = extract_complex.cpx_formatted
     }
 }
@@ -96,6 +97,7 @@ task extract_complex {
     RuntimeAttr runtime_attr = select_first([runtime_attr_override, default_attr])
 
     output {
+        File cpx_dictionary = "~{prefix}_complex_events.bed"
         File cpx_formatted = "~{prefix}_complex_events_formatted.bed"
     }
 
@@ -113,8 +115,16 @@ task extract_complex {
         # Extract calls for the interesting events
         zcat ~{prefix}.bed.gz | grep -f ~{prefix}_complex_events > ~{prefix}_complex_events.bed
 
-        # Format the extracted events
-        cat ~{prefix}_complex_events.bed | awk -v OFS="\t" '{print $1,$2,$3,$4,$6,$5}' > ~{prefix}_complex_events_formatted.bed
+        ## for svtk formatting, create +/-50bp padding + generate unique name that includes sample + event ID + make each name unique
+        ## breakpoint 1
+        cat ~{prefix}_complex_events.bed | awk -v OFS="\t" '{print $1"_"$7,$2-50,$3+50,$18"_"$4"_bp1",$6,$5}' > ~{prefix}_complex_events_formatted.bed1
+
+        ## breakpoint2
+        cat ~{prefix}_complex_events.bed | awk -v OFS="\t" '{print $8"_"$7,$9-50,$9+$11+50,$18"_"$4"_bp2",$6,$7}' > ~{prefix}_complex_events_formatted.bed2
+
+        ## stitch
+        cat ~{prefix}_complex_events_formatted.bed1 ~{prefix}_complex_events_formatted.bed2 > ~{prefix}_complex_events_formatted.bed
+        
     >>>
 
     runtime {
@@ -156,7 +166,7 @@ task clusterCPX {
 
         ## combine all input beds into one for per batch allele count
         cat ~{sep=" " input_beds} > unified.bed
-        svtk bedcluster unified.bed complex_unified_cluster.bed -f 0.5
+        svtk bedcluster unified.bed complex_unified_cluster.bed
         bgzip -c complex_unified_cluster.bed > ~{prefix}_cpx.bed.gz
     >>>
 
