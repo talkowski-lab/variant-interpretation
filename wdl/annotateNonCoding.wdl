@@ -30,17 +30,19 @@ workflow annotateNonCoding {
         }
     }
 
-    call mergeVCFs.mergeVCFs as mergeVCFs {
-        input:
-        vcf_files=annotateFromBed.noncoding_vcf,
-        sv_base_mini_docker=sv_base_mini_docker,
-        cohort_prefix=cohort_prefix + basename(noncoding_bed, '.bed'),
-        sort_after_merge=sort_after_merge
-    }
+    # call mergeVCFs.mergeVCFs as mergeVCFs {
+    #     input:
+    #     vcf_files=annotateFromBed.noncoding_vcf,
+    #     sv_base_mini_docker=sv_base_mini_docker,
+    #     cohort_prefix=cohort_prefix + basename(noncoding_bed, '.bed'),
+    #     sort_after_merge=sort_after_merge
+    # }
 
     output {
-        File noncoding_vcf_file = mergeVCFs.merged_vcf_file
-        File noncoding_vcf_idx = mergeVCFs.merged_vcf_idx
+        Array[File] noncoding_vcf_files = annotateFromBed.noncoding_vcf
+        Array[File] noncoding_vcf_idx = annotateFromBed.noncoding_vcf_idx
+        # File noncoding_vcf_file = mergeVCFs.merged_vcf_file
+        # File noncoding_vcf_idx = mergeVCFs.merged_vcf_idx
     }
 }
 
@@ -109,16 +111,17 @@ task annotateFromBed {
 
     # filter only annotated
     mt = mt.filter_rows(hl.is_defined(mt.info.PREDICTED_NONCODING))
-    
+
     header = hl.get_vcf_metadata(vcf_file)
     header['info']['PREDICTED_NONCODING'] = {'Description': "Class(es) of noncoding elements disrupted by SNV/Indel.", 
                                             'Number': '.', 'Type': 'String'}
-    hl.export_vcf(mt, output_filename, metadata=header)
+    hl.export_vcf(mt, output_filename, metadata=header, tabix=True)
     EOF
     python3 annotate_noncoding.py ~{vcf_file} ~{noncoding_bed} ~{cpu_cores} ~{memory} ~{output_filename}
     >>>
 
     output {
         File noncoding_vcf = output_filename
+        File noncoding_vcf_idx = output_filename + '.tbi'
     }
 }
