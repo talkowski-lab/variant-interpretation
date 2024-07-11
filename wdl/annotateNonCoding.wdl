@@ -16,7 +16,7 @@ workflow annotateNonCoding {
         Array[File] vep_vcf_files
         File noncoding_bed
         String cohort_prefix
-        Boolean sort_after_merge
+        # Boolean sort_after_merge
         String sv_base_mini_docker
         String hail_docker        
     }
