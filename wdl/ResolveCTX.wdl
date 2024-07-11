@@ -103,7 +103,7 @@ task extract_complex {
         File cpx_formatted = "~{prefix}_complex_events_formatted.bed"
     }
 
-    command <<<ry.
+    command <<<
         set -euo pipefail
 
         # Convert to bed file
