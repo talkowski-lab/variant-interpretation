@@ -41,14 +41,16 @@ loeuf_v4_uri = args.loeuf_v4_uri
 gene_list = args.gene_list
 gcp_project = args.project_id
 
-hl.init(min_block_size=128, spark_conf={"spark.executor.cores": cores, 
-                    "spark.executor.memory": f"{mem}g",
-                    "spark.driver.cores": cores,
-                    "spark.driver.memory": f"{mem}g",
-                    'spark.hadoop.fs.gs.requester.pays.mode': 'CUSTOM',
-                    'spark.hadoop.fs.gs.requester.pays.buckets': 'hail-datasets-us-central1',
-                    'spark.hadoop.fs.gs.requester.pays.project.id': gcp_project,
-                    }, tmp_dir="tmp", local_tmpdir="tmp",
+hl.init(min_block_size=128, 
+        # spark_conf={"spark.executor.cores": cores, 
+        #             "spark.executor.memory": f"{mem}g",
+        #             "spark.driver.cores": cores,
+        #             "spark.driver.memory": f"{mem}g",
+        #             'spark.hadoop.fs.gs.requester.pays.mode': 'CUSTOM',
+        #             'spark.hadoop.fs.gs.requester.pays.buckets': 'hail-datasets-us-central1',
+        #             'spark.hadoop.fs.gs.requester.pays.project.id': gcp_project,
+        #             }, 
+        tmp_dir="tmp", local_tmpdir="tmp",
                     )
 
 #split-multi
