@@ -70,6 +70,7 @@ workflow ResolveCTX {
 
     output {
         File cluster_bed = clusterCPX.svtk_bedcluster
+        File cluster_dictionary = clusterCPX.svtk_dictionary
         Array[File] all_cpx_dictionary = extract_complex.cpx_dictionary
         Array[File] all_cpx_formatted = extract_complex.cpx_formatted
     }
@@ -102,7 +103,7 @@ task extract_complex {
         File cpx_formatted = "~{prefix}_complex_events_formatted.bed"
     }
 
-    command <<<
+    command <<<ry.
         set -euo pipefail
 
         # Convert to bed file
@@ -161,7 +162,7 @@ task clusterCPX {
 
     output {
         File svtk_bedcluster = "~{prefix}_cpx.bed.gz"
-        File svtik_dictionary = "~{prefix}_cpx.dictionary.bed.gz"
+        File svtk_dictionary = "~{prefix}_cpx.dictionary.bed.gz"
     }
 
     command <<<
