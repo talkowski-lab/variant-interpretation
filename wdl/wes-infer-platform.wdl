@@ -14,27 +14,45 @@ struct RuntimeAttr {
 # cohort set
 workflow inferPlatform {
     input {
-        Array[String] call_rate_mt
+        Array[File] vcf_files
+        Array[String] cohort_prefixes
+        File interval_list
+
         String cohort_set_id
         String bucket_id
         String hail_docker
         String genome_build='GRCh38'
+
         Float binarization_threshold=0.25
         Int n_pcs=10
         Int hdbscan_min_cluster_size=0
         Int hdbscan_min_samples=50
+        RuntimeAttr? runtime_attr_get_call_rate_mt
         RuntimeAttr? runtime_attr_infer_platform
     }
 
+    scatter (pair in zip(vcf_files, cohort_prefixes)) {
+        File vcf_file = pair.left
+        String cohort_prefix = pair.right
+        call getCallRateMT {
+            input:
+            vcf_file=vcf_file,
+            interval_list=interval_list,
+            cohort_prefix=cohort_prefix,
+            genome_build=genome_build,
+            hail_docker=hail_docker,
+            runtime_attr_override=runtime_attr_get_call_rate_mt
+        }
+    }
     call helpers.getHailMTSizes as getCallRateMTSizes {
         input:
-        mt_uris=call_rate_mt,
+        mt_uris=getCallRateMT.call_rate_mt,
         hail_docker=hail_docker
     }
 
     call inferPlatformPCA {
         input:
-            call_rate_mts=call_rate_mt,
+            call_rate_mts=getCallRateMT.call_rate_mt,
             hail_docker=hail_docker,
             genome_build=genome_build,
             cohort_set_id=cohort_set_id,
@@ -53,6 +71,91 @@ workflow inferPlatform {
         File platform_tsv = inferPlatformPCA.platform_tsv
     }
 }   
+
+task getCallRateMT {
+    input {
+        File vcf_file
+        File interval_list
+        String cohort_prefix
+        String genome_build
+        String hail_docker
+        RuntimeAttr? runtime_attr_override
+    }
+    Float input_size = size(vcf_file, 'GB')
+    Float base_disk_gb = 10.0
+    Float input_disk_scale = 5.0
+
+    RuntimeAttr runtime_default = object {
+        mem_gb: 4,
+        disk_gb: ceil(base_disk_gb + input_size * input_disk_scale),
+        cpu_cores: 1,
+        preemptible_tries: 3,
+        max_retries: 1,
+        boot_disk_gb: 10
+    }
+
+    RuntimeAttr runtime_override = select_first([runtime_attr_override, runtime_default])
+
+    Float memory = select_first([runtime_override.mem_gb, runtime_default.mem_gb])
+    Int cpu_cores = select_first([runtime_override.cpu_cores, runtime_default.cpu_cores])
+    
+    runtime {
+        memory: "~{memory} GB"
+        disks: "local-disk ~{select_first([runtime_override.disk_gb, runtime_default.disk_gb])} HDD"
+        cpu: cpu_cores
+        preemptible: select_first([runtime_override.preemptible_tries, runtime_default.preemptible_tries])
+        maxRetries: select_first([runtime_override.max_retries, runtime_default.max_retries])
+        docker: hail_docker
+        bootDiskSizeGb: select_first([runtime_override.boot_disk_gb, runtime_default.boot_disk_gb])
+    }
+    command <<<
+    cat <<EOF > get_call_rate_mt.py
+    import hail as hl
+    import pandas as pd
+    import numpy as np
+    import os
+    import sys
+    import datetime
+    from gnomad.sample_qc.ancestry import apply_onnx_classification_model, apply_sklearn_classification_model, assign_population_pcs
+    from gnomad.utils.filtering import filter_to_adj
+    import gnomad.sample_qc.platform 
+    import logging
+    from typing import List, Optional, Tuple
+    from logging import INFO, DEBUG
+    logger = logging.getLogger()
+    logger.setLevel(INFO)
+
+    vcf_file = sys.argv[1]
+    interval_list = sys.argv[2]
+    cohort_prefix = sys.argv[3]
+    genome_build = sys.argv[4]
+    cores = sys.argv[5]
+    mem = int(np.floor(float(sys.argv[6])))
+
+    hl.init(min_block_size=128, spark_conf={"spark.executor.cores": cores, 
+                        "spark.executor.memory": f"{mem}g",
+                        "spark.driver.cores": cores,
+                        "spark.driver.memory": f"{mem}g"
+                        }, tmp_dir="tmp", local_tmpdir="tmp")
+
+    mt = hl.import_vcf(vcf_file, reference_genome=genome_build, force_bgz=vcf_file.split('.')[-1] in ['gz', 'bgz'],
+                        array_elements_required=False, call_fields=[], find_replace=('nul', '.'))
+    intervals = hl.import_locus_intervals(interval_list, reference_genome=genome_build)
+
+    mt = mt.annotate_entries(GT=hl.or_missing(mt.DP>0, mt.GT))
+    call_rate_mt = gnomad.sample_qc.platform.compute_callrate_mt(mt, intervals)
+    call_rate_mt.write(f"gs://fc-16559487-7c8d-477e-8bce-47462ad86a98/hail/call_rate_mt/{cohort_prefix}_call_rate.mt",
+                    overwrite=True)    
+    EOF
+
+    python3 get_call_rate_mt.py ~{vcf_file} ~{interval_list} ~{cohort_prefix} ~{genome_build} \
+        ~{cpu_cores} ~{memory}
+    >>>
+
+    output {
+        String call_rate_mt = "gs://fc-16559487-7c8d-477e-8bce-47462ad86a98/hail/call_rate_mt/~{cohort_prefix}_call_rate.mt"
+    }
+}
 
 task inferPlatformPCA {
     input {
