@@ -62,6 +62,7 @@ workflow ResolveCTX {
     call clusterCPX {
         input:
             input_beds = extract_complex.cpx_formatted,
+            input_dictionaries = extract_complex.cpx_dictionary,
             docker = docker_path,
             prefix = prefix,
             runtime_attr_override = runtime_attr_cluster
@@ -141,6 +142,7 @@ task extract_complex {
 task clusterCPX {
     input {
         Array[File] input_beds
+        Array[File] input_dictionaries
         String docker
         String prefix
         RuntimeAttr? runtime_attr_override
@@ -159,6 +161,7 @@ task clusterCPX {
 
     output {
         File svtk_bedcluster = "~{prefix}_cpx.bed.gz"
+        File svtik_dictionary = "~{prefix}_cpx.dictionary.bed.gz"
     }
 
     command <<<
@@ -168,6 +171,11 @@ task clusterCPX {
         cat ~{sep=" " input_beds} > unified.bed
         svtk bedcluster unified.bed complex_unified_cluster.bed
         bgzip -c complex_unified_cluster.bed > ~{prefix}_cpx.bed.gz
+
+        ## generate per batch dictionary for post filtering
+        cat ~{sep=" " input_dictionaries} > dictionary.bed
+        bgzip -c dictionary.bed > ~{prefix}_cpx.dictionary.bed.gz
+
     >>>
 
     runtime {
