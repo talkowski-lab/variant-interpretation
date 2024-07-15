@@ -72,8 +72,8 @@ workflow ResolveCTX {
         File cluster_bed = clusterCPX.svtk_bedcluster
         File cluster_dictionary = clusterCPX.svtk_dictionary
         File cluster_bed_filtered = clusterCPX.filtered_bedcluster
-        #Array[File] all_cpx_dictionary = extract_complex.cpx_dictionary
-        #Array[File] all_cpx_formatted = extract_complex.cpx_formatted
+        Array[File] all_cpx_dictionary = extract_complex.cpx_dictionary
+        Array[File] all_cpx_formatted = extract_complex.cpx_formatted
     }
 }
 
