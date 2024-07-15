@@ -128,89 +128,8 @@ if build=='GRCh38':
     mt = mt.annotate_rows(info = mt.info.annotate(CLNSIG=clinvar_vcf.rows()[mt.row_key].info.CLNSIG,
                                                   CLNREVSTAT=clinvar_vcf.rows()[mt.row_key].info.CLNREVSTAT))
 
-# annotate CADD
-# cadd_ht = hl.experimental.load_dataset(name='CADD', version='1.6', reference_genome=build,
-#                                 region='us-central1', cloud='gcp')
-# mt = mt.annotate_rows(info = mt.info.annotate(CADD_raw_score=cadd_ht[mt.locus, mt.alleles].raw_score,
-#                                               CADD_PHRED_score=cadd_ht[mt.locus, mt.alleles].PHRED_score))
-
-# annotate DANN
-# dann_ht = hl.experimental.load_dataset(name='DANN', version=None, reference_genome=build,
-#                                     region='us-central1', cloud='gcp')
-# mt = mt.annotate_rows(info = mt.info.annotate(DANN_score=dann_ht[mt.locus, mt.alleles].score))
-
 # run VEP
 mt = hl.vep(mt, config='vep_config.json', csq=True, tolerate_parse_error=True)
 mt = mt.annotate_rows(info = mt.info.annotate(CSQ=mt.vep))
-
-# annotate REVEL
-revel_ht = hl.import_table(revel_file, force_bgz=True)
-revel_ht = revel_ht.annotate(chr='chr'+revel_ht['#chr']) 
-build_chr = 'chr' if build=='GRCh38' else '#chr'
-build_pos = 'grch38_pos' if build=='GRCh38' else 'hg19_pos'
-revel_ht = revel_ht.annotate(locus=hl.locus(revel_ht[build_chr], hl.int(revel_ht[build_pos]), build),
-                 alleles=hl.array([revel_ht.ref, revel_ht.alt]))
-revel_ht = revel_ht.key_by('locus', 'alleles')
-mt = mt.annotate_rows(info=mt.info.annotate(REVEL=revel_ht[mt.row_key].REVEL))
-
-# annotate OMIM
-csq_columns = hl.eval(mt.vep_csq_header).split('Format: ')[1].split('|')
-mt = mt.annotate_rows(vep=mt.info)
-transcript_consequences = mt.vep.CSQ.map(lambda x: x.split('\|'))
-
-transcript_consequences_strs = transcript_consequences.map(lambda x: hl.if_else(hl.len(x)>1, hl.struct(**
-                                                       {col: x[i] if col!='Consequence' else x[i].split('&')  
-                                                        for i, col in enumerate(csq_columns)}), 
-                                                        hl.struct(**{col: hl.missing('str') if col!='Consequence' else hl.array([hl.missing('str')])  
-                                                        for i, col in enumerate(csq_columns)})))
-
-mt = mt.annotate_rows(vep=mt.vep.annotate(transcript_consequences=transcript_consequences_strs))
-mt = mt.annotate_rows(vep=mt.vep.select('transcript_consequences'))
-
-omim = hl.import_table(omim_uri).key_by('approvedGeneSymbol')
-
-mt_by_gene = mt.explode_rows(mt.vep.transcript_consequences)
-mt_by_gene = mt_by_gene.key_rows_by(mt_by_gene.vep.transcript_consequences.SYMBOL)
-mt_by_gene = mt_by_gene.annotate_rows(vep=mt_by_gene.vep.annotate(
-    transcript_consequences=mt_by_gene.vep.transcript_consequences.annotate(
-        OMIM_MIM_number=hl.if_else(hl.is_defined(omim[mt_by_gene.row_key]), omim[mt_by_gene.row_key].mimNumber, ''),
-        OMIM_inheritance_code=hl.if_else(hl.is_defined(omim[mt_by_gene.row_key]), omim[mt_by_gene.row_key].inheritance_code, ''))))
-
-# annotate LOEUF from gnomAD
-loeuf_v4_ht = hl.read_table(loeuf_v4_uri).key_by('transcript')
-loeuf_v2_ht = hl.read_table(loeuf_v2_uri).key_by('transcript')
-mt_by_transcript = mt_by_gene.key_rows_by(mt_by_gene.vep.transcript_consequences.Feature)
-mt_by_transcript = mt_by_transcript.annotate_rows(vep=mt_by_transcript.vep.annotate(
-    transcript_consequences=mt_by_transcript.vep.transcript_consequences.annotate(
-        LOEUF_v2=hl.if_else(hl.is_defined(loeuf_v2_ht[mt_by_transcript.row_key]), loeuf_v2_ht[mt_by_transcript.row_key]['oe_lof_upper'], ''),
-        LOEUF_v4=hl.if_else(hl.is_defined(loeuf_v4_ht[mt_by_transcript.row_key]), loeuf_v4_ht[mt_by_transcript.row_key]['lof.oe_ci.upper'], ''))))
-mt_by_gene = mt_by_transcript.key_rows_by(mt_by_transcript.vep.transcript_consequences.SYMBOL)
-
-csq_fields_str = hl.eval(mt.vep_csq_header) + '|'.join(['', 'OMIM_MIM_number', 'OMIM_inheritance_code', 'LOEUF_v2', 'LOEUF_v4'])
-
-# annotate with gene list, if provided
-if gene_list.split('.')[-1] == 'txt':
-    genes = pd.read_csv(gene_list, sep='\t', header=None)[0].tolist()
-    gene_list_name = os.path.basename(gene_list)
-    mt_by_gene = mt_by_gene.annotate_rows(vep=mt_by_gene.vep.annotate(
-    transcript_consequences=mt_by_gene.vep.transcript_consequences.annotate(
-        gene_list=hl.if_else(hl.array(genes).contains(mt_by_gene.row_key.SYMBOL), gene_list_name, ''))))
-    csq_fields_str = csq_fields_str + '|gene_list'
-
-mt_by_gene = (mt_by_gene.group_rows_by(mt_by_gene.locus, mt_by_gene.alleles)
-    .aggregate_rows(vep = hl.agg.collect(mt_by_gene.vep))).result()
-
-fields = list(mt_by_gene.vep.transcript_consequences[0])
-new_csq = mt_by_gene.vep.transcript_consequences.scan(lambda i, j: 
-                                      hl.str('|').join(hl.array([i]))
-                                      +','+hl.str('|').join(hl.array([j[col] if col!='Consequence' else 
-                                                                  hl.str('&').join(j[col]) 
-                                                                  for col in list(fields)])), '')[-1][1:]
-mt_by_gene = mt_by_gene.annotate_rows(CSQ=new_csq)
-mt = mt.annotate_rows(info=mt.info.annotate(CSQ=mt_by_gene.rows()[mt.row_key].CSQ))
-mt = mt.drop('vep')
-
-header['info']['CSQ'] = {'Description': csq_fields_str, 'Number': '.', 'Type': 'String'}
-header['info']['REVEL'] = {'Description': 'REVEL scores.', 'Number': '.', 'Type': 'String'}
 
 hl.export_vcf(dataset=mt, output=vep_annotated_vcf_name, metadata=header)
