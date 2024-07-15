@@ -71,8 +71,9 @@ workflow ResolveCTX {
     output {
         File cluster_bed = clusterCPX.svtk_bedcluster
         File cluster_dictionary = clusterCPX.svtk_dictionary
-        Array[File] all_cpx_dictionary = extract_complex.cpx_dictionary
-        Array[File] all_cpx_formatted = extract_complex.cpx_formatted
+        File cluster_bed_filtered = clusterCPX.filtered_bedcluster
+        #Array[File] all_cpx_dictionary = extract_complex.cpx_dictionary
+        #Array[File] all_cpx_formatted = extract_complex.cpx_formatted
     }
 }
 
@@ -98,10 +99,10 @@ task extract_complex {
 
     RuntimeAttr runtime_attr = select_first([runtime_attr_override, default_attr])
 
-    output {
-        File cpx_dictionary = "~{prefix}_complex_events.bed"
-        File cpx_formatted = "~{prefix}_complex_events_formatted.bed"
-    }
+    #output {
+    #    File cpx_dictionary = "~{prefix}_complex_events.bed"
+    #    File cpx_formatted = "~{prefix}_complex_events_formatted.bed"
+    #}
 
     command <<<
         set -euo pipefail
@@ -163,6 +164,7 @@ task clusterCPX {
     output {
         File svtk_bedcluster = "~{prefix}_cpx.bed.gz"
         File svtk_dictionary = "~{prefix}_cpx.dictionary.bed.gz"
+        File filtered_bedcluster = "~{prefix}_cpx_AC0.01.bed.gz"
     }
 
     command <<<
@@ -176,6 +178,8 @@ task clusterCPX {
         ## generate per batch dictionary for post filtering
         cat ~{sep=" " input_dictionaries} > dictionary.bed
         bgzip -c dictionary.bed > ~{prefix}_cpx.dictionary.bed.gz
+        Rscript /opt/cpx_AC.R
+        bgzip -c filtered.bed > ~{prefix}_cpx_AC0.01.bed.gz
 
     >>>
 
