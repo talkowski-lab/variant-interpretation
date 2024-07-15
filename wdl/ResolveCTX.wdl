@@ -99,10 +99,10 @@ task extract_complex {
 
     RuntimeAttr runtime_attr = select_first([runtime_attr_override, default_attr])
 
-    #output {
-    #    File cpx_dictionary = "~{prefix}_complex_events.bed"
-    #    File cpx_formatted = "~{prefix}_complex_events_formatted.bed"
-    #}
+    output {
+        File cpx_dictionary = "~{prefix}_complex_events.bed"
+        File cpx_formatted = "~{prefix}_complex_events_formatted.bed"
+    }
 
     command <<<
         set -euo pipefail
