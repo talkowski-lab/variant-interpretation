@@ -27,8 +27,8 @@ workflow vepAnnotateHail {
         File top_level_fa
         File gerp_conservation_scores
         File ref_vep_cache
-        File loeuf_v2_uri
-        File loeuf_v4_uri
+        String loeuf_v2_uri
+        String loeuf_v4_uri
         File alpha_missense_file
         File revel_file
         File clinvar_vcf_uri
@@ -210,8 +210,8 @@ task vepAnnotate {
         File gerp_conservation_scores
         File ref_vep_cache
 
-        File loeuf_v2_uri
-        File loeuf_v4_uri
+        String loeuf_v2_uri
+        String loeuf_v4_uri
         File alpha_missense_file
         File alpha_missense_file_idx
         File revel_file
@@ -310,8 +310,8 @@ task vepAnnotate {
 task annotateExtra {
     input {
         File vcf_file
-        File loeuf_v2_uri
-        File loeuf_v4_uri
+        String loeuf_v2_uri
+        String loeuf_v4_uri
         File alpha_missense_file
         File alpha_missense_file_idx
         File revel_file
