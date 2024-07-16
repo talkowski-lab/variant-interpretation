@@ -85,10 +85,10 @@ loeuf_v2_ht = hl.read_table(loeuf_v2_uri).key_by('transcript')
 loeuf_v4_ht = hl.read_table(loeuf_v4_uri).key_by('transcript')
 mt_by_transcript = mt.explode_rows(mt.vep.transcript_consequences)
 mt_by_transcript = mt_by_transcript.key_rows_by(mt_by_transcript.vep.transcript_consequences.Feature)
-# mt_by_transcript = mt_by_transcript.annotate_rows(vep=mt_by_transcript.vep.annotate(
-#     transcript_consequences=mt_by_transcript.vep.transcript_consequences.annotate(
-#         LOEUF_v2=hl.if_else(hl.is_defined(loeuf_v2_ht[mt_by_transcript.row_key]), loeuf_v2_ht[mt_by_transcript.row_key]['oe_lof_upper'], ''),
-#         LOEUF_v4=hl.if_else(hl.is_defined(loeuf_v4_ht[mt_by_transcript.row_key]), loeuf_v4_ht[mt_by_transcript.row_key]['lof.oe_ci.upper'], ''))))
+mt_by_transcript = mt_by_transcript.annotate_rows(vep=mt_by_transcript.vep.annotate(
+    transcript_consequences=mt_by_transcript.vep.transcript_consequences.annotate(
+        LOEUF_v2=hl.if_else(hl.is_defined(loeuf_v2_ht[mt_by_transcript.row_key]), loeuf_v2_ht[mt_by_transcript.row_key]['oe_lof_upper'], ''),
+        LOEUF_v4=hl.if_else(hl.is_defined(loeuf_v4_ht[mt_by_transcript.row_key]), loeuf_v4_ht[mt_by_transcript.row_key]['lof.oe_ci.upper'], ''))))
 
 # annotate OMIM
 omim = hl.import_table(omim_uri).key_by('approvedGeneSymbol')
