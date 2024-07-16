@@ -183,6 +183,10 @@ omim_dom = gene_tm.filter_rows((
                 hl.float(gene_tm.vep.transcript_consequences.LOEUF_v4))<=loeuf_v4_threshold)
         )
     )
+
+omim_dom = omim_dom.filter_entries((omim_dom.proband_entry.GT.is_non_ref()) | 
+                                   (omim_dom.mother_entry.GT.is_non_ref()) |
+                                   (omim_dom.father_entry.GT.is_non_ref()))
 omim_dom_df = omim_dom.entries().to_pandas()
 
 hl.export_vcf(clinvar_mt, prefix+'_clinvar_variants.vcf.bgz', metadata=header)
