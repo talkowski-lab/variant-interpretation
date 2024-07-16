@@ -22,7 +22,7 @@ workflow filterClinicalVariants {
         File ref_fasta
 
         String cohort_prefix
-        String filter_rare_splice_impact_script
+        String filter_clinical_variants_script
         String hail_docker
         String sv_base_mini_docker
         String spliceAI_docker
@@ -51,7 +51,7 @@ workflow filterClinicalVariants {
             input:
             vcf_file=vcf_file,
             ped_uri=ped_uri,
-            filter_rare_splice_impact_script=filter_rare_splice_impact_script,
+            filter_clinical_variants_script=filter_clinical_variants_script,
             hail_docker=hail_docker,
             ac_threshold=ac_threshold,
             gnomad_af_threshold=gnomad_af_threshold,
@@ -143,7 +143,7 @@ task runClinicalFiltering {
         File vcf_file
         File ped_uri
 
-        String filter_rare_splice_impact_script
+        String filter_clinical_variants_script
         String hail_docker
         
         Int ac_threshold
@@ -189,7 +189,7 @@ task runClinicalFiltering {
     String prefix = basename(vcf_file, file_ext) + '_filtered'
 
     command {
-        curl ~{filter_rare_splice_impact_script} > filter_vcf.py
+        curl ~{filter_clinical_variants_script} > filter_vcf.py
         python3 filter_vcf.py ~{vcf_file} ~{prefix} ~{cpu_cores} ~{memory} \
             ~{ped_uri} ~{ac_threshold} ~{gnomad_af_threshold} ~{am_threshold} \
             ~{mpc_threshold} ~{gnomad_rec_threshold} ~{gnomad_dom_threshold} \
