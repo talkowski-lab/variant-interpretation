@@ -141,36 +141,37 @@ workflow vepAnnotateHail {
         Array[File] vcf_shards_ = select_first([scatterVCF.vcf_shards, vcf_shards])
     
         scatter (vcf_shard in vcf_shards_) {
-            call vepAnnotate {
-                input:
-                    vcf_file=vcf_shard,
-                    vep_annotate_hail_python_script=vep_annotate_hail_python_script,
-                    top_level_fa=top_level_fa,
-                    human_ancestor_fa=human_ancestor_fa,
-                    human_ancestor_fa_fai=human_ancestor_fa_fai,
-                    gerp_conservation_scores=gerp_conservation_scores,
-                    ref_vep_cache=ref_vep_cache,
-                    loeuf_v2_uri=loeuf_v2_uri,
-                    loeuf_v4_uri=loeuf_v4_uri,
-                    alpha_missense_file=alpha_missense_file,
-                    alpha_missense_file_idx=alpha_missense_file+'.tbi',
-                    revel_file=revel_file,
-                    revel_file_idx=revel_file+'.tbi',
-                    clinvar_vcf_uri=clinvar_vcf_uri,
-                    omim_uri=omim_uri,
-                    eve_data=eve_data,
-                    eve_data_idx=eve_data+'.tbi',
-                    gene_list=select_first([gene_list, vcf_shard]),
-                    mpc_ht_uri=mpc_ht_uri,
-                    vep_hail_docker=vep_hail_docker,
-                    reannotate_ac_af=reannotate_ac_af,
-                    genome_build=genome_build,
-                    runtime_attr_override=runtime_attr_vep_annotate
-            }
+            # call vepAnnotate {
+            #     input:
+            #         vcf_file=vcf_shard,
+            #         vep_annotate_hail_python_script=vep_annotate_hail_python_script,
+            #         top_level_fa=top_level_fa,
+            #         human_ancestor_fa=human_ancestor_fa,
+            #         human_ancestor_fa_fai=human_ancestor_fa_fai,
+            #         gerp_conservation_scores=gerp_conservation_scores,
+            #         ref_vep_cache=ref_vep_cache,
+            #         loeuf_v2_uri=loeuf_v2_uri,
+            #         loeuf_v4_uri=loeuf_v4_uri,
+            #         alpha_missense_file=alpha_missense_file,
+            #         alpha_missense_file_idx=alpha_missense_file+'.tbi',
+            #         revel_file=revel_file,
+            #         revel_file_idx=revel_file+'.tbi',
+            #         clinvar_vcf_uri=clinvar_vcf_uri,
+            #         omim_uri=omim_uri,
+            #         eve_data=eve_data,
+            #         eve_data_idx=eve_data+'.tbi',
+            #         gene_list=select_first([gene_list, vcf_shard]),
+            #         mpc_ht_uri=mpc_ht_uri,
+            #         vep_hail_docker=vep_hail_docker,
+            #         reannotate_ac_af=reannotate_ac_af,
+            #         genome_build=genome_build,
+            #         runtime_attr_override=runtime_attr_vep_annotate
+            # }
 
             call annotateExtra {
                 input:
-                    vcf_file=vepAnnotate.vep_vcf_file,
+                    # vcf_file=vepAnnotate.vep_vcf_file,
+                    vcf_file=vcf_shard,
                     vep_annotate_hail_extra_python_script=vep_annotate_hail_extra_python_script,
                     loeuf_v2_uri=loeuf_v2_uri,
                     loeuf_v4_uri=loeuf_v4_uri,
@@ -192,8 +193,8 @@ workflow vepAnnotateHail {
         }
     }
 
-    Array[File] vep_vcf_files_ = select_first([vepAnnotate.vep_vcf_file, vepAnnotateMergedShards.vep_vcf_file])
-    Array[File] vep_vcf_idx_ = select_first([vepAnnotate.vep_vcf_idx, vepAnnotateMergedShards.vep_vcf_idx])
+    Array[File] vep_vcf_files_ = select_first([annotateExtra.vep_vcf_file, annotateExtraMergedShards.vep_vcf_file])
+    Array[File] vep_vcf_idx_ = select_first([annotateExtra.vep_vcf_idx, annotateExtra.vep_vcf_idx])
 
     output {
         Array[File] vep_vcf_files = vep_vcf_files_
