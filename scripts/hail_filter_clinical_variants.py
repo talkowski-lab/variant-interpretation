@@ -19,7 +19,17 @@ gnomad_dom_threshold = float(sys.argv[11])
 loeuf_v2_threshold = float(sys.argv[12])
 loeuf_v4_threshold = float(sys.argv[13])
 
-hl.init()
+hl.init(min_block_size=128, 
+        spark_conf={"spark.executor.cores": cores, 
+                    "spark.executor.memory": f"{mem}g",
+                    "spark.driver.cores": cores,
+                    "spark.driver.memory": f"{mem}g",
+        #             'spark.hadoop.fs.gs.requester.pays.mode': 'CUSTOM',
+        #             'spark.hadoop.fs.gs.requester.pays.buckets': 'hail-datasets-us-central1',
+        #             'spark.hadoop.fs.gs.requester.pays.project.id': gcp_project,
+                    }, 
+        tmp_dir="tmp", local_tmpdir="tmp",
+                    )
 
 mt = hl.import_vcf(vcf_file, reference_genome='GRCh38', force_bgz=True, call_fields=[], array_elements_required=False)
 
