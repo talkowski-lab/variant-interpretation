@@ -9,9 +9,15 @@ vcf_file = sys.argv[1]
 prefix = sys.argv[2]
 cores = sys.argv[3]  # string
 mem = int(np.floor(float(sys.argv[4])))
-ac_threshold = int(sys.argv[5])
-gnomad_af_threshold = float(sys.argv[6])
-ped_uri = sys.argv[7]
+ped_uri = sys.argv[5]
+ac_threshold = int(sys.argv[6])
+gnomad_af_threshold = float(sys.argv[7])
+am_threshold = float(sys.argv[8])
+mpc_threshold = float(sys.argv[9])
+gnomad_rec_threshold = float(sys.argv[10])
+gnomad_dom_threshold = float(sys.argv[11])
+loeuf_v2_threshold = float(sys.argv[12])
+loeuf_v4_threshold = float(sys.argv[13])
 
 hl.init()
 
@@ -96,7 +102,7 @@ def filter_mt(mt):
 
     # filter by Alpha Missense
     mt = mt.filter_rows(hl.if_else(mt.vep.transcript_consequences.am_pathogenicity=='', 1, 
-               hl.float(mt.vep.transcript_consequences.am_pathogenicity))>=0.56)
+               hl.float(mt.vep.transcript_consequences.am_pathogenicity))>=am_threshold)
     return mt 
 
 # Phasing
@@ -120,8 +126,8 @@ xlr_phased_tm = gene_phased_tm.filter_rows(gene_phased_tm.vep.transcript_consequ
 gene_phased_tm = gene_phased_tm.filter_rows(
     (gene_phased_tm.vep.transcript_consequences.OMIM_inheritance_code.matches('2')) |    # OMIM recessive
     ((hl.is_missing(gene_phased_tm.vep.transcript_consequences.OMIM_inheritance_code)) &  # not OMIM recessive with gnomAD AF and MPC filters
-                            ((gene_phased_tm.gnomad_af<=0.001) | (hl.is_missing(gene_phased_tm.gnomad_af))) &
-                            ((gene_phased_tm.info.MPC>=2) | (hl.is_missing(gene_phased_tm.info.MPC)))
+                            ((gene_phased_tm.gnomad_af<=gnomad_rec_threshold) | (hl.is_missing(gene_phased_tm.gnomad_af))) &
+                            ((gene_phased_tm.info.MPC>=mpc_threshold) | (hl.is_missing(gene_phased_tm.info.MPC)))
     )
 )
 
@@ -154,22 +160,26 @@ omim_rec_comp_hets = omim_rec_comp_hets.annotate_rows(variant_type='comphet')
 
 omim_rec_merged = xlr_phased_tm.union_rows(omim_rec_hom_var.drop('Feature', 'proband_PBT_GT_set'))\
 .union_rows(omim_rec_comp_hets.drop('Feature', 'proband_PBT_GT_set'))
+omim_rec_df = omim_rec_merged.entries().to_pandas()
 
 # Output 3: OMIM Dominant
 gene_tm = tm.explode_rows(tm.vep.transcript_consequences)
 gene_tm = filter_mt(gene_tm)
 omim_dom = gene_tm.filter_rows((
         (gene_tm.vep.transcript_consequences.OMIM_inheritance_code.matches('1')) &  # OMIM dominant with gnomAD AF and MPC filters 
-            ((gene_tm.gnomad_af<=0.00001) | (hl.is_missing(gene_tm.gnomad_af))) & 
-            ((gene_tm.info.MPC>=2) | (hl.is_missing(gene_tm.info.MPC)))) |
+            ((gene_tm.gnomad_af<=gnomad_dom_threshold) | (hl.is_missing(gene_tm.gnomad_af))) & 
+            ((gene_tm.info.MPC>=mpc_threshold) | (hl.is_missing(gene_tm.info.MPC)))) |
         ((hl.is_missing(gene_tm.vep.transcript_consequences.OMIM_inheritance_code)) &  # not OMIM dominant with LOEUF v2/v4 filters
             (hl.if_else(gene_tm.vep.transcript_consequences.LOEUF_v2=='', 0, 
-                hl.float(gene_tm.vep.transcript_consequences.LOEUF_v2))<=0.35) | 
+                hl.float(gene_tm.vep.transcript_consequences.LOEUF_v2))<=loeuf_v2_threshold) | 
             (hl.if_else(gene_tm.vep.transcript_consequences.LOEUF_v4=='', 0, 
-                hl.float(gene_tm.vep.transcript_consequences.LOEUF_v4))<=0.6)
+                hl.float(gene_tm.vep.transcript_consequences.LOEUF_v4))<=loeuf_v4_threshold)
         )
     )
+omim_dom_df = omim_dom.entries().to_pandas()
 
 hl.export_vcf(clinvar_mt, prefix+'_clinvar_variants.vcf.bgz', metadata=header)
+omim_rec_df.to_csv(prefix+'_OMIM_recessive.tsv', sep='\t', index=False)
+omim_dom_df.to_csv(prefix+'_OMIM_dominant.tsv', sep='\t', index=False)
 # hl.export_vcf(splice_mt, prefix+'_splice_variants.vcf.bgz', metadata=header)
 # hl.export_vcf(nc_impact_mt, prefix+'_noncoding_high_moderate_impact_variants.vcf.bgz', metadata=header)
