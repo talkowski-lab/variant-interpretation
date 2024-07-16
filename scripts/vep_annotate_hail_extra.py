@@ -100,7 +100,7 @@ mt_by_transcript = mt_by_transcript.annotate_rows(vep=mt_by_transcript.vep.annot
         LOEUF_v4=hl.if_else(hl.is_defined(loeuf_v4_ht[mt_by_transcript.row_key]), loeuf_v4_ht[mt_by_transcript.row_key]['lof.oe_ci.upper'], ''))))
 mt_by_gene = mt_by_transcript.key_rows_by(mt_by_transcript.vep.transcript_consequences.SYMBOL)
 
-csq_fields_str = hl.eval(mt.vep_csq_header) + '|'.join(['', 'OMIM_MIM_number', 'OMIM_inheritance_code', 'LOEUF_v2', 'LOEUF_v4'])
+csq_fields_str = header['info']['CSQ']['Description'].split('Format: ')[1] + '|'.join(['', 'OMIM_MIM_number', 'OMIM_inheritance_code', 'LOEUF_v2', 'LOEUF_v4'])
 
 # annotate with gene list, if provided
 if gene_list.split('.')[-1] == 'txt':
