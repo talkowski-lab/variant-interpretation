@@ -165,6 +165,13 @@ omim_rec_df = omim_rec_merged.entries().to_pandas()
 # Output 3: OMIM Dominant
 gene_tm = tm.explode_rows(tm.vep.transcript_consequences)
 gene_tm = filter_mt(gene_tm)
+
+# TODO: temporary hacky, can be removed when VEP rerun with LOEUF HTs fixed
+gene_tm = gene_tm.annotate_rows(vep=gene_tm.vep.annotate(transcript_consequences=gene_tm.vep.transcript_consequences.annotate(
+    LOEUF_v2=gene_tm.vep.transcript_consequences.LOEUF_v2.replace('null', ''),
+    LOEUF_v4=gene_tm.vep.transcript_consequences.LOEUF_v4.replace('null', '')
+)))
+
 omim_dom = gene_tm.filter_rows((
         (gene_tm.vep.transcript_consequences.OMIM_inheritance_code.matches('1')) &  # OMIM dominant with gnomAD AF and MPC filters 
             ((gene_tm.gnomad_af<=gnomad_dom_threshold) | (hl.is_missing(gene_tm.gnomad_af))) & 
