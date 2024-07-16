@@ -187,6 +187,7 @@ omim_dom = gene_tm.filter_rows((
 omim_dom = omim_dom.filter_entries((omim_dom.proband_entry.GT.is_non_ref()) | 
                                    (omim_dom.mother_entry.GT.is_non_ref()) |
                                    (omim_dom.father_entry.GT.is_non_ref()))
+omim_dom = omim_dom.filter_rows((hl.agg.count_where(hl.is_defined(omim_rec_hom_var.proband_entry.GT))>0))
 omim_dom_df = omim_dom.entries().to_pandas()
 
 hl.export_vcf(clinvar_mt, prefix+'_clinvar_variants.vcf.bgz', metadata=header)
