@@ -66,7 +66,6 @@ revel_ht = revel_ht.annotate(locus=hl.locus(revel_ht[build_chr], hl.int(revel_ht
 revel_ht = revel_ht.key_by('locus', 'alleles')
 mt = mt.annotate_rows(info=mt.info.annotate(REVEL=revel_ht[mt.row_key].REVEL))
 
-# annotate OMIM
 csq_columns = header['info']['CSQ']['Description'].split('Format: ')[1].split('|')
 # split VEP CSQ string
 mt = mt.annotate_rows(vep=mt.info)
@@ -81,26 +80,25 @@ transcript_consequences_strs = transcript_consequences.map(lambda x: hl.if_else(
 mt = mt.annotate_rows(vep=mt.vep.annotate(transcript_consequences=transcript_consequences_strs))
 mt = mt.annotate_rows(vep=mt.vep.select('transcript_consequences'))
 
-omim = hl.import_table(omim_uri).key_by('approvedGeneSymbol')
+# annotate LOEUF from gnomAD
+loeuf_v2_ht = hl.read_table(loeuf_v2_uri).key_by('transcript')
+loeuf_v4_ht = hl.read_table(loeuf_v4_uri).key_by('transcript')
+mt_by_transcript = mt.explode_rows(mt.vep.transcript_consequences)
+mt_by_transcript = mt_by_transcript.key_rows_by(mt_by_transcript.vep.transcript_consequences.Feature)
+mt_by_transcript = mt_by_transcript.annotate_rows(vep=mt_by_transcript.vep.annotate(
+    transcript_consequences=mt_by_transcript.vep.transcript_consequences.annotate(
+        LOEUF_v2=hl.if_else(hl.is_defined(loeuf_v2_ht[mt_by_transcript.row_key]), loeuf_v2_ht[mt_by_transcript.row_key]['oe_lof_upper'], ''),
+        LOEUF_v4=hl.if_else(hl.is_defined(loeuf_v4_ht[mt_by_transcript.row_key]), loeuf_v4_ht[mt_by_transcript.row_key]['lof.oe_ci.upper'], ''))))
 
-mt_by_gene = mt.explode_rows(mt.vep.transcript_consequences)
-mt_by_gene = mt_by_gene.key_rows_by(mt_by_gene.vep.transcript_consequences.SYMBOL)
+# annotate OMIM
+omim = hl.import_table(omim_uri).key_by('approvedGeneSymbol')
+mt_by_gene = mt_by_transcript.key_rows_by(mt_by_transcript.vep.transcript_consequences.SYMBOL)
 mt_by_gene = mt_by_gene.annotate_rows(vep=mt_by_gene.vep.annotate(
     transcript_consequences=mt_by_gene.vep.transcript_consequences.annotate(
         OMIM_MIM_number=hl.if_else(hl.is_defined(omim[mt_by_gene.row_key]), omim[mt_by_gene.row_key].mimNumber, ''),
         OMIM_inheritance_code=hl.if_else(hl.is_defined(omim[mt_by_gene.row_key]), omim[mt_by_gene.row_key].inheritance_code, ''))))
 
-# annotate LOEUF from gnomAD
-loeuf_v4_ht = hl.read_table(loeuf_v4_uri).key_by('transcript')
-loeuf_v2_ht = hl.read_table(loeuf_v2_uri).key_by('transcript')
-mt_by_transcript = mt_by_gene.key_rows_by(mt_by_gene.vep.transcript_consequences.Feature)
-mt_by_transcript = mt_by_transcript.annotate_rows(vep=mt_by_transcript.vep.annotate(
-    transcript_consequences=mt_by_transcript.vep.transcript_consequences.annotate(
-        LOEUF_v2=hl.if_else(hl.is_defined(loeuf_v2_ht[mt_by_transcript.row_key]), loeuf_v2_ht[mt_by_transcript.row_key]['oe_lof_upper'], ''),
-        LOEUF_v4=hl.if_else(hl.is_defined(loeuf_v4_ht[mt_by_transcript.row_key]), loeuf_v4_ht[mt_by_transcript.row_key]['lof.oe_ci.upper'], ''))))
-mt_by_gene = mt_by_transcript.key_rows_by(mt_by_transcript.vep.transcript_consequences.SYMBOL)
-
-csq_fields_str = header['info']['CSQ']['Description'].split('Format: ')[1] + '|'.join(['', 'OMIM_MIM_number', 'OMIM_inheritance_code', 'LOEUF_v2', 'LOEUF_v4'])
+csq_fields_str = header['info']['CSQ']['Description'].split('Format: ')[1] + '|'.join(['', 'LOEUF_v2', 'LOEUF_v4', 'OMIM_MIM_number', 'OMIM_inheritance_code'])
 
 # annotate with gene list, if provided
 if gene_list.split('.')[-1] == 'txt':
