@@ -43,7 +43,8 @@ workflow filterClinicalVariants {
         Boolean run_spliceAI=true
         Boolean run_pangolin=false
 
-        RuntimeAttr? runtime_attr_merge_results
+        RuntimeAttr? runtime_attr_merge_omim_rec
+        RuntimeAttr? runtime_attr_merge_omim_dom
     }
 
     scatter (vcf_file in vep_vcf_files) {
@@ -116,7 +117,7 @@ workflow filterClinicalVariants {
             hail_docker=hail_docker,
             input_size=size(runClinicalFiltering.omim_recessive, 'GB'),
             merged_filename=cohort_prefix+'_OMIM_recessive.tsv.gz',
-            runtime_attr_override=runtime_attr_merge_results
+            runtime_attr_override=runtime_attr_merge_omim_rec
     }
 
     call helpers.mergeResultsPython as mergeOMIMDominant {
@@ -125,7 +126,7 @@ workflow filterClinicalVariants {
             hail_docker=hail_docker,
             input_size=size(runClinicalFiltering.omim_dominant, 'GB'),
             merged_filename=cohort_prefix+'_OMIM_dominant.tsv.gz',
-            runtime_attr_override=runtime_attr_merge_results
+            runtime_attr_override=runtime_attr_merge_omim_dom
     }
 
     output {
