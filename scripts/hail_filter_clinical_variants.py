@@ -207,7 +207,7 @@ omim_dom = omim_dom.filter_entries((omim_dom.proband_entry.GT.is_non_ref()) |
                                    (omim_dom.father_entry.GT.is_non_ref()))
 omim_dom = omim_dom.filter_rows((hl.agg.count_where(hl.is_defined(omim_dom.proband_entry.GT))>0))
 omim_dom_df = omim_dom.entries().to_pandas()
-omim_dom_df['transmission'] = omim_dom_df(clinvar_df)
+omim_dom_df['transmission'] = get_transmission(omim_dom_df)
 
 clinvar_df.to_csv(prefix+'_clinvar_variants.tsv.gz', sep='\t', index=False)
 omim_rec_df.to_csv(prefix+'_OMIM_recessive.tsv.gz', sep='\t', index=False)
