@@ -17,9 +17,7 @@ workflow vepAnnotateHail {
 
     input {
         File? vcf_file
-        String vep_annotate_hail_python_script
-        String vep_annotate_hail_extra_python_script
-        String split_vcf_hail_script
+
         File ref_fasta
         File ref_fasta_fai
         File human_ancestor_fa
@@ -27,6 +25,7 @@ workflow vepAnnotateHail {
         File top_level_fa
         File gerp_conservation_scores
         File ref_vep_cache
+        
         String loeuf_v2_uri
         String loeuf_v4_uri
         File alpha_missense_file
@@ -35,18 +34,26 @@ workflow vepAnnotateHail {
         File omim_uri
         File eve_data
         String mpc_ht_uri
+
         String cohort_prefix
         String hail_docker
         String vep_hail_docker
         String sv_base_mini_docker
+        
+        String vep_annotate_hail_python_script
+        String vep_annotate_hail_extra_python_script
+        String split_vcf_hail_script
+
         String genome_build='GRCh38'
         Boolean split_by_chromosome
         Boolean split_into_shards 
         Boolean merge_split_vcf
         Boolean reannotate_ac_af=false
         Int shards_per_chunk=10  # combine pre-sharded VCFs
+        
         Array[File]? vcf_shards  # if scatterVCF.wdl already run before VEP
         File? gene_list  # must end in .txt or it will be ignored
+        
         RuntimeAttr? runtime_attr_merge_vcfs
         RuntimeAttr? runtime_attr_vep_annotate
         RuntimeAttr? runtime_attr_annotate_extra

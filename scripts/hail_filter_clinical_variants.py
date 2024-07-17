@@ -131,8 +131,8 @@ xlr_phased_tm = xlr_phased_tm.filter_entries((xlr_phased_tm.proband_entry.GT.is_
                             (~xlr_phased_tm.is_female))
 
 # filter out calls that couldn't be phased or are hom ref in proband
-phased_tm = phased_tm.filter_entries((hl.is_defined(phased_tm.proband_entry.PBT_GT)) 
-                                          & (phased_tm.proband_entry.PBT_GT!=hl.parse_call('0|0')))
+gene_phased_tm = gene_phased_tm.filter_entries((hl.is_defined(gene_phased_tm.proband_entry.PBT_GT)) 
+                                          & (gene_phased_tm.proband_entry.PBT_GT!=hl.parse_call('0|0')))
 
 # OMIM recessive only
 gene_phased_tm = gene_phased_tm.filter_rows(
@@ -172,6 +172,7 @@ omim_rec_comp_hets = omim_rec_comp_hets.annotate_rows(variant_type='comphet')
 
 omim_rec_merged = xlr_phased_tm.union_rows(omim_rec_hom_var.drop('Feature', 'proband_PBT_GT_set'))\
 .union_rows(omim_rec_comp_hets.drop('Feature', 'proband_PBT_GT_set'))
+omim_rec_merged = omim_rec_merged.filter_rows((hl.agg.count_where(hl.is_defined(omim_rec_merged.proband_entry.GT))>0))
 omim_rec_df = omim_rec_merged.entries().to_pandas()
 
 # Output 3: OMIM Dominant
