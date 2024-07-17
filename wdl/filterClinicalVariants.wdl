@@ -43,6 +43,7 @@ workflow filterClinicalVariants {
         Boolean run_spliceAI=true
         Boolean run_pangolin=false
 
+        RuntimeAttr? runtime_attr_merge_clinvar
         RuntimeAttr? runtime_attr_merge_omim_rec
         RuntimeAttr? runtime_attr_merge_omim_dom
     }
@@ -103,14 +104,14 @@ workflow filterClinicalVariants {
         # }
     }   
 
-    call mergeVCFs.mergeVCFs as mergeClinvarVCFs {
+    call helpers.mergeResultsPython as mergeClinVar {
         input:
-        vcf_files=runClinicalFiltering.clinvar_vcf,
-        sv_base_mini_docker=sv_base_mini_docker,
-        cohort_prefix=cohort_prefix + '_clinvar_pass_variants',
-        sort_after_merge=true        
+            tsvs=runClinicalFiltering.clinvar,
+            hail_docker=hail_docker,
+            input_size=size(runClinicalFiltering.clinvar, 'GB'),
+            merged_filename=cohort_prefix+'_clinvar_variants.tsv.gz',
+            runtime_attr_override=runtime_attr_merge_clinvar
     }
-
     call helpers.mergeResultsPython as mergeOMIMRecessive {
         input:
             tsvs=runClinicalFiltering.omim_recessive,
@@ -130,12 +131,9 @@ workflow filterClinicalVariants {
     }
 
     output {
-        File clinvar_vcf_file = mergeClinvarVCFs.merged_vcf_file
-        File clinvar_vcf_idx = mergeClinvarVCFs.merged_vcf_idx
+        File clinvar_tsv = mergeClinVar.merged_tsv
         File omim_recessive_tsv = mergeOMIMRecessive.merged_tsv
         File omim_dominant_tsv = mergeOMIMDominant.merged_tsv
-        # Array[File] splice_nc_impact_vcf_files = mergeSpliceWithNonCodingImpactVars.merged_vcf_file
-        # Array[File] splice_nc_impact_vcf_idx = mergeSpliceWithNonCodingImpactVars.merged_vcf_idx
     }
 }
 
@@ -198,7 +196,7 @@ task runClinicalFiltering {
     }
 
     output {
-        File clinvar_vcf = prefix + '_clinvar_variants.vcf.bgz'
+        File clinvar = prefix + '_clinvar_variants.tsv.gz'
         File omim_recessive = prefix + '_OMIM_recessive.tsv.gz'
         File omim_dominant = prefix + '_OMIM_dominant.tsv.gz'
     }
