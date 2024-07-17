@@ -125,6 +125,7 @@ workflow hailDenovoWES {
         cohort_prefix=cohort_prefix,
         prioritize_csq_script=prioritize_csq_script,
         hail_docker=hail_docker,
+        genome_build=genome_build,
         runtime_attr_merge_results=runtime_attr_merge_results,
         runtime_attr_prioritize=runtime_attr_prioritize
     }
