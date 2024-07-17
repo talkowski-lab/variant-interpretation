@@ -181,24 +181,24 @@ omim_rec_df = omim_rec_merged.entries().to_pandas()
 omim_rec_df['transmission'] = get_transmission(omim_rec_df)
 
 # Output 3: OMIM Dominant
-gene_tm = tm.explode_rows(tm.vep.transcript_consequences)
-gene_tm = filter_mt(gene_tm)
+gene_phased_tm = phased_tm.explode_rows(phased_tm.vep.transcript_consequences)
+gene_phased_tm = filter_mt(gene_phased_tm)
 
 # TODO: temporary hacky, can be removed when VEP rerun with LOEUF HTs fixed
-gene_tm = gene_tm.annotate_rows(vep=gene_tm.vep.annotate(transcript_consequences=gene_tm.vep.transcript_consequences.annotate(
-    LOEUF_v2=gene_tm.vep.transcript_consequences.LOEUF_v2.replace('null', ''),
-    LOEUF_v4=gene_tm.vep.transcript_consequences.LOEUF_v4.replace('null', '')
+gene_phased_tm = gene_phased_tm.annotate_rows(vep=gene_phased_tm.vep.annotate(transcript_consequences=gene_phased_tm.vep.transcript_consequences.annotate(
+    LOEUF_v2=gene_phased_tm.vep.transcript_consequences.LOEUF_v2.replace('null', ''),
+    LOEUF_v4=gene_phased_tm.vep.transcript_consequences.LOEUF_v4.replace('null', '')
 )))
 
-omim_dom = gene_tm.filter_rows((
-        (gene_tm.vep.transcript_consequences.OMIM_inheritance_code.matches('1')) &  # OMIM dominant with gnomAD AF and MPC filters 
-            ((gene_tm.gnomad_af<=gnomad_dom_threshold) | (hl.is_missing(gene_tm.gnomad_af))) & 
-            ((gene_tm.info.MPC>=mpc_threshold) | (hl.is_missing(gene_tm.info.MPC)))) |
-        ((hl.is_missing(gene_tm.vep.transcript_consequences.OMIM_inheritance_code)) &  # not OMIM dominant with LOEUF v2/v4 filters
-            (hl.if_else(gene_tm.vep.transcript_consequences.LOEUF_v2=='', 0, 
-                hl.float(gene_tm.vep.transcript_consequences.LOEUF_v2))<=loeuf_v2_threshold) | 
-            (hl.if_else(gene_tm.vep.transcript_consequences.LOEUF_v4=='', 0, 
-                hl.float(gene_tm.vep.transcript_consequences.LOEUF_v4))<=loeuf_v4_threshold)
+omim_dom = gene_phased_tm.filter_rows((
+        (gene_phased_tm.vep.transcript_consequences.OMIM_inheritance_code.matches('1')) &  # OMIM dominant with gnomAD AF and MPC filters 
+            ((gene_phased_tm.gnomad_af<=gnomad_dom_threshold) | (hl.is_missing(gene_phased_tm.gnomad_af))) & 
+            ((gene_phased_tm.info.MPC>=mpc_threshold) | (hl.is_missing(gene_phased_tm.info.MPC)))) |
+        ((hl.is_missing(gene_phased_tm.vep.transcript_consequences.OMIM_inheritance_code)) &  # not OMIM dominant with LOEUF v2/v4 filters
+            (hl.if_else(gene_phased_tm.vep.transcript_consequences.LOEUF_v2=='', 0, 
+                hl.float(gene_phased_tm.vep.transcript_consequences.LOEUF_v2))<=loeuf_v2_threshold) | 
+            (hl.if_else(gene_phased_tm.vep.transcript_consequences.LOEUF_v4=='', 0, 
+                hl.float(gene_phased_tm.vep.transcript_consequences.LOEUF_v4))<=loeuf_v4_threshold)
         )
     )
 
