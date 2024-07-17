@@ -87,6 +87,13 @@ transcript_consequences_strs = transcript_consequences.map(lambda x: hl.if_else(
 mt = mt.annotate_rows(vep=mt.vep.annotate(transcript_consequences=transcript_consequences_strs))
 mt = mt.annotate_rows(vep=mt.vep.select('transcript_consequences'))
 
+mt = mt.annotate_rows(all_csqs=hl.set(hl.flatmap(lambda x: x, mt.vep.transcript_consequences.Consequence)),  
+                             gnomADg_AF=hl.or_missing(hl.array(hl.set(mt.vep.transcript_consequences.gnomADg_AF))[0]!='', 
+                                                  hl.float(hl.array(hl.set(mt.vep.transcript_consequences.gnomADg_AF))[0])),
+                             gnomADe_AF=hl.or_missing(hl.array(hl.set(mt.vep.transcript_consequences.gnomADe_AF))[0]!='', 
+                                                  hl.float(hl.array(hl.set(mt.vep.transcript_consequences.gnomADe_AF))[0])))
+mt = mt.annotate_rows(gnomad_af=hl.max([mt.gnomADg_AF, mt.gnomADe_AF]))
+
 # Phasing
 pedigree = hl.Pedigree.read(ped_uri)
 tm = hl.trio_matrix(mt, pedigree, complete_trios=False)
@@ -102,27 +109,21 @@ clinvar_df = clinvar_tm.entries().to_pandas()
 clinvar_df['transmission'] = get_transmission(clinvar_df)
 
 # filter out ClinVar benign
-mt = mt.filter_rows((hl.is_missing(mt.info.CLNSIG)) |
-    ~(mt.info.CLNSIG[0].matches('Benign') | mt.info.CLNSIG[0].matches('benign')))
+phased_tm = phased_tm.filter_rows((hl.is_missing(phased_tm.info.CLNSIG)) |
+    ~(phased_tm.info.CLNSIG[0].matches('Benign') | phased_tm.info.CLNSIG[0].matches('benign')))
 
 # filter PASS
-mt = mt.filter_rows(mt.filters.size()==0)
+phased_tm = phased_tm.filter_rows(phased_tm.filters.size()==0)
 
 # filter out variants containing only these consequences
 exclude_csqs = ['intergenic_variant', 'upstream_gene_variant', 'downstream_gene_variant',
                 'synonymous_variant', 'coding_sequence_variant', 'sequence_variant']
 
-mt = mt.annotate_rows(all_csqs=hl.set(hl.flatmap(lambda x: x, mt.vep.transcript_consequences.Consequence)),  
-                             gnomADg_AF=hl.or_missing(hl.array(hl.set(mt.vep.transcript_consequences.gnomADg_AF))[0]!='', 
-                                                  hl.float(hl.array(hl.set(mt.vep.transcript_consequences.gnomADg_AF))[0])),
-                             gnomADe_AF=hl.or_missing(hl.array(hl.set(mt.vep.transcript_consequences.gnomADe_AF))[0]!='', 
-                                                  hl.float(hl.array(hl.set(mt.vep.transcript_consequences.gnomADe_AF))[0])))
-mt = mt.annotate_rows(gnomad_af=hl.max([mt.gnomADg_AF, mt.gnomADe_AF]))
-mt = mt.filter_rows(hl.set(exclude_csqs).intersection(mt.all_csqs).size()!=mt.all_csqs.size())
+phased_tm = phased_tm.filter_rows(hl.set(exclude_csqs).intersection(phased_tm.all_csqs).size()!=phased_tm.all_csqs.size())
 
 # filter by AC and gnomAD AF
-mt = mt.filter_rows(mt.info.cohort_AC<=ac_threshold)
-mt = mt.filter_rows((mt.gnomad_af<=gnomad_af_threshold) | (hl.is_missing(mt.gnomad_af)))
+phased_tm = phased_tm.filter_rows(phased_tm.info.cohort_AC<=ac_threshold)
+phased_tm = phased_tm.filter_rows((phased_tm.gnomad_af<=gnomad_af_threshold) | (hl.is_missing(phased_tm.gnomad_af)))
 
 # Output 2: OMIM Recessive --> CompHets + Homozygous in probands + XLR in males 
 gene_phased_tm = phased_tm.explode_rows(phased_tm.vep.transcript_consequences)
