@@ -127,8 +127,8 @@ gene_phased_tm = filter_mt(gene_phased_tm)
 
 # XLR only
 xlr_phased_tm = gene_phased_tm.filter_rows(gene_phased_tm.vep.transcript_consequences.OMIM_inheritance_code.matches('4'))
-xlr_phased_tm = xlr_phased_tm.filter_cols(~xlr_phased_tm.is_female)
-xlr_phased_tm.filter_entries(xlr_phased_tm.proband_entry.GT.is_non_ref())
+xlr_phased_tm = xlr_phased_tm.filter_entries((xlr_phased_tm.proband_entry.GT.is_non_ref()) &
+                            (~xlr_phased_tm.is_female))
 
 # filter out calls that couldn't be phased or are hom ref in proband
 phased_tm = phased_tm.filter_entries((hl.is_defined(phased_tm.proband_entry.PBT_GT)) 
