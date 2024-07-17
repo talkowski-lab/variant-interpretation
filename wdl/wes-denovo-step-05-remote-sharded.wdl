@@ -17,6 +17,7 @@ workflow step5 {
         String cohort_prefix
         String final_filtering_script
         String hail_docker
+        String genome_build
         Int vqslod_cutoff_snv=-20
         Int vqslod_cutoff_indel=-2
         Int AD_alt_threshold=10
@@ -46,6 +47,7 @@ workflow step5 {
         eval_regions=eval_regions,
         cohort_prefix=cohort_prefix,
         hail_docker=hail_docker,
+        genome_build=genome_build,
         runtime_attr_override=runtime_attr_eval_regions
     }
 
@@ -111,6 +113,7 @@ task annotateEvalRegions {
         File de_novo_final
         File eval_regions
         String cohort_prefix
+        String genome_build
         String hail_docker
         RuntimeAttr? runtime_attr_override
     }
@@ -156,6 +159,7 @@ task annotateEvalRegions {
     cores = sys.argv[3]
     mem = int(np.floor(float(sys.argv[4])))
     cohort_prefix = sys.argv[5]
+    genome_build = sys.argv[6]
 
     hl.init(min_block_size=128, spark_conf={"spark.executor.cores": cores, 
                         "spark.executor.memory": f"{mem}g",
@@ -164,17 +168,17 @@ task annotateEvalRegions {
                         }, tmp_dir="tmp", local_tmpdir="tmp")
     
     ht = hl.import_table(de_novo_final)
-    ht = ht.annotate(locus=hl.parse_locus(ht.locus, 'GRCh38'))
+    ht = ht.annotate(locus=hl.parse_locus(ht.locus, genome_build))
     ht = ht.key_by('locus','alleles')
 
-    evaluation_regions = hl.import_locus_intervals(eval_regions, reference_genome = 'GRCh38')
+    evaluation_regions = hl.import_locus_intervals(eval_regions, reference_genome = genome_build)
     ht = ht.annotate(eval_reg = hl.is_defined(evaluation_regions[ht.locus]))
     
     df = ht.to_pandas()
     df.to_csv(cohort_prefix+'_eval_reg.tsv', sep='\t', index=False)
     EOF
 
-    python3 annotate_eval_regions.py ~{de_novo_final} ~{eval_regions} ~{cpu_cores} ~{memory} ~{cohort_prefix} > stdout
+    python3 annotate_eval_regions.py ~{de_novo_final} ~{eval_regions} ~{cpu_cores} ~{memory} ~{cohort_prefix} ~{genome_build} > stdout
     >>>
 
     output {

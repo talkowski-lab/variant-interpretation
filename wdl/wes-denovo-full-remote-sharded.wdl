@@ -140,7 +140,8 @@ workflow hailDenovoWES {
         vqslod_cutoff_snv=vqslod_cutoff_snv,
         vqslod_cutoff_indel=vqslod_cutoff_indel,
         af_threshold=af_threshold,
-        single_variant=single_variant
+        single_variant=single_variant,
+        genome_build=genome_build
     }
 
     output {
