@@ -122,15 +122,15 @@ pedigree = hl.Pedigree.read(ped_uri)
 tm = hl.trio_matrix(mt, pedigree, complete_trios=True)
 phased_tm = hl.experimental.phase_trio_matrix_by_transmission(tm, call_field='GT', phased_call_field='PBT_GT')
 
-test_phased_tm = phased_tm.filter_entries((hl.is_defined(phased_tm.proband_entry.PBT_GT)) 
-                                          & (phased_tm.proband_entry.PBT_GT!=hl.parse_call('0|0')))
-
-gene_phased_tm = test_phased_tm.explode_rows(test_phased_tm.vep.transcript_consequences)
-# gene_phased_tm = gene_phased_tm.filter_rows(gene_phased_tm.vep.transcript_consequences.Feature!='')
+gene_phased_tm = phased_tm.explode_rows(phased_tm.vep.transcript_consequences)
 gene_phased_tm = filter_mt(gene_phased_tm)
 
 # XLR only
 xlr_phased_tm = gene_phased_tm.filter_rows(gene_phased_tm.vep.transcript_consequences.OMIM_inheritance_code.matches('4'))
+
+# filter out calls that couldn't be phased or are hom ref in proband
+phased_tm = phased_tm.filter_entries((hl.is_defined(phased_tm.proband_entry.PBT_GT)) 
+                                          & (phased_tm.proband_entry.PBT_GT!=hl.parse_call('0|0')))
 
 # OMIM recessive only
 gene_phased_tm = gene_phased_tm.filter_rows(
@@ -201,7 +201,7 @@ omim_dom = omim_dom.filter_rows((hl.agg.count_where(hl.is_defined(omim_dom.proba
 omim_dom_df = omim_dom.entries().to_pandas()
 
 hl.export_vcf(clinvar_mt, prefix+'_clinvar_variants.vcf.bgz', metadata=header)
-omim_rec_df.to_csv(prefix+'_OMIM_recessive.tsv', sep='\t', index=False)
-omim_dom_df.to_csv(prefix+'_OMIM_dominant.tsv', sep='\t', index=False)
+omim_rec_df.to_csv(prefix+'_OMIM_recessive.tsv.gz', sep='\t', index=False)
+omim_dom_df.to_csv(prefix+'_OMIM_dominant.tsv.gz', sep='\t', index=False)
 # hl.export_vcf(splice_mt, prefix+'_splice_variants.vcf.bgz', metadata=header)
 # hl.export_vcf(nc_impact_mt, prefix+'_noncoding_high_moderate_impact_variants.vcf.bgz', metadata=header)

@@ -199,8 +199,8 @@ task runClinicalFiltering {
 
     output {
         File clinvar_vcf = prefix + '_clinvar_variants.vcf.bgz'
-        File omim_recessive = prefix + '_OMIM_recessive.tsv'
-        File omim_dominant = prefix + '_OMIM_dominant.tsv'
+        File omim_recessive = prefix + '_OMIM_recessive.tsv.gz'
+        File omim_dominant = prefix + '_OMIM_dominant.tsv.gz'
     }
 }
 
