@@ -80,22 +80,14 @@ workflow vepAnnotateHail {
                     vcf_file=mergeVCFs.merged_vcf_file,
                     vep_annotate_hail_python_script=vep_annotate_hail_python_script,
                     top_level_fa=top_level_fa,
-                    human_ancestor_fa=human_ancestor_fa,
-                    human_ancestor_fa_fai=human_ancestor_fa_fai,
-                    gerp_conservation_scores=gerp_conservation_scores,
+                    # human_ancestor_fa=human_ancestor_fa,
+                    # human_ancestor_fa_fai=human_ancestor_fa_fai,
+                    # gerp_conservation_scores=gerp_conservation_scores,
                     ref_vep_cache=ref_vep_cache,
-                    loeuf_v2_uri=loeuf_v2_uri,
-                    loeuf_v4_uri=loeuf_v4_uri,
                     alpha_missense_file=alpha_missense_file,
                     alpha_missense_file_idx=alpha_missense_file+'.tbi',
-                    revel_file=revel_file,
-                    revel_file_idx=revel_file+'.tbi',
-                    clinvar_vcf_uri=clinvar_vcf_uri,
-                    omim_uri=omim_uri,
                     eve_data=eve_data,
                     eve_data_idx=eve_data+'.tbi',
-                    gene_list=select_first([gene_list, mergeVCFs.merged_vcf_file]),
-                    mpc_ht_uri=mpc_ht_uri,
                     vep_hail_docker=vep_hail_docker,
                     reannotate_ac_af=reannotate_ac_af,
                     genome_build=genome_build,
@@ -107,14 +99,10 @@ workflow vepAnnotateHail {
                     vep_annotate_hail_extra_python_script=vep_annotate_hail_extra_python_script,
                     loeuf_v2_uri=loeuf_v2_uri,
                     loeuf_v4_uri=loeuf_v4_uri,
-                    alpha_missense_file=alpha_missense_file,
-                    alpha_missense_file_idx=alpha_missense_file+'.tbi',
                     revel_file=revel_file,
                     revel_file_idx=revel_file+'.tbi',
                     clinvar_vcf_uri=clinvar_vcf_uri,
                     omim_uri=omim_uri,
-                    eve_data=eve_data,
-                    eve_data_idx=eve_data+'.tbi',
                     gene_list=select_first([gene_list, mergeVCFs.merged_vcf_file]),
                     mpc_ht_uri=mpc_ht_uri,
                     vep_hail_docker=vep_hail_docker,
@@ -147,22 +135,14 @@ workflow vepAnnotateHail {
                     vcf_file=vcf_shard,
                     vep_annotate_hail_python_script=vep_annotate_hail_python_script,
                     top_level_fa=top_level_fa,
-                    human_ancestor_fa=human_ancestor_fa,
-                    human_ancestor_fa_fai=human_ancestor_fa_fai,
-                    gerp_conservation_scores=gerp_conservation_scores,
+                    # human_ancestor_fa=human_ancestor_fa,
+                    # human_ancestor_fa_fai=human_ancestor_fa_fai,
+                    # gerp_conservation_scores=gerp_conservation_scores,
                     ref_vep_cache=ref_vep_cache,
-                    loeuf_v2_uri=loeuf_v2_uri,
-                    loeuf_v4_uri=loeuf_v4_uri,
                     alpha_missense_file=alpha_missense_file,
                     alpha_missense_file_idx=alpha_missense_file+'.tbi',
-                    revel_file=revel_file,
-                    revel_file_idx=revel_file+'.tbi',
-                    clinvar_vcf_uri=clinvar_vcf_uri,
-                    omim_uri=omim_uri,
                     eve_data=eve_data,
                     eve_data_idx=eve_data+'.tbi',
-                    gene_list=select_first([gene_list, vcf_shard]),
-                    mpc_ht_uri=mpc_ht_uri,
                     vep_hail_docker=vep_hail_docker,
                     reannotate_ac_af=reannotate_ac_af,
                     genome_build=genome_build,
@@ -175,14 +155,10 @@ workflow vepAnnotateHail {
                     vep_annotate_hail_extra_python_script=vep_annotate_hail_extra_python_script,
                     loeuf_v2_uri=loeuf_v2_uri,
                     loeuf_v4_uri=loeuf_v4_uri,
-                    alpha_missense_file=alpha_missense_file,
-                    alpha_missense_file_idx=alpha_missense_file+'.tbi',
                     revel_file=revel_file,
                     revel_file_idx=revel_file+'.tbi',
                     clinvar_vcf_uri=clinvar_vcf_uri,
                     omim_uri=omim_uri,
-                    eve_data=eve_data,
-                    eve_data_idx=eve_data+'.tbi',
                     gene_list=select_first([gene_list, vcf_shard]),
                     mpc_ht_uri=mpc_ht_uri,
                     vep_hail_docker=vep_hail_docker,
@@ -206,24 +182,16 @@ task vepAnnotate {
     input {
         File vcf_file
         File top_level_fa
-        File human_ancestor_fa
-        File human_ancestor_fa_fai
-        File gerp_conservation_scores
+        # File human_ancestor_fa
+        # File human_ancestor_fa_fai
+        # File gerp_conservation_scores
         File ref_vep_cache
 
-        String loeuf_v2_uri
-        String loeuf_v4_uri
         File alpha_missense_file
         File alpha_missense_file_idx
-        File revel_file
-        File revel_file_idx
-        File clinvar_vcf_uri
-        File omim_uri
         File eve_data
         File eve_data_idx
-        File gene_list
 
-        String mpc_ht_uri
         String vep_hail_docker
         String genome_build
         String vep_annotate_hail_python_script
@@ -231,7 +199,7 @@ task vepAnnotate {
         RuntimeAttr? runtime_attr_override
     }
 
-    Float input_size = size(vcf_file, "GB") + size(ref_vep_cache, "GB") + size(gerp_conservation_scores, "GB")
+    Float input_size = size(vcf_file, "GB") + size(ref_vep_cache, "GB")# + size(gerp_conservation_scores, "GB")
     Float base_disk_gb = 10.0
     Float input_disk_scale = 10.0
     RuntimeAttr runtime_default = object {
@@ -284,7 +252,6 @@ task vepAnnotate {
         "--fasta", "~{top_level_fa}",
         "--plugin", "AlphaMissense,file=~{alpha_missense_file}",
         "--plugin", "EVE,file=~{eve_data}",
-        "--plugin", "LoF,loftee_path:/opt/vep/Plugins/,human_ancestor_fa:~{human_ancestor_fa},gerp_bigwig:~{gerp_conservation_scores}",
         "-o", "STDOUT"],
         "env": {
         "PERL5LIB": "/opt/vep/Plugins/"
@@ -295,8 +262,7 @@ task vepAnnotate {
         curl ~{vep_annotate_hail_python_script} > vep_annotate.py
         proj_id=$(gcloud config get-value project)
         python3.9 vep_annotate.py -i ~{vcf_file} -o ~{vep_annotated_vcf_name} --cores ~{cpu_cores} --mem ~{memory} \
-        --reannotate-ac-af ~{reannotate_ac_af} --build ~{genome_build} --loeuf-v2 ~{loeuf_v2_uri} --loeuf-v4 ~{loeuf_v4_uri} \
-        --mpc ~{mpc_ht_uri} --clinvar ~{clinvar_vcf_uri} --omim ~{omim_uri} --revel ~{revel_file} --genes ~{gene_list} --project-id $proj_id
+        --reannotate-ac-af ~{reannotate_ac_af} --build ~{genome_build} --project-id $proj_id
         cp $(ls . | grep hail*.log) hail_log.txt
         bcftools index -t ~{vep_annotated_vcf_name}
     >>>
@@ -313,14 +279,10 @@ task annotateExtra {
         File vcf_file
         String loeuf_v2_uri
         String loeuf_v4_uri
-        File alpha_missense_file
-        File alpha_missense_file_idx
         File revel_file
         File revel_file_idx
         File clinvar_vcf_uri
         File omim_uri
-        File eve_data
-        File eve_data_idx
         File gene_list
 
         String mpc_ht_uri

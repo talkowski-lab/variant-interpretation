@@ -15,13 +15,6 @@ parser.add_argument('--cores', dest='cores', help='CPU cores')
 parser.add_argument('--mem', dest='mem', help='Memory')
 parser.add_argument('--reannotate-ac-af', dest='reannotate_ac_af', help='Whether or not AC/AF should be recalculated by Hail')
 parser.add_argument('--build', dest='build', help='Genome build')
-parser.add_argument('--mpc', dest='mpc_ht_uri', help='MPC scores HT')
-parser.add_argument('--clinvar', dest='clinvar_vcf_uri', help='ClinVar VCF')
-parser.add_argument('--omim', dest='omim_uri', help='OMIM file')
-parser.add_argument('--revel', dest='revel_file', help='REVEL file')
-parser.add_argument('--loeuf-v2', dest='loeuf_v2_uri', help='LOEUF scores from gnomAD v2.1.1')
-parser.add_argument('--loeuf-v4', dest='loeuf_v4_uri', help='LOEUF scores from gnomAD v4.1')
-parser.add_argument('--genes', dest='gene_list', help='Gene list txt file')
 parser.add_argument('--project-id', dest='project_id', help='Google Project ID')
 
 args = parser.parse_args()
@@ -32,13 +25,6 @@ cores = args.cores  # string
 mem = int(np.floor(float(args.mem)))
 reannotate_ac_af = ast.literal_eval(args.reannotate_ac_af.capitalize())
 build = args.build
-mpc_ht_uri = args.mpc_ht_uri
-clinvar_vcf_uri = args.clinvar_vcf_uri
-omim_uri = args.omim_uri
-revel_file = args.revel_file
-loeuf_v2_uri = args.loeuf_v2_uri
-loeuf_v4_uri = args.loeuf_v4_uri
-gene_list = args.gene_list
 gcp_project = args.project_id
 
 hl.init(min_block_size=128, 
@@ -115,18 +101,6 @@ for field in all_as_fields:
     n_missing = mt.filter_rows(hl.is_missing(getattr(mt.info, normal_field))).count_rows()
     if (n_missing_as < n_missing):
         mt = mt.annotate_rows(info=mt.info.annotate(**{normal_field: getattr(mt.info, field)[mt.a_index - 1]}))    
-
-# annotate MPC
-mpc = hl.read_table(mpc_ht_uri).key_by('locus','alleles')
-mt = mt.annotate_rows(info = mt.info.annotate(MPC=mpc[mt.locus, mt.alleles].mpc))
-        
-# annotate ClinVar
-if build=='GRCh38':
-    clinvar_vcf = hl.import_vcf(clinvar_vcf_uri,
-                            reference_genome='GRCh38',
-                            force_bgz=clinvar_vcf_uri.split('.')[-1] in ['gz', 'bgz'])
-    mt = mt.annotate_rows(info = mt.info.annotate(CLNSIG=clinvar_vcf.rows()[mt.row_key].info.CLNSIG,
-                                                  CLNREVSTAT=clinvar_vcf.rows()[mt.row_key].info.CLNREVSTAT))
 
 # run VEP
 mt = hl.vep(mt, config='vep_config.json', csq=True, tolerate_parse_error=True)

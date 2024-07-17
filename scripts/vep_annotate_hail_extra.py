@@ -56,6 +56,18 @@ hl.init(min_block_size=128,
 header = hl.get_vcf_metadata(vcf_file) 
 mt = hl.import_vcf(vcf_file, force_bgz=True, array_elements_required=False, call_fields=[], reference_genome=build)
 
+# annotate MPC
+mpc = hl.read_table(mpc_ht_uri).key_by('locus','alleles')
+mt = mt.annotate_rows(info = mt.info.annotate(MPC=mpc[mt.locus, mt.alleles].mpc))
+        
+# annotate ClinVar
+if build=='GRCh38':
+    clinvar_vcf = hl.import_vcf(clinvar_vcf_uri,
+                            reference_genome='GRCh38',
+                            force_bgz=clinvar_vcf_uri.split('.')[-1] in ['gz', 'bgz'])
+    mt = mt.annotate_rows(info = mt.info.annotate(CLNSIG=clinvar_vcf.rows()[mt.row_key].info.CLNSIG,
+                                                  CLNREVSTAT=clinvar_vcf.rows()[mt.row_key].info.CLNREVSTAT))
+
 # annotate REVEL
 revel_ht = hl.import_table(revel_file, force_bgz=True)
 revel_ht = revel_ht.annotate(chr='chr'+revel_ht['#chr']) 
