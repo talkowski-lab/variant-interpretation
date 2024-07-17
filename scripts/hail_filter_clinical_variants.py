@@ -74,6 +74,19 @@ mt = hl.import_vcf(vcf_file, reference_genome='GRCh38', force_bgz=True, call_fie
 header = hl.get_vcf_metadata(vcf_file)
 csq_columns = header['info']['CSQ']['Description'].split('Format: ')[1].split('|')
 
+# split VEP CSQ string
+mt = mt.annotate_rows(vep=mt.info)
+transcript_consequences = mt.vep.CSQ.map(lambda x: x.split('\|'))
+
+transcript_consequences_strs = transcript_consequences.map(lambda x: hl.if_else(hl.len(x)>1, hl.struct(**
+                                                       {col: x[i] if col!='Consequence' else x[i].split('&')  
+                                                        for i, col in enumerate(csq_columns)}), 
+                                                        hl.struct(**{col: hl.missing('str') if col!='Consequence' else hl.array([hl.missing('str')])  
+                                                        for i, col in enumerate(csq_columns)})))
+
+mt = mt.annotate_rows(vep=mt.vep.annotate(transcript_consequences=transcript_consequences_strs))
+mt = mt.annotate_rows(vep=mt.vep.select('transcript_consequences'))
+
 # Phasing
 pedigree = hl.Pedigree.read(ped_uri)
 tm = hl.trio_matrix(mt, pedigree, complete_trios=False)
@@ -94,19 +107,6 @@ mt = mt.filter_rows((hl.is_missing(mt.info.CLNSIG)) |
 
 # filter PASS
 mt = mt.filter_rows(mt.filters.size()==0)
-
-# split VEP CSQ string
-mt = mt.annotate_rows(vep=mt.info)
-transcript_consequences = mt.vep.CSQ.map(lambda x: x.split('\|'))
-
-transcript_consequences_strs = transcript_consequences.map(lambda x: hl.if_else(hl.len(x)>1, hl.struct(**
-                                                       {col: x[i] if col!='Consequence' else x[i].split('&')  
-                                                        for i, col in enumerate(csq_columns)}), 
-                                                        hl.struct(**{col: hl.missing('str') if col!='Consequence' else hl.array([hl.missing('str')])  
-                                                        for i, col in enumerate(csq_columns)})))
-
-mt = mt.annotate_rows(vep=mt.vep.annotate(transcript_consequences=transcript_consequences_strs))
-mt = mt.annotate_rows(vep=mt.vep.select('transcript_consequences'))
 
 # filter out variants containing only these consequences
 exclude_csqs = ['intergenic_variant', 'upstream_gene_variant', 'downstream_gene_variant',
