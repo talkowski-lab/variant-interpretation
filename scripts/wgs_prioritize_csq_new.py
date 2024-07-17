@@ -11,6 +11,7 @@ cores = sys.argv[2]
 mem = int(np.floor(float(sys.argv[3])))
 sample_column = sys.argv[4]
 vep_vcf_uri = sys.argv[5]
+genome_build = sys.argv[6]
 
 hl.init(min_block_size=128, spark_conf={"spark.executor.cores": cores, 
                     "spark.executor.memory": f"{mem}g",
@@ -164,8 +165,8 @@ def process_consequence_cohort(csq_columns, vcf_metrics_uri, numeric, sample_col
         tmp_df.to_csv(new_path, sep='\t', index=False)
         ht = hl.import_table(new_path)
 
-    ht = ht.annotate(locus=hl.parse_variant(ht.ID, reference_genome='GRCh38').locus,
-                            alleles=hl.parse_variant(ht.ID, reference_genome='GRCh38').alleles)
+    ht = ht.annotate(locus=hl.parse_variant(ht.ID, reference_genome=genome_build).locus,
+                            alleles=hl.parse_variant(ht.ID, reference_genome=genome_build).alleles)
 
     mt = ht.to_matrix_table_row_major(columns=numeric, entry_field_name='metrics', col_field_name=sample_column)
     mt = mt.key_rows_by(mt.locus, mt.alleles)

@@ -23,6 +23,7 @@ workflow step4 {
         String cohort_prefix
         String prioritize_csq_script
         String hail_docker
+        String genome_build
         RuntimeAttr? runtime_attr_merge_results
         RuntimeAttr? runtime_attr_prioritize
     }
@@ -61,6 +62,7 @@ workflow step4 {
         prioritize_csq_script=prioritize_csq_script,
         hail_docker=hail_docker,
         sample_column=sample_column,
+        genome_build=genome_build,
         runtime_attr_override=runtime_attr_prioritize
     }
 
