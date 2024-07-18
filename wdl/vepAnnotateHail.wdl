@@ -25,15 +25,16 @@ workflow vepAnnotateHail {
         File top_level_fa
         File gerp_conservation_scores
         File ref_vep_cache
-        
-        String loeuf_v2_uri
-        String loeuf_v4_uri
+
         File alpha_missense_file
-        File revel_file
-        File clinvar_vcf_uri
-        File omim_uri
         File eve_data
-        String mpc_ht_uri
+
+        # File revel_file
+        # File clinvar_vcf_uri
+        # File omim_uri
+        # String mpc_ht_uri
+        # String loeuf_v2_uri
+        # String loeuf_v4_uri
 
         String cohort_prefix
         String hail_docker
@@ -41,7 +42,6 @@ workflow vepAnnotateHail {
         String sv_base_mini_docker
         
         String vep_annotate_hail_python_script
-        String vep_annotate_hail_extra_python_script
         String split_vcf_hail_script
 
         String genome_build='GRCh38'
@@ -100,23 +100,6 @@ workflow vepAnnotateHail {
                     genome_build=genome_build,
                     runtime_attr_override=runtime_attr_vep_annotate
             }
-            call annotateExtra as annotateExtraMergedShards {
-                input:
-                    vcf_file=vepAnnotateMergedShards.vep_vcf_file,
-                    vep_annotate_hail_extra_python_script=vep_annotate_hail_extra_python_script,
-                    loeuf_v2_uri=loeuf_v2_uri,
-                    loeuf_v4_uri=loeuf_v4_uri,
-                    revel_file=revel_file,
-                    revel_file_idx=revel_file+'.tbi',
-                    clinvar_vcf_uri=clinvar_vcf_uri,
-                    omim_uri=omim_uri,
-                    gene_list=select_first([gene_list, mergeVCFs.merged_vcf_file]),
-                    mpc_ht_uri=mpc_ht_uri,
-                    vep_hail_docker=vep_hail_docker,
-                    reannotate_ac_af=reannotate_ac_af,
-                    genome_build=genome_build,
-                    runtime_attr_override=runtime_attr_annotate_extra
-            }
         }
     }
 
@@ -155,29 +138,11 @@ workflow vepAnnotateHail {
                     genome_build=genome_build,
                     runtime_attr_override=runtime_attr_vep_annotate
             }
-
-            call annotateExtra {
-                input:
-                    vcf_file=vepAnnotate.vep_vcf_file,
-                    vep_annotate_hail_extra_python_script=vep_annotate_hail_extra_python_script,
-                    loeuf_v2_uri=loeuf_v2_uri,
-                    loeuf_v4_uri=loeuf_v4_uri,
-                    revel_file=revel_file,
-                    revel_file_idx=revel_file+'.tbi',
-                    clinvar_vcf_uri=clinvar_vcf_uri,
-                    omim_uri=omim_uri,
-                    gene_list=select_first([gene_list, vcf_shard]),
-                    mpc_ht_uri=mpc_ht_uri,
-                    vep_hail_docker=vep_hail_docker,
-                    reannotate_ac_af=reannotate_ac_af,
-                    genome_build=genome_build,
-                    runtime_attr_override=runtime_attr_annotate_extra
-            }
         }
     }
 
-    Array[File] vep_vcf_files_ = select_first([annotateExtra.vep_vcf_file, annotateExtraMergedShards.vep_vcf_file])
-    Array[File] vep_vcf_idx_ = select_first([annotateExtra.vep_vcf_idx, annotateExtra.vep_vcf_idx])
+    Array[File] vep_vcf_files_ = select_first([vepAnnotate.vep_vcf_file, vepAnnotateMergedShards.vep_vcf_file])
+    Array[File] vep_vcf_idx_ = select_first([vepAnnotate.vep_vcf_idx, vepAnnotateMergedShards.vep_vcf_idx])
 
     output {
         Array[File] vep_vcf_files = vep_vcf_files_
@@ -270,71 +235,6 @@ task vepAnnotate {
         proj_id=$(gcloud config get-value project)
         python3.9 vep_annotate.py -i ~{vcf_file} -o ~{vep_annotated_vcf_name} --cores ~{cpu_cores} --mem ~{memory} \
         --reannotate-ac-af ~{reannotate_ac_af} --build ~{genome_build} --project-id $proj_id
-        cp $(ls . | grep hail*.log) hail_log.txt
-        bcftools index -t ~{vep_annotated_vcf_name}
-    >>>
-
-    output {
-        File vep_vcf_file = vep_annotated_vcf_name
-        File vep_vcf_idx = vep_annotated_vcf_name + '.tbi'
-        File hail_log = "hail_log.txt"
-    }
-}
-
-task annotateExtra {
-    input {
-        File vcf_file
-        String loeuf_v2_uri
-        String loeuf_v4_uri
-        File revel_file
-        File revel_file_idx
-        File clinvar_vcf_uri
-        File omim_uri
-        File gene_list
-
-        String mpc_ht_uri
-        String vep_hail_docker
-        String genome_build
-        String vep_annotate_hail_extra_python_script
-        Boolean reannotate_ac_af
-        RuntimeAttr? runtime_attr_override
-    }
-
-    Float input_size = size(vcf_file, "GB")
-    Float base_disk_gb = 10.0
-    Float input_disk_scale = 10.0
-    RuntimeAttr runtime_default = object {
-        mem_gb: 8,
-        disk_gb: ceil(base_disk_gb + input_size * input_disk_scale),
-        cpu_cores: 1,
-        preemptible_tries: 3,
-        max_retries: 1,
-        boot_disk_gb: 10
-    }
-
-    RuntimeAttr runtime_override = select_first([runtime_attr_override, runtime_default])
-    Float memory = select_first([runtime_override.mem_gb, runtime_default.mem_gb])
-    Int cpu_cores = select_first([runtime_override.cpu_cores, runtime_default.cpu_cores])
-    
-    runtime {
-        memory: "~{memory} GB"
-        disks: "local-disk ~{select_first([runtime_override.disk_gb, runtime_default.disk_gb])} HDD"
-        cpu: cpu_cores
-        preemptible: select_first([runtime_override.preemptible_tries, runtime_default.preemptible_tries])
-        maxRetries: select_first([runtime_override.max_retries, runtime_default.max_retries])
-        docker: vep_hail_docker
-        bootDiskSizeGb: select_first([runtime_override.boot_disk_gb, runtime_default.boot_disk_gb])
-    }
-
-    String filename = basename(vcf_file)
-    String prefix = if (sub(filename, "\\.gz", "")!=filename) then basename(vcf_file, ".vcf.gz") else basename(vcf_file, ".vcf.bgz")
-    String vep_annotated_vcf_name = "~{prefix}.annot.vcf.bgz"
-
-    command <<<
-        curl ~{vep_annotate_hail_extra_python_script} > annotate.py
-        python3.9 annotate.py -i ~{vcf_file} -o ~{vep_annotated_vcf_name} --cores ~{cpu_cores} --mem ~{memory} \
-        --reannotate-ac-af ~{reannotate_ac_af} --build ~{genome_build} --loeuf-v2 ~{loeuf_v2_uri} --loeuf-v4 ~{loeuf_v4_uri} \
-        --mpc ~{mpc_ht_uri} --clinvar ~{clinvar_vcf_uri} --omim ~{omim_uri} --revel ~{revel_file} --genes ~{gene_list}
         cp $(ls . | grep hail*.log) hail_log.txt
         bcftools index -t ~{vep_annotated_vcf_name}
     >>>
