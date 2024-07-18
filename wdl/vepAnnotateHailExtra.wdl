@@ -37,8 +37,6 @@ workflow vepAnnotateHailExtra {
         
         File? gene_list  # must end in .txt or it will be ignored
         
-        RuntimeAttr? runtime_attr_merge_vcfs
-        RuntimeAttr? runtime_attr_vep_annotate
         RuntimeAttr? runtime_attr_annotate_extra
     }
 

@@ -15,7 +15,7 @@ struct RuntimeAttr {
 
 workflow filterClinicalVariants {
     input {
-        Array[File] vep_vcf_files
+        Array[File] annot_vcf_files
         File ped_uri
         File spliceAI_gene_annotation_file
         File pangolin_gene_annotation_file
@@ -48,7 +48,7 @@ workflow filterClinicalVariants {
         RuntimeAttr? runtime_attr_merge_omim_dom
     }
 
-    scatter (vcf_file in vep_vcf_files) {
+    scatter (vcf_file in annot_vcf_files) {
         call runClinicalFiltering {
             input:
             vcf_file=vcf_file,
