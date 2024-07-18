@@ -13,7 +13,6 @@ parser.add_argument('-i', dest='vcf_file', help='Input VCF file')
 parser.add_argument('-o', dest='vep_annotated_vcf_name', help='Output filename')
 parser.add_argument('--cores', dest='cores', help='CPU cores')
 parser.add_argument('--mem', dest='mem', help='Memory')
-parser.add_argument('--reannotate-ac-af', dest='reannotate_ac_af', help='Whether or not AC/AF should be recalculated by Hail')
 parser.add_argument('--build', dest='build', help='Genome build')
 parser.add_argument('--mpc', dest='mpc_ht_uri', help='MPC scores HT')
 parser.add_argument('--clinvar', dest='clinvar_vcf_uri', help='ClinVar VCF')
@@ -30,7 +29,6 @@ vcf_file = args.vcf_file
 vep_annotated_vcf_name = args.vep_annotated_vcf_name
 cores = args.cores  # string
 mem = int(np.floor(float(args.mem)))
-reannotate_ac_af = ast.literal_eval(args.reannotate_ac_af.capitalize())
 build = args.build
 mpc_ht_uri = args.mpc_ht_uri
 clinvar_vcf_uri = args.clinvar_vcf_uri
