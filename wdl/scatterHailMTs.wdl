@@ -122,9 +122,9 @@ task getMTPartitionInterval {
     bucket_id = sys.argv[7]
 
     hl.init(min_block_size=128, spark_conf={"spark.executor.cores": cores, 
-                        "spark.executor.memory": f"{mem}g",
+                        "spark.executor.memory": f"{int(np.floor(mem*0.4))}g",
                         "spark.driver.cores": cores,
-                        "spark.driver.memory": f"{mem}g"
+                        "spark.driver.memory": f"{int(np.floor(mem*0.4))}g"
                         }, tmp_dir="tmp", local_tmpdir="tmp")
 
     mt = hl.read_matrix_table(mt_uri)
@@ -193,9 +193,9 @@ task getRepartitions {
     mem = int(np.floor(float(sys.argv[4])))
 
     hl.init(min_block_size=128, spark_conf={"spark.executor.cores": cores, 
-                        "spark.executor.memory": f"{mem}g",
+                        "spark.executor.memory": f"{int(np.floor(mem*0.4))}g",
                         "spark.driver.cores": cores,
-                        "spark.driver.memory": f"{mem}g"
+                        "spark.driver.memory": f"{int(np.floor(mem*0.4))}g"
                         }, tmp_dir="tmp", local_tmpdir="tmp")
 
     if mt_uri.split('.')[-1]=='mt':

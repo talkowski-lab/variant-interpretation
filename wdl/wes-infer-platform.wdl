@@ -133,9 +133,9 @@ task getCallRateMT {
     mem = int(np.floor(float(sys.argv[6])))
 
     hl.init(min_block_size=128, spark_conf={"spark.executor.cores": cores, 
-                        "spark.executor.memory": f"{mem}g",
+                        "spark.executor.memory": f"{int(np.floor(mem*0.4))}g",
                         "spark.driver.cores": cores,
-                        "spark.driver.memory": f"{mem}g"
+                        "spark.driver.memory": f"{int(np.floor(mem*0.4))}g"
                         }, tmp_dir="tmp", local_tmpdir="tmp")
 
     mt = hl.import_vcf(vcf_file, reference_genome=genome_build, force_bgz=vcf_file.split('.')[-1] in ['gz', 'bgz'],
@@ -227,9 +227,9 @@ task inferPlatformPCA {
     mem = int(np.floor(float(sys.argv[10])))
 
     hl.init(min_block_size=128, spark_conf={"spark.executor.cores": cores, 
-                        "spark.executor.memory": f"{mem}g",
+                        "spark.executor.memory": f"{int(np.floor(mem*0.4))}g",
                         "spark.driver.cores": cores,
-                        "spark.driver.memory": f"{mem}g"
+                        "spark.driver.memory": f"{int(np.floor(mem*0.4))}g"
                         }, tmp_dir="tmp", local_tmpdir="tmp")
 
 

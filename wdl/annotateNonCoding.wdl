@@ -100,9 +100,9 @@ task annotateFromBed {
     output_filename = sys.argv[5]
 
     hl.init(min_block_size=128, spark_conf={"spark.executor.cores": cores, 
-                        "spark.executor.memory": f"{mem}g",
+                        "spark.executor.memory": f"{int(np.floor(mem*0.4))}g",
                         "spark.driver.cores": cores,
-                        "spark.driver.memory": f"{mem}g"
+                        "spark.driver.memory": f"{int(np.floor(mem*0.4))}g"
                         }, tmp_dir="tmp", local_tmpdir="tmp")
 
     bed = hl.import_bed(noncoding_bed, reference_genome='GRCh38', skip_invalid_intervals=True)

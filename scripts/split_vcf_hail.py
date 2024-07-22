@@ -15,9 +15,9 @@ build = sys.argv[7]
 #     row_fields_to_keep = []
 
 hl.init(min_block_size=128, spark_conf={"spark.executor.cores": cores, 
-                    "spark.executor.memory": f"{mem}g",
+                    "spark.executor.memory": f"{int(np.floor(mem*0.4))}g",
                     "spark.driver.cores": cores,
-                    "spark.driver.memory": f"{mem}g"
+                    "spark.driver.memory": f"{int(np.floor(mem*0.4))}g"
                     }, tmp_dir="tmp", local_tmpdir="tmp")
 
 is_vcf = file.split('.')[-1] != 'mt'

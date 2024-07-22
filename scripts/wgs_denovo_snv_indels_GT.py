@@ -17,9 +17,9 @@ mem = int(np.floor(float(sys.argv[5])))
 file_ext = sys.argv[6]
 
 hl.init(min_block_size=128, spark_conf={"spark.executor.cores": cores, 
-                    "spark.executor.memory": f"{mem}g",
+                    "spark.executor.memory": f"{int(np.floor(mem*0.4))}g",
                     "spark.driver.cores": cores,
-                    "spark.driver.memory": f"{mem}g"
+                    "spark.driver.memory": f"{int(np.floor(mem*0.4))}g"
                     }, tmp_dir="tmp", local_tmpdir="tmp")
 
 prefix = os.path.basename(vcf_file).split(file_ext)[0]

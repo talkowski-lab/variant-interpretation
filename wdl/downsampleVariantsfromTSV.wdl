@@ -179,9 +179,9 @@ task convertTSVtoVCF {
         mem = int(np.floor(float(sys.argv[3])))
 
         hl.init(min_block_size=128, spark_conf={"spark.executor.cores": cores, 
-                    "spark.executor.memory": f"{mem}g",
+                    "spark.executor.memory": f"{int(np.floor(mem*0.4))}g",
                     "spark.driver.cores": cores,
-                    "spark.driver.memory": f"{mem}g"
+                    "spark.driver.memory": f"{int(np.floor(mem*0.4))}g"
                     }, tmp_dir="tmp", local_tmpdir="tmp")
 
         df = pd.read_csv(tsv, sep='\t')[['CHROM','POS','REF','ALT']].to_csv('temp.tsv', sep='\t',index=False)

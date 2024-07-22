@@ -223,9 +223,9 @@ task HailPCA {
     genome_build = sys.argv[6]
 
     hl.init(min_block_size=128, spark_conf={"spark.executor.cores": cores, 
-                        "spark.executor.memory": f"{mem}g",
+                        "spark.executor.memory": f"{int(np.floor(mem*0.4))}g",
                         "spark.driver.cores": cores,
-                        "spark.driver.memory": f"{mem}g"
+                        "spark.driver.memory": f"{int(np.floor(mem*0.4))}g"
                         }, tmp_dir="tmp", local_tmpdir="tmp")
 
     mt = hl.import_vcf(merged_vcf_file, reference_genome=genome_build, call_fields=[], array_elements_required=False, force_bgz=True)
