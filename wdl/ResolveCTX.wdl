@@ -164,7 +164,7 @@ task clusterCPX {
     output {
         File svtk_bedcluster = "~{prefix}_cpx.bed.gz"
         File svtk_dictionary = "~{prefix}_cpx.dictionary.bed.gz"
-        File filtered_bedcluster = "~{prefix}_cpx_AC0.01.bed.gz"
+        File filtered_bedcluster = "~{prefix}_cpx_filtered.bed.gz"
     }
 
     command <<<
@@ -179,7 +179,7 @@ task clusterCPX {
         cat ~{sep=" " input_dictionaries} > dictionary.bed
         bgzip -c dictionary.bed > ~{prefix}_cpx.dictionary.bed.gz
         Rscript /opt/cpx_AC.R
-        bgzip -c filtered.bed > ~{prefix}_cpx_AC0.01.bed.gz
+        bgzip -c batch_filtered.bed > ~{prefix}_cpx_filtered.bed.gz
 
     >>>
 
