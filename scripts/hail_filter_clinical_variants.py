@@ -1,6 +1,7 @@
 from pyspark.sql import SparkSession
 import hail as hl
 import numpy as np
+import pandas as pd
 import sys
 import ast
 import os
@@ -95,7 +96,10 @@ mt = mt.annotate_rows(all_csqs=hl.set(hl.flatmap(lambda x: x, mt.vep.transcript_
 mt = mt.annotate_rows(gnomad_af=hl.max([mt.gnomADg_AF, mt.gnomADe_AF]))
 
 # Phasing
-pedigree = hl.Pedigree.read(ped_uri)
+tmp_ped = pd.read_csv(ped_uri, sep='\t').iloc[:,:6]
+tmp_ped.to_csv(f"{prefix}.ped", sep='\t', index=False)
+pedigree = hl.Pedigree.read(f"{prefix}.ped", delimiter='\t')
+
 tm = hl.trio_matrix(mt, pedigree, complete_trios=False)
 phased_tm = hl.experimental.phase_trio_matrix_by_transmission(tm, call_field='GT', phased_call_field='PBT_GT')
 
@@ -135,8 +139,9 @@ xlr_phased_tm = xlr_phased_tm.filter_entries((xlr_phased_tm.proband_entry.GT.is_
                             (~xlr_phased_tm.is_female))
 
 # filter out calls that couldn't be phased or are hom ref in proband
-gene_phased_tm = gene_phased_tm.filter_entries((hl.is_defined(gene_phased_tm.proband_entry.PBT_GT)) 
-                                          & (gene_phased_tm.proband_entry.PBT_GT!=hl.parse_call('0|0')))
+gene_phased_tm = gene_phased_tm.filter_entries(gene_phased_tm.proband_entry.GT.is_non_ref())
+# gene_phased_tm = gene_phased_tm.filter_entries((hl.is_defined(gene_phased_tm.proband_entry.PBT_GT)) 
+#                                           & (gene_phased_tm.proband_entry.PBT_GT!=hl.parse_call('0|0')))
 
 # OMIM recessive only
 gene_phased_tm = gene_phased_tm.filter_rows(

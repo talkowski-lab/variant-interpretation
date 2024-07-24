@@ -71,10 +71,7 @@ from hail.table import Table
 from hail.typecheck import typecheck, numeric
 from hail.methods.misc import require_biallelic
 
-tmp_ped = pd.read_csv(ped_uri, sep='\t')
-# check tmp_ped number of columns
-if len(tmp_ped) > 6:
-    tmp_ped = tmp_ped.iloc[:,:6]
+tmp_ped = pd.read_csv(ped_uri, sep='\t').iloc[:,:6]
     
 # subset tmp_ped to samples in mt
 samps = mt.s.collect()
