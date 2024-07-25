@@ -23,6 +23,9 @@ workflow filterClinicalVariants {
 
         String cohort_prefix
         String filter_clinical_variants_script
+        String filter_clinical_variants_omim_script
+        String filter_comphets_xlr_script
+
         String hail_docker
         String sv_base_mini_docker
         String spliceAI_docker
@@ -40,7 +43,8 @@ workflow filterClinicalVariants {
         Int max_distance=50
         Boolean mask=false
 
-        Boolean run_spliceAI=true
+
+        Boolean run_spliceAI=false
         Boolean run_pangolin=false
 
         RuntimeAttr? runtime_attr_merge_clinvar
@@ -56,15 +60,26 @@ workflow filterClinicalVariants {
             filter_clinical_variants_script=filter_clinical_variants_script,
             hail_docker=hail_docker,
             ac_threshold=ac_threshold,
+            gnomad_af_threshold=gnomad_af_threshold
+        }
+
+        call runClinicalFilteringOMIM {
+            input:
+            vcf_file=runClinicalFiltering.filtered_vcf,
+            ped_uri=ped_uri,
+            filter_clinical_variants_omim_script=filter_clinical_variants_omim_script,
+            hail_docker=hail_docker,
+            ac_threshold=ac_threshold,
             gnomad_af_threshold=gnomad_af_threshold,
             am_threshold=am_threshold,
             mpc_threshold=mpc_threshold,
             gnomad_rec_threshold=gnomad_rec_threshold,
             gnomad_dom_threshold=gnomad_dom_threshold,
             loeuf_v2_threshold=loeuf_v2_threshold,
-            loeuf_v4_threshold=loeuf_v4_threshold
+            loeuf_v4_threshold=loeuf_v4_threshold            
         }
 
+        ## TODO: logic for spliceAI/Pangolin
         # if (run_spliceAI) {
         #     call runSpliceAI {
         #         input:
@@ -112,27 +127,53 @@ workflow filterClinicalVariants {
             merged_filename=cohort_prefix+'_clinvar_variants.tsv.gz',
             runtime_attr_override=runtime_attr_merge_clinvar
     }
-    call helpers.mergeResultsPython as mergeOMIMRecessive {
-        input:
-            tsvs=runClinicalFiltering.omim_recessive,
-            hail_docker=hail_docker,
-            input_size=size(runClinicalFiltering.omim_recessive, 'GB'),
-            merged_filename=cohort_prefix+'_OMIM_recessive.tsv.gz',
-            runtime_attr_override=runtime_attr_merge_omim_rec
-    }
+    # call helpers.mergeResultsPython as mergeOMIMRecessive {
+    #     input:
+    #         tsvs=runClinicalFiltering.omim_recessive,
+    #         hail_docker=hail_docker,
+    #         input_size=size(runClinicalFiltering.omim_recessive, 'GB'),
+    #         merged_filename=cohort_prefix+'_OMIM_recessive.tsv.gz',
+    #         runtime_attr_override=runtime_attr_merge_omim_rec
+    # }
 
     call helpers.mergeResultsPython as mergeOMIMDominant {
         input:
-            tsvs=runClinicalFiltering.omim_dominant,
+            tsvs=runClinicalFilteringOMIM.omim_dominant,
             hail_docker=hail_docker,
-            input_size=size(runClinicalFiltering.omim_dominant, 'GB'),
+            input_size=size(runClinicalFilteringOMIM.omim_dominant, 'GB'),
             merged_filename=cohort_prefix+'_OMIM_dominant.tsv.gz',
             runtime_attr_override=runtime_attr_merge_omim_dom
     }
 
+    call mergeVCFs.mergeVCFs as mergeOMIMRecessive {
+        input:  
+            vcf_files=runClinicalFilteringOMIM.omim_recessive_vcf,
+            sv_base_mini_docker=sv_base_mini_docker,
+            cohort_prefix=cohort_prefix + '_OMIM_recessive',
+            sort_after_merge=false,
+            naive=true   
+    }
+
+    call filterCompHetsXLR {
+        input:
+            vcf_file=mergeOMIMRecessive.merged_vcf_file,
+            ped_uri=ped_uri,
+            filter_comphets_xlr_script=filter_comphets_xlr_script,
+            hail_docker=hail_docker,
+            ac_threshold=ac_threshold,
+            gnomad_af_threshold=gnomad_af_threshold,
+            am_threshold=am_threshold,
+            mpc_threshold=mpc_threshold,
+            gnomad_rec_threshold=gnomad_rec_threshold,
+            gnomad_dom_threshold=gnomad_dom_threshold,
+            loeuf_v2_threshold=loeuf_v2_threshold,
+            loeuf_v4_threshold=loeuf_v4_threshold            
+    }
+
     output {
         File clinvar_tsv = mergeClinVar.merged_tsv
-        File omim_recessive_tsv = mergeOMIMRecessive.merged_tsv
+        File omim_recessive_vcf = mergeOMIMRecessive.merged_vcf_file
+        File omim_recessive_comphet_xlr_tsv = filterCompHetsXLR.omim_recessive_comphet_xlr
         File omim_dominant_tsv = mergeOMIMDominant.merged_tsv
     }
 }
@@ -143,6 +184,62 @@ task runClinicalFiltering {
         File ped_uri
 
         String filter_clinical_variants_script
+        String hail_docker
+        
+        Int ac_threshold
+        Float gnomad_af_threshold
+
+        RuntimeAttr? runtime_attr_override
+    }
+    Float input_size = size(vcf_file, 'GB')
+    Float base_disk_gb = 10.0
+    Float input_disk_scale = 5.0
+
+    RuntimeAttr runtime_default = object {
+        mem_gb: 4,
+        disk_gb: ceil(base_disk_gb + input_size * input_disk_scale),
+        cpu_cores: 1,
+        preemptible_tries: 3,
+        max_retries: 1,
+        boot_disk_gb: 10
+    }
+
+    RuntimeAttr runtime_override = select_first([runtime_attr_override, runtime_default])
+
+    Float memory = select_first([runtime_override.mem_gb, runtime_default.mem_gb])
+    Int cpu_cores = select_first([runtime_override.cpu_cores, runtime_default.cpu_cores])
+    
+    runtime {
+        memory: "~{memory} GB"
+        disks: "local-disk ~{select_first([runtime_override.disk_gb, runtime_default.disk_gb])} HDD"
+        cpu: cpu_cores
+        preemptible: select_first([runtime_override.preemptible_tries, runtime_default.preemptible_tries])
+        maxRetries: select_first([runtime_override.max_retries, runtime_default.max_retries])
+        docker: hail_docker
+        bootDiskSizeGb: select_first([runtime_override.boot_disk_gb, runtime_default.boot_disk_gb])
+    }
+
+    String file_ext = if sub(basename(vcf_file), '.vcf.gz', '')!=basename(vcf_file) then '.vcf.gz' else '.vcf.bgz'
+    String prefix = basename(vcf_file, file_ext) + '_filtered'
+
+    command {
+        curl ~{filter_clinical_variants_script} > filter_vcf.py
+        python3 filter_vcf.py ~{vcf_file} ~{prefix} ~{cpu_cores} ~{memory} \
+            ~{ped_uri} ~{ac_threshold} ~{gnomad_af_threshold}
+    }
+
+    output {
+        File clinvar = prefix + '_clinvar_variants.tsv.gz'
+        File filtered_vcf = prefix + '_clinical.vcf.bgz'
+    }
+}
+
+task filterCompHetsXLR {
+    input {
+        File vcf_file
+        File ped_uri
+
+        String filter_comphets_xlr_script
         String hail_docker
         
         Int ac_threshold
@@ -188,7 +285,7 @@ task runClinicalFiltering {
     String prefix = basename(vcf_file, file_ext) + '_filtered'
 
     command {
-        curl ~{filter_clinical_variants_script} > filter_vcf.py
+        curl ~{filter_comphets_xlr_script} > filter_vcf.py
         python3 filter_vcf.py ~{vcf_file} ~{prefix} ~{cpu_cores} ~{memory} \
             ~{ped_uri} ~{ac_threshold} ~{gnomad_af_threshold} ~{am_threshold} \
             ~{mpc_threshold} ~{gnomad_rec_threshold} ~{gnomad_dom_threshold} \
@@ -196,8 +293,70 @@ task runClinicalFiltering {
     }
 
     output {
-        File clinvar = prefix + '_clinvar_variants.tsv.gz'
-        File omim_recessive = prefix + '_OMIM_recessive.tsv.gz'
+        File omim_recessive_comphet_xlr = prefix + '_OMIM_recessive_comphet_XLR.tsv.gz'
+    }
+}
+
+task runClinicalFilteringOMIM {
+    input {
+        File vcf_file
+        File ped_uri
+
+        String filter_clinical_variants_omim_script
+        String hail_docker
+        
+        Int ac_threshold
+        Float gnomad_af_threshold
+        Float am_threshold
+        Float mpc_threshold
+        Float gnomad_rec_threshold
+        Float gnomad_dom_threshold
+        Float loeuf_v2_threshold
+        Float loeuf_v4_threshold
+
+        RuntimeAttr? runtime_attr_override
+    }
+    Float input_size = size(vcf_file, 'GB')
+    Float base_disk_gb = 10.0
+    Float input_disk_scale = 5.0
+
+    RuntimeAttr runtime_default = object {
+        mem_gb: 4,
+        disk_gb: ceil(base_disk_gb + input_size * input_disk_scale),
+        cpu_cores: 1,
+        preemptible_tries: 3,
+        max_retries: 1,
+        boot_disk_gb: 10
+    }
+
+    RuntimeAttr runtime_override = select_first([runtime_attr_override, runtime_default])
+
+    Float memory = select_first([runtime_override.mem_gb, runtime_default.mem_gb])
+    Int cpu_cores = select_first([runtime_override.cpu_cores, runtime_default.cpu_cores])
+    
+    runtime {
+        memory: "~{memory} GB"
+        disks: "local-disk ~{select_first([runtime_override.disk_gb, runtime_default.disk_gb])} HDD"
+        cpu: cpu_cores
+        preemptible: select_first([runtime_override.preemptible_tries, runtime_default.preemptible_tries])
+        maxRetries: select_first([runtime_override.max_retries, runtime_default.max_retries])
+        docker: hail_docker
+        bootDiskSizeGb: select_first([runtime_override.boot_disk_gb, runtime_default.boot_disk_gb])
+    }
+
+    String file_ext = if sub(basename(vcf_file), '.vcf.gz', '')!=basename(vcf_file) then '.vcf.gz' else '.vcf.bgz'
+    String prefix = basename(vcf_file, file_ext) + '_filtered'
+
+    command {
+        curl ~{filter_clinical_variants_omim_script} > filter_vcf.py
+        python3 filter_vcf.py ~{vcf_file} ~{prefix} ~{cpu_cores} ~{memory} \
+            ~{ped_uri} ~{ac_threshold} ~{gnomad_af_threshold} ~{am_threshold} \
+            ~{mpc_threshold} ~{gnomad_rec_threshold} ~{gnomad_dom_threshold} \
+            ~{loeuf_v2_threshold} ~{loeuf_v4_threshold}
+    }
+
+    output {
+        File omim_recessive_vcf = prefix + '_OMIM_recessive.vcf.bgz'
         File omim_dominant = prefix + '_OMIM_dominant.tsv.gz'
     }
 }
