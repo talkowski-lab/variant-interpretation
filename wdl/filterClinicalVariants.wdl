@@ -48,7 +48,7 @@ workflow filterClinicalVariants {
         Boolean run_pangolin=false
 
         RuntimeAttr? runtime_attr_merge_clinvar
-        RuntimeAttr? runtime_attr_merge_omim_rec
+        RuntimeAttr? runtime_attr_merge_omim_rec_vcfs
         RuntimeAttr? runtime_attr_merge_omim_dom
     }
 
@@ -151,7 +151,8 @@ workflow filterClinicalVariants {
             sv_base_mini_docker=sv_base_mini_docker,
             cohort_prefix=cohort_prefix + '_OMIM_recessive',
             sort_after_merge=false,
-            naive=true   
+            naive=true,
+            runtime_attr_override=runtime_attr_merge_omim_rec_vcfs
     }
 
     call filterCompHetsXLR {

@@ -78,8 +78,6 @@ clinvar_tm = clinvar_tm.filter_entries((clinvar_tm.proband_entry.GT.is_non_ref()
                                    (clinvar_tm.mother_entry.GT.is_non_ref()) |
                                    (clinvar_tm.father_entry.GT.is_non_ref()))
 clinvar_tm = clinvar_tm.annotate_rows(variant_type='ClinVar_P/LP')
-# clinvar_df = clinvar_tm.entries().to_pandas()
-# clinvar_df['transmission'] = get_transmission(clinvar_df)
 
 # filter out ClinVar benign
 mt = mt.filter_rows((hl.is_missing(mt.info.CLNSIG)) |
@@ -103,4 +101,3 @@ hl.export_vcf(mt, prefix+'_clinical.vcf.bgz', metadata=header)
 
 # export ClinVar TSV
 clinvar_tm.entries().flatten().export(prefix+'_clinvar_variants.tsv.gz', delimiter='\t')
-# clinvar_df.to_csv(prefix+'_clinvar_variants.tsv.gz', sep='\t', index=False)

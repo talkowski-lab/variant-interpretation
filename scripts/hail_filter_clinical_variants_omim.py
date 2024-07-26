@@ -157,13 +157,9 @@ omim_dom = omim_dom.filter_entries((omim_dom.proband_entry.GT.is_non_ref()) |
                                    (omim_dom.father_entry.GT.is_non_ref()))
 omim_dom = omim_dom.filter_rows((hl.agg.count_where(hl.is_defined(omim_dom.proband_entry.GT))>0))
 omim_dom = omim_dom.annotate_rows(variant_type='OMIM_dominant')
-# omim_dom_df = omim_dom.entries().to_pandas()
-
-# omim_dom_df['transmission'] = get_transmission(omim_dom_df)
 
 # export OMIM Recessive VCF
 hl.export_vcf(omim_rec_mt, prefix+'_OMIM_recessive.vcf.bgz', metadata=header)
 
 # export OMIM Dominant TSV
 omim_dom.entries().flatten().export(prefix+'_OMIM_dominant.tsv.gz', delimiter='\t')
-# omim_dom_df.to_csv(prefix+'_OMIM_dominant.tsv.gz', sep='\t', index=False)

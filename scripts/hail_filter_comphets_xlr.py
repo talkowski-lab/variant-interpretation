@@ -127,9 +127,6 @@ omim_rec_comp_hets = omim_rec_comp_hets.annotate_rows(variant_type='comphet')
 omim_rec_merged = xlr_phased_tm.union_rows(omim_rec_hom_var)\
 .union_rows(omim_rec_comp_hets.drop('Feature', 'proband_PBT_GT_set'))
 omim_rec_merged = omim_rec_merged.filter_rows((hl.agg.count_where(hl.is_defined(omim_rec_merged.proband_entry.GT))>0))
-# omim_rec_df = omim_rec_merged.entries().to_pandas()
-# omim_rec_df['transmission'] = get_transmission(omim_rec_df)
 
 # export OMIM Recessive CompHet + XLR TSV
 omim_rec_merged.entries().flatten().export(prefix+'_OMIM_recessive_comphet_XLR.tsv.gz', delimiter='\t')
-# omim_rec_df.to_csv(prefix+'_OMIM_recessive_comphet_XLR.tsv.gz', sep='\t', index=False)
