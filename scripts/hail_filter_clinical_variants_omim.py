@@ -43,6 +43,9 @@ def filter_mt(mt):
     mt = mt.filter_rows(hl.set(exclude_csqs).intersection(
         hl.set(mt.vep.transcript_consequences.Consequence)).size()==0)
 
+    # filter only canonical transcript
+    mt = mt.filter_rows(mt.vep.transcript_consequences.CANONICAL=='YES')
+
     # filter by Impact and splice/noncoding consequence
     splice_vars = ['splice_donor_5th_base_variant', 'splice_region_variant', 'splice_donor_region_variant']
     keep_vars = ['non_coding_transcript_exon_variant']
