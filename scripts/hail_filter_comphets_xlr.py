@@ -114,7 +114,7 @@ omim_rec = omim_rec.annotate_entries(proband_PBT_GT_set=hl.set(
     potential_comp_hets[omim_rec.row_key, omim_rec.col_key].proband_PBT_GT))
 
 omim_rec = omim_rec.filter_entries(omim_rec.proband_PBT_GT_set.size()>1)
-omim_rec_comp_hets = omim_rec.semi_join_rows(potential_comp_hets.rows()).key_rows_by('locus', 'alleles')#.count()
+omim_rec_comp_hets = omim_rec.semi_join_rows(potential_comp_hets.rows()).key_rows_by('locus', 'alleles')
 
 omim_rec_hom_var = gene_phased_tm.filter_entries(gene_phased_tm.proband_entry.GT.is_hom_var())
 omim_rec_hom_var = omim_rec_hom_var.filter_rows(hl.agg.count_where(
@@ -125,7 +125,7 @@ omim_rec_hom_var = omim_rec_hom_var.annotate_rows(variant_type='hom_var')
 omim_rec_comp_hets = omim_rec_comp_hets.annotate_rows(variant_type='comphet')
 
 # Output 3: CompHets + Homozygous in probands + XLR in males 
-omim_rec_merged = xlr_phased_tm.union_rows(omim_rec_hom_var.drop('Feature', 'proband_PBT_GT_set'))\
+omim_rec_merged = xlr_phased_tm.union_rows(omim_rec_hom_var.drop('proband_PBT_GT_set'))\
 .union_rows(omim_rec_comp_hets.drop('Feature', 'proband_PBT_GT_set'))
 omim_rec_merged = omim_rec_merged.filter_rows((hl.agg.count_where(hl.is_defined(omim_rec_merged.proband_entry.GT))>0))
 # omim_rec_df = omim_rec_merged.entries().to_pandas()
