@@ -102,7 +102,7 @@ task runDeNovo{
 #    Float input_size = size(select_all([vcf_input, ped_input, disorder_input, coverage_indeces, raw_proband, raw_parents, exclude_regions, batch_bincov_index, sample_batches]), "GB")
 #    Float bed_size = size(bed_input, "GB")
     Float base_mem_gb = 3.75
-    Float base_disk_gb = 8
+    Int base_disk_gb = 8
 
     RuntimeAttr default_attr = object {
                                       mem_gb: base_mem_gb,
