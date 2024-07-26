@@ -165,5 +165,5 @@ omim_dom = omim_dom.annotate_rows(variant_type='OMIM_dominant')
 hl.export_vcf(omim_rec_mt, prefix+'_OMIM_recessive.vcf.bgz', metadata=header)
 
 # export OMIM Dominant TSV
-omim_dom.entries().export(prefix+'_OMIM_dominant.tsv.gz', delimiter='\t')
+omim_dom.entries().flatten().export(prefix+'_OMIM_dominant.tsv.gz', delimiter='\t')
 # omim_dom_df.to_csv(prefix+'_OMIM_dominant.tsv.gz', sep='\t', index=False)

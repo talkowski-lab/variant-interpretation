@@ -102,5 +102,5 @@ mt = mt.filter_rows((mt.gnomad_af<=gnomad_af_threshold) | (hl.is_missing(mt.gnom
 hl.export_vcf(mt, prefix+'_clinical.vcf.bgz', metadata=header)
 
 # export ClinVar TSV
-clinvar_tm.entries().export(prefix+'_clinvar_variants.tsv.gz', delimiter='\t')
+clinvar_tm.entries().flatten().export(prefix+'_clinvar_variants.tsv.gz', delimiter='\t')
 # clinvar_df.to_csv(prefix+'_clinvar_variants.tsv.gz', sep='\t', index=False)

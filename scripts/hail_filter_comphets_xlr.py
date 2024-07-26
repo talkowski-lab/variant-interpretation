@@ -94,7 +94,7 @@ xlr_phased_tm = gene_phased_tm.filter_rows(gene_phased_tm.vep.transcript_consequ
 xlr_phased_tm = xlr_phased_tm.filter_entries((xlr_phased_tm.proband_entry.GT.is_non_ref()) &
                             (~xlr_phased_tm.is_female))
 
-# filter out calls that couldn't be phased or are hom ref in proband
+# filter out calls that are hom ref in proband
 omim_rec = gene_phased_tm.filter_entries(gene_phased_tm.proband_entry.GT.is_non_ref())
 
 potential_comp_hets = (omim_rec.group_rows_by(omim_rec.vep.transcript_consequences.Feature)
@@ -124,13 +124,12 @@ xlr_phased_tm = xlr_phased_tm.annotate_rows(variant_type='XLR')
 omim_rec_hom_var = omim_rec_hom_var.annotate_rows(variant_type='hom_var')
 omim_rec_comp_hets = omim_rec_comp_hets.annotate_rows(variant_type='comphet')
 
-# Output 3: CompHets + Homozygous in probands + XLR in males 
-omim_rec_merged = xlr_phased_tm.union_rows(omim_rec_hom_var.drop('proband_PBT_GT_set'))\
+omim_rec_merged = xlr_phased_tm.union_rows(omim_rec_hom_var)\
 .union_rows(omim_rec_comp_hets.drop('Feature', 'proband_PBT_GT_set'))
 omim_rec_merged = omim_rec_merged.filter_rows((hl.agg.count_where(hl.is_defined(omim_rec_merged.proband_entry.GT))>0))
 # omim_rec_df = omim_rec_merged.entries().to_pandas()
 # omim_rec_df['transmission'] = get_transmission(omim_rec_df)
 
 # export OMIM Recessive CompHet + XLR TSV
-omim_rec_merged.entries().export(prefix+'_OMIM_recessive_comphet_XLR.tsv.gz', delimiter='\t')
+omim_rec_merged.entries().flatten().export(prefix+'_OMIM_recessive_comphet_XLR.tsv.gz', delimiter='\t')
 # omim_rec_df.to_csv(prefix+'_OMIM_recessive_comphet_XLR.tsv.gz', sep='\t', index=False)
