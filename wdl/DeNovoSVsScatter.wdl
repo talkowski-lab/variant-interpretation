@@ -165,7 +165,7 @@ task vcfToBed{
 
 #    Float input_size = size(vcf_file, "GB")
     Float base_mem_gb = 3.75
-    Float base_disk_gb = 8
+    Int base_disk_gb = 8
 
     RuntimeAttr default_attr = object {
                                       mem_gb: base_mem_gb,
