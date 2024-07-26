@@ -16,7 +16,7 @@ ped_uri = sys.argv[5]
 hl.init(min_block_size=128, 
         spark_conf={"spark.executor.cores": cores, 
                     "spark.executor.memory": f"{int(np.floor(mem*0.4))}g",
-                    "spark.driver.cores": cores,
+                    "spark.driver.cores": "2",
                     "spark.driver.memory": f"{int(np.floor(mem*0.4))}g",
         #             'spark.hadoop.fs.gs.requester.pays.mode': 'CUSTOM',
         #             'spark.hadoop.fs.gs.requester.pays.buckets': 'hail-datasets-us-central1',
@@ -128,8 +128,9 @@ omim_rec_comp_hets = omim_rec_comp_hets.annotate_rows(variant_type='comphet')
 omim_rec_merged = xlr_phased_tm.union_rows(omim_rec_hom_var.drop('Feature', 'proband_PBT_GT_set'))\
 .union_rows(omim_rec_comp_hets.drop('Feature', 'proband_PBT_GT_set'))
 omim_rec_merged = omim_rec_merged.filter_rows((hl.agg.count_where(hl.is_defined(omim_rec_merged.proband_entry.GT))>0))
-omim_rec_df = omim_rec_merged.entries().to_pandas()
-omim_rec_df['transmission'] = get_transmission(omim_rec_df)
+# omim_rec_df = omim_rec_merged.entries().to_pandas()
+# omim_rec_df['transmission'] = get_transmission(omim_rec_df)
 
 # export OMIM Recessive CompHet + XLR TSV
-omim_rec_df.to_csv(prefix+'_OMIM_recessive_comphet_XLR.tsv.gz', sep='\t', index=False)
+omim_rec_merged.entries().export(prefix+'_OMIM_recessive_comphet_XLR.tsv.gz', delimiter='\t')
+# omim_rec_df.to_csv(prefix+'_OMIM_recessive_comphet_XLR.tsv.gz', sep='\t', index=False)
