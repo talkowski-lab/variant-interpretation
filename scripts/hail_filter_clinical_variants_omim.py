@@ -92,18 +92,6 @@ mt = mt.annotate_rows(
                 hl.float(hl.array(hl.set(mt.vep.transcript_consequences.gnomADe_AF))[0])))
 mt = mt.annotate_rows(gnomad_af=hl.max([mt.gnomADg_AF, mt.gnomADe_AF]))
 
-# Output 2: OMIM Recessive
-# OMIM recessive only
-omim_rec_mt = mt.filter_rows(
-    (mt.vep.transcript_consequences.OMIM_inheritance_code.matches('2')) |    # OMIM recessive
-    ((hl.is_missing(mt.vep.transcript_consequences.OMIM_inheritance_code)) &  # not OMIM recessive with gnomAD AF and MPC filters
-                            ((mt.gnomad_af<=gnomad_rec_threshold) | (hl.is_missing(mt.gnomad_af))) &
-                            ((mt.info.MPC>=mpc_threshold) | (hl.is_missing(mt.info.MPC))) &
-                            (hl.if_else(mt.vep.transcript_consequences.am_pathogenicity=='', 1, 
-                               hl.float(mt.vep.transcript_consequences.am_pathogenicity))>=am_threshold)
-    )
-)
-
 # Phasing
 tmp_ped = pd.read_csv(ped_uri, sep='\t').iloc[:,:6]
 tmp_ped.to_csv(f"{prefix}.ped", sep='\t', index=False)
@@ -114,6 +102,31 @@ phased_tm = hl.experimental.phase_trio_matrix_by_transmission(tm, call_field='GT
 
 gene_phased_tm = phased_tm.explode_rows(phased_tm.vep.transcript_consequences)
 gene_phased_tm = filter_mt(gene_phased_tm)
+
+# Output 2: OMIM Recessive
+# OMIM recessive only
+omim_rec_gene_phased_tm = gene_phased_tm.filter_rows(
+    (gene_phased_tm.vep.transcript_consequences.OMIM_inheritance_code.matches('2')) |    # OMIM recessive
+    ((hl.is_missing(gene_phased_tm.vep.transcript_consequences.OMIM_inheritance_code)) &  # not OMIM recessive with gnomAD AF and MPC filters
+                            ((gene_phased_tm.gnomad_af<=gnomad_rec_threshold) | (hl.is_missing(gene_phased_tm.gnomad_af))) &
+                            ((gene_phased_tm.info.MPC>=mpc_threshold) | (hl.is_missing(gene_phased_tm.info.MPC))) &
+                            (hl.if_else(gene_phased_tm.vep.transcript_consequences.am_pathogenicity=='', 1, 
+                               hl.float(gene_phased_tm.vep.transcript_consequences.am_pathogenicity))>=am_threshold)
+    )
+)
+
+omim_rec_gene_phased_tm = (omim_rec_gene_phased_tm.group_rows_by(omim_rec_gene_phased_tm.locus, omim_rec_gene_phased_tm.alleles)
+    .aggregate_rows(vep = hl.agg.collect(omim_rec_gene_phased_tm.vep))).result()
+
+fields = list(omim_rec_gene_phased_tm.vep.transcript_consequences[0])
+new_csq = omim_rec_gene_phased_tm.vep.transcript_consequences.scan(lambda i, j: 
+                                      hl.str('|').join(hl.array([i]))
+                                      +','+hl.str('|').join(hl.array([j[col] if col!='Consequence' else 
+                                                                  hl.str('&').join(j[col]) 
+                                                                  for col in list(fields)])), '')[-1][1:]
+omim_rec_gene_phased_tm = omim_rec_gene_phased_tm.annotate_rows(CSQ=new_csq)
+omim_rec_mt = mt.semi_join_rows(omim_rec_gene_phased_tm.rows())
+omim_rec_mt = omim_rec_mt.annotate_rows(info=omim_rec_mt.info.annotate(CSQ=omim_rec_gene_phased_tm.rows()[omim_rec_mt.row_key].CSQ))
 
 # Output 3: OMIM Dominant
 # TODO: temporary hacky, can be removed when VEP rerun with LOEUF HTs fixed
