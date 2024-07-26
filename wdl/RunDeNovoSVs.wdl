@@ -219,7 +219,7 @@ task subsetVcf{
         RuntimeAttr? runtime_attr_override
     }
 
-    Float input_size = size(vcf_file, "GB")
+    Int input_size = ceil(size(vcf_file, "GB"))
     Float base_mem_gb = 3.75
 
     RuntimeAttr default_attr = object {
