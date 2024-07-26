@@ -91,7 +91,6 @@ mt = mt.annotate_rows(
     gnomADe_AF=hl.or_missing(hl.array(hl.set(mt.vep.transcript_consequences.gnomADe_AF))[0]!='', 
                 hl.float(hl.array(hl.set(mt.vep.transcript_consequences.gnomADe_AF))[0])))
 mt = mt.annotate_rows(gnomad_af=hl.max([mt.gnomADg_AF, mt.gnomADe_AF]))
-mt = filter_mt(mt)
 
 # Output 2: OMIM Recessive
 # OMIM recessive only
@@ -114,6 +113,7 @@ tm = hl.trio_matrix(mt, pedigree, complete_trios=False)
 phased_tm = hl.experimental.phase_trio_matrix_by_transmission(tm, call_field='GT', phased_call_field='PBT_GT')
 
 gene_phased_tm = phased_tm.explode_rows(phased_tm.vep.transcript_consequences)
+gene_phased_tm = filter_mt(gene_phased_tm)
 
 # Output 3: OMIM Dominant
 # TODO: temporary hacky, can be removed when VEP rerun with LOEUF HTs fixed

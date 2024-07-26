@@ -24,6 +24,28 @@ hl.init(min_block_size=128,
                     }, 
         tmp_dir="tmp", local_tmpdir="tmp",
                     )
+
+def filter_mt(mt):
+    '''
+    mt: can be trio matrix (tm) or matrix table (mt) but must be transcript-level, not variant-level
+    '''
+    # filter by Consequence
+    exclude_csqs = ['intergenic_variant', 'upstream_gene_variant', 'downstream_gene_variant',
+                    'synonymous_variant', 'coding_sequence_variant', 'sequence_variant']
+    mt = mt.filter_rows(hl.set(exclude_csqs).intersection(
+        hl.set(mt.vep.transcript_consequences.Consequence)).size()==0)
+
+    # filter by Impact and splice/noncoding consequence
+    splice_vars = ['splice_donor_5th_base_variant', 'splice_region_variant', 'splice_donor_region_variant']
+    keep_vars = ['non_coding_transcript_exon_variant']
+    mt = mt.filter_rows(
+        (hl.set(splice_vars + keep_vars).intersection(
+            hl.set(mt.vep.transcript_consequences.Consequence)).size()>0) |
+        (hl.array(['HIGH', 'MODERATE']).contains(
+        mt.vep.transcript_consequences.IMPACT))
+        )
+    return mt 
+
 def get_transmission(df):
     '''
     df: trio matrix (tm) phased with PBT_GT converted to Pandas DataFrame
@@ -63,10 +85,9 @@ pedigree = hl.Pedigree.read(f"{prefix}.ped", delimiter='\t')
 tm = hl.trio_matrix(mt, pedigree, complete_trios=False)
 phased_tm = hl.experimental.phase_trio_matrix_by_transmission(tm, call_field='GT', phased_call_field='PBT_GT')
 
-gene_phased_tm = phased_tm.explode_rows(phased_tm.vep.transcript_consequences)
-
 # Output 2.5: OMIM Recessive --> CompHets + Homozygous in probands + XLR in males 
 gene_phased_tm = phased_tm.explode_rows(phased_tm.vep.transcript_consequences)
+gene_phased_tm = filter_mt(gene_phased_tm)
 
 # XLR only
 xlr_phased_tm = gene_phased_tm.filter_rows(gene_phased_tm.vep.transcript_consequences.OMIM_inheritance_code.matches('4'))
