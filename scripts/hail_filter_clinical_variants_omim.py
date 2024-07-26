@@ -145,7 +145,7 @@ omim_dom_df = omim_dom.entries().to_pandas()
 omim_dom_df['transmission'] = get_transmission(omim_dom_df)
 
 # export OMIM Recessive VCF
-hl.export_vcf(omim_rec_mt, prefix+'_OMIM_recessive.vcf.bgz')
+hl.export_vcf(omim_rec_mt, prefix+'_OMIM_recessive.vcf.bgz', metadata=header)
 
 # export OMIM Dominant TSV
 omim_dom_df.to_csv(prefix+'_OMIM_dominant.tsv.gz', sep='\t', index=False)
