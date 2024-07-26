@@ -209,17 +209,13 @@ task mergeBedFiles{
         RuntimeAttr? runtime_attr_override
     }
 
-#    Float bed_files_size = size(bed_files, "GB")
-    Float base_mem_gb = 3.75
-    Float base_disk_gb = 8
-
     RuntimeAttr default_attr = object {
-                                      mem_gb: base_mem_gb,
-                                      disk_gb: base_disk_gb,
+                                      mem_gb: 3.75,
+                                      disk_gb: 30,
                                       cpu: 1,
                                       preemptible: 2,
                                       max_retries: 1,
-                                      boot_disk_gb: 8
+                                      boot_disk_gb: 10
                                   }
     
     RuntimeAttr runtime_attr = select_first([runtime_attr_override, default_attr])
