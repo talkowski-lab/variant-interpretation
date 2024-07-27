@@ -150,7 +150,6 @@ workflow filterClinicalVariants {
             vcf_files=runClinicalFilteringOMIM.omim_recessive_vcf,
             sv_base_mini_docker=sv_base_mini_docker,
             cohort_prefix=cohort_prefix + '_OMIM_recessive',
-            sort_after_merge=false,
             naive=true,
             runtime_attr_override=runtime_attr_merge_omim_rec_vcfs
     }
