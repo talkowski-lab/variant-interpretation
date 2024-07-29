@@ -74,8 +74,10 @@ task mergeVCFSamples {
         for vcf in $(cat vcfs_sorted.list);
         do
             tabix $vcf
+            bcftools norm $vcf -m- -Oz -o $(basename $vcf .vcf.gz)_norm.vcf.gz
+            echo $(basename $vcf .vcf.gz)_norm.vcf.gz >> vcfs_sorted_norm.list
         done
-        bcftools merge -m none --force-samples --no-version -Oz --file-list vcfs_sorted.list --output ~{merged_filename}_merged.vcf.gz
+        bcftools merge -m none --force-samples --no-version -Oz --file-list vcfs_sorted_norm.list --output ~{merged_filename}_merged.vcf.gz
             >>>
 
     output {
