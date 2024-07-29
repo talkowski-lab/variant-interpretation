@@ -40,9 +40,10 @@ workflow filterClinicalVariants {
         Float loeuf_v2_threshold=0.35
         Float loeuf_v4_threshold=0.6
 
+        String genome_build='GRCh38'
+        Int families_per_chunk=500
         Int max_distance=50
         Boolean mask=false
-
 
         Boolean run_spliceAI=false
         Boolean run_pangolin=false
@@ -50,6 +51,7 @@ workflow filterClinicalVariants {
         RuntimeAttr? runtime_attr_merge_clinvar
         RuntimeAttr? runtime_attr_merge_omim_rec_vcfs
         RuntimeAttr? runtime_attr_merge_omim_dom
+        RuntimeAttr? runtime_attr_merge_omim_rec
     }
 
     scatter (vcf_file in annot_vcf_files) {
@@ -154,26 +156,54 @@ workflow filterClinicalVariants {
             runtime_attr_override=runtime_attr_merge_omim_rec_vcfs
     }
 
-    call filterCompHetsXLR {
+    call helpers.splitFamilies as splitFamilies {
         input:
             vcf_file=mergeOMIMRecessive.merged_vcf_file,
             ped_uri=ped_uri,
-            filter_comphets_xlr_script=filter_comphets_xlr_script,
+            families_per_chunk=families_per_chunk,
+            cohort_prefix=cohort_prefix,
+            sv_base_mini_docker=sv_base_mini_docker
+    } 
+
+    scatter (sample_file in splitFamilies.family_shard_files) {
+        call helpers.subsetVCFSamplesHail as subsetVCFSamples {
+            input:
+                samples_file=sample_file,
+                vcf_file=mergeOMIMRecessive.merged_vcf_file,
+                hail_docker=hail_docker,
+                genome_build=genome_build
+        }
+
+        call filterCompHetsXLR {
+            input:
+                vcf_file=subsetVCFSamples.vcf_subset,
+                ped_uri=ped_uri,
+                filter_comphets_xlr_script=filter_comphets_xlr_script,
+                hail_docker=hail_docker,
+                ac_threshold=ac_threshold,
+                gnomad_af_threshold=gnomad_af_threshold,
+                am_threshold=am_threshold,
+                mpc_threshold=mpc_threshold,
+                gnomad_rec_threshold=gnomad_rec_threshold,
+                gnomad_dom_threshold=gnomad_dom_threshold,
+                loeuf_v2_threshold=loeuf_v2_threshold,
+                loeuf_v4_threshold=loeuf_v4_threshold            
+        }
+    }
+
+    call helpers.mergeResultsPython as mergeCompHetsXLR {
+        input:
+            tsvs=filterCompHetsXLR.omim_recessive_comphet_xlr,
             hail_docker=hail_docker,
-            ac_threshold=ac_threshold,
-            gnomad_af_threshold=gnomad_af_threshold,
-            am_threshold=am_threshold,
-            mpc_threshold=mpc_threshold,
-            gnomad_rec_threshold=gnomad_rec_threshold,
-            gnomad_dom_threshold=gnomad_dom_threshold,
-            loeuf_v2_threshold=loeuf_v2_threshold,
-            loeuf_v4_threshold=loeuf_v4_threshold            
+            input_size=size(filterCompHetsXLR.omim_recessive_comphet_xlr, 'GB'),
+            merged_filename=cohort_prefix+'_OMIM_recessive_comphet_XLR.tsv.gz',
+            runtime_attr_override=runtime_attr_merge_omim_rec
     }
 
     output {
         File clinvar_tsv = mergeClinVar.merged_tsv
         File omim_recessive_vcf = mergeOMIMRecessive.merged_vcf_file
-        File omim_recessive_comphet_xlr_tsv = filterCompHetsXLR.omim_recessive_comphet_xlr
+        File omim_recessive_comphet_xlr_tsv = mergeCompHetsXLR.merged_tsv
         File omim_dominant_tsv = mergeOMIMDominant.merged_tsv
     }
 }
