@@ -73,7 +73,7 @@ task mergeVCFSamples {
         cat $VCFS | awk -F '/' '{print $NF"\t"$0}' | sort -k1,1V | awk '{print $2}' > vcfs_sorted.list
         for vcf in $(cat vcfs_sorted.list);
         do
-            bcftools annotate -x FORMAT -Oz -o "$vcf"_stripped.vcf.gz
+            bcftools annotate -x FORMAT -Oz -o "$vcf"_stripped.vcf.gz $vcf
             tabix "$vcf"_stripped.vcf.gz
             echo "$vcf"_stripped.vcf.gz >> vcfs_sorted_stripped.list
         done
