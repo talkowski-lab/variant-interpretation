@@ -655,6 +655,8 @@ task subsetVCFSamplesHail {
                         }, tmp_dir="tmp", local_tmpdir="tmp")
 
     mt = hl.import_vcf(vcf_file, reference_genome = genome_build, array_elements_required=False, force_bgz=True)
+    header = hl.get_vcf_metadata(vcf_file)
+    
     samples = pd.read_csv(samples_file, header=None)[0].tolist()
     try:
         # for haploid (e.g. chrY)
@@ -670,7 +672,7 @@ task subsetVCFSamplesHail {
     mt_filt = mt.filter_cols(hl.array(samples).contains(mt.s))
     mt_filt = hl.variant_qc(mt_filt)
     mt_filt = mt_filt.filter_rows(mt_filt.variant_qc.AC[1]>0)
-    hl.export_vcf(mt_filt, os.path.basename(samples_file).split('.txt')[0]+'.vcf.bgz')
+    hl.export_vcf(mt_filt, os.path.basename(samples_file).split('.txt')[0]+'.vcf.bgz', metadata=header)
     EOF
 
     python3 subset_samples.py ~{vcf_file} ~{samples_file} ~{cpu_cores} ~{memory} ~{genome_build}
