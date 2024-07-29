@@ -145,6 +145,82 @@ task splitSamples {
     }
 }
 
+task splitFamilies {
+    input {
+        File vcf_file
+        File ped_uri
+        Int families_per_chunk
+        String cohort_prefix
+        String sv_base_mini_docker
+        RuntimeAttr? runtime_attr_override
+    }
+
+    Float input_size = size(vcf_file, "GB")
+    Float base_disk_gb = 10.0
+    Float input_disk_scale = 5.0
+    
+    RuntimeAttr runtime_default = object {
+        mem_gb: 4,
+        disk_gb: ceil(base_disk_gb + input_size * input_disk_scale),
+        cpu_cores: 1,
+        preemptible_tries: 3,
+        max_retries: 1,
+        boot_disk_gb: 10
+    }
+
+    RuntimeAttr runtime_override = select_first([runtime_attr_override, runtime_default])
+    Float memory = select_first([runtime_override.mem_gb, runtime_default.mem_gb])
+    Int cpu_cores = select_first([runtime_override.cpu_cores, runtime_default.cpu_cores])
+    
+    runtime {
+        memory: "~{memory} GB"
+        disks: "local-disk ~{select_first([runtime_override.disk_gb, runtime_default.disk_gb])} HDD"
+        cpu: cpu_cores
+        preemptible: select_first([runtime_override.preemptible_tries, runtime_default.preemptible_tries])
+        maxRetries: select_first([runtime_override.max_retries, runtime_default.max_retries])
+        docker: sv_base_mini_docker
+        bootDiskSizeGb: select_first([runtime_override.boot_disk_gb, runtime_default.boot_disk_gb])
+    }
+
+    command <<<
+        set -eou pipefail
+
+        cat <<EOF > split_samples.py 
+        import os
+        import sys
+        import pandas as pd
+        import numpy as np
+
+        cohort_prefix = sys.argv[1]
+        families_per_chunk = int(sys.argv[2])  # approximation for trios
+        ped_uri = sys.argv[3]
+
+        ped = pd.read_csv(ped_uri, sep='\t').iloc[:, :6]
+        ped.columns = ['family_id', 'sample_id', 'paternal_id', 'maternal_id', 'sex', 'phenotype']
+
+        n = families_per_chunk
+        families = ped.family_id.unique().tolist()
+
+        chunks = [families[i * n:(i + 1) * n] for i in range((len(families) + n - 1) // n )]  
+        sample_chunks = [ped[ped.family_id.isin(fams)].sample_id.to_list() for fams in chunks]
+
+        shard_samples = []
+        for i, chunk1 in enumerate(sample_chunks):
+            for chunk2 in chunks[i+1:]:
+                shard_samples.append(chunk1 + chunk2)
+
+        for i, shard in enumerate(shard_samples):
+            pd.Series(shard).to_csv(f"{cohort_prefix}_shard_{i}.txt", index=False, header=None)
+        EOF
+
+        python3 split_samples.py ~{cohort_prefix} ~{families_per_chunk} ~{ped_uri}
+    >>>
+
+    output {
+        Array[File] family_shard_files = glob("~{cohort_prefix}_shard_*.txt")
+    }
+}
+
 task mergeResultsPython {
      input {
         Array[String] tsvs
