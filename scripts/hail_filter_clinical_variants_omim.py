@@ -110,6 +110,7 @@ gene_phased_tm = filter_mt(gene_phased_tm)
 # OMIM recessive only
 omim_rec_gene_phased_tm = gene_phased_tm.filter_rows(
     (gene_phased_tm.vep.transcript_consequences.OMIM_inheritance_code.matches('2')) |    # OMIM recessive
+    (gene_phased_tm.vep.transcript_consequences.OMIM_inheritance_code.matches('4')) |  # XLR
     ((hl.is_missing(gene_phased_tm.vep.transcript_consequences.OMIM_inheritance_code)) &  # not OMIM recessive with gnomAD AF and MPC filters
                             ((gene_phased_tm.gnomad_af<=gnomad_rec_threshold) | (hl.is_missing(gene_phased_tm.gnomad_af))) &
                             ((gene_phased_tm.info.MPC>=mpc_threshold) | (hl.is_missing(gene_phased_tm.info.MPC))) &
