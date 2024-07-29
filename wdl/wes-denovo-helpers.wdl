@@ -656,7 +656,7 @@ task subsetVCFSamplesHail {
 
     mt = hl.import_vcf(vcf_file, reference_genome = genome_build, array_elements_required=False, force_bgz=True)
     header = hl.get_vcf_metadata(vcf_file)
-    
+
     samples = pd.read_csv(samples_file, header=None)[0].tolist()
     try:
         # for haploid (e.g. chrY)
