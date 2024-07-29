@@ -668,6 +668,8 @@ task subsetVCFSamplesHail {
         pass
 
     mt_filt = mt.filter_cols(hl.array(samples).contains(mt.s))
+    mt_filt = hl.variant_qc(mt_filt)
+    mt_filt = mt_filt.filter_rows(mt_filt.variant_qc.AC[1]>0)
     hl.export_vcf(mt_filt, os.path.basename(samples_file).split('.txt')[0]+'.vcf.bgz')
     EOF
 
