@@ -16,9 +16,11 @@ struct RuntimeAttr {
 workflow getBAFinBED {
     input {
         File bed_file
-        File ped_uri
+
+        Array[File] cohort_ped_uris
         Array[Array[File]] cohort_vep_vcf_files
         Array[String] cohort_prefixes
+
         String cohort_set_id
         String get_baf_script
         String plot_baf_script
@@ -27,9 +29,10 @@ workflow getBAFinBED {
         Float window_size=0.15
     }
 
-    scatter (pair in zip(cohort_prefixes, cohort_vep_vcf_files)) {
-        Array[File] vep_vcf_files = pair.right
-        String cohort_prefix = pair.left
+    scatter (i in range(length(cohort_prefixes))) {
+        File ped_uri = cohort_ped_uris[i]
+        Array[File] vep_vcf_files = cohort_vep_vcf_files[i]
+        String cohort_prefix = cohort_prefixes[i]
         
         scatter (vep_file in vep_vcf_files) {
             call getBAF {
