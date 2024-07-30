@@ -66,7 +66,7 @@ workflow VisualizePlots{
         File batch_medianfile_ = select_first([batch_medianfile])
         File batch_bincov_ = select_first([batch_bincov])
         File sample_batches_ = select_first([sample_batches])
-        File rd_outliers_ = select_all([rd_outliers])
+        File rd_outliers_ = select_first([rd_outliers])
 #        File regeno_file_ = select_first([regeno_file])
 
         call rdtest.RdTestVisualization as RdTest{
