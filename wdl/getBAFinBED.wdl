@@ -29,7 +29,7 @@ workflow getBAFinBED {
         Float window_size=0.15
     }
 
-    scatter (i in range(length(cohort_prefixes))) {
+    scatter (i in range(length(cohort_vep_vcf_files))) {
         File ped_uri = cohort_ped_uris[i]
         Array[File] vep_vcf_files = cohort_vep_vcf_files[i]
         String cohort_prefix = cohort_prefixes[i]
