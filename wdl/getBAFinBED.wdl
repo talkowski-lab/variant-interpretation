@@ -17,8 +17,9 @@ workflow getBAFinBED {
     input {
         File bed_file
         File ped_uri
-        Array[File] vep_vcf_files
-        String cohort_prefix
+        Array[Array[File]] cohort_vep_vcf_files
+        Array[String] cohort_prefixes
+        String cohort_set_id
         String get_baf_script
         String plot_baf_script
         String hail_docker
@@ -26,25 +27,29 @@ workflow getBAFinBED {
         Float window_size=0.15
     }
 
-    scatter (vep_file in vep_vcf_files) {
-        call getBAF {
-            input:
-            bed_file=bed_file,
-            ped_uri=ped_uri,
-            vep_file=vep_file,
-            cohort_prefix=cohort_prefix,
-            window_size=window_size,
-            get_baf_script=get_baf_script,
-            hail_docker=hail_docker
+    scatter (pair in zip(cohort_prefixes, cohort_vep_vcf_files)) {
+        Array[File] vep_vcf_files = pair.right
+        String cohort_prefix = pair.left
+        
+        scatter (vep_file in vep_vcf_files) {
+            call getBAF {
+                input:
+                bed_file=bed_file,
+                ped_uri=ped_uri,
+                vep_file=vep_file,
+                cohort_prefix=cohort_prefix,
+                window_size=window_size,
+                get_baf_script=get_baf_script,
+                hail_docker=hail_docker
+            }
         }
-
     }
 
     call helpers.mergeResultsPython as mergeResults {
         input:
-        tsvs=getBAF.baf_tsv,
+        tsvs=flatten(getBAF.baf_tsv),
         hail_docker=hail_docker,
-        merged_filename=cohort_prefix + '_AB_SNVs_locus_intervals.tsv',
+        merged_filename=cohort_set_id + '_AB_SNVs_locus_intervals.tsv',
         input_size=size(getBAF.baf_tsv, 'GB')
     }
 
