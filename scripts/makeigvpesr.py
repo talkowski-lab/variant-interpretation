@@ -25,7 +25,7 @@ parser.add_argument('-b', '--buff', type=str, help='length of buffer to add arou
 parser.add_argument('-c', '--chromosome', type=str, help='name of chromosome to make igv on', default='all')
 parser.add_argument('-i', '--igvfile', type=str, help='name of chromosome to make igv on', default='all')
 parser.add_argument('-bam', '--bamfiscript', type=str, help='name of chromosome to make igv on', default='all')
-parser.add_argument('-m', '--igvmaxwindow', type=str, help='max length of SV to appear in IGV', default='all')
+parser.add_argument('-m', '--igvmaxwindow', type=str, help='max length of SV to appear in IGV', default=10e10)
 
 args = parser.parse_args()
 

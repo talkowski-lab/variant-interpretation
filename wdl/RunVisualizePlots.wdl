@@ -16,7 +16,7 @@ workflow VisualizePlots{
         File? batch_medianfile
         File? fam_ids
 
-        Int ?igv_max_window
+        Int? igv_max_window
         File? rd_outliers
         File? sample_pe_sr
         File? sample_crai_cram
