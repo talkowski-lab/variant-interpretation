@@ -140,7 +140,7 @@ task rdtest {
         File ped_file
         File sample_batches # samples, batches
         File batch_bincov # batch, bincov, index
-        File outlier_samples
+        File? outlier_samples
         Array[File] medianfile
         String prefix
         String sv_pipeline_rdtest_docker
@@ -200,8 +200,12 @@ task rdtest {
         cut -f2 subset_families.ped | sort -u > subset_samples.txt
 
         ##Remove outliers from RD plot except samples from this family
-        grep -vf subset_samples.txt ~{outlier_samples} > outliers_keepFams.txt
-        grep -vf outliers_keepFams.txt samples.txt > samples_noOutliers.txt
+        if [ ~{defined(outlier_samples)} == "true" ]; then
+            grep -vf subset_samples.txt ~{outlier_samples} > outliers_keepFams.txt || true
+            grep -vf outliers_keepFams.txt samples.txt > samples_noOutliers.txt || true
+        else
+            cp samples.txt samples_noOutliers.txt
+        fi
 
         ##Run RD test script
         Rscript /opt/RdTest/Rd.R \

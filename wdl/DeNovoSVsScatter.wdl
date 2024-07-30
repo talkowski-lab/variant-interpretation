@@ -99,13 +99,14 @@ task runDeNovo{
         RuntimeAttr? runtime_attr_override
     }
 
-    Float input_size = size(select_all([vcf_input, ped_input, disorder_input, coverage_indeces, raw_proband, raw_parents, exclude_regions, batch_bincov_index, sample_batches]), "GB")
-    Float bed_size = size(bed_input, "GB")
+#    Float input_size = size(select_all([vcf_input, ped_input, disorder_input, coverage_indeces, raw_proband, raw_parents, exclude_regions, batch_bincov_index, sample_batches]), "GB")
+#    Float bed_size = size(bed_input, "GB")
     Float base_mem_gb = 3.75
+    Int base_disk_gb = 8
 
     RuntimeAttr default_attr = object {
                                       mem_gb: base_mem_gb,
-                                      disk_gb: ceil(10 + input_size + bed_size * 1.5),
+                                      disk_gb: base_disk_gb,
                                       cpu: 1,
                                       preemptible: 2,
                                       max_retries: 1,
@@ -162,12 +163,13 @@ task vcfToBed{
         RuntimeAttr? runtime_attr_override
     }
 
-    Float input_size = size(vcf_file, "GB")
+#    Float input_size = size(vcf_file, "GB")
     Float base_mem_gb = 3.75
+    Int base_disk_gb = 8
 
     RuntimeAttr default_attr = object {
                                       mem_gb: base_mem_gb,
-                                      disk_gb: ceil(10 + input_size * 1.5),
+                                      disk_gb: base_disk_gb,
                                       cpu: 1,
                                       preemptible: 2,
                                       max_retries: 1,
@@ -207,16 +209,13 @@ task mergeBedFiles{
         RuntimeAttr? runtime_attr_override
     }
 
-    Float bed_files_size = size(bed_files, "GB")
-    Float base_mem_gb = 3.75
-
     RuntimeAttr default_attr = object {
-                                      mem_gb: base_mem_gb,
-                                      disk_gb: ceil(10 + (bed_files_size) * 2.0),
+                                      mem_gb: 3.75,
+                                      disk_gb: 30,
                                       cpu: 1,
                                       preemptible: 2,
                                       max_retries: 1,
-                                      boot_disk_gb: 8
+                                      boot_disk_gb: 10
                                   }
     
     RuntimeAttr runtime_attr = select_first([runtime_attr_override, default_attr])
