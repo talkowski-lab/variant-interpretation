@@ -38,6 +38,7 @@ workflow Relatedness {
         RuntimeAttr? runtime_attr_check_relatedness
         RuntimeAttr? runtime_attr_plot_relatedness
         RuntimeAttr? runtime_attr_merge_results
+        RuntimeAttr? runtime_attr_remove_duplicates
     }
 
     if (!defined(somalier_vcf_file_)) {
@@ -145,7 +146,7 @@ workflow Relatedness {
         relatedness_qc=mergeRelatednessQC.merged_tsv,
         hail_docker=hail_docker,
         chunk_size=chunk_size,
-        runtime_attr_override=runtime_attr_merge_results
+        runtime_attr_override=runtime_attr_remove_duplicates
     }
 
     call relatednessHail.plotRelatedness as plotRelatedness {
