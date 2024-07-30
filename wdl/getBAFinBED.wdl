@@ -31,10 +31,10 @@ workflow getBAFinBED {
 
     scatter (pair in zip(cohort_prefixes, zip(cohort_vep_vcf_files, cohort_ped_uris))) {
         File ped_uri = pair.right.right
-        Array[File] vep_vcf_files = pair.right.left
+        # Array[File] vep_vcf_files = pair.right.left
         String cohort_prefix = pair.left
         
-        scatter (vep_file in vep_vcf_files) {
+        scatter (vep_file in pair.right.left) {
             call getBAF {
                 input:
                 bed_file=bed_file,
