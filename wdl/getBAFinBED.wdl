@@ -18,7 +18,7 @@ workflow getBAFinBED {
         File bed_file
 
         Array[File] cohort_ped_uris
-        Array[Array[File]] cohort_vep_vcf_files
+        Array[Array[String]] cohort_vep_vcf_files
         Array[String] cohort_prefixes
 
         String cohort_set_id
