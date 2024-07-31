@@ -92,6 +92,7 @@ task mergeVCFs {
         String cohort_prefix
         Boolean sort_after_merge
         Boolean naive=true
+        Array[File]? vcf_indices
         RuntimeAttr? runtime_attr_override
     }
 

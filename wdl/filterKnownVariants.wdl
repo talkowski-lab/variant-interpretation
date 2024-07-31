@@ -36,6 +36,7 @@ workflow filterKnownVariants {
     call mergeVCFs.mergeVCFs as mergeVCFs {
         input:
             vcf_files=filterVariants.known_vcf,
+            vcf_indices=filterVariants.known_vcf_idx,
             sv_base_mini_docker=sv_base_mini_docker,
             cohort_prefix=cohort_prefix + '_known',
             sort_after_merge=true,
@@ -116,7 +117,7 @@ task filterVariants {
 
     mt = mt.semi_join_rows(known_ht)
     header = hl.get_vcf_metadata(vcf_file)
-    hl.export_vcf(mt, f"{os.path.basename(vcf_file).split('.vcf')[0]}.known.vcf.bgz", metadata=header)
+    hl.export_vcf(mt, f"{os.path.basename(vcf_file).split('.vcf')[0]}.known.vcf.bgz", metadata=header, tabix=True)
     EOF
 
     python3 filter_vcf.py ~{vcf_file} ~{known_variants_file} ~{genome_build} ~{cpu_cores} ~{memory}
@@ -124,5 +125,6 @@ task filterVariants {
 
     output {
         File known_vcf = basename(vcf_file, file_ext) + '.known.vcf.bgz'
+        File known_vcf_idx = basename(vcf_file, file_ext) + '.known.vcf.bgz.tbi'
     }
 }
