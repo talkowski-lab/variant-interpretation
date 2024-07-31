@@ -135,7 +135,7 @@ workflow Relatedness {
             input:
             input_size=size(checkRelatedness.kinship_tsv, 'GB'),
             tsvs=checkRelatedness.kinship_tsv,
-            merged_filename=cohort_prefix + '_kinship.tsv',
+            merged_filename=cohort_prefix + '_kinship.tsv.gz',
             hail_docker=hail_docker,
             runtime_attr_override=runtime_attr_merge_results
     }
