@@ -207,7 +207,8 @@ task runIGV_whole_genome_parse{
             #localize cram files
             while read sample crai cram new_cram new_crai
             do
-                name=$(echo $new_cram|awk -F"/" '{print $NF}'|sed 's/.cram//g')
+                name=$( echo $new_cram|awk -F"/" '{print $NF}'|sed 's/.cram//g' )
+                gsutil cp $crai $( basename $cram | sed 's/\.cram$/.crai/g' )
                 export GCS_OAUTH_TOKEN=`gcloud auth application-default print-access-token`
                 samtools view -h -C -T ~{reference} -o $name.cram $cram -L regions.bed.gz -M
                 samtools index $name.cram
