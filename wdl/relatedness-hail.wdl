@@ -225,7 +225,7 @@ task plotRelatedness {
         RuntimeAttr? runtime_attr_override
     }
 
-    Float input_size = size(ped_uri, "GB")
+    Float input_size = size([kinship_tsv, ped_uri], "GB")
     Float base_disk_gb = 10.0
     Float input_disk_scale = 5.0
 
