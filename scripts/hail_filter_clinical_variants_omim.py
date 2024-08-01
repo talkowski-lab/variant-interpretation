@@ -88,12 +88,10 @@ transcript_consequences_strs = transcript_consequences.map(lambda x: hl.if_else(
 mt = mt.annotate_rows(vep=mt.vep.annotate(transcript_consequences=transcript_consequences_strs))
 mt = mt.annotate_rows(vep=mt.vep.select('transcript_consequences'))
 
-mt = mt.annotate_rows(
-    gnomADg_AF=hl.or_missing(hl.array(hl.set(mt.vep.transcript_consequences.gnomADg_AF))[0]!='', 
-                                hl.float(hl.array(hl.set(mt.vep.transcript_consequences.gnomADg_AF))[0])),
-    gnomADe_AF=hl.or_missing(hl.array(hl.set(mt.vep.transcript_consequences.gnomADe_AF))[0]!='', 
-                hl.float(hl.array(hl.set(mt.vep.transcript_consequences.gnomADe_AF))[0])))
-mt = mt.annotate_rows(gnomad_af=hl.max([mt.gnomADg_AF, mt.gnomADe_AF]))
+gnomad_fields = [x for x in list(mt.vep.transcript_consequences) if 'gnomAD' in x]
+mt = mt.annotate_rows(gnomad_popmax_af=hl.max([hl.or_missing(mt.vep.transcript_consequences[gnomad_field]!='',
+                                hl.float(mt.vep.transcript_consequences[gnomad_field])) 
+                            for gnomad_field in gnomad_fields]))
 
 # Phasing
 tmp_ped = pd.read_csv(ped_uri, sep='\t').iloc[:,:6]
@@ -112,7 +110,7 @@ omim_rec_gene_phased_tm = gene_phased_tm.filter_rows(
     (gene_phased_tm.vep.transcript_consequences.OMIM_inheritance_code.matches('2')) |    # OMIM recessive
     (gene_phased_tm.vep.transcript_consequences.OMIM_inheritance_code.matches('4')) |  # XLR
     ((hl.is_missing(gene_phased_tm.vep.transcript_consequences.OMIM_inheritance_code)) &  # not OMIM recessive with gnomAD AF and MPC filters
-                            ((gene_phased_tm.gnomad_af<=gnomad_rec_threshold) | (hl.is_missing(gene_phased_tm.gnomad_af))) &
+                            ((gene_phased_tm.gnomad_popmax_af<=gnomad_rec_threshold) | (hl.is_missing(gene_phased_tm.gnomad_popmax_af))) &
                             ((gene_phased_tm.info.MPC>=mpc_threshold) | (hl.is_missing(gene_phased_tm.info.MPC))) &
                             (hl.if_else(gene_phased_tm.vep.transcript_consequences.am_pathogenicity=='', 1, 
                                hl.float(gene_phased_tm.vep.transcript_consequences.am_pathogenicity))>=am_threshold)
@@ -140,12 +138,12 @@ gene_phased_tm = gene_phased_tm.annotate_rows(vep=gene_phased_tm.vep.annotate(tr
 )))
 
 omim_dom = gene_phased_tm.filter_rows(
-        ((gene_phased_tm.gnomad_af<=gnomad_dom_threshold) | (hl.is_missing(gene_phased_tm.gnomad_af))) & 
+        ((gene_phased_tm.gnomad_popmax_af<=gnomad_dom_threshold) | (hl.is_missing(gene_phased_tm.gnomad_popmax_af))) & 
         ((gene_phased_tm.vep.transcript_consequences.OMIM_inheritance_code.matches('1')) |   # OMIM dominant with gnomAD AF filter
         ((hl.is_missing(gene_phased_tm.vep.transcript_consequences.OMIM_inheritance_code)) &  # not OMIM dominant with LOEUF v2/v4 and MPC filters
-            ((gene_phased_tm.info.MPC>=mpc_threshold) | (hl.is_missing(gene_phased_tm.info.MPC))) &
+            (((gene_phased_tm.info.MPC>=mpc_threshold) | (hl.is_missing(gene_phased_tm.info.MPC))) |
             (hl.if_else(gene_phased_tm.vep.transcript_consequences.am_pathogenicity=='', 1, 
-                hl.float(gene_phased_tm.vep.transcript_consequences.am_pathogenicity))>=am_threshold) &
+                hl.float(gene_phased_tm.vep.transcript_consequences.am_pathogenicity))>=am_threshold)) &
             (hl.if_else(gene_phased_tm.vep.transcript_consequences.LOEUF_v2=='', 0, 
                 hl.float(gene_phased_tm.vep.transcript_consequences.LOEUF_v2))<=loeuf_v2_threshold) | 
             (hl.if_else(gene_phased_tm.vep.transcript_consequences.LOEUF_v4=='', 0, 

@@ -83,12 +83,11 @@ transcript_consequences_strs = transcript_consequences.map(lambda x: hl.if_else(
 mt = mt.annotate_rows(vep=mt.vep.annotate(transcript_consequences=transcript_consequences_strs))
 mt = mt.annotate_rows(vep=mt.vep.select('transcript_consequences'))
 
+gnomad_fields = [x for x in list(mt.vep.transcript_consequences) if 'gnomAD' in x]
 mt = mt.annotate_rows(all_csqs=hl.set(hl.flatmap(lambda x: x, mt.vep.transcript_consequences.Consequence)),  
-                             gnomADg_AF=hl.or_missing(hl.array(hl.set(mt.vep.transcript_consequences.gnomADg_AF))[0]!='', 
-                                                  hl.float(hl.array(hl.set(mt.vep.transcript_consequences.gnomADg_AF))[0])),
-                             gnomADe_AF=hl.or_missing(hl.array(hl.set(mt.vep.transcript_consequences.gnomADe_AF))[0]!='', 
-                                                  hl.float(hl.array(hl.set(mt.vep.transcript_consequences.gnomADe_AF))[0])))
-mt = mt.annotate_rows(gnomad_af=hl.max([mt.gnomADg_AF, mt.gnomADe_AF]))
+                             gnomad_popmax_af=hl.max([hl.or_missing(mt.vep.transcript_consequences[gnomad_field]!='',
+                                    hl.float(mt.vep.transcript_consequences[gnomad_field])) 
+                             for gnomad_field in gnomad_fields]))
 
 # Phasing
 tmp_ped = pd.read_csv(ped_uri, sep='\t').iloc[:,:6]
@@ -123,7 +122,7 @@ mt = mt.filter_rows(hl.set(exclude_csqs).intersection(mt.all_csqs).size()!=mt.al
 
 # filter by AC and gnomAD AF
 mt = mt.filter_rows(mt.info.cohort_AC<=ac_threshold)
-mt = mt.filter_rows((mt.gnomad_af<=gnomad_af_threshold) | (hl.is_missing(mt.gnomad_af)))
+mt = mt.filter_rows((mt.gnomad_popmax_af<=gnomad_af_threshold) | (hl.is_missing(mt.gnomad_popmax_af)))
 
 # export intermediate VCF
 hl.export_vcf(mt, prefix+'_clinical.vcf.bgz', metadata=header)
