@@ -64,7 +64,7 @@ def get_transmission(phased_tm):
                                 hl.if_else(phased_tm.proband_entry.PBT_GT==hl.parse_call('1|1'), 'inherited_from_both', 'unknown'))))
     )
 
-    phased_tm = phased_tm.annotate_entries(transmission=hl.if_else((phased_tm.transmission=='unknown') & 
+    phased_tm = phased_tm.annotate_entries(transmission=hl.if_else((hl.is_missing(phased_tm.transmission)) & 
                                                     ((hl.is_defined(phased_tm.mother_entry.GT)) & 
                                                         (hl.is_defined(phased_tm.father_entry.GT))),
                                                     'de_novo', phased_tm.transmission))
