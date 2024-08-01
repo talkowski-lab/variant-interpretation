@@ -14,28 +14,30 @@ ped_uri = sys.argv[5]
 ac_threshold = int(sys.argv[6])
 gnomad_af_threshold = float(sys.argv[7])
 
-def filter_mt(mt):
+def filter_mt(mt, filter_csq=True, filter_impact=True):
     '''
     mt: can be trio matrix (tm) or matrix table (mt) but must be transcript-level, not variant-level
     '''
     # filter by Consequence
-    exclude_csqs = ['intergenic_variant', 'upstream_gene_variant', 'downstream_gene_variant',
-                    'synonymous_variant', 'coding_sequence_variant', 'sequence_variant']
-    mt = mt.filter_rows(hl.set(exclude_csqs).intersection(
-        hl.set(mt.vep.transcript_consequences.Consequence)).size()==0)
+    if filter_csq:
+        exclude_csqs = ['intergenic_variant', 'upstream_gene_variant', 'downstream_gene_variant',
+                        'synonymous_variant', 'coding_sequence_variant', 'sequence_variant']
+        mt = mt.filter_rows(hl.set(exclude_csqs).intersection(
+            hl.set(mt.vep.transcript_consequences.Consequence)).size()==0)
 
     # filter only canonical transcript
     mt = mt.filter_rows(mt.vep.transcript_consequences.CANONICAL=='YES')
 
     # filter by Impact and splice/noncoding consequence
-    splice_vars = ['splice_donor_5th_base_variant', 'splice_region_variant', 'splice_donor_region_variant']
-    keep_vars = ['non_coding_transcript_exon_variant']
-    mt = mt.filter_rows(
-        (hl.set(splice_vars + keep_vars).intersection(
-            hl.set(mt.vep.transcript_consequences.Consequence)).size()>0) |
-        (hl.array(['HIGH', 'MODERATE']).contains(
-        mt.vep.transcript_consequences.IMPACT))
-        )
+    if filter_impact:
+        splice_vars = ['splice_donor_5th_base_variant', 'splice_region_variant', 'splice_donor_region_variant']
+        keep_vars = ['non_coding_transcript_exon_variant']
+        mt = mt.filter_rows(
+            (hl.set(splice_vars + keep_vars).intersection(
+                hl.set(mt.vep.transcript_consequences.Consequence)).size()>0) |
+            (hl.array(['HIGH', 'MODERATE']).contains(
+            mt.vep.transcript_consequences.IMPACT))
+            )
     return mt 
 
 def get_transmission(df):
@@ -103,7 +105,7 @@ clinvar_tm = clinvar_tm.filter_entries((clinvar_tm.proband_entry.GT.is_non_ref()
                                    (clinvar_tm.father_entry.GT.is_non_ref()))
 clinvar_tm = clinvar_tm.annotate_rows(variant_type='ClinVar_P/LP')
 clinvar_tm = clinvar_tm.explode_rows(clinvar_tm.vep.transcript_consequences)
-# clinvar_tm = filter_mt(clinvar_tm)
+clinvar_tm = filter_mt(clinvar_tm, filter_csq=False, filter_impact=False)
 
 # filter out ClinVar benign
 mt = mt.filter_rows((hl.is_missing(mt.info.CLNSIG)) |
