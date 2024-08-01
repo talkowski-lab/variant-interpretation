@@ -88,7 +88,7 @@ transcript_consequences_strs = transcript_consequences.map(lambda x: hl.if_else(
 mt = mt.annotate_rows(vep=mt.vep.annotate(transcript_consequences=transcript_consequences_strs))
 mt = mt.annotate_rows(vep=mt.vep.select('transcript_consequences'))
 
-gnomad_fields = [x for x in list(mt.vep.transcript_consequences) if 'gnomAD' in x]
+gnomad_fields = [x for x in list(mt.vep.transcript_consequences[0]) if 'gnomAD' in x]
 mt = mt.annotate_rows(gnomad_popmax_af=hl.max([hl.or_missing(mt.vep.transcript_consequences[gnomad_field]!='',
                                 hl.float(mt.vep.transcript_consequences[gnomad_field])) 
                             for gnomad_field in gnomad_fields]))
