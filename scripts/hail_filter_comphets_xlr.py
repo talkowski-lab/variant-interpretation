@@ -33,7 +33,7 @@ def filter_mt(mt):
     exclude_csqs = ['intergenic_variant', 'upstream_gene_variant', 'downstream_gene_variant',
                     'synonymous_variant', 'coding_sequence_variant', 'sequence_variant']
     mt = mt.filter_rows(hl.set(exclude_csqs).intersection(
-        hl.set(mt.vep.transcript_consequences.Consequence)).size()==0)
+        hl.set(mt.vep.transcript_consequences.Consequence)).size()!=hl.set(mt.vep.transcript_consequences.Consequence).size())
 
     # filter by Impact and splice/noncoding consequence
     splice_vars = ['splice_donor_5th_base_variant', 'splice_region_variant', 'splice_donor_region_variant']

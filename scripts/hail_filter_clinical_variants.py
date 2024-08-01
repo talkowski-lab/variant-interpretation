@@ -23,7 +23,7 @@ def filter_mt(mt, filter_csq=True, filter_impact=True):
         exclude_csqs = ['intergenic_variant', 'upstream_gene_variant', 'downstream_gene_variant',
                         'synonymous_variant', 'coding_sequence_variant', 'sequence_variant']
         mt = mt.filter_rows(hl.set(exclude_csqs).intersection(
-            hl.set(mt.vep.transcript_consequences.Consequence)).size()==0)
+            hl.set(mt.vep.transcript_consequences.Consequence)).size()!=hl.set(mt.vep.transcript_consequences.Consequence).size())
 
     # filter only canonical transcript
     mt = mt.filter_rows(mt.vep.transcript_consequences.CANONICAL=='YES')
