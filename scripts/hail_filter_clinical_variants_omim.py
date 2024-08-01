@@ -89,9 +89,10 @@ mt = mt.annotate_rows(vep=mt.vep.annotate(transcript_consequences=transcript_con
 mt = mt.annotate_rows(vep=mt.vep.select('transcript_consequences'))
 
 gnomad_fields = [x for x in list(mt.vep.transcript_consequences[0]) if 'gnomAD' in x]
-mt = mt.annotate_rows(gnomad_popmax_af=hl.max([hl.or_missing(mt.vep.transcript_consequences[gnomad_field]!='',
-                                hl.float(mt.vep.transcript_consequences[gnomad_field])) 
-                            for gnomad_field in gnomad_fields]))
+mt = mt.annotate_rows(all_csqs=hl.set(hl.flatmap(lambda x: x, mt.vep.transcript_consequences.Consequence)),  
+                             gnomad_popmax_af=hl.max([hl.or_missing(hl.array(hl.set(mt.vep.transcript_consequences[gnomad_field]))[0]!='',
+                                    hl.float(hl.array(hl.set(mt.vep.transcript_consequences[gnomad_field]))[0])) 
+                             for gnomad_field in gnomad_fields]))
 
 # Phasing
 tmp_ped = pd.read_csv(ped_uri, sep='\t').iloc[:,:6]
