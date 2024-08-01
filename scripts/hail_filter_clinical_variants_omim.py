@@ -57,18 +57,18 @@ def filter_mt(mt):
         )
     return mt 
 
-def get_transmission(df):
-    '''
-    df: trio matrix (tm) phased with PBT_GT converted to Pandas DataFrame
-    returns Pandas Series
-    ''' 
-    return df['proband_entry.PBT_GT'].astype(str).map({
-        '0|0': 'uninherited', 
-        '0|1': 'inherited_from_mother', 
-        '1|0': 'inherited_from_father', 
-        '1|1': 'inherited_from_both', 
-        'None': 'unknown'
-    })
+def get_transmission(phased_tm):
+    phased_tm = phased_tm.annotate_entries(transmission=hl.if_else(phased_tm.proband_entry.PBT_GT==hl.parse_call('0|0'), 'uninherited',
+            hl.if_else(phased_tm.proband_entry.PBT_GT==hl.parse_call('0|1'), 'inherited_from_mother',
+                        hl.if_else(phased_tm.proband_entry.PBT_GT==hl.parse_call('1|0'), 'inherited_from_father',
+                                hl.if_else(phased_tm.proband_entry.PBT_GT==hl.parse_call('1|1'), 'inherited_from_both', 'unknown'))))
+    )
+
+    phased_tm = phased_tm.annotate_entries(transmission=hl.if_else((phased_tm.transmission=='unknown') & 
+                                                    ((hl.is_defined(phased_tm.mother_entry.GT)) & 
+                                                        (hl.is_defined(phased_tm.father_entry.GT))),
+                                                    'de_novo', phased_tm.transmission))
+    return phased_tm
 
 mt = hl.import_vcf(vcf_file, reference_genome='GRCh38', force_bgz=True, call_fields=[], array_elements_required=False)
 
@@ -158,6 +158,8 @@ omim_dom = omim_dom.filter_entries((omim_dom.proband_entry.GT.is_non_ref()) |
                                    (omim_dom.father_entry.GT.is_non_ref()))
 omim_dom = omim_dom.filter_rows((hl.agg.count_where(hl.is_defined(omim_dom.proband_entry.GT))>0))
 omim_dom = omim_dom.annotate_rows(variant_type='OMIM_dominant')
+
+omim_dom = get_transmission(omim_dom)
 
 # export OMIM Recessive VCF
 hl.export_vcf(omim_rec_mt, prefix+'_OMIM_recessive.vcf.bgz', metadata=header)

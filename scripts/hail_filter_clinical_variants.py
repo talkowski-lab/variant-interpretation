@@ -40,18 +40,18 @@ def filter_mt(mt, filter_csq=True, filter_impact=True):
             )
     return mt 
 
-def get_transmission(df):
-    '''
-    df: trio matrix (tm) phased with PBT_GT converted to Pandas DataFrame
-    returns Pandas Series
-    ''' 
-    return df['proband_entry.PBT_GT'].astype(str).map({
-        '0|0': 'uninherited', 
-        '0|1': 'inherited_from_mother', 
-        '1|0': 'inherited_from_father', 
-        '1|1': 'inherited_from_both', 
-        'None': 'unknown'
-    })
+def get_transmission(phased_tm):
+    phased_tm = phased_tm.annotate_entries(transmission=hl.if_else(phased_tm.proband_entry.PBT_GT==hl.parse_call('0|0'), 'uninherited',
+            hl.if_else(phased_tm.proband_entry.PBT_GT==hl.parse_call('0|1'), 'inherited_from_mother',
+                        hl.if_else(phased_tm.proband_entry.PBT_GT==hl.parse_call('1|0'), 'inherited_from_father',
+                                hl.if_else(phased_tm.proband_entry.PBT_GT==hl.parse_call('1|1'), 'inherited_from_both', 'unknown'))))
+    )
+
+    phased_tm = phased_tm.annotate_entries(transmission=hl.if_else((phased_tm.transmission=='unknown') & 
+                                                    ((hl.is_defined(phased_tm.mother_entry.GT)) & 
+                                                        (hl.is_defined(phased_tm.father_entry.GT))),
+                                                    'de_novo', phased_tm.transmission))
+    return phased_tm
 
 hl.init(min_block_size=128, 
         spark_conf={"spark.executor.cores": cores, 
@@ -106,6 +106,7 @@ clinvar_tm = clinvar_tm.filter_entries((clinvar_tm.proband_entry.GT.is_non_ref()
 clinvar_tm = clinvar_tm.annotate_rows(variant_type='ClinVar_P/LP')
 clinvar_tm = clinvar_tm.explode_rows(clinvar_tm.vep.transcript_consequences)
 clinvar_tm = filter_mt(clinvar_tm, filter_csq=False, filter_impact=False)
+clinvar_tm = get_transmission(clinvar_tm)
 
 # filter out ClinVar benign
 mt = mt.filter_rows((hl.is_missing(mt.info.CLNSIG)) |

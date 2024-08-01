@@ -203,6 +203,7 @@ workflow filterClinicalVariants {
     output {
         File clinvar_tsv = mergeClinVar.merged_tsv
         File omim_recessive_vcf = mergeOMIMRecessive.merged_vcf_file
+        File omim_recessive_vcf_idx = mergeOMIMRecessive.merged_vcf_idx
         File omim_recessive_comphet_xlr_tsv = mergeCompHetsXLR.merged_tsv
         File omim_dominant_tsv = mergeOMIMDominant.merged_tsv
     }

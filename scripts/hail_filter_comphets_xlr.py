@@ -46,18 +46,18 @@ def filter_mt(mt):
         )
     return mt 
 
-def get_transmission(df):
-    '''
-    df: trio matrix (tm) phased with PBT_GT converted to Pandas DataFrame
-    returns Pandas Series
-    ''' 
-    return df['proband_entry.PBT_GT'].astype(str).map({
-        '0|0': 'uninherited', 
-        '0|1': 'inherited_from_mother', 
-        '1|0': 'inherited_from_father', 
-        '1|1': 'inherited_from_both', 
-        'None': 'unknown'
-    })
+def get_transmission(phased_tm):
+    phased_tm = phased_tm.annotate_entries(transmission=hl.if_else(phased_tm.proband_entry.PBT_GT==hl.parse_call('0|0'), 'uninherited',
+            hl.if_else(phased_tm.proband_entry.PBT_GT==hl.parse_call('0|1'), 'inherited_from_mother',
+                        hl.if_else(phased_tm.proband_entry.PBT_GT==hl.parse_call('1|0'), 'inherited_from_father',
+                                hl.if_else(phased_tm.proband_entry.PBT_GT==hl.parse_call('1|1'), 'inherited_from_both', 'unknown'))))
+    )
+
+    phased_tm = phased_tm.annotate_entries(transmission=hl.if_else((phased_tm.transmission=='unknown') & 
+                                                    ((hl.is_defined(phased_tm.mother_entry.GT)) & 
+                                                        (hl.is_defined(phased_tm.father_entry.GT))),
+                                                    'de_novo', phased_tm.transmission))
+    return phased_tm
 
 mt = hl.import_vcf(vcf_file, reference_genome='GRCh38', force_bgz=True, call_fields=[], array_elements_required=False)
 
@@ -127,6 +127,8 @@ omim_rec_comp_hets = omim_rec_comp_hets.annotate_rows(variant_type='comphet')
 omim_rec_merged = xlr_phased_tm.union_rows(omim_rec_hom_var)\
 .union_rows(omim_rec_comp_hets.drop('Feature', 'proband_PBT_GT_set'))
 omim_rec_merged = omim_rec_merged.filter_rows((hl.agg.count_where(hl.is_defined(omim_rec_merged.proband_entry.GT))>0))
+
+omim_rec_merged = get_transmission(omim_rec_merged)
 
 # export OMIM Recessive CompHet + XLR TSV
 omim_rec_merged.entries().flatten().export(prefix+'_OMIM_recessive_comphet_XLR.tsv.gz', delimiter='\t')
