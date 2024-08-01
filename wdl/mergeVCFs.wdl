@@ -92,7 +92,8 @@ task mergeVCFs {
         String cohort_prefix
         Boolean sort_after_merge
         Boolean naive=true
-        Array[File]? vcf_indices
+        Boolean allow_overlaps=false  # cannot be used with naive
+        Array[File]? vcf_indices  # need if allow_overlaps=true
         RuntimeAttr? runtime_attr_override
     }
 
@@ -129,7 +130,7 @@ task mergeVCFs {
     String merged_vcf_name="~{cohort_prefix}.merged.vcf.gz"
     String sorted_vcf_name="~{cohort_prefix}.merged.sorted.vcf.gz"
     String naive_str = if naive then '-n' else ''
-    String overlap_str = if sort_after_merge then '-a' else ''
+    String overlap_str = if allow_overlaps then '-a' else ''
 
     command <<<
         set -euo pipefail
