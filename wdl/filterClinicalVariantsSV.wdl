@@ -16,7 +16,7 @@ struct RuntimeAttr {
 workflow filterClinicalVariantsSV {
     input {
         File vcf_file
-        File clinvar_bed
+        File clinvar_bed_with_header
         String cohort_prefix
         String genome_build='GRCh38'
         String hail_docker
@@ -35,7 +35,7 @@ workflow filterClinicalVariantsSV {
     call intersectBed as intersectClinVar {
         input:
         bed_file=vcfToBed.bed_output,
-        ref_bed_with_header=clinvar_bed,
+        ref_bed_with_header=clinvar_bed_with_header,
         cohort_prefix=cohort_prefix,
         variant_interpretation_docker=variant_interpretation_docker
     }
@@ -44,7 +44,7 @@ workflow filterClinicalVariantsSV {
         input:
         vcf_file=vcf_file,
         intersect_bed=intersectClinVar.intersect_bed,
-        ref_bed_with_header=clinvar_bed,
+        ref_bed_with_header=clinvar_bed_with_header,
         genome_build=genome_build,
         hail_docker=hail_docker,
         annot_name='ClinVar'
