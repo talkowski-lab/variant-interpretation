@@ -109,7 +109,7 @@ task filterVariants {
                         "spark.driver.memory": f"{int(np.floor(mem*0.4))}g"
                         }, tmp_dir="tmp", local_tmpdir="tmp")
 
-    mt = hl.import_vcf(vcf_file, force_bgz=vcf_file.split('.')[-1] in ['.gz', '.bgz'], 
+    mt = hl.import_vcf(vcf_file, force_bgz=vcf_file.split('.')[-1] in ['gz', 'bgz'], 
         reference_genome=genome_build, array_elements_required=False, call_fields=[])
     known_ht = hl.import_table(known_file)
     known_ht = known_ht.annotate(locus=hl.parse_variant(known_ht.ID, genome_build).locus,

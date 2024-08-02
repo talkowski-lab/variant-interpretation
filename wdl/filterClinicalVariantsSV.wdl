@@ -35,7 +35,7 @@ workflow filterClinicalVariantsSV {
     call intersectBed as intersectClinVar {
         input:
         bed_file=vcfToBed.bed_output,
-        ref_bed=clinvar_bed,
+        ref_bed_with_header=clinvar_bed,
         cohort_prefix=cohort_prefix,
         variant_interpretation_docker=variant_interpretation_docker
     }
@@ -44,10 +44,10 @@ workflow filterClinicalVariantsSV {
         input:
         vcf_file=vcf_file,
         intersect_bed=intersectClinVar.intersect_bed,
-        ref_bed=clinvar_bed,
+        ref_bed_with_header=clinvar_bed,
         genome_build=genome_build,
         hail_docker=hail_docker,
-        bed_overlap_threshold=bed_overlap_threshold
+        annot_name='ClinVar'
     }
 
     output {
@@ -55,7 +55,6 @@ workflow filterClinicalVariantsSV {
         File clinvar_vcf_idx = filterClinVarVCF.filtered_vcf_idx
     }
 }
-
 
 task vcfToBed {
     input{
@@ -104,7 +103,7 @@ task vcfToBed {
 task intersectBed {
     input {
         File bed_file
-        File ref_bed
+        File ref_bed_with_header
         String cohort_prefix
         String variant_interpretation_docker
 
@@ -112,7 +111,7 @@ task intersectBed {
         RuntimeAttr? runtime_attr_override
     }
 
-    Float input_size = size([bed_file, ref_bed], 'GB')
+    Float input_size = size([bed_file, ref_bed_with_header], 'GB')
     Float base_disk_gb = 10.0
     Float input_disk_scale = 5.0
 
@@ -140,14 +139,14 @@ task intersectBed {
         bootDiskSizeGb: select_first([runtime_override.boot_disk_gb, runtime_default.boot_disk_gb])
     }
 
-    String ref_bed_str = basename(ref_bed, '.bed')
+    String ref_bed_with_header_str = basename(ref_bed_with_header, '.bed')
 
     command <<<
-        bedtools intersect -wao -f ~{bed_overlap_threshold} -r -a ~{bed_file} ~{ref_bed} | bgzip > ~{cohort_prefix}_{ref_bed_str}.bed.gz
+        bedtools intersect -wao -f ~{bed_overlap_threshold} -r -a ~{bed_file} ~{ref_bed_with_header} | bgzip > ~{cohort_prefix}_{ref_bed_with_header_str}.bed.gz
     >>>
 
     output {
-        File intersect_bed = "~{cohort_prefix}_{ref_bed_str}.bed.gz"
+        File intersect_bed = "~{cohort_prefix}_{ref_bed_with_header_str}.bed.gz"
     }
 }
 
@@ -155,11 +154,10 @@ task filterVCFByBed {
     input {
         File vcf_file
         File intersect_bed
-        File ref_bed
+        File ref_bed_with_header
+        String annot_name
         String genome_build
         String hail_docker
-
-        Float bed_overlap_threshold
         RuntimeAttr? runtime_attr_override
     }
 
@@ -202,9 +200,9 @@ task filterVCFByBed {
 
     vcf_file = sys.argv[1]
     intersect_bed = sys.argv[2]
-    ref_bed_uri = sys.argv[3]
+    ref_bed_with_header_uri = sys.argv[3]
     genome_build = sys.argv[4]
-    prop_threshold = float(sys.argv[5])
+    annot_name = sys.argv[5]
     cores = sys.argv[6]
     mem = int(np.floor(float(sys.argv[7])))
 
@@ -214,7 +212,7 @@ task filterVCFByBed {
                         "spark.driver.memory": f"{int(np.floor(mem*0.4))}g"
                         }, tmp_dir="tmp", local_tmpdir="tmp")
 
-    mt = hl.import_vcf(vcf_file, force_bgz=vcf_file.split('.')[-1] in ['.gz', '.bgz'], 
+    mt = hl.import_vcf(vcf_file, force_bgz=vcf_file.split('.')[-1] in ['gz', 'bgz'], 
         reference_genome=genome_build, array_elements_required=False, call_fields=[])
     header = hl.get_vcf_metadata(vcf_file)
 
@@ -230,35 +228,31 @@ task filterVCFByBed {
     overlap_bed = overlap_bed.annotate(sv_prop=hl.int(overlap_bed[overlap_field]) / overlap_bed.sv_len, 
                         ref_prop=hl.int(overlap_bed[overlap_field]) / overlap_bed.ref_len)
 
-    # filter by reciprocal overlap
-    overlap_bed = overlap_bed.filter((overlap_bed.sv_prop >= prop_threshold) & 
-                                    (overlap_bed.ref_prop >= prop_threshold))    
-
-    # use ref_bed for annotation column/field names
-    ref_bed = hl.import_table(ref_bed_uri)                                    
-    ref_bed_idx = range(5, len(fields)-1)
-    ref_bed_mapping = {f"f{ref_bed_idx[i]}": list(ref_bed.row)[i].lower().replace(' ', '_') 
-                                    for i in range(len(ref_bed_idx))}
-    overlap_bed = overlap_bed.rename(ref_bed_mapping)
+    # use ref_bed_with_header for annotation column/field names
+    ref_bed_with_header = hl.import_table(ref_bed_with_header_uri)                                    
+    ref_bed_with_header_idx = range(5, len(fields)-1)
+    ref_bed_with_header_mapping = {f"f{ref_bed_with_header_idx[i]}": list(ref_bed_with_header.row)[i].lower().replace(' ', '_') 
+                                    for i in range(len(ref_bed_with_header_idx))} | {'sv_prop': f"{annot_name}_overlap"}
+    overlap_bed = overlap_bed.rename(ref_bed_with_header_mapping)
 
     overlap_bed = overlap_bed.annotate(locus=hl.locus(overlap_bed.f0, overlap_bed.f1, genome_build))
     overlap_bed = overlap_bed.annotate(alleles=mt.key_rows_by('locus').rows()[overlap_bed.locus].alleles)
     overlap_bed = overlap_bed.key_by('locus','alleles')
 
     # annotate original VCF
-    annot_fields = list(ref_bed_mapping.values())[3:]
+    annot_fields = list(ref_bed_with_header_mapping.values())[3:]
     mt = mt.annotate_rows(info=mt.info.annotate(
         **{field: overlap_bed[mt.row_key][field] for field in annot_fields}))
 
     for field in annot_fields:
         header['info'][field] = {'Description': '', 'Number': '.', 'Type': 'String'}
-    
+    # TODO: annotate overlap?
     # export filtered and annotated VCF
     hl.export_vcf(mt, os.path.basename(intersect_bed).split('.bed')[0] + '.vcf.bgz', metadata=header, tabix=True)
     EOF
 
-    python3 filter_vcf.py ~{vcf_file} ~{intersect_bed} ~{ref_bed} ~{genome_build} \
-    ~{bed_overlap_threshold} ~{cpu_cores} ~{memory}
+    python3 filter_vcf.py ~{vcf_file} ~{intersect_bed} ~{ref_bed_with_header} ~{genome_build} \
+    ~{annot_name} ~{cpu_cores} ~{memory}
     >>>
 
     output {
