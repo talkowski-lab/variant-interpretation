@@ -40,7 +40,7 @@ workflow filterClinicalVariantsSV {
         variant_interpretation_docker=variant_interpretation_docker
     }
 
-    call filterVCFByBed as filterClinVarVCF {
+    call annotateVCFWithBed as annotateVCFClinVar {
         input:
         vcf_file=vcf_file,
         intersect_bed=intersectClinVar.intersect_bed,
@@ -51,8 +51,8 @@ workflow filterClinicalVariantsSV {
     }
 
     output {
-        File clinvar_vcf = filterClinVarVCF.filtered_vcf
-        File clinvar_vcf_idx = filterClinVarVCF.filtered_vcf_idx
+        File clinvar_vcf = annotateVCFClinVar.filtered_vcf
+        File clinvar_vcf_idx = annotateVCFClinVar.filtered_vcf_idx
     }
 }
 
@@ -150,7 +150,7 @@ task intersectBed {
     }
 }
 
-task filterVCFByBed {
+task annotateVCFWithBed {
     input {
         File vcf_file
         File intersect_bed
@@ -246,7 +246,7 @@ task filterVCFByBed {
 
     for field in annot_fields:
         header['info'][field] = {'Description': '', 'Number': '.', 'Type': 'String'}
-    # TODO: annotate overlap?
+
     # export filtered and annotated VCF
     hl.export_vcf(mt, os.path.basename(intersect_bed).split('.bed')[0] + '.vcf.bgz', metadata=header, tabix=True)
     EOF
