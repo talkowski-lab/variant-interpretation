@@ -93,6 +93,7 @@ task vcfToBed {
     }
 
     command <<<
+        set -eou pipefail
         svtk vcf2bed --no-samples ~{vcf_file} ~{cohort_prefix}.bed.gz
     >>>
 
@@ -143,6 +144,7 @@ task intersectBed {
     String ref_bed_with_header_str = basename(ref_bed_with_header, '.bed')
 
     command <<<
+        set -eou pipefail
         bedtools intersect -wao -f ~{bed_overlap_threshold} -r -a ~{bed_file} ~{ref_bed_with_header} | bgzip > ~{cohort_prefix}_{ref_bed_with_header_str}.bed.gz
     >>>
 
@@ -191,6 +193,7 @@ task annotateVCFWithBed {
     }
 
     command <<<
+    set -eou pipefail
     cat <<EOF > filter_vcf.py
     import datetime
     import pandas as pd
