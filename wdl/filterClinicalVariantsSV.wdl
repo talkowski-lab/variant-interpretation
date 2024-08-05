@@ -19,6 +19,7 @@ workflow filterClinicalVariantsSV {
         File clinvar_bed_with_header
         File dbvar_bed_with_header
         File gnomad_benign_bed_with_header
+        File gd_bed_with_header
         String cohort_prefix
         String genome_build='GRCh38'
         String hail_docker
@@ -34,7 +35,8 @@ workflow filterClinicalVariantsSV {
         variant_interpretation_docker=variant_interpretation_docker
     }
 
-    Array[File] bed_files = [clinvar_bed_with_header, dbvar_bed_with_header, gnomad_benign_bed_with_header]
+    Array[File] bed_files = [clinvar_bed_with_header, dbvar_bed_with_header, 
+            gnomad_benign_bed_with_header, gd_bed_with_header]
 
     scatter (ref_bed_with_header in bed_files) {
         call intersectBed {
@@ -65,7 +67,6 @@ workflow filterClinicalVariantsSV {
         hail_docker=hail_docker,
         annot_name='dbVar'
     }
-
     call annotateVCFWithBed as annotate_gnomAD_benign {
         input:
         vcf_file=annotate_dbVar.annotated_vcf,
@@ -74,6 +75,15 @@ workflow filterClinicalVariantsSV {
         genome_build=genome_build,
         hail_docker=hail_docker,
         annot_name='gnomAD_benign'
+    }
+    call annotateVCFWithBed as annotate_GD {
+        input:
+        vcf_file=annotate_dbVar.annotated_vcf,
+        intersect_bed=intersectBed.intersect_bed[3],
+        ref_bed_with_header=bed_files[3],
+        genome_build=genome_build,
+        hail_docker=hail_docker,
+        annot_name='GD'
     }
 
     output {
