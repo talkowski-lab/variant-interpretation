@@ -76,7 +76,7 @@ workflow filterClinicalVariantsSV {
         hail_docker=hail_docker,
         annot_name='gnomAD_benign'
     }
-    call annotateVCFWithBed as annotate_ClinVar {
+    call annotateVCFWithBed as annotate_clinVar {
         input:
         vcf_file=annotate_dbVar.annotated_vcf,
         intersect_bed=intersectBed.intersect_bed[3],
@@ -87,8 +87,8 @@ workflow filterClinicalVariantsSV {
     }
 
     output {
-        File annotated_vcf = annotate_ClinVar.annotated_vcf
-        File annotated_vcf_idx = annotate_ClinVar.annotated_vcf_idx
+        File annotated_vcf = annotate_clinVar.annotated_vcf
+        File annotated_vcf_idx = annotate_clinVar.annotated_vcf_idx
     }
 }
 
