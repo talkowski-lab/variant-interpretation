@@ -35,8 +35,8 @@ workflow filterClinicalVariantsSV {
         variant_interpretation_docker=variant_interpretation_docker
     }
 
-    Array[File] bed_files = [clinvar_bed_with_header, dbvar_bed_with_header, 
-            gnomad_benign_bed_with_header, gd_bed_with_header]
+    Array[File] bed_files = [gd_bed_with_header, dbvar_bed_with_header, 
+                            gnomad_benign_bed_with_header, clinvar_bed_with_header]
 
     scatter (ref_bed_with_header in bed_files) {
         call intersectBed {
@@ -49,18 +49,18 @@ workflow filterClinicalVariantsSV {
         }
     }
 
-    call annotateVCFWithBed as annotate_clinVar {
+    call annotateVCFWithBed as annotate_GD {
         input:
         vcf_file=vcf_file,
         intersect_bed=intersectBed.intersect_bed[0],
         ref_bed_with_header=bed_files[0],
         genome_build=genome_build,
         hail_docker=hail_docker,
-        annot_name='ClinVar'
+        annot_name='GD'
     }    
     call annotateVCFWithBed as annotate_dbVar {
         input:
-        vcf_file=annotate_clinVar.annotated_vcf,
+        vcf_file=annotate_GD.annotated_vcf,
         intersect_bed=intersectBed.intersect_bed[1],
         ref_bed_with_header=bed_files[1],
         genome_build=genome_build,
@@ -76,19 +76,19 @@ workflow filterClinicalVariantsSV {
         hail_docker=hail_docker,
         annot_name='gnomAD_benign'
     }
-    call annotateVCFWithBed as annotate_GD {
+    call annotateVCFWithBed as annotate_ClinVar {
         input:
         vcf_file=annotate_dbVar.annotated_vcf,
         intersect_bed=intersectBed.intersect_bed[3],
         ref_bed_with_header=bed_files[3],
         genome_build=genome_build,
         hail_docker=hail_docker,
-        annot_name='GD'
+        annot_name='ClinVar'
     }
 
     output {
-        File annotated_vcf = annotate_gnomAD_benign.annotated_vcf
-        File annotated_vcf_idx = annotate_gnomAD_benign.annotated_vcf_idx
+        File annotated_vcf = annotate_ClinVar.annotated_vcf
+        File annotated_vcf_idx = annotate_ClinVar.annotated_vcf_idx
     }
 }
 
