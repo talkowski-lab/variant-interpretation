@@ -26,6 +26,7 @@ workflow filterClinicalVariantsSV {
         String variant_interpretation_docker
 
         Float bed_overlap_threshold=0.5
+        Float gnomad_af_threshold=0.05
     }
 
     call vcfToBed {
@@ -86,9 +87,17 @@ workflow filterClinicalVariantsSV {
         annot_name='ClinVar'
     }
 
+    call filterVCF {
+        input:
+        vcf_file=annotate_clinVar.annotated_vcf,
+        genome_build=genome_build,
+        hail_docker=hail_docker,
+        gnomad_af_threshold=gnomad_af_threshold
+    }
+
     output {
-        File annotated_vcf = annotate_clinVar.annotated_vcf
-        File annotated_vcf_idx = annotate_clinVar.annotated_vcf_idx
+        File filtered_vcf = filterVCF.filtered_vcf
+        File filtered_vcf_idx = filterVCF.filtered_vcf_idx
     }
 }
 
@@ -298,5 +307,87 @@ task annotateVCFWithBed {
     output {
         File annotated_vcf = basename(intersect_bed, '.bed.gz') + '.vcf.bgz'
         File annotated_vcf_idx = basename(intersect_bed, '.bed.gz') + '.vcf.bgz.tbi'
+    }
+}
+
+task filterVCF {
+    input {
+        File vcf_file
+        String genome_build
+        String hail_docker
+        Float gnomad_af_threshold
+        RuntimeAttr? runtime_attr_override
+    }
+
+    Float input_size = size(vcf_file, 'GB')
+    Float base_disk_gb = 10.0
+    Float input_disk_scale = 5.0
+
+    RuntimeAttr runtime_default = object {
+        mem_gb: 4,
+        disk_gb: ceil(base_disk_gb + input_size * input_disk_scale),
+        cpu_cores: 1,
+        preemptible_tries: 3,
+        max_retries: 1,
+        boot_disk_gb: 10
+    }
+
+    RuntimeAttr runtime_override = select_first([runtime_attr_override, runtime_default])
+
+    Float memory = select_first([runtime_override.mem_gb, runtime_default.mem_gb])
+    Int cpu_cores = select_first([runtime_override.cpu_cores, runtime_default.cpu_cores])
+    
+    runtime {
+        memory: "~{memory} GB"
+        disks: "local-disk ~{select_first([runtime_override.disk_gb, runtime_default.disk_gb])} HDD"
+        cpu: cpu_cores
+        preemptible: select_first([runtime_override.preemptible_tries, runtime_default.preemptible_tries])
+        maxRetries: select_first([runtime_override.max_retries, runtime_default.max_retries])
+        docker: hail_docker
+        bootDiskSizeGb: select_first([runtime_override.boot_disk_gb, runtime_default.boot_disk_gb])
+    }
+
+    command <<<
+    set -eou pipefail
+    cat <<EOF > filter_vcf.py
+    import datetime
+    import pandas as pd
+    import hail as hl
+    import numpy as np
+    import sys
+    import os
+
+    vcf_file = sys.argv[1]
+    genome_build = sys.argv[2]
+    gnomad_af_threshold = float(sys.argv[3])
+    cores = sys.argv[4]
+    mem = int(np.floor(float(sys.argv[5])))
+
+    hl.init(min_block_size=128, spark_conf={"spark.executor.cores": cores, 
+                        "spark.executor.memory": f"{int(np.floor(mem*0.4))}g",
+                        "spark.driver.cores": cores,
+                        "spark.driver.memory": f"{int(np.floor(mem*0.4))}g"
+                        }, tmp_dir="tmp", local_tmpdir="tmp")
+
+    mt = hl.import_vcf(vcf_file, force_bgz=vcf_file.split('.')[-1] in ['gz', 'bgz'], 
+        reference_genome=genome_build, array_elements_required=False, call_fields=[])
+    header = hl.get_vcf_metadata(vcf_file)
+
+    gnomad_fields = [x for x in list(mt.info) if 'gnomad' in x and 'AF' in x]
+    mt = mt.annotate_rows(gnomad_popmax_af=hl.max([mt.info[field] for field in gnomad_fields]))
+
+    filt_mt = mt.filter_rows(((~mt.info.clinical_interpretation[0].matches('enign')) |  # not ClinVar benign
+                    (hl.is_missing(mt.info.clinical_interpretation[0]))) &
+                (hl.is_missing(mt.info.gnomad_sv_name[0])) &  # not gnomAD benign
+                (mt.gnomad_popmax_af <= 0.05))  
+    
+    hl.export_vcf(filt_mt, os.path.basename(vcf_file).split('.vcf')[0] + '.filtered.vcf.bgz', metadata=header, tabix=True)
+    EOF
+    python3 filter_vcf.py ~{vcf_file} ~{genome_build} ~{gnomad_af_threshold} ~{cpu_cores} ~{memory}
+    >>>
+
+    output {
+        File filtered_vcf = basename(vcf_file, '.vcf.bgz') + '.filtered.vcf.bgz'
+        File filtered_vcf_idx = basename(vcf_file, '.vcf.bgz') + '.filtered.vcf.bgz.tbi'
     }
 }
