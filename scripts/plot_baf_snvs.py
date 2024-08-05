@@ -51,33 +51,34 @@ for locus_interval in merged_baf.locus_interval.unique():
     sv_type = locus_int_df.SV_type.unique()[0]
 
     fig.suptitle(f"{locus_interval} in {pipeline_id} ({interval_size} {sv_type})");
-    for i, role in enumerate(['sample','father','mother']):
-        median_baf_above = locus_int_df[(locus_int_df[f"AB_{role}"]<1)&(locus_int_df[f"AB_{role}"]>0.5)][f"AB_{role}"].median()
-        median_baf_below = locus_int_df[(locus_int_df[f"AB_{role}"]>0)&(locus_int_df[f"AB_{role}"]<0.5)][f"AB_{role}"].median()
-        sns.scatterplot(data=locus_int_df, y=f"AB_{role}", x='POS', ax=ax[i],  
-                        hue='parental_origin' if i==0 else None, hue_order=['mother','father','unresolved'],
-                        size='parental_origin' if i==0 else None, sizes={'unresolved': 9, 'mother': 12, 'father': 12} if i==0 else None,
-                        s=9 if i!=0 else None,
-                        palette={'mother':'mediumpurple', 'father':'mediumturquoise', 'unresolved':'silver'} if i==0 else None,
-                        color='silver' if i!=0 else None);
-        if i==0:
-            ax[0].legend(loc='upper center', bbox_to_anchor=(0.5, 1), ncol=3, fancybox=True, fontsize=8);
-        ax[i].set(ylim=(-0.1, 1.1), title=f"AB_{role}");
-        ax[i].axhline(median_baf_above, linestyle='--', color='indianred');
-        ax[i].axhline(median_baf_below, linestyle='--', color='indianred');
+    if (locus_int_df.AB_sample.isna().sum()!=locus_int_df.shape[0]):
+        for i, role in enumerate(['sample','father','mother']):
+            median_baf_above = locus_int_df[(locus_int_df[f"AB_{role}"]<1)&(locus_int_df[f"AB_{role}"]>0.5)][f"AB_{role}"].median()
+            median_baf_below = locus_int_df[(locus_int_df[f"AB_{role}"]>0)&(locus_int_df[f"AB_{role}"]<0.5)][f"AB_{role}"].median()
+            sns.scatterplot(data=locus_int_df, y=f"AB_{role}", x='POS', ax=ax[i],  
+                            hue='parental_origin' if i==0 else None, hue_order=['mother','father','unresolved'],
+                            size='parental_origin' if i==0 else None, sizes={'unresolved': 9, 'mother': 12, 'father': 12} if i==0 else None,
+                            s=9 if i!=0 else None,
+                            palette={'mother':'mediumpurple', 'father':'mediumturquoise', 'unresolved':'silver'} if i==0 else None,
+                            color='silver' if i!=0 else None);
+            if i==0:
+                ax[0].legend(loc='upper center', bbox_to_anchor=(0.5, 1), ncol=3, fancybox=True, fontsize=8);
+            ax[i].set(ylim=(-0.1, 1.1), title=f"AB_{role}");
+            ax[i].axhline(median_baf_above, linestyle='--', color='indianred');
+            ax[i].axhline(median_baf_below, linestyle='--', color='indianred');
 
-        ax[i].axvline(start, linestyle='--', color='maroon');
-        ax[i].axvline(end, linestyle='--', color='maroon');
-        ax[i].axvspan(window_start, start, facecolor='0.2', alpha=0.02)
-        ax[i].axvspan(end, window_end, facecolor='0.2', alpha=0.02)
-        ax[i].margins(x=0)
+            ax[i].axvline(start, linestyle='--', color='maroon');
+            ax[i].axvline(end, linestyle='--', color='maroon');
+            ax[i].axvspan(window_start, start, facecolor='0.2', alpha=0.02)
+            ax[i].axvspan(end, window_end, facecolor='0.2', alpha=0.02)
+            ax[i].margins(x=0)
 
-        trans = transforms.blended_transform_factory(
-            ax[i].get_yticklabels()[0].get_transform(), ax[i].transData)
-        ax[i].text(1.03, median_baf_above, round(median_baf_above, 3), color="indianred", transform=trans, 
-            ha="left", va="center");
-        ax[i].text(1.03, median_baf_below, round(median_baf_below, 3), color="indianred", transform=trans, 
-            ha="left", va="center");
+            trans = transforms.blended_transform_factory(
+                ax[i].get_yticklabels()[0].get_transform(), ax[i].transData)
+            ax[i].text(1.03, median_baf_above, round(median_baf_above, 3), color="indianred", transform=trans, 
+                ha="left", va="center");
+            ax[i].text(1.03, median_baf_below, round(median_baf_below, 3), color="indianred", transform=trans, 
+                ha="left", va="center");
     locus_str = locus_interval.replace(':', '_').replace('-', '_')
     plt.tight_layout();
     plt.savefig(f"{locus_str}_{sv_type}_{pipeline_id}.baf.png");
