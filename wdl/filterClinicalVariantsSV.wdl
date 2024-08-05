@@ -17,6 +17,8 @@ workflow filterClinicalVariantsSV {
     input {
         File vcf_file
         File clinvar_bed_with_header
+        File dbvar_bed_with_header
+        File gnomad_benign_bed_with_header
         String cohort_prefix
         String genome_build='GRCh38'
         String hail_docker
@@ -32,28 +34,51 @@ workflow filterClinicalVariantsSV {
         variant_interpretation_docker=variant_interpretation_docker
     }
 
-    call intersectBed as intersectClinVar {
-        input:
-        bed_file=vcfToBed.bed_output,
-        ref_bed_with_header=clinvar_bed_with_header,
-        cohort_prefix=cohort_prefix,
-        bed_overlap_threshold=bed_overlap_threshold,
-        variant_interpretation_docker=variant_interpretation_docker
+    Array[File] bed_files = [clinvar_bed_with_header, dbvar_bed_with_header, gnomad_benign_bed_with_header]
+
+    scatter (ref_bed_with_header in bed_files) {
+        call intersectBed {
+            input:
+            bed_file=vcfToBed.bed_output,
+            ref_bed_with_header=ref_bed_with_header,
+            cohort_prefix=cohort_prefix,
+            bed_overlap_threshold=bed_overlap_threshold,
+            variant_interpretation_docker=variant_interpretation_docker
+        }
     }
 
-    call annotateVCFWithBed as annotateVCFClinVar {
+    call annotateVCFWithBed as annotate_clinVar {
         input:
         vcf_file=vcf_file,
-        intersect_bed=intersectClinVar.intersect_bed,
-        ref_bed_with_header=clinvar_bed_with_header,
+        intersect_bed=intersectBed.intersect_bed[0],
+        ref_bed_with_header=bed_files[0],
         genome_build=genome_build,
         hail_docker=hail_docker,
         annot_name='ClinVar'
+    }    
+    call annotateVCFWithBed as annotate_dbVar {
+        input:
+        vcf_file=annotate_clinVar.annotated_vcf,
+        intersect_bed=intersectBed.intersect_bed[1],
+        ref_bed_with_header=bed_files[1],
+        genome_build=genome_build,
+        hail_docker=hail_docker,
+        annot_name='dbVar'
+    }
+
+    call annotateVCFWithBed as annotate_gnomAD_benign {
+        input:
+        vcf_file=annotate_dbVar.annotated_vcf,
+        intersect_bed=intersectBed.intersect_bed[2],
+        ref_bed_with_header=bed_files[2],
+        genome_build=genome_build,
+        hail_docker=hail_docker,
+        annot_name='gnomAD_benign'
     }
 
     output {
-        File clinvar_vcf = annotateVCFClinVar.filtered_vcf
-        File clinvar_vcf_idx = annotateVCFClinVar.filtered_vcf_idx
+        File annotated_vcf = annotate_gnomAD_benign.annotated_vcf
+        File annotated_vcf_idx = annotate_gnomAD_benign.annotated_vcf_idx
     }
 }
 
@@ -195,7 +220,7 @@ task annotateVCFWithBed {
 
     command <<<
     set -eou pipefail
-    cat <<EOF > filter_vcf.py
+    cat <<EOF > annotate_vcf.py
     import datetime
     import pandas as pd
     import hail as hl
@@ -252,16 +277,16 @@ task annotateVCFWithBed {
     for field in annot_fields:
         header['info'][field] = {'Description': '', 'Number': '.', 'Type': 'String'}
 
-    # export filtered and annotated VCF
+    # export annotated VCF
     hl.export_vcf(mt, os.path.basename(intersect_bed).split('.bed')[0] + '.vcf.bgz', metadata=header, tabix=True)
     EOF
 
-    python3 filter_vcf.py ~{vcf_file} ~{intersect_bed} ~{ref_bed_with_header} ~{genome_build} \
+    python3 annotate_vcf.py ~{vcf_file} ~{intersect_bed} ~{ref_bed_with_header} ~{genome_build} \
     ~{annot_name} ~{cpu_cores} ~{memory}
     >>>
 
     output {
-        File filtered_vcf = basename(intersect_bed, '.bed.gz') + '.vcf.bgz'
-        File filtered_vcf_idx = basename(intersect_bed, '.bed.gz') + '.vcf.bgz.tbi'
+        File annotated_vcf = basename(intersect_bed, '.bed.gz') + '.vcf.bgz'
+        File annotated_vcf_idx = basename(intersect_bed, '.bed.gz') + '.vcf.bgz.tbi'
     }
 }
