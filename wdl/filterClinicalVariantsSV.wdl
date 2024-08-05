@@ -145,7 +145,8 @@ task intersectBed {
 
     command <<<
         set -eou pipefail
-        bedtools intersect -wao -f ~{bed_overlap_threshold} -r -a ~{bed_file} -b ~{ref_bed_with_header} | bgzip > ~{cohort_prefix}_~{ref_bed_with_header_str}.bed.gz
+        tail -n +2 ~{ref_bed_with_header} > ref.bed 
+        bedtools intersect -wao -f ~{bed_overlap_threshold} -r -a ~{bed_file} -b ref.bed | bgzip > ~{cohort_prefix}_~{ref_bed_with_header_str}.bed.gz
     >>>
 
     output {
