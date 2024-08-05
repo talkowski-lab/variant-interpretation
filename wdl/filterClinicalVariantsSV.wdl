@@ -78,7 +78,7 @@ workflow filterClinicalVariantsSV {
     }
     call annotateVCFWithBed as annotate_clinVar {
         input:
-        vcf_file=annotate_dbVar.annotated_vcf,
+        vcf_file=annotate_gnomAD_benign.annotated_vcf,
         intersect_bed=intersectBed.intersect_bed[3],
         ref_bed_with_header=bed_files[3],
         genome_build=genome_build,
