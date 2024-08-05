@@ -37,6 +37,7 @@ workflow filterClinicalVariantsSV {
         bed_file=vcfToBed.bed_output,
         ref_bed_with_header=clinvar_bed_with_header,
         cohort_prefix=cohort_prefix,
+        bed_overlap_threshold=bed_overlap_threshold,
         variant_interpretation_docker=variant_interpretation_docker
     }
 
