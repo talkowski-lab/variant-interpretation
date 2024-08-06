@@ -16,6 +16,7 @@ struct RuntimeAttr {
 workflow filterClinicalVariantsSV {
     input {
         File vcf_file
+        File ped_uri
         File clinvar_bed_with_header
         File dbvar_bed_with_header
         File gnomad_benign_bed_with_header
@@ -90,12 +91,14 @@ workflow filterClinicalVariantsSV {
     call filterVCF {
         input:
         vcf_file=annotate_clinVar.annotated_vcf,
+        ped_uri=ped_uri,
         genome_build=genome_build,
         hail_docker=hail_docker,
         gnomad_af_threshold=gnomad_af_threshold
     }
 
     output {
+        File pathogenic_tsv = filterVCF.pathogenic_tsv
         File filtered_vcf = filterVCF.filtered_vcf
         File filtered_vcf_idx = filterVCF.filtered_vcf_idx
     }
@@ -313,6 +316,7 @@ task annotateVCFWithBed {
 task filterVCF {
     input {
         File vcf_file
+        File ped_uri
         String genome_build
         String hail_docker
         Float gnomad_af_threshold
@@ -358,10 +362,11 @@ task filterVCF {
     import os
 
     vcf_file = sys.argv[1]
-    genome_build = sys.argv[2]
-    gnomad_af_threshold = float(sys.argv[3])
-    cores = sys.argv[4]
-    mem = int(np.floor(float(sys.argv[5])))
+    ped_uri = sys.argv[2]
+    genome_build = sys.argv[3]
+    gnomad_af_threshold = float(sys.argv[4])
+    cores = sys.argv[5]
+    mem = int(np.floor(float(sys.argv[6])))
 
     hl.init(min_block_size=128, spark_conf={"spark.executor.cores": cores, 
                         "spark.executor.memory": f"{int(np.floor(mem*0.4))}g",
@@ -369,9 +374,42 @@ task filterVCF {
                         "spark.driver.memory": f"{int(np.floor(mem*0.4))}g"
                         }, tmp_dir="tmp", local_tmpdir="tmp")
 
+    def get_transmission(phased_tm):
+        phased_tm = phased_tm.annotate_entries(transmission=hl.if_else(phased_tm.proband_entry.PBT_GT==hl.parse_call('0|0'), 'uninherited',
+                hl.if_else(phased_tm.proband_entry.PBT_GT==hl.parse_call('0|1'), 'inherited_from_mother',
+                            hl.if_else(phased_tm.proband_entry.PBT_GT==hl.parse_call('1|0'), 'inherited_from_father',
+                                    hl.if_else(phased_tm.proband_entry.PBT_GT==hl.parse_call('1|1'), 'inherited_from_both', 'unknown'))))
+        )
+
+        phased_tm = phased_tm.annotate_entries(transmission=hl.if_else((hl.is_missing(phased_tm.transmission)) & 
+                                                        ((hl.is_defined(phased_tm.mother_entry.GT)) & 
+                                                            (hl.is_defined(phased_tm.father_entry.GT))),
+                                                        'de_novo', phased_tm.transmission))
+        return phased_tm
+
     mt = hl.import_vcf(vcf_file, force_bgz=vcf_file.split('.')[-1] in ['gz', 'bgz'], 
         reference_genome=genome_build, array_elements_required=False, call_fields=[])
     header = hl.get_vcf_metadata(vcf_file)
+
+    # Phasing
+    tmp_ped = pd.read_csv(ped_uri, sep='\t').iloc[:,:6]
+    cropped_ped_uri = f"{os.path.basename(ped_uri).split('.ped')[0]}_crop.ped"
+    tmp_ped.to_csv(cropped_ped_uri, sep='\t', index=False)
+    pedigree = hl.Pedigree.read(cropped_ped_uri, delimiter='\t')
+
+    tm = hl.trio_matrix(mt, pedigree, complete_trios=False)
+    phased_tm = hl.experimental.phase_trio_matrix_by_transmission(tm, call_field='GT', phased_call_field='PBT_GT')
+
+    # Output 1: grab ClinVar only
+    path_tm = phased_tm.filter_rows((phased_tm.info.clinical_interpretation[0].matches('athogenic')) |  # ClinVar P/LP
+                (hl.is_defined(phased_tm.info.dbvar_pathogenic[0])) |  # dbVar Pathogenic
+                (hl.is_defined(phased_tm.info.gd_sv_name[0])))  # GD region  
+    
+    path_tm = path_tm.filter_entries((path_tm.proband_entry.GT.is_non_ref()) | 
+                                    (path_tm.mother_entry.GT.is_non_ref()) |
+                                    (path_tm.father_entry.GT.is_non_ref()))
+    path_tm = path_tm.annotate_rows(variant_type='P/LP')
+    path_tm = get_transmission(path_tm)
 
     gnomad_fields = [x for x in list(mt.info) if 'gnomad' in x and 'AF' in x]
     mt = mt.annotate_rows(gnomad_popmax_af=hl.max([mt.info[field] for field in gnomad_fields]))
@@ -381,12 +419,17 @@ task filterVCF {
                 (hl.is_missing(mt.info.gnomad_sv_name[0])) &  # not gnomAD benign
                 (mt.gnomad_popmax_af <= 0.05))  
     
+    # export P/LP TSV
+    path_tm.entries().flatten().export(os.path.basename(vcf_file).split('.vcf')[0] + '_path_variants.tsv.gz', delimiter='\t')
+
+    # export filtered VCF
     hl.export_vcf(filt_mt, os.path.basename(vcf_file).split('.vcf')[0] + '.filtered.vcf.bgz', metadata=header, tabix=True)
     EOF
-    python3 filter_vcf.py ~{vcf_file} ~{genome_build} ~{gnomad_af_threshold} ~{cpu_cores} ~{memory}
+    python3 filter_vcf.py ~{vcf_file} ~{ped_uri} ~{genome_build} ~{gnomad_af_threshold} ~{cpu_cores} ~{memory}
     >>>
 
     output {
+        File pathogenic_tsv = basename(vcf_file, '.vcf.bgz') + '_path_variants.tsv.gz'
         File filtered_vcf = basename(vcf_file, '.vcf.bgz') + '.filtered.vcf.bgz'
         File filtered_vcf_idx = basename(vcf_file, '.vcf.bgz') + '.filtered.vcf.bgz.tbi'
     }

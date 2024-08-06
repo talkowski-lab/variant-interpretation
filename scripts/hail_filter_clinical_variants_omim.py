@@ -96,8 +96,9 @@ mt = mt.annotate_rows(all_csqs=hl.set(hl.flatmap(lambda x: x, mt.vep.transcript_
 
 # Phasing
 tmp_ped = pd.read_csv(ped_uri, sep='\t').iloc[:,:6]
-tmp_ped.to_csv(f"{prefix}.ped", sep='\t', index=False)
-pedigree = hl.Pedigree.read(f"{prefix}.ped", delimiter='\t')
+cropped_ped_uri = f"{os.path.basename(ped_uri).split('.ped')[0]}_crop.ped"
+tmp_ped.to_csv(cropped_ped_uri, sep='\t', index=False)
+pedigree = hl.Pedigree.read(cropped_ped_uri, delimiter='\t')
 
 tm = hl.trio_matrix(mt, pedigree, complete_trios=False)
 phased_tm = hl.experimental.phase_trio_matrix_by_transmission(tm, call_field='GT', phased_call_field='PBT_GT')
