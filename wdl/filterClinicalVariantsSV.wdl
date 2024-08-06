@@ -389,13 +389,8 @@ task filterVCF {
         phased_tm = phased_tm.annotate_entries(transmission=hl.if_else(phased_tm.proband_entry.PBT_GT==hl.parse_call('0|0'), 'uninherited',
                 hl.if_else(phased_tm.proband_entry.PBT_GT==hl.parse_call('0|1'), 'inherited_from_mother',
                             hl.if_else(phased_tm.proband_entry.PBT_GT==hl.parse_call('1|0'), 'inherited_from_father',
-                                    hl.if_else(phased_tm.proband_entry.PBT_GT==hl.parse_call('1|1'), 'inherited_from_both', 'unknown'))))
+                                    hl.or_missing(phased_tm.proband_entry.PBT_GT==hl.parse_call('1|1'), 'inherited_from_both'))))
         )
-
-        phased_tm = phased_tm.annotate_entries(transmission=hl.if_else((hl.is_missing(phased_tm.transmission)) & 
-                                                        ((hl.is_defined(phased_tm.mother_entry.GT)) & 
-                                                            (hl.is_defined(phased_tm.father_entry.GT))),
-                                                        'de_novo', phased_tm.transmission))
         return phased_tm
 
     mt = hl.import_vcf(vcf_file, force_bgz=vcf_file.split('.')[-1] in ['gz', 'bgz'], 
@@ -411,7 +406,7 @@ task filterVCF {
     tm = hl.trio_matrix(mt, pedigree, complete_trios=False)
     phased_tm = hl.experimental.phase_trio_matrix_by_transmission(tm, call_field='GT', phased_call_field='PBT_GT')
 
-    # Output 1: grab ClinVar only
+    # grab Pathogenic only
     path_tm = phased_tm.filter_rows((phased_tm.info.clinical_interpretation[0].matches('athogenic')) |  # ClinVar P/LP
                 (hl.is_defined(phased_tm.info.dbvar_pathogenic[0])) |  # dbVar Pathogenic
                 (hl.is_defined(phased_tm.info.gd_sv_name[0])))  # GD region  
@@ -421,7 +416,10 @@ task filterVCF {
                                     (path_tm.father_entry.GT.is_non_ref()))
     path_tm = path_tm.annotate_rows(variant_type='P/LP')
     path_tm = get_transmission(path_tm)
+    all_errors, per_fam, per_sample, per_variant = hl.mendel_errors(path_tm['GT'], pedigree)
+    path_tm = path_tm.annotate_rows(mendel_code=all_errors.key_by('locus','alleles')[path_tm.row_key].mendel_code)
 
+    # filter
     gnomad_fields = [x for x in list(mt.info) if 'gnomad' in x and 'AF' in x]
     mt = mt.annotate_rows(gnomad_popmax_af=hl.max([mt.info[field] for field in gnomad_fields]))
 
