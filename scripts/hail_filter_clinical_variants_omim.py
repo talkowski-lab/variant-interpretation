@@ -61,13 +61,8 @@ def get_transmission(phased_tm):
     phased_tm = phased_tm.annotate_entries(transmission=hl.if_else(phased_tm.proband_entry.PBT_GT==hl.parse_call('0|0'), 'uninherited',
             hl.if_else(phased_tm.proband_entry.PBT_GT==hl.parse_call('0|1'), 'inherited_from_mother',
                         hl.if_else(phased_tm.proband_entry.PBT_GT==hl.parse_call('1|0'), 'inherited_from_father',
-                                hl.if_else(phased_tm.proband_entry.PBT_GT==hl.parse_call('1|1'), 'inherited_from_both', 'unknown'))))
+                                hl.or_missing(phased_tm.proband_entry.PBT_GT==hl.parse_call('1|1'), 'inherited_from_both'))))
     )
-
-    phased_tm = phased_tm.annotate_entries(transmission=hl.if_else((hl.is_missing(phased_tm.transmission)) & 
-                                                    ((hl.is_defined(phased_tm.mother_entry.GT)) & 
-                                                        (hl.is_defined(phased_tm.father_entry.GT))),
-                                                    'de_novo', phased_tm.transmission))
     return phased_tm
 
 mt = hl.import_vcf(vcf_file, reference_genome='GRCh38', force_bgz=True, call_fields=[], array_elements_required=False)
@@ -102,6 +97,10 @@ pedigree = hl.Pedigree.read(cropped_ped_uri, delimiter='\t')
 
 tm = hl.trio_matrix(mt, pedigree, complete_trios=False)
 phased_tm = hl.experimental.phase_trio_matrix_by_transmission(tm, call_field='GT', phased_call_field='PBT_GT')
+
+# Mendel errors
+all_errors, per_fam, per_sample, per_variant = hl.mendel_errors(phased_tm['GT'], pedigree)
+phased_tm = phased_tm.annotate_rows(mendel_code=all_errors.key_by('locus','alleles')[phased_tm.row_key].mendel_code)
 
 gene_phased_tm = phased_tm.explode_rows(phased_tm.vep.transcript_consequences)
 gene_phased_tm = filter_mt(gene_phased_tm)
