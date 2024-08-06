@@ -81,7 +81,7 @@ tm = hl.trio_matrix(mt, pedigree, complete_trios=False)
 phased_tm = hl.experimental.phase_trio_matrix_by_transmission(tm, call_field='GT', phased_call_field='PBT_GT')
 
 # Mendel errors
-all_errors, per_fam, per_sample, per_variant = hl.mendel_errors(phased_tm['GT'], pedigree)
+all_errors, per_fam, per_sample, per_variant = hl.mendel_errors(mt['GT'], pedigree)
 phased_tm = phased_tm.annotate_rows(mendel_code=all_errors.key_by('locus','alleles')[phased_tm.row_key].mendel_code)
 
 # Output 2.5: OMIM Recessive --> CompHets + Homozygous in probands + XLR in males 
