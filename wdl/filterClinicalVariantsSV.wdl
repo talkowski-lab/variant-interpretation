@@ -416,8 +416,10 @@ task filterVCF {
                                     (path_tm.father_entry.GT.is_non_ref()))
     path_tm = path_tm.annotate_rows(variant_type='P/LP')
     path_tm = get_transmission(path_tm)
+    # Mendel errors
     all_errors, per_fam, per_sample, per_variant = hl.mendel_errors(mt['GT'], pedigree)
-    path_tm = path_tm.annotate_rows(mendel_code=all_errors.key_by('locus','alleles')[path_tm.row_key].mendel_code)
+    all_errors_mt = all_errors.key_by().to_matrix_table_row_major(columns=['mendel_code'], entry_field_name='mendel_code', col_field_name='s').key_rows_by('locus','alleles')
+    path_tm = path_tm.annotate_entries(mendel_code=all_errors_mt[path_tm.row_key, path_tm.col_key].mendel_code)
 
     # filter
     gnomad_fields = [x for x in list(mt.info) if 'gnomad' in x and 'AF' in x]
