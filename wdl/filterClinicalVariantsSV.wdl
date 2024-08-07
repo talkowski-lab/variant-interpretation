@@ -282,6 +282,7 @@ task annotateVCFWithBeds {
 
     for (intersect_bed, annot_name, ref_bed_with_header_uri) in zip(intersect_bed_files, annot_names, ref_bed_files):
         mt, header = annotate_with_bed(intersect_bed, annot_name, ref_bed_with_header_uri, mt, header)
+        mt.checkpoint()
 
     # export annotated VCF
     hl.export_vcf(mt, cohort_prefix + 'annotated.vcf.bgz', metadata=header, tabix=True)
