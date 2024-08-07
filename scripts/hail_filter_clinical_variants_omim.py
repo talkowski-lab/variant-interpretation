@@ -100,7 +100,8 @@ phased_tm = hl.experimental.phase_trio_matrix_by_transmission(tm, call_field='GT
 
 # Mendel errors
 all_errors, per_fam, per_sample, per_variant = hl.mendel_errors(mt['GT'], pedigree)
-phased_tm = phased_tm.annotate_rows(mendel_code=all_errors.key_by('locus','alleles')[phased_tm.row_key].mendel_code)
+all_errors_mt = all_errors.key_by().to_matrix_table_row_major(columns=['mendel_code'], entry_field_name='mendel_code', col_field_name='s').key_rows_by('locus','alleles')
+phased_tm = phased_tm.annotate_entries(mendel_code=all_errors_mt[phased_tm.row_key, phased_tm.col_key].mendel_code)
 
 gene_phased_tm = phased_tm.explode_rows(phased_tm.vep.transcript_consequences)
 gene_phased_tm = filter_mt(gene_phased_tm)
