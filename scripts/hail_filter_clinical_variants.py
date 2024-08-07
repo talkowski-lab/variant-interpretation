@@ -94,7 +94,7 @@ phased_tm = hl.experimental.phase_trio_matrix_by_transmission(tm, call_field='GT
 
 # Mendel errors
 all_errors, per_fam, per_sample, per_variant = hl.mendel_errors(mt['GT'], pedigree)
-all_errors_mt = all_errors.key_by().to_matrix_table_row_major(columns=['mendel_code'], entry_field_name='mendel_code', col_field_name='s').key_rows_by('locus','alleles')
+all_errors_mt = all_errors.key_by().to_matrix_table(row_key=['locus','alleles'], col_key=['s'], row_fields=['fam_id'])
 phased_tm = phased_tm.annotate_entries(mendel_code=all_errors_mt[phased_tm.row_key, phased_tm.col_key].mendel_code)
 
 # Output 1: grab ClinVar only
