@@ -18,11 +18,6 @@ workflow filterClinicalVariantsSV {
         File vcf_file
         File ped_uri
         File bed_files_with_header
-        # File dbvar_bed_with_header
-        # File gnomad_benign_bed_with_header
-        # File gd_bed_with_header
-        # File clingen_bed_with_header
-        # File decipher_bed_with_header
         String cohort_prefix
         String genome_build='GRCh38'
         String hail_docker
@@ -40,10 +35,6 @@ workflow filterClinicalVariantsSV {
     }
 
     Array[Pair[String, File]] bed_files_map = read_map(bed_files_with_header)
-
-    # Array[File] bed_files = [gd_bed_with_header, clingen_bed_with_header, dbvar_bed_with_header, 
-    #                         gnomad_benign_bed_with_header, decipher_bed_with_header, 
-    #                         clinvar_bed_with_header]
 
     scatter (pair in bed_files_map) {
         call intersectBed {
@@ -244,7 +235,7 @@ task annotateVCFWithBeds {
         RuntimeAttr? runtime_attr_override
     }
 
-    Float input_size = size([vcf_file], 'GB')
+    Float input_size = size(vcf_file, 'GB') + size(intersect_bed_files, 'GB')
     Float base_disk_gb = 10.0
     Float input_disk_scale = 5.0
 
