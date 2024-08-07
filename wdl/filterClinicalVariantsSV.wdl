@@ -17,12 +17,12 @@ workflow filterClinicalVariantsSV {
     input {
         File vcf_file
         File ped_uri
-        File clinvar_bed_with_header
-        File dbvar_bed_with_header
-        File gnomad_benign_bed_with_header
-        File gd_bed_with_header
-        File clingen_bed_with_header
-        File decipher_bed_with_header
+        File bed_files_with_header
+        # File dbvar_bed_with_header
+        # File gnomad_benign_bed_with_header
+        # File gd_bed_with_header
+        # File clingen_bed_with_header
+        # File decipher_bed_with_header
         String cohort_prefix
         String genome_build='GRCh38'
         String hail_docker
@@ -39,79 +39,90 @@ workflow filterClinicalVariantsSV {
         variant_interpretation_docker=variant_interpretation_docker
     }
 
-    Array[File] bed_files = [gd_bed_with_header, clingen_bed_with_header, dbvar_bed_with_header, 
-                            gnomad_benign_bed_with_header, decipher_bed_with_header, 
-                            clinvar_bed_with_header]
+    Array[Pair[String, File]] bed_files_map = read_map(bed_files_with_header)
 
-    scatter (ref_bed_with_header in bed_files) {
+    # Array[File] bed_files = [gd_bed_with_header, clingen_bed_with_header, dbvar_bed_with_header, 
+    #                         gnomad_benign_bed_with_header, decipher_bed_with_header, 
+    #                         clinvar_bed_with_header]
+
+    scatter (pair in bed_files_map) {
         call intersectBed {
             input:
             bed_file=vcfToBed.bed_output,
-            ref_bed_with_header=ref_bed_with_header,
+            ref_bed_with_header=pair.right,
             cohort_prefix=cohort_prefix,
             bed_overlap_threshold=bed_overlap_threshold,
             variant_interpretation_docker=variant_interpretation_docker
         }
     }
 
-    call annotateVCFWithBed as annotate_GD {
+    call annotateVCFWithBeds {
         input:
         vcf_file=vcf_file,
-        intersect_bed=intersectBed.intersect_bed[0],
-        ref_bed_with_header=bed_files[0],
+        intersect_bed_files=intersectBed.intersect_bed,
+        bed_files_with_header=bed_files_with_header,
+        cohort_prefix=cohort_prefix,
         genome_build=genome_build,
-        hail_docker=hail_docker,
-        annot_name='GD'
-    }    
-    call annotateVCFWithBed as annotate_clinGen {
-        input:
-        vcf_file=annotate_GD.annotated_vcf,
-        intersect_bed=intersectBed.intersect_bed[1],
-        ref_bed_with_header=bed_files[1],
-        genome_build=genome_build,
-        hail_docker=hail_docker,
-        annot_name='ClinGen'
+        hail_docker=hail_docker
     }
-    call annotateVCFWithBed as annotate_dbVar {
-        input:
-        vcf_file=annotate_clinGen.annotated_vcf,
-        intersect_bed=intersectBed.intersect_bed[2],
-        ref_bed_with_header=bed_files[2],
-        genome_build=genome_build,
-        hail_docker=hail_docker,
-        annot_name='dbVar'
-    }
-    call annotateVCFWithBed as annotate_gnomAD_benign {
-        input:
-        vcf_file=annotate_dbVar.annotated_vcf,
-        intersect_bed=intersectBed.intersect_bed[3],
-        ref_bed_with_header=bed_files[3],
-        genome_build=genome_build,
-        hail_docker=hail_docker,
-        annot_name='gnomAD_benign'
-    }
-    call annotateVCFWithBed as annotate_DECIPHER {
-        input:
-        vcf_file=annotate_gnomAD_benign.annotated_vcf,
-        intersect_bed=intersectBed.intersect_bed[4],
-        ref_bed_with_header=bed_files[4],
-        genome_build=genome_build,
-        hail_docker=hail_docker,
-        annot_name='DECIPHER'
-    }
-    call annotateVCFWithBed as annotate_clinVar {
-        input:
-        vcf_file=annotate_DECIPHER.annotated_vcf,
-        intersect_bed=intersectBed.intersect_bed[5],
-        ref_bed_with_header=bed_files[5],
-        genome_build=genome_build,
-        hail_docker=hail_docker,
-        annot_name='ClinVar'
-    }
+    # call annotateVCFWithBed as annotate_GD {
+    #     input:
+    #     vcf_file=vcf_file,
+    #     intersect_bed=intersectBed.intersect_bed[0],
+    #     ref_bed_with_header=bed_files[0],
+    #     genome_build=genome_build,
+    #     hail_docker=hail_docker,
+    #     annot_name='GD'
+    # }    
+    # call annotateVCFWithBed as annotate_clinGen {
+    #     input:
+    #     vcf_file=annotate_GD.annotated_vcf,
+    #     intersect_bed=intersectBed.intersect_bed[1],
+    #     ref_bed_with_header=bed_files[1],
+    #     genome_build=genome_build,
+    #     hail_docker=hail_docker,
+    #     annot_name='ClinGen'
+    # }
+    # call annotateVCFWithBed as annotate_dbVar {
+    #     input:
+    #     vcf_file=annotate_clinGen.annotated_vcf,
+    #     intersect_bed=intersectBed.intersect_bed[2],
+    #     ref_bed_with_header=bed_files[2],
+    #     genome_build=genome_build,
+    #     hail_docker=hail_docker,
+    #     annot_name='dbVar'
+    # }
+    # call annotateVCFWithBed as annotate_gnomAD_benign {
+    #     input:
+    #     vcf_file=annotate_dbVar.annotated_vcf,
+    #     intersect_bed=intersectBed.intersect_bed[3],
+    #     ref_bed_with_header=bed_files[3],
+    #     genome_build=genome_build,
+    #     hail_docker=hail_docker,
+    #     annot_name='gnomAD_benign'
+    # }
+    # call annotateVCFWithBed as annotate_DECIPHER {
+    #     input:
+    #     vcf_file=annotate_gnomAD_benign.annotated_vcf,
+    #     intersect_bed=intersectBed.intersect_bed[4],
+    #     ref_bed_with_header=bed_files[4],
+    #     genome_build=genome_build,
+    #     hail_docker=hail_docker,
+    #     annot_name='DECIPHER'
+    # }
+    # call annotateVCFWithBed as annotate_clinVar {
+    #     input:
+    #     vcf_file=annotate_DECIPHER.annotated_vcf,
+    #     intersect_bed=intersectBed.intersect_bed[5],
+    #     ref_bed_with_header=bed_files[5],
+    #     genome_build=genome_build,
+    #     hail_docker=hail_docker,
+    #     annot_name='ClinVar'
+    # }
 
     call filterVCF {
         input:
-        vcf_file=annotate_clinVar.annotated_vcf,
+        vcf_file=annotateVCFWithBeds.annotated_vcf,
         ped_uri=ped_uri,
         genome_build=genome_build,
         hail_docker=hail_docker,
@@ -222,18 +233,18 @@ task intersectBed {
     }
 }
 
-task annotateVCFWithBed {
+task annotateVCFWithBeds {
     input {
         File vcf_file
-        File intersect_bed
-        File ref_bed_with_header
-        String annot_name
+        Array[File] intersect_bed_files
+        File bed_files_with_header
+        String cohort_prefix
         String genome_build
         String hail_docker
         RuntimeAttr? runtime_attr_override
     }
 
-    Float input_size = size([vcf_file, intersect_bed], 'GB')
+    Float input_size = size([vcf_file, intersect_bed_files], 'GB')
     Float base_disk_gb = 10.0
     Float input_disk_scale = 5.0
 
@@ -272,10 +283,10 @@ task annotateVCFWithBed {
     import os
 
     vcf_file = sys.argv[1]
-    intersect_bed = sys.argv[2]
-    ref_bed_with_header_uri = sys.argv[3]
-    genome_build = sys.argv[4]
-    annot_name = sys.argv[5]
+    intersect_bed_files = sys.argv[2].split(',')
+    bed_files_with_header = sys.argv[3]
+    cohort_prefix = sys.argv[4]
+    genome_build = sys.argv[5]
     cores = sys.argv[6]
     mem = int(np.floor(float(sys.argv[7])))
 
@@ -289,48 +300,58 @@ task annotateVCFWithBed {
         reference_genome=genome_build, array_elements_required=False, call_fields=[])
     header = hl.get_vcf_metadata(vcf_file)
 
-    overlap_bed = hl.import_table(intersect_bed, force_bgz=True, no_header=True, types={f"f{i}": 'int' for i in [1,2,6,7]})
-    overlap_bed = overlap_bed.annotate(f1=overlap_bed.f1 + 1,  # adjust for bed 0-based coordinates
-                                    f6=overlap_bed.f6 + 1)
+    ref_bed_df = pd.read_csv(bed_files_with_header, sep='\t', header=None)
+    annot_names = ref_bed_df[0].tolist()
+    ref_bed_files = ref_bed_df[1].tolist()
 
-    fields = list(overlap_bed.row)
-    overlap_field = fields[-1]
+    def annotate_with_bed(intersect_bed, annot_name, ref_bed_with_header_uri, mt, header):
+        overlap_bed = hl.import_table(intersect_bed, force_bgz=True, no_header=True, types={f"f{i}": 'int' for i in [1,2,6,7]})
+        overlap_bed = overlap_bed.annotate(f1=overlap_bed.f1 + 1,  # adjust for bed 0-based coordinates
+                                        f6=overlap_bed.f6 + 1)
 
-    overlap_bed = overlap_bed.annotate(sv_len=overlap_bed.f2-overlap_bed.f1, 
-                        ref_len=overlap_bed.f7-overlap_bed.f6)
-    overlap_bed = overlap_bed.annotate(sv_prop=hl.int(overlap_bed[overlap_field]) / overlap_bed.sv_len, 
-                        ref_prop=hl.int(overlap_bed[overlap_field]) / overlap_bed.ref_len)
+        fields = list(overlap_bed.row)
+        overlap_field = fields[-1]
 
-    # use ref_bed_with_header for annotation column/field names
-    ref_bed_with_header = hl.import_table(ref_bed_with_header_uri)                                    
-    ref_bed_with_header_idx = range(5, len(fields)-1)
-    ref_bed_with_header_mapping = {f"f{ref_bed_with_header_idx[i]}": list(ref_bed_with_header.row)[i].lower().replace(' ', '_') 
-                                    for i in range(len(ref_bed_with_header_idx))} | {'sv_prop': f"{annot_name}_overlap"}
-    overlap_bed = overlap_bed.rename(ref_bed_with_header_mapping)
+        overlap_bed = overlap_bed.annotate(sv_len=overlap_bed.f2-overlap_bed.f1, 
+                            ref_len=overlap_bed.f7-overlap_bed.f6)
+        overlap_bed = overlap_bed.annotate(sv_prop=hl.int(overlap_bed[overlap_field]) / overlap_bed.sv_len, 
+                            ref_prop=hl.int(overlap_bed[overlap_field]) / overlap_bed.ref_len)
 
-    overlap_bed = overlap_bed.annotate(locus=hl.locus(overlap_bed.f0, overlap_bed.f1, genome_build))
-    overlap_bed = overlap_bed.annotate(alleles=mt.key_rows_by('locus').rows()[overlap_bed.locus].alleles)
-    overlap_bed = overlap_bed.key_by('locus','alleles')
+        # use ref_bed_with_header for annotation column/field names
+        ref_bed_with_header = hl.import_table(ref_bed_with_header_uri)                                    
+        ref_bed_with_header_idx = range(5, len(fields)-1)
+        ref_bed_with_header_mapping = {f"f{ref_bed_with_header_idx[i]}": list(ref_bed_with_header.row)[i].lower().replace(' ', '_') 
+                                        for i in range(len(ref_bed_with_header_idx))} | {'sv_prop': f"{annot_name}_overlap"}
+        overlap_bed = overlap_bed.rename(ref_bed_with_header_mapping)
 
-    # annotate original VCF
-    annot_fields = list(ref_bed_with_header_mapping.values())[3:]
-    mt = mt.annotate_rows(info=mt.info.annotate(
-        **{field: overlap_bed[mt.row_key][field] for field in annot_fields}))
+        overlap_bed = overlap_bed.annotate(locus=hl.locus(overlap_bed.f0, overlap_bed.f1, genome_build))
+        overlap_bed = overlap_bed.annotate(alleles=mt.key_rows_by('locus').rows()[overlap_bed.locus].alleles)
+        overlap_bed = overlap_bed.key_by('locus','alleles')
 
-    for field in annot_fields:
-        header['info'][field] = {'Description': '', 'Number': '.', 'Type': 'String'}
+        # annotate original VCF
+        annot_fields = list(ref_bed_with_header_mapping.values())[3:]
+        mt = mt.annotate_rows(info=mt.info.annotate(
+            **{field: overlap_bed[mt.row_key][field] for field in annot_fields}))
+
+        for field in annot_fields:
+            header['info'][field] = {'Description': '', 'Number': '.', 'Type': 'String'}
+        
+        return mt, header
+
+    for (intersect_bed, annot_name, ref_bed_with_header_uri) in zip(intersect_bed_files, annot_names, ref_bed_files):
+        mt, header = annotate_with_bed(intersect_bed, annot_name, ref_bed_with_header_uri, mt, header)
 
     # export annotated VCF
-    hl.export_vcf(mt, os.path.basename(intersect_bed).split('.bed')[0] + '.vcf.bgz', metadata=header, tabix=True)
+    hl.export_vcf(mt, cohort_prefix + 'annotated.vcf.bgz', metadata=header, tabix=True)
     EOF
 
-    python3 annotate_vcf.py ~{vcf_file} ~{intersect_bed} ~{ref_bed_with_header} ~{genome_build} \
-    ~{annot_name} ~{cpu_cores} ~{memory}
+    python3 annotate_vcf.py ~{vcf_file} ~{sep=',' intersect_bed_files} ~{bed_files_with_header} ~{genome_build} \
+        ~{cpu_cores} ~{memory}
     >>>
 
     output {
-        File annotated_vcf = basename(intersect_bed, '.bed.gz') + '.vcf.bgz'
-        File annotated_vcf_idx = basename(intersect_bed, '.bed.gz') + '.vcf.bgz.tbi'
+        File annotated_vcf = cohort_prefix + 'annotated.vcf.bgz'
+        File annotated_vcf_idx = cohort_prefix + 'annotated.vcf.bgz.tbi'
     }
 }
 
