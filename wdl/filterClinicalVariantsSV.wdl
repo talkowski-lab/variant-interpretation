@@ -220,7 +220,7 @@ task annotateVCFWithBeds {
     import os
 
     vcf_file = sys.argv[1]
-    intersect_bed_files = sys.argv[2].split(',')
+    intersect_bed_files = pd.DataFrame(sys.argv[2].split(','))
     bed_files_with_header = sys.argv[3]
     cohort_prefix = sys.argv[4]
     genome_build = sys.argv[5]
@@ -240,6 +240,11 @@ task annotateVCFWithBeds {
     ref_bed_df = pd.read_csv(bed_files_with_header, sep='\t', header=None)
     annot_names = ref_bed_df[0].tolist()
     ref_bed_files = ref_bed_df[1].tolist()
+
+    # match order of intersectBed outputs
+    intersect_bed_files['ref_bed_with_header_str'] = intersect_bed_files[0].str.split('.bed.gz').str[0].str.split(f"{cohort_prefix}_").str[1]
+    ref_bed_df['ref_bed_with_header_str'] = ref_bed_df[1].apply(os.path.basename).str.split('.bed').str[0]
+    intersect_bed_files = intersect_bed_files.set_index('ref_bed_with_header_str').loc[ref_bed_df.ref_bed_with_header_str][0].tolist()
 
     def annotate_with_bed(intersect_bed, annot_name, ref_bed_with_header_uri, mt, header):
         overlap_bed = hl.import_table(intersect_bed, force_bgz=True, no_header=True, types={f"f{i}": 'int' for i in [1,2,6,7]})
