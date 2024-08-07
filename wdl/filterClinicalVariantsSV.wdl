@@ -56,60 +56,6 @@ workflow filterClinicalVariantsSV {
         genome_build=genome_build,
         hail_docker=hail_docker
     }
-    # call annotateVCFWithBed as annotate_GD {
-    #     input:
-    #     vcf_file=vcf_file,
-    #     intersect_bed=intersectBed.intersect_bed[0],
-    #     ref_bed_with_header=bed_files[0],
-    #     genome_build=genome_build,
-    #     hail_docker=hail_docker,
-    #     annot_name='GD'
-    # }    
-    # call annotateVCFWithBed as annotate_clinGen {
-    #     input:
-    #     vcf_file=annotate_GD.annotated_vcf,
-    #     intersect_bed=intersectBed.intersect_bed[1],
-    #     ref_bed_with_header=bed_files[1],
-    #     genome_build=genome_build,
-    #     hail_docker=hail_docker,
-    #     annot_name='ClinGen'
-    # }
-    # call annotateVCFWithBed as annotate_dbVar {
-    #     input:
-    #     vcf_file=annotate_clinGen.annotated_vcf,
-    #     intersect_bed=intersectBed.intersect_bed[2],
-    #     ref_bed_with_header=bed_files[2],
-    #     genome_build=genome_build,
-    #     hail_docker=hail_docker,
-    #     annot_name='dbVar'
-    # }
-    # call annotateVCFWithBed as annotate_gnomAD_benign {
-    #     input:
-    #     vcf_file=annotate_dbVar.annotated_vcf,
-    #     intersect_bed=intersectBed.intersect_bed[3],
-    #     ref_bed_with_header=bed_files[3],
-    #     genome_build=genome_build,
-    #     hail_docker=hail_docker,
-    #     annot_name='gnomAD_benign'
-    # }
-    # call annotateVCFWithBed as annotate_DECIPHER {
-    #     input:
-    #     vcf_file=annotate_gnomAD_benign.annotated_vcf,
-    #     intersect_bed=intersectBed.intersect_bed[4],
-    #     ref_bed_with_header=bed_files[4],
-    #     genome_build=genome_build,
-    #     hail_docker=hail_docker,
-    #     annot_name='DECIPHER'
-    # }
-    # call annotateVCFWithBed as annotate_clinVar {
-    #     input:
-    #     vcf_file=annotate_DECIPHER.annotated_vcf,
-    #     intersect_bed=intersectBed.intersect_bed[5],
-    #     ref_bed_with_header=bed_files[5],
-    #     genome_build=genome_build,
-    #     hail_docker=hail_docker,
-    #     annot_name='ClinVar'
-    # }
 
     call filterVCF {
         input:
@@ -336,8 +282,8 @@ task annotateVCFWithBeds {
     hl.export_vcf(mt, cohort_prefix + 'annotated.vcf.bgz', metadata=header, tabix=True)
     EOF
 
-    python3 annotate_vcf.py ~{vcf_file} ~{sep=',' intersect_bed_files} ~{bed_files_with_header} ~{genome_build} \
-        ~{cpu_cores} ~{memory}
+    python3 annotate_vcf.py ~{vcf_file} ~{sep=',' intersect_bed_files} ~{bed_files_with_header} \
+    ~{cohort_prefix} ~{genome_build} ~{cpu_cores} ~{memory}
     >>>
 
     output {
