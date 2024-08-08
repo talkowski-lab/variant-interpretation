@@ -78,12 +78,12 @@ task writeHT {
     cores = sys.argv[3]  # string
     mem = int(np.floor(float(sys.argv[4])))
 
-    hl.init()
-    # hl.init(min_block_size=128, spark_conf={"spark.executor.cores": cores, 
-    #                     "spark.executor.memory": f"{int(np.floor(mem*0.4))}g",
-    #                     "spark.driver.cores": cores,
-    #                     "spark.driver.memory": f"{int(np.floor(mem*0.4))}g"
-    #                     }, tmp_dir="tmp", local_tmpdir="tmp")
+    # hl.init()
+    hl.init(min_block_size=128, spark_conf={"spark.executor.cores": cores, 
+                        "spark.executor.memory": f"{int(np.floor(mem*0.4))}g",
+                        "spark.driver.cores": cores,
+                        "spark.driver.memory": f"{int(np.floor(mem*0.4))}g"
+                        }, tmp_dir="tmp", local_tmpdir="tmp")
 
     file_ext = vcf_file.split('.')[-1]
 
