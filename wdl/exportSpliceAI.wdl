@@ -95,7 +95,7 @@ task writeHT {
     ht = ht.annotate(locus=hl.locus(ht.CHROM, hl.int(ht.POS), 'GRCh38'),
                     alleles=hl.array([ht.REF, ht.ALT]))
 
-    ht = ht.annotate(SYMBOL=ht.SpliceAI.split('=')[1].split('|')[1])
+    ht = ht.annotate(SYMBOL=ht.SpliceAI.split('=')[1].split('\|')[1])
 
     ht = ht.key_by('locus','alleles','SYMBOL')
     ht.write(output_ht_path, overwrite=True)
