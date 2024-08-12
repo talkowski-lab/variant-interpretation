@@ -125,7 +125,7 @@ task annotateExtra {
 
     command <<<
         curl ~{vep_annotate_hail_extra_python_script} > annotate.py
-        python3.9 annotate.py -i ~{vcf_file} -o ~{vep_annotated_vcf_name} --cores ~{cpu_cores} --mem ~{memory} \
+        python3 annotate.py -i ~{vcf_file} -o ~{vep_annotated_vcf_name} --cores ~{cpu_cores} --mem ~{memory} \
         --build ~{genome_build} --loeuf-v2 ~{loeuf_v2_uri} --loeuf-v4 ~{loeuf_v4_uri} \
         --mpc ~{mpc_ht_uri} --clinvar ~{clinvar_vcf_uri} --omim ~{omim_uri} \
         --spliceAI-snv ~{spliceAI_snv_uri} --spliceAI-indel ~{spliceAI_indel_uri} \
