@@ -29,7 +29,6 @@ workflow vepAnnotateHailExtra {
 
         String cohort_prefix
         String hail_docker
-        String hail_docker
         String sv_base_mini_docker
         
         String vep_annotate_hail_extra_python_script
@@ -132,7 +131,6 @@ task annotateExtra {
         --spliceAI-snv ~{spliceAI_snv_uri} --spliceAI-indel ~{spliceAI_indel_uri} \
         --revel ~{revel_file} --genes ~{gene_list} --noncoding-bed ~{noncoding_bed}
         cp $(ls . | grep hail*.log) hail_log.txt
-        bcftools index -t ~{vep_annotated_vcf_name}
     >>>
 
     output {
