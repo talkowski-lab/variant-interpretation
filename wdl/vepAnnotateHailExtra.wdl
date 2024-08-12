@@ -29,7 +29,7 @@ workflow vepAnnotateHailExtra {
 
         String cohort_prefix
         String hail_docker
-        String vep_hail_docker
+        String hail_docker
         String sv_base_mini_docker
         
         String vep_annotate_hail_extra_python_script
@@ -59,7 +59,7 @@ workflow vepAnnotateHailExtra {
                 mpc_ht_uri=mpc_ht_uri,
                 spliceAI_snv_uri=spliceAI_snv_uri,
                 spliceAI_indel_uri=spliceAI_indel_uri,
-                vep_hail_docker=vep_hail_docker,
+                hail_docker=hail_docker,
                 genome_build=genome_build,
                 runtime_attr_override=runtime_attr_annotate_extra
         }
@@ -88,7 +88,7 @@ task annotateExtra {
         String spliceAI_snv_uri
         String spliceAI_indel_uri
 
-        String vep_hail_docker
+        String hail_docker
         String genome_build
         String vep_annotate_hail_extra_python_script
         RuntimeAttr? runtime_attr_override
@@ -116,7 +116,7 @@ task annotateExtra {
         cpu: cpu_cores
         preemptible: select_first([runtime_override.preemptible_tries, runtime_default.preemptible_tries])
         maxRetries: select_first([runtime_override.max_retries, runtime_default.max_retries])
-        docker: vep_hail_docker
+        docker: hail_docker
         bootDiskSizeGb: select_first([runtime_override.boot_disk_gb, runtime_default.boot_disk_gb])
     }
 
