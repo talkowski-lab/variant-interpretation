@@ -24,6 +24,8 @@ workflow vepAnnotateHailExtra {
         String mpc_ht_uri
         String loeuf_v2_uri
         String loeuf_v4_uri
+        String spliceAI_snv_uri
+        String spliceAI_indel_uri
 
         String cohort_prefix
         String hail_docker
@@ -77,6 +79,9 @@ task annotateExtra {
         File gene_list
 
         String mpc_ht_uri
+        String spliceAI_snv_uri
+        String spliceAI_indel_uri
+
         String vep_hail_docker
         String genome_build
         String vep_annotate_hail_extra_python_script
@@ -117,7 +122,9 @@ task annotateExtra {
         curl ~{vep_annotate_hail_extra_python_script} > annotate.py
         python3.9 annotate.py -i ~{vcf_file} -o ~{vep_annotated_vcf_name} --cores ~{cpu_cores} --mem ~{memory} \
         --build ~{genome_build} --loeuf-v2 ~{loeuf_v2_uri} --loeuf-v4 ~{loeuf_v4_uri} \
-        --mpc ~{mpc_ht_uri} --clinvar ~{clinvar_vcf_uri} --omim ~{omim_uri} --revel ~{revel_file} --genes ~{gene_list}
+        --mpc ~{mpc_ht_uri} --clinvar ~{clinvar_vcf_uri} --omim ~{omim_uri} \
+        --spliceAI-snv ~{spliceAI_snv_uri} --spliceAI-indel ~{spliceAI_indel_uri} \
+        --revel ~{revel_file} --genes ~{gene_list}
         cp $(ls . | grep hail*.log) hail_log.txt
         bcftools index -t ~{vep_annotated_vcf_name}
     >>>

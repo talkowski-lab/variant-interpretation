@@ -90,7 +90,7 @@ task writeHT {
     header_cols = ['CHROM', 'POS', 'ID', 'REF', 'ALT', 'QUAL', 'FILTER', 'SpliceAI']
     ht = hl.import_table(vcf_file, comment=['#'], no_header=True, force_bgz=file_ext in ['gz', 'bgz'])\
         .rename({f"f{i}": col for i, col in enumerate(header_cols)})
-    ht = ht.checkpoint(os.path.basename(vcf_file).split(file_ext)[0]+'ht')
+    # ht = ht.checkpoint(os.path.basename(vcf_file).split(file_ext)[0]+'ht')
 
     ht = ht.annotate(locus=hl.locus(ht.CHROM, hl.int(ht.POS), 'GRCh38'),
                     alleles=hl.array([ht.REF, ht.ALT]))
