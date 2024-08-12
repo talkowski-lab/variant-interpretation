@@ -55,6 +55,8 @@ workflow vepAnnotateHailExtra {
                 omim_uri=omim_uri,
                 gene_list=select_first([gene_list, vcf_shard]),
                 mpc_ht_uri=mpc_ht_uri,
+                spliceAI_snv_uri=spliceAI_snv_uri,
+                spliceAI_indel_uri=spliceAI_indel_uri,
                 vep_hail_docker=vep_hail_docker,
                 genome_build=genome_build,
                 runtime_attr_override=runtime_attr_annotate_extra
