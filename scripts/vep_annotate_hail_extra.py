@@ -61,8 +61,9 @@ header = hl.get_vcf_metadata(vcf_file)
 mt = hl.import_vcf(vcf_file, force_bgz=True, array_elements_required=False, call_fields=[], reference_genome=build)
 
 # OPTIONAL: annotate non-coding 
-bed = hl.import_bed(noncoding_bed, reference_genome=build, skip_invalid_intervals=True)
-mt = mt.annotate_rows(info=mt.info.annotate(PREDICTED_NONCODING=bed[mt.locus].target))
+if noncoding_bed!='NA':
+    bed = hl.import_bed(noncoding_bed, reference_genome=build, skip_invalid_intervals=True)
+    mt = mt.annotate_rows(info=mt.info.annotate(PREDICTED_NONCODING=bed[mt.locus].target))
 
 # annotate MPC
 mpc = hl.read_table(mpc_ht_uri).key_by('locus','alleles')
