@@ -22,7 +22,8 @@ parser.add_argument('--loeuf-v2', dest='loeuf_v2_uri', help='LOEUF scores from g
 parser.add_argument('--loeuf-v4', dest='loeuf_v4_uri', help='LOEUF scores from gnomAD v4.1')
 parser.add_argument('--spliceAI-snv', dest='spliceAI_snv_uri', help='SpliceAI scores SNV HT')
 parser.add_argument('--spliceAI-indel', dest='spliceAI_indel_uri', help='SpliceAI scores Indel HT')
-parser.add_argument('--genes', dest='gene_list', help='Gene list txt file')
+parser.add_argument('--genes', dest='gene_list', help='OPTIONAL: Gene list txt file')
+parser.add_argument('--noncoding-bed', dest='noncoding_bed', help='OPTIONAL: non-coding annotations bed file')
 parser.add_argument('--project-id', dest='project_id', help='Google Project ID')
 
 args = parser.parse_args()
@@ -41,6 +42,7 @@ loeuf_v4_uri = args.loeuf_v4_uri
 spliceAI_snv_uri = args.spliceAI_snv_uri
 spliceAI_indel_uri = args.spliceAI_indel_uri
 gene_list = args.gene_list
+noncoding_bed = args.noncoding_bed
 gcp_project = args.project_id
 
 hl.init(min_block_size=128, 
@@ -57,6 +59,10 @@ hl.init(min_block_size=128,
 
 header = hl.get_vcf_metadata(vcf_file) 
 mt = hl.import_vcf(vcf_file, force_bgz=True, array_elements_required=False, call_fields=[], reference_genome=build)
+
+# OPTIONAL: annotate non-coding 
+bed = hl.import_bed(noncoding_bed, reference_genome=build, skip_invalid_intervals=True)
+mt = mt.annotate_rows(info=mt.info.annotate(PREDICTED_NONCODING=bed[mt.locus].target))
 
 # annotate MPC
 mpc = hl.read_table(mpc_ht_uri).key_by('locus','alleles')
@@ -128,8 +134,8 @@ mt_by_gene = mt_by_gene.annotate_rows(vep=mt_by_gene.vep.annotate(
 
 csq_fields_str = 'Format: ' + header['info']['CSQ']['Description'].split('Format: ')[1] + '|'.join(['', 'LOEUF_v2', 'LOEUF_v4'] + fields + ['OMIM_MIM_number', 'OMIM_inheritance_code'])
 
-# annotate with gene list, if provided
-if gene_list.split('.')[-1] == 'txt':
+# OPTIONAL: annotate with gene list, if provided
+if gene_list!='NA':
     genes = pd.read_csv(gene_list, sep='\t', header=None)[0].tolist()
     gene_list_name = os.path.basename(gene_list)
     mt_by_gene = mt_by_gene.annotate_rows(vep=mt_by_gene.vep.annotate(

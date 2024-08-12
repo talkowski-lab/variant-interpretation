@@ -37,7 +37,8 @@ workflow vepAnnotateHailExtra {
 
         String genome_build='GRCh38'
         
-        File? gene_list  # must end in .txt or it will be ignored
+        String? noncoding_bed
+        String? gene_list  # must end in .txt or it will be ignored
         
         RuntimeAttr? runtime_attr_annotate_extra
     }
@@ -53,7 +54,8 @@ workflow vepAnnotateHailExtra {
                 revel_file_idx=revel_file+'.tbi',
                 clinvar_vcf_uri=clinvar_vcf_uri,
                 omim_uri=omim_uri,
-                gene_list=select_first([gene_list, vcf_shard]),
+                noncoding_bed=select_first([noncoding_bed, 'NA']),
+                gene_list=select_first([gene_list, 'NA']),
                 mpc_ht_uri=mpc_ht_uri,
                 spliceAI_snv_uri=spliceAI_snv_uri,
                 spliceAI_indel_uri=spliceAI_indel_uri,
@@ -78,7 +80,9 @@ task annotateExtra {
         File revel_file_idx
         File clinvar_vcf_uri
         File omim_uri
-        File gene_list
+        
+        String noncoding_bed
+        String gene_list
 
         String mpc_ht_uri
         String spliceAI_snv_uri
@@ -126,7 +130,7 @@ task annotateExtra {
         --build ~{genome_build} --loeuf-v2 ~{loeuf_v2_uri} --loeuf-v4 ~{loeuf_v4_uri} \
         --mpc ~{mpc_ht_uri} --clinvar ~{clinvar_vcf_uri} --omim ~{omim_uri} \
         --spliceAI-snv ~{spliceAI_snv_uri} --spliceAI-indel ~{spliceAI_indel_uri} \
-        --revel ~{revel_file} --genes ~{gene_list}
+        --revel ~{revel_file} --genes ~{gene_list} --noncoding-bed ~{noncoding_bed}
         cp $(ls . | grep hail*.log) hail_log.txt
         bcftools index -t ~{vep_annotated_vcf_name}
     >>>
