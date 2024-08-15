@@ -126,9 +126,9 @@ workflow filterClinicalVariantsSV {
     }
 
     output {
-        File pathogenic_tsv = filterVCF.pathogenic_tsv
-        File filtered_vcf = filterVCF.filtered_vcf
-        File filtered_vcf_idx = filterVCF.filtered_vcf_idx
+        File sv_sv_pathogenic_tsv = filterVCF.sv_pathogenic_tsv
+        File sv_filtered_vcf = filterVCF.sv_filtered_vcf
+        File sv_filtered_vcf_idx = filterVCF.sv_filtered_vcf_idx
     }
 }
 
@@ -433,7 +433,7 @@ task filterVCF {
                                     (path_tm.father_entry.GT.is_non_ref()))
     path_tm = path_tm.annotate_rows(variant_type='P/LP')
     path_tm = get_transmission(path_tm)
-    
+
     # Mendel errors
     all_errors, per_fam, per_sample, per_variant = hl.mendel_errors(mt['GT'], pedigree)
     all_errors_mt = all_errors.key_by().to_matrix_table(row_key=['locus','alleles'], col_key=['s'], row_fields=['fam_id'])
@@ -458,8 +458,8 @@ task filterVCF {
     >>>
 
     output {
-        File pathogenic_tsv = basename(vcf_file, '.vcf.bgz') + '_path_variants.tsv.gz'
-        File filtered_vcf = basename(vcf_file, '.vcf.bgz') + '.filtered.vcf.bgz'
-        File filtered_vcf_idx = basename(vcf_file, '.vcf.bgz') + '.filtered.vcf.bgz.tbi'
+        File sv_pathogenic_tsv = basename(vcf_file, '.vcf.bgz') + '_path_variants.tsv.gz'
+        File sv_filtered_vcf = basename(vcf_file, '.vcf.bgz') + '.filtered.vcf.bgz'
+        File sv_filtered_vcf_idx = basename(vcf_file, '.vcf.bgz') + '.filtered.vcf.bgz.tbi'
     }
 }
