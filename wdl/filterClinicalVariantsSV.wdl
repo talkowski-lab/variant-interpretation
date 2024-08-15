@@ -431,7 +431,7 @@ task filterVCF {
     path_tm = path_tm.filter_entries((path_tm.proband_entry.GT.is_non_ref()) | 
                                     (path_tm.mother_entry.GT.is_non_ref()) |
                                     (path_tm.father_entry.GT.is_non_ref()))
-    path_tm = path_tm.annotate_rows(variant_type='P/LP')
+    path_tm = path_tm.annotate_rows(variant_category='P/LP')
     path_tm = get_transmission(path_tm)
 
     # Mendel errors
