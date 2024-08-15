@@ -267,4 +267,4 @@ merged_comphets = merged_comphets.annotate(variant_type='comphet')
 merged_comphets_xlr_hom_var = merged_comphets.drop('proband_GT_set','proband_PBT_GT_set').union(xlr_phased_tm.entries()).union(phased_hom_var.entries())
 merged_comphets_xlr_hom_var = get_transmission(merged_comphets_xlr_hom_var)
 
-merged_comphets_xlr_hom_var.entries().flatten().export(f"{prefix}_{variant_types}_comp_hets_xlr_hom_var.tsv.gz")
+merged_comphets_xlr_hom_var.flatten().export(f"{prefix}_{variant_types}_comp_hets_xlr_hom_var.tsv.gz")
