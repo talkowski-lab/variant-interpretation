@@ -142,7 +142,7 @@ task filterCompHetsXLRHomVar {
     }
 
     String variant_types_ = if (snv_indel_vcf!='NA') then 'SV_SNV_Indel' else 'SV'
-    String variant_types = if (sv_vcf!='NA') then variant_types else 'SNV_Indel'
+    String variant_types = if (sv_vcf!='NA') then variant_types_ else 'SNV_Indel'
     String vcf_file = if (variant_types=='SV') then sv_vcf else snv_indel_vcf
     String file_ext = if sub(basename(vcf_file), '.vcf.gz', '')!=basename(vcf_file) then '.vcf.gz' else '.vcf.bgz'
     String prefix = basename(vcf_file, file_ext) + '_filtered'
