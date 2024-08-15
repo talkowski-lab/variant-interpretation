@@ -38,6 +38,10 @@ def filter_mt(mt):
     mt = mt.filter_rows(hl.set(exclude_csqs).intersection(
         hl.set(mt.vep.transcript_consequences.Consequence)).size()!=hl.set(mt.vep.transcript_consequences.Consequence).size())
 
+    # filter only canonical transcript or MANE PLUS CLINICAL
+    mt = mt.filter_rows((mt.vep.transcript_consequences.CANONICAL=='YES') | 
+                        (mt.vep.transcript_consequences.MANE_PLUS_CLINICAL!=''))
+
     # filter by Impact and splice/noncoding consequence
     splice_vars = ['splice_donor_5th_base_variant', 'splice_region_variant', 'splice_donor_region_variant']
     keep_vars = ['non_coding_transcript_exon_variant']
