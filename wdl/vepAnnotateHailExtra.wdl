@@ -37,7 +37,7 @@ workflow vepAnnotateHailExtra {
         String genome_build='GRCh38'
         
         String? noncoding_bed
-        String? gene_list  # must end in .txt or it will be ignored
+        String? gene_list 
         
         RuntimeAttr? runtime_attr_annotate_extra
     }

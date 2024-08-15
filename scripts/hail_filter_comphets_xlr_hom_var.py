@@ -264,9 +264,9 @@ phased_hom_var = gene_phased_tm.filter_entries(gene_phased_tm.proband_entry.GT.i
 phased_hom_var = phased_hom_var.filter_rows(hl.agg.count_where(
     hl.is_defined(phased_hom_var.proband_entry.GT))>0).key_rows_by('locus', 'alleles')
 
-xlr_phased_tm = xlr_phased_tm.annotate_rows(variant_type='XLR')
-phased_hom_var = phased_hom_var.annotate_rows(variant_type='hom_var')
-merged_comphets = merged_comphets.annotate(variant_type='comphet')
+xlr_phased_tm = xlr_phased_tm.annotate_rows(variant_category='XLR')
+phased_hom_var = phased_hom_var.annotate_rows(variant_category='hom_var')
+merged_comphets = merged_comphets.annotate(variant_category='comphet')
 
 merged_comphets_xlr_hom_var = merged_comphets.drop('proband_GT_set','proband_PBT_GT_set').union(xlr_phased_tm.entries()).union(phased_hom_var.entries())
 merged_comphets_xlr_hom_var = get_transmission(merged_comphets_xlr_hom_var)
