@@ -126,7 +126,7 @@ workflow filterClinicalVariantsSV {
     }
 
     output {
-        File sv_sv_pathogenic_tsv = filterVCF.sv_pathogenic_tsv
+        File sv_pathogenic_tsv = filterVCF.sv_pathogenic_tsv
         File sv_filtered_vcf = filterVCF.sv_filtered_vcf
         File sv_filtered_vcf_idx = filterVCF.sv_filtered_vcf_idx
     }
