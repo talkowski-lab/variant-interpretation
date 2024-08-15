@@ -95,7 +95,7 @@ task annotateExtra {
 
     Float input_size = size(vcf_file, "GB")
     Float base_disk_gb = 10.0
-    Float input_disk_scale = 10.0
+    Float input_disk_scale = if noncoding_bed!='NA' then 20.0 else 10.0
     RuntimeAttr runtime_default = object {
         mem_gb: 8,
         disk_gb: ceil(base_disk_gb + input_size * input_disk_scale),
