@@ -83,6 +83,10 @@ workflow filterClinicalCompHets {
             input_size=size(filterCompHetsXLRHomVar.comphet_xlr_hom_var, 'GB'),
             merged_filename=cohort_prefix+'_comp_hets_xlr_hom_var.tsv.gz',
     }
+
+    output {
+        File comphet_xlr_hom_var = mergeCompHetsXLRHomVar.merged_tsv
+    }
 }
 
 task filterCompHetsXLRHomVar {
