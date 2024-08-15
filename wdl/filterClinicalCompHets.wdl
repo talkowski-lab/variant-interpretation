@@ -115,7 +115,8 @@ task filterCompHetsXLRHomVar {
     }
     String variant_types_ = if (snv_indel_vcf!='NA') then 'SV_SNV_Indel' else 'SV'
     String variant_types = if (sv_vcf!='NA') then variant_types_ else 'SNV_Indel'
-    Map[String, Array[String]] vcf_files = {'SV_SNV_Indel': [snv_indel_vcf, sv_vcf], 'SV': [sv_vcf], 'SNV_Indel': [snv_indel_vcf]} 
+    Map[String, Array[String]] vcf_files = {'SV_SNV_Indel': [snv_indel_vcf, sv_vcf], 'SV': [sv_vcf], 'SNV_Indel': [snv_indel_vcf]}
+     
     Float input_size = size(vcf_files[variant_types], 'GB')
     Float base_disk_gb = 10.0
     Float input_disk_scale = 5.0

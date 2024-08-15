@@ -150,9 +150,6 @@ elif sv_vcf!='NA':
 
 
 ## STEP 2: Get CompHets
-pedigree = hl.Pedigree.read(ped_uri, delimiter='\t')
-trio_samples = list(np.array([[trio.s, trio.pat_id, trio.mat_id] for trio in pedigree.complete_trios()]).flatten())
-
 # Mendel errors
 def get_mendel_errors(mt, phased_tm):
     all_errors, per_fam, per_sample, per_variant = hl.mendel_errors(mt['GT'], pedigree)
@@ -241,11 +238,15 @@ def get_transmission(phased_tm_ht):
     )
     return phased_tm_ht
 
+tmp_ped = pd.read_csv(ped_uri, sep='\t').iloc[:,:6]
+tmp_ped.to_csv(f"{prefix}.ped", sep='\t', index=False)
+pedigree = hl.Pedigree.read(f"{prefix}.ped", delimiter='\t')
+trio_samples = list(np.array([[trio.s, trio.pat_id, trio.mat_id] for trio in pedigree.complete_trios()]).flatten())
+
 # Get CompHets
 merged_trio_comphets = get_trio_comphets(merged_mt)
 merged_non_trio_comphets = get_non_trio_comphets(merged_mt)
 merged_comphets = merged_trio_comphets.entries().union(merged_non_trio_comphets.entries())
-
 
 # XLR only
 merged_tm = hl.trio_matrix(merged_mt, pedigree, complete_trios=False)
