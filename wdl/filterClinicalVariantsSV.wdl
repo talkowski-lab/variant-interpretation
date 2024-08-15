@@ -433,6 +433,7 @@ task filterVCF {
                                     (path_tm.father_entry.GT.is_non_ref()))
     path_tm = path_tm.annotate_rows(variant_type='P/LP')
     path_tm = get_transmission(path_tm)
+    
     # Mendel errors
     all_errors, per_fam, per_sample, per_variant = hl.mendel_errors(mt['GT'], pedigree)
     all_errors_mt = all_errors.key_by().to_matrix_table(row_key=['locus','alleles'], col_key=['s'], row_fields=['fam_id'])

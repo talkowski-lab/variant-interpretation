@@ -45,7 +45,6 @@ workflow filterClinicalVariants {
         Int max_distance=50
         Boolean mask=false
 
-        Boolean run_spliceAI=false
         Boolean run_pangolin=false
 
         RuntimeAttr? runtime_attr_merge_clinvar
@@ -82,18 +81,6 @@ workflow filterClinicalVariants {
         }
 
         ## TODO: logic for spliceAI/Pangolin
-        # if (run_spliceAI) {
-        #     call runSpliceAI {
-        #         input:
-        #         vcf_file=filterRareSpliceImpactVariants.splice_vcf,
-        #         ref_fasta=ref_fasta,
-        #         gene_annotation_file=spliceAI_gene_annotation_file,
-        #         spliceAI_docker=spliceAI_docker,
-        #         max_distance=max_distance,
-        #         mask=mask
-        #     }
-        # }
-        # File int_splice_vcf = select_first([runSpliceAI.spliceAI_vcf, filterRareSpliceImpactVariants.splice_vcf])
         
         # if (run_pangolin) {
         #     call runPangolin {
