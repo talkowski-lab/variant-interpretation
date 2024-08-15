@@ -6,7 +6,6 @@ import "wes-denovo-helpers.wdl" as helpers
 struct RuntimeAttr {
     Float? mem_gb
     Int? cpu_cores
-    Int? gpu_cores
     Int? disk_gb
     Int? boot_disk_gb
     Int? preemptible_tries
@@ -30,16 +29,22 @@ workflow filterClinicalCompHets {
         String genome_build='GRCh38'
         Int families_per_chunk=500
         Boolean mask=false
+
+        RuntimeAttr? runtime_attr_split_families
+        RuntimeAttr? runtime_attr_subset_vcfs
+        RuntimeAttr? runtime_attr_filter_comphets
+        RuntimeAttr? runtime_attr_merge_results
     }
 
-    # might not work if SV VCF Sample IDs don't match SNV/Indel VCF Sample IDs
+    # TODO: might not work if SV VCF Sample IDs don't match SNV/Indel VCF Sample IDs
     call helpers.splitFamilies as splitFamilies {
         input:
             vcf_file=select_first([omim_recessive_vcf]),
             ped_uri=ped_uri,
             families_per_chunk=families_per_chunk,
             cohort_prefix=cohort_prefix,
-            sv_base_mini_docker=sv_base_mini_docker
+            sv_base_mini_docker=sv_base_mini_docker,
+            runtime_attr_override=runtime_attr_split_families
     } 
 
     scatter (sample_file in splitFamilies.family_shard_files) {
@@ -49,7 +54,8 @@ workflow filterClinicalCompHets {
                     samples_file=sample_file,
                     vcf_file=select_first([omim_recessive_vcf]),
                     hail_docker=hail_docker,
-                    genome_build=genome_build
+                    genome_build=genome_build,
+                    runtime_attr_override=runtime_attr_subset_vcfs
             }
         }
 
@@ -59,7 +65,8 @@ workflow filterClinicalCompHets {
                     samples_file=sample_file,
                     vcf_file=select_first([sv_filtered_vcf]),
                     hail_docker=hail_docker,
-                    genome_build=genome_build
+                    genome_build=genome_build,
+                    runtime_attr_override=runtime_attr_subset_vcfs
             }
         }
 
@@ -72,7 +79,8 @@ workflow filterClinicalCompHets {
                 sv_gene_fields=sv_gene_fields,
                 filter_comphets_xlr_hom_var_script=filter_comphets_xlr_hom_var_script,
                 genome_build=genome_build,
-                hail_docker=hail_docker
+                hail_docker=hail_docker,
+                runtime_attr_override=runtime_attr_filter_comphets
         }
     }
 
@@ -82,6 +90,7 @@ workflow filterClinicalCompHets {
             hail_docker=hail_docker,
             input_size=size(filterCompHetsXLRHomVar.comphet_xlr_hom_var, 'GB'),
             merged_filename=cohort_prefix+'_comp_hets_xlr_hom_var.tsv.gz',
+            runtime_attr_override=runtime_attr_merge_results
     }
 
     output {
