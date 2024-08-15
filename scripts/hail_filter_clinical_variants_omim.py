@@ -159,7 +159,7 @@ omim_dom = omim_dom.filter_entries((omim_dom.proband_entry.GT.is_non_ref()) |
                                    (omim_dom.mother_entry.GT.is_non_ref()) |
                                    (omim_dom.father_entry.GT.is_non_ref()))
 omim_dom = omim_dom.filter_rows((hl.agg.count_where(hl.is_defined(omim_dom.proband_entry.GT))>0))
-omim_dom = omim_dom.annotate_rows(variant_type='OMIM_dominant')
+omim_dom = omim_dom.annotate_rows(variant_category='OMIM_dominant')
 
 omim_dom = get_transmission(omim_dom)
 
