@@ -20,6 +20,7 @@ gnomad_rec_threshold = float(sys.argv[10])
 gnomad_dom_threshold = float(sys.argv[11])
 loeuf_v2_threshold = float(sys.argv[12])
 loeuf_v4_threshold = float(sys.argv[13])
+build = sys.argv[14]
 
 hl.init(min_block_size=128, 
         spark_conf={"spark.executor.cores": cores, 
@@ -65,7 +66,7 @@ def get_transmission(phased_tm):
     )
     return phased_tm
 
-mt = hl.import_vcf(vcf_file, reference_genome='GRCh38', force_bgz=True, call_fields=[], array_elements_required=False)
+mt = hl.import_vcf(vcf_file, reference_genome=build, force_bgz=True, call_fields=[], array_elements_required=False)
 
 header = hl.get_vcf_metadata(vcf_file)
 csq_columns = header['info']['CSQ']['Description'].split('Format: ')[1].split('|')

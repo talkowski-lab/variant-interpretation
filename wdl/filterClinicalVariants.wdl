@@ -61,7 +61,8 @@ workflow filterClinicalVariants {
             filter_clinical_variants_script=filter_clinical_variants_script,
             hail_docker=hail_docker,
             ac_threshold=ac_threshold,
-            gnomad_af_threshold=gnomad_af_threshold
+            gnomad_af_threshold=gnomad_af_threshold,
+            genome_build=genome_build
         }
 
         call runClinicalFilteringOMIM {
@@ -77,7 +78,8 @@ workflow filterClinicalVariants {
             gnomad_rec_threshold=gnomad_rec_threshold,
             gnomad_dom_threshold=gnomad_dom_threshold,
             loeuf_v2_threshold=loeuf_v2_threshold,
-            loeuf_v4_threshold=loeuf_v4_threshold            
+            loeuf_v4_threshold=loeuf_v4_threshold,
+            genome_build=genome_build
         }
 
         ## TODO: logic for spliceAI/Pangolin
@@ -142,55 +144,55 @@ workflow filterClinicalVariants {
             runtime_attr_override=runtime_attr_merge_omim_rec_vcfs
     }
 
-    call helpers.splitFamilies as splitFamilies {
-        input:
-            vcf_file=mergeOMIMRecessive.merged_vcf_file,
-            ped_uri=ped_uri,
-            families_per_chunk=families_per_chunk,
-            cohort_prefix=cohort_prefix,
-            sv_base_mini_docker=sv_base_mini_docker
-    } 
+    # call helpers.splitFamilies as splitFamilies {
+    #     input:
+    #         vcf_file=mergeOMIMRecessive.merged_vcf_file,
+    #         ped_uri=ped_uri,
+    #         families_per_chunk=families_per_chunk,
+    #         cohort_prefix=cohort_prefix,
+    #         sv_base_mini_docker=sv_base_mini_docker
+    # } 
 
-    scatter (sample_file in splitFamilies.family_shard_files) {
-        call helpers.subsetVCFSamplesHail as subsetVCFSamples {
-            input:
-                samples_file=sample_file,
-                vcf_file=mergeOMIMRecessive.merged_vcf_file,
-                hail_docker=hail_docker,
-                genome_build=genome_build
-        }
+    # scatter (sample_file in splitFamilies.family_shard_files) {
+    #     call helpers.subsetVCFSamplesHail as subsetVCFSamples {
+    #         input:
+    #             samples_file=sample_file,
+    #             vcf_file=mergeOMIMRecessive.merged_vcf_file,
+    #             hail_docker=hail_docker,
+    #             genome_build=genome_build
+    #     }
 
-        call filterCompHetsXLR {
-            input:
-                vcf_file=subsetVCFSamples.vcf_subset,
-                ped_uri=ped_uri,
-                filter_comphets_xlr_script=filter_comphets_xlr_script,
-                hail_docker=hail_docker,
-                ac_threshold=ac_threshold,
-                gnomad_af_threshold=gnomad_af_threshold,
-                am_threshold=am_threshold,
-                mpc_threshold=mpc_threshold,
-                gnomad_rec_threshold=gnomad_rec_threshold,
-                gnomad_dom_threshold=gnomad_dom_threshold,
-                loeuf_v2_threshold=loeuf_v2_threshold,
-                loeuf_v4_threshold=loeuf_v4_threshold            
-        }
-    }
+    #     call filterCompHetsXLR {
+    #         input:
+    #             vcf_file=subsetVCFSamples.vcf_subset,
+    #             ped_uri=ped_uri,
+    #             filter_comphets_xlr_script=filter_comphets_xlr_script,
+    #             hail_docker=hail_docker,
+    #             ac_threshold=ac_threshold,
+    #             gnomad_af_threshold=gnomad_af_threshold,
+    #             am_threshold=am_threshold,
+    #             mpc_threshold=mpc_threshold,
+    #             gnomad_rec_threshold=gnomad_rec_threshold,
+    #             gnomad_dom_threshold=gnomad_dom_threshold,
+    #             loeuf_v2_threshold=loeuf_v2_threshold,
+    #             loeuf_v4_threshold=loeuf_v4_threshold            
+    #     }
+    # }
 
-    call helpers.mergeResultsPython as mergeCompHetsXLR {
-        input:
-            tsvs=filterCompHetsXLR.omim_recessive_comphet_xlr,
-            hail_docker=hail_docker,
-            input_size=size(filterCompHetsXLR.omim_recessive_comphet_xlr, 'GB'),
-            merged_filename=cohort_prefix+'_OMIM_recessive_comphet_XLR.tsv.gz',
-            runtime_attr_override=runtime_attr_merge_omim_rec
-    }
+    # call helpers.mergeResultsPython as mergeCompHetsXLR {
+    #     input:
+    #         tsvs=filterCompHetsXLR.omim_recessive_comphet_xlr,
+    #         hail_docker=hail_docker,
+    #         input_size=size(filterCompHetsXLR.omim_recessive_comphet_xlr, 'GB'),
+    #         merged_filename=cohort_prefix+'_OMIM_recessive_comphet_XLR.tsv.gz',
+    #         runtime_attr_override=runtime_attr_merge_omim_rec
+    # }
 
     output {
         File clinvar_tsv = mergeClinVar.merged_tsv
         File omim_recessive_vcf = mergeOMIMRecessive.merged_vcf_file
         File omim_recessive_vcf_idx = mergeOMIMRecessive.merged_vcf_idx
-        File omim_recessive_comphet_xlr_tsv = mergeCompHetsXLR.merged_tsv
+        # File omim_recessive_comphet_xlr_tsv = mergeCompHetsXLR.merged_tsv
         File omim_dominant_tsv = mergeOMIMDominant.merged_tsv
     }
 }
@@ -202,7 +204,8 @@ task runClinicalFiltering {
 
         String filter_clinical_variants_script
         String hail_docker
-        
+        String genome_build
+
         Int ac_threshold
         Float gnomad_af_threshold
 
@@ -242,7 +245,7 @@ task runClinicalFiltering {
     command {
         curl ~{filter_clinical_variants_script} > filter_vcf.py
         python3 filter_vcf.py ~{vcf_file} ~{prefix} ~{cpu_cores} ~{memory} \
-            ~{ped_uri} ~{ac_threshold} ~{gnomad_af_threshold}
+            ~{ped_uri} ~{ac_threshold} ~{gnomad_af_threshold} ~{genome_build}
     }
 
     output {
@@ -258,7 +261,8 @@ task filterCompHetsXLR {
 
         String filter_comphets_xlr_script
         String hail_docker
-        
+        String genome_build 
+
         Int ac_threshold
         Float gnomad_af_threshold
         Float am_threshold
@@ -306,7 +310,7 @@ task filterCompHetsXLR {
         python3 filter_vcf.py ~{vcf_file} ~{prefix} ~{cpu_cores} ~{memory} \
             ~{ped_uri} ~{ac_threshold} ~{gnomad_af_threshold} ~{am_threshold} \
             ~{mpc_threshold} ~{gnomad_rec_threshold} ~{gnomad_dom_threshold} \
-            ~{loeuf_v2_threshold} ~{loeuf_v4_threshold}
+            ~{loeuf_v2_threshold} ~{loeuf_v4_threshold} ~{genome_build}
     }
 
     output {
@@ -321,6 +325,7 @@ task runClinicalFilteringOMIM {
 
         String filter_clinical_variants_omim_script
         String hail_docker
+        String genome_build
         
         Int ac_threshold
         Float gnomad_af_threshold
@@ -369,65 +374,12 @@ task runClinicalFilteringOMIM {
         python3 filter_vcf.py ~{vcf_file} ~{prefix} ~{cpu_cores} ~{memory} \
             ~{ped_uri} ~{ac_threshold} ~{gnomad_af_threshold} ~{am_threshold} \
             ~{mpc_threshold} ~{gnomad_rec_threshold} ~{gnomad_dom_threshold} \
-            ~{loeuf_v2_threshold} ~{loeuf_v4_threshold}
+            ~{loeuf_v2_threshold} ~{loeuf_v4_threshold} ~{genome_build}
     }
 
     output {
         File omim_recessive_vcf = prefix + '_OMIM_recessive.vcf.bgz'
         File omim_dominant = prefix + '_OMIM_dominant.tsv.gz'
-    }
-}
-
-task getNonEmptyVCFs {
-    input {
-        Array[File] vcf_files
-        String sv_base_mini_docker
-        RuntimeAttr? runtime_attr_override
-    }
-    Float input_size = size(vcf_files, 'GB')
-    Float base_disk_gb = 10.0
-    Float input_disk_scale = 5.0
-
-    RuntimeAttr runtime_default = object {
-        mem_gb: 4,
-        disk_gb: ceil(base_disk_gb + input_size * input_disk_scale),
-        cpu_cores: 1,
-        preemptible_tries: 3,
-        max_retries: 1,
-        boot_disk_gb: 10
-    }
-
-    RuntimeAttr runtime_override = select_first([runtime_attr_override, runtime_default])
-
-    Float memory = select_first([runtime_override.mem_gb, runtime_default.mem_gb])
-    Int cpu_cores = select_first([runtime_override.cpu_cores, runtime_default.cpu_cores])
-    
-    runtime {
-        memory: "~{memory} GB"
-        disks: "local-disk ~{select_first([runtime_override.disk_gb, runtime_default.disk_gb])} HDD"
-        cpu: cpu_cores
-        preemptible: select_first([runtime_override.preemptible_tries, runtime_default.preemptible_tries])
-        maxRetries: select_first([runtime_override.max_retries, runtime_default.max_retries])
-        docker: sv_base_mini_docker
-        bootDiskSizeGb: select_first([runtime_override.boot_disk_gb, runtime_default.boot_disk_gb])
-    }
-
-    command <<<
-    set -eou pipefail
-    mkdir output_vcfs
-    for vcf_file in $(cat ~{write_lines(vcf_files)});
-        do
-        tabix $vcf_file
-        if [[ $(bcftools index -n $vcf_file".tbi") != 0 ]]; then
-            mv $vcf_file output_vcfs/
-            mv $vcf_file".tbi" output_vcfs/
-        fi
-    done    
-    >>>
-
-    output {
-        Array[File] output_vcfs = glob('output_vcfs/*.vcf.bgz')
-        Array[File] output_vcfs_idx = glob('output_vcfs/*.vcf.bgz.tbi')
     }
 }
 
