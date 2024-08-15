@@ -113,7 +113,10 @@ task filterCompHetsXLRHomVar {
         
         RuntimeAttr? runtime_attr_override
     }
-    Float input_size = size([snv_indel_vcf, sv_vcf], 'GB')
+    String variant_types_ = if (snv_indel_vcf!='NA') then 'SV_SNV_Indel' else 'SV'
+    String variant_types = if (sv_vcf!='NA') then variant_types_ else 'SNV_Indel'
+    Map[String, Array[String]] vcf_files = {'SV_SNV_Indel': [snv_indel_vcf, sv_vcf], 'SV': [sv_vcf], 'SNV_Indel': [snv_indel_vcf]} 
+    Float input_size = size(vcf_files[variant_types], 'GB')
     Float base_disk_gb = 10.0
     Float input_disk_scale = 5.0
 
@@ -141,8 +144,6 @@ task filterCompHetsXLRHomVar {
         bootDiskSizeGb: select_first([runtime_override.boot_disk_gb, runtime_default.boot_disk_gb])
     }
 
-    String variant_types_ = if (snv_indel_vcf!='NA') then 'SV_SNV_Indel' else 'SV'
-    String variant_types = if (sv_vcf!='NA') then variant_types_ else 'SNV_Indel'
     String vcf_file = if (variant_types=='SV') then sv_vcf else snv_indel_vcf
     String file_ext = if sub(basename(vcf_file), '.vcf.gz', '')!=basename(vcf_file) then '.vcf.gz' else '.vcf.bgz'
     String prefix = basename(vcf_file, file_ext) + '_filtered'
