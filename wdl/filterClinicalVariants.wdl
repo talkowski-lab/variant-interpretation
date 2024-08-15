@@ -71,8 +71,6 @@ workflow filterClinicalVariants {
             ped_uri=ped_uri,
             filter_clinical_variants_omim_script=filter_clinical_variants_omim_script,
             hail_docker=hail_docker,
-            ac_threshold=ac_threshold,
-            gnomad_af_threshold=gnomad_af_threshold,
             am_threshold=am_threshold,
             mpc_threshold=mpc_threshold,
             gnomad_rec_threshold=gnomad_rec_threshold,
@@ -318,9 +316,8 @@ task runClinicalFilteringOMIM {
 
     command {
         curl ~{filter_clinical_variants_omim_script} > filter_vcf.py
-        python3 filter_vcf.py ~{vcf_file} ~{prefix} ~{cpu_cores} ~{memory} \
-            ~{ped_uri} ~{ac_threshold} ~{gnomad_af_threshold} ~{am_threshold} \
-            ~{mpc_threshold} ~{gnomad_rec_threshold} ~{gnomad_dom_threshold} \
+        python3 filter_vcf.py ~{vcf_file} ~{prefix} ~{cpu_cores} ~{memory} ~{ped_uri} \
+            ~{am_threshold} ~{mpc_threshold} ~{gnomad_rec_threshold} ~{gnomad_dom_threshold} \
             ~{loeuf_v2_threshold} ~{loeuf_v4_threshold} ~{genome_build}
     }
 
