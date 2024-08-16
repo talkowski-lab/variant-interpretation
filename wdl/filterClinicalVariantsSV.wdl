@@ -440,13 +440,13 @@ task filterVCF {
     path_tm = path_tm.annotate_entries(mendel_code=all_errors_mt[path_tm.row_key, path_tm.col_key].mendel_code)
 
     # filter
-    gnomad_fields = [x for x in list(mt.info) if 'gnomad' in x and 'AF' in x]
+    gnomad_fields = [x for x in list(mt.info) if 'gnomad' in x.lower() and 'af' in x.lower()]
     mt = mt.annotate_rows(gnomad_popmax_af=hl.max([mt.info[field] for field in gnomad_fields]))
 
     filt_mt = mt.filter_rows(((~mt.info.clinical_interpretation[0].matches('enign')) |  # not ClinVar benign
                     (hl.is_missing(mt.info.clinical_interpretation[0]))) &
                 (hl.is_missing(mt.info.gnomad_sv_name[0])) &  # not gnomAD benign
-                (mt.gnomad_popmax_af <= 0.05))  
+                (mt.gnomad_popmax_af <= gnomad_af_threshold))  
     
     # export P/LP TSV
     path_tm.entries().flatten().export(os.path.basename(vcf_file).split('.vcf')[0] + '_path_variants.tsv.gz', delimiter='\t')
