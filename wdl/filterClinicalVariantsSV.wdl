@@ -16,12 +16,15 @@ workflow filterClinicalVariantsSV {
     input {
         File vcf_file
         File ped_uri
+        File? sample_map_tsv
+
         File clinvar_bed_with_header
         File dbvar_bed_with_header
         File gnomad_benign_bed_with_header
         File gd_bed_with_header
         File clingen_bed_with_header
         File decipher_bed_with_header
+
         String cohort_prefix
         String genome_build='GRCh38'
         String hail_docker
@@ -31,6 +34,8 @@ workflow filterClinicalVariantsSV {
         Float gnomad_af_threshold=0.05
 
         RuntimeAttr? runtime_attr_annotate
+        RuntimeAttr? runtime_attr_rename_samples
+        RuntimeAttr? runtime_attr_filter_vcf
     }
 
     call vcfToBed {
@@ -116,13 +121,24 @@ workflow filterClinicalVariantsSV {
         runtime_attr_override=runtime_attr_annotate
     }
 
+    if (defined(sample_map_tsv)) {
+        call renameVCFSamples {
+            input:
+            vcf_file=annotate_clinVar.annotated_vcf,
+            sample_map_tsv=select_first([sample_map_tsv]),
+            variant_interpretation_docker=variant_interpretation_docker,
+            runtime_attr_override=runtime_attr_rename_samples
+        }
+    }
+
     call filterVCF {
         input:
-        vcf_file=annotate_clinVar.annotated_vcf,
+        vcf_file=select_first([renameVCFSamples.output_vcf, annotate_clinVar.annotated_vcf]),
         ped_uri=ped_uri,
         genome_build=genome_build,
         hail_docker=hail_docker,
-        gnomad_af_threshold=gnomad_af_threshold
+        gnomad_af_threshold=gnomad_af_threshold,
+        runtime_attr_override=runtime_attr_filter_vcf
     }
 
     output {
@@ -338,6 +354,53 @@ task annotateVCFWithBed {
     output {
         File annotated_vcf = basename(intersect_bed, '.bed.gz') + '.vcf.bgz'
         File annotated_vcf_idx = basename(intersect_bed, '.bed.gz') + '.vcf.bgz.tbi'
+    }
+}
+
+task renameVCFSamples {
+    input {
+        File vcf_file
+        File sample_map_tsv
+        String variant_interpretation_docker
+        RuntimeAttr? runtime_attr_override
+    }
+
+    Float input_size = size(vcf_file, 'GB')
+    Float base_disk_gb = 10.0
+    Float input_disk_scale = 5.0
+
+    RuntimeAttr runtime_default = object {
+        mem_gb: 4,
+        disk_gb: ceil(base_disk_gb + input_size * input_disk_scale),
+        cpu_cores: 1,
+        preemptible_tries: 3,
+        max_retries: 1,
+        boot_disk_gb: 10
+    }
+
+    RuntimeAttr runtime_override = select_first([runtime_attr_override, runtime_default])
+
+    Float memory = select_first([runtime_override.mem_gb, runtime_default.mem_gb])
+    Int cpu_cores = select_first([runtime_override.cpu_cores, runtime_default.cpu_cores])
+    
+    runtime {
+        memory: "~{memory} GB"
+        disks: "local-disk ~{select_first([runtime_override.disk_gb, runtime_default.disk_gb])} HDD"
+        cpu: cpu_cores
+        preemptible: select_first([runtime_override.preemptible_tries, runtime_default.preemptible_tries])
+        maxRetries: select_first([runtime_override.max_retries, runtime_default.max_retries])
+        docker: variant_interpretation_docker
+        bootDiskSizeGb: select_first([runtime_override.boot_disk_gb, runtime_default.boot_disk_gb])
+    }
+
+    String file_ext = if sub(basename(vcf_file), '.vcf.gz', '')!=basename(vcf_file) then '.vcf.gz' else '.vcf.bgz'
+    String output_filename = basename(vcf_file, file_ext) + '_renamed_samples.vcf.gz'
+    command {
+        bcftools reheader -s ~{sample_map_tsv} -Oz -o ~{output_filename} ~{vcf_file}
+    }
+
+    output {
+        File output_vcf = output_filename
     }
 }
 
