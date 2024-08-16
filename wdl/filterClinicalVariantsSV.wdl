@@ -522,9 +522,10 @@ task filterVCF {
     python3 filter_vcf.py ~{vcf_file} ~{ped_uri} ~{genome_build} ~{gnomad_af_threshold} ~{cpu_cores} ~{memory}
     >>>
 
+    String file_ext = if sub(basename(vcf_file), '.vcf.gz', '')!=basename(vcf_file) then '.vcf.gz' else '.vcf.bgz'
     output {
-        File sv_pathogenic_tsv = basename(vcf_file, '.vcf.bgz') + '_path_variants.tsv.gz'
-        File sv_filtered_vcf = basename(vcf_file, '.vcf.bgz') + '.filtered.vcf.bgz'
-        File sv_filtered_vcf_idx = basename(vcf_file, '.vcf.bgz') + '.filtered.vcf.bgz.tbi'
+        File sv_pathogenic_tsv = basename(vcf_file, file_ext) + '_path_variants.tsv.gz'
+        File sv_filtered_vcf = basename(vcf_file, file_ext) + '.filtered.vcf.bgz'
+        File sv_filtered_vcf_idx = basename(vcf_file, file_ext) + '.filtered.vcf.bgz.tbi'
     }
 }
