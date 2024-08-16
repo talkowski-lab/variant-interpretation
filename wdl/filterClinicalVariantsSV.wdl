@@ -396,7 +396,7 @@ task renameVCFSamples {
     String file_ext = if sub(basename(vcf_file), '.vcf.gz', '')!=basename(vcf_file) then '.vcf.gz' else '.vcf.bgz'
     String output_filename = basename(vcf_file, file_ext) + '_renamed_samples.vcf.gz'
     command {
-        bcftools reheader -s ~{sample_map_tsv} -Oz -o ~{output_filename} ~{vcf_file}
+        bcftools reheader -s ~{sample_map_tsv} -o ~{output_filename} ~{vcf_file}
     }
 
     output {
