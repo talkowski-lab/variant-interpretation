@@ -257,19 +257,27 @@ trio_samples = list(np.array([[trio.s, trio.pat_id, trio.mat_id] for trio in ped
 # Get CompHets
 merged_trio_comphets = get_trio_comphets(merged_mt)
 merged_non_trio_comphets = get_non_trio_comphets(merged_mt)
+merged_trio_comphets = merged_trio_comphets.annotate_cols(trio_status='trio')
+merged_non_trio_comphets = merged_non_trio_comphets.annotate_cols(trio_status=
+                                                              hl.if_else(merged_non_trio_comphets.fam_id=='-9', 
+                                                              'not_in_pedigree', 'non_trio'))
 merged_comphets = merged_trio_comphets.entries().union(merged_non_trio_comphets.entries())
 
 # XLR only
 merged_tm = hl.trio_matrix(merged_mt, pedigree, complete_trios=False)
 gene_phased_tm, gene_agg_phased_tm = phase_by_transmission_aggregate_by_gene(merged_tm, merged_mt)
 xlr_phased_tm = gene_phased_tm.filter_rows(gene_phased_tm.vep.transcript_consequences.OMIM_inheritance_code.matches('4'))
-xlr_phased = xlr_phased_tm.filter_entries((xlr_phased_tm.proband_entry.GT.is_non_ref()) &
-                            (~xlr_phased_tm.is_female)).key_rows_by('locus', 'alleles').entries()
+xlr_phased_tm = xlr_phased_tm.filter_entries((xlr_phased_tm.proband_entry.GT.is_non_ref()) &
+                            (~xlr_phased_tm.is_female)).key_rows_by('locus', 'alleles')
+xlr_phased = xlr_phased_tm.annotate_cols(trio_status=hl.if_else(xlr_phased_tm.fam_id=='-9', 'not_in_pedigree', 
+                                                   hl.if_else(hl.array(trio_samples).contains(xlr_phased_tm.id), 'trio', 'non_trio'))).entries()
 
 # HomVar in proband only
 phased_hom_var = gene_phased_tm.filter_entries(gene_phased_tm.proband_entry.GT.is_hom_var())
 phased_hom_var = phased_hom_var.filter_rows(hl.agg.count_where(
-    hl.is_defined(phased_hom_var.proband_entry.GT))>0).key_rows_by('locus', 'alleles').entries()
+    hl.is_defined(phased_hom_var.proband_entry.GT))>0).key_rows_by('locus', 'alleles')
+phased_hom_var = phased_hom_var.annotate_cols(trio_status=hl.if_else(phased_hom_var.fam_id=='-9', 'not_in_pedigree', 
+                                                   hl.if_else(hl.array(trio_samples).contains(phased_hom_var.id), 'trio', 'non_trio'))).entries()
 
 xlr_phased = xlr_phased.annotate(variant_category='XLR')
 phased_hom_var = phased_hom_var.annotate(variant_category='hom_var')
