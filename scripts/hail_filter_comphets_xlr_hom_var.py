@@ -99,7 +99,7 @@ if sv_vcf!='NA':
     if (snv_indel_vcf!='NA'):
         snv_vep_fields = {field: str(snv_mt.vep.transcript_consequences[field].dtype) for field in list(snv_mt.row.vep.transcript_consequences)}
     else:
-        snv_vep_fields = {'OMIM_MIM_number': 'str', 'OMIM_inheritance_code': 'str'}
+        snv_vep_fields = {'OMIM_MIM_number': 'array<str>', 'OMIM_inheritance_code': 'str'}
     sv_mt = sv_mt.annotate_rows(vep=hl.struct(transcript_consequences=
             {field: hl.missing(dtype) for field, dtype in snv_vep_fields.items()}))
 
@@ -110,6 +110,7 @@ if sv_vcf!='NA':
         transcript_consequences=sv_mt.vep.transcript_consequences.annotate(
         OMIM_MIM_number=hl.if_else(hl.is_defined(omim[sv_mt.row_key]), omim[sv_mt.row_key].mimNumber, ''),
         OMIM_inheritance_code=hl.if_else(hl.is_defined(omim[sv_mt.row_key]), omim[sv_mt.row_key].inheritance_code, ''))))
+
 
 if (snv_indel_vcf!='NA') and (sv_vcf!='NA'):
     sv_info_fields, sv_entry_fields = list(sv_mt.row.info), list(sv_mt.entry)
