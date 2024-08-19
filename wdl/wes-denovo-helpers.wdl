@@ -147,7 +147,6 @@ task splitSamples {
 
 task splitFamilies {
     input {
-        File vcf_file
         File ped_uri
         Int families_per_chunk
         String cohort_prefix
@@ -155,7 +154,7 @@ task splitFamilies {
         RuntimeAttr? runtime_attr_override
     }
 
-    Float input_size = size(vcf_file, "GB")
+    Float input_size = size(ped_uri, "GB")
     Float base_disk_gb = 10.0
     Float input_disk_scale = 5.0
     
