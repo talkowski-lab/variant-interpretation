@@ -24,8 +24,6 @@ workflow vepAnnotateHailExtra {
         String mpc_ht_uri
         String loeuf_v2_uri
         String loeuf_v4_uri
-        String spliceAI_snv_uri
-        String spliceAI_indel_uri
 
         String cohort_prefix
         String hail_docker
@@ -35,7 +33,9 @@ workflow vepAnnotateHailExtra {
         String split_vcf_hail_script
 
         String genome_build='GRCh38'
-        
+
+        String? spliceAI_snv_uri
+        String? spliceAI_indel_uri        
         String? noncoding_bed
         String? gene_list 
         
@@ -56,8 +56,8 @@ workflow vepAnnotateHailExtra {
                 noncoding_bed=select_first([noncoding_bed, 'NA']),
                 gene_list=select_first([gene_list, 'NA']),
                 mpc_ht_uri=mpc_ht_uri,
-                spliceAI_snv_uri=spliceAI_snv_uri,
-                spliceAI_indel_uri=spliceAI_indel_uri,
+                spliceAI_snv_uri=select_first([spliceAI_snv_uri, 'NA']),
+                spliceAI_indel_uri=select_first([spliceAI_indel_uri, 'NA']),
                 hail_docker=hail_docker,
                 genome_build=genome_build,
                 runtime_attr_override=runtime_attr_annotate_extra

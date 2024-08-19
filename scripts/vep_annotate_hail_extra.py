@@ -113,20 +113,24 @@ mt_by_transcript = mt_by_transcript.annotate_rows(vep=mt_by_transcript.vep.annot
     transcript_consequences=mt_by_transcript.vep.transcript_consequences.annotate(
         LOEUF_v2=hl.if_else(hl.is_defined(loeuf_v2_ht[mt_by_transcript.row_key]), loeuf_v2_ht[mt_by_transcript.row_key]['oe_lof_upper'], ''),
         LOEUF_v4=hl.if_else(hl.is_defined(loeuf_v4_ht[mt_by_transcript.row_key]), loeuf_v4_ht[mt_by_transcript.row_key]['lof.oe_ci.upper'], ''))))
+csq_fields_str = 'Format: ' + header['info']['CSQ']['Description'].split('Format: ')[1] + '|'.join(['', 'LOEUF_v2', 'LOEUF_v4'])
 
-# annotate SpliceAI scores
-snv_ht = hl.read_table(spliceAI_snv_uri)
-indel_ht = hl.read_table(spliceAI_indel_uri)
-spliceAI_ht = snv_ht.union(indel_ht)
 mt_by_locus_and_gene = mt_by_transcript.key_rows_by('locus', 'alleles', mt_by_transcript.vep.transcript_consequences.SYMBOL)
-# leave out ALLELE/SYMBOL because redundant
-fields = 'ALLELE|SYMBOL|DS_AG|DS_AL|DS_DG|DS_DL|DP_AG|DP_AL|DP_DG|DP_DL'.split('|')[2:]  
-mt_by_locus_and_gene = mt_by_locus_and_gene.annotate_rows(SpliceAI_raw=spliceAI_ht[mt_by_locus_and_gene.row_key].SpliceAI)
-mt_by_locus_and_gene = mt_by_locus_and_gene.annotate_rows(vep=mt_by_locus_and_gene.vep.annotate(
-    transcript_consequences=(mt_by_locus_and_gene.vep.transcript_consequences.annotate(
-        **{field: hl.if_else(hl.is_defined(mt_by_locus_and_gene.SpliceAI_raw), 
-                             mt_by_locus_and_gene.SpliceAI_raw.split('=')[1].split('\|')[i+2], '') 
-           for i, field in enumerate(fields)}))))
+
+# OPTIONAL: annotate SpliceAI scores
+if (spliceAI_snv_uri!='NA') and (spliceAI_indel_uri!='NA'):
+    snv_ht = hl.read_table(spliceAI_snv_uri)
+    indel_ht = hl.read_table(spliceAI_indel_uri)
+    spliceAI_ht = snv_ht.union(indel_ht)
+    # leave out ALLELE/SYMBOL because redundant
+    fields = 'ALLELE|SYMBOL|DS_AG|DS_AL|DS_DG|DS_DL|DP_AG|DP_AL|DP_DG|DP_DL'.split('|')[2:]  
+    mt_by_locus_and_gene = mt_by_locus_and_gene.annotate_rows(SpliceAI_raw=spliceAI_ht[mt_by_locus_and_gene.row_key].SpliceAI)
+    mt_by_locus_and_gene = mt_by_locus_and_gene.annotate_rows(vep=mt_by_locus_and_gene.vep.annotate(
+        transcript_consequences=(mt_by_locus_and_gene.vep.transcript_consequences.annotate(
+            **{field: hl.if_else(hl.is_defined(mt_by_locus_and_gene.SpliceAI_raw), 
+                                mt_by_locus_and_gene.SpliceAI_raw.split('=')[1].split('\|')[i+2], '') 
+            for i, field in enumerate(fields)}))))
+    csq_fields_str = csq_fields_str + '|'.join([''] + fields)
 
 # annotate OMIM
 omim = hl.import_table(omim_uri).key_by('approvedGeneSymbol')
@@ -135,8 +139,7 @@ mt_by_gene = mt_by_gene.annotate_rows(vep=mt_by_gene.vep.annotate(
     transcript_consequences=mt_by_gene.vep.transcript_consequences.annotate(
         OMIM_MIM_number=hl.if_else(hl.is_defined(omim[mt_by_gene.row_key]), omim[mt_by_gene.row_key].mimNumber, ''),
         OMIM_inheritance_code=hl.if_else(hl.is_defined(omim[mt_by_gene.row_key]), omim[mt_by_gene.row_key].inheritance_code, ''))))
-
-csq_fields_str = 'Format: ' + header['info']['CSQ']['Description'].split('Format: ')[1] + '|'.join(['', 'LOEUF_v2', 'LOEUF_v4'] + fields + ['OMIM_MIM_number', 'OMIM_inheritance_code'])
+csq_fields_str = csq_fields_str + '|'.join([''] + ['OMIM_MIM_number', 'OMIM_inheritance_code'])
 
 # OPTIONAL: annotate with gene list, if provided
 if gene_list!='NA':
