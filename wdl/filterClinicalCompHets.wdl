@@ -31,7 +31,8 @@ workflow filterClinicalCompHets {
         Boolean mask=false
 
         RuntimeAttr? runtime_attr_split_families
-        RuntimeAttr? runtime_attr_subset_vcfs
+        RuntimeAttr? runtime_attr_subset_vcfs_snv_indel
+        RuntimeAttr? runtime_attr_subset_vcfs_sv
         RuntimeAttr? runtime_attr_filter_comphets
         RuntimeAttr? runtime_attr_merge_results
     }
@@ -55,7 +56,7 @@ workflow filterClinicalCompHets {
                     vcf_file=select_first([omim_recessive_vcf]),
                     hail_docker=hail_docker,
                     genome_build=genome_build,
-                    runtime_attr_override=runtime_attr_subset_vcfs
+                    runtime_attr_override=runtime_attr_subset_vcfs_snv_indel
             }
         }
 
@@ -66,7 +67,7 @@ workflow filterClinicalCompHets {
                     vcf_file=select_first([sv_filtered_vcf]),
                     hail_docker=hail_docker,
                     genome_build=genome_build,
-                    runtime_attr_override=runtime_attr_subset_vcfs
+                    runtime_attr_override=runtime_attr_subset_vcfs_sv
             }
         }
 
