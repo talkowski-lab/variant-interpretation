@@ -95,6 +95,22 @@ if sv_vcf!='NA':
 
     sv_mt = sv_mt.explode_rows(sv_mt.gene)
 
+    # VEP
+    if (snv_indel_vcf!='NA'):
+        snv_vep_fields = {field: str(snv_mt.vep.transcript_consequences[field].dtype) for field in list(snv_mt.row.vep.transcript_consequences)}
+    else:
+        snv_vep_fields = {'OMIM_MIM_number': 'str', 'OMIM_inheritance_code': 'str'}
+    sv_mt = sv_mt.annotate_rows(vep=hl.struct(transcript_consequences=
+            {field: hl.missing(dtype) for field, dtype in snv_vep_fields.items()}))
+
+    # Annotate OMIM in SVs
+    omim = hl.import_table(omim_uri).key_by('approvedGeneSymbol')
+    sv_mt = sv_mt.key_rows_by('gene')
+    sv_mt = sv_mt.annotate_rows(vep=sv_mt.vep.annotate(
+        transcript_consequences=sv_mt.vep.transcript_consequences.annotate(
+        OMIM_MIM_number=hl.if_else(hl.is_defined(omim[sv_mt.row_key]), omim[sv_mt.row_key].mimNumber, ''),
+        OMIM_inheritance_code=hl.if_else(hl.is_defined(omim[sv_mt.row_key]), omim[sv_mt.row_key].inheritance_code, ''))))
+
 if (snv_indel_vcf!='NA') and (sv_vcf!='NA'):
     sv_info_fields, sv_entry_fields = list(sv_mt.row.info), list(sv_mt.entry)
     snv_info_fields, snv_entry_fields = list(snv_mt.row.info), list(snv_mt.entry)
@@ -117,19 +133,6 @@ if (snv_indel_vcf!='NA') and (sv_vcf!='NA'):
     sv_mt = sv_mt.annotate_rows(info=sv_mt.info.select(*sorted(list(sv_mt.info))))
     snv_mt = snv_mt.annotate_rows(info=snv_mt.info.select(*sorted(list(snv_mt.info))))
 
-    # VEP
-    snv_vep_fields = {field: str(snv_mt.vep.transcript_consequences[field].dtype) for field in list(snv_mt.row.vep.transcript_consequences)}
-    sv_mt = sv_mt.annotate_rows(vep=hl.struct(transcript_consequences=
-            {field: hl.missing(dtype) for field, dtype in snv_vep_fields.items()}))
-
-    # Annotate OMIM in SVs
-    omim = hl.import_table(omim_uri).key_by('approvedGeneSymbol')
-    sv_mt = sv_mt.key_rows_by('gene')
-    sv_mt = sv_mt.annotate_rows(vep=sv_mt.vep.annotate(
-        transcript_consequences=sv_mt.vep.transcript_consequences.annotate(
-        OMIM_MIM_number=hl.if_else(hl.is_defined(omim[sv_mt.row_key]), omim[sv_mt.row_key].mimNumber, ''),
-        OMIM_inheritance_code=hl.if_else(hl.is_defined(omim[sv_mt.row_key]), omim[sv_mt.row_key].inheritance_code, ''))))
-
     sv_mt = sv_mt.key_rows_by().select_rows(*sorted(list(sv_mt.row))).key_rows_by('locus','alleles')
     snv_mt = snv_mt.key_rows_by().select_rows(*sorted(list(snv_mt.row))).key_rows_by('locus','alleles')
 
@@ -140,7 +143,7 @@ if (snv_indel_vcf!='NA') and (sv_vcf!='NA'):
 
     if len(shared_samps)==0:
         shared_samps = ['']
-        
+
     sv_mt = sv_mt.filter_cols(hl.array(shared_samps).contains(sv_mt.s))
     snv_mt = snv_mt.filter_cols(hl.array(shared_samps).contains(snv_mt.s))
 
