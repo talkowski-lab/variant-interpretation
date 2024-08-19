@@ -138,6 +138,9 @@ if (snv_indel_vcf!='NA') and (sv_vcf!='NA'):
     snv_samps = snv_mt.s.collect()
     shared_samps = list(np.intersect1d(sv_samps, snv_samps))
 
+    if len(shared_samps)==0:
+        shared_samps = ['']
+        
     sv_mt = sv_mt.filter_cols(hl.array(shared_samps).contains(sv_mt.s))
     snv_mt = snv_mt.filter_cols(hl.array(shared_samps).contains(snv_mt.s))
 
