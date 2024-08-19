@@ -40,7 +40,7 @@ workflow filterClinicalCompHets {
     # TODO: might not work if SV VCF Sample IDs don't match SNV/Indel VCF Sample IDs
     call helpers.splitFamilies as splitFamilies {
         input:
-            vcf_file=select_first([omim_recessive_vcf]),
+            vcf_file=select_first([omim_recessive_vcf, sv_filtered_vcf]),
             ped_uri=ped_uri,
             families_per_chunk=families_per_chunk,
             cohort_prefix=cohort_prefix,

@@ -56,7 +56,6 @@ workflow vepAnnotateHail {
         
         RuntimeAttr? runtime_attr_merge_vcfs
         RuntimeAttr? runtime_attr_vep_annotate
-        RuntimeAttr? runtime_attr_annotate_extra
     }
 
     if (defined(vcf_shards)) {
