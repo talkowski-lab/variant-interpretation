@@ -110,6 +110,7 @@ if sv_vcf!='NA':
         transcript_consequences=sv_mt.vep.transcript_consequences.annotate(
         OMIM_MIM_number=hl.if_else(hl.is_defined(omim[sv_mt.row_key]), omim[sv_mt.row_key].mimNumber, ''),
         OMIM_inheritance_code=hl.if_else(hl.is_defined(omim[sv_mt.row_key]), omim[sv_mt.row_key].inheritance_code, ''))))
+    sv_mt = sv_mt.key_rows_by('locus', 'alleles')
 
 
 if (snv_indel_vcf!='NA') and (sv_vcf!='NA'):
