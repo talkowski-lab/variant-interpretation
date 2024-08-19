@@ -176,7 +176,9 @@ task addSVSamplesToPed {
     missing_samps = pd.DataFrame({'family_id': [-9 for _ in range(np.setdiff1d(vcf_samps, ped.sample_id).size)],
              'sample_id': np.setdiff1d(vcf_samps, ped.sample_id)})
 
-    pd.concat([ped, missing_samps]).to_csv(os.path.basename(ped_uri).split('.ped')[0] + '_SV_samples.ped',
+    new_ped = pd.concat([ped, missing_samps])
+    new_ped = new_ped.replace({np.nan: -9})
+    new_ped.to_csv(os.path.basename(ped_uri).split('.ped')[0] + '_SV_samples.ped',
             sep='\t', index=False)
     EOF
     python3 edit_pedigree.py ~{vcf_file} ~{ped_uri} ~{genome_build} ~{cpu_cores} ~{memory}
