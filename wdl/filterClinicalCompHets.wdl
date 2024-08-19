@@ -38,9 +38,20 @@ workflow filterClinicalCompHets {
     }
 
     # TODO: might not work if SV VCF Sample IDs don't match SNV/Indel VCF Sample IDs
+    if (defined(sv_filtered_vcf)) {
+        call addSVSamplesToPed {
+            input:
+            ped_uri=ped_uri,
+            vcf_file=select_first([sv_filtered_vcf]),
+            genome_build=genome_build,
+            hail_docker=hail_docker,
+            runtime_attr_override=runtime_attr_subset_vcfs_sv
+        }
+    }
+
     call helpers.splitFamilies as splitFamilies {
         input:
-            ped_uri=ped_uri,
+            ped_uri=select_first([addSVSamplesToPed.output_ped, ped_uri]),
             families_per_chunk=families_per_chunk,
             cohort_prefix=cohort_prefix,
             sv_base_mini_docker=sv_base_mini_docker,
@@ -74,7 +85,7 @@ workflow filterClinicalCompHets {
             input:
                 snv_indel_vcf=select_first([subsetVCFSamplesSNVIndels.vcf_subset, 'NA']),
                 sv_vcf=select_first([subsetVCFSamplesSVs.vcf_subset, 'NA']),
-                ped_uri=ped_uri,
+                ped_uri=select_first([addSVSamplesToPed.output_ped, ped_uri]),
                 omim_uri=omim_uri,
                 sv_gene_fields=sv_gene_fields,
                 filter_comphets_xlr_hom_var_script=filter_comphets_xlr_hom_var_script,
@@ -95,6 +106,84 @@ workflow filterClinicalCompHets {
 
     output {
         File comphet_xlr_hom_var_tsv = mergeCompHetsXLRHomVar.merged_tsv
+    }
+}
+
+task addSVSamplesToPed {
+    input {
+        File ped_uri
+        File vcf_file
+        String genome_build
+        String hail_docker
+        RuntimeAttr? runtime_attr_override
+    }
+
+    Float input_size = size(vcf_file, 'GB')
+    Float base_disk_gb = 10.0
+    Float input_disk_scale = 5.0
+
+    RuntimeAttr runtime_default = object {
+        mem_gb: 4,
+        disk_gb: ceil(base_disk_gb + input_size * input_disk_scale),
+        cpu_cores: 1,
+        preemptible_tries: 3,
+        max_retries: 1,
+        boot_disk_gb: 10
+    }
+
+    RuntimeAttr runtime_override = select_first([runtime_attr_override, runtime_default])
+
+    Float memory = select_first([runtime_override.mem_gb, runtime_default.mem_gb])
+    Int cpu_cores = select_first([runtime_override.cpu_cores, runtime_default.cpu_cores])
+    
+    runtime {
+        memory: "~{memory} GB"
+        disks: "local-disk ~{select_first([runtime_override.disk_gb, runtime_default.disk_gb])} HDD"
+        cpu: cpu_cores
+        preemptible: select_first([runtime_override.preemptible_tries, runtime_default.preemptible_tries])
+        maxRetries: select_first([runtime_override.max_retries, runtime_default.max_retries])
+        docker: hail_docker
+        bootDiskSizeGb: select_first([runtime_override.boot_disk_gb, runtime_default.boot_disk_gb])
+    }
+
+    command <<<
+    set -eou pipefail
+    cat <<EOF > edit_pedigree.py
+    import datetime
+    import pandas as pd
+    import hail as hl
+    import numpy as np
+    import sys
+    import os
+
+    vcf_file = sys.argv[1]
+    ped_uri = sys.argv[2]
+    genome_build = sys.argv[3]
+    cores = sys.argv[4]
+    mem = int(np.floor(float(sys.argv[5])))
+
+    hl.init(min_block_size=128, spark_conf={"spark.executor.cores": cores, 
+                        "spark.executor.memory": f"{int(np.floor(mem*0.4))}g",
+                        "spark.driver.cores": cores,
+                        "spark.driver.memory": f"{int(np.floor(mem*0.4))}g"
+                        }, tmp_dir="tmp", local_tmpdir="tmp")
+
+    mt = hl.import_vcf(vcf_file, force_bgz=vcf_file.split('.')[-1] in ['gz', 'bgz'], 
+        reference_genome=genome_build, array_elements_required=False, call_fields=[])
+    vcf_samps = mt.s.collect()
+
+    ped = pd.read_csv(ped_uri, sep='\t')
+    missing_samps = pd.DataFrame({'family_id': [-9 for _ in range(np.setdiff1d(vcf_samps, ped.sample_id).size)],
+             'sample_id': np.setdiff1d(vcf_samps, ped.sample_id)})
+
+    pd.concat([ped, missing_samps]).to_csv(os.path.basename(ped_uri).split('.ped')[0] + '_SV_samples.ped',
+            sep='\t', index=False)
+    EOF
+    python3 edit_pedigree.py ~{vcf_file} ~{ped_uri} ~{genome_build} ~{cpu_cores} ~{memory}
+    >>>
+
+    output {
+        File output_ped = basename(ped_uri, '.ped') + '_SV_samples.ped'
     }
 }
 
