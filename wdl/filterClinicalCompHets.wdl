@@ -86,15 +86,15 @@ workflow filterClinicalCompHets {
 
     call helpers.mergeResultsPython as mergeCompHetsXLRHomVar {
         input:
-            tsvs=filterCompHetsXLRHomVar.comphet_xlr_hom_var,
+            tsvs=filterCompHetsXLRHomVar.comphet_xlr_hom_var_tsv,
             hail_docker=hail_docker,
-            input_size=size(filterCompHetsXLRHomVar.comphet_xlr_hom_var, 'GB'),
+            input_size=size(filterCompHetsXLRHomVar.comphet_xlr_hom_var_tsv, 'GB'),
             merged_filename=cohort_prefix+'_comp_hets_xlr_hom_var.tsv.gz',
             runtime_attr_override=runtime_attr_merge_results
     }
 
     output {
-        File comphet_xlr_hom_var = mergeCompHetsXLRHomVar.merged_tsv
+        File comphet_xlr_hom_var_tsv = mergeCompHetsXLRHomVar.merged_tsv
     }
 }
 
@@ -156,6 +156,6 @@ task filterCompHetsXLRHomVar {
     }
 
     output {
-        File comphet_xlr_hom_var = "~{prefix}_~{variant_types}_comp_hets_xlr_hom_var.tsv.gz"
+        File comphet_xlr_hom_var_tsv = "~{prefix}_~{variant_types}_comp_hets_xlr_hom_var.tsv.gz"
     }
 }
