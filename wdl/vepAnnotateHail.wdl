@@ -52,7 +52,6 @@ workflow vepAnnotateHail {
         Int shards_per_chunk=10  # combine pre-sharded VCFs
         
         Array[File]? vcf_shards  # if scatterVCF.wdl already run before VEP
-        File? gene_list  # must end in .txt or it will be ignored
         
         RuntimeAttr? runtime_attr_merge_vcfs
         RuntimeAttr? runtime_attr_vep_annotate
