@@ -68,6 +68,7 @@ mt = hl.import_vcf(vcf_file, force_bgz=True, array_elements_required=False, call
 if noncoding_bed!='NA':
     bed = hl.import_bed(noncoding_bed, reference_genome=build, skip_invalid_intervals=True)
     mt = mt.annotate_rows(info=mt.info.annotate(PREDICTED_NONCODING=bed[mt.locus].target))
+    mt.checkpoint('noncoding_annot.mt')
 
 # annotate MPC
 mpc = hl.read_table(mpc_ht_uri).key_by('locus','alleles')
@@ -90,8 +91,6 @@ revel_ht = revel_ht.annotate(locus=hl.locus(revel_ht[build_chr], hl.int(revel_ht
                  alleles=hl.array([revel_ht.ref, revel_ht.alt]))
 revel_ht = revel_ht.key_by('locus', 'alleles')
 mt = mt.annotate_rows(info=mt.info.annotate(REVEL=revel_ht[mt.row_key].REVEL))
-
-mt.checkpoint('row_annot.mt')
 
 csq_columns = header['info']['CSQ']['Description'].split('Format: ')[1].split('|')
 # split VEP CSQ string
