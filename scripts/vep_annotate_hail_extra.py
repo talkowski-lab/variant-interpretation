@@ -91,6 +91,8 @@ revel_ht = revel_ht.annotate(locus=hl.locus(revel_ht[build_chr], hl.int(revel_ht
 revel_ht = revel_ht.key_by('locus', 'alleles')
 mt = mt.annotate_rows(info=mt.info.annotate(REVEL=revel_ht[mt.row_key].REVEL))
 
+mt.checkpoint('row_annot.mt')
+
 csq_columns = header['info']['CSQ']['Description'].split('Format: ')[1].split('|')
 # split VEP CSQ string
 mt = mt.annotate_rows(vep=mt.info)
@@ -132,6 +134,7 @@ if (spliceAI_snv_uri!='NA') and (spliceAI_indel_uri!='NA'):
                                 mt_by_locus_and_gene.SpliceAI_raw.split('=')[1].split('\|')[i+2], '') 
             for i, field in enumerate(fields)}))))
     csq_fields_str = csq_fields_str + '|'.join([''] + fields)
+    mt_by_locus_and_gene.checkpoint('annot_spliceAI.mt')
 
 # annotate OMIM
 omim = hl.import_table(omim_uri).key_by('approvedGeneSymbol')
