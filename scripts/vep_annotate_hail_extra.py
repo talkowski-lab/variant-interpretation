@@ -117,6 +117,8 @@ mt_by_transcript = mt_by_transcript.annotate_rows(vep=mt_by_transcript.vep.annot
         LOEUF_v4=hl.if_else(hl.is_defined(loeuf_v4_ht[mt_by_transcript.row_key]), loeuf_v4_ht[mt_by_transcript.row_key]['lof.oe_ci.upper'], ''))))
 csq_fields_str = 'Format: ' + header['info']['CSQ']['Description'].split('Format: ')[1] + '|'.join(['', 'LOEUF_v2', 'LOEUF_v4'])
 
+mt_by_transcript.checkpoint('loeuf_annot.mt')
+
 mt_by_locus_and_gene = mt_by_transcript.key_rows_by('locus', 'alleles', mt_by_transcript.vep.transcript_consequences.SYMBOL)
 
 # OPTIONAL: annotate SpliceAI scores
