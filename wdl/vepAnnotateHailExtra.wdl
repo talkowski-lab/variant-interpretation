@@ -3,6 +3,7 @@ version 1.0
 import "scatterVCF.wdl" as scatterVCF
 import "mergeSplitVCF.wdl" as mergeSplitVCF
 import "mergeVCFs.wdl" as mergeVCFs
+import "annotateNonCoding.wdl" as annotateNonCoding
 
 struct RuntimeAttr {
     Float? mem_gb
@@ -43,9 +44,19 @@ workflow vepAnnotateHailExtra {
     }
 
     scatter (vcf_shard in vep_vcf_files) {
+
+        if (noncoding_bed!='NA') {
+            call annotateNonCoding.annotateFromBed as annotateNonCoding {
+                input:
+                vcf_file=vcf_shard,
+                noncoding_bed=select_first([noncoding_bed]),
+                hail_docker=hail_docker,
+                runtime_attr_override=runtime_attr_annotate_extra
+            }
+        }
         call annotateExtra {
             input:
-                vcf_file=vcf_shard,
+                vcf_file=select_first([annotateNonCoding.noncoding_vcf, vcf_shard]),
                 vep_annotate_hail_extra_python_script=vep_annotate_hail_extra_python_script,
                 loeuf_v2_uri=loeuf_v2_uri,
                 loeuf_v4_uri=loeuf_v4_uri,
