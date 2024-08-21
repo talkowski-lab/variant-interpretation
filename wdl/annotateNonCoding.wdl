@@ -17,6 +17,7 @@ workflow annotateNonCoding {
         File noncoding_bed
         String cohort_prefix
         # Boolean sort_after_merge
+        Boolean filter=true
         String sv_base_mini_docker
         String hail_docker        
     }
@@ -26,7 +27,8 @@ workflow annotateNonCoding {
             input:
             vcf_file=vcf_file,
             noncoding_bed=noncoding_bed,
-            hail_docker=hail_docker
+            hail_docker=hail_docker,
+            filter=filter
         }
     }
 
@@ -51,6 +53,7 @@ task annotateFromBed {
         File vcf_file
         String noncoding_bed 
         String hail_docker
+        Boolean filter
         RuntimeAttr? runtime_attr_override
     }
     Float input_size = size(vcf_file, 'GB')
@@ -98,6 +101,7 @@ task annotateFromBed {
     cores = sys.argv[3]  # string
     mem = int(np.floor(float(sys.argv[4])))
     output_filename = sys.argv[5]
+    filter = ast.literal_eval(sys.argv[6].capitalize())
 
     hl.init(min_block_size=128, spark_conf={"spark.executor.cores": cores, 
                         "spark.executor.memory": f"{int(np.floor(mem*0.4))}g",
@@ -110,14 +114,15 @@ task annotateFromBed {
     mt = mt.annotate_rows(info=mt.info.annotate(PREDICTED_NONCODING=bed[mt.locus].target))
 
     # filter only annotated
-    mt = mt.filter_rows(hl.is_defined(mt.info.PREDICTED_NONCODING))
+    if filter:
+        mt = mt.filter_rows(hl.is_defined(mt.info.PREDICTED_NONCODING))
 
     header = hl.get_vcf_metadata(vcf_file)
     header['info']['PREDICTED_NONCODING'] = {'Description': "Class(es) of noncoding elements disrupted by SNV/Indel.", 
                                             'Number': '.', 'Type': 'String'}
     hl.export_vcf(mt, output_filename, metadata=header, tabix=True)
     EOF
-    python3 annotate_noncoding.py ~{vcf_file} ~{noncoding_bed} ~{cpu_cores} ~{memory} ~{output_filename}
+    python3 annotate_noncoding.py ~{vcf_file} ~{noncoding_bed} ~{cpu_cores} ~{memory} ~{output_filename} ~{filter}
     >>>
 
     output {
