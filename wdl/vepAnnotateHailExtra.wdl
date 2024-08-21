@@ -3,7 +3,6 @@ version 1.0
 import "scatterVCF.wdl" as scatterVCF
 import "mergeSplitVCF.wdl" as mergeSplitVCF
 import "mergeVCFs.wdl" as mergeVCFs
-import "annotateNonCoding.wdl" as annotateNonCoding
 
 struct RuntimeAttr {
     Float? mem_gb
@@ -18,6 +17,7 @@ workflow vepAnnotateHailExtra {
 
     input {
         Array[File] vep_vcf_files
+        Array[File] vep_vcf_idx
 
         File revel_file
         File clinvar_vcf_uri
@@ -44,10 +44,12 @@ workflow vepAnnotateHailExtra {
         RuntimeAttr? runtime_attr_annotate_spliceAI
     }
 
-    scatter (vcf_shard in vep_vcf_files) {
+    scatter (pair in zip(vep_vcf_files, vep_vcf_idx)) {
+        File vcf_shard = pair.left
+        File vcf_shard_idx = pair.right
 
         if (noncoding_bed!='NA') {
-            call annotateNonCoding.annotateFromBed as annotateNonCoding {
+            call annotateFromBed as annotateNonCoding {
                 input:
                 vcf_file=vcf_shard,
                 noncoding_bed=select_first([noncoding_bed]),
@@ -85,13 +87,105 @@ workflow vepAnnotateHailExtra {
         }
         File annot_vcf_file = select_first([annotateSpliceAI.annot_vcf_file, annotateExtra.annot_vcf_file])
         File annot_vcf_idx_ = select_first([annotateSpliceAI.annot_vcf_idx, annotateExtra.annot_vcf_idx])
+
+        call addGenotypes {
+            input:
+            annot_vcf_file=annot_vcf_file,
+            annot_vcf_idx=annot_vcf_idx_,
+            vcf_file=vcf_shard,
+            vcf_idx=vcf_shard_idx,
+            sv_base_mini_docker=sv_base_mini_docker
+        }
     }
 
     output {
-        Array[File] annot_vcf_files = annot_vcf_file
-        Array[File] annot_vcf_idx = annot_vcf_idx_
+        Array[File] annot_vcf_files = addGenotypes.combined_vcf_file
+        Array[File] annot_vcf_idx = addGenotypes.combined_vcf_idx
     }
 }   
+
+task annotateFromBed {
+    input {
+        File vcf_file
+        String noncoding_bed 
+        String hail_docker
+        Boolean filter
+        RuntimeAttr? runtime_attr_override
+    }
+    Float input_size = size(vcf_file, 'GB')
+    Float base_disk_gb = 10.0
+    Float input_disk_scale = 5.0
+
+    RuntimeAttr runtime_default = object {
+        mem_gb: 4,
+        disk_gb: ceil(base_disk_gb + input_size * input_disk_scale),
+        cpu_cores: 1,
+        preemptible_tries: 3,
+        max_retries: 1,
+        boot_disk_gb: 10
+    }
+
+    RuntimeAttr runtime_override = select_first([runtime_attr_override, runtime_default])
+
+    Float memory = select_first([runtime_override.mem_gb, runtime_default.mem_gb])
+    Int cpu_cores = select_first([runtime_override.cpu_cores, runtime_default.cpu_cores])
+    
+    runtime {
+        memory: "~{memory} GB"
+        disks: "local-disk ~{select_first([runtime_override.disk_gb, runtime_default.disk_gb])} HDD"
+        cpu: cpu_cores
+        preemptible: select_first([runtime_override.preemptible_tries, runtime_default.preemptible_tries])
+        maxRetries: select_first([runtime_override.max_retries, runtime_default.max_retries])
+        docker: hail_docker
+        bootDiskSizeGb: select_first([runtime_override.boot_disk_gb, runtime_default.boot_disk_gb])
+    }
+
+    String file_ext = if sub(basename(vcf_file), '.vcf.gz', '')!=basename(vcf_file) then '.vcf.gz' else '.vcf.bgz'
+    String output_filename = basename(vcf_file, file_ext) + '_noncoding_annot' + file_ext
+   
+    command <<<
+    cat <<EOF > annotate_noncoding.py
+    from pyspark.sql import SparkSession
+    import hail as hl
+    import numpy as np
+    import sys
+    import ast
+    import os
+
+    vcf_file = sys.argv[1]
+    noncoding_bed = sys.argv[2]
+    cores = sys.argv[3]  # string
+    mem = int(np.floor(float(sys.argv[4])))
+    output_filename = sys.argv[5]
+    filter = ast.literal_eval(sys.argv[6].capitalize())
+
+    hl.init(min_block_size=128, spark_conf={"spark.executor.cores": cores, 
+                        "spark.executor.memory": f"{int(np.floor(mem*0.4))}g",
+                        "spark.driver.cores": cores,
+                        "spark.driver.memory": f"{int(np.floor(mem*0.4))}g"
+                        }, tmp_dir="tmp", local_tmpdir="tmp")
+
+    bed = hl.import_bed(noncoding_bed, reference_genome='GRCh38', skip_invalid_intervals=True)
+    mt = hl.import_vcf(vcf_file, drop_samples=True, force_bgz=True, array_elements_required=False, call_fields=[], reference_genome='GRCh38')
+    mt = mt.annotate_rows(info=mt.info.annotate(PREDICTED_NONCODING=bed[mt.locus].target))
+
+    # filter only annotated
+    if filter:
+        mt = mt.filter_rows(hl.is_defined(mt.info.PREDICTED_NONCODING))
+
+    header = hl.get_vcf_metadata(vcf_file)
+    header['info']['PREDICTED_NONCODING'] = {'Description': "Class(es) of noncoding elements disrupted by SNV/Indel.", 
+                                            'Number': '.', 'Type': 'String'}
+    hl.export_vcf(mt, output_filename, metadata=header, tabix=True)
+    EOF
+    python3 annotate_noncoding.py ~{vcf_file} ~{noncoding_bed} ~{cpu_cores} ~{memory} ~{output_filename} ~{filter}
+    >>>
+
+    output {
+        File noncoding_vcf = output_filename
+        File noncoding_vcf_idx = output_filename + '.tbi'
+    }
+}
 
 task annotateExtra {
     input {
@@ -198,7 +292,6 @@ task annotateSpliceAI {
     String prefix = if (sub(filename, "\\.gz", "")!=filename) then basename(vcf_file, ".vcf.gz") else basename(vcf_file, ".vcf.bgz")
     String vep_annotated_vcf_name = "~{prefix}.SpliceAI.annot.vcf.bgz"
 
-
     command <<<
     cat <<EOF > annotate.py
     from pyspark.sql import SparkSession
@@ -246,7 +339,7 @@ task annotateSpliceAI {
                         )
 
     header = hl.get_vcf_metadata(vcf_file) 
-    mt = hl.import_vcf(vcf_file, force_bgz=True, array_elements_required=False, call_fields=[], reference_genome=build)
+    mt = hl.import_vcf(vcf_file, drop_samples=True, force_bgz=True, array_elements_required=False, call_fields=[], reference_genome=build)
 
     csq_columns = header['info']['CSQ']['Description'].split('Format: ')[1].split('|')
     # split VEP CSQ string
@@ -306,4 +399,61 @@ task annotateSpliceAI {
         File annot_vcf_idx = vep_annotated_vcf_name + '.tbi'
         File hail_log = "hail_log.txt"
     }
+}
+
+task addGenotypes {
+    input {
+        File annot_vcf_file
+        File annot_vcf_idx
+        File vcf_file
+        File vcf_idx
+        String sv_base_mini_docker
+        RuntimeAttr? runtime_attr_override
+    }
+
+    Float input_size = size([annot_vcf_file, vcf_file], "GB") 
+    Float base_disk_gb = 10.0
+
+    RuntimeAttr runtime_default = object {
+                                      mem_gb: 16,
+                                      disk_gb: ceil(base_disk_gb + input_size * 5.0),
+                                      cpu_cores: 1,
+                                      preemptible_tries: 3,
+                                      max_retries: 1,
+                                      boot_disk_gb: 10
+                                  }
+    RuntimeAttr runtime_override = select_first([runtime_attr_override, runtime_default])
+    
+    runtime {
+        memory: "~{select_first([runtime_override.mem_gb, runtime_default.mem_gb])} GB"
+        disks: "local-disk ~{select_first([runtime_override.disk_gb, runtime_default.disk_gb])} HDD"
+        cpu: select_first([runtime_override.cpu_cores, runtime_default.cpu_cores])
+        preemptible: select_first([runtime_override.preemptible_tries, runtime_default.preemptible_tries])
+        maxRetries: select_first([runtime_override.max_retries, runtime_default.max_retries])
+        docker: sv_base_mini_docker
+        bootDiskSizeGb: select_first([runtime_override.boot_disk_gb, runtime_default.boot_disk_gb])
+    }
+
+    String filename = basename(annot_vcf_file)
+    String prefix = if (sub(filename, "\\.gz", "")!=filename) then basename(annot_vcf_file, ".vcf.gz") else basename(annot_vcf_file, ".vcf.bgz")
+    String combined_vcf_name = "~{prefix}.GT.vcf.bgz"
+
+    command <<<
+        set -euo pipefail
+
+        bcftools merge \
+        --no-version \
+        -Oz \
+        --output ~{combined_vcf_name} \
+        ~{vcf_file} \
+        ~{annot_vcf_file}
+
+        bcftools index -t ~{combined_vcf_name}
+    >>>
+
+    output {
+        File combined_vcf_file = combined_vcf_name
+        File combined_vcf_idx = combined_vcf_name + ".tbi"
+    }
+
 }
