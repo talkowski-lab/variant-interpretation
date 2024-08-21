@@ -93,7 +93,7 @@ task mergeSNVIndelSpliceAI {
     indel_ht = hl.read_table(indel_uri)
     spliceAI_ht = snv_ht.union(indel_ht)
 
-    spliceAI_ht.write(output_ht_path)
+    spliceAI_ht.write(output_ht_path, overwrite=True)
     EOF
     python3 merge.py ~{snv_ht} ~{indel_ht} ~{output_ht_path} ~{cpu_cores} ~{memory}
     >>>
