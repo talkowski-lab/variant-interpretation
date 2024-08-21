@@ -58,6 +58,7 @@ workflow vepAnnotateHailExtra {
                 runtime_attr_override=runtime_attr_annotate_noncoding
             }
         }
+
         call annotateExtra {
             input:
                 vcf_file=select_first([annotateNonCoding.noncoding_vcf, vcf_shard]),
@@ -339,7 +340,7 @@ task annotateSpliceAI {
                         )
 
     header = hl.get_vcf_metadata(vcf_file) 
-    mt = hl.import_vcf(vcf_file, drop_samples=True, force_bgz=True, array_elements_required=False, call_fields=[], reference_genome=build)
+    mt = hl.import_vcf(vcf_file, min_partitions=int(cores), drop_samples=True, force_bgz=True, array_elements_required=False, call_fields=[], reference_genome=build)
 
     csq_columns = header['info']['CSQ']['Description'].split('Format: ')[1].split('|')
     # split VEP CSQ string
