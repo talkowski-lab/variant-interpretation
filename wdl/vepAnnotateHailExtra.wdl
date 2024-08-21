@@ -241,6 +241,7 @@ task annotateSpliceAI {
                 #         "spark.driver.cores": cores,
                         "spark.driver.memory": f"{int(np.floor(mem*0.8))}g",
                         "spark.driver.memoryOverheadFactor": '0.6',
+                        "spark.speculation": 'true',
                         # "spark.executor.memoryOverheadFactor": '0.6',
             #             'spark.hadoop.fs.gs.requester.pays.mode': 'CUSTOM',
             #             'spark.hadoop.fs.gs.requester.pays.buckets': 'hail-datasets-us-central1',
