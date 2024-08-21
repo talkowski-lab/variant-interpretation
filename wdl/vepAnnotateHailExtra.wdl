@@ -240,7 +240,7 @@ task annotateSpliceAI {
                 #         "spark.executor.memory": f"{int(np.floor(mem*0.4))}g",
                 #         "spark.driver.cores": cores,
                         "spark.driver.memory": f"{int(np.floor(mem*0.8))}g",
-                        "spark.driver.memoryOverheadFactor": '0.6',
+                        # "spark.driver.memoryOverheadFactor": '0.6',
                         "spark.speculation": 'true',
                         # "spark.executor.memoryOverheadFactor": '0.6',
             #             'spark.hadoop.fs.gs.requester.pays.mode': 'CUSTOM',
