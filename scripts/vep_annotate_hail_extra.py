@@ -117,7 +117,7 @@ mt_by_transcript = mt_by_transcript.annotate_rows(vep=mt_by_transcript.vep.annot
         LOEUF_v4=hl.if_else(hl.is_defined(loeuf_v4_ht[mt_by_transcript.row_key]), loeuf_v4_ht[mt_by_transcript.row_key]['lof.oe_ci.upper'], ''))))
 csq_fields_str = 'Format: ' + header['info']['CSQ']['Description'].split('Format: ')[1] + '|'.join(['', 'LOEUF_v2', 'LOEUF_v4'])
 
-mt_by_transcript.checkpoint('loeuf_annot.mt')
+# mt_by_transcript.checkpoint('loeuf_annot.mt')
 
 mt_by_locus_and_gene = mt_by_transcript.key_rows_by('locus', 'alleles', mt_by_transcript.vep.transcript_consequences.SYMBOL)
 
@@ -135,7 +135,7 @@ if (spliceAI_snv_uri!='NA') and (spliceAI_indel_uri!='NA'):
                                 mt_by_locus_and_gene.SpliceAI_raw.split('=')[1].split('\|')[i+2], '') 
             for i, field in enumerate(fields)}))))
     csq_fields_str = csq_fields_str + '|'.join([''] + fields)
-    mt_by_locus_and_gene.checkpoint('annot_spliceAI.mt')
+    # mt_by_locus_and_gene.checkpoint('annot_spliceAI.mt')
 
 # annotate OMIM
 omim = hl.import_table(omim_uri).key_by('approvedGeneSymbol')
