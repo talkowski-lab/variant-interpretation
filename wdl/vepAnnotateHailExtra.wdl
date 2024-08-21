@@ -35,8 +35,7 @@ workflow vepAnnotateHailExtra {
 
         String genome_build='GRCh38'
 
-        String spliceAI_snv_uri='NA'
-        String spliceAI_indel_uri='NA'       
+        String spliceAI_uri='NA'
         String noncoding_bed='NA'
         String gene_list='NA'
 
@@ -74,12 +73,11 @@ workflow vepAnnotateHailExtra {
                 runtime_attr_override=runtime_attr_annotate_extra
         }
 
-        if ((spliceAI_snv_uri!='NA') && (spliceAI_indel_uri!='NA')) {
+        if (spliceAI_uri!='NA') {
             call annotateSpliceAI {
                 input:
                 vcf_file=annotateExtra.annot_vcf_file,
-                spliceAI_snv_uri=spliceAI_snv_uri,
-                spliceAI_indel_uri=spliceAI_indel_uri,
+                spliceAI_uri=spliceAI_uri,
                 genome_build=genome_build,
                 hail_docker=hail_docker,
                 runtime_attr_override=runtime_attr_annotate_spliceAI
@@ -163,8 +161,7 @@ task annotateExtra {
 task annotateSpliceAI {
     input {
         File vcf_file
-        String spliceAI_snv_uri
-        String spliceAI_indel_uri
+        String spliceAI_uri
 
         String hail_docker
         String genome_build
@@ -220,8 +217,7 @@ task annotateSpliceAI {
     parser.add_argument('--cores', dest='cores', help='CPU cores')
     parser.add_argument('--mem', dest='mem', help='Memory')
     parser.add_argument('--build', dest='build', help='Genome build')
-    parser.add_argument('--spliceAI-snv', dest='spliceAI_snv_uri', help='SpliceAI scores SNV HT')
-    parser.add_argument('--spliceAI-indel', dest='spliceAI_indel_uri', help='SpliceAI scores Indel HT')
+    parser.add_argument('--spliceAI-uri', dest='spliceAI_uri', help='SpliceAI scores SNV/Indel HT')
 
     args = parser.parse_args()
 
@@ -230,8 +226,7 @@ task annotateSpliceAI {
     cores = args.cores  # string
     mem = int(np.floor(float(args.mem)))
     build = args.build
-    spliceAI_snv_uri = args.spliceAI_snv_uri
-    spliceAI_indel_uri = args.spliceAI_indel_uri
+    spliceAI_uri = args.spliceAI_uri
 
     hl.init(min_block_size=128, 
             local=f"local[{cores}]", 
@@ -271,9 +266,7 @@ task annotateSpliceAI {
     mt_by_transcript = mt.explode_rows(mt.vep.transcript_consequences)
     mt_by_locus_and_gene = mt_by_transcript.key_rows_by('locus', 'alleles', mt_by_transcript.vep.transcript_consequences.SYMBOL)
 
-    snv_ht = hl.read_table(spliceAI_snv_uri)
-    indel_ht = hl.read_table(spliceAI_indel_uri)
-    spliceAI_ht = snv_ht.union(indel_ht)
+    spliceAI_ht = hl.read_table(spliceAI_uri)
     # leave out ALLELE/SYMBOL because redundant
     fields = 'ALLELE|SYMBOL|DS_AG|DS_AL|DS_DG|DS_DL|DP_AG|DP_AL|DP_DG|DP_DL'.split('|')[2:]  
     mt_by_locus_and_gene = mt_by_locus_and_gene.annotate_rows(SpliceAI_raw=spliceAI_ht[mt_by_locus_and_gene.row_key].SpliceAI)
@@ -304,7 +297,7 @@ task annotateSpliceAI {
     hl.export_vcf(dataset=mt, output=vep_annotated_vcf_name, metadata=header, tabix=True)
     EOF
     python3 annotate.py -i ~{vcf_file} -o ~{vep_annotated_vcf_name} --cores ~{cpu_cores} --mem ~{memory} \
-    --build ~{genome_build} --spliceAI-snv ~{spliceAI_snv_uri} --spliceAI-indel ~{spliceAI_indel_uri}
+    --build ~{genome_build} --spliceAI-uri ~{spliceAI_uri} 
     cp $(ls . | grep hail*.log) hail_log.txt
     >>>
 
