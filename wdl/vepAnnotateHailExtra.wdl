@@ -386,8 +386,6 @@ task annotateSpliceAI {
     mt = mt.drop('vep')
 
     header['info']['CSQ'] = {'Description': csq_fields_str, 'Number': '.', 'Type': 'String'}
-    header['info']['REVEL'] = {'Description': 'REVEL scores.', 'Number': '.', 'Type': 'String'}
-
     hl.export_vcf(dataset=mt, output=vep_annotated_vcf_name, metadata=header, tabix=True)
     EOF
     python3 annotate.py -i ~{vcf_file} -o ~{vep_annotated_vcf_name} --cores ~{cpu_cores} --mem ~{memory} \

@@ -24,7 +24,7 @@ workflow filterClinicalVariants {
         String cohort_prefix
         String filter_clinical_variants_script
         String filter_clinical_variants_omim_script
-        String filter_comphets_xlr_script
+        # String filter_comphets_xlr_script
 
         String hail_docker
         String sv_base_mini_docker
