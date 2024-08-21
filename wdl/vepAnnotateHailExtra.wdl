@@ -39,8 +39,10 @@ workflow vepAnnotateHailExtra {
         String spliceAI_indel_uri='NA'       
         String noncoding_bed='NA'
         String gene_list='NA'
-        
+
+        RuntimeAttr? runtime_attr_annotate_noncoding      
         RuntimeAttr? runtime_attr_annotate_extra
+        RuntimeAttr? runtime_attr_annotate_spliceAI
     }
 
     scatter (vcf_shard in vep_vcf_files) {
@@ -51,7 +53,7 @@ workflow vepAnnotateHailExtra {
                 vcf_file=vcf_shard,
                 noncoding_bed=select_first([noncoding_bed]),
                 hail_docker=hail_docker,
-                runtime_attr_override=runtime_attr_annotate_extra
+                runtime_attr_override=runtime_attr_annotate_noncoding
             }
         }
         call annotateExtra {
@@ -79,7 +81,7 @@ workflow vepAnnotateHailExtra {
                 spliceAI_indel_uri=spliceAI_indel_uri,
                 genome_build=genome_build,
                 hail_docker=hail_docker,
-                runtime_attr_override=runtime_attr_annotate_extra
+                runtime_attr_override=runtime_attr_annotate_spliceAI
             }
         }
         File annot_vcf_file = select_first([annotateSpliceAI.annot_vcf_file, annotateExtra.annot_vcf_file])
