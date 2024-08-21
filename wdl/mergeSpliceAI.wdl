@@ -89,8 +89,8 @@ task mergeSNVIndelSpliceAI {
                         "spark.driver.memory": f"{int(np.floor(mem*0.8))}g"
                         }, tmp_dir="tmp", local_tmpdir="tmp")
 
-    snv_ht = hl.read_table(spliceAI_snv_uri)
-    indel_ht = hl.read_table(spliceAI_indel_uri)
+    snv_ht = hl.read_table(snv_uri)
+    indel_ht = hl.read_table(indel_uri)
     spliceAI_ht = snv_ht.union(indel_ht)
 
     spliceAI_ht.write(output_ht_path)
