@@ -272,8 +272,6 @@ task runClinicalFilteringOMIM {
         String hail_docker
         String genome_build
         
-        Int ac_threshold
-        Float gnomad_af_threshold
         Float am_threshold
         Float mpc_threshold
         Float gnomad_rec_threshold
