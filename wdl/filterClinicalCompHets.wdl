@@ -37,7 +37,6 @@ workflow filterClinicalCompHets {
         RuntimeAttr? runtime_attr_merge_results
     }
 
-    # TODO: might not work if SV VCF Sample IDs don't match SNV/Indel VCF Sample IDs
     if (defined(sv_filtered_vcf)) {
         call addSVSamplesToPed {
             input:
