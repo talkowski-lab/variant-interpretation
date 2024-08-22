@@ -207,11 +207,13 @@ def get_non_trio_comphets(mt):
     potential_comp_hets_non_trios = potential_comp_hets_non_trios.filter_entries(potential_comp_hets_non_trios.proband_GT.size()>1)
     
     non_trio_gene_phased_tm = non_trio_gene_phased_tm.key_rows_by('locus', 'alleles', 'gene')
-    non_trio_gene_phased_tm = non_trio_gene_phased_tm.annotate_entries(proband_GT_set=hl.set(
+    non_trio_gene_phased_tm = non_trio_gene_phased_tm.annotate_entries(proband_GT=
+        potential_comp_hets_non_trios[non_trio_gene_phased_tm.row_key, non_trio_gene_phased_tm.col_key].proband_GT,
+                                                                      proband_GT_set=hl.set(
         potential_comp_hets_non_trios[non_trio_gene_phased_tm.row_key, non_trio_gene_phased_tm.col_key].proband_GT),
                                                                       proband_PBT_GT_set=hl.set(
         potential_comp_hets_non_trios[non_trio_gene_phased_tm.row_key, non_trio_gene_phased_tm.col_key].proband_PBT_GT))
-
+    non_trio_gene_phased_tm = non_trio_gene_phased_tm.filter_entries(non_trio_gene_phased_tm.proband_GT.size()>1)  # this actually seems necessary but idk why tbh
     gene_phased_tm_comp_hets_non_trios = non_trio_gene_phased_tm.semi_join_rows(potential_comp_hets_non_trios.rows()).key_rows_by('locus', 'alleles')
     return gene_phased_tm_comp_hets_non_trios
 
@@ -230,7 +232,9 @@ def get_trio_comphets(mt):
     potential_comp_hets_trios = potential_comp_hets_trios.filter_entries(hl.set(potential_comp_hets_trios.proband_PBT_GT).size()>1)
 
     trio_gene_phased_tm = trio_gene_phased_tm.key_rows_by('locus', 'alleles', 'gene')
-    trio_gene_phased_tm = trio_gene_phased_tm.annotate_entries(proband_GT_set=hl.set(
+    trio_gene_phased_tm = trio_gene_phased_tm.annotate_entries(proband_GT=
+        potential_comp_hets_trios[trio_gene_phased_tm.row_key, trio_gene_phased_tm.col_key].proband_GT,
+                                                               proband_GT_set=hl.set(
         potential_comp_hets_trios[trio_gene_phased_tm.row_key, trio_gene_phased_tm.col_key].proband_GT),
                                                                proband_PBT_GT_set=hl.set(
         potential_comp_hets_trios[trio_gene_phased_tm.row_key, trio_gene_phased_tm.col_key].proband_PBT_GT))
@@ -281,7 +285,7 @@ xlr_phased = xlr_phased.annotate(variant_category='XLR')
 phased_hom_var = phased_hom_var.annotate(variant_category='hom_var')
 merged_comphets = merged_comphets.annotate(variant_category='comphet')
 
-merged_comphets_xlr_hom_var = merged_comphets.drop('proband_GT_set','proband_PBT_GT_set').union(xlr_phased).union(phased_hom_var)
+merged_comphets_xlr_hom_var = merged_comphets.drop('proband_GT','proband_GT_set','proband_PBT_GT_set').union(xlr_phased).union(phased_hom_var)
 merged_comphets_xlr_hom_var = get_transmission(merged_comphets_xlr_hom_var)
 
 merged_comphets_xlr_hom_var.flatten().export(f"{prefix}_{variant_types}_comp_hets_xlr_hom_var.tsv.gz")
