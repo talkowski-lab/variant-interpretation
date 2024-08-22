@@ -94,12 +94,14 @@ workflow filterClinicalCompHets {
         }
     }
 
+    String variant_types_ = if defined(omim_recessive_vcf) then 'SV_SNV_Indel' else 'SV'
+    String variant_types = if defined(sv_filtered_vcf) then variant_types_ else 'SNV_Indel'
     call helpers.mergeResultsPython as mergeCompHetsXLRHomVar {
         input:
             tsvs=filterCompHetsXLRHomVar.comphet_xlr_hom_var_tsv,
             hail_docker=hail_docker,
             input_size=size(filterCompHetsXLRHomVar.comphet_xlr_hom_var_tsv, 'GB'),
-            merged_filename=cohort_prefix+'_comp_hets_xlr_hom_var.tsv.gz',
+            merged_filename="~{cohort_prefix}_~{variant_types}_comp_hets_xlr_hom_var.tsv.gz",
             runtime_attr_override=runtime_attr_merge_results
     }
 
