@@ -44,18 +44,10 @@ gene_list = args.gene_list
 gcp_project = args.project_id
 
 hl.init(min_block_size=128, 
-        local=f"local[{cores}]", 
+        local=f"local[*]", 
         spark_conf={
-            # "spark.executor.cores": '1', 
-            #         "spark.executor.memory": f"{int(np.floor(mem*0.4))}g",
-            #         "spark.driver.cores": cores,
                     "spark.driver.memory": f"{int(np.floor(mem*0.8))}g",
-                    # "spark.driver.memoryOverheadFactor": '0.6',
-                    "spark.speculation": 'true',
-                    # "spark.executor.memoryOverheadFactor": '0.6',
-        #             'spark.hadoop.fs.gs.requester.pays.mode': 'CUSTOM',
-        #             'spark.hadoop.fs.gs.requester.pays.buckets': 'hail-datasets-us-central1',
-        #             'spark.hadoop.fs.gs.requester.pays.project.id': gcp_project,
+                    "spark.speculation": 'true'
                     }, 
         tmp_dir="tmp", local_tmpdir="tmp",
                     )

@@ -160,11 +160,14 @@ task annotateFromBed {
     output_filename = sys.argv[5]
     filter = ast.literal_eval(sys.argv[6].capitalize())
 
-    hl.init(min_block_size=128, spark_conf={"spark.executor.cores": cores, 
-                        "spark.executor.memory": f"{int(np.floor(mem*0.4))}g",
-                        "spark.driver.cores": cores,
-                        "spark.driver.memory": f"{int(np.floor(mem*0.4))}g"
-                        }, tmp_dir="tmp", local_tmpdir="tmp")
+    hl.init(min_block_size=128, 
+            local=f"local[*]", 
+            spark_conf={
+                        "spark.driver.memory": f"{int(np.floor(mem*0.8))}g",
+                        "spark.speculation": 'true'
+                        }, 
+            tmp_dir="tmp", local_tmpdir="tmp",
+                        )
 
     bed = hl.import_bed(noncoding_bed, reference_genome='GRCh38', skip_invalid_intervals=True)
     mt = hl.import_vcf(vcf_file, drop_samples=True, force_bgz=True, array_elements_required=False, call_fields=[], reference_genome='GRCh38')
@@ -323,18 +326,10 @@ task annotateSpliceAI {
     spliceAI_uri = args.spliceAI_uri
 
     hl.init(min_block_size=128, 
-            local=f"local[{cores}]", 
+            local=f"local[*]", 
             spark_conf={
-                # "spark.executor.cores": '1', 
-                #         "spark.executor.memory": f"{int(np.floor(mem*0.4))}g",
-                #         "spark.driver.cores": cores,
                         "spark.driver.memory": f"{int(np.floor(mem*0.8))}g",
-                        # "spark.driver.memoryOverheadFactor": '0.6',
-                        "spark.speculation": 'true',
-                        # "spark.executor.memoryOverheadFactor": '0.6',
-            #             'spark.hadoop.fs.gs.requester.pays.mode': 'CUSTOM',
-            #             'spark.hadoop.fs.gs.requester.pays.buckets': 'hail-datasets-us-central1',
-            #             'spark.hadoop.fs.gs.requester.pays.project.id': gcp_project,
+                        "spark.speculation": 'true'
                         }, 
             tmp_dir="tmp", local_tmpdir="tmp",
                         )
