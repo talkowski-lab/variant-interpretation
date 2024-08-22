@@ -175,7 +175,9 @@ task addSVSamplesToPed {
 
     ped = pd.read_csv(ped_uri, sep='\t')
     missing_samps = pd.DataFrame({'family_id': [-9 for _ in range(np.setdiff1d(vcf_samps, ped.sample_id).size)],
-             'sample_id': np.setdiff1d(vcf_samps, ped.sample_id)})
+            'paternal_id': [0 for _ in range(np.setdiff1d(vcf_samps, ped.sample_id).size)],
+            'maternal_id': [0 for _ in range(np.setdiff1d(vcf_samps, ped.sample_id).size)],
+            'sample_id': np.setdiff1d(vcf_samps, ped.sample_id)})
 
     new_ped = pd.concat([ped, missing_samps])
     new_ped = new_ped.replace({np.nan: -9})
