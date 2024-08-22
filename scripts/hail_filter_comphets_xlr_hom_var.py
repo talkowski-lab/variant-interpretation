@@ -17,13 +17,10 @@ cores = sys.argv[8]  # string
 mem = int(np.floor(float(sys.argv[9])))
 
 hl.init(min_block_size=128, 
-        spark_conf={"spark.executor.cores": cores, 
-                    "spark.executor.memory": f"{int(np.floor(mem*0.4))}g",
-                    "spark.driver.cores": "2",
-                    "spark.driver.memory": f"{int(np.floor(mem*0.4))}g",
-        #             'spark.hadoop.fs.gs.requester.pays.mode': 'CUSTOM',
-        #             'spark.hadoop.fs.gs.requester.pays.buckets': 'hail-datasets-us-central1',
-        #             'spark.hadoop.fs.gs.requester.pays.project.id': gcp_project,
+        local=f"local[*]", 
+        spark_conf={
+                    "spark.driver.memory": f"{int(np.floor(mem*0.8))}g",
+                    "spark.speculation": 'true'
                     }, 
         tmp_dir="tmp", local_tmpdir="tmp",
                     )
@@ -91,7 +88,7 @@ if sv_vcf!='NA':
     sv_mt = hl.import_vcf(sv_vcf, reference_genome=build, force_bgz=True, call_fields=[], array_elements_required=False)
 
     sv_mt = sv_mt.annotate_rows(gene=hl.array(hl.set(hl.flatmap(lambda x: x, [sv_mt.info[field] for field in sv_gene_fields]))))
-    sv_mt = sv_mt.annotate_rows(gene=hl.if_else(sv_mt.gene.size()==0, hl.array(['']), sv_mt.gene))
+    sv_mt = sv_mt.annotate_rows(gene=hl.if_else(sv_mt.gene.size()==0, hl.array(['']), sv_mt.gene))  # TODO: this might blow up the results
     sv_mt = sv_mt.annotate_rows(variant_type='SV')
 
     sv_mt = sv_mt.explode_rows(sv_mt.gene)
@@ -268,18 +265,18 @@ merged_comphets = merged_trio_comphets.entries().union(merged_non_trio_comphets.
 # XLR only
 merged_tm = hl.trio_matrix(merged_mt, pedigree, complete_trios=False)
 gene_phased_tm, gene_agg_phased_tm = phase_by_transmission_aggregate_by_gene(merged_tm, merged_mt)
+gene_phased_tm = gene_phased_tm.annotate_cols(trio_status=hl.if_else(gene_phased_tm.fam_id=='-9', 'not_in_pedigree', 
+                                                   hl.if_else(hl.array(trio_samples).contains(gene_phased_tm.id), 'trio', 'non_trio')))
+
 xlr_phased_tm = gene_phased_tm.filter_rows(gene_phased_tm.vep.transcript_consequences.OMIM_inheritance_code.matches('4'))
-xlr_phased_tm = xlr_phased_tm.filter_entries((xlr_phased_tm.proband_entry.GT.is_non_ref()) &
-                            (~xlr_phased_tm.is_female)).key_rows_by('locus', 'alleles')
-xlr_phased = xlr_phased_tm.annotate_cols(trio_status=hl.if_else(xlr_phased_tm.fam_id=='-9', 'not_in_pedigree', 
-                                                   hl.if_else(hl.array(trio_samples).contains(xlr_phased_tm.id), 'trio', 'non_trio'))).entries()
+xlr_phased = xlr_phased_tm.filter_entries((xlr_phased_tm.proband_entry.GT.is_non_ref()) &
+                            (~xlr_phased_tm.is_female)).key_rows_by('locus', 'alleles').entries()
+
 
 # HomVar in proband only
 phased_hom_var = gene_phased_tm.filter_entries(gene_phased_tm.proband_entry.GT.is_hom_var())
 phased_hom_var = phased_hom_var.filter_rows(hl.agg.count_where(
-    hl.is_defined(phased_hom_var.proband_entry.GT))>0).key_rows_by('locus', 'alleles')
-phased_hom_var = phased_hom_var.annotate_cols(trio_status=hl.if_else(phased_hom_var.fam_id=='-9', 'not_in_pedigree', 
-                                                   hl.if_else(hl.array(trio_samples).contains(phased_hom_var.id), 'trio', 'non_trio'))).entries()
+    hl.is_defined(phased_hom_var.proband_entry.GT))>0).key_rows_by('locus', 'alleles').entries()
 
 xlr_phased = xlr_phased.annotate(variant_category='XLR')
 phased_hom_var = phased_hom_var.annotate(variant_category='hom_var')

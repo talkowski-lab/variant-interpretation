@@ -179,6 +179,7 @@ task addSVSamplesToPed {
 
     new_ped = pd.concat([ped, missing_samps])
     new_ped = new_ped.replace({np.nan: -9})
+    new_ped[['sex','phenotype']] = new_ped[['sex', 'phenotype']].astype(int)
     new_ped.to_csv(os.path.basename(ped_uri).split('.ped')[0] + '_SV_samples.ped',
             sep='\t', index=False)
     EOF
