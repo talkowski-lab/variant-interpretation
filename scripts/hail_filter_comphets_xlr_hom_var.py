@@ -254,7 +254,11 @@ def get_transmission(phased_tm_ht):
 tmp_ped = pd.read_csv(ped_uri, sep='\t').iloc[:,:6]
 tmp_ped.to_csv(f"{prefix}.ped", sep='\t', index=False)
 pedigree = hl.Pedigree.read(f"{prefix}.ped", delimiter='\t')
-trio_samples = list(np.array([[trio.s, trio.pat_id, trio.mat_id] for trio in pedigree.complete_trios() if trio.fam_id!='-9']).flatten())
+
+vcf_samples = merged_mt.s.collect()
+trio_samples = list(np.intersect1d(vcf_samples,
+                              list(np.array([[trio.s, trio.pat_id, trio.mat_id] 
+                                             for trio in pedigree.complete_trios() if trio.fam_id!='-9']).flatten())))
 
 # Get CompHets
 merged_trio_comphets = get_trio_comphets(merged_mt)
