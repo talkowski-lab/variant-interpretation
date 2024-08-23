@@ -143,11 +143,17 @@ if (snv_indel_vcf!='NA') and (sv_vcf!='NA'):
     if len(shared_samps)==0:
         shared_samps = ['']
 
+    def align_mt2_cols_to_mt1(mt1, mt2):
+        mt1 = mt1.add_col_index()
+        mt2 = mt2.add_col_index()
+        new_col_order = mt2.index_cols(mt1.col_key).col_idx.collect()
+        return mt2.choose_cols(new_col_order)
+    
     sv_mt = sv_mt.filter_cols(hl.array(shared_samps).contains(sv_mt.s))
-    snv_mt = snv_mt.filter_cols(hl.array(shared_samps).contains(snv_mt.s))
+    snv_mt = align_mt2_cols_to_mt1(sv_mt, snv_mt)
 
     variant_types = 'SV_SNV_Indel'
-    merged_mt = sv_mt.key_cols_by().union_rows(snv_mt.key_cols_by()).key_cols_by('s')
+    merged_mt = sv_mt.union_rows(snv_mt)
 
 elif snv_indel_vcf!='NA':
     variant_types = 'SNV_Indel'
