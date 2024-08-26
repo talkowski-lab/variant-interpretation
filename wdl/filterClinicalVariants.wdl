@@ -45,6 +45,7 @@ workflow filterClinicalVariants {
         Int max_distance=50
         Boolean mask=false
 
+        Boolean pass_filter=true
         Boolean run_pangolin=false
 
         RuntimeAttr? runtime_attr_merge_clinvar
@@ -62,7 +63,8 @@ workflow filterClinicalVariants {
             hail_docker=hail_docker,
             ac_threshold=ac_threshold,
             gnomad_af_threshold=gnomad_af_threshold,
-            genome_build=genome_build
+            genome_build=genome_build,
+            pass_filter=pass_filter
         }
 
         call runClinicalFilteringOMIM {
@@ -153,7 +155,8 @@ task runClinicalFiltering {
 
         Int ac_threshold
         Float gnomad_af_threshold
-
+        Boolean pass_filter
+        
         RuntimeAttr? runtime_attr_override
     }
     Float input_size = size(vcf_file, 'GB')
@@ -190,7 +193,7 @@ task runClinicalFiltering {
     command {
         curl ~{filter_clinical_variants_script} > filter_vcf.py
         python3 filter_vcf.py ~{vcf_file} ~{prefix} ~{cpu_cores} ~{memory} \
-            ~{ped_uri} ~{ac_threshold} ~{gnomad_af_threshold} ~{genome_build}
+            ~{ped_uri} ~{ac_threshold} ~{gnomad_af_threshold} ~{genome_build} ~{pass_filter}
     }
 
     output {

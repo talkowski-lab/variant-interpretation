@@ -14,6 +14,7 @@ ped_uri = sys.argv[5]
 ac_threshold = int(sys.argv[6])
 gnomad_af_threshold = float(sys.argv[7])
 build = sys.argv[8]
+pass_filter = ast.literal_eval(sys.argv[9].capitalize())
 
 def filter_mt(mt, filter_csq=True, filter_impact=True):
     '''
@@ -114,7 +115,8 @@ mt = mt.filter_rows((hl.is_missing(mt.info.CLNSIG)) |
     ~(mt.info.CLNSIG[0].matches('Benign') | mt.info.CLNSIG[0].matches('benign')))
 
 # filter PASS
-mt = mt.filter_rows(mt.filters.size()==0)
+if (pass_filter):
+    mt = mt.filter_rows(mt.filters.size()==0)
 
 # filter out variants containing only these consequences
 exclude_csqs = ['intergenic_variant', 'upstream_gene_variant', 'downstream_gene_variant',
