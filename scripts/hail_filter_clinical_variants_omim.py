@@ -140,17 +140,21 @@ gene_phased_tm = gene_phased_tm.annotate_rows(vep=gene_phased_tm.vep.annotate(tr
 )))
 
 omim_dom = gene_phased_tm.filter_rows(
-        ((gene_phased_tm.gnomad_popmax_af<=gnomad_dom_threshold) | (hl.is_missing(gene_phased_tm.gnomad_popmax_af))) & 
+    ((gene_phased_tm.gnomad_popmax_af<=gnomad_dom_threshold) | (hl.is_missing(gene_phased_tm.gnomad_popmax_af))) & 
         ((gene_phased_tm.vep.transcript_consequences.OMIM_inheritance_code.matches('1')) |   # OMIM dominant with gnomAD AF filter
         ((hl.is_missing(gene_phased_tm.vep.transcript_consequences.OMIM_inheritance_code)) &  # not OMIM dominant with LOEUF v2/v4 and MPC filters
             (((gene_phased_tm.info.MPC>=mpc_threshold) | (hl.is_missing(gene_phased_tm.info.MPC))) |
-            (hl.if_else(gene_phased_tm.vep.transcript_consequences.am_pathogenicity=='', 1, 
-                hl.float(gene_phased_tm.vep.transcript_consequences.am_pathogenicity))>=am_threshold)) &
-            (hl.if_else(gene_phased_tm.vep.transcript_consequences.LOEUF_v2=='', 0, 
-                hl.float(gene_phased_tm.vep.transcript_consequences.LOEUF_v2))<=loeuf_v2_threshold) | 
-            (hl.if_else(gene_phased_tm.vep.transcript_consequences.LOEUF_v4=='', 0, 
-                hl.float(gene_phased_tm.vep.transcript_consequences.LOEUF_v4))<=loeuf_v4_threshold)
-        ))
+            ((hl.if_else(gene_phased_tm.vep.transcript_consequences.am_pathogenicity=='', 1, 
+            hl.float(gene_phased_tm.vep.transcript_consequences.am_pathogenicity))>=am_threshold) &
+                ((hl.if_else(gene_phased_tm.vep.transcript_consequences.LOEUF_v2=='', 0, 
+                    hl.float(gene_phased_tm.vep.transcript_consequences.LOEUF_v2))<=loeuf_v2_threshold) | 
+                (hl.if_else(gene_phased_tm.vep.transcript_consequences.LOEUF_v4=='', 0, 
+                    hl.float(gene_phased_tm.vep.transcript_consequences.LOEUF_v4))<=loeuf_v4_threshold)
+                )
+            )
+            )
+        )
+        )
     )
 
 omim_dom = omim_dom.filter_entries((omim_dom.proband_entry.GT.is_non_ref()) | 
