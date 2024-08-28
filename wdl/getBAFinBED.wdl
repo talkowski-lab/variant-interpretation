@@ -48,7 +48,6 @@ workflow getBAFinBED {
         input_size=size(getBAF.baf_tsv, 'GB')
     }
 
-
     call plotBAF {
         input:
         merged_baf_tsv=mergeResults.merged_tsv,
@@ -59,6 +58,7 @@ workflow getBAFinBED {
 
     output {
         File merged_baf_tsv = mergeResults.merged_tsv
+        File trio_genotype_SNV_counts = plotBAF.trio_genotype_SNV_counts
         Array[File] baf_plots = plotBAF.baf_plots
     }
 }
@@ -157,5 +157,6 @@ task plotBAF {
 
     output {
         Array[File] baf_plots = glob('*.png')
+        File trio_genotype_SNV_counts = 'trio_genotype_SNV_counts.tsv'
     }
 }

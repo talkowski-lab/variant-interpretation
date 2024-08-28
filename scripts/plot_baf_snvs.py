@@ -39,6 +39,11 @@ if het_only:
 merged_baf = merged_baf.sort_values(['chrom_int', 'POS'])
 merged_baf['parental_origin'] = merged_baf.apply(get_parental_origin, axis=1).astype('category').cat.set_categories(['mother','father','unresolved'])    
 
+# save counts
+gt_cols = ['GT_father','GT_mother','GT_sample']
+merged_baf[gt_cols] = merged_baf[gt_cols].replace({np.nan: './.'})
+merged_baf.groupby('locus_interval')[gt_cols].value_counts().to_csv('trio_genotype_SNV_counts.tsv', sep='\t')
+
 for locus_interval in merged_baf.locus_interval.unique():
     fig, ax = plt.subplots(1, 3, figsize=(20, 5));
     locus_int_df = merged_baf[merged_baf.locus_interval==locus_interval]
