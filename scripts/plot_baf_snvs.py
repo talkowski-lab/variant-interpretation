@@ -41,8 +41,22 @@ merged_baf['parental_origin'] = merged_baf.apply(get_parental_origin, axis=1).as
 
 # save counts
 gt_cols = ['GT_father','GT_mother','GT_sample']
+ab_cols = ['AB_father','AB_mother','AB_sample']
+cols_of_interest = ['SV_type', 'SAMPLE', 'pipeline_id']
+
 merged_baf[gt_cols] = merged_baf[gt_cols].replace({np.nan: './.'})
-merged_baf.groupby('locus_interval')[gt_cols].value_counts().to_csv('trio_genotype_SNV_counts.tsv', sep='\t')
+
+ab_stats = merged_baf.groupby(['locus_interval']+gt_cols)[ab_cols].describe()
+ab_stats.columns = ['_'.join(col).strip() for col in ab_stats.columns.values]
+
+gt_counts = pd.concat([merged_baf.groupby('locus_interval')[gt_cols].value_counts(),
+         ab_stats[[col+'_mean' for col in ab_cols]]], axis=1).reset_index()
+
+for col in cols_of_interest:
+    gt_counts[col] = gt_counts.locus_interval.map(merged_baf.set_index('locus_interval')[col].to_dict())
+
+gt_counts[['locus_interval'] + cols_of_interest + list(np.setdiff1d(gt_counts.columns.drop('locus_interval'), cols_of_interest))]\
+.to_csv('trio_genotype_SNV_counts.tsv', sep='\t', index=False)
 
 for locus_interval in merged_baf.locus_interval.unique():
     fig, ax = plt.subplots(1, 3, figsize=(20, 5));
