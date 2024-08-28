@@ -50,14 +50,18 @@ def split_multi_ssc(mt):
     mt = split_ds.drop('old_locus', 'old_alleles')
     return mt
 
-test_shard = hl.import_vcf(vep_file, reference_genome='GRCh38', array_elements_required=False, call_fields=[])
-test_shard = split_multi_ssc(test_shard)
+mt = hl.import_vcf(vep_file, reference_genome='GRCh38', array_elements_required=False, call_fields=[])
+mt = split_multi_ssc(mt)
 
-test_shard = hl.filter_intervals(test_shard, [hl.parse_locus_interval(locus_interval, 'GRCh38') for locus_interval in bed.locus_interval])
-test_shard = test_shard.filter_rows(hl.is_snp(test_shard.alleles[0], test_shard.alleles[1]))
+mt = hl.filter_intervals(mt, [hl.parse_locus_interval(locus_interval, 'GRCh38') for locus_interval in bed.locus_interval])
+mt = mt.filter_rows(hl.is_snp(mt.alleles[0], mt.alleles[1]))
 
-test_shard = test_shard.filter_rows(test_shard.filters.size()==0)
-test_shard = test_shard.annotate_entries(AB=test_shard.AD[1]/hl.sum(test_shard.AD))
+mt = mt.filter_rows(mt.filters.size()==0)
+mt = mt.annotate_entries(AB=mt.AD[1]/hl.sum(mt.AD))
+
+# filter out regions if sample not in VCF
+vcf_samps = mt.s.collect()
+bed = bed[bed.SAMPLE.isin(vcf_samps)].copy()
 
 roles = ['sample','father','mother']
 output_cols = ['locus', 'alleles', 'window_locus_interval', 'locus_interval', 'SV_type', 'SAMPLE', 'pipeline_id', 'vep_shard'] + [f"AB_{role}" for role in roles] + [f"GT_{role}" for role in roles] 
@@ -107,13 +111,13 @@ def test_interval(locus_interval, og_locus_interval, sample, pipeline_id, sv_typ
 
     return trio_mat_new
 
-if test_shard.count_rows()==0:
+if mt.count_rows()==0:
     print('no overlapping SNVs, outputting empty file...')
     pd.DataFrame({col: [] for col in output_cols}).to_csv(output_name, sep='\t', index=False)  
 
 else:
-    start_locus = test_shard.head(1).locus.collect()[0]
-    end_locus = test_shard.tail(1).locus.collect()[0]
+    start_locus = mt.head(1).locus.collect()[0]
+    end_locus = mt.tail(1).locus.collect()[0]
     chrom_str_to_int = {f"{i}": i for i in range(1, 23)} | {'X': 23, 'Y': 24}
     end_chrom = chrom_str_to_int[end_locus.contig.split('chr')[1]]
     end_pos = int(end_locus.position)
@@ -131,5 +135,5 @@ else:
     for i, row in bed[~bed.not_in_vcf].reset_index().iterrows():
         if ((i+1)%10==0):
             print(f"Getting SNV BAFs for SV interval {i+1}/{tot}...")
-        test_df = pd.concat([test_df, test_interval(row.window_locus_interval, row.locus_interval, row.SAMPLE, row.pipeline_id, row.TYPE, test_shard)])  
+        test_df = pd.concat([test_df, test_interval(row.window_locus_interval, row.locus_interval, row.SAMPLE, row.pipeline_id, row.TYPE, mt)])  
     test_df[np.intersect1d(output_cols, test_df.columns)].to_csv(output_name, sep='\t', index=False)  
