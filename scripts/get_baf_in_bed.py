@@ -74,7 +74,7 @@ def test_interval(locus_interval, og_locus_interval, sample, pipeline_id, sv_typ
                             'vep_shard': [os.path.basename(vep_file)]}
     if n_cohort_vars==0:
         print(f"No SNVs in cohort at {locus_interval}...")
-        return pd.DataFrame(to_return | {col: [np.nan] for col in np.setdiff1d(output_cols, to_return.keys())})
+        return pd.DataFrame(to_return | {col: [np.nan] for col in np.setdiff1d(output_cols, list(to_return.keys()))})
     print(f"number of SNVs in cohort at {locus_interval}: {n_cohort_vars}")
 
     father, mother = ped.loc[sample, ['paternal_id','maternal_id']].tolist()
@@ -86,7 +86,7 @@ def test_interval(locus_interval, og_locus_interval, sample, pipeline_id, sv_typ
     n_sample_vars = sample_mt.count_rows()
     if n_sample_vars==0:
         print(f"No SNVs in sample {sample} at {locus_interval}...")
-        return pd.DataFrame(to_return | {col: [np.nan] for col in np.setdiff1d(output_cols, to_return.keys())})
+        return pd.DataFrame(to_return | {col: [np.nan] for col in np.setdiff1d(output_cols, list(to_return.keys()))})
     print(f"number of SNVs in sample {sample} at {locus_interval}: {n_sample_vars}")
 
     trio_mt = mt.filter_cols((mt.s==sample) | (mt.s==father) | (mt.s==mother))
