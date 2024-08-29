@@ -35,8 +35,11 @@ merged_baf['locus'] = merged_baf.locus.replace({np.nan: 'chr0:0'})
 merged_baf[['CHROM', 'POS']] = merged_baf.locus.str.split(':', expand=True)
 merged_baf['chrom_int'] = merged_baf.CHROM.str.split('chr').str[1].replace({'X':23, 'Y':24}).astype(int)
 merged_baf['POS'] = merged_baf.POS.astype(int)
+
+merged_baf['to_plot'] = True
 if het_only:
-    merged_baf = merged_baf[merged_baf.GT_sample=='0/1']
+    merged_baf['to_plot'] = ((merged_baf.GT_sample=='0/1') | (merged_baf.GT_sample.isna()))
+
 merged_baf = merged_baf.sort_values(['chrom_int', 'POS'])
 merged_baf['parental_origin'] = merged_baf.apply(get_parental_origin, axis=1).astype('category').cat.set_categories(['mother','father','unresolved'])    
 
@@ -61,7 +64,7 @@ gt_counts[['locus_interval'] + cols_of_interest + list(np.setdiff1d(gt_counts.co
 
 for locus_interval in merged_baf.locus_interval.unique():
     fig, ax = plt.subplots(1, 3, figsize=(20, 5));
-    locus_int_df = merged_baf[merged_baf.locus_interval==locus_interval]
+    locus_int_df = merged_baf[(merged_baf.locus_interval==locus_interval) & (merged_baf.to_plot)]
     window_locus_interval = locus_int_df.window_locus_interval.unique()[0]
     sample = locus_int_df.SAMPLE.unique()[0]
     pipeline_id = locus_int_df.pipeline_id.unique()[0]
