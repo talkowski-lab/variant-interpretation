@@ -31,12 +31,12 @@ def get_parental_origin(row):
 
 merged_baf = pd.read_csv(merged_baf_tsv, sep='\t')
 
-merged_baf[['CHROM', 'POS']] = merged_baf.locus.str.split(':', expand=True)
-merged_baf['chrom_int'] = merged_baf.CHROM.str.split('chr').str[1].replace({'X':23, 'Y':24}).astype(int)
-merged_baf['POS'] = merged_baf.POS.astype(int)
+# merged_baf[['CHROM', 'POS']] = merged_baf.locus.str.split(':', expand=True)
+# merged_baf['chrom_int'] = merged_baf.CHROM.str.split('chr').str[1].replace({'X':23, 'Y':24}).astype(int)
+# merged_baf['POS'] = merged_baf.POS.astype(int)
 if het_only:
     merged_baf = merged_baf[merged_baf.GT_sample=='0/1']
-merged_baf = merged_baf.sort_values(['chrom_int', 'POS'])
+# merged_baf = merged_baf.sort_values(['chrom_int', 'POS'])
 merged_baf['parental_origin'] = merged_baf.apply(get_parental_origin, axis=1).astype('category').cat.set_categories(['mother','father','unresolved'])    
 
 # save counts
