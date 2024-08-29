@@ -151,6 +151,7 @@ task plotBAF {
     }
 
     command <<<
+    set -eou pipefail
     curl ~{plot_baf_script} > plot_baf.py
     python3 plot_baf.py ~{merged_baf_tsv} ~{het_only}
     >>>
