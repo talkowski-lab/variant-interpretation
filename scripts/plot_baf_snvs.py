@@ -65,16 +65,16 @@ gt_counts[['locus_interval'] + cols_of_interest + list(np.setdiff1d(gt_counts.co
 for locus_interval in merged_baf.locus_interval.unique():
     fig, ax = plt.subplots(1, 3, figsize=(20, 5));
     locus_int_df = merged_baf[(merged_baf.locus_interval==locus_interval)]
-    if (locus_int_df.to_plot.sum()!=0):
-        window_locus_interval = locus_int_df.window_locus_interval.unique()[0]
-        sample = locus_int_df.SAMPLE.unique()[0]
-        pipeline_id = locus_int_df.pipeline_id.unique()[0]
-        start, end = (int(x) for x in locus_interval.split(':')[1].split('-'))
-        interval_size = human_size(end - start)
-        window_start, window_end = (int(x) for x in window_locus_interval.split(':')[1].split('-'))
-        sv_type = locus_int_df.SV_type.unique()[0]
+    window_locus_interval = locus_int_df.window_locus_interval.unique()[0]
+    sample = locus_int_df.SAMPLE.unique()[0]
+    pipeline_id = locus_int_df.pipeline_id.unique()[0]
+    start, end = (int(x) for x in locus_interval.split(':')[1].split('-'))
+    interval_size = human_size(end - start)
+    window_start, window_end = (int(x) for x in window_locus_interval.split(':')[1].split('-'))
+    sv_type = locus_int_df.SV_type.unique()[0]
 
-        fig.suptitle(f"{locus_interval} in {pipeline_id} ({interval_size} {sv_type})");
+    fig.suptitle(f"{locus_interval} in {pipeline_id} ({interval_size} {sv_type})");
+    if (locus_int_df.to_plot.sum()!=0):
         for i, role in enumerate(['sample','father','mother']):
             median_baf_above = locus_int_df[(locus_int_df[f"AB_{role}"]<1)&(locus_int_df[f"AB_{role}"]>0.5)][f"AB_{role}"].median()
             median_baf_below = locus_int_df[(locus_int_df[f"AB_{role}"]>0)&(locus_int_df[f"AB_{role}"]<0.5)][f"AB_{role}"].median()
