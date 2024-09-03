@@ -31,7 +31,7 @@ workflow filterClinicalVariants {
         String spliceAI_docker
         String pangolin_docker
 
-        Int ac_threshold=20
+        Float af_threshold=0.1
         Float gnomad_af_threshold=0.05
         Float am_threshold=0.56
         Float mpc_threshold=2
@@ -61,7 +61,7 @@ workflow filterClinicalVariants {
             ped_uri=ped_uri,
             filter_clinical_variants_script=filter_clinical_variants_script,
             hail_docker=hail_docker,
-            ac_threshold=ac_threshold,
+            af_threshold=af_threshold,
             gnomad_af_threshold=gnomad_af_threshold,
             genome_build=genome_build,
             pass_filter=pass_filter
@@ -153,10 +153,10 @@ task runClinicalFiltering {
         String hail_docker
         String genome_build
 
-        Int ac_threshold
+        Float af_threshold
         Float gnomad_af_threshold
         Boolean pass_filter
-        
+
         RuntimeAttr? runtime_attr_override
     }
     Float input_size = size(vcf_file, 'GB')
@@ -193,7 +193,7 @@ task runClinicalFiltering {
     command {
         curl ~{filter_clinical_variants_script} > filter_vcf.py
         python3 filter_vcf.py ~{vcf_file} ~{prefix} ~{cpu_cores} ~{memory} \
-            ~{ped_uri} ~{ac_threshold} ~{gnomad_af_threshold} ~{genome_build} ~{pass_filter}
+            ~{ped_uri} ~{af_threshold} ~{gnomad_af_threshold} ~{genome_build} ~{pass_filter}
     }
 
     output {
@@ -211,7 +211,7 @@ task filterCompHetsXLR {
         String hail_docker
         String genome_build 
 
-        Int ac_threshold
+        Float af_threshold
         Float gnomad_af_threshold
         Float am_threshold
         Float mpc_threshold
@@ -256,7 +256,7 @@ task filterCompHetsXLR {
     command {
         curl ~{filter_comphets_xlr_script} > filter_vcf.py
         python3 filter_vcf.py ~{vcf_file} ~{prefix} ~{cpu_cores} ~{memory} \
-            ~{ped_uri} ~{ac_threshold} ~{gnomad_af_threshold} ~{am_threshold} \
+            ~{ped_uri} ~{af_threshold} ~{gnomad_af_threshold} ~{am_threshold} \
             ~{mpc_threshold} ~{gnomad_rec_threshold} ~{gnomad_dom_threshold} \
             ~{loeuf_v2_threshold} ~{loeuf_v4_threshold} ~{genome_build}
     }

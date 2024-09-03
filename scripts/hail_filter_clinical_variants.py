@@ -11,7 +11,7 @@ prefix = sys.argv[2]
 cores = sys.argv[3]  # string
 mem = int(np.floor(float(sys.argv[4])))
 ped_uri = sys.argv[5]
-ac_threshold = int(sys.argv[6])
+af_threshold = float(sys.argv[6])
 gnomad_af_threshold = float(sys.argv[7])
 build = sys.argv[8]
 pass_filter = ast.literal_eval(sys.argv[9].capitalize())
@@ -125,7 +125,7 @@ exclude_csqs = ['intergenic_variant', 'upstream_gene_variant', 'downstream_gene_
 mt = mt.filter_rows(hl.set(exclude_csqs).intersection(mt.all_csqs).size()!=mt.all_csqs.size())
 
 # filter by AC and gnomAD AF
-mt = mt.filter_rows(mt.info.cohort_AC<=ac_threshold)
+mt = mt.filter_rows(mt.info.cohort_AC<=af_threshold)
 mt = mt.filter_rows((mt.gnomad_popmax_af<=gnomad_af_threshold) | (hl.is_missing(mt.gnomad_popmax_af)))
 
 # export intermediate VCF
