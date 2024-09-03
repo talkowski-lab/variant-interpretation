@@ -87,7 +87,9 @@ if snv_indel_vcf!='NA':
 if sv_vcf!='NA':
     sv_mt = hl.import_vcf(sv_vcf, reference_genome=build, force_bgz=True, call_fields=[], array_elements_required=False)
 
-    sv_mt = sv_mt.annotate_rows(gene=hl.array(hl.set(hl.flatmap(lambda x: x, [sv_mt.info[field] for field in sv_gene_fields]))))
+    # ignore genes for CPX SVs
+    sv_mt = sv_mt.annotate_rows(gene=hl.or_missing(sv_mt.info.SVTYPE!='CPX', 
+                                                   hl.array(hl.set(hl.flatmap(lambda x: x, [sv_mt.info[field] for field in sv_gene_fields])))))
     sv_mt = sv_mt.annotate_rows(variant_type='SV')
 
     sv_mt = sv_mt.explode_rows(sv_mt.gene)
