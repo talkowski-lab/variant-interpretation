@@ -533,7 +533,7 @@ task filterVCF {
     #             (hl.is_missing(mt.info.gnomad_sv_name[0])) &  # not gnomAD benign
     #             (mt.gnomad_popmax_af <= gnomad_af_threshold))  
     filt_mt = mt.filter_rows(mt.gnomad_popmax_af <= gnomad_af_threshold)
-    
+
     # export P/LP TSV
     path_tm.entries().flatten().export(os.path.basename(vcf_file).split('.vcf')[0] + '_path_variants.tsv.gz', delimiter='\t')
 
@@ -639,7 +639,7 @@ task filterByGeneList {
     hl.export_vcf(mt, os.path.basename(vcf_file).split('.vcf')[0] + f".filtered.{gene_list_name}.vcf.bgz", metadata=header, tabix=True)
     EOF
 
-    python3 ~{vcf_file} ~{gene_list} ~{genome_build} ~{size_threshold} ~{cpu_cores} ~{memory} ~{sv_gene_fields}
+    python3 ~{vcf_file} ~{gene_list} ~{genome_build} ~{size_threshold} ~{cpu_cores} ~{memory} ~{sep=',' sv_gene_fields}
     >>>
 
     String file_ext = if sub(basename(vcf_file), '.vcf.gz', '')!=basename(vcf_file) then '.vcf.gz' else '.vcf.bgz'
