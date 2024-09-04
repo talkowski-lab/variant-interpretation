@@ -106,6 +106,7 @@ all_errors_mt = all_errors.key_by().to_matrix_table(row_key=['locus','alleles'],
 phased_tm = phased_tm.annotate_entries(mendel_code=all_errors_mt[phased_tm.row_key, phased_tm.col_key].mendel_code)
 
 # Output 1: grab ClinVar only
+clinvar_mt = mt.filter_rows((mt.info.CLNSIG[0].matches('Pathogenic') | mt.info.CLNSIG[0].matches('pathogenic')))
 clinvar_tm = phased_tm.filter_rows((phased_tm.info.CLNSIG[0].matches('Pathogenic') | phased_tm.info.CLNSIG[0].matches('pathogenic')))
 clinvar_tm = clinvar_tm.filter_entries((clinvar_tm.proband_entry.GT.is_non_ref()) | 
                                    (clinvar_tm.mother_entry.GT.is_non_ref()) |
@@ -135,6 +136,9 @@ mt = mt.filter_rows((mt.gnomad_af<=gnomad_af_threshold) | (hl.is_missing(mt.gnom
 
 # export intermediate VCF
 hl.export_vcf(mt, prefix+'_clinical.vcf.bgz', metadata=header)
+
+# export ClinVar VCF
+hl.export_vcf(clinvar_mt, prefix+'_clinvar_variants.vcf.bgz', metadata=header)
 
 # export ClinVar TSV
 clinvar_tm.entries().flatten().export(prefix+'_clinvar_variants.tsv.gz', delimiter='\t')

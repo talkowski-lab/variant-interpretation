@@ -50,6 +50,7 @@ workflow filterClinicalVariants {
 
         RuntimeAttr? runtime_attr_merge_clinvar
         RuntimeAttr? runtime_attr_merge_omim_rec_vcfs
+        RuntimeAttr? runtime_attr_merge_clinvar_vcfs
         RuntimeAttr? runtime_attr_merge_omim_dom
         RuntimeAttr? runtime_attr_merge_omim_rec
     }
@@ -136,8 +137,18 @@ workflow filterClinicalVariants {
             runtime_attr_override=runtime_attr_merge_omim_rec_vcfs
     }
 
+    call mergeVCFs.mergeVCFs as mergeClinVarVCFs {
+        input:  
+            vcf_files=runClinicalFiltering.clinvar_vcf,
+            sv_base_mini_docker=sv_base_mini_docker,
+            cohort_prefix=cohort_prefix + '_ClinVar_variants',
+            runtime_attr_override=runtime_attr_merge_clinvar_vcfs
+    }
+
     output {
         File clinvar_tsv = mergeClinVar.merged_tsv
+        File clinvar_vcf = mergeClinVarVCFs.merged_vcf_file
+        File clinvar_vcf_idx = mergeClinVarVCFs.merged_vcf_idx
         File omim_recessive_vcf = mergeOMIMRecessive.merged_vcf_file
         File omim_recessive_vcf_idx = mergeOMIMRecessive.merged_vcf_idx
         File omim_dominant_tsv = mergeOMIMDominant.merged_tsv
@@ -198,6 +209,7 @@ task runClinicalFiltering {
 
     output {
         File clinvar = prefix + '_clinvar_variants.tsv.gz'
+        File clinvar_vcf = prefix + '_clinvar_variants.vcf.bgz'
         File filtered_vcf = prefix + '_clinical.vcf.bgz'
     }
 }
