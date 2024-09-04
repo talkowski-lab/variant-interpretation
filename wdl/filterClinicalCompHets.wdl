@@ -15,6 +15,7 @@ struct RuntimeAttr {
 workflow filterClinicalCompHets {
     input {
         File? omim_recessive_vcf
+        File? clinvar_vcf
         File? sv_filtered_vcf
         File ped_uri
         File omim_uri
@@ -71,6 +72,17 @@ workflow filterClinicalCompHets {
             }
         }
 
+        if (defined(clinvar_vcf)) {
+            call helpers.subsetVCFSamplesHail as subsetVCFSamplesSNVIndelsClinVar {
+                input:
+                    samples_file=sample_file,
+                    vcf_file=select_first([clinvar_vcf]),
+                    hail_docker=hail_docker,
+                    genome_build=genome_build,
+                    runtime_attr_override=runtime_attr_subset_vcfs_snv_indel
+            }
+        }
+
         if (defined(sv_filtered_vcf)) {
             call helpers.subsetVCFSamplesHail as subsetVCFSamplesSVs {
                 input:
@@ -85,6 +97,7 @@ workflow filterClinicalCompHets {
         call filterCompHetsXLRHomVar {
             input:
                 snv_indel_vcf=select_first([subsetVCFSamplesSNVIndels.vcf_subset, 'NA']),
+                clinvar_vcf=select_first([subsetVCFSamplesSNVIndelsClinVar.vcf_subset, 'NA']),
                 sv_vcf=select_first([subsetVCFSamplesSVs.vcf_subset, 'NA']),
                 ped_uri=select_first([addSVSamplesToPed.output_ped, ped_uri]),
                 omim_uri=omim_uri,
@@ -198,6 +211,7 @@ task addSVSamplesToPed {
 task filterCompHetsXLRHomVar {
     input {
         String snv_indel_vcf
+        String clinvar_vcf
         String sv_vcf
         File ped_uri
         String omim_uri
@@ -248,7 +262,7 @@ task filterCompHetsXLRHomVar {
 
     command {
         curl ~{filter_comphets_xlr_hom_var_script} > filter_vcf.py
-        python3 filter_vcf.py ~{snv_indel_vcf} ~{sv_vcf} ~{ped_uri} ~{prefix} ~{omim_uri} \
+        python3 filter_vcf.py ~{snv_indel_vcf} ~{clinvar_vcf} ~{sv_vcf} ~{ped_uri} ~{prefix} ~{omim_uri} \
             ~{sep=',' sv_gene_fields} ~{genome_build} ~{cpu_cores} ~{memory} 
     }
 

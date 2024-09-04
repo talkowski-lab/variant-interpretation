@@ -7,14 +7,15 @@ import ast
 import os
 
 snv_indel_vcf = sys.argv[1]
-sv_vcf = sys.argv[2]
-ped_uri = sys.argv[3]
-prefix = sys.argv[4]
-omim_uri = sys.argv[5]
-sv_gene_fields = sys.argv[6].split(',')  # ['PREDICTED_LOF', 'PREDICTED_INTRAGENIC_EXON_DUP']
-build = sys.argv[7]
-cores = sys.argv[8]  # string
-mem = int(np.floor(float(sys.argv[9])))
+clinvar_vcf = sys.argv[2]
+sv_vcf = sys.argv[3]
+ped_uri = sys.argv[4]
+prefix = sys.argv[5]
+omim_uri = sys.argv[6]
+sv_gene_fields = sys.argv[7].split(',')  # ['PREDICTED_LOF', 'PREDICTED_INTRAGENIC_EXON_DUP']
+build = sys.argv[8]
+cores = sys.argv[9]  # string
+mem = int(np.floor(float(sys.argv[10])))
 
 hl.init(min_block_size=128, 
         local=f"local[*]", 
@@ -50,14 +51,12 @@ def filter_mt(mt):
         )
     return mt 
 
-## STEP 1: Merge SNV/Indel VCF with SV VCF (or just one of them)
-# Load SNV/Indel VCF
-if snv_indel_vcf!='NA':
-    snv_mt = hl.import_vcf(snv_indel_vcf, reference_genome=build, force_bgz=True, call_fields=[], array_elements_required=False)
-    csq_columns = hl.get_vcf_metadata(snv_indel_vcf)['info']['CSQ']['Description'].split('Format: ')[1].split('|')
+def load_split_vep_consequences(vcf_uri):
+    mt = hl.import_vcf(vcf_uri, reference_genome=build, force_bgz=True, call_fields=[], array_elements_required=False)
+    csq_columns = hl.get_vcf_metadata(vcf_uri)['info']['CSQ']['Description'].split('Format: ')[1].split('|')
 
-    snv_mt = snv_mt.annotate_rows(vep=snv_mt.info)
-    transcript_consequences = snv_mt.vep.CSQ.map(lambda x: x.split('\|'))
+    mt = mt.annotate_rows(vep=mt.info)
+    transcript_consequences = mt.vep.CSQ.map(lambda x: x.split('\|'))
 
     transcript_consequences_strs = transcript_consequences.map(lambda x: hl.if_else(hl.len(x)>1, hl.struct(**
                                                         {col: x[i] if col!='Consequence' else x[i].split('&')  
@@ -65,8 +64,19 @@ if snv_indel_vcf!='NA':
                                                             hl.struct(**{col: hl.missing('str') if col!='Consequence' else hl.array([hl.missing('str')])  
                                                             for i, col in enumerate(csq_columns)})))
 
-    snv_mt = snv_mt.annotate_rows(vep=snv_mt.vep.annotate(transcript_consequences=transcript_consequences_strs))
-    snv_mt = snv_mt.annotate_rows(vep=snv_mt.vep.select('transcript_consequences'))
+    mt = mt.annotate_rows(vep=mt.vep.annotate(transcript_consequences=transcript_consequences_strs))
+    mt = mt.annotate_rows(vep=mt.vep.select('transcript_consequences'))
+    return mt
+
+## STEP 1: Merge SNV/Indel VCF with SV VCF (or just one of them)
+# Load SNV/Indel VCF
+if snv_indel_vcf!='NA':
+    snv_mt = load_split_vep_consequences(snv_indel_vcf)
+
+    # Load and merge SNV/Indel ClinVar P/LP VCF
+    if clinvar_vcf!='NA':
+        clinvar_mt = load_split_vep_consequences(clinvar_vcf) 
+        snv_mt = snv_mt.union_rows(clinvar_mt).distinct_by_row()
 
     # filter SNV/Indel MT
     snv_mt = snv_mt.explode_rows(snv_mt.vep.transcript_consequences)
