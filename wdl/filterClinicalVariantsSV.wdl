@@ -626,7 +626,7 @@ task filterByGeneList {
 
     def get_predicted_sources_expr(row_expr, sv_gene_fields):
         return hl.array(
-            [hl.or_missing(hl.set(row_expr.info[col]).intersection(hl.set(row_expr.disease_genes)).size()>0, col) for col in sv_gene_fields]
+            [hl.or_missing(hl.set(row_expr.info[col]).intersection(hl.set(row_expr.info.disease_genes)).size()>0, col) for col in sv_gene_fields]
         ).filter(hl.is_defined)
 
     mt = mt.annotate_rows(info=mt.info.annotate(disease_gene_sources=get_predicted_sources_expr(mt, sv_gene_fields)))
