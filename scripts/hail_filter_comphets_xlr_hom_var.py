@@ -97,6 +97,9 @@ if snv_indel_vcf!='NA':
 if sv_vcf!='NA':
     sv_mt = hl.import_vcf(sv_vcf, reference_genome=build, force_bgz=True, call_fields=[], array_elements_required=False)
 
+    # filter by PASS
+    sv_mt = sv_mt.filter_rows((sv_mt.filters.size()==0) | hl.is_missing(sv_mt.filters))
+
     # ignore genes for CPX SVs
     sv_mt = sv_mt.annotate_rows(gene=hl.or_missing(sv_mt.info.SVTYPE!='CPX', 
                                                    hl.array(hl.set(hl.flatmap(lambda x: x, [sv_mt.info[field] for field in sv_gene_fields])))))
@@ -282,9 +285,9 @@ trio_samples = list(np.intersect1d(vcf_samples,
                               list(np.array([[trio.s, trio.pat_id, trio.mat_id] 
                                              for trio in pedigree.complete_trios() if trio.fam_id!='-9']).flatten())))
 
-# Get CompHets
-merged_trio_comphets = get_trio_comphets(merged_mt)
-merged_non_trio_comphets = get_non_trio_comphets(merged_mt)
+# Get CompHets (only in autosomes or PAR)
+merged_trio_comphets = get_trio_comphets(merged_mt.filter_rows(merged_mt.locus.in_autosome_or_par()))
+merged_non_trio_comphets = get_non_trio_comphets(merged_mt.filter_rows(merged_mt.locus.in_autosome_or_par()))
 merged_trio_comphets = merged_trio_comphets.annotate_cols(trio_status='trio')
 merged_non_trio_comphets = merged_non_trio_comphets.annotate_cols(trio_status=
                                                               hl.if_else(merged_non_trio_comphets.fam_id=='-9', 
@@ -305,6 +308,8 @@ xlr_phased = xlr_phased_tm.filter_entries((xlr_phased_tm.proband_entry.GT.is_non
 
 # HomVar in proband only
 phased_hom_var = gene_phased_tm.filter_entries(gene_phased_tm.proband_entry.GT.is_hom_var())
+phased_hom_var = phased_hom_var.filter_entries((phased_hom_var.locus.in_x_nonpar()) &
+                            (~phased_hom_var.is_female))  # filter out non-PAR chrX in males
 phased_hom_var = phased_hom_var.filter_rows(hl.agg.count_where(
     hl.is_defined(phased_hom_var.proband_entry.GT))>0).key_rows_by('locus', 'alleles').entries()
 
