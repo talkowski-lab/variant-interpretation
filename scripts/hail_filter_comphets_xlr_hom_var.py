@@ -285,9 +285,15 @@ trio_samples = list(np.intersect1d(vcf_samples,
                               list(np.array([[trio.s, trio.pat_id, trio.mat_id] 
                                              for trio in pedigree.complete_trios() if trio.fam_id!='-9']).flatten())))
 
-# Get CompHets (only in autosomes or PAR)
-merged_trio_comphets = get_trio_comphets(merged_mt.filter_rows(merged_mt.locus.in_autosome_or_par()))
-merged_non_trio_comphets = get_non_trio_comphets(merged_mt.filter_rows(merged_mt.locus.in_autosome_or_par()))
+## Get CompHets 
+# Filter to only in autosomes or PAR
+comphet_mt = merged_mt.filter_rows(merged_mt.locus.in_autosome_or_par())
+# Filter only OMIM recessive or missing (for SVs)
+comphet_mt = comphet_mt.filter_rows((comphet_mt.vep.transcript_consequences.OMIM_inheritance_code.matches('2')) | 
+                                    (comphet_mt.vep.transcript_consequences.OMIM_inheritance_code==''))
+
+merged_trio_comphets = get_trio_comphets(comphet_mt)
+merged_non_trio_comphets = get_non_trio_comphets(comphet_mt)
 merged_trio_comphets = merged_trio_comphets.annotate_cols(trio_status='trio')
 merged_non_trio_comphets = merged_non_trio_comphets.annotate_cols(trio_status=
                                                               hl.if_else(merged_non_trio_comphets.fam_id=='-9', 
