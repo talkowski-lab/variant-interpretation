@@ -161,10 +161,8 @@ workflow filterClinicalVariantsSV {
 
     output {
         File sv_pathogenic_tsv = filterVCF.sv_pathogenic_tsv
-        File sv_filtered_vcf = filterVCF.sv_filtered_vcf
-        File sv_filtered_vcf_idx = filterVCF.sv_filtered_vcf_idx
-        File sv_filtered_gene_list_vcf = select_first([filterByGeneList.sv_filtered_gene_list_vcf, filterVCF.sv_filtered_vcf])
-        File sv_filtered_gene_list_vcf_idx = select_first([filterByGeneList.sv_filtered_gene_list_vcf_idx, filterVCF.sv_filtered_vcf_idx])
+        File sv_filtered_vcf = select_first([filterByGeneList.sv_filtered_gene_list_vcf, filterVCF.sv_filtered_vcf])
+        File sv_filtered_vcf_idx = select_first([filterByGeneList.sv_filtered_gene_list_vcf_idx, filterVCF.sv_filtered_vcf_idx])
     }
 }
 
@@ -643,7 +641,7 @@ task filterByGeneList {
     header['info']['disease_gene_sources'] = {'Description': f"Sources for disease genes overlapping with {gene_list_name}. Considered fields: {', '.join(sv_gene_fields)}.", 'Number': '.', 'Type': 'String'}
     header['info'][size_threshold_field] = {'Description': f"Passes SVLEN size filter of {humansize(size_threshold)}.", 'Number': '0', 'Type': 'Flag'}
 
-    hl.export_vcf(mt, os.path.basename(vcf_file).split('.vcf')[0] + f".filtered.{gene_list_name}.vcf.bgz", metadata=header, tabix=True)
+    hl.export_vcf(mt, os.path.basename(vcf_file).split('.vcf')[0] + f".{gene_list_name}.vcf.bgz", metadata=header, tabix=True)
     EOF
 
     python3 filter_gene_list.py ~{vcf_file} ~{gene_list} ~{genome_build} ~{size_threshold} ~{cpu_cores} ~{memory} ~{sep=',' sv_gene_fields}
@@ -651,7 +649,7 @@ task filterByGeneList {
 
     String file_ext = if sub(basename(vcf_file), '.vcf.gz', '')!=basename(vcf_file) then '.vcf.gz' else '.vcf.bgz'
     output {
-        File sv_filtered_gene_list_vcf = basename(vcf_file, file_ext) + ".filtered.~{basename(gene_list, '.txt')}.vcf.bgz"
-        File sv_filtered_gene_list_vcf_idx = basename(vcf_file, file_ext) + ".filtered.~{basename(gene_list, '.txt')}.vcf.bgz.tbi"
+        File sv_filtered_gene_list_vcf = basename(vcf_file, file_ext) + ".~{basename(gene_list, '.txt')}.vcf.bgz"
+        File sv_filtered_gene_list_vcf_idx = basename(vcf_file, file_ext) + ".~{basename(gene_list, '.txt')}.vcf.bgz.tbi"
     }
 }
