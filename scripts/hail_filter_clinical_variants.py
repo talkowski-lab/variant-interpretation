@@ -85,12 +85,7 @@ gnomad_fields = [x for x in list(mt.vep.transcript_consequences[0]) if 'gnomAD' 
 mt = mt.annotate_rows(all_csqs=hl.set(hl.flatmap(lambda x: x, mt.vep.transcript_consequences.Consequence)),  
                              gnomad_popmax_af=hl.max([hl.or_missing(hl.array(hl.set(mt.vep.transcript_consequences[gnomad_field]))[0]!='',
                                     hl.float(hl.array(hl.set(mt.vep.transcript_consequences[gnomad_field]))[0])) 
-                             for gnomad_field in gnomad_fields]),
-                             gnomad_max_af=hl.max([hl.or_missing(hl.array(hl.set(mt.vep.transcript_consequences[gnomad_field]))[0]!='',
-                                    hl.float(hl.array(hl.set(mt.vep.transcript_consequences[gnomad_field]))[0])) 
-                             for gnomad_field in ['gnomADg_AF','gnomADe_AF']]))
-# Use gnomAD popmax AF if not more than 0.01 greater than gnomAD exome/genome AF
-mt = mt.annotate_rows(gnomad_af=hl.if_else((mt.gnomad_popmax_af-mt.gnomad_max_af)>0.01, mt.gnomad_max_af, mt.gnomad_popmax_af))
+                             for gnomad_field in gnomad_fields]))
 
 # Phasing
 tmp_ped = pd.read_csv(ped_uri, sep='\t').iloc[:,:6]
@@ -132,7 +127,7 @@ mt = mt.filter_rows(hl.set(exclude_csqs).intersection(mt.all_csqs).size()!=mt.al
 
 # filter by AC and gnomAD AF
 mt = mt.filter_rows(mt.info.cohort_AF<=af_threshold)
-mt = mt.filter_rows((mt.gnomad_af<=gnomad_af_threshold) | (hl.is_missing(mt.gnomad_af)))
+mt = mt.filter_rows((mt.gnomad_popmax_af<=gnomad_af_threshold) | (hl.is_missing(mt.gnomad_popmax_af)))
 
 # export intermediate VCF
 hl.export_vcf(mt, prefix+'_clinical.vcf.bgz', metadata=header)

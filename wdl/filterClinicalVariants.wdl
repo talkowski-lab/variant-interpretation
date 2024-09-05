@@ -35,7 +35,7 @@ workflow filterClinicalVariants {
         Float gnomad_af_threshold=0.05
         Float am_threshold=0.56
         Float mpc_threshold=2
-        Float gnomad_rec_threshold=0.001
+        Float gnomad_rec_threshold=1
         Float gnomad_dom_threshold=0.001
         Float loeuf_v2_threshold=0.35
         Float loeuf_v4_threshold=0.6
