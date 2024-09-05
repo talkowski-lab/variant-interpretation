@@ -632,7 +632,7 @@ task filterByGeneList {
     mt = mt.annotate_rows(info=mt.info.annotate(disease_gene_sources=get_predicted_sources_expr(mt, sv_gene_fields)))
 
     # filter only disease genes with SVLEN/size threshold
-    mt = mt.filter_rows((mt.disease_genes.size()>0) & (mt.info.SVLEN>=size_threshold))
+    mt = mt.filter_rows((mt.info.disease_genes.size()>0) & (mt.info.SVLEN>=size_threshold))
     header['info']['disease_genes'] = {'Description': f"Disease genes overlapping with {gene_list_name}.", 'Number': '.', 'Type': 'String'}
     header['info']['disease_gene_sources'] = {'Description': f"Sources for disease genes overlapping with {gene_list_name}. Considered fields: {', '.join(sv_gene_fields)}.", 'Number': '.', 'Type': 'String'}
 
