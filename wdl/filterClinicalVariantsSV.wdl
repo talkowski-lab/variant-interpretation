@@ -528,10 +528,6 @@ task filterVCF {
                     and 'af' in x.lower()]
     mt = mt.annotate_rows(gnomad_popmax_af=hl.max([mt.info[field] for field in gnomad_fields]))
 
-    # filt_mt = mt.filter_rows(((~mt.info.clinical_interpretation[0].matches('enign')) |  # not ClinVar benign
-    #                 (hl.is_missing(mt.info.clinical_interpretation[0]))) &
-    #             (hl.is_missing(mt.info.gnomad_sv_name[0])) &  # not gnomAD benign
-    #             (mt.gnomad_popmax_af <= gnomad_af_threshold))  
     filt_mt = mt.filter_rows(mt.gnomad_popmax_af <= gnomad_af_threshold)
 
     # export P/LP TSV
@@ -631,10 +627,21 @@ task filterByGeneList {
 
     mt = mt.annotate_rows(info=mt.info.annotate(disease_gene_sources=get_predicted_sources_expr(mt, sv_gene_fields)))
 
-    # filter only disease genes with SVLEN/size threshold
-    mt = mt.filter_rows((mt.info.disease_genes.size()>0) & (mt.info.SVLEN>=size_threshold))
+    suffixes = ['BP', 'KB', 'MB', 'GB', 'TB', 'PB']
+    def humansize(bps):
+        i = 0
+        while bps >= 1000 and i < len(suffixes)-1:
+            bps /= 1000.
+            i += 1
+        f = ('%.2f' % bps).rstrip('0').rstrip('.')
+        return '%s_%s' % (f, suffixes[i])
+
+    size_threshold_field = f"SVLEN_filter_{humansize(size_threshold)}"
+    # flag size threshold
+    mt = mt.annotate_rows(info=mt.info.annotate(**{size_threshold_field: (mt.info.SVLEN>=size_threshold)}))
     header['info']['disease_genes'] = {'Description': f"Disease genes overlapping with {gene_list_name}.", 'Number': '.', 'Type': 'String'}
     header['info']['disease_gene_sources'] = {'Description': f"Sources for disease genes overlapping with {gene_list_name}. Considered fields: {', '.join(sv_gene_fields)}.", 'Number': '.', 'Type': 'String'}
+    header['info'][size_threshold_field] = {'Description': f"Passes SVLEN size filter of {humansize(size_threshold)}.", 'Number': '0', 'Type': 'Flag'}
 
     hl.export_vcf(mt, os.path.basename(vcf_file).split('.vcf')[0] + f".filtered.{gene_list_name}.vcf.bgz", metadata=header, tabix=True)
     EOF
