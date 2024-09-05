@@ -639,7 +639,7 @@ task filterByGeneList {
     hl.export_vcf(mt, os.path.basename(vcf_file).split('.vcf')[0] + f".filtered.{gene_list_name}.vcf.bgz", metadata=header, tabix=True)
     EOF
 
-    python3 ~{vcf_file} ~{gene_list} ~{genome_build} ~{size_threshold} ~{cpu_cores} ~{memory} ~{sep=',' sv_gene_fields}
+    python3 filter_gene_list.py ~{vcf_file} ~{gene_list} ~{genome_build} ~{size_threshold} ~{cpu_cores} ~{memory} ~{sep=',' sv_gene_fields}
     >>>
 
     String file_ext = if sub(basename(vcf_file), '.vcf.gz', '')!=basename(vcf_file) then '.vcf.gz' else '.vcf.bgz'
