@@ -636,7 +636,7 @@ task filterByGeneList {
         f = ('%.2f' % bps).rstrip('0').rstrip('.')
         return '%s_%s' % (f, suffixes[i])
 
-    size_threshold_field = f"SVLEN_filter_{humansize(size_threshold)}"
+    size_threshold_field = f"passes_SVLEN_filter_{humansize(size_threshold)}"
     # flag size threshold
     mt = mt.annotate_rows(info=mt.info.annotate(**{size_threshold_field: (mt.info.SVLEN>=size_threshold)}))
     header['info']['disease_genes'] = {'Description': f"Disease genes overlapping with {gene_list_name}.", 'Number': '.', 'Type': 'String'}
