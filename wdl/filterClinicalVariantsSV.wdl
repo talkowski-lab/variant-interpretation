@@ -36,7 +36,7 @@ workflow filterClinicalVariantsSV {
                 "PREDICTED_NEAREST_TSS","PREDICTED_PARTIAL_EXON_DUP","PREDICTED_PROMOTER","PREDICTED_TSS_DUP","PREDICTED_UTR"]
         Float bed_overlap_threshold=0.5
         Float gnomad_af_threshold=0.05
-        Float size_threshold=500
+        Int size_threshold=500
 
         RuntimeAttr? runtime_attr_annotate
         RuntimeAttr? runtime_attr_rename_samples
@@ -557,7 +557,7 @@ task filterByGeneList {
         File gene_list
         String genome_build
         String hail_docker
-        Float size_threshold
+        Int size_threshold
         Array[String] sv_gene_fields
         RuntimeAttr? runtime_attr_override
     }
