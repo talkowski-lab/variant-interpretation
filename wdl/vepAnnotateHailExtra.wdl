@@ -515,6 +515,8 @@ task addGenotypesReheader {
         set -euo pipefail
 
         bcftools reheader -h ~{header_file} -o fixed_header.vcf.gz ~{vcf_file}
+        bcftools index -t fixed_header.vcf.gz       
+
         bcftools merge \
         --no-version \
         -Oz \
