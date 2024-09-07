@@ -163,7 +163,7 @@ task annotateFromBed {
     }
 
     String file_ext = if sub(basename(vcf_file), '.vcf.gz', '')!=basename(vcf_file) then '.vcf.gz' else '.vcf.bgz'
-    String output_filename = basename(vcf_file, file_ext) + '_noncoding_annot' + file_ext
+    String output_filename = basename(vcf_file, file_ext) + '_noncoding_annot.vcf.bgz' 
    
     command <<<
     cat <<EOF > annotate_noncoding.py
