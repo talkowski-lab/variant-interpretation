@@ -44,6 +44,7 @@ workflow vepAnnotateHailExtra {
         RuntimeAttr? runtime_attr_annotate_noncoding      
         RuntimeAttr? runtime_attr_annotate_extra
         RuntimeAttr? runtime_attr_annotate_spliceAI
+        RuntimeAttr? runtime_attr_annotate_add_genotypes
     }
 
     scatter (pair in zip(vep_vcf_files, vep_vcf_idx)) {
@@ -99,7 +100,8 @@ workflow vepAnnotateHailExtra {
                 annot_vcf_idx=annot_vcf_idx_,
                 vcf_file=vcf_shard,
                 vcf_idx=vcf_shard_idx,
-                sv_base_mini_docker=sv_base_mini_docker
+                sv_base_mini_docker=sv_base_mini_docker,
+                runtime_attr_override=runtime_attr_annotate_add_genotypes
             }
         }
 
@@ -110,7 +112,8 @@ workflow vepAnnotateHailExtra {
                 annot_vcf_idx=annot_vcf_idx_,
                 vcf_file=vcf_shard,
                 vcf_idx=vcf_shard_idx,
-                sv_base_mini_docker=sv_base_mini_docker
+                sv_base_mini_docker=sv_base_mini_docker,
+                runtime_attr_override=runtime_attr_annotate_add_genotypes
             }
         }
         File merged_vcf_file = select_first([addGenotypesReheader.combined_vcf_file, addGenotypes.combined_vcf_file])
