@@ -39,6 +39,8 @@ workflow vepAnnotateHailExtra {
         String noncoding_bed='NA'
         String gene_list='NA'
 
+        File? header_file
+
         RuntimeAttr? runtime_attr_annotate_noncoding      
         RuntimeAttr? runtime_attr_annotate_extra
         RuntimeAttr? runtime_attr_annotate_spliceAI
@@ -89,19 +91,35 @@ workflow vepAnnotateHailExtra {
         File annot_vcf_file = select_first([annotateSpliceAI.annot_vcf_file, annotateExtra.annot_vcf_file])
         File annot_vcf_idx_ = select_first([annotateSpliceAI.annot_vcf_idx, annotateExtra.annot_vcf_idx])
 
-        call addGenotypes {
-            input:
-            annot_vcf_file=annot_vcf_file,
-            annot_vcf_idx=annot_vcf_idx_,
-            vcf_file=vcf_shard,
-            vcf_idx=vcf_shard_idx,
-            sv_base_mini_docker=sv_base_mini_docker
+        if (defined(header_file)) {
+            call addGenotypesReheader {
+                input:
+                header_file=select_first([header_file]),
+                annot_vcf_file=annot_vcf_file,
+                annot_vcf_idx=annot_vcf_idx_,
+                vcf_file=vcf_shard,
+                vcf_idx=vcf_shard_idx,
+                sv_base_mini_docker=sv_base_mini_docker
+            }
         }
+
+        if (!defined(header_file)) {
+            call addGenotypes {
+                input:
+                annot_vcf_file=annot_vcf_file,
+                annot_vcf_idx=annot_vcf_idx_,
+                vcf_file=vcf_shard,
+                vcf_idx=vcf_shard_idx,
+                sv_base_mini_docker=sv_base_mini_docker
+            }
+        }
+        File merged_vcf_file = select_first([addGenotypesReheader.combined_vcf_file, addGenotypes.combined_vcf_file])
+        File merged_vcf_idx = select_first([addGenotypesReheader.combined_vcf_idx, addGenotypes.combined_vcf_idx])
     }
 
     output {
-        Array[File] annot_vcf_files = addGenotypes.combined_vcf_file
-        Array[File] annot_vcf_idx = addGenotypes.combined_vcf_idx
+        Array[File] annot_vcf_files = merged_vcf_file
+        Array[File] annot_vcf_idx = merged_vcf_idx
     }
 }   
 
@@ -439,8 +457,67 @@ task addGenotypes {
         --no-version \
         -Oz \
         --output ~{combined_vcf_name} \
-        ~{vcf_file} \
-        ~{annot_vcf_file}
+        ~{annot_vcf_file} \
+        ~{vcf_file}
+
+        bcftools index -t ~{combined_vcf_name}
+    >>>
+
+    output {
+        File combined_vcf_file = combined_vcf_name
+        File combined_vcf_idx = combined_vcf_name + ".tbi"
+    }
+
+}
+
+task addGenotypesReheader {
+    input {
+        File header_file
+        File annot_vcf_file
+        File annot_vcf_idx
+        File vcf_file
+        File vcf_idx
+        String sv_base_mini_docker
+        RuntimeAttr? runtime_attr_override
+    }
+
+    Float input_size = size([annot_vcf_file, vcf_file], "GB") 
+    Float base_disk_gb = 10.0
+
+    RuntimeAttr runtime_default = object {
+                                      mem_gb: 16,
+                                      disk_gb: ceil(base_disk_gb + input_size * 5.0),
+                                      cpu_cores: 1,
+                                      preemptible_tries: 3,
+                                      max_retries: 1,
+                                      boot_disk_gb: 10
+                                  }
+    RuntimeAttr runtime_override = select_first([runtime_attr_override, runtime_default])
+    
+    runtime {
+        memory: "~{select_first([runtime_override.mem_gb, runtime_default.mem_gb])} GB"
+        disks: "local-disk ~{select_first([runtime_override.disk_gb, runtime_default.disk_gb])} HDD"
+        cpu: select_first([runtime_override.cpu_cores, runtime_default.cpu_cores])
+        preemptible: select_first([runtime_override.preemptible_tries, runtime_default.preemptible_tries])
+        maxRetries: select_first([runtime_override.max_retries, runtime_default.max_retries])
+        docker: sv_base_mini_docker
+        bootDiskSizeGb: select_first([runtime_override.boot_disk_gb, runtime_default.boot_disk_gb])
+    }
+
+    String filename = basename(annot_vcf_file)
+    String prefix = if (sub(filename, "\\.gz", "")!=filename) then basename(annot_vcf_file, ".vcf.gz") else basename(annot_vcf_file, ".vcf.bgz")
+    String combined_vcf_name = "~{prefix}.GT.vcf.bgz"
+
+    command <<<
+        set -euo pipefail
+
+        bcftools reheader --no-version -h ~{header_file} -o fixed_header.vcf.gz ~{vcf_file}
+        bcftools merge \
+        --no-version \
+        -Oz \
+        --output ~{combined_vcf_name} \
+        ~{annot_vcf_file} \
+        fixed_header.vcf.gz
 
         bcftools index -t ~{combined_vcf_name}
     >>>
