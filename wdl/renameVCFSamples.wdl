@@ -14,21 +14,23 @@ struct RuntimeAttr {
 
 workflow renameVCFSamples_workflow {
     input {
-        File vcf_file
+        Array[File] vcf_files
         File sample_map_tsv
         String sv_base_mini_docker
     }
 
-    call renameVCFSamples {
-        input:
-        vcf_file=vcf_file,
-        sample_map_tsv=sample_map_tsv,
-        sv_base_mini_docker=sv_base_mini_docker
+    scatter (vcf_file in vcf_files) {
+        call renameVCFSamples {
+            input:
+            vcf_file=vcf_file,
+            sample_map_tsv=sample_map_tsv,
+            sv_base_mini_docker=sv_base_mini_docker
+        }
     }
 
     output {
-        File renamed_vcf = renameVCFSamples.output_vcf
-        File renamed_vcf_idx = renameVCFSamples.output_vcf_idx
+        Array[File] renamed_vcf_files = renameVCFSamples.output_vcf
+        Array[File] renamed_vcf_idx = renameVCFSamples.output_vcf_idx
     }
 }
 
