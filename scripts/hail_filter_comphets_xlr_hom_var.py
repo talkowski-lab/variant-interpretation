@@ -310,7 +310,7 @@ xlr_phased = xlr_phased_tm.filter_entries((xlr_phased_tm.proband_entry.GT.is_non
 # HomVar in proband only
 phased_hom_var = gene_phased_tm.filter_entries(gene_phased_tm.proband_entry.GT.is_hom_var())
 phased_hom_var = phased_hom_var.filter_entries((phased_hom_var.locus.in_x_nonpar()) &
-                            (~phased_hom_var.is_female))  # filter out non-PAR chrX in males
+                            (~phased_hom_var.is_female), keep=False)  # filter out non-PAR chrX in males
 phased_hom_var = phased_hom_var.filter_rows(hl.agg.count_where(
     hl.is_defined(phased_hom_var.proband_entry.GT))>0).key_rows_by('locus', 'alleles').entries()
 
