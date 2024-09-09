@@ -206,11 +206,11 @@ def get_subset_tm(mt, samples, keep=True, complete_trios=False):
     subset_mt = subset_mt.drop('variant_qc')
 
     subset_tm = hl.trio_matrix(subset_mt, pedigree, complete_trios=complete_trios)
-    return subset_tm
+    return subset_mt, subset_tm
 
 def get_non_trio_comphets(mt):
-    non_trio_tm = get_subset_tm(mt, trio_samples, keep=False)
-    non_trio_gene_phased_tm, non_trio_gene_agg_phased_tm = phase_by_transmission_aggregate_by_gene(non_trio_tm, mt)
+    non_trio_mt, non_trio_tm = get_subset_tm(mt, trio_samples, keep=False)
+    non_trio_gene_phased_tm, non_trio_gene_agg_phased_tm = phase_by_transmission_aggregate_by_gene(non_trio_tm, non_trio_mt)
 
     # different criteria for non-trios
     potential_comp_hets_non_trios = non_trio_gene_agg_phased_tm.filter_rows(
@@ -234,9 +234,9 @@ def get_non_trio_comphets(mt):
     return gene_phased_tm_comp_hets_non_trios
 
 def get_trio_comphets(mt):
-    trio_tm = get_subset_tm(mt, trio_samples, keep=True, complete_trios=True)
+    trio_mt, trio_tm = get_subset_tm(mt, trio_samples, keep=True, complete_trios=True)
 
-    trio_gene_phased_tm, trio_gene_agg_phased_tm = phase_by_transmission_aggregate_by_gene(trio_tm, mt)
+    trio_gene_phased_tm, trio_gene_agg_phased_tm = phase_by_transmission_aggregate_by_gene(trio_tm, trio_mt)
 
     # different criteria for trios (requires phasing)
     potential_comp_hets_trios = trio_gene_agg_phased_tm.filter_rows(
