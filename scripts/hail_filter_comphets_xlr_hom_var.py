@@ -82,15 +82,10 @@ if snv_indel_vcf!='NA':
     snv_mt = snv_mt.explode_rows(snv_mt.vep.transcript_consequences)
     snv_mt = filter_mt(snv_mt)
 
-    snv_gene_field_str = 'vep.transcript_consequences.SYMBOL'
-    snv_gene_field = None
-
-    for i, field in enumerate(snv_gene_field_str.split('.')):
-        if i==0:
-            snv_gene_field = snv_mt[field]
-        else:
-            snv_gene_field = snv_gene_field[field]
-    snv_mt = snv_mt.annotate_rows(gene=snv_gene_field)
+    # filter out empty gene fields
+    snv_mt = snv_mt.annotate_rows(gene=snv_mt['vep']['transcript_consequences']['SYMBOL'])
+    snv_mt = snv_mt.filter_rows(snv_mt.gene!='')
+    
     snv_mt = snv_mt.annotate_rows(variant_type='SNV/Indel')
 
 # Load SV VCF
