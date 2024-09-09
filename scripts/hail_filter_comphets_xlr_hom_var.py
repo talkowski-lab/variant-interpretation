@@ -85,7 +85,7 @@ if snv_indel_vcf!='NA':
     # filter out empty gene fields
     snv_mt = snv_mt.annotate_rows(gene=snv_mt['vep']['transcript_consequences']['SYMBOL'])
     snv_mt = snv_mt.filter_rows(snv_mt.gene!='')
-    
+
     snv_mt = snv_mt.annotate_rows(variant_type='SNV/Indel')
 
 # Load SV VCF
@@ -319,6 +319,8 @@ phased_hom_var = phased_hom_var.annotate(variant_category='hom_var')
 merged_comphets = merged_comphets.annotate(variant_category='comphet')
 
 merged_comphets_xlr_hom_var = merged_comphets.drop('proband_GT','proband_GT_set','proband_PBT_GT_set').union(xlr_phased).union(phased_hom_var)
+# Annotate PAR status
+merged_comphets_xlr_hom_var = merged_comphets_xlr_hom_var.annotate(in_non_par=~(merged_comphets_xlr_hom_var.locus.in_autosome_or_par()))
 merged_comphets_xlr_hom_var = get_transmission(merged_comphets_xlr_hom_var)
 
 merged_comphets_xlr_hom_var.flatten().export(f"{prefix}_{variant_types}_comp_hets_xlr_hom_var.tsv.gz")
