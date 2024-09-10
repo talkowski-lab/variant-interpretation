@@ -280,7 +280,7 @@ trio_samples = list(np.intersect1d(vcf_samples,
                                              for trio in pedigree.complete_trios() if trio.fam_id!='-9']).flatten())))
 non_trio_samples = list(np.setdiff1d(vcf_samples, trio_samples))
 
-trio_pedigree =pedigree.filter_to(trio_samples)
+trio_pedigree = pedigree.filter_to(trio_samples)
 non_trio_pedigree =pedigree.filter_to(non_trio_samples)
 
 ## Get CompHets 
@@ -300,7 +300,7 @@ merged_comphets = merged_trio_comphets.entries().union(merged_non_trio_comphets.
 
 # XLR only
 merged_tm = hl.trio_matrix(merged_mt, pedigree, complete_trios=False)
-gene_phased_tm, gene_agg_phased_tm = phase_by_transmission_aggregate_by_gene(merged_tm, merged_mt)
+gene_phased_tm, gene_agg_phased_tm = phase_by_transmission_aggregate_by_gene(merged_tm, merged_mt, pedigree)
 gene_phased_tm = gene_phased_tm.annotate_cols(trio_status=hl.if_else(gene_phased_tm.fam_id=='-9', 'not_in_pedigree', 
                                                    hl.if_else(hl.array(trio_samples).contains(gene_phased_tm.id), 'trio', 'non_trio')))
 
