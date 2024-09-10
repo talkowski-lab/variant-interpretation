@@ -176,18 +176,18 @@ elif sv_vcf!='NA':
 
 ## STEP 2: Get CompHets
 # Mendel errors
-def get_mendel_errors(mt, phased_tm):
+def get_mendel_errors(mt, phased_tm, pedigree):
     all_errors, per_fam, per_sample, per_variant = hl.mendel_errors(mt['GT'], pedigree)
     all_errors_mt = all_errors.key_by().to_matrix_table(row_key=['locus','alleles'], col_key=['s'], row_fields=['fam_id'])
     phased_tm = phased_tm.annotate_entries(mendel_code=all_errors_mt[phased_tm.row_key, phased_tm.col_key].mendel_code)
     return phased_tm
 
-def phase_by_transmission_aggregate_by_gene(tm, mt):
+def phase_by_transmission_aggregate_by_gene(tm, mt, pedigree):
     # filter out calls that are hom ref in proband
     tm = tm.filter_entries(tm.proband_entry.GT.is_non_ref())
 
     phased_tm = hl.experimental.phase_trio_matrix_by_transmission(tm, call_field='GT', phased_call_field='PBT_GT')
-    phased_tm = get_mendel_errors(mt, phased_tm)
+    phased_tm = get_mendel_errors(mt, phased_tm, pedigree)
     gene_phased_tm = phased_tm.key_rows_by('locus','alleles','gene')
 
     gene_agg_phased_tm = (gene_phased_tm.group_rows_by(gene_phased_tm.gene)
@@ -197,7 +197,7 @@ def phase_by_transmission_aggregate_by_gene(tm, mt):
                           proband_GT = hl.agg.collect(gene_phased_tm.proband_entry.GT).filter(hl.is_defined))).result()
     return gene_phased_tm, gene_agg_phased_tm
 
-def get_subset_tm(mt, samples, keep=True, complete_trios=False):
+def get_subset_tm(mt, samples, pedigree, keep=True, complete_trios=False):
     subset_mt = mt.filter_cols(hl.array(samples).contains(mt.s), keep=keep)
 
     # remove variants missing in subset samples
@@ -209,8 +209,8 @@ def get_subset_tm(mt, samples, keep=True, complete_trios=False):
     return subset_mt, subset_tm
 
 def get_non_trio_comphets(mt):
-    non_trio_mt, non_trio_tm = get_subset_tm(mt, trio_samples, keep=False)
-    non_trio_gene_phased_tm, non_trio_gene_agg_phased_tm = phase_by_transmission_aggregate_by_gene(non_trio_tm, non_trio_mt)
+    non_trio_mt, non_trio_tm = get_subset_tm(mt, non_trio_samples, non_trio_pedigree)
+    non_trio_gene_phased_tm, non_trio_gene_agg_phased_tm = phase_by_transmission_aggregate_by_gene(non_trio_tm, non_trio_mt, non_trio_pedigree)
 
     # different criteria for non-trios
     potential_comp_hets_non_trios = non_trio_gene_agg_phased_tm.filter_rows(
@@ -234,9 +234,8 @@ def get_non_trio_comphets(mt):
     return gene_phased_tm_comp_hets_non_trios
 
 def get_trio_comphets(mt):
-    trio_mt, trio_tm = get_subset_tm(mt, trio_samples, keep=True, complete_trios=True)
-
-    trio_gene_phased_tm, trio_gene_agg_phased_tm = phase_by_transmission_aggregate_by_gene(trio_tm, trio_mt)
+    trio_mt, trio_tm = get_subset_tm(mt, trio_samples, trio_pedigree, keep=True, complete_trios=True)
+    trio_gene_phased_tm, trio_gene_agg_phased_tm = phase_by_transmission_aggregate_by_gene(trio_tm, trio_mt, trio_pedigree)
 
     # different criteria for trios (requires phasing)
     potential_comp_hets_trios = trio_gene_agg_phased_tm.filter_rows(
@@ -279,6 +278,10 @@ pedigree = hl.Pedigree.read(f"{prefix}.ped", delimiter='\t')
 trio_samples = list(np.intersect1d(vcf_samples,
                               list(np.array([[trio.s, trio.pat_id, trio.mat_id] 
                                              for trio in pedigree.complete_trios() if trio.fam_id!='-9']).flatten())))
+non_trio_samples = list(np.setdiff1d(vcf_samples, trio_samples))
+
+trio_pedigree =pedigree.filter_to(trio_samples)
+non_trio_pedigree =pedigree.filter_to(non_trio_samples)
 
 ## Get CompHets 
 # Filter to only in autosomes or PAR
