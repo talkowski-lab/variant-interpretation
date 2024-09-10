@@ -178,7 +178,7 @@ elif sv_vcf!='NA':
 # Mendel errors
 def get_mendel_errors(mt, phased_tm, pedigree):
     all_errors, per_fam, per_sample, per_variant = hl.mendel_errors(mt['GT'], pedigree)
-    all_errors_mt = all_errors.key_by().to_matrix_table(row_key=['locus','alleles'], col_key=['s'], row_fields=['fam_id'])
+    all_errors_mt = all_errors.key_by().to_matrix_table(row_key=['locus','alleles'], col_key=['s'], col_fields=['fam_id'])
     phased_tm = phased_tm.annotate_entries(mendel_code=all_errors_mt[phased_tm.row_key, phased_tm.col_key].mendel_code)
     return phased_tm
 
