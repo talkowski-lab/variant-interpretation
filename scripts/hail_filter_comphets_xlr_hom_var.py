@@ -229,7 +229,7 @@ def get_non_trio_comphets(mt):
         potential_comp_hets_non_trios[non_trio_gene_phased_tm.row_key, non_trio_gene_phased_tm.col_key].proband_GT),
                                                                       proband_PBT_GT_set=hl.set(
         potential_comp_hets_non_trios[non_trio_gene_phased_tm.row_key, non_trio_gene_phased_tm.col_key].proband_PBT_GT))
-    non_trio_gene_phased_tm = non_trio_gene_phased_tm.filter_entries(non_trio_gene_phased_tm.proband_GT.size()>1)  # this actually seems necessary but idk why tbh
+    non_trio_gene_phased_tm = non_trio_gene_phased_tm.filter_entries(non_trio_gene_phased_tm.proband_GT.size()>1)  # this actually seems necessary
     gene_phased_tm_comp_hets_non_trios = non_trio_gene_phased_tm.semi_join_rows(potential_comp_hets_non_trios.rows()).key_rows_by('locus', 'alleles')
     return gene_phased_tm_comp_hets_non_trios
 
@@ -254,7 +254,7 @@ def get_trio_comphets(mt):
                                                                proband_PBT_GT_set=hl.set(
         potential_comp_hets_trios[trio_gene_phased_tm.row_key, trio_gene_phased_tm.col_key].proband_PBT_GT))
 
-    trio_gene_phased_tm = trio_gene_phased_tm.filter_entries(trio_gene_phased_tm.proband_PBT_GT_set.size()>1)  # this actually seems necessary but idk why tbh
+    trio_gene_phased_tm = trio_gene_phased_tm.filter_entries(trio_gene_phased_tm.proband_PBT_GT_set.size()>1)  # this actually seems necessary
     gene_phased_tm_comp_hets_trios = trio_gene_phased_tm.semi_join_rows(potential_comp_hets_trios.rows()).key_rows_by('locus', 'alleles')
     return gene_phased_tm_comp_hets_trios
 
@@ -275,6 +275,8 @@ tmp_ped['maternal_id'] = tmp_ped.maternal_id.apply(lambda id: id if id in vcf_sa
 tmp_ped.to_csv(f"{prefix}.ped", sep='\t', index=False)
 
 pedigree = hl.Pedigree.read(f"{prefix}.ped", delimiter='\t')
+pedigree = pedigree.filter_to(vcf_samples)
+
 trio_samples = list(np.intersect1d(vcf_samples,
                               list(np.array([[trio.s, trio.pat_id, trio.mat_id] 
                                              for trio in pedigree.complete_trios() if trio.fam_id!='-9']).flatten())))
