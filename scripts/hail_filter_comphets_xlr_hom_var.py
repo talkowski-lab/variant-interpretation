@@ -6,6 +6,16 @@ import sys
 import ast
 import os
 
+from typing import Tuple
+
+import hail.expr.aggregators as agg
+from hail.expr import expr_call, expr_float64
+from hail.genetics.pedigree import Pedigree
+from hail.matrixtable import MatrixTable
+from hail.table import Table
+from hail.typecheck import numeric, typecheck
+from hail.utils.java import Env
+
 snv_indel_vcf = sys.argv[1]
 clinvar_vcf = sys.argv[2]
 sv_vcf = sys.argv[3]
@@ -95,7 +105,7 @@ if sv_vcf!='NA':
     sv_mt = hl.import_vcf(sv_vcf, reference_genome=build, force_bgz=True, call_fields=[], array_elements_required=False)
 
     # filter by PASS
-    sv_mt = sv_mt.filter_rows((sv_mt.filters.size()==0) | hl.is_missing(sv_mt.filters))
+    # sv_mt = sv_mt.filter_rows((sv_mt.filters.size()==0) | hl.is_missing(sv_mt.filters))
 
     # ignore genes for CPX SVs
     sv_mt = sv_mt.annotate_rows(gene=hl.or_missing(sv_mt.info.SVTYPE!='CPX', 
@@ -182,17 +192,6 @@ elif snv_indel_vcf!='NA':
 elif sv_vcf!='NA':
     variant_types = 'SV'
     merged_mt = sv_mt
-
-from typing import Tuple
-
-import hail as hl
-import hail.expr.aggregators as agg
-from hail.expr import expr_call, expr_float64
-from hail.genetics.pedigree import Pedigree
-from hail.matrixtable import MatrixTable
-from hail.table import Table
-from hail.typecheck import numeric, typecheck
-from hail.utils.java import Env
 
 ## EDITED HAIL FUNCTIONS
 # EDITED: don't check locus struct
