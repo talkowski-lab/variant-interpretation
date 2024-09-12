@@ -563,10 +563,16 @@ pedigree = pedigree.filter_to(vcf_samples)
 trio_samples = list(np.intersect1d(vcf_samples,
                               list(np.array([[trio.s, trio.pat_id, trio.mat_id] 
                                              for trio in pedigree.complete_trios() if trio.fam_id!='-9']).flatten())))
+# Make sure incomplete trios include parents
+fathers = pd.Series({trio.s: trio.pat_id for trio in pedigree.trios if trio.pat_id is not None})
+mothers = pd.Series({trio.s: trio.mat_id for trio in pedigree.trios if trio.mat_id is not None})
 non_trio_samples = list(np.setdiff1d(vcf_samples, trio_samples))
+non_trio_samples = list(np.union1d(np.union1d(non_trio_samples,
+                              mothers.loc[np.intersect1d(non_trio_samples, mothers.index)].tolist()),
+                             fathers.loc[np.intersect1d(non_trio_samples, fathers.index)].tolist()))
 
 trio_pedigree = pedigree.filter_to(trio_samples)
-non_trio_pedigree =pedigree.filter_to(non_trio_samples)
+non_trio_pedigree = pedigree.filter_to(non_trio_samples)
 
 ## Get CompHets 
 # Filter to only in autosomes or PAR
