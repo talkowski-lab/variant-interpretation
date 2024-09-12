@@ -104,8 +104,8 @@ if sv_vcf!='NA':
     locus_expr = 'locus_interval'
     sv_mt = hl.import_vcf(sv_vcf, reference_genome=build, force_bgz=True, call_fields=[], array_elements_required=False)
 
-    # filter by PASS
-    # sv_mt = sv_mt.filter_rows((sv_mt.filters.size()==0) | hl.is_missing(sv_mt.filters))
+    # filter out BNDs
+    sv_mt = sv_mt.filter_rows(sv_mt.info.SVTYPE!='BND') 
 
     # ignore genes for CPX SVs
     sv_mt = sv_mt.annotate_rows(gene=hl.or_missing(sv_mt.info.SVTYPE!='CPX', 
