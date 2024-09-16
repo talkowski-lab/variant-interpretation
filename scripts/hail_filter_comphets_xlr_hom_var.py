@@ -175,16 +175,7 @@ if (snv_indel_vcf!='NA') and (sv_vcf!='NA'):
 
     variant_types = 'SV_SNV_Indel'
     merged_mt = sv_mt.union_rows(snv_mt)
-    
-    # Change locus to locus_interval to include END for SVs
-    merged_mt = merged_mt.annotate_rows(end=hl.if_else(hl.is_defined(merged_mt.info.END2), merged_mt.info.END2, merged_mt.info.END))
-    merged_mt = merged_mt.key_rows_by()
-    merged_mt = merged_mt.annotate_rows(locus_interval=hl.locus_interval(contig=merged_mt.locus.contig, 
-                                                                              start=merged_mt.locus.position,
-                                                                              end=merged_mt.end, reference_genome=build))
-    locus_expr = 'locus_interval'
-    merged_mt = merged_mt.key_rows_by(locus_expr, 'alleles')
-    
+        
 elif snv_indel_vcf!='NA':
     variant_types = 'SNV_Indel'
     merged_mt = snv_mt
@@ -192,6 +183,17 @@ elif snv_indel_vcf!='NA':
 elif sv_vcf!='NA':
     variant_types = 'SV'
     merged_mt = sv_mt
+
+if sv_vcf!='NA':
+    # Change locus to locus_interval to include END for SVs
+    merged_mt = merged_mt.annotate_rows(end=hl.if_else(hl.is_defined(merged_mt.info.END2), merged_mt.info.END2, merged_mt.info.END))
+    # Account for INS having same END but different SVLEN
+    merged_mt = merged_mt.annotate_rows(end=hl.if_else(merged_mt.info.SVTYPE=='INS', merged_mt.end + merged_mt.info.SVLEN, merged_mt.end))
+    merged_mt = merged_mt.key_rows_by()
+    merged_mt = merged_mt.annotate_rows(locus_interval=hl.locus_interval(contig=merged_mt.locus.contig, 
+                                                                              start=merged_mt.locus.position,
+                                                                              end=merged_mt.end, reference_genome=build))
+    merged_mt = merged_mt.key_rows_by(locus_expr, 'alleles')
 
 ## EDITED HAIL FUNCTIONS
 # EDITED: don't check locus struct
