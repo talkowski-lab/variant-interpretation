@@ -502,22 +502,25 @@ def get_non_trio_comphets(mt):
     potential_comp_hets_non_trios = non_trio_gene_agg_phased_tm.filter_rows(
             hl.agg.count_where(non_trio_gene_agg_phased_tm.proband_GT.size()>1)>0
     )
-          
+    potential_comp_hets_non_trios = potential_comp_hets_non_trios.annotate_entries(all_locus_alleles=potential_comp_hets_non_trios.locus_alleles)  # EDITED      
     potential_comp_hets_non_trios = potential_comp_hets_non_trios.explode_rows(potential_comp_hets_non_trios.locus_alleles)
     potential_comp_hets_non_trios = potential_comp_hets_non_trios.key_rows_by(potential_comp_hets_non_trios.locus_alleles[locus_expr], potential_comp_hets_non_trios.locus_alleles.alleles, 'gene')
 
     potential_comp_hets_non_trios = potential_comp_hets_non_trios.filter_entries(potential_comp_hets_non_trios.proband_GT.size()>1)
     
     non_trio_gene_phased_tm = non_trio_gene_phased_tm.key_rows_by(locus_expr, 'alleles', 'gene')
-    non_trio_gene_phased_tm = non_trio_gene_phased_tm.annotate_entries(proband_GT=
+    non_trio_gene_phased_tm = non_trio_gene_phased_tm.annotate_entries(locus_alleles=  # EDITED
+        potential_comp_hets_non_trios[non_trio_gene_phased_tm.row_key, non_trio_gene_phased_tm.col_key].all_locus_alleles,
+        proband_GT=
         potential_comp_hets_non_trios[non_trio_gene_phased_tm.row_key, non_trio_gene_phased_tm.col_key].proband_GT,
                                                                       proband_GT_set=hl.set(
         potential_comp_hets_non_trios[non_trio_gene_phased_tm.row_key, non_trio_gene_phased_tm.col_key].proband_GT),
                                                                       proband_PBT_GT_set=hl.set(
         potential_comp_hets_non_trios[non_trio_gene_phased_tm.row_key, non_trio_gene_phased_tm.col_key].proband_PBT_GT))
-    non_trio_gene_phased_tm = non_trio_gene_phased_tm.filter_entries(non_trio_gene_phased_tm.proband_GT.size()>1)  # this actually seems necessary
+    non_trio_gene_phased_tm = non_trio_gene_phased_tm.filter_entries((hl.set(non_trio_gene_phased_tm.locus_alleles).size()>1) &
+                                                                     (non_trio_gene_phased_tm.proband_GT.size()>1))  # EDITED this actually seems necessary
     gene_phased_tm_comp_hets_non_trios = non_trio_gene_phased_tm.semi_join_rows(potential_comp_hets_non_trios.rows()).key_rows_by(locus_expr, 'alleles')
-    return gene_phased_tm_comp_hets_non_trios
+    return gene_phased_tm_comp_hets_non_trios.drop('locus_alleles')  # EDITED
 
 def get_trio_comphets(mt):
     trio_mt, trio_tm = get_subset_tm(mt, trio_samples, trio_pedigree, keep=True, complete_trios=True)
