@@ -639,7 +639,7 @@ task filterByGeneList {
     mt = mt.annotate_rows(info=mt.info.annotate(**{size_threshold_field: (mt.info.SVLEN>=size_threshold)}))
     header['info']['disease_genes'] = {'Description': f"Disease genes overlapping with {gene_list_name}.", 'Number': '.', 'Type': 'String'}
     header['info']['disease_gene_sources'] = {'Description': f"Sources for disease genes overlapping with {gene_list_name}. Considered fields: {', '.join(sv_gene_fields)}.", 'Number': '.', 'Type': 'String'}
-    header['info'][size_threshold_field] = {'Description': f"Passes SVLEN size filter of {humansize(size_threshold)}.", 'Number': '0', 'Type': 'Flag'}
+    header['info'][size_threshold_field] = {'Description': f"Passes SVLEN size filter of {humansize(size_threshold).replace('_', ' ')}.", 'Number': '0', 'Type': 'Flag'}
 
     hl.export_vcf(mt, os.path.basename(vcf_file).split('.vcf')[0] + f".{gene_list_name}.vcf.bgz", metadata=header, tabix=True)
     EOF

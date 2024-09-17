@@ -189,6 +189,8 @@ if sv_vcf!='NA':
     merged_mt = merged_mt.annotate_rows(end=hl.if_else(hl.is_defined(merged_mt.info.END2), merged_mt.info.END2, merged_mt.info.END))
     # Account for INS having same END but different SVLEN
     merged_mt = merged_mt.annotate_rows(end=hl.if_else(merged_mt.info.SVTYPE=='INS', merged_mt.end + merged_mt.info.SVLEN, merged_mt.end))
+    # Account for empty END for SNV/Indels
+    merged_mt = merged_mt.annotate_rows(end=hl.if_else(merged_mt.variant_type=='SNV/Indel', merged_mt.locus.position, merged_mt.end))
     merged_mt = merged_mt.key_rows_by()
     merged_mt = merged_mt.annotate_rows(locus_interval=hl.locus_interval(contig=merged_mt.locus.contig, 
                                                                               start=merged_mt.locus.position,
