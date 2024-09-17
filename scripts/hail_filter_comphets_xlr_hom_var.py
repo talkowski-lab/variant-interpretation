@@ -511,14 +511,14 @@ def get_non_trio_comphets(mt):
     non_trio_gene_phased_tm = non_trio_gene_phased_tm.key_rows_by(locus_expr, 'alleles', 'gene')
     non_trio_gene_phased_tm = non_trio_gene_phased_tm.annotate_entries(locus_alleles=  # EDITED
         potential_comp_hets_non_trios[non_trio_gene_phased_tm.row_key, non_trio_gene_phased_tm.col_key].all_locus_alleles,
-        proband_GT=
+                                                                      proband_GT=
         potential_comp_hets_non_trios[non_trio_gene_phased_tm.row_key, non_trio_gene_phased_tm.col_key].proband_GT,
                                                                       proband_GT_set=hl.set(
         potential_comp_hets_non_trios[non_trio_gene_phased_tm.row_key, non_trio_gene_phased_tm.col_key].proband_GT),
                                                                       proband_PBT_GT_set=hl.set(
         potential_comp_hets_non_trios[non_trio_gene_phased_tm.row_key, non_trio_gene_phased_tm.col_key].proband_PBT_GT))
     non_trio_gene_phased_tm = non_trio_gene_phased_tm.filter_entries((hl.set(non_trio_gene_phased_tm.locus_alleles).size()>1) &
-                                                                     (non_trio_gene_phased_tm.proband_GT.size()>1))  # EDITED this actually seems necessary
+                                                                     (non_trio_gene_phased_tm.proband_GT.size()>1))  # EDITED
     gene_phased_tm_comp_hets_non_trios = non_trio_gene_phased_tm.semi_join_rows(potential_comp_hets_non_trios.rows()).key_rows_by(locus_expr, 'alleles')
     return gene_phased_tm_comp_hets_non_trios.drop('locus_alleles')  # EDITED
 
@@ -543,7 +543,7 @@ def get_trio_comphets(mt):
                                                                proband_PBT_GT_set=hl.set(
         potential_comp_hets_trios[trio_gene_phased_tm.row_key, trio_gene_phased_tm.col_key].proband_PBT_GT))
 
-    trio_gene_phased_tm = trio_gene_phased_tm.filter_entries(trio_gene_phased_tm.proband_PBT_GT_set.size()>1)  # this actually seems necessary
+    trio_gene_phased_tm = trio_gene_phased_tm.filter_entries(trio_gene_phased_tm.proband_PBT_GT_set.size()>1)  
     gene_phased_tm_comp_hets_trios = trio_gene_phased_tm.semi_join_rows(potential_comp_hets_trios.rows()).key_rows_by(locus_expr, 'alleles')
     return gene_phased_tm_comp_hets_trios
 
