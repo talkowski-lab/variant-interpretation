@@ -469,18 +469,18 @@ task combineBedAnnotations {
                         "spark.driver.memory": f"{int(np.floor(mem*0.4))}g"
                         }, tmp_dir="tmp", local_tmpdir="tmp")
 
-    mt = hl.import_vcf(preannotated_vcf, force_bgz=vcf_file.split('.')[-1] in ['gz', 'bgz'], 
+    mt = hl.import_vcf(preannotated_vcf, force_bgz=preannotated_vcf.split('.')[-1] in ['gz', 'bgz'], 
         reference_genome=genome_build, array_elements_required=False, call_fields=[])
     header = hl.get_vcf_metadata(preannotated_vcf)
     new_header = header
 
-    for (vcf_uri in annotated_vcfs):
+    for vcf_uri in annotated_vcfs:
         annot_mt = hl.import_vcf(vcf_uri, force_bgz=vcf_uri.split('.')[-1] in ['gz', 'bgz'], 
         reference_genome=genome_build, array_elements_required=False, call_fields=[])
         annot_header = hl.get_vcf_metadata(vcf_uri)
         new_fields = list(np.setdiff1d(list(annot_header['info'].keys()), list(header['info'].keys())))
         mt = mt.annotate_rows(info=mt.info.annotate(
-            **{field: annot_mt.rows()[mt.row_key][field] for field in new_fields}))
+            **{field: annot_mt.rows()[mt.row_key].info[field] for field in new_fields}))
         for field in new_fields:
             new_header['info'][field] = annot_header['info'][field]
 
