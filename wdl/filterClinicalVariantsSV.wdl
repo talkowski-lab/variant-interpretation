@@ -19,12 +19,13 @@ workflow filterClinicalVariantsSV {
         File? sample_map_tsv
         File? gene_list
 
-        File clinvar_bed_with_header
-        File dbvar_bed_with_header
-        File gnomad_benign_bed_with_header
-        File gd_bed_with_header
-        File clingen_bed_with_header
-        File decipher_bed_with_header
+        File annot_beds_with_header_tsv
+        # File clinvar_bed_with_header
+        # File dbvar_bed_with_header
+        # File gnomad_benign_bed_with_header
+        # File gd_bed_with_header
+        # File clingen_bed_with_header
+        # File decipher_bed_with_header
 
         String cohort_prefix
         String genome_build='GRCh38'
@@ -50,11 +51,86 @@ workflow filterClinicalVariantsSV {
         variant_interpretation_docker=variant_interpretation_docker
     }
 
-    Array[File] bed_files = [gd_bed_with_header, clingen_bed_with_header, dbvar_bed_with_header, 
-                            gnomad_benign_bed_with_header, decipher_bed_with_header, 
-                            clinvar_bed_with_header]
+    # Array[File] bed_files = [gd_bed_with_header, clingen_bed_with_header, dbvar_bed_with_header, 
+    #                         gnomad_benign_bed_with_header, decipher_bed_with_header, 
+    #                         clinvar_bed_with_header]
 
-    scatter (ref_bed_with_header in bed_files) {
+    # scatter (ref_bed_with_header in bed_files) {
+    #     call intersectBed {
+    #         input:
+    #         bed_file=vcfToBed.bed_output,
+    #         ref_bed_with_header=ref_bed_with_header,
+    #         cohort_prefix=cohort_prefix,
+    #         bed_overlap_threshold=bed_overlap_threshold,
+    #         variant_interpretation_docker=variant_interpretation_docker
+    #     }
+    # }
+    # 
+    # call annotateVCFWithBed as annotate_GD {
+    #     input:
+    #     vcf_file=vcf_file,
+    #     intersect_bed=intersectBed.intersect_bed[0],
+    #     ref_bed_with_header=bed_files[0],
+    #     genome_build=genome_build,
+    #     hail_docker=hail_docker,
+    #     annot_name='GD',
+    #     runtime_attr_override=runtime_attr_annotate
+    # }    
+    # call annotateVCFWithBed as annotate_clinGen {
+    #     input:
+    #     vcf_file=annotate_GD.annotated_vcf,
+    #     intersect_bed=intersectBed.intersect_bed[1],
+    #     ref_bed_with_header=bed_files[1],
+    #     genome_build=genome_build,
+    #     hail_docker=hail_docker,
+    #     annot_name='ClinGen',
+    #     runtime_attr_override=runtime_attr_annotate
+    # }
+    # call annotateVCFWithBed as annotate_dbVar {
+    #     input:
+    #     vcf_file=annotate_clinGen.annotated_vcf,
+    #     intersect_bed=intersectBed.intersect_bed[2],
+    #     ref_bed_with_header=bed_files[2],
+    #     genome_build=genome_build,
+    #     hail_docker=hail_docker,
+    #     annot_name='dbVar',
+    #     runtime_attr_override=runtime_attr_annotate
+    # }
+    # call annotateVCFWithBed as annotate_gnomAD_benign {
+    #     input:
+    #     vcf_file=annotate_dbVar.annotated_vcf,
+    #     intersect_bed=intersectBed.intersect_bed[3],
+    #     ref_bed_with_header=bed_files[3],
+    #     genome_build=genome_build,
+    #     hail_docker=hail_docker,
+    #     annot_name='gnomAD_benign',
+    #     runtime_attr_override=runtime_attr_annotate
+    # }
+    # call annotateVCFWithBed as annotate_DECIPHER {
+    #     input:
+    #     vcf_file=annotate_gnomAD_benign.annotated_vcf,
+    #     intersect_bed=intersectBed.intersect_bed[4],
+    #     ref_bed_with_header=bed_files[4],
+    #     genome_build=genome_build,
+    #     hail_docker=hail_docker,
+    #     annot_name='DECIPHER',
+    #     runtime_attr_override=runtime_attr_annotate
+    # }
+    # call annotateVCFWithBed as annotate_clinVar {
+    #     input:
+    #     vcf_file=annotate_DECIPHER.annotated_vcf,
+    #     intersect_bed=intersectBed.intersect_bed[5],
+    #     ref_bed_with_header=bed_files[5],
+    #     genome_build=genome_build,
+    #     hail_docker=hail_docker,
+    #     annot_name='ClinVar',
+    #     runtime_attr_override=runtime_attr_annotate
+    # }
+
+    scatter (arr in read_tsv(annot_beds_with_header_tsv)) {
+        String annot_name = arr[0]
+        File ref_bed_with_header = arr[1]
+    
         call intersectBed {
             input:
             bed_file=vcfToBed.bed_output,
@@ -63,73 +139,32 @@ workflow filterClinicalVariantsSV {
             bed_overlap_threshold=bed_overlap_threshold,
             variant_interpretation_docker=variant_interpretation_docker
         }
+
+        call annotateVCFWithBed {
+            input:
+            vcf_file=vcf_file,
+            intersect_bed=intersectBed.intersect_bed,
+            ref_bed_with_header=ref_bed_with_header,
+            genome_build=genome_build,
+            hail_docker=hail_docker,
+            annot_name=annot_name,
+            runtime_attr_override=runtime_attr_annotate
+        }    
     }
 
-    call annotateVCFWithBed as annotate_GD {
+    call combineBedAnnotations {
         input:
-        vcf_file=vcf_file,
-        intersect_bed=intersectBed.intersect_bed[0],
-        ref_bed_with_header=bed_files[0],
+        preannotated_vcf=vcf_file,
+        annotated_vcfs=annotateVCFWithBed.annotated_vcf,
         genome_build=genome_build,
         hail_docker=hail_docker,
-        annot_name='GD',
-        runtime_attr_override=runtime_attr_annotate
-    }    
-    call annotateVCFWithBed as annotate_clinGen {
-        input:
-        vcf_file=annotate_GD.annotated_vcf,
-        intersect_bed=intersectBed.intersect_bed[1],
-        ref_bed_with_header=bed_files[1],
-        genome_build=genome_build,
-        hail_docker=hail_docker,
-        annot_name='ClinGen',
-        runtime_attr_override=runtime_attr_annotate
-    }
-    call annotateVCFWithBed as annotate_dbVar {
-        input:
-        vcf_file=annotate_clinGen.annotated_vcf,
-        intersect_bed=intersectBed.intersect_bed[2],
-        ref_bed_with_header=bed_files[2],
-        genome_build=genome_build,
-        hail_docker=hail_docker,
-        annot_name='dbVar',
-        runtime_attr_override=runtime_attr_annotate
-    }
-    call annotateVCFWithBed as annotate_gnomAD_benign {
-        input:
-        vcf_file=annotate_dbVar.annotated_vcf,
-        intersect_bed=intersectBed.intersect_bed[3],
-        ref_bed_with_header=bed_files[3],
-        genome_build=genome_build,
-        hail_docker=hail_docker,
-        annot_name='gnomAD_benign',
-        runtime_attr_override=runtime_attr_annotate
-    }
-    call annotateVCFWithBed as annotate_DECIPHER {
-        input:
-        vcf_file=annotate_gnomAD_benign.annotated_vcf,
-        intersect_bed=intersectBed.intersect_bed[4],
-        ref_bed_with_header=bed_files[4],
-        genome_build=genome_build,
-        hail_docker=hail_docker,
-        annot_name='DECIPHER',
-        runtime_attr_override=runtime_attr_annotate
-    }
-    call annotateVCFWithBed as annotate_clinVar {
-        input:
-        vcf_file=annotate_DECIPHER.annotated_vcf,
-        intersect_bed=intersectBed.intersect_bed[5],
-        ref_bed_with_header=bed_files[5],
-        genome_build=genome_build,
-        hail_docker=hail_docker,
-        annot_name='ClinVar',
         runtime_attr_override=runtime_attr_annotate
     }
 
     if (defined(sample_map_tsv)) {
         call renameVCFSamples {
             input:
-            vcf_file=annotate_clinVar.annotated_vcf,
+            vcf_file=combineBedAnnotations.combined_vcf,
             sample_map_tsv=select_first([sample_map_tsv]),
             variant_interpretation_docker=variant_interpretation_docker,
             runtime_attr_override=runtime_attr_rename_samples
@@ -138,7 +173,7 @@ workflow filterClinicalVariantsSV {
 
     call filterVCF {
         input:
-        vcf_file=select_first([renameVCFSamples.output_vcf, annotate_clinVar.annotated_vcf]),
+        vcf_file=select_first([renameVCFSamples.output_vcf, combineBedAnnotations.combined_vcf]),
         ped_uri=ped_uri,
         genome_build=genome_build,
         hail_docker=hail_docker,
@@ -373,6 +408,95 @@ task annotateVCFWithBed {
         File annotated_vcf = basename(intersect_bed, '.bed.gz') + '.vcf.bgz'
         File annotated_vcf_idx = basename(intersect_bed, '.bed.gz') + '.vcf.bgz.tbi'
     }
+}
+
+task combineBedAnnotations {
+    input {
+        File preannotated_vcf
+        Array[File] annotated_vcfs
+        String genome_build
+        String hail_docker
+        RuntimeAttr? runtime_attr_override
+    }
+
+    Float input_size = size(preannotated_vcf, 'GB') + size(annotated_vcfs, 'GB')
+    Float base_disk_gb = 10.0
+    Float input_disk_scale = 5.0
+
+    RuntimeAttr runtime_default = object {
+        mem_gb: 4,
+        disk_gb: ceil(base_disk_gb + input_size * input_disk_scale),
+        cpu_cores: 1,
+        preemptible_tries: 3,
+        max_retries: 1,
+        boot_disk_gb: 10
+    }
+
+    RuntimeAttr runtime_override = select_first([runtime_attr_override, runtime_default])
+
+    Float memory = select_first([runtime_override.mem_gb, runtime_default.mem_gb])
+    Int cpu_cores = select_first([runtime_override.cpu_cores, runtime_default.cpu_cores])
+    
+    runtime {
+        memory: "~{memory} GB"
+        disks: "local-disk ~{select_first([runtime_override.disk_gb, runtime_default.disk_gb])} HDD"
+        cpu: cpu_cores
+        preemptible: select_first([runtime_override.preemptible_tries, runtime_default.preemptible_tries])
+        maxRetries: select_first([runtime_override.max_retries, runtime_default.max_retries])
+        docker: hail_docker
+        bootDiskSizeGb: select_first([runtime_override.boot_disk_gb, runtime_default.boot_disk_gb])
+    }
+
+    command <<<
+    set -eou pipefail
+    cat <<EOF > annotate_vcf.py
+    import datetime
+    import pandas as pd
+    import hail as hl
+    import numpy as np
+    import sys
+    import os
+
+    preannotated_vcf = sys.argv[1]
+    annotated_vcfs = sys.argv[2].split(',')
+    genome_build = sys.argv[3]
+    cores = sys.argv[4]
+    mem = int(np.floor(float(sys.argv[5])))
+
+    hl.init(min_block_size=128, spark_conf={"spark.executor.cores": cores, 
+                        "spark.executor.memory": f"{int(np.floor(mem*0.4))}g",
+                        "spark.driver.cores": cores,
+                        "spark.driver.memory": f"{int(np.floor(mem*0.4))}g"
+                        }, tmp_dir="tmp", local_tmpdir="tmp")
+
+    mt = hl.import_vcf(preannotated_vcf, force_bgz=vcf_file.split('.')[-1] in ['gz', 'bgz'], 
+        reference_genome=genome_build, array_elements_required=False, call_fields=[])
+    header = hl.get_vcf_metadata(preannotated_vcf)
+    new_header = header
+
+    for (vcf_uri in annotated_vcfs):
+        annot_mt = hl.import_vcf(vcf_uri, force_bgz=vcf_uri.split('.')[-1] in ['gz', 'bgz'], 
+        reference_genome=genome_build, array_elements_required=False, call_fields=[])
+        annot_header = hl.get_vcf_metadata(vcf_uri)
+        new_fields = list(np.setdiff1d(list(annot_header['info'].keys()), list(header['info'].keys())))
+        mt = mt.annotate_rows(info=mt.info.annotate(
+            **{field: annot_mt.rows()[mt.row_key][field] for field in new_fields}))
+        for field in new_fields:
+            new_header['info'][field] = annot_header['info'][field]
+
+    # export annotated VCF
+    hl.export_vcf(mt, os.path.basename(preannotated_vcf).split('.vcf')[0] + '.combined.annotations.vcf.bgz', metadata=new_header, tabix=True)
+    EOF
+
+    python3 annotate_vcf.py ~{preannotated_vcf} ~{sep=',' annotated_vcfs} ~{genome_build} \
+        ~{cpu_cores} ~{memory}
+    >>>
+
+    String file_ext = if sub(basename(preannotated_vcf), '.vcf.gz', '')!=basename(preannotated_vcf) then '.vcf.gz' else '.vcf.bgz'
+    output {
+        File combined_vcf = basename(preannotated_vcf, file_ext) + '.combined.annotations.vcf.bgz'
+        File combined_vcf_idx =combined_vcf + '.tbi'
+    }    
 }
 
 task renameVCFSamples {
