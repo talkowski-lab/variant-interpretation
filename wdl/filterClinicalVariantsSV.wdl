@@ -355,11 +355,14 @@ task annotateVCFWithBed {
     cores = sys.argv[6]
     mem = int(np.floor(float(sys.argv[7])))
 
-    hl.init(min_block_size=128, spark_conf={"spark.executor.cores": cores, 
-                        "spark.executor.memory": f"{int(np.floor(mem*0.4))}g",
-                        "spark.driver.cores": cores,
-                        "spark.driver.memory": f"{int(np.floor(mem*0.4))}g"
-                        }, tmp_dir="tmp", local_tmpdir="tmp")
+    hl.init(min_block_size=128, 
+            local=f"local[*]", 
+            spark_conf={
+                        "spark.driver.memory": f"{int(np.floor(mem*0.8))}g",
+                        "spark.speculation": 'true'
+                        }, 
+            tmp_dir="tmp", local_tmpdir="tmp",
+                        )
 
     mt = hl.import_vcf(vcf_file, force_bgz=vcf_file.split('.')[-1] in ['gz', 'bgz'], 
         reference_genome=genome_build, array_elements_required=False, call_fields=[])
@@ -463,11 +466,14 @@ task combineBedAnnotations {
     cores = sys.argv[4]
     mem = int(np.floor(float(sys.argv[5])))
 
-    hl.init(min_block_size=128, spark_conf={"spark.executor.cores": cores, 
-                        "spark.executor.memory": f"{int(np.floor(mem*0.4))}g",
-                        "spark.driver.cores": cores,
-                        "spark.driver.memory": f"{int(np.floor(mem*0.4))}g"
-                        }, tmp_dir="tmp", local_tmpdir="tmp")
+    hl.init(min_block_size=128, 
+            local=f"local[*]", 
+            spark_conf={
+                        "spark.driver.memory": f"{int(np.floor(mem*0.8))}g",
+                        "spark.speculation": 'true'
+                        }, 
+            tmp_dir="tmp", local_tmpdir="tmp",
+                        )
 
     mt = hl.import_vcf(preannotated_vcf, force_bgz=preannotated_vcf.split('.')[-1] in ['gz', 'bgz'], 
         reference_genome=genome_build, array_elements_required=False, call_fields=[])
@@ -601,11 +607,14 @@ task filterVCF {
     cores = sys.argv[5]
     mem = int(np.floor(float(sys.argv[6])))
 
-    hl.init(min_block_size=128, spark_conf={"spark.executor.cores": cores, 
-                        "spark.executor.memory": f"{int(np.floor(mem*0.4))}g",
-                        "spark.driver.cores": cores,
-                        "spark.driver.memory": f"{int(np.floor(mem*0.4))}g"
-                        }, tmp_dir="tmp", local_tmpdir="tmp")
+    hl.init(min_block_size=128, 
+            local=f"local[*]", 
+            spark_conf={
+                        "spark.driver.memory": f"{int(np.floor(mem*0.8))}g",
+                        "spark.speculation": 'true'
+                        }, 
+            tmp_dir="tmp", local_tmpdir="tmp",
+                        )
 
     def get_transmission(phased_tm):
         phased_tm = phased_tm.annotate_entries(transmission=hl.if_else(phased_tm.proband_entry.PBT_GT==hl.parse_call('0|0'), 'uninherited',
@@ -726,11 +735,14 @@ task filterByGeneList {
     mem = int(np.floor(float(sys.argv[6])))
     sv_gene_fields = sys.argv[7].split(',')
 
-    hl.init(min_block_size=128, spark_conf={"spark.executor.cores": cores, 
-                        "spark.executor.memory": f"{int(np.floor(mem*0.4))}g",
-                        "spark.driver.cores": cores,
-                        "spark.driver.memory": f"{int(np.floor(mem*0.4))}g"
-                        }, tmp_dir="tmp", local_tmpdir="tmp")
+    hl.init(min_block_size=128, 
+            local=f"local[*]", 
+            spark_conf={
+                        "spark.driver.memory": f"{int(np.floor(mem*0.8))}g",
+                        "spark.speculation": 'true'
+                        }, 
+            tmp_dir="tmp", local_tmpdir="tmp",
+                        )
 
     mt = hl.import_vcf(vcf_file, force_bgz=vcf_file.split('.')[-1] in ['gz', 'bgz'], 
         reference_genome=genome_build, array_elements_required=False, call_fields=[])
