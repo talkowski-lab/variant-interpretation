@@ -479,7 +479,9 @@ def phase_by_transmission_aggregate_by_gene(tm, mt, pedigree):
     gene_agg_phased_tm = (gene_phased_tm.group_rows_by(gene_phased_tm.gene)
         .aggregate_rows(locus_alleles = hl.agg.collect(gene_phased_tm.row_key),
                        variant_type = hl.agg.collect(gene_phased_tm.variant_type))
-        .aggregate_entries(proband_PBT_GT = hl.agg.collect(gene_phased_tm.proband_entry.PBT_GT).filter(hl.is_defined),
+        .aggregate_entries(all_locus_alleles=hl.agg.filter(hl.is_defined(gene_phased_tm.proband_entry.GT),  # EDITED
+                                                       hl.agg.collect(gene_phased_tm.row_key)),
+                          proband_PBT_GT = hl.agg.collect(gene_phased_tm.proband_entry.PBT_GT).filter(hl.is_defined),
                           proband_GT = hl.agg.collect(gene_phased_tm.proband_entry.GT).filter(hl.is_defined))).result()
     return gene_phased_tm, gene_agg_phased_tm
 
@@ -502,7 +504,6 @@ def get_non_trio_comphets(mt):
     potential_comp_hets_non_trios = non_trio_gene_agg_phased_tm.filter_rows(
             hl.agg.count_where(non_trio_gene_agg_phased_tm.proband_GT.size()>1)>0
     )
-    potential_comp_hets_non_trios = potential_comp_hets_non_trios.annotate_entries(all_locus_alleles=potential_comp_hets_non_trios.locus_alleles)  # EDITED      
     potential_comp_hets_non_trios = potential_comp_hets_non_trios.explode_rows(potential_comp_hets_non_trios.locus_alleles)
     potential_comp_hets_non_trios = potential_comp_hets_non_trios.key_rows_by(potential_comp_hets_non_trios.locus_alleles[locus_expr], potential_comp_hets_non_trios.locus_alleles.alleles, 'gene')
 
