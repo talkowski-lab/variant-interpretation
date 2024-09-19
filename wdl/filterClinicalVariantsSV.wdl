@@ -400,7 +400,7 @@ task combineBedAnnotations {
 
     output {
         File combined_vcf = basename(preannotated_vcf, file_ext) + '.combined.annotations.vcf.gz'
-        File combined_vcf_idx =combined_vcf + '.tbi'
+        File combined_vcf_idx = basename(preannotated_vcf, file_ext) + '.combined.annotations.vcf.gz.tbi'
     }    
 }
 
