@@ -506,7 +506,6 @@ task combineBedAnnotations {
     cat $VCFS | awk -F '/' '{print $NF"\t"$0}' | sort -k1,1V | awk '{print $2}' >> vcfs_sorted.list
     for vcf in $(cat vcfs_sorted.list)
         do
-        echo $vcf
         file_ext=$(echo $vcf | rev | cut -f -1 -d '.' | rev)
         no_gt_vcf=$(basename $vcf '.vcf.'$file_ext).no.GTs.vcf.gz
         bcftools view -G -Oz -o $no_gt_vcf --no-version $vcf;
