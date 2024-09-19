@@ -97,8 +97,9 @@ if snv_indel_vcf!='NA':
     snv_mt = snv_mt.annotate_rows(gene=snv_mt['vep']['transcript_consequences']['SYMBOL'])
     snv_mt = snv_mt.filter_rows(snv_mt.gene!='')
 
-    snv_mt = snv_mt.annotate_rows(variant_type='SNV/Indel')
-
+    snv_mt = snv_mt.annotate_rows(variant_type='SNV/Indel', 
+                                  gene_source=['vep'])
+    
 # Load SV VCF
 if sv_vcf!='NA':
     locus_expr = 'locus_interval'
@@ -113,6 +114,14 @@ if sv_vcf!='NA':
     sv_mt = sv_mt.annotate_rows(variant_type='SV')
 
     sv_mt = sv_mt.explode_rows(sv_mt.gene)
+
+    # get gene source
+    def get_predicted_sources_expr(row_expr, sv_gene_fields):
+        return hl.array(
+            [hl.or_missing(hl.array(row_expr.info[col]).contains(row_expr.gene), col) for col in sv_gene_fields]
+        ).filter(hl.is_defined)
+
+    sv_mt = sv_mt.annotate_rows(gene_source=get_predicted_sources_expr(sv_mt, sv_gene_fields))
 
     # VEP
     if (snv_indel_vcf!='NA'):
