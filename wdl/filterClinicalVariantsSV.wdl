@@ -83,6 +83,7 @@ workflow filterClinicalVariantsSV {
         input:
         preannotated_vcf=vcf_file,
         annotated_vcfs=annotateVCFWithBed.annotated_vcf,
+        annotated_vcfs_idx=annotateVCFWithBed.annotated_vcf_idx,
         genome_build=genome_build,
         variant_interpretation_docker=variant_interpretation_docker,
         runtime_attr_override=runtime_attr_bcftools
@@ -344,6 +345,7 @@ task combineBedAnnotations {
     input {
         File preannotated_vcf
         Array[File] annotated_vcfs
+        Array[File] annotated_vcfs_idx
         String genome_build
         String variant_interpretation_docker
         RuntimeAttr? runtime_attr_override
