@@ -157,7 +157,7 @@ workflow filterClinicalVariantsSV {
         preannotated_vcf=vcf_file,
         annotated_vcfs=annotateVCFWithBed.annotated_vcf,
         genome_build=genome_build,
-        hail_docker=hail_docker,
+        variant_interpretation_docker=variant_interpretation_docker,
         runtime_attr_override=runtime_attr_annotate
     }
 
@@ -418,7 +418,7 @@ task combineBedAnnotations {
         File preannotated_vcf
         Array[File] annotated_vcfs
         String genome_build
-        String hail_docker
+        String variant_interpretation_docker
         RuntimeAttr? runtime_attr_override
     }
 
@@ -446,62 +446,82 @@ task combineBedAnnotations {
         cpu: cpu_cores
         preemptible: select_first([runtime_override.preemptible_tries, runtime_default.preemptible_tries])
         maxRetries: select_first([runtime_override.max_retries, runtime_default.max_retries])
-        docker: hail_docker
+        docker: variant_interpretation_docker
         bootDiskSizeGb: select_first([runtime_override.boot_disk_gb, runtime_default.boot_disk_gb])
     }
 
+    String file_ext = if sub(basename(preannotated_vcf), '.vcf.gz', '')!=basename(preannotated_vcf) then '.vcf.gz' else '.vcf.bgz'
+    String merged_no_gt_vcf = basename(preannotated_vcf, file_ext) + 'no.GTs.combined.annotations.vcf.gz'
     command <<<
+    # set -eou pipefail
+    # cat <<EOF > annotate_vcf.py
+    # import datetime
+    # import pandas as pd
+    # import hail as hl
+    # import numpy as np
+    # import sys
+    # import os
+
+    # preannotated_vcf = sys.argv[1]
+    # annotated_vcfs = sys.argv[2].split(',')
+    # genome_build = sys.argv[3]
+    # cores = sys.argv[4]
+    # mem = int(np.floor(float(sys.argv[5])))
+
+    # hl.init(min_block_size=128, 
+    #         local=f"local[*]", 
+    #         spark_conf={
+    #                     "spark.driver.memory": f"{int(np.floor(mem*0.8))}g",
+    #                     "spark.speculation": 'true'
+    #                     }, 
+    #         tmp_dir="tmp", local_tmpdir="tmp",
+    #                     )
+
+    # mt = hl.import_vcf(preannotated_vcf, force_bgz=preannotated_vcf.split('.')[-1] in ['gz', 'bgz'], 
+    #     reference_genome=genome_build, array_elements_required=False, call_fields=[])
+    # header = hl.get_vcf_metadata(preannotated_vcf)
+    # new_header = header
+
+    # for vcf_uri in annotated_vcfs:
+    #     annot_mt = hl.import_vcf(vcf_uri, force_bgz=vcf_uri.split('.')[-1] in ['gz', 'bgz'], 
+    #     reference_genome=genome_build, array_elements_required=False, call_fields=[])
+    #     annot_header = hl.get_vcf_metadata(vcf_uri)
+    #     new_fields = list(np.setdiff1d(list(annot_header['info'].keys()), list(header['info'].keys())))
+    #     mt = mt.annotate_rows(info=mt.info.annotate(
+    #         **{field: annot_mt.rows()[mt.row_key].info[field] for field in new_fields}))
+    #     mt.checkpoint(f"{os.path.basename(vcf_uri).split('.vcf')[0]}.mt")
+    #     for field in new_fields:
+    #         new_header['info'][field] = annot_header['info'][field]
+
+    # # export annotated VCF
+    # hl.export_vcf(mt, os.path.basename(preannotated_vcf).split('.vcf')[0] + '.combined.annotations.vcf.bgz', metadata=new_header, tabix=True)
+    # EOF
+
+    # python3 annotate_vcf.py ~{preannotated_vcf} ~{sep=',' annotated_vcfs} ~{genome_build} \
+    #     ~{cpu_cores} ~{memory}
+
     set -eou pipefail
-    cat <<EOF > annotate_vcf.py
-    import datetime
-    import pandas as pd
-    import hail as hl
-    import numpy as np
-    import sys
-    import os
-
-    preannotated_vcf = sys.argv[1]
-    annotated_vcfs = sys.argv[2].split(',')
-    genome_build = sys.argv[3]
-    cores = sys.argv[4]
-    mem = int(np.floor(float(sys.argv[5])))
-
-    hl.init(min_block_size=128, 
-            local=f"local[*]", 
-            spark_conf={
-                        "spark.driver.memory": f"{int(np.floor(mem*0.8))}g",
-                        "spark.speculation": 'true'
-                        }, 
-            tmp_dir="tmp", local_tmpdir="tmp",
-                        )
-
-    mt = hl.import_vcf(preannotated_vcf, force_bgz=preannotated_vcf.split('.')[-1] in ['gz', 'bgz'], 
-        reference_genome=genome_build, array_elements_required=False, call_fields=[])
-    header = hl.get_vcf_metadata(preannotated_vcf)
-    new_header = header
-
-    for vcf_uri in annotated_vcfs:
-        annot_mt = hl.import_vcf(vcf_uri, force_bgz=vcf_uri.split('.')[-1] in ['gz', 'bgz'], 
-        reference_genome=genome_build, array_elements_required=False, call_fields=[])
-        annot_header = hl.get_vcf_metadata(vcf_uri)
-        new_fields = list(np.setdiff1d(list(annot_header['info'].keys()), list(header['info'].keys())))
-        mt = mt.annotate_rows(info=mt.info.annotate(
-            **{field: annot_mt.rows()[mt.row_key].info[field] for field in new_fields}))
-        mt.checkpoint(f"{os.path.basename(vcf_uri).split('.vcf')[0]}.mt")
-        for field in new_fields:
-            new_header['info'][field] = annot_header['info'][field]
-
-    # export annotated VCF
-    hl.export_vcf(mt, os.path.basename(preannotated_vcf).split('.vcf')[0] + '.combined.annotations.vcf.bgz', metadata=new_header, tabix=True)
-    EOF
-
-    python3 annotate_vcf.py ~{preannotated_vcf} ~{sep=',' annotated_vcfs} ~{genome_build} \
-        ~{cpu_cores} ~{memory}
+    echo ~{preannotated_vcf} > vcfs_sorted.list
+    VCFS="~{write_lines(annotated_vcfs)}"
+    cat $VCFS | awk -F '/' '{print $NF"\t"$0}' | sort -k1,1V | awk '{print $2}' >> vcfs_sorted.list
+    for vcf in $(cat vcfs_sorted.list)
+        do
+        echo $vcf
+        file_ext=$(echo $vcf | rev | cut -f -1 -d '.' | rev)
+        no_gt_vcf=$(basename $vcf '.vcf.'$file_ext).no.GTs.vcf.gz
+        bcftools view -G -Oz -o $no_gt_vcf --no-version $vcf;
+        echo $no_gt_vcf >> no_gt_vcfs_sorted.list;
+        done
+    # merge annotations
+    bcftools merge --no-version -Oz -o ~{merged_no_gt_vcf} --file-list no_gt_vcfs_sorted.list
+    # add genotypes back
+    bcftools merge --no-version -Oz -o ~{basename(preannotated_vcf, file_ext) + '.combined.annotations.vcf.gz'} \
+        ~{merged_no_gt_vcf} ~{preannotated_vcf}
+    tabix ~{basename(preannotated_vcf, file_ext) + '.combined.annotations.vcf.gz'}
     >>>
 
-    String file_ext = if sub(basename(preannotated_vcf), '.vcf.gz', '')!=basename(preannotated_vcf) then '.vcf.gz' else '.vcf.bgz'
     output {
-        File combined_vcf = basename(preannotated_vcf, file_ext) + '.combined.annotations.vcf.bgz'
+        File combined_vcf = basename(preannotated_vcf, file_ext) + '.combined.annotations.vcf.gz'
         File combined_vcf_idx =combined_vcf + '.tbi'
     }    
 }
