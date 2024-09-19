@@ -509,6 +509,7 @@ task combineBedAnnotations {
         file_ext=$(echo $vcf | rev | cut -f -1 -d '.' | rev)
         no_gt_vcf=$(basename $vcf '.vcf.'$file_ext).no.GTs.vcf.gz
         bcftools view -G -Oz -o $no_gt_vcf --no-version $vcf;
+        tabix $no_gt_vcf;
         echo $no_gt_vcf >> no_gt_vcfs_sorted.list;
         done
     # merge annotations
