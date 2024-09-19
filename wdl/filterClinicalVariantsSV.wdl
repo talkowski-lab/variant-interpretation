@@ -383,7 +383,7 @@ task combineBedAnnotations {
     }
 
     String file_ext = if sub(basename(preannotated_vcf), '.vcf.gz', '')!=basename(preannotated_vcf) then '.vcf.gz' else '.vcf.bgz'
-    String merged_no_gt_vcf = basename(preannotated_vcf, file_ext) + 'no.GTs.combined.annotations.vcf.gz'
+    String merged_no_gt_vcf = basename(preannotated_vcf, file_ext) + '.no.GTs.combined.annotations.vcf.gz'
     
     command <<<
     set -eou pipefail
@@ -391,6 +391,7 @@ task combineBedAnnotations {
     cat $VCFS | awk -F '/' '{print $NF"\t"$0}' | sort -k1,1V | awk '{print $2}' > vcfs_sorted.list
     # merge annotations
     bcftools merge --no-version -Oz -o ~{merged_no_gt_vcf} --file-list vcfs_sorted.list
+    tabix ~{merged_no_gt_vcf}
     # add genotypes back
     bcftools merge --no-version -Oz -o ~{basename(preannotated_vcf, file_ext) + '.combined.annotations.vcf.gz'} \
         ~{merged_no_gt_vcf} ~{preannotated_vcf}
@@ -453,6 +454,7 @@ task removeGenotypes {
         File no_gt_vcf_idx = no_gt_vcf + '.tbi'
     }
 }
+
 task renameVCFSamples {
     input {
         File vcf_file
