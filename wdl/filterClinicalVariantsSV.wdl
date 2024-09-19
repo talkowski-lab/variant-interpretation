@@ -501,7 +501,6 @@ task combineBedAnnotations {
     #     ~{cpu_cores} ~{memory}
 
     set -eou pipefail
-    echo ~{preannotated_vcf} > vcfs_sorted.list
     VCFS="~{write_lines(annotated_vcfs)}"
     cat $VCFS | awk -F '/' '{print $NF"\t"$0}' | sort -k1,1V | awk '{print $2}' >> vcfs_sorted.list
     for vcf in $(cat vcfs_sorted.list)
