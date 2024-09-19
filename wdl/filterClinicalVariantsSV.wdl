@@ -487,6 +487,7 @@ task combineBedAnnotations {
         new_fields = list(np.setdiff1d(list(annot_header['info'].keys()), list(header['info'].keys())))
         mt = mt.annotate_rows(info=mt.info.annotate(
             **{field: annot_mt.rows()[mt.row_key].info[field] for field in new_fields}))
+        mt.checkpoint(f"{os.path.basename(annotated_vcfs).split('.vcf')[0]}.mt")
         for field in new_fields:
             new_header['info'][field] = annot_header['info'][field]
 
