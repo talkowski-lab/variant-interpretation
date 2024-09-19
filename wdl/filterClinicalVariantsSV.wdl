@@ -20,12 +20,6 @@ workflow filterClinicalVariantsSV {
         File? gene_list
 
         File annot_beds_with_header_tsv
-        # File clinvar_bed_with_header
-        # File dbvar_bed_with_header
-        # File gnomad_benign_bed_with_header
-        # File gd_bed_with_header
-        # File clingen_bed_with_header
-        # File decipher_bed_with_header
 
         String cohort_prefix
         String genome_build='GRCh38'
@@ -39,6 +33,7 @@ workflow filterClinicalVariantsSV {
         Float gnomad_af_threshold=0.05
         Int size_threshold=500
 
+        RuntimeAttr? runtime_attr_bcftools
         RuntimeAttr? runtime_attr_annotate
         RuntimeAttr? runtime_attr_rename_samples
         RuntimeAttr? runtime_attr_filter_vcf
@@ -51,81 +46,13 @@ workflow filterClinicalVariantsSV {
         variant_interpretation_docker=variant_interpretation_docker
     }
 
-    # Array[File] bed_files = [gd_bed_with_header, clingen_bed_with_header, dbvar_bed_with_header, 
-    #                         gnomad_benign_bed_with_header, decipher_bed_with_header, 
-    #                         clinvar_bed_with_header]
-
-    # scatter (ref_bed_with_header in bed_files) {
-    #     call intersectBed {
-    #         input:
-    #         bed_file=vcfToBed.bed_output,
-    #         ref_bed_with_header=ref_bed_with_header,
-    #         cohort_prefix=cohort_prefix,
-    #         bed_overlap_threshold=bed_overlap_threshold,
-    #         variant_interpretation_docker=variant_interpretation_docker
-    #     }
-    # }
-    # 
-    # call annotateVCFWithBed as annotate_GD {
-    #     input:
-    #     vcf_file=vcf_file,
-    #     intersect_bed=intersectBed.intersect_bed[0],
-    #     ref_bed_with_header=bed_files[0],
-    #     genome_build=genome_build,
-    #     hail_docker=hail_docker,
-    #     annot_name='GD',
-    #     runtime_attr_override=runtime_attr_annotate
-    # }    
-    # call annotateVCFWithBed as annotate_clinGen {
-    #     input:
-    #     vcf_file=annotate_GD.annotated_vcf,
-    #     intersect_bed=intersectBed.intersect_bed[1],
-    #     ref_bed_with_header=bed_files[1],
-    #     genome_build=genome_build,
-    #     hail_docker=hail_docker,
-    #     annot_name='ClinGen',
-    #     runtime_attr_override=runtime_attr_annotate
-    # }
-    # call annotateVCFWithBed as annotate_dbVar {
-    #     input:
-    #     vcf_file=annotate_clinGen.annotated_vcf,
-    #     intersect_bed=intersectBed.intersect_bed[2],
-    #     ref_bed_with_header=bed_files[2],
-    #     genome_build=genome_build,
-    #     hail_docker=hail_docker,
-    #     annot_name='dbVar',
-    #     runtime_attr_override=runtime_attr_annotate
-    # }
-    # call annotateVCFWithBed as annotate_gnomAD_benign {
-    #     input:
-    #     vcf_file=annotate_dbVar.annotated_vcf,
-    #     intersect_bed=intersectBed.intersect_bed[3],
-    #     ref_bed_with_header=bed_files[3],
-    #     genome_build=genome_build,
-    #     hail_docker=hail_docker,
-    #     annot_name='gnomAD_benign',
-    #     runtime_attr_override=runtime_attr_annotate
-    # }
-    # call annotateVCFWithBed as annotate_DECIPHER {
-    #     input:
-    #     vcf_file=annotate_gnomAD_benign.annotated_vcf,
-    #     intersect_bed=intersectBed.intersect_bed[4],
-    #     ref_bed_with_header=bed_files[4],
-    #     genome_build=genome_build,
-    #     hail_docker=hail_docker,
-    #     annot_name='DECIPHER',
-    #     runtime_attr_override=runtime_attr_annotate
-    # }
-    # call annotateVCFWithBed as annotate_clinVar {
-    #     input:
-    #     vcf_file=annotate_DECIPHER.annotated_vcf,
-    #     intersect_bed=intersectBed.intersect_bed[5],
-    #     ref_bed_with_header=bed_files[5],
-    #     genome_build=genome_build,
-    #     hail_docker=hail_docker,
-    #     annot_name='ClinVar',
-    #     runtime_attr_override=runtime_attr_annotate
-    # }
+    call removeGenotypes {
+        input:
+        vcf_file=vcf_file,
+        genome_build=genome_build,
+        variant_interpretation_docker=variant_interpretation_docker,
+        runtime_attr_override=runtime_attr_bcftools
+    }
 
     scatter (arr in read_tsv(annot_beds_with_header_tsv)) {
         String annot_name = arr[0]
@@ -142,7 +69,7 @@ workflow filterClinicalVariantsSV {
 
         call annotateVCFWithBed {
             input:
-            vcf_file=vcf_file,
+            vcf_file=removeGenotypes.no_gt_vcf_file,
             intersect_bed=intersectBed.intersect_bed,
             ref_bed_with_header=ref_bed_with_header,
             genome_build=genome_build,
@@ -150,23 +77,15 @@ workflow filterClinicalVariantsSV {
             annot_name=annot_name,
             runtime_attr_override=runtime_attr_annotate
         }    
-
-        call removeGenotypes {
-            input:
-            vcf_file=annotateVCFWithBed.annotated_vcf,
-            genome_build=genome_build,
-            variant_interpretation_docker=variant_interpretation_docker,
-            runtime_attr_override=runtime_attr_annotate
-        }
     }
 
     call combineBedAnnotations {
         input:
         preannotated_vcf=vcf_file,
-        annotated_vcfs=removeGenotypes.no_gt_vcf_file,
+        annotated_vcfs=annotateVCFWithBed.annotated_vcf,
         genome_build=genome_build,
         variant_interpretation_docker=variant_interpretation_docker,
-        runtime_attr_override=runtime_attr_annotate
+        runtime_attr_override=runtime_attr_bcftools
     }
 
     if (defined(sample_map_tsv)) {
@@ -460,57 +379,11 @@ task combineBedAnnotations {
 
     String file_ext = if sub(basename(preannotated_vcf), '.vcf.gz', '')!=basename(preannotated_vcf) then '.vcf.gz' else '.vcf.bgz'
     String merged_no_gt_vcf = basename(preannotated_vcf, file_ext) + 'no.GTs.combined.annotations.vcf.gz'
+    
     command <<<
-    # set -eou pipefail
-    # cat <<EOF > annotate_vcf.py
-    # import datetime
-    # import pandas as pd
-    # import hail as hl
-    # import numpy as np
-    # import sys
-    # import os
-
-    # preannotated_vcf = sys.argv[1]
-    # annotated_vcfs = sys.argv[2].split(',')
-    # genome_build = sys.argv[3]
-    # cores = sys.argv[4]
-    # mem = int(np.floor(float(sys.argv[5])))
-
-    # hl.init(min_block_size=128, 
-    #         local=f"local[*]", 
-    #         spark_conf={
-    #                     "spark.driver.memory": f"{int(np.floor(mem*0.8))}g",
-    #                     "spark.speculation": 'true'
-    #                     }, 
-    #         tmp_dir="tmp", local_tmpdir="tmp",
-    #                     )
-
-    # mt = hl.import_vcf(preannotated_vcf, force_bgz=preannotated_vcf.split('.')[-1] in ['gz', 'bgz'], 
-    #     reference_genome=genome_build, array_elements_required=False, call_fields=[])
-    # header = hl.get_vcf_metadata(preannotated_vcf)
-    # new_header = header
-
-    # for vcf_uri in annotated_vcfs:
-    #     annot_mt = hl.import_vcf(vcf_uri, force_bgz=vcf_uri.split('.')[-1] in ['gz', 'bgz'], 
-    #     reference_genome=genome_build, array_elements_required=False, call_fields=[])
-    #     annot_header = hl.get_vcf_metadata(vcf_uri)
-    #     new_fields = list(np.setdiff1d(list(annot_header['info'].keys()), list(header['info'].keys())))
-    #     mt = mt.annotate_rows(info=mt.info.annotate(
-    #         **{field: annot_mt.rows()[mt.row_key].info[field] for field in new_fields}))
-    #     mt.checkpoint(f"{os.path.basename(vcf_uri).split('.vcf')[0]}.mt")
-    #     for field in new_fields:
-    #         new_header['info'][field] = annot_header['info'][field]
-
-    # # export annotated VCF
-    # hl.export_vcf(mt, os.path.basename(preannotated_vcf).split('.vcf')[0] + '.combined.annotations.vcf.bgz', metadata=new_header, tabix=True)
-    # EOF
-
-    # python3 annotate_vcf.py ~{preannotated_vcf} ~{sep=',' annotated_vcfs} ~{genome_build} \
-    #     ~{cpu_cores} ~{memory}
-
     set -eou pipefail
     VCFS="~{write_lines(annotated_vcfs)}"
-    cat $VCFS | awk -F '/' '{print $NF"\t"$0}' | sort -k1,1V | awk '{print $2}' >> vcfs_sorted.list
+    cat $VCFS | awk -F '/' '{print $NF"\t"$0}' | sort -k1,1V | awk '{print $2}' > vcfs_sorted.list
     # merge annotations
     bcftools merge --no-version -Oz -o ~{merged_no_gt_vcf} --file-list vcfs_sorted.list
     # add genotypes back
