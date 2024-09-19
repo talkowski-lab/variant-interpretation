@@ -15,6 +15,7 @@ struct RuntimeAttr {
 workflow filterClinicalVariantsSV {
     input {
         File vcf_file
+        File vcf_idx
         File ped_uri
         File? sample_map_tsv
         File? gene_list
@@ -82,6 +83,7 @@ workflow filterClinicalVariantsSV {
     call combineBedAnnotations {
         input:
         preannotated_vcf=vcf_file,
+        preannotated_vcf_idx=vcf_idx,
         annotated_vcfs=annotateVCFWithBed.annotated_vcf,
         annotated_vcfs_idx=annotateVCFWithBed.annotated_vcf_idx,
         genome_build=genome_build,
@@ -344,6 +346,7 @@ task annotateVCFWithBed {
 task combineBedAnnotations {
     input {
         File preannotated_vcf
+        File preannotated_vcf_idx
         Array[File] annotated_vcfs
         Array[File] annotated_vcfs_idx
         String genome_build
