@@ -127,7 +127,7 @@ task mergeVCFSamples {
     import sys
     import os
     
-    vcf_files = sys.argv[1].str.split(',')
+    vcf_files = sys.argv[1].split(',')
     cores = sys.argv[2]
     mem = int(np.floor(float(sys.argv[3])))
     build = sys.argv[4]
