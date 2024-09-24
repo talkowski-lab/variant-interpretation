@@ -66,11 +66,11 @@ workflow AncestryInferenceCohortSet {
             }
         }
         
-        call mergeVCFs.mergeVCFs as mergeVCFs {
+        call mergeVCFs.mergeVCFSamples as mergeVCFs {
             input:
             vcf_files=select_first([ancestry_vcf_files, mergeCohortVCFs.merged_vcf_file]),
             sv_base_mini_docker=sv_base_mini_docker,
-            cohort_prefix=cohort_set_id+'_gnomad_pca_sites',
+            merged_filename=cohort_set_id+'_gnomad_pca_sites',
             runtime_attr_override=runtime_attr_merge_vcfs
         }
     }
