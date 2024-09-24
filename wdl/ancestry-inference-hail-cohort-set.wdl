@@ -38,7 +38,6 @@ workflow AncestryInferenceCohortSet {
 
         String genome_build='GRCh38'
 
-        RuntimeAttr? runtime_attr_subset_vcfs
         RuntimeAttr? runtime_attr_merge_vcfs
         RuntimeAttr? runtime_attr_infer_ancestry
     }
