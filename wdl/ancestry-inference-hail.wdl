@@ -32,6 +32,8 @@ workflow AncestryInference {
         Boolean infer_ancestry=true
         Boolean use_gnomad_rf=false
 
+        String genome_build='GRCh38'
+
         RuntimeAttr? runtime_attr_subset_vcfs
         RuntimeAttr? runtime_attr_merge_vcfs
         RuntimeAttr? runtime_attr_infer_ancestry
@@ -44,6 +46,7 @@ workflow AncestryInference {
                 vcf_uri=vcf_uri,
                 hail_docker=hail_docker,
                 gnomad_loading_ht=gnomad_loading_ht,
+                genome_build=genome_build,
                 runtime_attr_override=runtime_attr_subset_vcfs
             }
         }
@@ -73,6 +76,7 @@ workflow AncestryInference {
                 num_pcs=num_pcs,
                 min_prob=min_prob,
                 use_gnomad_rf=use_gnomad_rf,
+                genome_build=genome_build,
                 runtime_attr_override=runtime_attr_infer_ancestry
         }
     }
@@ -87,6 +91,7 @@ task subsetVCFgnomAD {
     input {
         File vcf_uri
         String gnomad_loading_ht
+        String genome_build
         String hail_docker
         RuntimeAttr? runtime_attr_override
     }
@@ -135,6 +140,7 @@ task subsetVCFgnomAD {
     mem = int(np.floor(float(sys.argv[3])))
     prefix = sys.argv[4]
     gnomad_loading_ht = sys.argv[5]
+    build = sys.argv[6]
 
     hl.init(min_block_size=128, 
             local=f"local[*]", 
@@ -145,7 +151,7 @@ task subsetVCFgnomAD {
             tmp_dir="tmp", local_tmpdir="tmp",
                         )
 
-    mt = hl.import_vcf(vcf_uri, reference_genome='GRCh38', force_bgz=True, call_fields=[], array_elements_required=False)
+    mt = hl.import_vcf(vcf_uri, reference_genome=build, force_bgz=True, call_fields=[], array_elements_required=False)
     gnomad_loading_ht = hl.read_table(gnomad_loading_ht)
     mt = mt.filter_rows(hl.is_defined(gnomad_loading_ht[mt.row_key]))
     output_filename = prefix + '_gnomad_pca_sites.vcf.bgz'
@@ -174,6 +180,7 @@ task inferAncestry {
         Int num_pcs
         Float min_prob
         Boolean use_gnomad_rf
+        String genome_build
         RuntimeAttr? runtime_attr_override
     }
 
@@ -207,7 +214,7 @@ task inferAncestry {
     command <<<
     curl ~{infer_ancestry_script} > infer_ancestry.py
     python3 infer_ancestry.py ~{vcf_uri} ~{gnomad_vcf_uri} ~{gnomad_loading_ht} ~{gnomad_rf_onnx} \
-        ~{pop_labels_tsv} ~{num_pcs} ~{min_prob} ~{cohort_prefix} ~{cpu_cores} ~{memory} ~{use_gnomad_rf} > stdout
+        ~{pop_labels_tsv} ~{num_pcs} ~{min_prob} ~{cohort_prefix} ~{cpu_cores} ~{memory} ~{use_gnomad_rf} ~{genome_build} > stdout
     >>>
 
     output {
