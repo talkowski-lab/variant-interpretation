@@ -158,7 +158,7 @@ task subsetVCFgnomAD {
     hl.export_vcf(mt, output_filename)
     EOF
 
-    python3 filter_sites.py ~{vcf_uri} ~{cpu_cores} ~{memory} ~{prefix} ~{gnomad_loading_ht} > stdout
+    python3 filter_sites.py ~{vcf_uri} ~{cpu_cores} ~{memory} ~{prefix} ~{gnomad_loading_ht} ~{genome_build} > stdout
 
     >>>
 
