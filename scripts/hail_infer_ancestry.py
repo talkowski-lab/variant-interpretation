@@ -24,12 +24,14 @@ cores = sys.argv[9]
 mem = int(np.floor(float(sys.argv[10])))
 use_gnomad_rf = ast.literal_eval(sys.argv[11].capitalize())
 
-hl.init(min_block_size=128, spark_conf={"spark.executor.cores": cores, 
-                    "spark.executor.memory": f"{int(np.floor(mem*0.4))}g",
-                    "spark.driver.cores": cores,
-                    "spark.driver.memory": f"{int(np.floor(mem*0.4))}g"
-                    }, tmp_dir="tmp", local_tmpdir="tmp")
-
+hl.init(min_block_size=128, 
+        local=f"local[*]", 
+        spark_conf={
+                    "spark.driver.memory": f"{int(np.floor(mem*0.8))}g",
+                    "spark.speculation": 'true'
+                    }, 
+        tmp_dir="tmp", local_tmpdir="tmp",
+                    )
 mt = hl.import_vcf(vcf_uri, reference_genome='GRCh38', force_bgz=True, call_fields=[], array_elements_required=False)    
 gnomad_mt = hl.import_vcf(gnomad_vcf_uri, reference_genome='GRCh38', force_bgz=True, call_fields=[], array_elements_required=False)    
 

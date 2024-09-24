@@ -43,6 +43,7 @@ workflow AncestryInference {
                 input:
                 vcf_uri=vcf_uri,
                 hail_docker=hail_docker,
+                gnomad_loading_ht=gnomad_loading_ht,
                 runtime_attr_override=runtime_attr_subset_vcfs
             }
         }
@@ -85,6 +86,7 @@ workflow AncestryInference {
 task subsetVCFgnomAD {
     input {
         File vcf_uri
+        String gnomad_loading_ht
         String hail_docker
         RuntimeAttr? runtime_attr_override
     }
@@ -132,21 +134,25 @@ task subsetVCFgnomAD {
     cores = sys.argv[2]
     mem = int(np.floor(float(sys.argv[3])))
     prefix = sys.argv[4]
+    gnomad_loading_ht = sys.argv[5]
 
-    hl.init(min_block_size=128, spark_conf={"spark.executor.cores": cores, 
-                        "spark.executor.memory": f"{int(np.floor(mem*0.4))}g",
-                        "spark.driver.cores": cores,
-                        "spark.driver.memory": f"{int(np.floor(mem*0.4))}g"
-                        }, tmp_dir="tmp", local_tmpdir="tmp")
+    hl.init(min_block_size=128, 
+            local=f"local[*]", 
+            spark_conf={
+                        "spark.driver.memory": f"{int(np.floor(mem*0.8))}g",
+                        "spark.speculation": 'true'
+                        }, 
+            tmp_dir="tmp", local_tmpdir="tmp",
+                        )
 
     mt = hl.import_vcf(vcf_uri, reference_genome='GRCh38', force_bgz=True, call_fields=[], array_elements_required=False)
-    gnomad_loading_ht = hl.read_table("gs://gcp-public-data--gnomad/release/3.1/pca/gnomad.v3.1.pca_loadings.ht")
+    gnomad_loading_ht = hl.read_table(gnomad_loading_ht)
     mt = mt.filter_rows(hl.is_defined(gnomad_loading_ht[mt.row_key]))
     output_filename = prefix + '_gnomad_pca_sites.vcf.bgz'
     hl.export_vcf(mt, output_filename)
     EOF
 
-    python3 filter_sites.py ~{vcf_uri} ~{cpu_cores} ~{memory} ~{prefix} > stdout
+    python3 filter_sites.py ~{vcf_uri} ~{cpu_cores} ~{memory} ~{prefix} ~{gnomad_loading_ht} > stdout
 
     >>>
 
