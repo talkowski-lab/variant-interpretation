@@ -218,6 +218,10 @@ task mergeVCFSamples {
         set -euo pipefail
         VCFS="~{write_lines(vcf_files)}"
         cat $VCFS | awk -F '/' '{print $NF"\t"$0}' | sort -k1,1V | awk '{print $2}' > vcfs_sorted.list
+        for vcf in $(cat vcfs_sorted.list);
+        do
+            tabix $vcf
+        done
         bcftools merge -m none --force-samples --no-version -Oz --file-list vcfs_sorted.list --output ~{merged_filename}_merged.vcf.gz
             >>>
 
