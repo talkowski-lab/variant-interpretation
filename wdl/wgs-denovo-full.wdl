@@ -20,50 +20,51 @@ struct RuntimeAttr {
 
 workflow wgs_denovo_full {
     input {
-            String python_trio_sample_script
-            String python_preprocess_script
-            String subset_ped_script
-            String uberSplit_v3_script
-            String merge_vcf_to_tsv_fullQC_script
-            String get_sample_pedigree_script
-            String filter_final_tsv_script
-            String annotate_mpc_loeuf_script
-            String mpc_dir
-            File mpc_chr22_file
-            File loeuf_file
-            File lcr_uri
-            File ped_sex_qc
-            File relatedness_qc
-            File hg38_reference
-            File hg38_reference_fai
-            File hg38_reference_dict
-            File info_header
-            Array[File]? vep_vcf_files
-            Array[File]? vep_annotated_final_vcf
-            String cohort_prefix
-            String cohort_id
-            String sv_base_mini_docker
-            String trio_denovo_docker
-            String hail_docker
-            String vep_hail_docker
-            String jvarkit_docker
-            String sample_column
-            Boolean exclude_gq_filters=false
-            Boolean merge_split_vcf=false
-            Int batch_size
-            Int shards_per_chunk=10
-            Int qual_threshold=150
-            Float sor_threshold_indel=3.0
-            Float sor_threshold_snv=2.5
-            Float readposranksum_threshold_indel=-1.7
-            Float readposranksum_threshold_snv=-1.4
-            Float qd_threshold_indel=4.0
-            Float qd_threshold_snv=3.0
-            Float mq_threshold=50
-            Float minDQ
-            Float AF_threshold=0.005
-            Int AC_threshold=2
-            Float csq_af_threshold=0.01
+        String python_trio_sample_script
+        String python_preprocess_script
+        String subset_ped_script
+        String uberSplit_v3_script
+        String merge_vcf_to_tsv_fullQC_script
+        String get_sample_pedigree_script
+        String filter_final_tsv_script
+        String annotate_mpc_loeuf_script
+        String mpc_dir
+        File mpc_chr22_file
+        File loeuf_file
+        File lcr_uri
+        File ped_sex_qc
+        File relatedness_qc
+        File hg38_reference
+        File hg38_reference_fai
+        File hg38_reference_dict
+        File info_header
+        Array[File]? vep_vcf_files
+        Array[File]? vep_annotated_final_vcf
+        String cohort_prefix
+        String cohort_id
+        String sv_base_mini_docker
+        String trio_denovo_docker
+        String hail_docker
+        String vep_hail_docker
+        String jvarkit_docker
+        String sample_column
+        Boolean exclude_gq_filters=false
+        Boolean merge_split_vcf=false
+        Int batch_size
+        String genome_build='GRCh38'
+        Int shards_per_chunk=10
+        Int qual_threshold=150
+        Float sor_threshold_indel=3.0
+        Float sor_threshold_snv=2.5
+        Float readposranksum_threshold_indel=-1.7
+        Float readposranksum_threshold_snv=-1.4
+        Float qd_threshold_indel=4.0
+        Float qd_threshold_snv=3.0
+        Float mq_threshold=50
+        Float minDQ
+        Float AF_threshold=0.005
+        Int AC_threshold=2
+        Float csq_af_threshold=0.01
     }
 
     Array[File] vep_files = select_first([vep_vcf_files, vep_annotated_final_vcf])
@@ -155,12 +156,14 @@ workflow wgs_denovo_full {
     call step6.step6 as step6 {
         input:
             vcf_metrics_tsv_annot=annotateMPCandLOEUF.vcf_metrics_tsv_annot,
+            vep_vcf_file=vep_files[0],
             AF_threshold=AF_threshold,
             AC_threshold=AC_threshold,
             csq_af_threshold=csq_af_threshold,
             filter_final_tsv_script=filter_final_tsv_script,
             hail_docker=hail_docker,
-            sample_column=sample_column
+            sample_column=sample_column,
+            genome_build=genome_build
     }
 
     output {
