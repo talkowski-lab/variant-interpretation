@@ -32,6 +32,7 @@ hl.init(min_block_size=128,
                     }, 
         tmp_dir="tmp", local_tmpdir="tmp",
                     )
+
 mt = hl.import_vcf(vcf_uri, reference_genome='GRCh38', force_bgz=True, call_fields=[], array_elements_required=False)    
 gnomad_mt = hl.import_vcf(gnomad_vcf_uri, reference_genome='GRCh38', force_bgz=True, call_fields=[], array_elements_required=False)    
 

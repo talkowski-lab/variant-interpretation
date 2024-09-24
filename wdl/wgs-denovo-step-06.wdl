@@ -14,6 +14,7 @@ struct RuntimeAttr {
 workflow step6 {
     input {
         File vcf_metrics_tsv_annot
+        File vep_vcf_file
         Float AF_threshold=0.005
         Int AC_threshold=2
         Float csq_af_threshold=0.01
@@ -21,6 +22,7 @@ workflow step6 {
         String prioritize_csq_script
         String hail_docker
         String sample_column
+        String genome_build
         RuntimeAttr? runtime_attr_prioritize
         RuntimeAttr? runtime_attr_filter_final
     }
@@ -28,9 +30,11 @@ workflow step6 {
     call prioritizeCSQ.annotateMostSevereCSQ as prioritizeCSQ {
         input:
         vcf_metrics_tsv=vcf_metrics_tsv_annot,
+        vep_vcf_file=vep_vcf_file,
         prioritize_csq_script=prioritize_csq_script,
         hail_docker=hail_docker,
         sample_column=sample_column,
+        genome_build=genome_build,
         runtime_attr_override=runtime_attr_prioritize
     }
 
