@@ -14,7 +14,10 @@ struct RuntimeAttr {
 
 workflow AncestryInferenceCohortSet {
     input {
-        Array[File] ancestry_vcf_files
+        Array[Array[File]] vep_vcf_files
+        Array[String] cohort_prefixes
+
+        Array[File]? ancestry_vcf_files
         File? ancestry_vcf_file_
         File gnomad_vcf_uri
         File gnomad_rf_onnx
@@ -22,7 +25,7 @@ workflow AncestryInferenceCohortSet {
         String gnomad_loading_ht
         String infer_ancestry_script
 
-        String cohort_prefix
+        String cohort_set_id
         String hail_docker
         String sv_base_mini_docker
 
@@ -38,11 +41,36 @@ workflow AncestryInferenceCohortSet {
     }
 
     if ((!defined(ancestry_vcf_file_)) || (ancestry_vcf_file_ == '')) {
+        if (!defined(ancestry_vcf_files)) {
+            scatter (pair in zip(cohort_prefixes, vep_vcf_files)) {
+                Array[File] vcf_files = pair.right
+                String cohort_prefix = pair.left
+
+                scatter (vcf_uri in vcf_files) {
+                    call subsetVCFgnomAD {
+                        input:
+                        vcf_uri=vcf_uri,
+                        hail_docker=hail_docker,
+                        gnomad_loading_ht=gnomad_loading_ht,
+                        runtime_attr_override=runtime_attr_subset_vcfs
+                    }        
+                }
+
+                call mergeVCFs.mergeVCFs as mergeCohortVCFs {
+                    input:
+                    vcf_files=subsetVCFgnomAD.subset_vcf,
+                    sv_base_mini_docker=sv_base_mini_docker,
+                    cohort_prefix=cohort_prefix+'_gnomad_pca_sites',
+                    runtime_attr_override=runtime_attr_merge_vcfs
+                }
+            }
+        }
+        
         call mergeVCFs.mergeVCFs as mergeVCFs {
             input:
-            vcf_files=ancestry_vcf_files,
+            vcf_files=select_first([ancestry_vcf_files, mergeCohortVCFs.merged_vcf_file]),
             sv_base_mini_docker=sv_base_mini_docker,
-            cohort_prefix=cohort_prefix+'_gnomad_pca_sites',
+            cohort_prefix=cohort_set_id+'_gnomad_pca_sites',
             runtime_attr_override=runtime_attr_merge_vcfs
         }
     }
@@ -56,7 +84,7 @@ workflow AncestryInferenceCohortSet {
                 gnomad_vcf_uri=gnomad_vcf_uri,
                 gnomad_rf_onnx=gnomad_rf_onnx,
                 pop_labels_tsv=pop_labels_tsv,
-                cohort_prefix=cohort_prefix,
+                cohort_prefix=cohort_set_id,
                 gnomad_loading_ht=gnomad_loading_ht,
                 infer_ancestry_script=infer_ancestry_script,
                 hail_docker=hail_docker,
