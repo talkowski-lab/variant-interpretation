@@ -35,6 +35,8 @@ workflow AncestryInferenceCohortSet {
         Boolean infer_ancestry=true
         Boolean use_gnomad_rf=false
 
+        String genome_build='GRCh38'
+
         RuntimeAttr? runtime_attr_subset_vcfs
         RuntimeAttr? runtime_attr_merge_vcfs
         RuntimeAttr? runtime_attr_infer_ancestry
@@ -69,8 +71,9 @@ workflow AncestryInferenceCohortSet {
         call mergeVCFSamples {
             input:
             vcf_files=select_first([ancestry_vcf_files]),
-            sv_base_mini_docker=sv_base_mini_docker,
-            merged_filename=cohort_set_id+'_gnomad_pca_sites',
+            hail_docker=hail_docker,
+            prefix=cohort_set_id,
+            genome_build=genome_build,
             runtime_attr_override=runtime_attr_merge_vcfs
         }
     }
@@ -182,8 +185,9 @@ task subsetVCFgnomAD {
 task mergeVCFSamples {
     input {
         Array[File] vcf_files
-        String merged_filename
-        String sv_base_mini_docker
+        String prefix
+        String genome_build
+        String hail_docker
         RuntimeAttr? runtime_attr_override
     }
 
@@ -210,23 +214,52 @@ task mergeVCFSamples {
         cpu: cpu_cores
         preemptible: select_first([runtime_override.preemptible_tries, runtime_default.preemptible_tries])
         maxRetries: select_first([runtime_override.max_retries, runtime_default.max_retries])
-        docker: sv_base_mini_docker
+        docker: hail_docker
         bootDiskSizeGb: select_first([runtime_override.boot_disk_gb, runtime_default.boot_disk_gb])
     }
 
     command <<<
-        set -euo pipefail
-        VCFS="~{write_lines(vcf_files)}"
-        cat $VCFS | awk -F '/' '{print $NF"\t"$0}' | sort -k1,1V | awk '{print $2}' > vcfs_sorted.list
-        for vcf in $(cat vcfs_sorted.list);
-        do
-            tabix $vcf
-        done
-        bcftools merge -m none --force-samples --no-version -Oz --file-list vcfs_sorted.list --output ~{merged_filename}_merged.vcf.gz
-            >>>
+    set -euo pipefail
+    cat <<EOF > filter_sites.py
+    import datetime
+    import pandas as pd
+    import hail as hl
+    import numpy as np
+    import sys
+    import os
+    
+    vcf_files = sys.argv[1].str.split(',')
+    cores = sys.argv[2]
+    mem = int(np.floor(float(sys.argv[3])))
+    build = sys.argv[4]
+    prefix = sys.argv[5]
+
+    hl.init(min_block_size=128, 
+            local=f"local[*]", 
+            spark_conf={
+                        "spark.driver.memory": f"{int(np.floor(mem*0.8))}g",
+                        "spark.speculation": 'true'
+                        }, 
+            tmp_dir="tmp", local_tmpdir="tmp",
+                        )
+    for i, vcf_uri in enumerate(vcf_files):
+        if i==0:
+            mt = hl.import_vcf(vcf_uri, reference_genome=build, force_bgz=True, call_fields=[], array_elements_required=False)    
+        else:
+            cohort_mt = hl.import_vcf(vcf_uri, reference_genome=build, force_bgz=True, call_fields=[], array_elements_required=False)    
+            common_entry_fields = [x for x in list(np.intersect1d(list(mt.entry), list(cohort_mt.entry))) if x not in ['PGT','PID','MIN_DP']]
+            mt = mt.select_entries(*common_entry_fields).union_cols(cohort_mt.select_entries(*common_entry_fields), row_join_type='inner')
+
+    output_filename = prefix + '_gnomad_pca_sites.vcf.bgz'
+    hl.export_vcf(mt, output_filename)
+    EOF
+
+    python3 filter_sites.py ~{sep=',' vcf_files} ~{cpu_cores} ~{memory} ~{genome_build} ~{prefix} > stdout
+
+    >>>
 
     output {
-        File merged_vcf_file = "~{merged_filename}_merged.vcf.gz"
+        File merged_vcf_file = "~{prefix}_gnomad_pca_sites.vcf.gz"
     }
 }
 
