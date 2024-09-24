@@ -14,8 +14,8 @@ struct RuntimeAttr {
 
 workflow AncestryInferenceCohortSet {
     input {
-        Array[Array[File]] vep_vcf_files
-        Array[String] cohort_prefixes
+        # Array[Array[File]] vep_vcf_files
+        # Array[String] cohort_prefixes
 
         Array[File]? ancestry_vcf_files
         File? ancestry_vcf_file_
@@ -41,34 +41,34 @@ workflow AncestryInferenceCohortSet {
     }
 
     if ((!defined(ancestry_vcf_file_)) || (ancestry_vcf_file_ == '')) {
-        if (!defined(ancestry_vcf_files)) {
-            scatter (pair in zip(cohort_prefixes, vep_vcf_files)) {
-                Array[File] vcf_files = pair.right
-                String cohort_prefix = pair.left
+        # if (!defined(ancestry_vcf_files)) {
+        #     scatter (pair in zip(cohort_prefixes, vep_vcf_files)) {
+        #         Array[File] vcf_files = pair.right
+        #         String cohort_prefix = pair.left
 
-                scatter (vcf_uri in vcf_files) {
-                    call subsetVCFgnomAD {
-                        input:
-                        vcf_uri=vcf_uri,
-                        hail_docker=hail_docker,
-                        gnomad_loading_ht=gnomad_loading_ht,
-                        runtime_attr_override=runtime_attr_subset_vcfs
-                    }        
-                }
+        #         scatter (vcf_uri in vcf_files) {
+        #             call subsetVCFgnomAD {
+        #                 input:
+        #                 vcf_uri=vcf_uri,
+        #                 hail_docker=hail_docker,
+        #                 gnomad_loading_ht=gnomad_loading_ht,
+        #                 runtime_attr_override=runtime_attr_subset_vcfs
+        #             }        
+        #         }
 
-                call mergeVCFs.mergeVCFs as mergeCohortVCFs {
-                    input:
-                    vcf_files=subsetVCFgnomAD.subset_vcf,
-                    sv_base_mini_docker=sv_base_mini_docker,
-                    cohort_prefix=cohort_prefix+'_gnomad_pca_sites',
-                    runtime_attr_override=runtime_attr_merge_vcfs
-                }
-            }
-        }
+        #         call mergeVCFs.mergeVCFs as mergeCohortVCFs {
+        #             input:
+        #             vcf_files=subsetVCFgnomAD.subset_vcf,
+        #             sv_base_mini_docker=sv_base_mini_docker,
+        #             cohort_prefix=cohort_prefix+'_gnomad_pca_sites',
+        #             runtime_attr_override=runtime_attr_merge_vcfs
+        #         }
+        #     }
+        # }
         
         call mergeVCFs.mergeVCFSamples as mergeVCFs {
             input:
-            vcf_files=select_first([ancestry_vcf_files, mergeCohortVCFs.merged_vcf_file]),
+            vcf_files=select_first([ancestry_vcf_files]),
             sv_base_mini_docker=sv_base_mini_docker,
             merged_filename=cohort_set_id+'_gnomad_pca_sites',
             runtime_attr_override=runtime_attr_merge_vcfs
