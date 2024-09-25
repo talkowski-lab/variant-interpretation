@@ -419,7 +419,7 @@ task annotateSpliceAI {
 task addGenotypes {
     input {
         File annot_vcf_file
-        File annot_vcf_idx
+        File? annot_vcf_idx
         File vcf_file
         File vcf_idx
         String sv_base_mini_docker
@@ -449,12 +449,18 @@ task addGenotypes {
         bootDiskSizeGb: select_first([runtime_override.boot_disk_gb, runtime_default.boot_disk_gb])
     }
 
+    Boolean reindex = defined(annot_vcf_idx)
     String filename = basename(annot_vcf_file)
     String prefix = if (sub(filename, "\\.gz", "")!=filename) then basename(annot_vcf_file, ".vcf.gz") else basename(annot_vcf_file, ".vcf.bgz")
     String combined_vcf_name = "~{prefix}.GT.vcf.bgz"
 
     command <<<
         set -euo pipefail
+
+        if [[ ~{reindex} == "true" ]]
+        do
+            tabix ~{vcf_file}
+        done
 
         bcftools merge \
         --no-version \
@@ -477,7 +483,7 @@ task addGenotypesReheader {
     input {
         File header_file
         File annot_vcf_file
-        File annot_vcf_idx
+        File? annot_vcf_idx
         File vcf_file
         File vcf_idx
         String sv_base_mini_docker
@@ -507,12 +513,18 @@ task addGenotypesReheader {
         bootDiskSizeGb: select_first([runtime_override.boot_disk_gb, runtime_default.boot_disk_gb])
     }
 
+    Boolean reindex = defined(annot_vcf_idx)
     String filename = basename(annot_vcf_file)
     String prefix = if (sub(filename, "\\.gz", "")!=filename) then basename(annot_vcf_file, ".vcf.gz") else basename(annot_vcf_file, ".vcf.bgz")
     String combined_vcf_name = "~{prefix}.GT.vcf.bgz"
 
     command <<<
         set -euo pipefail
+
+        if [[ ~{reindex} == "true" ]]
+        do
+            tabix ~{vcf_file}
+        done
 
         bcftools reheader -h ~{header_file} -o fixed_header.vcf.gz ~{vcf_file}
         bcftools index -t fixed_header.vcf.gz       

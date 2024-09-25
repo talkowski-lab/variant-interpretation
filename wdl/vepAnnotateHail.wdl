@@ -3,6 +3,7 @@ version 1.0
 import "scatterVCF.wdl" as scatterVCF
 import "mergeSplitVCF.wdl" as mergeSplitVCF
 import "mergeVCFs.wdl" as mergeVCFs
+import "vepAnnotateHailExtra.wdl" as annotateExtra
 
 struct RuntimeAttr {
     Float? mem_gb
@@ -52,9 +53,12 @@ workflow vepAnnotateHail {
         Int shards_per_chunk=10  # combine pre-sharded VCFs
         
         Array[File]? vcf_shards  # if scatterVCF.wdl already run before VEP
+
+        File? header_file
         
         RuntimeAttr? runtime_attr_merge_vcfs
         RuntimeAttr? runtime_attr_vep_annotate
+        RuntimeAttr? runtime_attr_annotate_add_genotypes
     }
 
     if (defined(vcf_shards)) {
@@ -98,6 +102,34 @@ workflow vepAnnotateHail {
                     genome_build=genome_build,
                     runtime_attr_override=runtime_attr_vep_annotate
             }
+
+            if (defined(header_file)) {
+                call annotateExtra.addGenotypesReheader as addGenotypesReheaderMergedShards {
+                    input:
+                    header_file=select_first([header_file]),
+                    annot_vcf_file=vepAnnotateMergedShards.vep_vcf_file,
+                    annot_vcf_idx=vepAnnotateMergedShards.vep_vcf_idx,
+                    vcf_file=mergeVCFs.merged_vcf_file,
+                    vcf_idx=mergeVCFs.merged_vcf_idx,
+                    sv_base_mini_docker=sv_base_mini_docker,
+                    runtime_attr_override=runtime_attr_annotate_add_genotypes
+                }
+            }
+
+            if (!defined(header_file)) {
+                call annotateExtra.addGenotypes as addGenotypesMergedShards {
+                    input:
+                    annot_vcf_file=vepAnnotateMergedShards.vep_vcf_file,
+                    annot_vcf_idx=vepAnnotateMergedShards.vep_vcf_idx,
+                    vcf_file=mergeVCFs.merged_vcf_file,
+                    vcf_idx=mergeVCFs.merged_vcf_idx,
+                    sv_base_mini_docker=sv_base_mini_docker,
+                    runtime_attr_override=runtime_attr_annotate_add_genotypes
+                }
+            }
+
+            File combined_vcf_merged_shards = select_first([addGenotypesReheaderMergedShards.combined_vcf_file, addGenotypesMergedShards.combined_vcf_file])
+            File combined_vcf_idx_merged_shards = select_first([addGenotypesReheaderMergedShards.combined_vcf_idx, addGenotypesMergedShards.combined_vcf_idx])
         }
     }
 
@@ -136,11 +168,36 @@ workflow vepAnnotateHail {
                     genome_build=genome_build,
                     runtime_attr_override=runtime_attr_vep_annotate
             }
+            if (defined(header_file)) {
+                call annotateExtra.addGenotypesReheader as addGenotypesReheader {
+                    input:
+                    header_file=select_first([header_file]),
+                    annot_vcf_file=vepAnnotate.vep_vcf_file,
+                    annot_vcf_idx=vepAnnotate.vep_vcf_idx,
+                    vcf_file=vcf_shard,
+                    sv_base_mini_docker=sv_base_mini_docker,
+                    runtime_attr_override=runtime_attr_annotate_add_genotypes
+                }
+            }
+
+            if (!defined(header_file)) {
+                call annotateExtra.addGenotypes as addGenotypes {
+                    input:
+                    annot_vcf_file=vepAnnotate.vep_vcf_file,
+                    annot_vcf_idx=vepAnnotate.vep_vcf_idx,
+                    vcf_file=vcf_shard,
+                    sv_base_mini_docker=sv_base_mini_docker,
+                    runtime_attr_override=runtime_attr_annotate_add_genotypes
+                }
+            }
+
+            File combined_vcf = select_first([addGenotypesReheader.combined_vcf_file, addGenotypes.combined_vcf_file])
+            File combined_vcf_idx = select_first([addGenotypesReheader.combined_vcf_idx, addGenotypes.combined_vcf_idx])
         }
     }
 
-    Array[File] vep_vcf_files_ = select_first([vepAnnotate.vep_vcf_file, vepAnnotateMergedShards.vep_vcf_file])
-    Array[File] vep_vcf_idx_ = select_first([vepAnnotate.vep_vcf_idx, vepAnnotateMergedShards.vep_vcf_idx])
+    Array[File] vep_vcf_files_ = select_first([combined_vcf_merged_shards, combined_vcf])
+    Array[File] vep_vcf_idx_ = select_first([combined_vcf_idx_merged_shards, combined_vcf_idx])
 
     output {
         Array[File] vep_vcf_files = vep_vcf_files_
