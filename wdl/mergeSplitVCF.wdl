@@ -17,7 +17,7 @@ task splitFile {
         File file
         Int shards_per_chunk
         String cohort_prefix
-        String vep_hail_docker
+        String hail_docker
         RuntimeAttr? runtime_attr_override
     }
 
@@ -42,7 +42,7 @@ task splitFile {
         cpu: select_first([runtime_override.cpu_cores, runtime_default.cpu_cores])
         preemptible: select_first([runtime_override.preemptible_tries, runtime_default.preemptible_tries])
         maxRetries: select_first([runtime_override.max_retries, runtime_default.max_retries])
-        docker: vep_hail_docker
+        docker: hail_docker
         bootDiskSizeGb: select_first([runtime_override.boot_disk_gb, runtime_default.boot_disk_gb])
     }
 

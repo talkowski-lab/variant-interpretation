@@ -105,7 +105,6 @@ workflow wgs_denovo_full {
             sv_base_mini_docker=sv_base_mini_docker,
             cohort_prefix=cohort_prefix,
             hail_docker=hail_docker,
-            hail_docker=hail_docker,
             qual_threshold=qual_threshold,
             sor_threshold_indel=sor_threshold_indel,
             sor_threshold_snv=sor_threshold_snv,
