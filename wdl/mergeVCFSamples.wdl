@@ -12,7 +12,6 @@ struct RuntimeAttr {
 workflow MergeVCFs {
     input {
         Array[File] vcf_files
-        Array[File] vcf_indices
         String sample_set_id
         String sv_base_mini_docker
     }
@@ -20,7 +19,6 @@ workflow MergeVCFs {
     call mergeVCFs {
         input:
         vcf_files=vcf_files,
-        vcf_indices=vcf_indices,
         output_vcf_name=sample_set_id + '.merged.vcf.gz',
         sv_base_mini_docker=sv_base_mini_docker
     }
@@ -34,7 +32,6 @@ workflow MergeVCFs {
 task mergeVCFs {
     input {
         Array[File] vcf_files
-        Array[File] vcf_indices
         String output_vcf_name
         String sv_base_mini_docker
         RuntimeAttr? runtime_attr_override
@@ -72,7 +69,10 @@ task mergeVCFs {
         set -euo pipefail
         VCFS="~{write_lines(vcf_files)}"
         cat $VCFS | awk -F '/' '{print $NF"\t"$0}' | sort -k1,1V | awk '{print $2}' > vcfs_sorted.list
-        bcftools head ~{vcf_files[0]} | grep INFO= | grep -v -e "Type=String" -e "Type=Flag" | cut -f 3 -d '=' | cut -f 1 -d ',' > info_fields.txt  # numeric INFO fields only
+        for vcf in $(cat vcfs_sorted.list);
+        do
+            tabix $vcf
+        done
         bcftools merge -m id -Oz -o ~{output_vcf_name} --file-list vcfs_sorted.list
         tabix ~{output_vcf_name}
     >>>
