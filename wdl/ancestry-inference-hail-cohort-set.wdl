@@ -157,7 +157,7 @@ task mergeVCFSamples {
     >>>
 
     output {
-        File merged_vcf_file = "~{prefix}_gnomad_pca_sites.vcf.gz"
+        File merged_vcf_file = "~{prefix}_gnomad_pca_sites.vcf.bgz"
     }
 }
 
