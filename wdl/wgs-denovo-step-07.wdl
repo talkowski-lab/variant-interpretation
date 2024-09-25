@@ -82,7 +82,8 @@ workflow step7 {
             qual_threshold=qual_threshold,
             shards_per_chunk=shards_per_chunk,
             runtime_attr_filter_vcf=runtime_attr_filter_vcf,
-            runtime_attr_merge_results=runtime_attr_merge_results
+            runtime_attr_merge_results=runtime_attr_merge_results,
+            runtime_attr_downsample=runtime_attr_downsample
     }
 
     call filterUltraRareParentsVariantsHail.filterUltraRareParentsVariantsHail as filterUltraRareParentsVariantsHail {
@@ -109,7 +110,8 @@ workflow step7 {
             qual_threshold=qual_threshold,
             shards_per_chunk=shards_per_chunk,
             runtime_attr_filter_vcf=runtime_attr_filter_vcf,
-            runtime_attr_merge_results=runtime_attr_merge_results
+            runtime_attr_merge_results=runtime_attr_merge_results,
+            runtime_attr_downsample=runtime_attr_downsample
     }
 
     call BaggingPU_RF.BaggingPU_RF as BaggingPU_RF {
