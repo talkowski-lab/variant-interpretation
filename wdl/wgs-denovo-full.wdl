@@ -75,17 +75,17 @@ workflow wgs_denovo_full {
         Float csq_af_threshold=0.01
 
         # for ultra-rare
-        Int gq_het_threshold=99
-        Int gq_hom_ref_threshold=30
+        # Int gq_het_threshold=99
+        # Int gq_hom_ref_threshold=30
     
         # String var_type  # Indel or SNV, only Indel for now
-        String metric='fp_fn_ratio'
-        Array[String] sample_features=["GQ_parent", "AB_sample", "DPC_sample", "DPC_parent", "PL_sample_0.0", "PL_sample_1.1"]
-        Array[String] variant_features=["MQ", "FS", "BaseQRankSum", "SOR", "LEN", "ReadPosRankSum", "DP", "QD", "VQSLOD"]
-        Float vqslod_cutoff=-10
-        Int n_estimators_rf=100
-        Int n_bag=10
-        Boolean filter_pass_before=false
+        # String metric='fp_fn_ratio'
+        # Array[String] sample_features=["GQ_parent", "AB_sample", "DPC_sample", "DPC_parent", "PL_sample_0.0", "PL_sample_1.1"]
+        # Array[String] variant_features=["MQ", "FS", "BaseQRankSum", "SOR", "LEN", "ReadPosRankSum", "DP", "QD", "VQSLOD"]
+        # Float vqslod_cutoff=-10
+        # Int n_estimators_rf=100
+        # Int n_bag=10
+        # Boolean filter_pass_before=false
     }
 
     Array[File] vep_files = select_first([vep_vcf_files, vep_annotated_final_vcf])
@@ -206,8 +206,8 @@ workflow wgs_denovo_full {
         AF_threshold=AF_threshold,
         AC_threshold=AC_threshold,
         csq_af_threshold=csq_af_threshold,
-        gq_het_threshold=gq_het_threshold,
-        gq_hom_ref_threshold=gq_hom_ref_threshold,
+        # gq_het_threshold=gq_het_threshold,
+        # gq_hom_ref_threshold=gq_hom_ref_threshold,
         qual_threshold=qual_threshold,
         shards_per_chunk=shards_per_chunk,
         repetitive_regions_bed=repetitive_regions_bed,
@@ -215,13 +215,13 @@ workflow wgs_denovo_full {
         bagging_pu_rf_len_script=bagging_pu_rf_len_script,
         tsv_to_bed_script=tsv_to_bed_script,
         cohort_prefix=cohort_prefix,
-        metric=metric,
-        sample_features=sample_features,
-        variant_features=variant_features,
-        vqslod_cutoff=vqslod_cutoff,
-        n_estimators_rf=n_estimators_rf,
-        n_bag=n_bag,
-        filter_pass_before=filter_pass_before
+        # metric=metric,
+        # sample_features=sample_features,
+        # variant_features=variant_features,
+        # vqslod_cutoff=vqslod_cutoff,
+        # n_estimators_rf=n_estimators_rf,
+        # n_bag=n_bag,
+        # filter_pass_before=filter_pass_before
     }
 
     output {
