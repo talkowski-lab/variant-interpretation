@@ -184,7 +184,10 @@ ped_rels_ht_merged = ped_rels_ht.annotate(i=ped_rels_ht.j, j=ped_rels_ht.i).key_
 rel_merged = rel.key_by()
 rel_merged = rel_merged.annotate(i=rel_merged.j, j=rel_merged.i).key_by('i', 'j').union(rel.key_by('i','j'))
 
-related_in_ped = rel_merged.annotate(ped_relationship=ped_rels_ht_merged[rel_merged.key].ped_relationship)
+try:
+    related_in_ped = rel_merged.annotate(ped_relationship=ped_rels_ht_merged[rel_merged.key].ped_relationship)
+except:  # no related in ped
+    related_in_ped = rel_merged.annotate(ped_relationship=hl.missing('str'))
 related_in_ped = related_in_ped.filter(hl.is_missing(related_in_ped.ped_relationship), keep=False)
 
 unrelated_in_ped = rel.anti_join(related_in_ped).annotate(ped_relationship='unrelated')
