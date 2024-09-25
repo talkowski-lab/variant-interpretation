@@ -48,9 +48,9 @@ workflow step7 {
         String bagging_pu_rf_len_script
         String tsv_to_bed_script
         String cohort_prefix
-        String metric
-        Array[String] sample_features
-        Array[String] variant_features
+        String metric='fp_fn_ratio'
+        Array[String] sample_features=["GQ_parent", "AB_sample", "DPC_sample", "DPC_parent", "PL_sample_0.0", "PL_sample_1.1"]
+        Array[String] variant_features=["MQ", "FS", "BaseQRankSum", "SOR", "LEN", "ReadPosRankSum", "DP", "QD", "VQSLOD"]
         Float vqslod_cutoff=-10
         Int n_estimators_rf=100
         Int n_bag=10
