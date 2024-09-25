@@ -38,6 +38,13 @@ workflow step7 {
         Int gq_hom_ref_threshold=30
         Int qual_threshold=150
         Int shards_per_chunk=10
+
+        # for downsampling
+        Int chunk_size=100000
+        Float snv_scale=1
+        Float indel_scale=1
+        # Boolean prioritize_gnomad=false
+
         RuntimeAttr? runtime_attr_filter_vcf
         RuntimeAttr? runtime_attr_merge_results
         RuntimeAttr? runtime_attr_downsample
@@ -81,6 +88,10 @@ workflow step7 {
             gq_hom_ref_threshold=gq_hom_ref_threshold,
             qual_threshold=qual_threshold,
             shards_per_chunk=shards_per_chunk,
+            chunk_size=chunk_size,
+            snv_scale=snv_scale,
+            indel_scale=indel_scale,
+            prioritize_gnomad=false,
             runtime_attr_filter_vcf=runtime_attr_filter_vcf,
             runtime_attr_merge_results=runtime_attr_merge_results,
             runtime_attr_downsample=runtime_attr_downsample
@@ -109,6 +120,10 @@ workflow step7 {
             gq_hom_ref_threshold=gq_hom_ref_threshold,
             qual_threshold=qual_threshold,
             shards_per_chunk=shards_per_chunk,
+            chunk_size=chunk_size,
+            snv_scale=snv_scale,
+            indel_scale=indel_scale,
+            prioritize_gnomad=true,
             runtime_attr_filter_vcf=runtime_attr_filter_vcf,
             runtime_attr_merge_results=runtime_attr_merge_results,
             runtime_attr_downsample=runtime_attr_downsample
