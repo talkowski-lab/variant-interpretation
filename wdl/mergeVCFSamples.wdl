@@ -11,14 +11,15 @@ struct RuntimeAttr {
 
 workflow MergeVCFs {
     input {
-        Array[File] vcf_files
+        File? vcf_list_file
+        Array[File]? vcf_files
         String sample_set_id
         String sv_base_mini_docker
     }
 
     call mergeVCFs {
         input:
-        vcf_files=vcf_files,
+        vcf_files=select_first([vcf_files, read_lines(select_first([vcf_list_file]))]),
         output_vcf_name=sample_set_id + '.merged.vcf.gz',
         sv_base_mini_docker=sv_base_mini_docker
     }
