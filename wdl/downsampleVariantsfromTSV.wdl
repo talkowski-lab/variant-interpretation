@@ -125,7 +125,7 @@ task getNumVars {
         print(df.shape[0])
         EOF
 
-        python3.9 get_num_vars.py ~{reference_tsv} ~{var_type} > stdout
+        python3 get_num_vars.py ~{reference_tsv} ~{var_type} > stdout
     >>>
 
     output {
@@ -194,7 +194,7 @@ task convertTSVtoVCF {
         hl.export_vcf(mt, os.path.basename(tsv).split('.tsv')[0]+'.vcf')
         EOF
 
-        python3.9 tsv_to_vcf.py ~{tsv} ~{cpu_cores} ~{memory}
+        python3 tsv_to_vcf.py ~{tsv} ~{cpu_cores} ~{memory}
     >>>
 
     String file_ext = if sub(basename(tsv), '\\.gz', '')==basename(tsv) then '.tsv' else '.tsv.gz'
@@ -326,7 +326,7 @@ task downsampleVariantsPython {
         df.to_csv(output_name, sep='\t', index=False)
         EOF
 
-        python3.9 downsample.py ~{full_input_tsv} ~{var_type} ~{desired_num_variants} ~{output_name} ~{chunk_size} ~{prioritize_gnomad}
+        python3 downsample.py ~{full_input_tsv} ~{var_type} ~{desired_num_variants} ~{output_name} ~{chunk_size} ~{prioritize_gnomad}
     >>>
 
     output {
@@ -381,7 +381,7 @@ task mergePOLYX {
         df.to_csv(os.path.basename(tsv), sep='\t', index=False)
         EOF
 
-        python3.9 mergePOLYX.py ~{polyx_vcf} ~{tsv} > stdout
+        python3 mergePOLYX.py ~{polyx_vcf} ~{tsv} > stdout
     >>>
 
     output {

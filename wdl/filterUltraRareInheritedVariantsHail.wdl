@@ -175,8 +175,9 @@ task filterUltraRareInheritedVariants {
 
 
     command <<<
+        set -eou pipefail
         curl ~{filter_rare_inherited_python_script} > filter_rare_variants.py
-        python3.9 filter_rare_variants.py ~{lcr_uri} ~{ped_sex_qc} ~{meta_uri} ~{trio_uri} ~{vcf_file} \
+        python3 filter_rare_variants.py ~{lcr_uri} ~{ped_sex_qc} ~{meta_uri} ~{trio_uri} ~{vcf_file} \
         ~{cohort_prefix} ~{cpu_cores} ~{memory} ~{AC_threshold} ~{AF_threshold} ~{csq_af_threshold} \
         ~{gq_het_threshold} ~{gq_hom_ref_threshold} ~{qual_threshold} > stdout
 
