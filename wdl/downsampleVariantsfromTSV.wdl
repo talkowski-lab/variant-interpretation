@@ -20,7 +20,7 @@ workflow downsampleVariantsfromTSV {
         Float snv_scale=1
         Float indel_scale=1
         String jvarkit_docker
-        String vep_hail_docker
+        String hail_docker
         Boolean prioritize_gnomad=false
         RuntimeAttr? runtime_attr_downsample
     }
@@ -33,14 +33,14 @@ workflow downsampleVariantsfromTSV {
         call getNumVars {
         input:
             reference_tsv=reference_tsv,
-            vep_hail_docker=vep_hail_docker,
+            hail_docker=hail_docker,
             var_type=var_type
         }
 
         call downsampleVariantsPython {
             input:
             full_input_tsv=full_input_tsv,
-            vep_hail_docker=vep_hail_docker,
+            hail_docker=hail_docker,
             var_type=var_type,
             chunk_size=chunk_size,
             scale=scale,
@@ -52,7 +52,7 @@ workflow downsampleVariantsfromTSV {
         call convertTSVtoVCF {
             input:
             tsv=downsampleVariantsPython.downsampled_tsv,
-            vep_hail_docker=vep_hail_docker
+            hail_docker=hail_docker
         }
 
         call annotatePOLYX {
@@ -68,7 +68,7 @@ workflow downsampleVariantsfromTSV {
             input:
             polyx_vcf=annotatePOLYX.polyx_vcf,
             tsv=downsampleVariantsPython.downsampled_tsv,
-            vep_hail_docker=vep_hail_docker
+            hail_docker=hail_docker
         }
     }
 
@@ -81,7 +81,7 @@ workflow downsampleVariantsfromTSV {
 task getNumVars {
     input {
         File reference_tsv
-        String vep_hail_docker
+        String hail_docker
         String var_type
         RuntimeAttr? runtime_attr_override
     }
@@ -107,7 +107,7 @@ task getNumVars {
         cpu: select_first([runtime_override.cpu_cores, runtime_default.cpu_cores])
         preemptible: select_first([runtime_override.preemptible_tries, runtime_default.preemptible_tries])
         maxRetries: select_first([runtime_override.max_retries, runtime_default.max_retries])
-        docker: vep_hail_docker
+        docker: hail_docker
         bootDiskSizeGb: select_first([runtime_override.boot_disk_gb, runtime_default.boot_disk_gb])
     }
 
@@ -136,7 +136,7 @@ task getNumVars {
 task convertTSVtoVCF {
     input {
         File tsv
-        String vep_hail_docker
+        String hail_docker
         RuntimeAttr? runtime_attr_override
     }
 
@@ -162,7 +162,7 @@ task convertTSVtoVCF {
         cpu: cpu_cores
         preemptible: select_first([runtime_override.preemptible_tries, runtime_default.preemptible_tries])
         maxRetries: select_first([runtime_override.max_retries, runtime_default.max_retries])
-        docker: vep_hail_docker
+        docker: hail_docker
         bootDiskSizeGb: select_first([runtime_override.boot_disk_gb, runtime_default.boot_disk_gb])
     }
 
@@ -253,7 +253,7 @@ task annotatePOLYX {
 task downsampleVariantsPython {
     input {
         File full_input_tsv
-        String vep_hail_docker
+        String hail_docker
         String var_type
         Int num_variants
         Int chunk_size
@@ -283,7 +283,7 @@ task downsampleVariantsPython {
         cpu: select_first([runtime_override.cpu_cores, runtime_default.cpu_cores])
         preemptible: select_first([runtime_override.preemptible_tries, runtime_default.preemptible_tries])
         maxRetries: select_first([runtime_override.max_retries, runtime_default.max_retries])
-        docker: vep_hail_docker
+        docker: hail_docker
         bootDiskSizeGb: select_first([runtime_override.boot_disk_gb, runtime_default.boot_disk_gb])
     }
 
@@ -338,7 +338,7 @@ task mergePOLYX {
     input {
         File polyx_vcf
         File tsv
-        String vep_hail_docker
+        String hail_docker
         RuntimeAttr? runtime_attr_override
     }
     Float input_size = size([polyx_vcf, tsv], "GB")
@@ -362,7 +362,7 @@ task mergePOLYX {
         cpu: select_first([runtime_override.cpu_cores, runtime_default.cpu_cores])
         preemptible: select_first([runtime_override.preemptible_tries, runtime_default.preemptible_tries])
         maxRetries: select_first([runtime_override.max_retries, runtime_default.max_retries])
-        docker: vep_hail_docker
+        docker: hail_docker
         bootDiskSizeGb: select_first([runtime_override.boot_disk_gb, runtime_default.boot_disk_gb])
     }
 

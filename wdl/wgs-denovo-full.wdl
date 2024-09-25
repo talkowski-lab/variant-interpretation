@@ -6,6 +6,7 @@ import "wgs-denovo-step-03.wdl" as step3
 import "wgs-denovo-step-04.wdl" as step4
 import "wgs-denovo-step-05.wdl" as step5
 import "wgs-denovo-step-06.wdl" as step6
+import "wgs-denovo-step-07.wdl" as step7
 import "annotateHPandVAF.wdl" as annotateHPandVAF
 import "annotateMPCandLOEUF.wdl" as annotateMPCandLOEUF
 
@@ -28,6 +29,12 @@ workflow wgs_denovo_full {
         String get_sample_pedigree_script
         String filter_final_tsv_script
         String annotate_mpc_loeuf_script
+        String filter_rare_inherited_python_script
+        String filter_rare_parents_python_script
+        String bagging_pu_source_script
+        String bagging_pu_rf_len_script
+        String tsv_to_bed_script
+
         String mpc_dir
         File mpc_chr22_file
         File loeuf_file
@@ -38,19 +45,20 @@ workflow wgs_denovo_full {
         File hg38_reference_fai
         File hg38_reference_dict
         File info_header
+        File repetitive_regions_bed
+
         Array[File]? vep_vcf_files
         Array[File]? vep_annotated_final_vcf
         String cohort_prefix
-        String cohort_id
         String sv_base_mini_docker
         String trio_denovo_docker
         String hail_docker
-        String vep_hail_docker
         String jvarkit_docker
         String sample_column
+        Int batch_size
+
         Boolean exclude_gq_filters=false
         Boolean merge_split_vcf=false
-        Int batch_size
         String genome_build='GRCh38'
         Int shards_per_chunk=10
         Int qual_threshold=150
@@ -65,6 +73,23 @@ workflow wgs_denovo_full {
         Float AF_threshold=0.005
         Int AC_threshold=2
         Float csq_af_threshold=0.01
+
+        # for ultra-rare
+        Int gq_het_threshold=99
+        Int gq_hom_ref_threshold=30
+    
+        # String var_type  # Indel or SNV, only Indel for now
+        String metric
+        Array[String] sample_features
+        Array[String] variant_features
+        Float vqslod_cutoff=-10
+        Int n_estimators_rf=100
+        Int n_bag=10
+        Boolean filter_pass_before=false
+        RuntimeAttr? runtime_attr_bagging_pu
+        RuntimeAttr? runtime_attr_merge_chunk
+        RuntimeAttr? runtime_attr_filter_vcf
+        RuntimeAttr? runtime_attr_merge_results
     }
 
     Array[File] vep_files = select_first([vep_vcf_files, vep_annotated_final_vcf])
@@ -80,7 +105,7 @@ workflow wgs_denovo_full {
             sv_base_mini_docker=sv_base_mini_docker,
             cohort_prefix=cohort_prefix,
             hail_docker=hail_docker,
-            vep_hail_docker=vep_hail_docker,
+            hail_docker=hail_docker,
             qual_threshold=qual_threshold,
             sor_threshold_indel=sor_threshold_indel,
             sor_threshold_snv=sor_threshold_snv,
@@ -166,6 +191,48 @@ workflow wgs_denovo_full {
             genome_build=genome_build
     }
 
+    call step7.step7 as step7 {
+        input:
+        vep_vcf_files=vep_files,
+        lcr_uri=lcr_uri,
+        ped_sex_qc=ped_sex_qc,
+        meta_uri=meta_uri,
+        trio_uri=trio_uri,
+        vcf_metrics_tsv_final=step6.vcf_metrics_tsv_final,
+        hg38_reference=hg38_reference,
+        hg38_reference_dict=hg38_reference_dict,
+        hg38_reference_fai=hg38_reference_fai,
+        filter_rare_inherited_python_script=filter_rare_inherited_python_script,
+        filter_rare_parents_python_script=filter_rare_parents_python_script,
+        jvarkit_docker=jvarkit_docker,
+        hail_docker=hail_docker,
+        sv_base_mini_docker=sv_base_mini_docker,
+        cohort_prefix=cohort_prefix,
+        AF_threshold=AF_threshold,
+        AC_threshold=AC_threshold,
+        csq_af_threshold=csq_af_threshold,
+        gq_het_threshold=gq_het_threshold,
+        gq_hom_ref_threshold=gq_hom_ref_threshold,
+        qual_threshold=qual_threshold,
+        shards_per_chunk=shards_per_chunk,
+        runtime_attr_merge_chunk=runtime_attr_merge_chunk,
+        runtime_attr_filter_vcf=runtime_attr_filter_vcf,
+        runtime_attr_merge_results=runtime_attr_merge_results,
+        repetitive_regions_bed=repetitive_regions_bed,
+        bagging_pu_source_script=bagging_pu_source_script,
+        bagging_pu_rf_len_script=bagging_pu_rf_len_script,
+        tsv_to_bed_script=tsv_to_bed_script,
+        cohort_prefix=cohort_prefix,
+        metric=metric,
+        sample_features=sample_features,
+        variant_features=variant_features,
+        vqslod_cutoff=vqslod_cutoff,
+        n_estimators_rf=n_estimators_rf,
+        n_bag=n_bag,
+        filter_pass_before=filter_pass_before,
+        runtime_attr_bagging_pu=runtime_attr_bagging_pu        
+    }
+
     output {
         File meta_uri = step1.meta_uri
         File trio_uri = step1.trio_uri
@@ -180,5 +247,6 @@ workflow wgs_denovo_full {
         File vcf_metrics_tsv = step5.vcf_metrics_tsv
         File vcf_metrics_tsv_annot = annotateMPCandLOEUF.vcf_metrics_tsv_annot
         File vcf_metrics_tsv_final = step6.vcf_metrics_tsv_final
+        File vcf_metrics_tsv_final_pu = step7.vcf_metrics_tsv_final_pu
     }    
 }
