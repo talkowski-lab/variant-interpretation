@@ -25,11 +25,10 @@ workflow filterUltraRareInheritedVariantsHail {
         File hg38_reference
         File hg38_reference_dict
         File hg38_reference_fai
-        String python_trio_sample_script
+        # String python_trio_sample_script
         String filter_rare_inherited_python_script
         String jvarkit_docker
         String hail_docker
-        String vep_hail_docker
         String sv_base_mini_docker
         String cohort_prefix
         Float AF_threshold=0.005
@@ -66,7 +65,7 @@ workflow filterUltraRareInheritedVariantsHail {
                 meta_uri=meta_uri,
                 trio_uri=trio_uri,
                 filter_rare_inherited_python_script=filter_rare_inherited_python_script,
-                vep_hail_docker=vep_hail_docker,
+                hail_docker=hail_docker,
                 cohort_prefix=basename(vcf_file, file_ext),
                 AC_threshold=AC_threshold,
                 AF_threshold=AF_threshold,
@@ -94,7 +93,7 @@ workflow filterUltraRareInheritedVariantsHail {
         hg38_reference_dict=hg38_reference_dict,
         hg38_reference_fai=hg38_reference_fai,
         jvarkit_docker=jvarkit_docker,
-        vep_hail_docker=vep_hail_docker
+        hail_docker=hail_docker
     }
 
     output {
@@ -136,7 +135,7 @@ task filterUltraRareInheritedVariants {
         File meta_uri
         File trio_uri
         String filter_rare_inherited_python_script
-        String vep_hail_docker
+        String hail_docker
         String cohort_prefix
         Int AC_threshold
         Float AF_threshold
@@ -169,7 +168,7 @@ task filterUltraRareInheritedVariants {
         cpu: cpu_cores
         preemptible: select_first([runtime_override.preemptible_tries, runtime_default.preemptible_tries])
         maxRetries: select_first([runtime_override.max_retries, runtime_default.max_retries])
-        docker: vep_hail_docker
+        docker: hail_docker
         bootDiskSizeGb: select_first([runtime_override.boot_disk_gb, runtime_default.boot_disk_gb])
     }
 
