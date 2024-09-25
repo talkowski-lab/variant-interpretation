@@ -212,8 +212,9 @@ task preprocessVCF {
 
     String preprocessed_vcf_out = '~{prefix}.preprocessed.vcf.bgz'
     command <<<
+        set -eou pipefail
         curl ~{python_preprocess_script} > python_preprocess_script.py
-        python3.9 python_preprocess_script.py ~{lcr_uri} ~{ped_sex_qc} ~{meta_uri} ~{trio_uri} ~{vcf_uri} \
+        python3 python_preprocess_script.py ~{lcr_uri} ~{ped_sex_qc} ~{meta_uri} ~{trio_uri} ~{vcf_uri} \
         ~{exclude_gq_filters} ~{qual_threshold} ~{sor_threshold_indel} ~{sor_threshold_snv} \
         ~{readposranksum_threshold_indel} ~{readposranksum_threshold_snv} ~{qd_threshold_indel} ~{qd_threshold_snv} \
         ~{mq_threshold} ~{cpu_cores} ~{memory}
