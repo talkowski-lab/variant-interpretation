@@ -38,6 +38,13 @@ workflow filterUltraRareInheritedVariantsHail {
         Int gq_hom_ref_threshold=30
         Int qual_threshold=150
         Int shards_per_chunk=10
+        
+        #for downsampling
+        Int chunk_size=100000
+        Float snv_scale=1
+        Float indel_scale=1
+        Boolean prioritize_gnomad=false
+
         RuntimeAttr? runtime_attr_filter_vcf
         RuntimeAttr? runtime_attr_merge_results
         RuntimeAttr? runtime_attr_downsample
@@ -94,6 +101,10 @@ workflow filterUltraRareInheritedVariantsHail {
         hg38_reference_fai=hg38_reference_fai,
         jvarkit_docker=jvarkit_docker,
         hail_docker=hail_docker,
+        chunk_size=chunk_size,
+        snv_scale=snv_scale,
+        indel_scale=indel_scale,
+        prioritize_gnomad=prioritize_gnomad,
         runtime_attr_downsample=runtime_attr_downsample
     }
 
