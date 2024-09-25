@@ -39,7 +39,6 @@ workflow filterUltraRareParentsVariantsHail {
         Int gq_hom_ref_threshold=30
         Int qual_threshold=10
         Int shards_per_chunk=10
-        RuntimeAttr? runtime_attr_merge_chunk
         RuntimeAttr? runtime_attr_filter_vcf
         RuntimeAttr? runtime_attr_merge_results
     }  
