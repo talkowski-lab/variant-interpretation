@@ -86,10 +86,6 @@ workflow wgs_denovo_full {
         Int n_estimators_rf=100
         Int n_bag=10
         Boolean filter_pass_before=false
-        RuntimeAttr? runtime_attr_bagging_pu
-        RuntimeAttr? runtime_attr_merge_chunk
-        RuntimeAttr? runtime_attr_filter_vcf
-        RuntimeAttr? runtime_attr_merge_results
     }
 
     Array[File] vep_files = select_first([vep_vcf_files, vep_annotated_final_vcf])
@@ -214,9 +210,6 @@ workflow wgs_denovo_full {
         gq_hom_ref_threshold=gq_hom_ref_threshold,
         qual_threshold=qual_threshold,
         shards_per_chunk=shards_per_chunk,
-        runtime_attr_merge_chunk=runtime_attr_merge_chunk,
-        runtime_attr_filter_vcf=runtime_attr_filter_vcf,
-        runtime_attr_merge_results=runtime_attr_merge_results,
         repetitive_regions_bed=repetitive_regions_bed,
         bagging_pu_source_script=bagging_pu_source_script,
         bagging_pu_rf_len_script=bagging_pu_rf_len_script,
@@ -228,8 +221,7 @@ workflow wgs_denovo_full {
         vqslod_cutoff=vqslod_cutoff,
         n_estimators_rf=n_estimators_rf,
         n_bag=n_bag,
-        filter_pass_before=filter_pass_before,
-        runtime_attr_bagging_pu=runtime_attr_bagging_pu        
+        filter_pass_before=filter_pass_before
     }
 
     output {
