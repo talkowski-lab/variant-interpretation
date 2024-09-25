@@ -70,7 +70,7 @@ workflow vepAnnotateHail {
                 file=file,
                 shards_per_chunk=shards_per_chunk,
                 cohort_prefix=cohort_prefix,
-                vep_hail_docker=vep_hail_docker
+                hail_docker=hail_docker
         }
         scatter (chunk_file in splitFile.chunks) {
             call mergeVCFs.mergeVCFs as mergeVCFs {
