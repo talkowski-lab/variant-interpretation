@@ -73,19 +73,6 @@ workflow wgs_denovo_full {
         Float AF_threshold=0.005
         Int AC_threshold=2
         Float csq_af_threshold=0.01
-
-        # for ultra-rare
-        # Int gq_het_threshold=99
-        # Int gq_hom_ref_threshold=30
-    
-        # String var_type  # Indel or SNV, only Indel for now
-        # String metric='fp_fn_ratio'
-        # Array[String] sample_features=["GQ_parent", "AB_sample", "DPC_sample", "DPC_parent", "PL_sample_0.0", "PL_sample_1.1"]
-        # Array[String] variant_features=["MQ", "FS", "BaseQRankSum", "SOR", "LEN", "ReadPosRankSum", "DP", "QD", "VQSLOD"]
-        # Float vqslod_cutoff=-10
-        # Int n_estimators_rf=100
-        # Int n_bag=10
-        # Boolean filter_pass_before=false
     }
 
     Array[File] vep_files = select_first([vep_vcf_files, vep_annotated_final_vcf])
@@ -206,22 +193,13 @@ workflow wgs_denovo_full {
         AF_threshold=AF_threshold,
         AC_threshold=AC_threshold,
         csq_af_threshold=csq_af_threshold,
-        # gq_het_threshold=gq_het_threshold,
-        # gq_hom_ref_threshold=gq_hom_ref_threshold,
         qual_threshold=qual_threshold,
         shards_per_chunk=shards_per_chunk,
         repetitive_regions_bed=repetitive_regions_bed,
         bagging_pu_source_script=bagging_pu_source_script,
         bagging_pu_rf_len_script=bagging_pu_rf_len_script,
         tsv_to_bed_script=tsv_to_bed_script,
-        cohort_prefix=cohort_prefix,
-        # metric=metric,
-        # sample_features=sample_features,
-        # variant_features=variant_features,
-        # vqslod_cutoff=vqslod_cutoff,
-        # n_estimators_rf=n_estimators_rf,
-        # n_bag=n_bag,
-        # filter_pass_before=filter_pass_before
+        cohort_prefix=cohort_prefix
     }
 
     output {
@@ -239,5 +217,13 @@ workflow wgs_denovo_full {
         File vcf_metrics_tsv_annot = annotateMPCandLOEUF.vcf_metrics_tsv_annot
         File vcf_metrics_tsv_final = step6.vcf_metrics_tsv_final
         File vcf_metrics_tsv_final_pu = step7.vcf_metrics_tsv_final_pu
+        
+        File ultra_rare_inherited_tsv = step7.ultra_rare_inherited_tsv
+        File downsampled_ultra_rare_inherited_SNV = step7.downsampled_ultra_rare_inherited_SNV
+        File downsampled_ultra_rare_inherited_Indel = step7.downsampled_ultra_rare_inherited_Indel
+
+        File ultra_rare_parents_tsv = step7.ultra_rare_parents_tsv
+        File downsampled_ultra_rare_parents_SNV = step7.downsampled_ultra_rare_parents_SNV
+        File downsampled_ultra_rare_parents_Indel = step7.downsampled_ultra_rare_parents_Indel
     }    
 }
