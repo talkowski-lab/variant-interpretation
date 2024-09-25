@@ -21,7 +21,6 @@ workflow step1 {
         File info_header
         Array[File] vep_files
         String hail_docker
-        String vep_hail_docker
         String sv_base_mini_docker
         String cohort_prefix
         Int shards_per_chunk=10
@@ -56,7 +55,7 @@ workflow step1 {
                 file=write_lines(vep_files),
                 shards_per_chunk=shards_per_chunk,
                 cohort_prefix=cohort_prefix,
-                vep_hail_docker=vep_hail_docker
+                hail_docker=hail_docker
         }
         scatter (chunk_file in splitVEPFiles.chunks) {        
             call mergeVCFs.mergeVCFs as mergeChunk {
@@ -75,7 +74,7 @@ workflow step1 {
                     vcf_uri=mergeChunk.merged_vcf_file,
                     meta_uri=makeTrioSampleFiles.meta_uri,
                     trio_uri=makeTrioSampleFiles.trio_uri,
-                    vep_hail_docker=vep_hail_docker,
+                    hail_docker=hail_docker,
                     qual_threshold=qual_threshold,
                     sor_threshold_indel=sor_threshold_indel,
                     sor_threshold_snv=sor_threshold_snv,
@@ -108,7 +107,7 @@ workflow step1 {
                     vcf_uri=vcf_uri,
                     meta_uri=makeTrioSampleFiles.meta_uri,
                     trio_uri=makeTrioSampleFiles.trio_uri,
-                    vep_hail_docker=vep_hail_docker,
+                    hail_docker=hail_docker,
                     qual_threshold=qual_threshold,
                     sor_threshold_indel=sor_threshold_indel,
                     sor_threshold_snv=sor_threshold_snv,
@@ -170,7 +169,7 @@ task preprocessVCF {
         File vcf_uri
         File meta_uri
         File trio_uri
-        String vep_hail_docker
+        String hail_docker
         Int qual_threshold
         Float sor_threshold_indel
         Float sor_threshold_snv
@@ -205,7 +204,7 @@ task preprocessVCF {
         cpu: cpu_cores
         preemptible: select_first([runtime_override.preemptible_tries, runtime_default.preemptible_tries])
         maxRetries: select_first([runtime_override.max_retries, runtime_default.max_retries])
-        docker: vep_hail_docker
+        docker: hail_docker
         bootDiskSizeGb: select_first([runtime_override.boot_disk_gb, runtime_default.boot_disk_gb])
     }
     String filename = basename(vcf_uri)
