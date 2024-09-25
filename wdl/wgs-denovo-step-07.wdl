@@ -38,7 +38,6 @@ workflow step7 {
         Int gq_hom_ref_threshold=30
         Int qual_threshold=150
         Int shards_per_chunk=10
-        RuntimeAttr? runtime_attr_merge_chunk
         RuntimeAttr? runtime_attr_filter_vcf
         RuntimeAttr? runtime_attr_merge_results
     
@@ -81,7 +80,6 @@ workflow step7 {
             gq_hom_ref_threshold=gq_hom_ref_threshold,
             qual_threshold=qual_threshold,
             shards_per_chunk=shards_per_chunk,
-            runtime_attr_merge_chunk=runtime_attr_merge_chunk,
             runtime_attr_filter_vcf=runtime_attr_filter_vcf,
             runtime_attr_merge_results=runtime_attr_merge_results
     }
@@ -109,7 +107,6 @@ workflow step7 {
             gq_hom_ref_threshold=gq_hom_ref_threshold,
             qual_threshold=qual_threshold,
             shards_per_chunk=shards_per_chunk,
-            runtime_attr_merge_chunk=runtime_attr_merge_chunk,
             runtime_attr_filter_vcf=runtime_attr_filter_vcf,
             runtime_attr_merge_results=runtime_attr_merge_results
     }
