@@ -40,6 +40,7 @@ workflow step7 {
         Int shards_per_chunk=10
         RuntimeAttr? runtime_attr_filter_vcf
         RuntimeAttr? runtime_attr_merge_results
+        RuntimeAttr? runtime_attr_downsample
     
         File repetitive_regions_bed
         # String var_type  # Indel or SNV, only Indel for now

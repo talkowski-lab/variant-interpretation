@@ -41,6 +41,7 @@ workflow filterUltraRareParentsVariantsHail {
         Int shards_per_chunk=10
         RuntimeAttr? runtime_attr_filter_vcf
         RuntimeAttr? runtime_attr_merge_results
+        RuntimeAttr? runtime_attr_downsample
     }  
 
     # if (!defined(meta_uri)) {
@@ -94,7 +95,8 @@ workflow filterUltraRareParentsVariantsHail {
         hg38_reference_fai=hg38_reference_fai,
         jvarkit_docker=jvarkit_docker,
         hail_docker=hail_docker,
-        prioritize_gnomad=true
+        prioritize_gnomad=true,
+        runtime_attr_downsample=runtime_attr_downsample
     }
 
     output {
