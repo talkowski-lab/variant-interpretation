@@ -106,9 +106,12 @@ task reannotateFinalTSV {
             tmp_dir="tmp", local_tmpdir="tmp",
                         )
 
-    ht = hl.import_table(vcf_metrics_tsv_final_pu, force_bgz=vcf_metrics_tsv_final_pu.split('.')[-1]=='gz')
+    try:
+        ht = hl.import_table(vcf_metrics_tsv_final_pu, force_bgz=vcf_metrics_tsv_final_pu.split('.')[-1]=='gz')
+    except:
+        ht = hl.import_table(vcf_metrics_tsv_final_pu, force=True)
     ht = ht.annotate(locus=hl.locus(ht.CHROM, hl.int(ht.POS), reference_genome=build),
-                alleles=hl.array([ht.REF, ht.ALT]),
+                    alleles=hl.array([ht.REF, ht.ALT]),
                     protein_variant=ht.Protein_position.join(ht.Amino_acids.split('/'))) 
 
     # AlphaMissense
