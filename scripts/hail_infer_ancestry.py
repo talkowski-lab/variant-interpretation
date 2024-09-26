@@ -57,6 +57,7 @@ gnomad_pcs_ht = hl.experimental.pc_project(
 )
 
 gnomad_pcs_ht = gnomad_pcs_ht.annotate(known_pop=pop_labels_ht[gnomad_pcs_ht.key].SuperPop.lower())
+gnomad_pcs_ht = gnomad_pcs_ht.filter(hl.is_defined(gnomad_pcs_ht.scores))
 
 ht, model = assign_population_pcs(
     gnomad_pcs_ht,
