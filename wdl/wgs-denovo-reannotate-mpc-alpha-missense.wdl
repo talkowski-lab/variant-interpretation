@@ -98,11 +98,11 @@ task reannotateFinalTSV {
             tmp_dir="tmp", local_tmpdir="tmp",
                         )
 
-    ht = hl.import_table(vcf_metrics_tsv_final_pu)
+    ht = hl.import_table(vcf_metrics_tsv_final_pu, force_bgz=vcf_metrics_tsv_final_pu.split('.')[-1]=='gz')
     ht = ht.annotate(locus=hl.locus(ht.CHROM, hl.int(ht.POS), reference_genome=build),
                 alleles=hl.array([ht.REF, ht.ALT]),
                     protein_variant=ht.Protein_position.join(ht.Amino_acids.split('/'))) 
-                       
+
     # AlphaMissense
     am_fields = ['CHROM','POS', 'REF', 'ALT', 'genome', 'uniprot_id', 'transcript_id', 'protein_variant', 'am_pathogenicity', 'am_class']
     am_ht = hl.import_table(alpha_missense_file, comment='#', no_header=True, force_bgz=True)\
