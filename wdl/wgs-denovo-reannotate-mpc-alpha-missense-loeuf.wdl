@@ -127,6 +127,8 @@ task reannotateFinalTSV {
 
     # LOEUF 
     # annotate LOEUF from gnomAD
+    existing_loeuf = [field for field in list(ht.row) if 'loeuf' in field.lower()]
+    ht = ht.drop(*existing_loeuf)
     loeuf_v2_ht = hl.read_table(loeuf_v2_uri).key_by('transcript')
     loeuf_v4_ht = hl.read_table(loeuf_v4_uri).key_by('transcript')
     ht = ht.key_by('Feature')
