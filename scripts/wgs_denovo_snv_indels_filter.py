@@ -48,6 +48,6 @@ def get_gnomAD_AF(csq, col_num):
 final_output['CSQ'] = final_output.CSQ.replace({'.':np.nan}).str.split(',')
 
 gnomad_af_str = 'gnomADe_AF'
-final_output = final_output[final_output[gnomad_af_str]<=csq_af_threshold]
+final_output = final_output[final_output[gnomad_af_str].replace({np.nan: 0})<=csq_af_threshold]
 
 final_output.to_csv(os.path.basename(vcf_metrics_uri).split('.tsv')[0]+'_filtered.tsv.gz', sep='\t', index=False)
