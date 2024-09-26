@@ -218,7 +218,6 @@ task preprocessVCF {
         ~{exclude_gq_filters} ~{qual_threshold} ~{sor_threshold_indel} ~{sor_threshold_snv} \
         ~{readposranksum_threshold_indel} ~{readposranksum_threshold_snv} ~{qd_threshold_indel} ~{qd_threshold_snv} \
         ~{mq_threshold} ~{cpu_cores} ~{memory}
-        /opt/vep/bcftools/bcftools index -t ~{preprocessed_vcf_out}
     >>>
 
     output {
