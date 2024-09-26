@@ -122,7 +122,7 @@ task reannotateFinalTSV {
     ht = ht.annotate(MPC=mpc[ht.locus, ht.alleles].mpc)
 
     output_filename = os.path.basename(vcf_metrics_tsv_final_pu).split('.tsv')[0] + 'MPC.AlphaMissense.tsv.gz'
-    ht.drop('protein_variant','locus','alleles').export(output_filename)
+    ht.key_by().drop('protein_variant','locus','alleles').export(output_filename)
     EOF
 
     python3 reannotate.py ~{vcf_metrics_tsv_final_pu} ~{alpha_missense_file} ~{mpc_ht_uri} ~{genome_build} \
