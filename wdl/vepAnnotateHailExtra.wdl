@@ -457,10 +457,9 @@ task addGenotypes {
     command <<<
         set -euo pipefail
 
-        if [[ ~{reindex} == "true" ]]
-        do
+        if [[ ~{reindex} == "true" ]]; then
             tabix ~{vcf_file}
-        done
+        fi
 
         bcftools merge \
         --no-version \
@@ -521,10 +520,9 @@ task addGenotypesReheader {
     command <<<
         set -euo pipefail
 
-        if [[ ~{reindex} == "true" ]]
-        do
+        if [[ ~{reindex} == "true" ]]; then
             tabix ~{vcf_file}
-        done
+        fi
 
         bcftools reheader -h ~{header_file} -o fixed_header.vcf.gz ~{vcf_file}
         bcftools index -t fixed_header.vcf.gz       
