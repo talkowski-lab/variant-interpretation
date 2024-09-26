@@ -219,34 +219,6 @@ cols_to_keep = ['CHROM', 'POS', 'REF', 'ALT', 'LEN', 'TYPE', 'ID', 'VarKey', 'GQ
 # cols_to_keep = ['CHROM', 'POS', 'REF', 'ALT', 'LEN', 'TYPE', 'ID', 'VarKey'] + info_cols + list(rename_cols.values())
 
 # CSQ AF threshold
-csq_columns_less = ['Allele', 'Consequence', 'IMPACT', 'SYMBOL', 'Gene', 'Feature_type', 'Feature', 
-                    'BIOTYPE', 'EXON', 'INTRON', 'HGVSc', 'HGVSp', 'cDNA_position', 'CDS_position', 
-                    'Protein_position', 'Amino_acids', 'Codons', 'Existing_variation', 'ALLELE_NUM', 
-                    'DISTANCE', 'STRAND', 'FLAGS', 'VARIANT_CLASS', 'MINIMISED', 'SYMBOL_SOURCE', 
-                    'HGNC_ID', 'CANONICAL', 'TSL', 'APPRIS', 'CCDS', 'ENSP', 'SWISSPROT', 'TREMBL', 
-                    'UNIPARC', 'GENE_PHENO', 'SIFT', 'PolyPhen', 'DOMAINS', 'miRNA', 'HGVS_OFFSET', 
-                    'AF', 'AFR_AF', 'AMR_AF', 'EAS_AF', 'EUR_AF', 'SAS_AF', 'AA_AF', 'EA_AF', 'gnomAD_AF', 
-                    'gnomAD_AFR_AF', 'gnomAD_AMR_AF', 'gnomAD_ASJ_AF', 'gnomAD_EAS_AF', 'gnomAD_FIN_AF', 
-                    'gnomAD_NFE_AF', 'gnomAD_OTH_AF', 'gnomAD_SAS_AF', 'MAX_AF', 'MAX_AF_POPS', 'CLIN_SIG', 
-                    'SOMATIC', 'PHENO', 'PUBMED', 'MOTIF_NAME', 'MOTIF_POS', 'HIGH_INF_POS', 'MOTIF_SCORE_CHANGE', 
-                    'LOEUF', 'LoF', 'LoF_filter', 'LoF_flags', 'LoF_info']
-
-csq_columns_more = ["Allele","Consequence","IMPACT","SYMBOL","Gene","Feature_type","Feature",
-                   "BIOTYPE","EXON","INTRON","HGVSc","HGVSp","cDNA_position","CDS_position",
-                   "Protein_position","Amino_acids","Codons","Existing_variation","ALLELE_NUM",
-                   "DISTANCE","STRAND","FLAGS","VARIANT_CLASS","MINIMISED","SYMBOL_SOURCE",
-                   "HGNC_ID","CANONICAL","MANE_SELECT","MANE_PLUS_CLINICAL","TSL","APPRIS",
-                   "CCDS","ENSP","SWISSPROT","TREMBL","UNIPARC","UNIPROT_ISOFORM","GENE_PHENO",
-                   "SIFT","PolyPhen","DOMAINS","miRNA","HGVS_OFFSET","AF","AFR_AF","AMR_AF",
-                   "EAS_AF","EUR_AF","SAS_AF","gnomADe_AF","gnomADe_AFR_AF","gnomADe_AMR_AF",
-                   "gnomADe_ASJ_AF","gnomADe_EAS_AF","gnomADe_FIN_AF","gnomADe_NFE_AF","gnomADe_OTH_AF",
-                   "gnomADe_SAS_AF","gnomADg_AF","gnomADg_AFR_AF","gnomADg_AMI_AF","gnomADg_AMR_AF",
-                   "gnomADg_ASJ_AF","gnomADg_EAS_AF","gnomADg_FIN_AF","gnomADg_MID_AF","gnomADg_NFE_AF",
-                   "gnomADg_OTH_AF","gnomADg_SAS_AF","MAX_AF","MAX_AF_POPS","CLIN_SIG","SOMATIC",
-                   "PHENO","PUBMED","MOTIF_NAME","MOTIF_POS","HIGH_INF_POS","MOTIF_SCORE_CHANGE",
-                   "TRANSCRIPTION_FACTORS","LoF","LoF_filter","LoF_flags","LoF_info"]
-
-# NEW
 def get_gnomAD_AF(csq, col_num):
     if type(csq)==float:
         return 0
@@ -263,17 +235,9 @@ def get_gnomAD_AF(csq, col_num):
 ultra_rare_vars_df['CSQ'] = ultra_rare_vars_df.CSQ.replace({'.':np.nan, None: np.nan})#.str.split(',')
 
 try:
-    n_csq_fields = len(ultra_rare_vars_df[~ultra_rare_vars_df.CSQ.isna()].CSQ.iloc[0][0].split('|'))
-
-    if n_csq_fields==len(csq_columns_more):
-        gnomad_af_str = 'gnomADe_AF'
-        csq_columns = csq_columns_more
-    elif n_csq_fields==len(csq_columns_less):
-        gnomad_af_str = 'gnomAD_AF'
-        csq_columns = csq_columns_less
-    else:
-        warnings.simplefilter("error")
-        warnings.warn("CSQ fields are messed up!")
+    header = hl.get_vcf_metadata(vcf_file)
+    csq_columns = header['info']['CSQ']['Description'].split('Format: ')[1].split('|')
+    gnomad_af_str = 'gnomADe_AF'
 
     ultra_rare_vars_df[gnomad_af_str] = ultra_rare_vars_df.CSQ.apply(get_gnomAD_AF, col_num=csq_columns.index(gnomad_af_str)).astype(float)
     ultra_rare_vars_df = ultra_rare_vars_df[ultra_rare_vars_df[gnomad_af_str]<=csq_af_threshold]
