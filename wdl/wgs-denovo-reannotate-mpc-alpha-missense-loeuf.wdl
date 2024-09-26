@@ -14,6 +14,8 @@ workflow reannotateMPC_AlphaMissense {
         File vcf_metrics_tsv_final_pu
         File alpha_missense_file
 
+        String loeuf_v2_uri
+        String loeuf_v4_uri
         String mpc_ht_uri
         String hail_docker
         String genome_build='GRCh38'
@@ -23,6 +25,8 @@ workflow reannotateMPC_AlphaMissense {
         input:
         vcf_metrics_tsv_final_pu=vcf_metrics_tsv_final_pu,
         alpha_missense_file=alpha_missense_file,
+        loeuf_v2_uri=loeuf_v2_uri,
+        loeuf_v4_uri=loeuf_v4_uri,
         mpc_ht_uri=mpc_ht_uri,
         hail_docker=hail_docker,
         genome_build=genome_build
@@ -38,6 +42,8 @@ task reannotateFinalTSV {
         File vcf_metrics_tsv_final_pu
         File alpha_missense_file
 
+        String loeuf_v2_uri
+        String loeuf_v4_uri
         String mpc_ht_uri
         String hail_docker
         String genome_build
@@ -85,9 +91,11 @@ task reannotateFinalTSV {
     vcf_metrics_tsv_final_pu = sys.argv[1]
     alpha_missense_file = sys.argv[2]
     mpc_ht_uri = sys.argv[3]
-    build = sys.argv[4]
-    cores = sys.argv[5]
-    mem = int(np.floor(float(sys.argv[6])))
+    loeuf_v2_uri = sys.argv[4]
+    loeuf_v4_uri = sys.argv[5]
+    build = sys.argv[6]
+    cores = sys.argv[7]
+    mem = int(np.floor(float(sys.argv[8])))
 
     hl.init(min_block_size=128, 
             local=f"local[*]", 
@@ -117,16 +125,25 @@ task reannotateFinalTSV {
     ht = ht.annotate(am_pathogenicity=am_ht[ht.key].am_pathogenicity,
             am_class=am_ht[ht.key].am_class)
 
+    # LOEUF 
+    # annotate LOEUF from gnomAD
+    loeuf_v2_ht = hl.read_table(loeuf_v2_uri).key_by('transcript')
+    loeuf_v4_ht = hl.read_table(loeuf_v4_uri).key_by('transcript')
+    ht = ht.key_by('Feature')
+    ht = ht.annotate(LOEUF_v2=loeuf_v2_ht[ht.key]['oe_lof_upper'],
+                    LOEUF_v4=loeuf_v4_ht[ht.key]['lof.oe_ci.upper'])
+
+    # MPC
     mpc = hl.read_table(mpc_ht_uri).key_by('locus','alleles')
     ht = ht.key_by('locus', 'alleles')
-    ht = ht.annotate(MPC=mpc[ht.locus, ht.alleles].mpc)
+    ht = ht.annotate(MPC=mpc[ht.key].mpc)
 
     output_filename = os.path.basename(vcf_metrics_tsv_final_pu).split('.tsv')[0] + 'MPC.AlphaMissense.tsv.gz'
     ht.key_by().drop('protein_variant','locus','alleles').export(output_filename)
     EOF
 
-    python3 reannotate.py ~{vcf_metrics_tsv_final_pu} ~{alpha_missense_file} ~{mpc_ht_uri} ~{genome_build} \
-        ~{cpu_cores} ~{memory} 
+    python3 reannotate.py ~{vcf_metrics_tsv_final_pu} ~{alpha_missense_file} ~{mpc_ht_uri} \
+    ~{loeuf_v2_uri} ~{loeuf_v4_uri} ~{genome_build} ~{cpu_cores} ~{memory} 
     >>>
 
     String file_ext = if sub(basename(vcf_metrics_tsv_final_pu), '.tsv.gz', '')!=basename(vcf_metrics_tsv_final_pu) then '.tsv.gz' else '.tsv'
