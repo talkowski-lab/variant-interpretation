@@ -100,8 +100,10 @@ task reannotateFinalTSV {
 
     ht = hl.import_table(vcf_metrics_tsv_final_pu)
     ht = ht.annotate(locus=hl.locus(ht.CHROM, hl.int(ht.POS), reference_genome=build),
-                alleles=hl.array([ht.REF, ht.ALT]))
-
+                alleles=hl.array([ht.REF, ht.ALT]),
+                    protein_variant=ht.Amino_acids.replace('/','2'))
+    
+    # AlphaMissense
     am_fields = ['CHROM','POS', 'REF', 'ALT', 'genome', 'uniprot_id', 'transcript_id', 'protein_variant', 'am_pathogenicity', 'am_class']
     am_ht = hl.import_table(alpha_missense_file, comment='#', no_header=True, force_bgz=True)\
         .rename({f"f{i}": am_fields[i] for i in range(len(am_fields))})  # rename fields
@@ -109,20 +111,18 @@ task reannotateFinalTSV {
     am_ht = am_ht.annotate(locus=hl.locus(am_ht.CHROM, hl.int(am_ht.POS), reference_genome=build),
                 alleles=hl.array([am_ht.REF, am_ht.ALT]))
 
-    ht = ht.key_by('locus', 'alleles', 'Feature')
-    am_ht = am_ht.key_by('locus', 'alleles', 'transcript_id')
+    ht = ht.key_by('locus', 'alleles', 'protein_variant')
+    am_ht = am_ht.key_by('locus', 'alleles', 'protein_variant')
 
     ht = ht.annotate(am_pathogenicity=am_ht[ht.key].am_pathogenicity,
             am_class=am_ht[ht.key].am_class)
-
-    ht.semi_join(am_ht).count()
 
     mpc = hl.read_table(mpc_ht_uri).key_by('locus','alleles')
     ht = ht.key_by('locus', 'alleles')
     ht = ht.annotate(MPC=mpc[ht.locus, ht.alleles].mpc)
 
     output_filename = os.path.basename(vcf_metrics_tsv_final_pu).split('.tsv')[0] + 'MPC.AlphaMissense.tsv.gz'
-    ht.export(output_filename)
+    ht.drop('protein_variant','locus','alleles').export(output_filename)
     EOF
 
     python3 reannotate.py ~{vcf_metrics_tsv_final_pu} ~{alpha_missense_file} ~{mpc_ht_uri} ~{genome_build} \
