@@ -197,7 +197,7 @@ def trim_vcf(vcf_uri, lcr_uri, ped_uri, meta_uri, trio_uri, vcf_out_uri, build, 
     mt = mt.filter_rows(mt.variant_qc.AC[1] > 0, keep = True)
     mt = mt.drop('variant_qc')
     # write to output vcf
-    hl.export_vcf(mt, vcf_out_uri)
+    hl.export_vcf(mt, vcf_out_uri, tabix=True)
     # header = hl.get_vcf_metadata(vcf_uri) 
     # hl.export_vcf(mt, vcf_out_uri, metadata=header)
 
