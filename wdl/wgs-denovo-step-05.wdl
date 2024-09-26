@@ -80,7 +80,7 @@ task merge_vcf_to_tsv_fullQC {
         output_dir=$(dirname ~{trio_denovo_vcf[0]})
         curl ~{merge_vcf_to_tsv_fullQC_script} > merge_vcf_to_tsv_fullQC.py
         python3 merge_vcf_to_tsv_fullQC.py -d $output_dir -i $input_dir -p ~{ped_sex_qc} -o ~{cohort_prefix}_dnm.tsv \
-            -f {sep="," info_fields} > stdout
+            -f ~{sep="," info_fields} > stdout
     >>>
 
     output {
