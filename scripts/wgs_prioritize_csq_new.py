@@ -126,9 +126,9 @@ def process_consequences(mt: Union[hl.MatrixTable, hl.Table], vep_root: str = 'v
             csq_score=hl.case(missing_false=True)
             .when((tc.BIOTYPE != 'protein_coding'), csq_score(tc) + non_coding_score)
             .when((tc.CANONICAL != 'YES'), csq_score(tc) + non_canonical_score)
-            .when((tc.LoF == 'HC') & (tc.LoF_flags == ''), csq_score(tc) - no_flag_score)
-            .when((tc.LoF == 'HC') & (tc.LoF_flags != ''), csq_score(tc) - flag_score)
-            .when(tc.LoF == 'LC', csq_score(tc) - 10) 
+            # .when((tc.LoF == 'HC') & (tc.LoF_flags == ''), csq_score(tc) - no_flag_score)
+            # .when((tc.LoF == 'HC') & (tc.LoF_flags != ''), csq_score(tc) - flag_score)
+            # .when(tc.LoF == 'LC', csq_score(tc) - 10) 
             .when(tc.PolyPhen.contains('probably_damaging'), csq_score(tc) - 0.5)  # EDITED
             .when(tc.PolyPhen.contains('possibly_damaging'), csq_score(tc) - 0.25)
             .when(tc.PolyPhen.contains('benign'), csq_score(tc) - 0.1)
@@ -149,7 +149,7 @@ def process_consequences(mt: Union[hl.MatrixTable, hl.Table], vep_root: str = 'v
                                      worst_consequence_term=csqs.find(lambda c: transcript_csqs.map(lambda csq: csq.most_severe_consequence).contains(c)),
                                      worst_csq_by_gene=sorted_scores,  # EDITED
                                      worst_csq=sorted_scores[0],
-                                     any_LoF=hl.any(lambda x: x.LoF == 'HC', worst_csq_gene),
+                                    #  any_LoF=hl.any(lambda x: x.LoF == 'HC', worst_csq_gene),
                                      gene_with_most_severe_csq=gene_with_worst_csq,
                                      ensg_with_most_severe_csq=ensg_with_worst_csq)
     
@@ -234,37 +234,21 @@ synonymous = ['synonymous_variant', 'stop_retained_variant']
 final_output = pd.read_csv(vcf_metrics_uri, sep='\t')
 final_output['CSQ'] = final_output.CSQ.replace({'.':np.nan}).str.split(',')
 
-try:
-    # n_csq_fields = len(final_output[~final_output.CSQ.isna()].CSQ.iloc[0][0].split('|'))
+header = hl.get_vcf_metadata(vep_vcf_uri)
+csq_columns = header['info']['CSQ']['Description'].split('Format: ')[1].split('|')
 
-    # if n_csq_fields==len(csq_columns_more):
-    #     gnomad_af_str = 'gnomADe_AF'
-    #     csq_columns = csq_columns_more
-    # elif n_csq_fields==len(csq_columns_less):
-    #     gnomad_af_str = 'gnomAD_AF'
-    #     csq_columns = csq_columns_less
-    # else:
-    #     warnings.simplefilter("error")
-    #     warnings.warn("CSQ fields are messed up!")
-    header = hl.get_vcf_metadata(vep_vcf_uri)
-    csq_columns = header['info']['CSQ']['Description'].split('Format: ')[1].split('|')
+numeric = []
+for col in final_output.columns:
+    if col==sample_column:
+        continue
+    try:
+        final_output[col].astype(float)
+        numeric.append(col)
+    except:
+        continue
 
-    numeric = []
-    for col in final_output.columns:
-        if col==sample_column:
-            continue
-        try:
-            final_output[col].astype(float)
-            numeric.append(col)
-        except:
-            continue
-
-    df = process_consequence_cohort(csq_columns, vcf_metrics_uri, numeric, sample_column)
-    df['isCoding'] = df.Consequence.astype(str).replace({'None': '[]'}).apply(ast.literal_eval).apply(lambda csq: np.intersect1d(csq, coding_variants).size!=0)
-    df = pd.concat([final_output, df[np.setdiff1d(df.columns, final_output.columns)]], axis=1)
-
-except Exception as e:
-    print(str(e))
-    df = final_output
+df = process_consequence_cohort(csq_columns, vcf_metrics_uri, numeric, sample_column)
+df['isCoding'] = df.Consequence.astype(str).replace({'None': '[]'}).apply(ast.literal_eval).apply(lambda csq: np.intersect1d(csq, coding_variants).size!=0)
+df = pd.concat([final_output, df[np.setdiff1d(df.columns, final_output.columns)]], axis=1)
 
 df.to_csv(f"{os.path.basename(vcf_metrics_uri).split('.tsv')[0]}_prioritized_csq.tsv.gz", sep='\t',index=False)

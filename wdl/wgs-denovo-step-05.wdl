@@ -14,6 +14,7 @@ workflow step5 {
         File ped_sex_qc
         Array[File] split_trio_annot_vcfs  # for input directory (from step 4)
         Array[File] trio_denovo_vcf  # for output directory
+        Array[String] info_fields = ['END','AC','AF','AN','BaseQRankSum','ClippingRankSum','DP','FS','MLEAC','MLEAF','MQ','MQRankSum','POLYX','QD','ReadPosRankSum','SOR','VQSLOD','cohort_AC','CSQ', 'MPC']
         String merge_vcf_to_tsv_fullQC_script
         String trio_denovo_docker
         String cohort_prefix
@@ -28,6 +29,7 @@ workflow step5 {
             merge_vcf_to_tsv_fullQC_script=merge_vcf_to_tsv_fullQC_script,
             trio_denovo_docker=trio_denovo_docker,
             cohort_prefix=cohort_prefix,
+            info_fields=info_fields,
             runtime_attr_override=runtime_attr_step5
     }
 
@@ -42,6 +44,7 @@ task merge_vcf_to_tsv_fullQC {
         String merge_vcf_to_tsv_fullQC_script
         Array[File] split_trio_annot_vcfs 
         Array[File] trio_denovo_vcf
+        Array[String] info_fields
         String trio_denovo_docker
         String cohort_prefix
         RuntimeAttr? runtime_attr_override
@@ -72,12 +75,13 @@ task merge_vcf_to_tsv_fullQC {
         bootDiskSizeGb: select_first([runtime_override.boot_disk_gb, runtime_default.boot_disk_gb])
     }
 
-    command {
+    command <<<
         input_dir=$(dirname ~{split_trio_annot_vcfs[0]})
         output_dir=$(dirname ~{trio_denovo_vcf[0]})
         curl ~{merge_vcf_to_tsv_fullQC_script} > merge_vcf_to_tsv_fullQC.py
-        python3 merge_vcf_to_tsv_fullQC.py -d $output_dir -i $input_dir -p ~{ped_sex_qc} -o ~{cohort_prefix}_dnm.tsv > stdout
-    }
+        python3 merge_vcf_to_tsv_fullQC.py -d $output_dir -i $input_dir -p ~{ped_sex_qc} -o ~{cohort_prefix}_dnm.tsv \
+            -f {sep="," info_fields} > stdout
+    >>>
 
     output {
         File output_tsv = cohort_prefix + '_dnm.tsv'

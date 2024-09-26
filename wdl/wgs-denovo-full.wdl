@@ -21,19 +21,19 @@ struct RuntimeAttr {
 
 workflow wgs_denovo_full {
     input {
-        String python_trio_sample_script
-        String python_preprocess_script
-        String subset_ped_script
-        String uberSplit_v3_script
-        String merge_vcf_to_tsv_fullQC_script
-        String get_sample_pedigree_script
-        String filter_final_tsv_script
-        String annotate_mpc_loeuf_script
-        String filter_rare_inherited_python_script
-        String filter_rare_parents_python_script
-        String bagging_pu_source_script
-        String bagging_pu_rf_len_script
-        String tsv_to_bed_script
+        # String python_trio_sample_script
+        # String python_preprocess_script
+        # String subset_ped_script
+        # String uberSplit_v3_script
+        # String merge_vcf_to_tsv_fullQC_script
+        # String get_sample_pedigree_script
+        # String filter_final_tsv_script
+        # String annotate_mpc_loeuf_script
+        # String filter_rare_inherited_python_script
+        # String filter_rare_parents_python_script
+        # String bagging_pu_source_script
+        # String bagging_pu_rf_len_script
+        # String tsv_to_bed_script
 
         String mpc_dir
         File mpc_chr22_file
@@ -79,8 +79,8 @@ workflow wgs_denovo_full {
 
     call step1.step1 as step1 {
         input:
-            python_trio_sample_script=python_trio_sample_script,
-            python_preprocess_script=python_preprocess_script,
+            # python_trio_sample_script=python_trio_sample_script,
+            # python_preprocess_script=python_preprocess_script,
             lcr_uri=lcr_uri,
             ped_sex_qc=ped_sex_qc,
             info_header=info_header,
@@ -117,9 +117,9 @@ workflow wgs_denovo_full {
             hail_docker=hail_docker,
             cohort_prefix=cohort_prefix,
             trio_denovo_docker=trio_denovo_docker,
-            uberSplit_v3_script=uberSplit_v3_script,
+            # uberSplit_v3_script=uberSplit_v3_script,
             batch_size=batch_size,
-            subset_ped_script=subset_ped_script
+            # subset_ped_script=subset_ped_script
     }
     call annotateHPandVAF.annotateHPandVAF as annotateHPandVAF {
         input:
@@ -135,7 +135,7 @@ workflow wgs_denovo_full {
         input:
             ped_uri_trios=step3.ped_uri_trios,
             split_trio_vcfs=step3.split_trio_vcfs,
-            get_sample_pedigree_script=get_sample_pedigree_script,
+            # get_sample_pedigree_script=get_sample_pedigree_script,
             trio_denovo_docker=trio_denovo_docker,
             minDQ=minDQ
     }
@@ -145,29 +145,19 @@ workflow wgs_denovo_full {
             ped_sex_qc=ped_sex_qc,
             split_trio_annot_vcfs=annotateHPandVAF.split_trio_annot_vcfs,
             trio_denovo_vcf=step4.trio_denovo_vcf,
-            merge_vcf_to_tsv_fullQC_script=merge_vcf_to_tsv_fullQC_script,
+            # merge_vcf_to_tsv_fullQC_script=merge_vcf_to_tsv_fullQC_script,
             trio_denovo_docker=trio_denovo_docker,
             cohort_prefix=cohort_prefix
     }
 
-    call annotateMPCandLOEUF.annotateMPCandLOEUF as annotateMPCandLOEUF {
-        input:
-            vcf_metrics_tsv=vcf_metrics_tsv,
-            mpc_dir=mpc_dir,
-            mpc_chr22_file=mpc_chr22_file,
-            loeuf_file=loeuf_file,
-            annotate_mpc_loeuf_script=annotate_mpc_loeuf_script,
-            hail_docker=hail_docker
-    }
-
     call step6.step6 as step6 {
         input:
-            vcf_metrics_tsv_annot=annotateMPCandLOEUF.vcf_metrics_tsv_annot,
+            vcf_metrics_tsv=step5.vcf_metrics_tsv,
             vep_vcf_file=vep_files[0],
             AF_threshold=AF_threshold,
             AC_threshold=AC_threshold,
             csq_af_threshold=csq_af_threshold,
-            filter_final_tsv_script=filter_final_tsv_script,
+            # filter_final_tsv_script=filter_final_tsv_script,
             hail_docker=hail_docker,
             sample_column=sample_column,
             genome_build=genome_build
@@ -184,8 +174,8 @@ workflow wgs_denovo_full {
         hg38_reference=hg38_reference,
         hg38_reference_dict=hg38_reference_dict,
         hg38_reference_fai=hg38_reference_fai,
-        filter_rare_inherited_python_script=filter_rare_inherited_python_script,
-        filter_rare_parents_python_script=filter_rare_parents_python_script,
+        # filter_rare_inherited_python_script=filter_rare_inherited_python_script,
+        # filter_rare_parents_python_script=filter_rare_parents_python_script,
         jvarkit_docker=jvarkit_docker,
         hail_docker=hail_docker,
         sv_base_mini_docker=sv_base_mini_docker,
@@ -196,9 +186,9 @@ workflow wgs_denovo_full {
         qual_threshold=qual_threshold,
         shards_per_chunk=shards_per_chunk,
         repetitive_regions_bed=repetitive_regions_bed,
-        bagging_pu_source_script=bagging_pu_source_script,
-        bagging_pu_rf_len_script=bagging_pu_rf_len_script,
-        tsv_to_bed_script=tsv_to_bed_script,
+        # bagging_pu_source_script=bagging_pu_source_script,
+        # bagging_pu_rf_len_script=bagging_pu_rf_len_script,
+        # tsv_to_bed_script=tsv_to_bed_script,
         cohort_prefix=cohort_prefix
     }
 
@@ -214,7 +204,6 @@ workflow wgs_denovo_full {
         Array[File] split_trio_annot_vcfs = annotateHPandVAF.split_trio_annot_vcfs
         Array[File] trio_denovo_vcf = step4.trio_denovo_vcf
         File vcf_metrics_tsv = step5.vcf_metrics_tsv
-        File vcf_metrics_tsv_annot = annotateMPCandLOEUF.vcf_metrics_tsv_annot
         File vcf_metrics_tsv_final = step6.vcf_metrics_tsv_final
         File vcf_metrics_tsv_final_pu = step7.vcf_metrics_tsv_final_pu
         

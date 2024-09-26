@@ -28,6 +28,8 @@ def main():
     parser = create_arg_parser()
     args = parser.parse_args()
     
+    fixed_info_columns = args.info_fields.split(',')
+
     # Collect trio list infor
     sample_info, triokey_to_samp = parse_pedigree(args.ped_path)
     
@@ -66,7 +68,7 @@ def main():
         trio_key = os.path.basename(in_vcf_path).replace('.vcf', '').replace('_HP_VAF', '')
         sampleID = triokey_to_samp[trio_key]
         print("Processing:" + sampleID)
-        variant_df = parse_trio_vcf(in_vcf_path, sample_info, sampleID).set_index('ID', drop=False)
+        variant_df = parse_trio_vcf(in_vcf_path, sample_info, sampleID, fixed_info_columns).set_index('ID', drop=False)
         result_df = variant_df.loc[trio_variant_keys[trio_key].index]
         result_df[trio_variant_keys[trio_key].columns] = trio_variant_keys[trio_key]
         if conter == 0:
@@ -87,12 +89,14 @@ def create_arg_parser() -> argparse.ArgumentParser:
                         help='Directory for Triodenovo input VCF files (per trio)')
     parser.add_argument('-p', '--ped_path', dest='ped_path', required=True, type=str,
                         help='path for standard pedigree file')
+    parser.add_argument('-f', '--info-fields', dest='info_fields', required=True, type=str,
+                        help='INFO fields to output')    
     parser.add_argument('-o', '--out_path', dest='out_path', required=False, type=str,
                         help='path for output table'
                         '(Default: merged_dnms_LF_triodenovo.tsv)', default='merged_dnms_LF_triodenovo.tsv')
     return parser
 
-def parse_trio_vcf(vcf_path: str, sample_info: dict, sampleID: str, abnd_colnames: list = None) -> pd.DataFrame:
+def parse_trio_vcf(vcf_path: str, sample_info: dict, sampleID: str, fixed_info_columns: list, abnd_colnames: list = None) -> pd.DataFrame:
     """ Parse the VCF file and make a pandas.DataFrame object listing the annotated variants.
     :param vcf_path: The path of the VCF file
     :param abnd_colnames: The list of abandoned INFO names
@@ -144,7 +148,6 @@ def parse_trio_vcf(vcf_path: str, sample_info: dict, sampleID: str, abnd_colname
     vcf_df['VarKey'] = vcf_df['ID'] + ":" + vcf_df['SAMPLE']
 
     # Parse the INFO field
-    fixed_info_columns = ['END','AC','AF','AN','BaseQRankSum','ClippingRankSum','DP','FS','MLEAC','MLEAF','MQ','MQRankSum','POLYX','QD','ReadPosRankSum','SOR','VQSLOD','cohort_AC','CSQ']  # TODO: ADD
     info_strs = vcf_df['INFO'].to_numpy()
     info_dicts = list(map(parse_info_str, info_strs))
     info_df = pd.DataFrame(info_dicts)
