@@ -35,9 +35,9 @@ workflow wgs_denovo_full {
         # String bagging_pu_rf_len_script
         # String tsv_to_bed_script
 
-        String mpc_dir
-        File mpc_chr22_file
-        File loeuf_file
+        # String mpc_dir
+        # File mpc_chr22_file
+        # File loeuf_file
         File lcr_uri
         File ped_sex_qc
         File relatedness_qc
