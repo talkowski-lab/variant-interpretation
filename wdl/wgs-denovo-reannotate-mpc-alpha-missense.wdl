@@ -9,7 +9,7 @@ struct RuntimeAttr {
     Int? max_retries
 }
 
-workflow downsampleVariantsfromTSV {
+workflow reannotateMPC_AlphaMissense {
     input {
         File vcf_metrics_tsv_final_pu
         File alpha_missense_file
