@@ -121,7 +121,7 @@ task reannotateFinalTSV {
         .rename({f"f{i}": am_fields[i] for i in range(len(am_fields))})  # rename fields
 
     if build=='GRCh37':
-        am_ht = am_ht.annotate(CHROM=am_ht.CHROM.replace('chr',''))
+        am_ht = am_ht.annotate(CHROM=am_ht.CHROM.replace('chr','').replace('M','MT'))
     am_ht = am_ht.annotate(locus=hl.locus(am_ht.CHROM, hl.int(am_ht.POS), reference_genome=build),
                 alleles=hl.array([am_ht.REF, am_ht.ALT]))
 
