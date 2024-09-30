@@ -17,7 +17,6 @@ workflow vepAnnotateHailExtra {
 
     input {
         Array[File] vep_vcf_files
-        Array[File] vep_vcf_idx
 
         File revel_file
         File clinvar_vcf_uri
@@ -28,7 +27,6 @@ workflow vepAnnotateHailExtra {
 
         String cohort_prefix
         String hail_docker
-        String sv_base_mini_docker
         
         String vep_annotate_hail_extra_python_script
         String split_vcf_hail_script
@@ -39,18 +37,13 @@ workflow vepAnnotateHailExtra {
         String noncoding_bed='NA'
         String gene_list='NA'
 
-        File? header_file
-
         RuntimeAttr? runtime_attr_annotate_noncoding      
         RuntimeAttr? runtime_attr_annotate_extra
         RuntimeAttr? runtime_attr_annotate_spliceAI
         RuntimeAttr? runtime_attr_annotate_add_genotypes
     }
 
-    scatter (pair in zip(vep_vcf_files, vep_vcf_idx)) {
-        File vcf_shard = pair.left
-        File vcf_shard_idx = pair.right
-
+    scatter (vcf_shard in vep_vcf_files) {
         if (noncoding_bed!='NA') {
             call annotateFromBed as annotateNonCoding {
                 input:
@@ -90,39 +83,20 @@ workflow vepAnnotateHailExtra {
             }
         }
         File annot_vcf_file = select_first([annotateSpliceAI.annot_vcf_file, annotateExtra.annot_vcf_file])
-        File annot_vcf_idx_ = select_first([annotateSpliceAI.annot_vcf_idx, annotateExtra.annot_vcf_idx])
 
-        if (defined(header_file)) {
-            call addGenotypesReheader {
-                input:
-                header_file=select_first([header_file]),
-                annot_vcf_file=annot_vcf_file,
-                annot_vcf_idx=annot_vcf_idx_,
-                vcf_file=vcf_shard,
-                vcf_idx=vcf_shard_idx,
-                sv_base_mini_docker=sv_base_mini_docker,
-                runtime_attr_override=runtime_attr_annotate_add_genotypes
-            }
+        call addGenotypes {
+            input:
+            annot_vcf_file=annot_vcf_file,
+            vcf_file=vcf_shard,
+            genome_build=genome_build,
+            hail_docker=hail_docker,
+            runtime_attr_override=runtime_attr_annotate_add_genotypes
         }
-
-        if (!defined(header_file)) {
-            call addGenotypes {
-                input:
-                annot_vcf_file=annot_vcf_file,
-                annot_vcf_idx=annot_vcf_idx_,
-                vcf_file=vcf_shard,
-                vcf_idx=vcf_shard_idx,
-                sv_base_mini_docker=sv_base_mini_docker,
-                runtime_attr_override=runtime_attr_annotate_add_genotypes
-            }
-        }
-        File merged_vcf_file = select_first([addGenotypesReheader.combined_vcf_file, addGenotypes.combined_vcf_file])
-        File merged_vcf_idx = select_first([addGenotypesReheader.combined_vcf_idx, addGenotypes.combined_vcf_idx])
     }
 
     output {
-        Array[File] annot_vcf_files = merged_vcf_file
-        Array[File] annot_vcf_idx = merged_vcf_idx
+        Array[File] annot_vcf_files = addGenotypes.combined_vcf_file
+        Array[File] annot_vcf_idx = addGenotypes.combined_vcf_idx
     }
 }   
 
@@ -419,10 +393,9 @@ task annotateSpliceAI {
 task addGenotypes {
     input {
         File annot_vcf_file
-        File annot_vcf_idx
         File vcf_file
-        File? vcf_idx
-        String sv_base_mini_docker
+        String hail_docker
+        String genome_build
         RuntimeAttr? runtime_attr_override
     }
 
@@ -438,6 +411,8 @@ task addGenotypes {
                                       boot_disk_gb: 10
                                   }
     RuntimeAttr runtime_override = select_first([runtime_attr_override, runtime_default])
+    Float memory = select_first([runtime_override.mem_gb, runtime_default.mem_gb])
+    Int cpu_cores = select_first([runtime_override.cpu_cores, runtime_default.cpu_cores])
     
     runtime {
         memory: "~{select_first([runtime_override.mem_gb, runtime_default.mem_gb])} GB"
@@ -445,96 +420,90 @@ task addGenotypes {
         cpu: select_first([runtime_override.cpu_cores, runtime_default.cpu_cores])
         preemptible: select_first([runtime_override.preemptible_tries, runtime_default.preemptible_tries])
         maxRetries: select_first([runtime_override.max_retries, runtime_default.max_retries])
-        docker: sv_base_mini_docker
+        docker: hail_docker
         bootDiskSizeGb: select_first([runtime_override.boot_disk_gb, runtime_default.boot_disk_gb])
     }
 
-    Boolean reindex = !defined(vcf_idx)
     String filename = basename(annot_vcf_file)
     String prefix = if (sub(filename, "\\.gz", "")!=filename) then basename(annot_vcf_file, ".vcf.gz") else basename(annot_vcf_file, ".vcf.bgz")
     String combined_vcf_name = "~{prefix}.GT.vcf.bgz"
 
     command <<<
-        set -euo pipefail
+    cat <<EOF > merge_vcfs.py
+    from pyspark.sql import SparkSession
+    import hail as hl
+    import numpy as np
+    import pandas as pd
+    import sys
+    import ast
+    import os
+    import json
+    import argparse
 
-        if [[ ~{reindex} == "true" ]]; then
-            tabix ~{vcf_file}
-        fi
+    parser = argparse.ArgumentParser(description='Parse arguments')
+    parser.add_argument('-i', dest='vcf_file', help='Input VCF file before annotation')
+    parser.add_argument('-a', dest='annot_vcf_file', help='Input VCF file after annotation')
+    parser.add_argument('-o', dest='combined_vcf_name', help='Output filename')
+    parser.add_argument('--cores', dest='cores', help='CPU cores')
+    parser.add_argument('--mem', dest='mem', help='Memory')
+    parser.add_argument('--build', dest='build', help='Genome build')
 
-        bcftools merge \
-        --no-version \
-        -Oz \
-        --output ~{combined_vcf_name} \
-        ~{annot_vcf_file} \
-        ~{vcf_file}
+    args = parser.parse_args()
 
-        bcftools index -t ~{combined_vcf_name}
-    >>>
+    vcf_file = args.vcf_file
+    annot_vcf_file = args.annot_vcf_file
+    combined_vcf_name = args.combined_vcf_name
+    cores = args.cores  # string
+    mem = int(np.floor(float(args.mem)))
+    build = args.build
 
-    output {
-        File combined_vcf_file = combined_vcf_name
-        File combined_vcf_idx = combined_vcf_name + ".tbi"
-    }
+    hl.init(min_block_size=128, 
+            local=f"local[*]", 
+            spark_conf={
+                        "spark.driver.memory": f"{int(np.floor(mem*0.8))}g",
+                        "spark.speculation": 'true'
+                        }, 
+            tmp_dir="tmp", local_tmpdir="tmp",
+                        )
 
-}
+    #split-multi
+    def split_multi_ssc(mt):
+        mt = mt.annotate_rows(num_alleles = mt.alleles.size() ) # Add number of alleles at site before split
+        # only split variants that aren't already split
+        bi = mt.filter_rows(hl.len(mt.alleles) == 2)
+        bi = bi.annotate_rows(a_index=1, was_split=False, old_locus=bi.locus, old_alleles=bi.alleles)
+        multi = mt.filter_rows(hl.len(mt.alleles) > 2)
+        # Now split
+        split = hl.split_multi(multi, permit_shuffle=True)
+        sm = split.union_rows(bi)
+        # sm = hl.split_multi(mt, permit_shuffle=True)
+        if 'PL' in list(mt.entry.keys()):
+            pl = hl.or_missing(hl.is_defined(sm.PL),
+                            (hl.range(0, 3).map(lambda i: hl.min(hl.range(0, hl.len(sm.PL))
+            .filter(lambda j: hl.downcode(hl.unphased_diploid_gt_index_call(j), sm.a_index) == hl.unphased_diploid_gt_index_call(i))
+            .map(lambda j: sm.PL[j])))))
+            sm = sm.annotate_entries(PL = pl)
+        split_ds = sm.annotate_entries(GT = hl.downcode(sm.GT, sm.a_index),
+                                    AD = hl.or_missing(hl.is_defined(sm.AD), [hl.sum(sm.AD) - sm.AD[sm.a_index], sm.AD[sm.a_index]])
+                                    ) 
+            #GQ = hl.cond(hl.is_defined(pl[0]) & hl.is_defined(pl[1]) & hl.is_defined(pl[2]), hl.gq_from_pl(pl), sm.GQ) )
+        mt = split_ds.drop('old_locus', 'old_alleles')
+        return mt
 
-task addGenotypesReheader {
-    input {
-        File header_file
-        File annot_vcf_file
-        File annot_vcf_idx
-        File vcf_file
-        File? vcf_idx
-        String sv_base_mini_docker
-        RuntimeAttr? runtime_attr_override
-    }
+    header = hl.get_vcf_metadata(vcf_file) 
+    mt = hl.import_vcf(vcf_file, force_bgz=True, array_elements_required=False, call_fields=[], reference_genome=build)
 
-    Float input_size = size([annot_vcf_file, vcf_file], "GB") 
-    Float base_disk_gb = 10.0
+    mt = split_multi_ssc(mt)
 
-    RuntimeAttr runtime_default = object {
-                                      mem_gb: 4,
-                                      disk_gb: ceil(base_disk_gb + input_size * 5.0),
-                                      cpu_cores: 1,
-                                      preemptible_tries: 3,
-                                      max_retries: 1,
-                                      boot_disk_gb: 10
-                                  }
-    RuntimeAttr runtime_override = select_first([runtime_attr_override, runtime_default])
-    
-    runtime {
-        memory: "~{select_first([runtime_override.mem_gb, runtime_default.mem_gb])} GB"
-        disks: "local-disk ~{select_first([runtime_override.disk_gb, runtime_default.disk_gb])} HDD"
-        cpu: select_first([runtime_override.cpu_cores, runtime_default.cpu_cores])
-        preemptible: select_first([runtime_override.preemptible_tries, runtime_default.preemptible_tries])
-        maxRetries: select_first([runtime_override.max_retries, runtime_default.max_retries])
-        docker: sv_base_mini_docker
-        bootDiskSizeGb: select_first([runtime_override.boot_disk_gb, runtime_default.boot_disk_gb])
-    }
+    annot_mt = hl.import_vcf(annot_vcf_file, force_bgz=True, array_elements_required=False, call_fields=[], reference_genome=build)
 
-    Boolean reindex = !defined(vcf_idx)
-    String filename = basename(annot_vcf_file)
-    String prefix = if (sub(filename, "\\.gz", "")!=filename) then basename(annot_vcf_file, ".vcf.gz") else basename(annot_vcf_file, ".vcf.bgz")
-    String combined_vcf_name = "~{prefix}.GT.vcf.bgz"
+    annot_mt = annot_mt.union_cols(mt)
 
-    command <<<
-        set -euo pipefail
+    hl.export_vcf(dataset=annot_mt, output=combined_vcf_name, metadata=header, tabix=True)
+    EOF
 
-        if [[ ~{reindex} == "true" ]]; then
-            tabix ~{vcf_file}
-        fi
-
-        bcftools reheader -h ~{header_file} -o fixed_header.vcf.gz ~{vcf_file}
-        bcftools index -t fixed_header.vcf.gz       
-
-        bcftools merge \
-        --no-version \
-        -Oz \
-        --output ~{combined_vcf_name} \
-        ~{annot_vcf_file} \
-        fixed_header.vcf.gz
-
-        bcftools index -t ~{combined_vcf_name}
+    python3 merge_vcfs.py -i ~{vcf_file} -a ~{annot_vcf_file} -o ~{combined_vcf_name} --cores ~{cpu_cores} --mem ~{memory} \
+        --build ~{genome_build}
     >>>
 
     output {
