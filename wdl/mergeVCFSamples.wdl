@@ -31,7 +31,7 @@ workflow MergeVCFs {
     if (defined(header_file)) {
         call mergeVCFsReheader {
             input:
-            vcf_files=select_first([renameVCFSamples.renamed_vcf_files, vcf_files, read_lines(select_first([vcf_list_file]))]),
+            vcf_files=select_first([select_first([renameVCFSamples.renamed_vcf_files]), vcf_files, read_lines(select_first([vcf_list_file]))]),
             header_file=select_first([header_file]),
             output_vcf_name=sample_set_id + '.merged.vcf.gz',
             sv_base_mini_docker=sv_base_mini_docker
@@ -41,7 +41,7 @@ workflow MergeVCFs {
     if (!defined(header_file)) {
         call mergeVCFs {
             input:
-            vcf_files=select_first([renameVCFSamples.renamed_vcf_files, vcf_files, read_lines(select_first([vcf_list_file]))]),
+            vcf_files=select_first([select_first([renameVCFSamples.renamed_vcf_files]), vcf_files, read_lines(select_first([vcf_list_file]))]),
             output_vcf_name=sample_set_id + '.merged.vcf.gz',
             sv_base_mini_docker=sv_base_mini_docker
         }
