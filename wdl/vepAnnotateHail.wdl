@@ -43,7 +43,7 @@ workflow vepAnnotateHail {
         Boolean split_into_shards 
         Boolean merge_split_vcf
         Boolean reannotate_ac_af=false
-        Int shards_per_chunk=10  # combine pre-sharded VCFs
+        # Int shards_per_chunk=10  # combine pre-sharded VCFs
         
         Array[File]? vcf_shards  # if scatterVCF.wdl already run before VEP
         
@@ -63,7 +63,7 @@ workflow vepAnnotateHail {
         call mergeSplitVCF.splitFile as splitFile {
             input:
                 file=file,
-                shards_per_chunk=shards_per_chunk,
+                # shards_per_chunk=shards_per_chunk,
                 cohort_prefix=cohort_prefix,
                 hail_docker=hail_docker
         }
@@ -71,6 +71,9 @@ workflow vepAnnotateHail {
             call mergeVCFs.mergeVCFs as mergeVCFs {
                 input:
                     vcf_files=read_lines(chunk_file),
+                    vcf_indices=[chunk_file],  # dummy input
+                    naive=true,
+                    allow_overlaps=false,
                     sv_base_mini_docker=sv_base_mini_docker,
                     cohort_prefix=basename(chunk_file),
                     runtime_attr_override=runtime_attr_merge_vcfs
