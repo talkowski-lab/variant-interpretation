@@ -24,15 +24,23 @@ hl.init(min_block_size=128, spark_conf={"spark.executor.cores": cores,
 #split-multi
 def split_multi_ssc(mt):
     mt = mt.annotate_rows(num_alleles = mt.alleles.size() ) # Add number of alleles at site before split
+    # only split variants that aren't already split
+    bi = mt.filter_rows(hl.len(mt.alleles) == 2)
+    bi = bi.annotate_rows(a_index=1, was_split=False, old_locus=bi.locus, old_alleles=bi.alleles)
+    multi = mt.filter_rows(hl.len(mt.alleles) > 2)
     # Now split
-    sm = hl.split_multi(mt)
-    pl = hl.or_missing(hl.is_defined(sm.PL),
-                      (hl.range(0, 3).map(lambda i: hl.min(hl.range(0, hl.len(sm.PL))
-       .filter(lambda j: hl.downcode(hl.unphased_diploid_gt_index_call(j), sm.a_index) == hl.unphased_diploid_gt_index_call(i))
-       .map(lambda j: sm.PL[j])))))
+    split = hl.split_multi(multi, permit_shuffle=True)
+    sm = split.union_rows(bi)
+    # sm = hl.split_multi(mt, permit_shuffle=True)
+    if 'PL' in list(mt.entry.keys()):
+        pl = hl.or_missing(hl.is_defined(sm.PL),
+                        (hl.range(0, 3).map(lambda i: hl.min(hl.range(0, hl.len(sm.PL))
+        .filter(lambda j: hl.downcode(hl.unphased_diploid_gt_index_call(j), sm.a_index) == hl.unphased_diploid_gt_index_call(i))
+        .map(lambda j: sm.PL[j])))))
+        sm = sm.annotate_entries(PL = pl)
     split_ds = sm.annotate_entries(GT = hl.downcode(sm.GT, sm.a_index),
-                                   AD = hl.or_missing(hl.is_defined(sm.AD), [hl.sum(sm.AD) - sm.AD[sm.a_index], sm.AD[sm.a_index]]),
-                                   PL = pl) 
+                                   AD = hl.or_missing(hl.is_defined(sm.AD), [hl.sum(sm.AD) - sm.AD[sm.a_index], sm.AD[sm.a_index]])
+                                   ) 
         #GQ = hl.cond(hl.is_defined(pl[0]) & hl.is_defined(pl[1]) & hl.is_defined(pl[2]), hl.gq_from_pl(pl), sm.GQ) )
     mt = split_ds.drop('old_locus', 'old_alleles')
     return mt
