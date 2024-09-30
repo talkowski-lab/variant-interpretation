@@ -98,12 +98,11 @@ task renameVCFSamples {
             bcftools query -l $vcf > vcf_samples.txt;
             grep -Fwf vcf_samples.txt ~{sample_map_tsv} > sample_map.txt;
             bcftools reheader -s sample_map.txt -o "$vcf".renamed.vcf.gz $vcf;
-            echo "$vcf".renamed.vcf.gz >> renamed_vcfs.txt;
         done
     >>>
 
     output {
-        Array[File] renamed_vcf_files = read_lines('renamed_vcfs.txt')
+        Array[File] renamed_vcf_files = glob('*.renamed.vcf.gz')
     }
 }
 
