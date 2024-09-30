@@ -43,7 +43,7 @@ workflow vepAnnotateHail {
         Boolean split_into_shards 
         Boolean merge_split_vcf
         Boolean reannotate_ac_af=false
-        # Int shards_per_chunk=10  # combine pre-sharded VCFs
+        Int shards_per_chunk=10  # combine pre-sharded VCFs
         
         Array[File]? vcf_shards  # if scatterVCF.wdl already run before VEP
         
@@ -63,7 +63,7 @@ workflow vepAnnotateHail {
         call mergeSplitVCF.splitFile as splitFile {
             input:
                 file=file,
-                # shards_per_chunk=shards_per_chunk,
+                shards_per_chunk=shards_per_chunk,
                 cohort_prefix=cohort_prefix,
                 hail_docker=hail_docker
         }
