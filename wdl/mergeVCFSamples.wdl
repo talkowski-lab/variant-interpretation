@@ -97,7 +97,7 @@ task renameVCFSamples {
         do
             bcftools query -l $vcf > vcf_samples.txt;
             grep -Fwf vcf_samples.txt ~{sample_map_tsv} > sample_map.txt;
-            bcftools reheader -s sample_map.txt -o "$vcf".renamed.vcf.gz $vcf;
+            bcftools reheader -s sample_map.txt -o $(basename $vcf).renamed.vcf.gz $vcf;
         done
     >>>
 
