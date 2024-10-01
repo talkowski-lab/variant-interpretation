@@ -14,16 +14,15 @@ workflow MergeVCFs {
         File? vcf_list_file
         Array[File]? vcf_files
         File? header_file
-        File? sample_map_tsv
+        Boolean rename_samples=false
         String sample_set_id
         String sv_base_mini_docker
     }
 
-    if (defined(sample_map_tsv)) {
+    if (rename_samples) {
         call renameVCFSamples {
             input:
             vcf_files=select_first([vcf_files, read_lines(select_first([vcf_list_file]))]),
-            sample_map_tsv=select_first([sample_map_tsv]),
             sv_base_mini_docker=sv_base_mini_docker
         }
     }
@@ -56,7 +55,6 @@ workflow MergeVCFs {
 task renameVCFSamples {
     input {
         Array[File] vcf_files
-        File sample_map_tsv
         String sv_base_mini_docker
         RuntimeAttr? runtime_attr_override
     }
@@ -95,8 +93,10 @@ task renameVCFSamples {
         cat $VCFS | awk -F '/' '{print $NF"\t"$0}' | sort -k1,1V | awk '{print $2}' > vcfs_sorted.list
         for vcf in $(cat vcfs_sorted.list);
         do
-            bcftools query -l $vcf > vcf_samples.txt;
-            grep -Fwf vcf_samples.txt ~{sample_map_tsv} > sample_map.txt;
+            bcftools query -l $vcf > samples.txt;
+            trio_id=$(basename $vcf | cut -f 1 -d '.');
+            sed "s/^/$trio_id\-/" samples.txt > new_samples.txt;
+            paste samples.txt new_samples.txt > sample_map.txt;
             bcftools reheader -s sample_map.txt -o $(basename $vcf).renamed.vcf.gz $vcf;
         done
     >>>
