@@ -111,7 +111,7 @@ workflow Relatedness {
             input:
             vcf_uri=subsetVCFSamples.vcf_subset,
             sites_uri=sites_uri,
-            ped_uri=ped_uri,
+            ped_uri=imputeSex.ped_sex_qc,
             cohort_prefix=cohort_prefix,
             relatedness_qc_script=relatedness_qc_script,
             hail_docker=hail_docker,
