@@ -594,14 +594,14 @@ comphet_mt = comphet_mt.filter_rows((comphet_mt.vep.transcript_consequences.OMIM
 if len(trio_samples)>0:
     merged_trio_comphets = get_trio_comphets(comphet_mt)
     merged_trio_comphets = merged_trio_comphets.annotate_cols(trio_status='trio')
-    merged_comphets = merged_trio_comphets
+    merged_comphets = merged_trio_comphets.entries()
 
 if len(non_trio_samples)>0:
     merged_non_trio_comphets = get_non_trio_comphets(comphet_mt)
     merged_non_trio_comphets = merged_non_trio_comphets.annotate_cols(trio_status=
                                                               hl.if_else(merged_non_trio_comphets.fam_id=='-9', 
                                                               'not_in_pedigree', 'non_trio'))
-    merged_comphets = merged_non_trio_comphets
+    merged_comphets = merged_non_trio_comphets.entries()
 
 if (len(trio_samples)>0) and (len(non_trio_samples)>0):
     merged_comphets = merged_trio_comphets.entries().union(merged_non_trio_comphets.entries())
