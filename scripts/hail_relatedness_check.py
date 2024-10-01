@@ -20,11 +20,14 @@ bucket_id = sys.argv[7]
 score_table = sys.argv[8]
 genome_build = sys.argv[9]
 
-hl.init(min_block_size=128, spark_conf={"spark.executor.cores": cores, 
-                    "spark.executor.memory": f"{int(np.floor(mem*0.4))}g",
-                    "spark.driver.cores": cores,
-                    "spark.driver.memory": f"{int(np.floor(mem*0.4))}g"
-                    }, tmp_dir="tmp", local_tmpdir="tmp")
+hl.init(min_block_size=128, 
+        local=f"local[*]", 
+        spark_conf={
+                    "spark.driver.memory": f"{int(np.floor(mem*0.8))}g",
+                    "spark.speculation": 'true'
+                    }, 
+        tmp_dir="tmp", local_tmpdir="tmp",
+                    )
 
 #split-multi
 def split_multi_ssc(mt):
