@@ -188,7 +188,8 @@ task addSVSamplesToPed {
         reference_genome=genome_build, array_elements_required=False, call_fields=[])
     vcf_samps = mt.s.collect()
 
-    ped = pd.read_csv(ped_uri, sep='\t')
+    ped = pd.read_csv(ped_uri, sep='\t').iloc[:,:6]
+    ped.columns = ['family_id', 'sample_id', 'paternal_id', 'maternal_id', 'sex', 'phenotype']
     missing_samps = pd.DataFrame({'family_id': [-9 for _ in range(np.setdiff1d(vcf_samps, ped.sample_id).size)],
             'paternal_id': [0 for _ in range(np.setdiff1d(vcf_samps, ped.sample_id).size)],
             'maternal_id': [0 for _ in range(np.setdiff1d(vcf_samps, ped.sample_id).size)],
