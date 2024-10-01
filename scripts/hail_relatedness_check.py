@@ -116,7 +116,10 @@ def get_sample_role(row):
         role = 'Unknown'
     return role
 
-ped['role'] = ped.apply(get_sample_role, axis=1)
+try:
+    ped['role'] = ped.apply(get_sample_role, axis=1)
+except:  # empty df, no samples in VCF in ped
+    ped['role'] = np.nan
 
 ped_ht = hl.Table.from_pandas(ped)
 
@@ -142,7 +145,10 @@ dad_df = dad_df.rename({col: 'father_'+col for col in rename_cols}, axis=1).copy
 all_df = mom_df.merge(dad_df, how='outer')
 
 # get duplicates
-ped['sample_rank'] = 4 - (ped.sex.isin([1,2]).astype(int) + (ped.paternal_id!='0').astype(int) + (ped.maternal_id!='0').astype(int))
+try:
+    ped['sample_rank'] = 4 - (ped.sex.isin([1,2]).astype(int) + (ped.paternal_id!='0').astype(int) + (ped.maternal_id!='0').astype(int))
+except:  # empty df, no samples in VCF in ped
+    ped['sample_rank'] = np.nan
 
 for s in np.setdiff1d(vcf_samps, ped.sample_id):
     ped.at[s, 'sample_id'] = s
