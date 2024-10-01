@@ -116,57 +116,55 @@ def get_sample_role(row):
         role = 'Unknown'
     return role
 
-try:
+if not ped.empty:
     ped['role'] = ped.apply(get_sample_role, axis=1)
-except:  # empty df, no samples in VCF in ped
-    ped['role'] = np.nan
 
-ped_ht = hl.Table.from_pandas(ped)
+    ped_ht = hl.Table.from_pandas(ped)
 
-dad_temp = ped_ht.key_by('sample_id','paternal_id')
-dad_temp2 = ped_ht.key_by('paternal_id','sample_id')
+    dad_temp = ped_ht.key_by('sample_id','paternal_id')
+    dad_temp2 = ped_ht.key_by('paternal_id','sample_id')
 
-all_dad_ht = dad_temp.join(rel.semi_join(dad_temp)).key_by().union(dad_temp2.join(rel.semi_join(dad_temp2)).key_by(), unify=True)
-all_dad_ht = all_dad_ht.annotate(father_status=all_dad_ht.relationship).drop('relationship')
+    all_dad_ht = dad_temp.join(rel.semi_join(dad_temp)).key_by().union(dad_temp2.join(rel.semi_join(dad_temp2)).key_by(), unify=True)
+    all_dad_ht = all_dad_ht.annotate(father_status=all_dad_ht.relationship).drop('relationship')
 
-mom_temp = ped_ht.key_by('sample_id','maternal_id')
-mom_temp2 = ped_ht.key_by('maternal_id','sample_id')
+    mom_temp = ped_ht.key_by('sample_id','maternal_id')
+    mom_temp2 = ped_ht.key_by('maternal_id','sample_id')
 
-all_mom_ht = mom_temp.join(rel.semi_join(mom_temp)).key_by().union(mom_temp2.join(rel.semi_join(mom_temp2)).key_by(), unify=True)
-all_mom_ht = all_mom_ht.annotate(mother_status=all_mom_ht.relationship).drop('relationship')
+    all_mom_ht = mom_temp.join(rel.semi_join(mom_temp)).key_by().union(mom_temp2.join(rel.semi_join(mom_temp2)).key_by(), unify=True)
+    all_mom_ht = all_mom_ht.annotate(mother_status=all_mom_ht.relationship).drop('relationship')
 
-mom_df = all_mom_ht.to_pandas()
-dad_df = all_dad_ht.to_pandas()
+    mom_df = all_mom_ht.to_pandas()
+    dad_df = all_dad_ht.to_pandas()
 
-rename_cols = ['kin', 'ibd0', 'ibd1', 'ibd2']
-mom_df = mom_df.rename({col: 'mother_'+col for col in rename_cols}, axis=1).copy()
-dad_df = dad_df.rename({col: 'father_'+col for col in rename_cols}, axis=1).copy()
+    rename_cols = ['kin', 'ibd0', 'ibd1', 'ibd2']
+    mom_df = mom_df.rename({col: 'mother_'+col for col in rename_cols}, axis=1).copy()
+    dad_df = dad_df.rename({col: 'father_'+col for col in rename_cols}, axis=1).copy()
 
-all_df = mom_df.merge(dad_df, how='outer')
+    all_df = mom_df.merge(dad_df, how='outer')
 
-# get duplicates
-try:
+    # get duplicates
     ped['sample_rank'] = 4 - (ped.sex.isin([1,2]).astype(int) + (ped.paternal_id!='0').astype(int) + (ped.maternal_id!='0').astype(int))
-except:  # empty df, no samples in VCF in ped
-    ped['sample_rank'] = np.nan
 
-for s in np.setdiff1d(vcf_samps, ped.sample_id):
-    ped.at[s, 'sample_id'] = s
-    ped.loc[s, 'sample_rank'] = 4
+    for s in np.setdiff1d(vcf_samps, ped.sample_id):
+        ped.at[s, 'sample_id'] = s
+        ped.loc[s, 'sample_rank'] = 4
 
-# smaller rank is better
-rank_ht = hl.Table.from_pandas(ped[['sample_id','sample_rank']]).key_by('sample_id')
+    # smaller rank is better
+    rank_ht = hl.Table.from_pandas(ped[['sample_id','sample_rank']]).key_by('sample_id')
 
-merged_rel_df = pd.concat([ped, all_df.set_index('sample_id')], axis=1)
-merged_rel_df = merged_rel_df.loc[:,~merged_rel_df.columns.duplicated()].copy()
+    merged_rel_df = pd.concat([ped, all_df.set_index('sample_id')], axis=1)
+    merged_rel_df = merged_rel_df.loc[:,~merged_rel_df.columns.duplicated()].copy()
 
-dups = relatedness.get_duplicated_samples(rel, i_col='i', j_col='j', rel_col='relationship')
-if len(dups)>0:
-    dup_ht = relatedness.get_duplicated_samples_ht(dups, rank_ht,  rank_ann='sample_rank')
-    dup_df = dup_ht.to_pandas()
-    merged_rel_df['duplicate_samples'] = merged_rel_df.sample_id.map(dup_df.set_index('kept').filtered.to_dict())
+    dups = relatedness.get_duplicated_samples(rel, i_col='i', j_col='j', rel_col='relationship')
+    if len(dups)>0:
+        dup_ht = relatedness.get_duplicated_samples_ht(dups, rank_ht,  rank_ann='sample_rank')
+        dup_df = dup_ht.to_pandas()
+        merged_rel_df['duplicate_samples'] = merged_rel_df.sample_id.map(dup_df.set_index('kept').filtered.to_dict())
+    else:
+        merged_rel_df['duplicate_samples'] = np.nan
+
 else:
-    merged_rel_df['duplicate_samples'] = np.nan
+    merged_rel_df = ped.copy()
 
 merged_rel_df.to_csv(f"{cohort_prefix}_relatedness_qc.ped", sep='\t', index=False)
 
