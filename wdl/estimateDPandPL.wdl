@@ -137,7 +137,15 @@ task calculateDPandPL {
     header['format']['DP'] = {'Description': 'Approximate read depth (estimated as sum of AD).', 'Number': '1', 'Type': 'Integer'}
 
     # PL
-    mt = mt.annotate_entries(PL=hl.array([0, mt.GQ, hl.max(mt.GQ, 3*(mt.AD[0] - mt.AD[1]))]))
+    mt = mt.annotate_entries(PL=hl.case()
+                               .when(mt.GT.is_hom_ref(), 
+                                    [0, mt.GQ, hl.max(mt.GQ, 3*(mt.AD[0] - mt.AD[1]))] )
+                                .when(mt.GT.is_hom_var(), 
+                                    [hl.max(mt.GQ, 3*(mt.AD[0] - mt.AD[1])), mt.GQ, 0] )
+                                .when(mt.GT.is_het(), 
+                                    [mt.GQ, 0, hl.max(mt.GQ, 3*(mt.AD[0] - mt.AD[1]))] )
+                                )
+
     header['format']['PL'] = {'Description': 'Normalized, Phred-scaled likelihoods for genotypes as defined in the VCF specification (estimated using GQ).', 'Number': 'G', 'Type': 'Integer'}
 
     hl.export_vcf(mt, output_vcf_name, metadata=header, tabix=True)
