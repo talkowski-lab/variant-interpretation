@@ -144,7 +144,7 @@ task calculateDPandPL {
                                     [hl.max(mt.GQ, 3*(mt.AD[0] - mt.AD[1])), mt.GQ, 0] )
                                 .when(mt.GT.is_het(), 
                                     [mt.GQ, 0, hl.max(mt.GQ, 3*(mt.AD[0] - mt.AD[1]))] )
-                                ).default(hl.array([hl.missing('int')]))
+                                .default(hl.array([hl.missing('int')])))
 
     header['format']['PL'] = {'Description': 'Normalized, Phred-scaled likelihoods for genotypes as defined in the VCF specification (estimated using GQ).', 'Number': 'G', 'Type': 'Integer'}
 
