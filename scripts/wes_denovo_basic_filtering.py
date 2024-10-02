@@ -52,7 +52,7 @@ if genome_build=='GRCh37':
 
 mt = mt.filter_rows(hl.is_defined(lcr[mt.locus]), keep=False)
 
-mt = mt.filter_rows((hl.len(mt.filters) == 0))
+mt = mt.filter_rows((hl.len(mt.filters) == 0) | (~hl.is_defined(mt.filters)))
 
 mt = mt.filter_entries( 
         (mt.DP < 7) | 
