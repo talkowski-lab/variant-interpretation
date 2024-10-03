@@ -30,6 +30,7 @@ workflow Relatedness {
         String bucket_id
         String genome_build
         Boolean sort_after_merge=false
+        Boolean split_multi=true
         Int chunk_size=100000
         RuntimeAttr? runtime_attr_subset_vcfs
         RuntimeAttr? runtime_attr_merge_vcfs
@@ -77,6 +78,7 @@ workflow Relatedness {
         sex_qc_script=sex_qc_script,
         hail_docker=hail_docker,
         genome_build=genome_build,
+        split_multi=split_multi,
         runtime_attr_override=runtime_attr_impute_sex
     }
 
