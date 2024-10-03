@@ -28,6 +28,7 @@ workflow Relatedness {
         String bucket_id
         String genome_build
         Int chunk_size=0
+        Boolean split_multi=true
         Boolean sort_after_merge=false
         RuntimeAttr? runtime_attr_subset_vcfs
         RuntimeAttr? runtime_attr_merge_vcfs
@@ -72,6 +73,7 @@ workflow Relatedness {
         sex_qc_script=sex_qc_script,
         genome_build=genome_build,
         hail_docker=hail_docker,
+        split_multi=split_multi,
         runtime_attr_override=runtime_attr_impute_sex
     }
 
@@ -119,6 +121,7 @@ task imputeSex {
         String sex_qc_script
         String hail_docker
         String genome_build
+        Boolean split_multi=true
         RuntimeAttr? runtime_attr_override
     }
 
@@ -151,7 +154,7 @@ task imputeSex {
 
     command <<<
         curl ~{sex_qc_script} > impute_sex.py
-        python3 impute_sex.py ~{vcf_uri} ~{sites_uri} ~{cohort_prefix} ~{ped_uri} ~{cpu_cores} ~{memory} ~{genome_build}
+        python3 impute_sex.py ~{vcf_uri} ~{sites_uri} ~{cohort_prefix} ~{ped_uri} ~{cpu_cores} ~{memory} ~{genome_build} ~{split_multi}
     >>>
 
     output {

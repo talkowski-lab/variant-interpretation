@@ -14,6 +14,7 @@ ped_uri = sys.argv[4]
 cores = sys.argv[5]  # string
 mem = int(np.floor(float(sys.argv[6])))
 genome_build = sys.argv[7]
+split_multi = ast.literal_eval(sys.argv[8].capitalize())
 
 hl.init(min_block_size=128, 
         local=f"local[*]", 
@@ -49,7 +50,8 @@ def split_multi_ssc(mt):
     return mt
 
 mt = hl.import_vcf(vcf_uri, reference_genome=genome_build, force_bgz=True, call_fields=[], array_elements_required=False)
-mt = split_multi_ssc(mt)
+if split_multi:
+    mt = split_multi_ssc(mt)
 
 # somalier sites
 som_mt = hl.import_vcf(somalier_vcf, reference_genome=genome_build, force_bgz=True, call_fields=[], array_elements_required=False)
