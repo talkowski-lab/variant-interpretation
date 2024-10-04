@@ -43,9 +43,11 @@ workflow hailDenovoWES {
         String sv_base_mini_docker
         String hail_docker
 
+        Float max_parent_ab=0.05
         Float min_child_ab=0.25
         Float min_dp_ratio=0.1
         Float min_gq=25
+        Float min_p=0.05
         Int vqslod_cutoff_snv=-20
         Int vqslod_cutoff_indel=-2
         Float af_threshold=0.005
@@ -110,9 +112,11 @@ workflow hailDenovoWES {
                 loeuf_file=loeuf_file,
                 hail_denovo_filtering_script=hail_denovo_filtering_script,
                 hail_docker=hail_docker,
+                max_parent_ab=max_parent_ab,
                 min_child_ab=min_child_ab,
                 min_dp_ratio=min_dp_ratio,
-                min_gq=min_gq
+                min_gq=min_gq,
+                min_p=min_p
         }
     }
 

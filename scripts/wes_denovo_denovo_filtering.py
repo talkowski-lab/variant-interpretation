@@ -14,9 +14,11 @@ loeuf_file = sys.argv[4]
 cores = sys.argv[5]
 mem = int(np.floor(float(sys.argv[6])))
 bucket_id = sys.argv[7]
-min_child_ab = float(sys.argv[8])
-min_dp_ratio = float(sys.argv[9])
-min_gq = float(sys.argv[10])
+max_parent_ab = float(sys.argv[8])
+min_child_ab = float(sys.argv[9])
+min_dp_ratio = float(sys.argv[10])
+min_gq = float(sys.argv[11])
+min_p = float(sys.argv[12])
 
 prefix = os.path.basename(filtered_mt).split('_wes_denovo_basic_filtering.mt')[0]
 
@@ -366,7 +368,8 @@ def kyles_de_novo_v16(mt: MatrixTable,
 
 # Call de novos using my custom function
 de_novo_results = kyles_de_novo_v16(mt, pedigree, pop_frequency_prior = mt.gnomad_non_neuro_AF,
-                             max_parent_ab = 0.05, min_child_ab = 0.25, min_dp_ratio = 0.1, min_gq = 25)
+                             max_parent_ab = max_parent_ab, min_child_ab = min_child_ab, min_dp_ratio = min_dp_ratio, min_gq = min_gq,
+                             min_p = min_p)
 
 # TODO: output (all below)
 de_novo_df = de_novo_results.to_pandas()
