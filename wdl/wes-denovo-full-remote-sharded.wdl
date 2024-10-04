@@ -46,7 +46,7 @@ workflow hailDenovoWES {
         Float max_parent_ab=0.05
         Float min_child_ab=0.25
         Float min_dp_ratio=0.1
-        Float min_gq=25
+        Int min_gq=25
         Float min_p=0.05
         Int vqslod_cutoff_snv=-20
         Int vqslod_cutoff_indel=-2

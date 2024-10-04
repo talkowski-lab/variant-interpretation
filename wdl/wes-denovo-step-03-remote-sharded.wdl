@@ -24,7 +24,7 @@ workflow step3 {
         Float max_parent_ab=0.05
         Float min_child_ab=0.25
         Float min_dp_ratio=0.1
-        Float min_gq=25
+        Int min_gq=25
         Float min_p=0.05
     }
 
@@ -77,7 +77,7 @@ task hailDenovoFilteringRemote {
         Float max_parent_ab
         Float min_child_ab
         Float min_dp_ratio
-        Float min_gq
+        Int min_gq
         Float min_p
         RuntimeAttr? runtime_attr_override
     }
