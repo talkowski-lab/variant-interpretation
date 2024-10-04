@@ -17,7 +17,7 @@ bucket_id = sys.argv[7]
 max_parent_ab = float(sys.argv[8])
 min_child_ab = float(sys.argv[9])
 min_dp_ratio = float(sys.argv[10])
-min_gq = float(sys.argv[11])
+min_gq = int(sys.argv[11])
 min_p = float(sys.argv[12])
 
 prefix = os.path.basename(filtered_mt).split('_wes_denovo_basic_filtering.mt')[0]
