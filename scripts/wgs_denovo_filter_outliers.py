@@ -45,8 +45,12 @@ sample_qc['sex_error'] = ped_qc['sex_error']
 
 sample_qc['any_error'] = sample_qc[['parental_error','sex_error']].any(axis=1)
 
-n_het_thr = sample_qc.groupby('any_error').n_het.describe().loc[False, 'max']
-    
+try:
+    n_het_thr = sample_qc.groupby('any_error').n_het.describe().loc[False, 'max']
+except Exception as e:
+    print(str(e))
+    n_het_thr = np.inf
+
 samples_to_keep = sample_qc[(sample_qc.n_het<=n_het_thr)].index.tolist()
 
 mt = mt.filter_cols(hl.array(samples_to_keep).contains(mt.s))
