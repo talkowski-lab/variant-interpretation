@@ -86,6 +86,7 @@ task calculateDPandPL {
     parser.add_argument('--cores', dest='cores', help='CPU cores')
     parser.add_argument('--mem', dest='mem', help='Memory')
     parser.add_argument('--build', dest='build', help='Genome build')
+    parser.add_argument('-d', dest='default_dp', help='Default AD/DP for missing hom ref sites')
 
     args = parser.parse_args()
 
@@ -94,6 +95,7 @@ task calculateDPandPL {
     cores = args.cores  # string
     mem = int(np.floor(float(args.mem)))
     build = args.build
+    default_dp = int(args.default_dp)
 
     hl.init(min_block_size=128, 
             local=f"local[*]", 
@@ -133,6 +135,8 @@ task calculateDPandPL {
     mt = split_multi_ssc(mt)
 
     # DP
+    mt = mt.annotate_entries(AD=hl.if_else(hl.is_missing(mt.AD), 
+                                [default_dp, 0], mt.AD))
     mt = mt.annotate_entries(DP=hl.sum(mt.AD))
     header['format']['DP'] = {'Description': 'Approximate read depth (estimated as sum of AD).', 'Number': '1', 'Type': 'Integer'}
 
