@@ -14,6 +14,7 @@ workflow estimateDPandPL {
         Array[File] vcf_files
         String hail_docker
         String genome_build='GRCh38'
+        Int default_dp=100
     }
 
     scatter (vcf_file in vcf_files) {
@@ -21,6 +22,7 @@ workflow estimateDPandPL {
             input:
             vcf_file=vcf_file,
             hail_docker=hail_docker,
+            default_dp=default_dp,
             genome_build=genome_build
         }
     }
@@ -36,6 +38,7 @@ task calculateDPandPL {
         File vcf_file
         String hail_docker
         String genome_build
+        Int default_dp
         RuntimeAttr? runtime_attr_override
     }
 
@@ -155,7 +158,7 @@ task calculateDPandPL {
     hl.export_vcf(mt, output_vcf_name, metadata=header, tabix=True)
     EOF
     python3 calculate_dp_pl.py -i ~{vcf_file} -o ~{output_vcf_name} --cores ~{cpu_cores} --mem ~{memory} \
-        --build ~{genome_build}
+        --build ~{genome_build} -d ~{default_dp}
     >>>
 
     output {
