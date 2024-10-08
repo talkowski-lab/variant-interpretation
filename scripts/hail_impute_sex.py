@@ -102,9 +102,9 @@ def predict_sex(row):
             sex = 1
         elif (row['chrX.n_het'] / row['chrX.n_hom_var'] > 0.4) & (row['chrX.n_called'] > 10):
             sex = 2
-    if (row['chrY.n_called']>0) & (row.sex!=2) & (row['Y_ploidy'] < 0.4):
+    if (row['chrY.n_called']>0) & (row.sex==1) & (row['Y_ploidy'] < 0.4):
         sex = -1  # apparent loss of Y with low het-ratio on X chromosome
-    if (row['chrY.n_called']>0) & (row.sex!=1) & (row['Y_ploidy'] > 0.4):
+    if (row['chrY.n_called']>0) & (row.sex==2) & (row['Y_ploidy'] > 0.4):
         sex = -2  # apparent Y with high het-ratio on X chromosome
     return sex
 
