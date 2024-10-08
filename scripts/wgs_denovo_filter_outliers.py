@@ -30,7 +30,8 @@ for sex_type in ped_qc.ped_sex.unique():
         sex_str.append(sex_type)
 ped_qc['ped_sex'] = ped_qc.ped_sex.replace({np.nan: -9} | {sex_type: -9 for sex_type in sex_str}).astype(int).astype('category')
 
-ped_qc['sex_error'] = ped_qc['sex'].astype(int).astype(str)!=ped_qc['ped_sex'].astype(int).astype(str)
+ped_qc['sex_error'] = ((ped_qc['sex'].astype(int).astype(str)!=ped_qc['ped_sex'].astype(int).astype(str)) & 
+        (~ped_qc.ped_sex.astype(int).astype(str).isin(['0','-9'])))
 
 rel_df['maternal_error'] = (rel_df.role=='Proband')&(~rel_df.mother_status.isin(['parent-child','ambiguous',np.nan]))
 rel_df['paternal_error'] = (rel_df.role=='Proband')&(~rel_df.father_status.isin(['parent-child','ambiguous',np.nan]))
