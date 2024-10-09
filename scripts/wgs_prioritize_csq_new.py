@@ -249,6 +249,13 @@ for col in final_output.columns:
 
 df = process_consequence_cohort(csq_columns, vcf_metrics_uri, numeric, sample_column)
 df['isCoding'] = df.Consequence.astype(str).replace({'None': '[]'}).apply(ast.literal_eval).apply(lambda csq: np.intersect1d(csq, coding_variants).size!=0)
+
+if 'VarKey' not in df.columns:
+    df['VarKey'] = df[['ID', sample_column]].astype(str).agg(':'.join, axis=1)
+
+if 'VarKey' not in final_output.columns:
+    final_output['VarKey'] = final_output[['ID', sample_column]].astype(str).agg(':'.join, axis=1)
+
 df = pd.concat([final_output.set_index('VarKey',drop=False), df.set_index('VarKey',drop=False)[np.setdiff1d(df.columns, final_output.columns)]], axis=1)
 
 df.to_csv(f"{os.path.basename(vcf_metrics_uri).split('.tsv')[0]}_prioritized_csq.tsv.gz", sep='\t',index=False)
