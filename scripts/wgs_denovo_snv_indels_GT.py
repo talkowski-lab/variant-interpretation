@@ -89,7 +89,7 @@ for info_cat in ['AC', 'AF', 'MLEAC', 'MLEAF']:
             tm_denovo_df[info_cat] = tm_denovo_df[info_cat].str[0]
 
 try:
-    tm_denovo_df['VarKey'] = tm_denovo_df[['ID', 'REF', 'ALT']].astype(str).agg(':'.join, axis=1)
+    tm_denovo_df['VarKey'] = tm_denovo_df[['ID', 'SAMPLE']].astype(str).agg(':'.join, axis=1)
 except Exception as e:
     print(str(e))
     tm_denovo_df['VarKey'] = np.nan
