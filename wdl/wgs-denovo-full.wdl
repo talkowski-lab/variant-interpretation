@@ -204,6 +204,7 @@ workflow wgs_denovo_full {
         Array[File] split_trio_annot_vcfs = annotateHPandVAF.split_trio_annot_vcfs
         Array[File] trio_denovo_vcf = step4.trio_denovo_vcf
         File vcf_metrics_tsv = step5.vcf_metrics_tsv
+        File vcf_metrics_tsv_prior_csq = step6.vcf_metrics_tsv_prior_csq
         File vcf_metrics_tsv_final = step6.vcf_metrics_tsv_final
         File vcf_metrics_tsv_final_pu = step7.vcf_metrics_tsv_final_pu
         
