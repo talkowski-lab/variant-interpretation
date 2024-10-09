@@ -150,7 +150,7 @@ workflow wgs_denovo_full {
     call step6.step6 as step6 {
         input:
             vcf_metrics_tsv=step5.vcf_metrics_tsv,
-            merged_preprocessed_vcf_file=step1.merged_preprocessed_vcf_file,
+            annot_vcf_files=annot_vcf_files,
             AF_threshold=AF_threshold,
             AC_threshold=AC_threshold,
             csq_af_threshold=csq_af_threshold,
