@@ -29,6 +29,7 @@ workflow getDenovoByGT {
         Boolean merge_split_vcf=false
         String denovo_snv_indels_gt_script
         String prioritize_csq_script
+        String genome_build='GRCh38'
         String sample_column='SAMPLE'
     }
 
@@ -54,12 +55,14 @@ workflow getDenovoByGT {
             call denovoByGT as denovoByGTChunk {
                 input:
                     vcf_file=mergeChunk.merged_vcf_file,
+                    vep_vcf_file=vep_files[0],
                     ped_sex_qc=ped_sex_qc,
                     file_ext=file_ext,
                     af_threshold=af_threshold,
                     hail_docker=hail_docker,
                     denovo_snv_indels_gt_script=denovo_snv_indels_gt_script,
                     prioritize_csq_script=prioritize_csq_script,
+                    genome_build=genome_build,
                     sample_column=sample_column
             }
         }
@@ -114,6 +117,7 @@ workflow getDenovoByGT {
 task denovoByGT {
     input {
         File vcf_file
+        File vep_vcf_file
         File ped_sex_qc
         String file_ext
         Float af_threshold
@@ -121,6 +125,7 @@ task denovoByGT {
         String denovo_snv_indels_gt_script
         String prioritize_csq_script    
         String sample_column
+        String genome_build
         RuntimeAttr? runtime_attr_override
     }
 
@@ -155,10 +160,10 @@ task denovoByGT {
     command {
         curl ~{denovo_snv_indels_gt_script} > denovo_snv_indels.py
         python3 denovo_snv_indels.py ~{vcf_file} ~{ped_sex_qc} ~{af_threshold} \
-        ~{cpu_cores} ~{memory} ~{file_ext}
+        ~{cpu_cores} ~{memory} ~{file_ext} ~{genome_build}
 
         curl ~{prioritize_csq_script} > prioritize_csq.py
-        python3 prioritize_csq.py ~{denovo_gt} ~{cpu_cores} ~{memory} ~{sample_column}
+        python3 prioritize_csq.py ~{denovo_gt} ~{cpu_cores} ~{memory} ~{sample_column} ~{vep_vcf_file} ~{genome_build}
     }
 
     output {

@@ -8,13 +8,13 @@ import sys
 import os
 import ast
 
-build = 'GRCh38'
 vcf_file = sys.argv[1]
 ped_uri = sys.argv[2]
 af_threshold = float(sys.argv[3])
 cores = sys.argv[4]
 mem = int(np.floor(float(sys.argv[5])))
 file_ext = sys.argv[6]
+build = sys.argv[7]
 
 hl.init(min_block_size=128, spark_conf={"spark.executor.cores": cores, 
                     "spark.executor.memory": f"{int(np.floor(mem*0.4))}g",
@@ -33,7 +33,7 @@ tmp_ped.to_csv(f"{prefix}.ped", sep='\t', index=False)
 ped_uri = f"{prefix}.ped"
 pedigree = hl.Pedigree.read(ped_uri, delimiter='\t')
 
-mt = hl.import_vcf(vcf_file, force_bgz=True, array_elements_required=False, call_fields=[], reference_genome='GRCh38')
+mt = hl.import_vcf(vcf_file, force_bgz=True, array_elements_required=False, call_fields=[], reference_genome=build)
 mt = mt.annotate_rows(ID=hl.variant_str(mt.row_key))
 
 #split-multi
