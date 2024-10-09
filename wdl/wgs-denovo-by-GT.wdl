@@ -164,12 +164,13 @@ task denovoByGT {
         python3 denovo_snv_indels.py ~{vcf_file} ~{ped_sex_qc} ~{af_threshold} \
         ~{cpu_cores} ~{memory} ~{file_ext} ~{genome_build}
 
-        curl ~{prioritize_csq_script} > prioritize_csq.py
-        python3 prioritize_csq.py ~{denovo_gt} ~{cpu_cores} ~{memory} ~{sample_column} ~{vep_vcf_file} ~{genome_build}
+        # curl ~{prioritize_csq_script} > prioritize_csq.py
+        # python3 prioritize_csq.py ~{denovo_gt} ~{cpu_cores} ~{memory} ~{sample_column} ~{vep_vcf_file} ~{genome_build}
     }
 
     output {
-        File denovo_gt_csq = basename(denovo_gt, '.tsv.gz') + '_prioritized_csq.tsv.gz'
+        File denovo_gt_csq = denovo_gt
+        # File denovo_gt_csq = basename(denovo_gt, '.tsv.gz') + '_prioritized_csq.tsv.gz'
     }
 }
 
