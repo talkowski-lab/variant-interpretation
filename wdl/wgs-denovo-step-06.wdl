@@ -14,7 +14,7 @@ struct RuntimeAttr {
 workflow step6 {
     input {
         File vcf_metrics_tsv
-        File vep_vcf_file
+        File merged_preprocessed_vcf_file
         Float AF_threshold=0.005
         Int AC_threshold=2
         Float csq_af_threshold=0.01
@@ -30,7 +30,7 @@ workflow step6 {
     call prioritizeCSQ.annotateMostSevereCSQ as prioritizeCSQ {
         input:
         vcf_metrics_tsv=vcf_metrics_tsv,
-        vep_vcf_file=vep_vcf_file,
+        vcf_file=merged_preprocessed_vcf_file,
         prioritize_csq_script=prioritize_csq_script,
         hail_docker=hail_docker,
         sample_column=sample_column,

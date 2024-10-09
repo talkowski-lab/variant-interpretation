@@ -47,8 +47,7 @@ workflow wgs_denovo_full {
         File info_header
         File repetitive_regions_bed
 
-        Array[File]? vep_vcf_files
-        Array[File]? vep_annotated_final_vcf
+        Array[File] annot_vcf_files
         String cohort_prefix
         String sv_base_mini_docker
         String trio_denovo_docker
@@ -75,8 +74,6 @@ workflow wgs_denovo_full {
         Float csq_af_threshold=0.01
     }
 
-    Array[File] vep_files = select_first([vep_vcf_files, vep_annotated_final_vcf])
-
     call step1.step1 as step1 {
         input:
             # python_trio_sample_script=python_trio_sample_script,
@@ -84,7 +81,7 @@ workflow wgs_denovo_full {
             lcr_uri=lcr_uri,
             ped_sex_qc=ped_sex_qc,
             info_header=info_header,
-            vep_files=vep_files,
+            annot_vcf_files=annot_vcf_files,
             sv_base_mini_docker=sv_base_mini_docker,
             cohort_prefix=cohort_prefix,
             hail_docker=hail_docker,
@@ -124,7 +121,7 @@ workflow wgs_denovo_full {
     call annotateHPandVAF.annotateHPandVAF as annotateHPandVAF {
         input:
             split_trio_vcfs=step3.split_trio_vcfs,
-            vep_vcf_files=vep_files,
+            annot_vcf_files=annot_vcf_files,
             hg38_reference=hg38_reference,
             hg38_reference_fai=hg38_reference_fai,
             hg38_reference_dict=hg38_reference_dict,
@@ -153,7 +150,7 @@ workflow wgs_denovo_full {
     call step6.step6 as step6 {
         input:
             vcf_metrics_tsv=step5.vcf_metrics_tsv,
-            vep_vcf_file=vep_files[0],
+            merged_preprocessed_vcf_file=step1.merged_preprocessed_vcf_file,
             AF_threshold=AF_threshold,
             AC_threshold=AC_threshold,
             csq_af_threshold=csq_af_threshold,
@@ -165,7 +162,7 @@ workflow wgs_denovo_full {
 
     call step7.step7 as step7 {
         input:
-        vep_vcf_files=vep_files,
+        annot_vcf_files=annot_vcf_files,
         lcr_uri=lcr_uri,
         ped_sex_qc=ped_sex_qc,
         meta_uri=meta_uri,
