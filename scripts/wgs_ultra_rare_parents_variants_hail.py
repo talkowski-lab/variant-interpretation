@@ -235,7 +235,7 @@ except Exception as e:
     # pass
 
 try:
-    ultra_rare_vars_df['VarKey'] = ultra_rare_vars_df[['ID', 'REF', 'ALT']].astype(str).agg(':'.join, axis=1)
+    ultra_rare_vars_df['VarKey'] = ultra_rare_vars_df[['ID', 'SAMPLE']].astype(str).agg(':'.join, axis=1)
 except Exception as e:
     print(str(e))
     ultra_rare_vars_df['VarKey'] = np.nan
