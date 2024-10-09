@@ -16,7 +16,7 @@ struct RuntimeAttr {
 
 workflow step7 {
     input {
-        Array[File] vep_vcf_files
+        Array[File] annot_vcf_files
         File lcr_uri
         File ped_sex_qc
         File meta_uri
@@ -67,7 +67,7 @@ workflow step7 {
 
     call filterUltraRareInheritedVariantsHail.filterUltraRareInheritedVariantsHail as filterUltraRareInheritedVariantsHail {
         input:
-            vep_vcf_files=vep_vcf_files,
+            annot_vcf_files=annot_vcf_files,
             lcr_uri=lcr_uri,
             ped_sex_qc=ped_sex_qc,
             meta_uri=meta_uri,
@@ -99,7 +99,7 @@ workflow step7 {
 
     call filterUltraRareParentsVariantsHail.filterUltraRareParentsVariantsHail as filterUltraRareParentsVariantsHail {
         input:
-            vep_vcf_files=vep_vcf_files,
+            annot_vcf_files=annot_vcf_files,
             lcr_uri=lcr_uri,
             ped_sex_qc=ped_sex_qc,
             meta_uri=meta_uri,

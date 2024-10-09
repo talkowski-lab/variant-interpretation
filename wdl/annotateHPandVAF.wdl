@@ -12,7 +12,7 @@ struct RuntimeAttr {
 workflow annotateHPandVAF {
     input {
         Array[File] split_trio_vcfs
-        Array[File] vep_vcf_files
+        Array[File] annot_vcf_files
         File hg38_reference
         File hg38_reference_fai
         File hg38_reference_dict
@@ -23,7 +23,7 @@ workflow annotateHPandVAF {
         call annotateVCF {
             input:
                 trio_vcf=trio_vcf,
-                vep_vcf_file=vep_vcf_files[0],
+                vep_vcf_file=annot_vcf_files[0],
                 hg38_reference=hg38_reference,
                 hg38_reference_fai=hg38_reference_fai,
                 hg38_reference_dict=hg38_reference_dict,

@@ -16,7 +16,7 @@ struct RuntimeAttr {
 
 workflow filterUltraRareInheritedVariantsHail {
     input {
-        Array[File] vep_vcf_files
+        Array[File] annot_vcf_files
         File lcr_uri
         File ped_sex_qc
         File meta_uri
@@ -62,7 +62,7 @@ workflow filterUltraRareInheritedVariantsHail {
     # File meta_uri_ = select_first([meta_uri, makeTrioSampleFiles.meta_uri])
     # File trio_uri_ = select_first([trio_uri, makeTrioSampleFiles.trio_uri])
     
-    scatter (vcf_file in vep_vcf_files) {
+    scatter (vcf_file in annot_vcf_files) {
         String file_ext = if sub(basename(vcf_file), '.vcf.gz', '')!=basename(vcf_file) then '.vcf.gz' else '.vcf.bgz'
         call filterUltraRareInheritedVariants as filterUltraRareInheritedVariants_sharded {
             input:

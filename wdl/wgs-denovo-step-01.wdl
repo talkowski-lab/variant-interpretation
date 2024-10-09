@@ -19,7 +19,7 @@ workflow step1 {
         File lcr_uri
         File ped_sex_qc
         File info_header
-        Array[File] vep_files
+        Array[File] annot_vcf_files
         String hail_docker
         String sv_base_mini_docker
         String cohort_prefix
@@ -52,7 +52,7 @@ workflow step1 {
     if (merge_split_vcf) {
         call mergeSplitVCF.splitFile as splitVEPFiles {
             input:
-                file=write_lines(vep_files),
+                file=write_lines(annot_vcf_files),
                 shards_per_chunk=shards_per_chunk,
                 cohort_prefix=cohort_prefix,
                 hail_docker=hail_docker
@@ -98,7 +98,7 @@ workflow step1 {
     }
 
     if (!merge_split_vcf) {
-        scatter (vcf_uri in vep_files) {
+        scatter (vcf_uri in annot_vcf_files) {
             call preprocessVCF {
                 input:
                     python_preprocess_script=python_preprocess_script,
