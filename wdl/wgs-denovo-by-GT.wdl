@@ -80,12 +80,14 @@ workflow getDenovoByGT {
             call denovoByGT {
                 input:
                     vcf_file=vcf_uri,
+                    vep_vcf_file=vep_files[0],
                     ped_sex_qc=ped_sex_qc,
                     file_ext=file_ext,
                     af_threshold=af_threshold,
                     hail_docker=hail_docker,
                     denovo_snv_indels_gt_script=denovo_snv_indels_gt_script,
                     prioritize_csq_script=prioritize_csq_script,
+                    genome_build=genome_build,
                     sample_column=sample_column
             }
         }
