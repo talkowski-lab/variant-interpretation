@@ -50,6 +50,7 @@ workflow step6 {
     }
 
     output {
+        File vcf_metrics_tsv_prior_csq = prioritizeCSQ.vcf_metrics_tsv_prior_csq
         File vcf_metrics_tsv_final = filterFinalTSV.vcf_metrics_tsv_final
     }
 }
