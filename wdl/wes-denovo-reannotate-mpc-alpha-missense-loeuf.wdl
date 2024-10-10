@@ -139,7 +139,9 @@ task reannotateFinalTSV {
     loeuf_v4_ht = hl.read_table(loeuf_v4_uri).key_by('transcript')
     ht = ht.key_by('Feature')
     ht = ht.annotate(LOEUF_v2=loeuf_v2_ht[ht.key]['oe_lof_upper'],
-                    LOEUF_v4=loeuf_v4_ht[ht.key]['lof.oe_ci.upper'])
+                    LOEUF_v2_decile=loeuf_v2_ht[ht.key]['oe_lof_upper_bin'],
+                    LOEUF_v4=loeuf_v4_ht[ht.key]['lof.oe_ci.upper'],
+                    LOEUF_v4_decile=loeuf_v4_ht[ht.key]['lof.oe_ci.upper_bin_decile'])
 
     # MPC
     mpc = hl.read_table(mpc_ht_uri).key_by('locus','alleles')
