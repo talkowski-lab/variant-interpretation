@@ -150,7 +150,7 @@ task mergeVCFs {
         do
             tabix $vcf;
         done
-        bcftools merge -m id -Oz -o ~{output_vcf_name} --file-list vcfs_sorted.list
+        bcftools merge -m none -Oz -o ~{output_vcf_name} --file-list vcfs_sorted.list
         tabix ~{output_vcf_name}
     >>>
 
