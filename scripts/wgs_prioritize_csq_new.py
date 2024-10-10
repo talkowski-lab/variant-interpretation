@@ -180,7 +180,7 @@ try:
     ht = hl.import_table(vcf_metrics_uri, force_bgz='.gz' in vcf_metrics_uri)
 except:
     ht = hl.import_table(vcf_metrics_uri, force='.gz' in vcf_metrics_uri)
-    
+
 ht = ht.annotate(locus=hl.parse_variant(ht.ID, reference_genome=genome_build).locus,
                         alleles=hl.parse_variant(ht.ID, reference_genome=genome_build).alleles)
 
@@ -233,7 +233,8 @@ df['isCoding'] = df.Consequence.astype(str).replace({'None': '[]'}).apply(ast.li
 
 if 'VarKey' not in final_output.columns:
     final_output['VarKey'] = final_output[['ID', sample_column]].astype(str).agg(':'.join, axis=1)
-    final_output.index = final_output['VarKey']
+
+final_output.index = final_output['VarKey']
 
 new_cols = list(np.setdiff1d(df.columns, ['locus','alleles','VarKey','CSQ']))
 final_output[new_cols] = df[new_cols]  # allows overwriting columns
