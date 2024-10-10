@@ -72,6 +72,10 @@ def trim_vcf(vcf_uri, lcr_uri, ped_uri, meta_uri, trio_uri, vcf_out_uri, build, 
     # load vcf
     mt = hl.import_vcf(vcf_uri, array_elements_required=False, reference_genome=build, force_bgz=True, call_fields=[], find_replace=('nul', '.'))
     mt = split_multi_ssc(mt)
+
+    # get header
+    header = hl.get_vcf_metadata(vcf_uri)
+
     # annotate cohort ac to INFO field; cohortAC filter set to 100 
     mt = mt.annotate_rows(info=mt.info.annotate(cohort_AC=mt.info.AC[mt.a_index - 1],
                                            cohort_AF=mt.info.AF[mt.a_index - 1]))
@@ -205,7 +209,7 @@ def trim_vcf(vcf_uri, lcr_uri, ped_uri, meta_uri, trio_uri, vcf_out_uri, build, 
     mt = mt.filter_rows(mt.variant_qc.AC[1] > 0, keep = True)
     mt = mt.drop('variant_qc')
     # write to output vcf
-    hl.export_vcf(mt, vcf_out_uri, tabix=True)
+    hl.export_vcf(mt, vcf_out_uri, metadata=header, tabix=True)
     # header = hl.get_vcf_metadata(vcf_uri) 
     # hl.export_vcf(mt, vcf_out_uri, metadata=header)
 
