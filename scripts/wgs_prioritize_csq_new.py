@@ -176,8 +176,11 @@ final_output['CSQ'] = final_output.CSQ.replace({'.':np.nan}).str.split(',')
 header = hl.get_vcf_metadata(vep_vcf_uri)
 csq_columns = header['info']['CSQ']['Description'].split('Format: ')[1].split('|')
 
-ht = hl.import_table(vcf_metrics_uri, force_bgz='.gz' in vcf_metrics_uri)
-
+try:
+    ht = hl.import_table(vcf_metrics_uri, force_bgz='.gz' in vcf_metrics_uri)
+except:
+    ht = hl.import_table(vcf_metrics_uri, force='.gz' in vcf_metrics_uri)
+    
 ht = ht.annotate(locus=hl.parse_variant(ht.ID, reference_genome=genome_build).locus,
                         alleles=hl.parse_variant(ht.ID, reference_genome=genome_build).alleles)
 
