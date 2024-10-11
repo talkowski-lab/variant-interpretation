@@ -27,11 +27,14 @@ gq_het_threshold = float(sys.argv[12])
 gq_hom_ref_threshold = float(sys.argv[13])
 qual_threshold = int(sys.argv[14])
 
-hl.init(min_block_size=128, spark_conf={"spark.executor.cores": cores, 
-                    "spark.executor.memory": f"{int(np.floor(mem*0.4))}g",
-                    "spark.driver.cores": cores,
-                    "spark.driver.memory": f"{int(np.floor(mem*0.4))}g"
-                    }, tmp_dir="tmp", local_tmpdir="tmp")
+hl.init(min_block_size=128, 
+        local=f"local[*]", 
+        spark_conf={
+                    "spark.driver.memory": f"{int(np.floor(mem*0.8))}g",
+                    "spark.speculation": 'true'
+                    }, 
+        tmp_dir="tmp", local_tmpdir="tmp",
+                    )
 
 trio_df = pd.read_csv(trio_uri, dtype=str, sep='\t')
 
