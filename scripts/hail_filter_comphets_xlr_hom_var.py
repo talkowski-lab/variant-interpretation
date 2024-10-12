@@ -606,6 +606,9 @@ if len(non_trio_samples)>0:
 if (len(trio_samples)>0) and (len(non_trio_samples)>0):
     merged_comphets = merged_trio_comphets.entries().union(merged_non_trio_comphets.entries())
 
+if len(trio_samples==0):
+    trio_samples = ['']
+    
 # XLR only
 merged_tm = hl.trio_matrix(merged_mt, pedigree, complete_trios=False)
 gene_phased_tm, gene_agg_phased_tm = phase_by_transmission_aggregate_by_gene(merged_tm, merged_mt, pedigree)
