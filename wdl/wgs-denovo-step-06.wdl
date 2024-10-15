@@ -30,7 +30,7 @@ workflow step6 {
     call prioritizeCSQ.annotateMostSevereCSQ as prioritizeCSQ {
         input:
         vcf_metrics_tsv=vcf_metrics_tsv,
-        vcf_file=annot_vcf_files[0],
+        vep_vcf_file=annot_vcf_files[0],
         prioritize_csq_script=prioritize_csq_script,
         hail_docker=hail_docker,
         sample_column=sample_column,
