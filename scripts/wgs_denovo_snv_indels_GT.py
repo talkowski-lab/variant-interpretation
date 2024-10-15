@@ -102,7 +102,7 @@ tm_denovo_df['LEN'] = abs(tm_denovo_df.REF.str.len()-tm_denovo_df.ALT.str.len())
 tm_denovo_df['TYPE'] =np.where(tm_denovo_df.LEN==0, 'SNV', 'Indel')
 
 # 'POLYX' -- added after downsampling
-info_cols = ['END','AC','AF','AN','BaseQRankSum','ClippingRankSum','DP','FS','MLEAC','MLEAF','MQ','MQRankSum','QD','ReadPosRankSum','SOR','VQSLOD','cohort_AC', 'cohort_AF', 'CSQ']
+info_cols = ['END','AC','AF','AN','BaseQRankSum','ClippingRankSum','DP','FS','MLEAC','MLEAF','MQ','MQRankSum','QD','ReadPosRankSum','SOR','VQSLOD','cohort_AC', 'cohort_AF', 'MPC', 'CSQ']
 info_cols = list(np.intersect1d(info_cols, list(mt.info.keys())))
 cols_to_keep = ['CHROM', 'POS', 'REF', 'ALT', 'LEN', 'TYPE', 'ID', 'VarKey'] + info_cols + list(rename_cols.values())
 
