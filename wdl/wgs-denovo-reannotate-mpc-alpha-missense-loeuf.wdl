@@ -110,10 +110,15 @@ task reannotateFinalTSV {
         ht = hl.import_table(vcf_metrics_tsv_final_pu, force_bgz=vcf_metrics_tsv_final_pu.split('.')[-1]=='gz')
     except:
         ht = hl.import_table(vcf_metrics_tsv_final_pu, force=True)
-        
-    if 'locus' not in list(ht.row):
+
+    if 'locus' in list(ht.row):
+        ht = ht.annotate(locus=hl.parse_locus(ht.locus, reference_genome=build))
+    else:
         ht = ht.annotate(locus=hl.locus(ht.CHROM, hl.int(ht.POS), reference_genome=build))
-    if 'alleles' not in list(ht.row):
+        
+    if 'alleles' in list(ht.row):
+        ht = ht.annotate(alleles=ht.alleles.replace("\[",'').replace("\]",'').replace("\'",'').replace(' ','').replace('"','').split(','))
+    else:
         ht = ht.annotate(alleles=hl.array([ht.REF, ht.ALT]))
 
     ht = ht.annotate(protein_variant=ht.Protein_position.join(ht.Amino_acids.split('/'))) 
