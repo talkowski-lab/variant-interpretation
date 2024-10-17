@@ -186,12 +186,13 @@ except:
 
 if 'ID' not in list(ht.row):
     ht = ht.annotate(ID=ht.locus+':'+ht.alleles[0]+':'+ht.alleles[1])
-    
+
 ht = ht.annotate(locus=hl.parse_variant(ht.ID, reference_genome=genome_build).locus,
                         alleles=hl.parse_variant(ht.ID, reference_genome=genome_build).alleles)
 
 if 'VarKey' not in list(ht.row):
     ht = ht.annotate(VarKey=ht.ID+':'+ht[sample_column])
+
 ht = ht.select('locus','alleles','VarKey','CSQ')
 transcript_consequences = ht.CSQ.replace("\[",'').replace("\]",'').replace("\'",'').replace(' ','').split(',').map(lambda x: x.split('\|'))
 
@@ -237,6 +238,8 @@ df.index = df['VarKey']
 
 df['isCoding'] = df.Consequence.astype(str).replace({'None': '[]'}).apply(ast.literal_eval).apply(lambda csq: np.intersect1d(csq, coding_variants).size!=0)
 
+if 'ID' not in final_output.columns:
+    final_output['ID'] = final_output.locus.astype(str) + ':' + final_output.alleles.apply(ast.literal_eval).apply(':'.join)
 if 'VarKey' not in final_output.columns:
     final_output['VarKey'] = final_output[['ID', sample_column]].astype(str).agg(':'.join, axis=1)
 
