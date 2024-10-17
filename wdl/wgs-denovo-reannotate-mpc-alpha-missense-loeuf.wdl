@@ -110,9 +110,13 @@ task reannotateFinalTSV {
         ht = hl.import_table(vcf_metrics_tsv_final_pu, force_bgz=vcf_metrics_tsv_final_pu.split('.')[-1]=='gz')
     except:
         ht = hl.import_table(vcf_metrics_tsv_final_pu, force=True)
-    ht = ht.annotate(locus=hl.locus(ht.CHROM, hl.int(ht.POS), reference_genome=build),
-                    alleles=hl.array([ht.REF, ht.ALT]),
-                    protein_variant=ht.Protein_position.join(ht.Amino_acids.split('/'))) 
+        
+    if 'locus' not in list(ht.row):
+        ht = ht.annotate(locus=hl.locus(ht.CHROM, hl.int(ht.POS), reference_genome=build))
+    if 'alleles' not in list(ht.row):
+        ht = ht.annotate(alleles=hl.array([ht.REF, ht.ALT]))
+
+    ht = ht.annotate(protein_variant=ht.Protein_position.join(ht.Amino_acids.split('/'))) 
 
     # AlphaMissense
     am_fields = ['CHROM','POS', 'REF', 'ALT', 'genome', 'uniprot_id', 'transcript_id', 'protein_variant', 'am_pathogenicity', 'am_class']
