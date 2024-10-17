@@ -184,6 +184,9 @@ try:
 except:
     ht = hl.import_table(vcf_metrics_uri, force='.gz' in vcf_metrics_uri)
 
+if 'ID' not in list(ht.row):
+    ht = ht.annotate(ID=ht.locus+':'+ht.alleles[0]+':'+ht.alleles[1])
+    
 ht = ht.annotate(locus=hl.parse_variant(ht.ID, reference_genome=genome_build).locus,
                         alleles=hl.parse_variant(ht.ID, reference_genome=genome_build).alleles)
 
