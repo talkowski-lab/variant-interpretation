@@ -246,7 +246,7 @@ if 'VarKey' not in final_output.columns:
 
 final_output.index = final_output['VarKey']
 
-new_cols = list(np.setdiff1d(df.columns, ['locus','alleles','ID','VarKey','CSQ']))
+new_cols = list(np.setdiff1d(df.columns, ['locus','alleles','VarKey','CSQ']))
 final_output[new_cols] = df[new_cols]  # allows overwriting columns
 
 final_output.to_csv(f"{os.path.basename(vcf_metrics_uri).split('.tsv')[0]}_prioritized_csq.tsv.gz", sep='\t',index=False)
