@@ -185,6 +185,7 @@ except:
     ht = hl.import_table(vcf_metrics_uri, force='.gz' in vcf_metrics_uri)
 
 if 'ID' not in list(ht.row):
+    ht = ht.annotate(alleles=ht.alleles.replace("\[",'').replace("\]",'').replace("\'",'').replace(' ','').replace('"','').split(','))
     ht = ht.annotate(ID=ht.locus+':'+ht.alleles[0]+':'+ht.alleles[1])
 
 ht = ht.annotate(locus=hl.parse_variant(ht.ID, reference_genome=genome_build).locus,
@@ -194,7 +195,7 @@ if 'VarKey' not in list(ht.row):
     ht = ht.annotate(VarKey=ht.ID+':'+ht[sample_column])
 
 ht = ht.select('locus','alleles','VarKey','CSQ')
-transcript_consequences = ht.CSQ.replace("\[",'').replace("\]",'').replace("\'",'').replace(' ','').split(',').map(lambda x: x.split('\|'))
+transcript_consequences = ht.CSQ.replace("\[",'').replace("\]",'').replace("\'",'').replace(' ','').replace('"','').split(',').map(lambda x: x.split('\|'))
 
 transcript_consequences_strs = transcript_consequences.map(lambda x: hl.if_else(hl.len(x)>1, hl.struct(**
                                                        {col: x[i] if col!='Consequence' else x[i].split('&')  
