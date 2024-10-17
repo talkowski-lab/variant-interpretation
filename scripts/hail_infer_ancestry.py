@@ -41,16 +41,19 @@ loading_ht = hl.read_table(gnomad_loading_ht)
 with hl.hadoop_open(gnomad_rf_onnx, "rb") as f:
     onx_fit = onnx.load(f)
 
-# Filter the MT to high quality genotypes (GQ >= 20; DP >= 10; and AB >= 0.2 for het calls)
-mt = filter_to_adj(mt)
-common_entry_fields = [x for x in list(np.intersect1d(list(gnomad_mt.entry), list(mt.entry))) if x!='PGT']
-mt = mt.select_entries(*common_entry_fields).union_cols(gnomad_mt.select_entries(*common_entry_fields), row_join_type='inner')
-
 pop_labels_ht = hl.import_table(pop_labels_tsv)
 pop_labels_ht = pop_labels_ht.annotate(s=pop_labels_ht.Sample).key_by('s')
 
 pop_labels_ht = pop_labels_ht.annotate(SuperPop=pop_labels_ht.SuperPop.replace('CSA', 'SAS').replace('EUR', 'NFE'))
 pop_labels_ht = pop_labels_ht.filter(pop_labels_ht.SuperPop!='OCE')
+
+# Filter gnomAD samples
+gnomad_mt = gnomad_mt.semi_join_cols(pop_labels_ht)
+
+# Filter the MT to high quality genotypes (GQ >= 20; DP >= 10; and AB >= 0.2 for het calls)
+mt = filter_to_adj(mt)
+common_entry_fields = [x for x in list(np.intersect1d(list(gnomad_mt.entry), list(mt.entry))) if x!='PGT']
+mt = mt.select_entries(*common_entry_fields).union_cols(gnomad_mt.select_entries(*common_entry_fields), row_join_type='inner')
 
 gnomad_pcs_ht = hl.experimental.pc_project(
     mt.GT, loading_ht.loadings, loading_ht.pca_af,
