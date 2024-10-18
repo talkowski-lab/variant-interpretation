@@ -79,7 +79,7 @@ def trim_vcf(vcf_uri, lcr_uri, ped_uri, meta_uri, trio_uri, vcf_out_uri, build, 
     # get header
     header = hl.get_vcf_metadata(vcf_uri)
 
-    # annotate cohort ac to INFO field; cohortAC filter set to 100 
+    # annotate cohort ac to INFO field
     mt = mt.annotate_rows(info=mt.info.annotate(cohort_AC=mt.info.AC[mt.a_index - 1],
                                            cohort_AF=mt.info.AF[mt.a_index - 1]))
     mt = mt.annotate_entries(DPC=hl.sum(mt.AD),
