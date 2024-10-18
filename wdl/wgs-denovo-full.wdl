@@ -9,6 +9,8 @@ import "wgs-denovo-step-06.wdl" as step6
 import "wgs-denovo-step-07.wdl" as step7
 import "annotateHPandVAF.wdl" as annotateHPandVAF
 import "annotateMPCandLOEUF.wdl" as annotateMPCandLOEUF
+import "filterUltraRareInheritedVariantsHail.wdl" as filterUltraRareInheritedVariantsHail
+import "filterUltraRareParentsVariantsHail.wdl" as filterUltraRareParentsVariantsHail 
 
 struct RuntimeAttr {
     Float? mem_gb
@@ -73,6 +75,70 @@ workflow wgs_denovo_full {
         Int AC_threshold=2
         Float csq_af_threshold=0.01
     }
+
+    # call filterUltraRareInheritedVariantsHail.filterUltraRareInheritedVariantsHail as filterUltraRareInheritedVariantsHail {
+    #     input:
+    #         annot_vcf_files=annot_vcf_files,
+    #         lcr_uri=lcr_uri,
+    #         ped_sex_qc=ped_sex_qc,
+    #         meta_uri=meta_uri,
+    #         trio_uri=trio_uri,
+    #         vcf_metrics_tsv_final=vcf_metrics_tsv_final,
+    #         hg38_reference=hg38_reference,
+    #         hg38_reference_dict=hg38_reference_dict,
+    #         hg38_reference_fai=hg38_reference_fai,
+    #         # filter_rare_inherited_python_script=filter_rare_inherited_python_script,
+    #         jvarkit_docker=jvarkit_docker,
+    #         hail_docker=hail_docker,
+    #         sv_base_mini_docker=sv_base_mini_docker,
+    #         cohort_prefix=cohort_prefix,
+    #         AF_threshold=AF_threshold,
+    #         AC_threshold=AC_threshold,
+    #         csq_af_threshold=csq_af_threshold,
+    #         # gq_het_threshold=gq_het_threshold,
+    #         # gq_hom_ref_threshold=gq_hom_ref_threshold,
+    #         qual_threshold=qual_threshold,
+    #         shards_per_chunk=shards_per_chunk,
+    #         # chunk_size=chunk_size,
+    #         # snv_scale=snv_scale,
+    #         # indel_scale=indel_scale,
+    #         prioritize_gnomad=false,
+    #         # runtime_attr_filter_vcf=runtime_attr_filter_vcf,
+    #         # runtime_attr_merge_results=runtime_attr_merge_results,
+    #         # runtime_attr_downsample=runtime_attr_downsample
+    # }
+
+    # call filterUltraRareParentsVariantsHail.filterUltraRareParentsVariantsHail as filterUltraRareParentsVariantsHail {
+    #     input:
+    #         annot_vcf_files=annot_vcf_files,
+    #         lcr_uri=lcr_uri,
+    #         ped_sex_qc=ped_sex_qc,
+    #         meta_uri=meta_uri,
+    #         trio_uri=trio_uri,
+    #         vcf_metrics_tsv_final=vcf_metrics_tsv_final,
+    #         hg38_reference=hg38_reference,
+    #         hg38_reference_dict=hg38_reference_dict,
+    #         hg38_reference_fai=hg38_reference_fai,
+    #         # filter_rare_parents_python_script=filter_rare_parents_python_script,
+    #         jvarkit_docker=jvarkit_docker,
+    #         hail_docker=hail_docker,
+    #         sv_base_mini_docker=sv_base_mini_docker,
+    #         cohort_prefix=cohort_prefix,
+    #         AF_threshold=AF_threshold,
+    #         AC_threshold=AC_threshold,
+    #         csq_af_threshold=csq_af_threshold,
+    #         # gq_het_threshold=gq_het_threshold,
+    #         # gq_hom_ref_threshold=gq_hom_ref_threshold,
+    #         qual_threshold=qual_threshold,
+    #         shards_per_chunk=shards_per_chunk,
+    #         # chunk_size=chunk_size,
+    #         # snv_scale=snv_scale,
+    #         # indel_scale=indel_scale,
+    #         prioritize_gnomad=true,
+    #         # runtime_attr_filter_vcf=runtime_attr_filter_vcf,
+    #         # runtime_attr_merge_results=runtime_attr_merge_results,
+    #         # runtime_attr_downsample=runtime_attr_downsample
+    # }
 
     call step1.step1 as step1 {
         input:
