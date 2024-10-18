@@ -39,7 +39,7 @@ workflow prioritizeCSQ {
     }
 
     output {
-        File output_prior_csq = annotateMostSevereCSQ.output_prior_csq
+        File output_prior_csq_ht = annotateMostSevereCSQ.output_prior_csq_ht
     }
 }
 
@@ -90,6 +90,6 @@ task annotateMostSevereCSQ {
     >>>
 
     output {
-        File output_prior_csq = read_lines('ht_uri.txt')[0]
+        File output_prior_csq_ht = read_lines('ht_uri.txt')[0]
     }
 }
