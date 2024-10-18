@@ -177,17 +177,12 @@ synonymous = ['synonymous_variant', 'stop_retained_variant']
 
 ht = hl.read_table(input_ht)
 if 'ID' not in list(ht.row):
-    ht = ht.annotate(alleles=ht.alleles.replace("\[",'').replace("\]",'').replace("\'",'').replace(' ','').replace('"','').split(','))
-    ht = ht.annotate(ID=ht.locus+':'+ht.alleles[0]+':'+ht.alleles[1])
+    ht = ht.annotate(ID=hl.variant_str(ht.locus, ht.alleles))
 
-ht = ht.annotate(locus=hl.parse_variant(ht.ID, reference_genome=genome_build).locus,
-                        alleles=hl.parse_variant(ht.ID, reference_genome=genome_build).alleles)
+header = hl.get_vcf_metadata(vep_vcf_uri)
+csq_columns = header['info']['CSQ']['Description'].split('Format: ')[1].split('|')
 
-if 'VarKey' not in list(ht.row):
-    ht = ht.annotate(VarKey=ht.ID+':'+ht[sample_column])
-
-ht = ht.select('locus','alleles','VarKey','CSQ')
-transcript_consequences = ht.CSQ.replace("\[",'').replace("\]",'').replace("\'",'').replace(' ','').replace('"','').split(',').map(lambda x: x.split('\|'))
+transcript_consequences = ht.info.CSQ.map(lambda x: x.split('\|'))
 
 transcript_consequences_strs = transcript_consequences.map(lambda x: hl.if_else(hl.len(x)>1, hl.struct(**
                                                        {col: x[i] if col!='Consequence' else x[i].split('&')  
