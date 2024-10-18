@@ -10,10 +10,9 @@ import datetime
 input_ht = sys.argv[1]
 cores = sys.argv[2]
 mem = int(np.floor(float(sys.argv[3])))
-sample_column = sys.argv[4]
-vep_vcf_uri = sys.argv[5]
-genome_build = sys.argv[6]
-bucket_id = sys.argv[7]
+vep_vcf_uri = sys.argv[4]
+genome_build = sys.argv[5]
+bucket_id = sys.argv[6]
 
 hl.init(min_block_size=128, 
         local=f"local[*]", 

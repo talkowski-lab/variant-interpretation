@@ -18,7 +18,6 @@ workflow prioritizeCSQ {
         String bucket_id
         String prioritize_csq_ht_script
         String hail_docker
-        String sample_column
         String genome_build
     }
     
@@ -36,7 +35,6 @@ workflow prioritizeCSQ {
         vep_vcf_file=vep_vcf_file,
         prioritize_csq_ht_script=prioritize_csq_ht_script,
         hail_docker=hail_docker,
-        sample_column=sample_column,
         genome_build=genome_build
     }
 
@@ -52,7 +50,6 @@ task annotateMostSevereCSQ {
         String bucket_id
         String prioritize_csq_ht_script
         String hail_docker
-        String sample_column
         String genome_build
         Float input_size
         RuntimeAttr? runtime_attr_override
@@ -89,7 +86,7 @@ task annotateMostSevereCSQ {
         set -eou pipefail
         curl ~{prioritize_csq_ht_script} > prioritize_csq.py
         python3 prioritize_csq.py ~{input_ht} ~{cpu_cores} ~{memory} \
-        ~{sample_column} ~{vep_vcf_file} ~{genome_build} ~{bucket_id}
+            ~{vep_vcf_file} ~{genome_build} ~{bucket_id}
     >>>
 
     output {
