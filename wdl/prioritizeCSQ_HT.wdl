@@ -31,6 +31,7 @@ workflow prioritizeCSQ {
     call annotateMostSevereCSQ {
         input:
         input_ht=input_ht,
+        input_size=getInputMTSize.mt_size,
         bucket_id=bucket_id,
         vep_vcf_file=vep_vcf_file,
         prioritize_csq_ht_script=prioritize_csq_ht_script,
