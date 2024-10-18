@@ -220,7 +220,7 @@ ht_csq = ht_csq.annotate(isSNV = hl.is_snp(ht_csq.alleles[0], ht_csq.alleles[1])
                     isIndel = hl.is_indel(ht_csq.alleles[0], ht_csq.alleles[1]))
 
 prefix = os.path.basename(input_ht).split('.ht')[0]
-filename = f"{bucket_id}/hail/{str(datetime.datetime.now().strftime('%Y-%m-%d_%H-%M'))}/{prefix}_parent_aware_trio_tdt.mt"
+filename = f"{bucket_id}/hail/{str(datetime.datetime.now().strftime('%Y-%m-%d_%H-%M'))}/{prefix}_prioritized_csq.ht"
 pd.Series([filename]).to_csv('ht_uri.txt', index=False, header=None)
 
 ht_csq.write(filename, overwrite=True)
