@@ -157,7 +157,7 @@ task reannotateFinalTSV {
     ht = ht.annotate(MPC=mpc[ht.key].mpc)
 
     output_filename = os.path.basename(de_novo_merged).split('.tsv')[0] + '.MPC.LOEUF.AlphaMissense.tsv.gz'
-    ht.key_by().drop('protein_variant','locus','alleles').export(output_filename)
+    ht.key_by().drop('protein_variant').export(output_filename)
     EOF
 
     python3 reannotate.py ~{de_novo_merged} ~{alpha_missense_file} ~{mpc_ht_uri} \
