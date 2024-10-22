@@ -110,10 +110,18 @@ task reannotateFinalTSV {
         ht = hl.import_table(de_novo_merged, force_bgz=de_novo_merged.split('.')[-1]=='gz')
     except:
         ht = hl.import_table(de_novo_merged, force=True)
-    ht = ht.annotate(locus=hl.parse_locus(ht.locus, reference_genome=build),
-                    alleles=ht.alleles.replace("\[",'').replace("\]",'').replace("\'",'').split(','),
-                    protein_variant=ht.Protein_position.join(ht.Amino_acids.split('/'))) 
-    ht = ht.annotate(REF=ht.alleles[0], ALT=ht.alleles[1])
+    
+    if 'locus' in list(ht.row):
+        ht = ht.annotate(locus=hl.parse_locus(ht.locus, reference_genome=build))
+    else:
+        ht = ht.annotate(locus=hl.locus(ht.CHROM, hl.int(ht.POS), reference_genome=build))
+        
+    if 'alleles' in list(ht.row):
+        ht = ht.annotate(alleles=ht.alleles.replace("\[",'').replace("\]",'').replace("\'",'').replace(' ','').replace('"','').split(','))
+    else:
+        ht = ht.annotate(alleles=hl.array([ht.REF, ht.ALT]))
+
+    ht = ht.annotate(protein_variant=ht.Protein_position.join(ht.Amino_acids.split('/'))) 
 
     # AlphaMissense
     am_fields = ['CHROM','POS', 'REF', 'ALT', 'genome', 'uniprot_id', 'transcript_id', 'protein_variant', 'am_pathogenicity', 'am_class']
