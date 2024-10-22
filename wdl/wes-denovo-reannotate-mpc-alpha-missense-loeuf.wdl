@@ -156,7 +156,7 @@ task reannotateFinalTSV {
     ht = ht.key_by('locus', 'alleles')
     ht = ht.annotate(MPC=mpc[ht.key].mpc)
 
-    output_filename = os.path.basename(de_novo_merged).split('.tsv')[0] + 'MPC.AlphaMissense.tsv.gz'
+    output_filename = os.path.basename(de_novo_merged).split('.tsv')[0] + '.MPC.AlphaMissense.tsv.gz'
     ht.key_by().drop('protein_variant','locus','alleles').export(output_filename)
     EOF
 
@@ -167,6 +167,6 @@ task reannotateFinalTSV {
     String file_ext = if sub(basename(de_novo_merged), '.tsv.gz', '')!=basename(de_novo_merged) then '.tsv.gz' else '.tsv'
    
     output {
-        File reannotated_tsv = basename(de_novo_merged, file_ext) + 'MPC.AlphaMissense.tsv.gz'
+        File reannotated_tsv = basename(de_novo_merged, file_ext) + '.MPC.AlphaMissense.tsv.gz'
     }
 }

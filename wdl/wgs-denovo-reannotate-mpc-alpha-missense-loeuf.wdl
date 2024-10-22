@@ -115,7 +115,7 @@ task reannotateFinalTSV {
         ht = ht.annotate(locus=hl.parse_locus(ht.locus, reference_genome=build))
     else:
         ht = ht.annotate(locus=hl.locus(ht.CHROM, hl.int(ht.POS), reference_genome=build))
-        
+
     if 'alleles' in list(ht.row):
         ht = ht.annotate(alleles=ht.alleles.replace("\[",'').replace("\]",'').replace("\'",'').replace(' ','').replace('"','').split(','))
     else:
@@ -154,7 +154,7 @@ task reannotateFinalTSV {
     ht = ht.key_by('locus', 'alleles')
     ht = ht.annotate(MPC=mpc[ht.key].mpc)
 
-    output_filename = os.path.basename(vcf_metrics_tsv_final_pu).split('.tsv')[0] + 'MPC.AlphaMissense.tsv.gz'
+    output_filename = os.path.basename(vcf_metrics_tsv_final_pu).split('.tsv')[0] + '.MPC.AlphaMissense.tsv.gz'
     ht.key_by().drop('protein_variant','locus','alleles').export(output_filename)
     EOF
 
@@ -165,6 +165,6 @@ task reannotateFinalTSV {
     String file_ext = if sub(basename(vcf_metrics_tsv_final_pu), '.tsv.gz', '')!=basename(vcf_metrics_tsv_final_pu) then '.tsv.gz' else '.tsv'
    
     output {
-        File reannotated_tsv = basename(vcf_metrics_tsv_final_pu, file_ext) + 'MPC.AlphaMissense.tsv.gz'
+        File reannotated_tsv = basename(vcf_metrics_tsv_final_pu, file_ext) + '.MPC.AlphaMissense.tsv.gz'
     }
 }
