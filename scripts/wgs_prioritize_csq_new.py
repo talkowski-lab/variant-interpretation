@@ -173,16 +173,16 @@ PTVs = ['frameshift_variant', 'stop_gained', 'splice_donor_variant', 'splice_acc
 missense = ['missense_variant']
 synonymous = ['synonymous_variant', 'stop_retained_variant']
 
-final_output = pd.read_csv(vcf_metrics_uri, sep='\t')
+final_output = pd.read_csv(vcf_metrics_uri, sep='\t', compression="gzip" if vcf_metrics_uri.split('.')[-1] in ['gz', 'bgz'] else None)
 final_output['CSQ'] = final_output.CSQ.replace({'.':np.nan}).str.split(',')
 
 header = hl.get_vcf_metadata(vep_vcf_uri)
 csq_columns = header['info']['CSQ']['Description'].split('Format: ')[1].split('|')
 
 try:
-    ht = hl.import_table(vcf_metrics_uri, force_bgz='.gz' in vcf_metrics_uri)
+    ht = hl.import_table(vcf_metrics_uri, force_bgz=vcf_metrics_uri.split('.')[-1] in ['gz', 'bgz'])
 except:
-    ht = hl.import_table(vcf_metrics_uri, force='.gz' in vcf_metrics_uri)
+    ht = hl.import_table(vcf_metrics_uri, force=vcf_metrics_uri.split('.')[-1] in ['gz', 'bgz'])
 
 if 'ID' not in list(ht.row):
     ht = ht.annotate(alleles=ht.alleles.replace("\[",'').replace("\]",'').replace("\'",'').replace(' ','').replace('"','').split(','))
