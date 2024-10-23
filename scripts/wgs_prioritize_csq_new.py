@@ -13,15 +13,17 @@ sample_column = sys.argv[4]
 vep_vcf_uri = sys.argv[5]
 genome_build = sys.argv[6]
 
-hl.init(min_block_size=128, 
-        local=f"local[*]", 
-        spark_conf={
-                    "spark.driver.memory": f"{int(np.floor(mem*0.8))}g",
-                    "spark.executor.memory": f"{int(np.floor(mem*0.8))}g",
-                    "spark.speculation": 'true',
-                    "spark.kryoserializer.buffer": "2048"}, 
-        tmp_dir="tmp", local_tmpdir="tmp",
-                    )
+hl.init()
+
+# hl.init(min_block_size=128, 
+#         local=f"local[*]", 
+#         spark_conf={
+#                     "spark.driver.memory": f"{int(np.floor(mem*0.8))}g",
+#                     "spark.executor.memory": f"{int(np.floor(mem*0.8))}g",
+#                     "spark.speculation": 'true',
+#                     "spark.kryoserializer.buffer": "2048"}, 
+#         tmp_dir="tmp", local_tmpdir="tmp",
+#                     )
 
 # Prioritized CSQ
 
