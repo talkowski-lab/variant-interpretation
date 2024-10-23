@@ -13,7 +13,8 @@ sample_column = sys.argv[4]
 vep_vcf_uri = sys.argv[5]
 genome_build = sys.argv[6]
 
-hl.init()
+hl.init(spark_conf={
+                    "spark.driver.memory": f"{int(np.floor(mem*0.8))}g"})
 
 # hl.init(min_block_size=128, 
 #         local=f"local[*]", 
