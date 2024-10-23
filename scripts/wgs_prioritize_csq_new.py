@@ -18,7 +18,8 @@ hl.init(min_block_size=128,
         spark_conf={
                     "spark.driver.memory": f"{int(np.floor(mem*0.8))}g",
                     "spark.speculation": 'true',
-                    "spark.kryoserializer.buffer.max.mb": "512"}, 
+                    "spark.kryoserializer.buffer.max": "2048",
+                    "spark.kryoserializer.buffer": "128"}, 
         tmp_dir="tmp", local_tmpdir="tmp",
                     )
 
