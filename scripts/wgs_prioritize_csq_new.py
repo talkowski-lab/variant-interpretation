@@ -17,8 +17,7 @@ hl.init(min_block_size=128,
         local=f"local[*]", 
         spark_conf={
                     "spark.driver.memory": f"{int(np.floor(mem*0.8))}g",
-                    "spark.speculation": 'true',
-                    "spark.kryoserializer.buffer.max": "256"}, 
+                    "spark.speculation": 'true'}, 
         tmp_dir="tmp", local_tmpdir="tmp",
                     )
 
@@ -180,9 +179,9 @@ header = hl.get_vcf_metadata(vep_vcf_uri)
 csq_columns = header['info']['CSQ']['Description'].split('Format: ')[1].split('|')
 
 try:
-    ht = hl.import_table(vcf_metrics_uri, force_bgz=vcf_metrics_uri.split('.')[-1] in ['gz', 'bgz'])
+    ht = hl.import_table(vcf_metrics_uri, force_bgz=vcf_metrics_uri.split('.')[-1] in ['gz', 'bgz'], min_partitions=cores)
 except:
-    ht = hl.import_table(vcf_metrics_uri, force=vcf_metrics_uri.split('.')[-1] in ['gz', 'bgz'])
+    ht = hl.import_table(vcf_metrics_uri, force=vcf_metrics_uri.split('.')[-1] in ['gz', 'bgz'], min_partitions=cores)
 
 if 'ID' not in list(ht.row):
     ht = ht.annotate(alleles=ht.alleles.replace("\[",'').replace("\]",'').replace("\'",'').replace(' ','').replace('"','').split(','))
