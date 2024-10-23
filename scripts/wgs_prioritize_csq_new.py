@@ -17,8 +17,9 @@ hl.init(min_block_size=128,
         local=f"local[*]", 
         spark_conf={
                     "spark.driver.memory": f"{int(np.floor(mem*0.8))}g",
+                    "spark.executor.memory": f"{int(np.floor(mem*0.8))}g"
                     "spark.speculation": 'true',
-                    "spark.kryoserializer.buffer": "256m"}, 
+                    "spark.kryoserializer.buffer": "2048"}, 
         tmp_dir="tmp", local_tmpdir="tmp",
                     )
 
