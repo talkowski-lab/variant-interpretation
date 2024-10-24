@@ -6,6 +6,7 @@ import os
 
 final_output_uri = sys.argv[1]
 final_output = pd.read_csv(final_output_uri, sep='\t')
+final_output['POS'] = final_output.POS.astype(int)
 
 final_output['Indel_type'] = final_output.apply(lambda x: 'Insertion' if (len(x.ALT) - len(x.REF)) > 0 else 'Deletion', axis=1)
 final_output['START'] = final_output.apply(lambda x:  x.POS if x.Indel_type=='Insertion' else x.POS - x.LEN, axis=1)
