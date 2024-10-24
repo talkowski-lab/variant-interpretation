@@ -192,28 +192,28 @@ transcript_consequences_strs = transcript_consequences.map(lambda x: hl.if_else(
 ht=ht.annotate(vep=hl.Struct(transcript_consequences = transcript_consequences_strs))
 
 ht_csq = process_consequences(ht)
-ht_csq = ht_csq.annotate(worst_csq=ht_csq.vep.worst_csq)
-ht_csq = ht_csq.drop('vep')
+# ht_csq = ht_csq.annotate(worst_csq=ht_csq.vep.worst_csq)
+# ht_csq = ht_csq.drop('vep')
 
 ht_csq = ht_csq.annotate(
-    isPTV = ht_csq.worst_csq.Consequence.contains('frameshift_variant') | ht_csq.worst_csq.Consequence.contains('stop_gained') |
-            ht_csq.worst_csq.Consequence.contains('splice_donor_variant') | ht_csq.worst_csq.Consequence.contains('splice_acceptor_variant') |
-            ht_csq.worst_csq.Consequence.contains('transcript_ablation'),
-    isMIS = ht_csq.worst_csq.Consequence.contains('missense_variant'),
-    isSYN = ht_csq.worst_csq.Consequence.contains('synonymous_variant') | ht_csq.worst_csq.Consequence.contains('stop_retained_variant'),
-    isSRG = ht_csq.worst_csq.Consequence.contains('splice_region_variant'),
-    isSSL = ht_csq.worst_csq.Consequence.contains('start_lost') | ht_csq.worst_csq.Consequence.contains('stop_lost'),
-    isINF = ht_csq.worst_csq.Consequence.contains('inframe_insertion') | ht_csq.worst_csq.Consequence.contains('inframe_deletion') )
+    isPTV = ht_csq.vep.worst_csq.Consequence.contains('frameshift_variant') | ht_csq.vep.worst_csq.Consequence.contains('stop_gained') |
+            ht_csq.vep.worst_csq.Consequence.contains('splice_donor_variant') | ht_csq.vep.worst_csq.Consequence.contains('splice_acceptor_variant') |
+            ht_csq.vep.worst_csq.Consequence.contains('transcript_ablation'),
+    isMIS = ht_csq.vep.worst_csq.Consequence.contains('missense_variant'),
+    isSYN = ht_csq.vep.worst_csq.Consequence.contains('synonymous_variant') | ht_csq.vep.worst_csq.Consequence.contains('stop_retained_variant'),
+    isSRG = ht_csq.vep.worst_csq.Consequence.contains('splice_region_variant'),
+    isSSL = ht_csq.vep.worst_csq.Consequence.contains('start_lost') | ht_csq.vep.worst_csq.Consequence.contains('stop_lost'),
+    isINF = ht_csq.vep.worst_csq.Consequence.contains('inframe_insertion') | ht_csq.vep.worst_csq.Consequence.contains('inframe_deletion') )
 
 # And variants have an interesting "most severe" consequence (SII = "severe is interesting")
 ht_csq = ht_csq.annotate(
-    SII = (ht_csq.worst_csq.most_severe_consequence == 'frameshift_variant') | (ht_csq.worst_csq.most_severe_consequence == 'stop_gained') |
-        (ht_csq.worst_csq.most_severe_consequence == 'splice_donor_variant') | (ht_csq.worst_csq.most_severe_consequence ==  'splice_acceptor_variant') |
-        (ht_csq.worst_csq.most_severe_consequence == 'transcript_ablation') | (ht_csq.worst_csq.most_severe_consequence == 'missense_variant') |
-        (ht_csq.worst_csq.most_severe_consequence == 'synonymous_variant') | (ht_csq.worst_csq.most_severe_consequence == 'stop_retained_variant') |
-        (ht_csq.worst_csq.most_severe_consequence == 'splice_region_variant') | (ht_csq.worst_csq.most_severe_consequence == 'start_lost') | 
-        (ht_csq.worst_csq.most_severe_consequence == 'stop_lost') | (ht_csq.worst_csq.most_severe_consequence == 'inframe_insertion') | 
-        (ht_csq.worst_csq.most_severe_consequence == 'inframe_deletion') )
+    SII = (ht_csq.vep.worst_csq.most_severe_consequence == 'frameshift_variant') | (ht_csq.vep.worst_csq.most_severe_consequence == 'stop_gained') |
+        (ht_csq.vep.worst_csq.most_severe_consequence == 'splice_donor_variant') | (ht_csq.vep.worst_csq.most_severe_consequence ==  'splice_acceptor_variant') |
+        (ht_csq.vep.worst_csq.most_severe_consequence == 'transcript_ablation') | (ht_csq.vep.worst_csq.most_severe_consequence == 'missense_variant') |
+        (ht_csq.vep.worst_csq.most_severe_consequence == 'synonymous_variant') | (ht_csq.vep.worst_csq.most_severe_consequence == 'stop_retained_variant') |
+        (ht_csq.vep.worst_csq.most_severe_consequence == 'splice_region_variant') | (ht_csq.vep.worst_csq.most_severe_consequence == 'start_lost') | 
+        (ht_csq.vep.worst_csq.most_severe_consequence == 'stop_lost') | (ht_csq.vep.worst_csq.most_severe_consequence == 'inframe_insertion') | 
+        (ht_csq.vep.worst_csq.most_severe_consequence == 'inframe_deletion') )
 
 # Additionally annotate SNV vs indel
 ht_csq = ht_csq.annotate(isSNV = hl.is_snp(ht_csq.alleles[0], ht_csq.alleles[1]),
