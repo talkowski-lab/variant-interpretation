@@ -46,9 +46,9 @@ n_bags = int(sys.argv[12])
 filter_pass_before = ast.literal_eval(sys.argv[13].capitalize())
 
 # check for empty sample_features
-if sample_features==[""]:
+if sample_features==["",""]:
     sample_features = []
-    
+
 def fp_fn_ratio(y, y_pred):
     FP = ((y==0) & (y_pred==1)).sum()
     TP = ((y==1) & (y_pred==1)).sum()

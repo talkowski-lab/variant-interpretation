@@ -115,7 +115,7 @@ task runBaggingPU_RF {
         bootDiskSizeGb: select_first([runtime_override.boot_disk_gb, runtime_default.boot_disk_gb])
     }
 
-    Array[String] sample_features_ = if length(sample_features)>0 then sample_features else [""]
+    Array[String] sample_features_ = if length(sample_features)>0 then sample_features else ["",""]
     command <<<
         curl ~{bagging_pu_rf_len_script} > run_bagging_pu.py
         curl ~{bagging_pu_source_script} > baggingPU.py
