@@ -83,7 +83,7 @@ CSQ_ORDER = CSQ_CODING_HIGH_IMPACT + CSQ_CODING_MEDIUM_IMPACT + CSQ_CODING_LOW_I
 def filter_vep_to_canonical_transcripts(mt: Union[hl.MatrixTable, hl.Table],
                                         vep_root: str = 'vep') -> Union[hl.MatrixTable, hl.Table]:
     canonical = mt[vep_root].transcript_consequences.filter(lambda csq: csq.CANONICAL == "YES")
-    vep_data = mt[vep_root].annotate(transcript_consequences=canonical)
+    vep_data = mt[vep_root].annotate(transcript_consequences=hl.if_else(canonical.size()>0, canonical, mt[vep_root].transcript_consequences))
     return mt.annotate_rows(**{vep_root: vep_data}) if isinstance(mt, hl.MatrixTable) else mt.annotate(**{vep_root: vep_data})
 
 def add_most_severe_consequence_to_consequence(tc: hl.expr.StructExpression) -> hl.expr.StructExpression:
@@ -152,7 +152,7 @@ def process_consequences(mt: Union[hl.MatrixTable, hl.Table], vep_root: str = 'v
     vep_data = mt[vep_root].annotate(transcript_consequences=transcript_csqs,
                                      worst_consequence_term=csqs.find(lambda c: transcript_csqs.map(lambda csq: csq.most_severe_consequence).contains(c)),
                                      worst_csq_by_gene=sorted_scores,  # EDITED
-                                     worst_csq=hl.if_else(sorted_scores.size()>0, sorted_scores[0], sorted_scores),
+                                     worst_csq=sorted_scores[0],
                                     #  any_LoF=hl.any(lambda x: x.LoF == 'HC', worst_csq_gene),
                                      gene_with_most_severe_csq=gene_with_worst_csq,
                                      ensg_with_most_severe_csq=ensg_with_worst_csq)
