@@ -92,7 +92,7 @@ task filterHT {
         input_ht = sys.argv[1]
         gnomad_af_threshold = float(sys.argv[2])
         AC_threshold = int(sys.argv[3])
-        genome_build = float(sys.argv[4])
+        genome_build = sys.argv[4]
         cores = sys.argv[5]
         mem = int(np.floor(float(sys.argv[6])))
 
