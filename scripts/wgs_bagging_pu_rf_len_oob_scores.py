@@ -298,6 +298,7 @@ if var_type=='Indel':
     passes_variant_level = pd.concat([small_passes_variant_level, big_passes_variant_level])
 
 if var_type=='SNV':
+    # sample-level
     print("---------------------- Running SNVs sample-level ----------------------")
     sample_features = [feature for feature in sample_features if merged_output[feature].isna().all()==False]
     if len(sample_features) > 0:
@@ -305,7 +306,8 @@ if var_type=='SNV':
                                                 suffix='_sample_level')
     else: 
         all_snvs = merged_output.copy()
-        all_snvs['pred_bag_optimized_sample_level'] = 1    # variant-level
+        all_snvs['pred_bag_optimized_sample_level'] = 1    
+    # variant-level
     print("---------------------- Running SNVs variant-level ----------------------")
     passes_sample_level = all_snvs[(all_snvs['pred_bag_optimized_sample_level']==1)].VarKey
     merged_output_var = merged_output_var[((merged_output_var.label==1) | (merged_output_var.VarKey.isin(passes_sample_level)))].reset_index(drop=True)
