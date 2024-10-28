@@ -152,7 +152,7 @@ def process_consequences(mt: Union[hl.MatrixTable, hl.Table], vep_root: str = 'v
     vep_data = mt[vep_root].annotate(transcript_consequences=transcript_csqs,
                                      worst_consequence_term=csqs.find(lambda c: transcript_csqs.map(lambda csq: csq.most_severe_consequence).contains(c)),
                                      worst_csq_by_gene=sorted_scores,  # EDITED
-                                     worst_csq=sorted_scores[0],
+                                     worst_csq=hl.if_else(sorted_scores.size()>0, sorted_scores[0], sorted_scores),
                                     #  any_LoF=hl.any(lambda x: x.LoF == 'HC', worst_csq_gene),
                                      gene_with_most_severe_csq=gene_with_worst_csq,
                                      ensg_with_most_severe_csq=ensg_with_worst_csq)
