@@ -205,6 +205,9 @@ transcript_consequences_strs = transcript_consequences.map(lambda x: hl.if_else(
 
 ht=ht.annotate(vep=hl.Struct(transcript_consequences = transcript_consequences_strs))
 
+# filter canonical
+ht = filter_vep_to_canonical_transcripts(ht)
+
 ht_csq = process_consequences(ht)
 ht_csq = ht_csq.annotate(worst_csq=ht_csq.vep.worst_csq)
 ht_csq = ht_csq.drop('vep')
