@@ -17,7 +17,7 @@ workflow filterHTtoVCF {
         String hail_docker
         String genome_build
         Float gnomad_af_threshold=0.001
-        Float AC_threshold=5
+        Int AC_threshold=5
     }
     
     call helpers.getHailMTSize as getInputMTSize {
@@ -49,7 +49,7 @@ task filterHT {
         String genome_build
         Float input_size
         Float gnomad_af_threshold
-        Float AC_threshold
+        Int AC_threshold
         RuntimeAttr? runtime_attr_override
     }
 
