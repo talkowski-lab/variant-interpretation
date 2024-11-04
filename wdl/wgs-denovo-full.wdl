@@ -184,15 +184,15 @@ workflow wgs_denovo_full {
             batch_size=batch_size,
             # subset_ped_script=subset_ped_script
     }
-    call annotateHPandVAF.annotateHPandVAF as annotateHPandVAF {
-        input:
-            split_trio_vcfs=step3.split_trio_vcfs,
-            annot_vcf_files=annot_vcf_files,
-            hg38_reference=hg38_reference,
-            hg38_reference_fai=hg38_reference_fai,
-            hg38_reference_dict=hg38_reference_dict,
-            jvarkit_docker=jvarkit_docker
-    }
+    # call annotateHPandVAF.annotateHPandVAF as annotateHPandVAF {
+    #     input:
+    #         split_trio_vcfs=step3.split_trio_vcfs,
+    #         annot_vcf_files=annot_vcf_files,
+    #         hg38_reference=hg38_reference,
+    #         hg38_reference_fai=hg38_reference_fai,
+    #         hg38_reference_dict=hg38_reference_dict,
+    #         jvarkit_docker=jvarkit_docker
+    # }
 
     call step4.step4 as step4 {
         input:
@@ -206,7 +206,7 @@ workflow wgs_denovo_full {
     call step5.step5 as step5 {
         input:
             ped_sex_qc=ped_sex_qc,
-            split_trio_annot_vcfs=annotateHPandVAF.split_trio_annot_vcfs,
+            split_trio_annot_vcfs=step3.split_trio_vcfs,
             trio_denovo_vcf=step4.trio_denovo_vcf,
             # merge_vcf_to_tsv_fullQC_script=merge_vcf_to_tsv_fullQC_script,
             trio_denovo_docker=trio_denovo_docker,
@@ -264,7 +264,7 @@ workflow wgs_denovo_full {
         File merged_preprocessed_sample_qc = step2.merged_preprocessed_sample_qc
         File ped_uri_trios = step3.ped_uri_trios
         Array[File] split_trio_vcfs = step3.split_trio_vcfs
-        Array[File] split_trio_annot_vcfs = annotateHPandVAF.split_trio_annot_vcfs
+        # Array[File] split_trio_annot_vcfs = annotateHPandVAF.split_trio_annot_vcfs
         Array[File] trio_denovo_vcf = step4.trio_denovo_vcf
         File vcf_metrics_tsv = step5.vcf_metrics_tsv
         File vcf_metrics_tsv_prior_csq = step6.vcf_metrics_tsv_prior_csq

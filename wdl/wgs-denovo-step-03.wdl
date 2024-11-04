@@ -1,5 +1,7 @@
 version 1.0 
 
+import "annotateHPandVAF.wdl" as annotateHPandVAF
+
 struct RuntimeAttr {
     Float? mem_gb
     Int? cpu_cores
@@ -11,6 +13,7 @@ struct RuntimeAttr {
 
 workflow step3 {
     input {
+        Array[File] annot_vcf_files
         File trio_uri
         File ped_sex_qc
         File merged_preprocessed_vcf_file_filtered
@@ -20,6 +23,12 @@ workflow step3 {
         String uberSplit_v3_script
         String subset_ped_script
         Int batch_size
+
+        File hg38_reference
+        File hg38_reference_fai
+        File hg38_reference_dict
+        String jvarkit_docker
+
         Boolean subset_ped=true
         RuntimeAttr? runtime_attr_uber_split
     }
@@ -50,9 +59,19 @@ workflow step3 {
             runtime_attr_override=runtime_attr_uber_split
     }
 
+    call annotateHPandVAF.annotateHPandVAF as annotateHPandVAF {
+        input:
+            split_trio_vcfs=uberSplit_v3.split_trio_vcfs,
+            annot_vcf_files=annot_vcf_files,
+            hg38_reference=hg38_reference,
+            hg38_reference_fai=hg38_reference_fai,
+            hg38_reference_dict=hg38_reference_dict,
+            jvarkit_docker=jvarkit_docker
+    }
+
     output {
         File ped_uri_trios = new_ped_sex_qc
-        Array[File] split_trio_vcfs = uberSplit_v3.split_trio_vcfs
+        Array[File] split_trio_vcfs = annotateHPandVAF.split_trio_annot_vcfs
         File stats_files = uberSplit_v3.stats_file_out
     }
 }
