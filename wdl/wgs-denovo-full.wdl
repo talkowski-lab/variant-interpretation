@@ -182,7 +182,12 @@ workflow wgs_denovo_full {
             trio_denovo_docker=trio_denovo_docker,
             # uberSplit_v3_script=uberSplit_v3_script,
             batch_size=batch_size,
-            # subset_ped_script=subset_ped_script
+            # subset_ped_script=subset_ped_script,
+            annot_vcf_files=annot_vcf_files,
+            hg38_reference=hg38_reference,
+            hg38_reference_fai=hg38_reference_fai,
+            hg38_reference_dict=hg38_reference_dict,
+            jvarkit_docker=jvarkit_docker
     }
     # call annotateHPandVAF.annotateHPandVAF as annotateHPandVAF {
     #     input:
