@@ -317,9 +317,12 @@ task downsampleVariantsPython {
             gnomad_str = np.intersect1d(df.columns, ['gnomADe_AF', 'gnomAD_AF'])[0]
             in_gnomad = df[df[gnomad_str]>0].reset_index(drop=True)
             not_in_gnomad = df[df[gnomad_str]==0].reset_index(drop=True)
-            num_per_sample = int(max(0, desired_num_variants-in_gnomad.shape[0]) / not_in_gnomad.SAMPLE.unique().size)
-            not_in_gnomad = not_in_gnomad.groupby('SAMPLE').apply(lambda s: s.sample(min(len(s), num_per_sample))).reset_index(drop=True)
-            df = pd.concat([not_in_gnomad, in_gnomad])
+            if not not_in_gnomad.empty:
+                num_per_sample = int(max(0, desired_num_variants-in_gnomad.shape[0]) / not_in_gnomad.SAMPLE.unique().size)
+                not_in_gnomad = not_in_gnomad.groupby('SAMPLE').apply(lambda s: s.sample(min(len(s), num_per_sample))).reset_index(drop=True)
+                df = pd.concat([not_in_gnomad, in_gnomad])
+            else:
+                df = in_gnomad
         else:
             num_per_sample = int(desired_num_variants / df.SAMPLE.unique().size)
             df = df.groupby('SAMPLE').apply(lambda s: s.sample(min(len(s), num_per_sample)))
