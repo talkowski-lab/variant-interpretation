@@ -111,7 +111,7 @@ task runIGV_whole_genome_localize{
             RuntimeAttr? runtime_attr_override
         }
 
-    Float input_size = size(select_all([varfile, ped_file]), "GB")
+    Float input_size = size(select_all([varfile, ped_file, crams, crais]), "GB")
     Float base_mem_gb = 3.75
 
     RuntimeAttr default_attr = object {
