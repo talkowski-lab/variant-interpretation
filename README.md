@@ -1,6 +1,6 @@
 # Variant interpretation
 
-This repository contains utilities for consolidating, annotating and filtering structural variants (SVs) from [GATK-SV](https://github.com/broadinstitute/gatk-sv).
+This repository contains utilities for consolidating, annotating and filtering SNVs/indels and structural variants (SVs). This project is a work in progress.
 
 ## Table of Contents
 * [Requirements](#requirements)
