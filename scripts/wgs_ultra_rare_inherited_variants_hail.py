@@ -26,6 +26,13 @@ csq_af_threshold = float(sys.argv[11])
 gq_het_threshold = float(sys.argv[12])
 gq_hom_ref_threshold = float(sys.argv[13])
 qual_threshold = int(sys.argv[14])
+sor_threshold_indel = float(sys.argv[15])
+sor_threshold_snv = float(sys.argv[16])
+readposranksum_threshold_indel = float(sys.argv[17])
+readposranksum_threshold_snv = float(sys.argv[18])
+qd_threshold_indel = float(sys.argv[19])
+qd_threshold_snv = float(sys.argv[20])
+mq_threshold = float(sys.argv[21])
 
 hl.init(min_block_size=128, 
         local=f"local[*]", 

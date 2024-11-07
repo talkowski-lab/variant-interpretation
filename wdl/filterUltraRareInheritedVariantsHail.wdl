@@ -36,7 +36,14 @@ workflow filterUltraRareInheritedVariantsHail {
         Float csq_af_threshold=0.01
         Int gq_het_threshold=99
         Int gq_hom_ref_threshold=30
-        Int qual_threshold=150
+        Int qual_threshold=150  # ~30 for DRAGEN
+        Float sor_threshold_indel=3.0
+        Float sor_threshold_snv=2.5
+        Float readposranksum_threshold_indel=-1.7
+        Float readposranksum_threshold_snv=-1.4
+        Float qd_threshold_indel=4.0
+        Float qd_threshold_snv=3.0
+        Float mq_threshold=50
         Int shards_per_chunk=10
         
         #for downsampling
@@ -80,6 +87,13 @@ workflow filterUltraRareInheritedVariantsHail {
                 gq_het_threshold=gq_het_threshold,
                 gq_hom_ref_threshold=gq_hom_ref_threshold,
                 qual_threshold=qual_threshold,
+                sor_threshold_indel=sor_threshold_indel,
+                sor_threshold_snv=sor_threshold_snv,
+                readposranksum_threshold_indel=readposranksum_threshold_indel,
+                readposranksum_threshold_snv=readposranksum_threshold_snv,
+                qd_threshold_indel=qd_threshold_indel,
+                qd_threshold_snv=qd_threshold_snv,
+                mq_threshold=mq_threshold,
                 runtime_attr_override=runtime_attr_filter_vcf
                 }
     }
@@ -155,6 +169,13 @@ task filterUltraRareInheritedVariants {
         Int gq_het_threshold
         Int gq_hom_ref_threshold
         Int qual_threshold
+        Float sor_threshold_indel
+        Float sor_threshold_snv
+        Float readposranksum_threshold_indel
+        Float readposranksum_threshold_snv
+        Float qd_threshold_indel
+        Float qd_threshold_snv
+        Float mq_threshold
         RuntimeAttr? runtime_attr_override
     }
 
@@ -190,7 +211,9 @@ task filterUltraRareInheritedVariants {
         curl ~{filter_rare_inherited_python_script} > filter_rare_variants.py
         python3 filter_rare_variants.py ~{lcr_uri} ~{ped_sex_qc} ~{meta_uri} ~{trio_uri} ~{vcf_file} \
         ~{cohort_prefix} ~{cpu_cores} ~{memory} ~{AC_threshold} ~{AF_threshold} ~{csq_af_threshold} \
-        ~{gq_het_threshold} ~{gq_hom_ref_threshold} ~{qual_threshold} > stdout
+        ~{gq_het_threshold} ~{gq_hom_ref_threshold} ~{qual_threshold} ~{sor_threshold_indel} ~{sor_threshold_snv} \
+        ~{readposranksum_threshold_indel} ~{readposranksum_threshold_snv} ~{qd_threshold_indel} ~{qd_threshold_snv} \
+        ~{mq_threshold} > stdout
 
         cp $(ls . | grep hail*.log) hail_log.txt
     >>>
