@@ -49,6 +49,7 @@ workflow step7 {
         Float vqslod_cutoff=-10
         Int n_estimators_rf=100
         Int n_bag=10
+        Int n_jobs=-1
         Boolean filter_pass_before=false
         RuntimeAttr? runtime_attr_bagging_pu
     }
@@ -72,6 +73,7 @@ workflow step7 {
         vqslod_cutoff=vqslod_cutoff,
         n_estimators_rf=n_estimators_rf,
         n_bag=n_bag,
+        n_jobs=n_jobs,
         filter_pass_before=filter_pass_before,
         runtime_attr_bagging_pu=runtime_attr_bagging_pu
     }

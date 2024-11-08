@@ -44,6 +44,7 @@ metric = sys.argv[10]  # ['roc-auc', 'accuracy', 'f1', 'fp_fn_ratio']
 n_estimators_rf = int(sys.argv[11])
 n_bags = int(sys.argv[12])
 filter_pass_before = ast.literal_eval(sys.argv[13].capitalize())
+n_jobs = int(sys.argv[14])
 
 # check for empty sample_features
 if sample_features==["",""]:
@@ -161,7 +162,7 @@ def filter_variants(final_output, ultra_rare, final_output_raw, ultra_rare_raw, 
 
     return final_output, ultra_rare, merged_output
 
-def BaggingPU(X, y, kf, model, n_bags, n_jobs=-1):
+def BaggingPU(X, y, kf, model, n_bags, n_jobs):
     y_pred_bag = np.zeros(y.size)
     output_bag = np.zeros(y.size)
     classifiers = []
@@ -185,9 +186,9 @@ def BaggingPU(X, y, kf, model, n_bags, n_jobs=-1):
     return y_pred_bag, output_bag, classifiers
 
 
-def runBaggingPU_RF(X, y, model, merged_output, features, suffix, n_bags=10):
+def runBaggingPU_RF(X, y, model, merged_output, features, suffix, n_bags=10, n_jobs=-1):
     kf = sklearn.model_selection.KFold(n_splits=5)
-    y_pred_bag, output_bag, classifiers_bag = BaggingPU(X, y, kf, model, n_bags=n_bags, n_jobs=-1)
+    y_pred_bag, output_bag, classifiers_bag = BaggingPU(X, y, kf, model, n_bags=n_bags, n_jobs=n_jobs)
 
     print('---- {} ----'.format('Bagging PU'))
     print(sklearn.metrics.confusion_matrix(y, y_pred_bag))
@@ -199,9 +200,9 @@ def runBaggingPU_RF(X, y, model, merged_output, features, suffix, n_bags=10):
                             })
     return results, classifiers_bag
 
-def get_importances_oob_scores(X, y, merged_output, features, suffix, n_estimators_rf=100, n_bags=10, oob_score=True):
+def get_importances_oob_scores(X, y, merged_output, features, suffix, n_estimators_rf=100, n_bags=10, oob_score=True, n_jobs=-1):
     model = RandomForestClassifier(warm_start=True, oob_score=oob_score, n_estimators=n_estimators_rf)
-    results, estimators = runBaggingPU_RF(X, y, model, merged_output, features, suffix, n_bags=n_bags)
+    results, estimators = runBaggingPU_RF(X, y, model, merged_output, features, suffix, n_bags=n_bags, n_jobs=n_jobs)
 
     importances = pd.DataFrame(np.array([[estimators[j].estimators_[i].feature_importances_ 
                 for i in range(len(estimators[j].estimators_))] 
@@ -229,12 +230,13 @@ def get_optimized_results(features, results, suffix, metric='fp_fn_ratio'):
     results['p_thr'] = best_p_thr
     return results
 
-def runBaggingPU_level_features(merged_output_subset, features, n_estimators_rf, n_bags, suffix=''):
+def runBaggingPU_level_features(merged_output_subset, features, n_estimators_rf, n_bags, suffix='', n_jobs=-1):
     merged_output_subset = merged_output_subset[~merged_output_subset[features].isna().any(axis=1)].reset_index(drop=True)
     X = merged_output_subset[features].sample(frac=1)
     y = merged_output_subset['label'].astype(int).loc[X.index]
     results, estimators_optimized, importances_optimized, oob_scores_optimized = get_importances_oob_scores(X, y, merged_output_subset, features, 
-                                                                                                          suffix=suffix, n_estimators_rf=n_estimators_rf, n_bags=n_bags, oob_score=metrics_to_funcs[metric])  
+                                                                                                          suffix=suffix, n_estimators_rf=n_estimators_rf, n_bags=n_bags, oob_score=metrics_to_funcs[metric],
+                                                                                                          n_jobs=n_jobs)  
     results_optimized = get_optimized_results(features, results, suffix)
         
     merged_output_subset.index = merged_output_subset.VarKey
@@ -263,7 +265,7 @@ if var_type=='Indel':
     merged_output_big_indels = merged_output[merged_output.LEN>3].reset_index(drop=True)
     big_sample_features = [feature for feature in sample_features if merged_output_big_indels[feature].isna().all()==False]
     big_indels = runBaggingPU_level_features(merged_output_big_indels, big_sample_features, n_estimators_rf, n_bags, 
-                                            suffix='_sample_level')
+                                            suffix='_sample_level', n_jobs=n_jobs)
     # variant-level
     print("---------------------- Running Large Indels (LEN>3) variant-level ----------------------")
     passes_sample_level = big_indels[(big_indels['pred_bag_optimized_sample_level']==1)].VarKey
@@ -273,7 +275,7 @@ if var_type=='Indel':
 
     big_variant_features = [feature for feature in variant_features if merged_output_big_indels_var[feature].isna().all()==False]
     big_indels_var = runBaggingPU_level_features(merged_output_big_indels_var, big_variant_features, n_estimators_rf, n_bags, 
-                                            suffix='_variant_level')
+                                            suffix='_variant_level', n_jobs=n_jobs)
 
     # small indels: LEN<=3
     # sample-level
@@ -281,7 +283,7 @@ if var_type=='Indel':
     merged_output_small_indels = merged_output[merged_output.LEN<=3].reset_index(drop=True)
     small_sample_features = [feature for feature in sample_features if merged_output_small_indels[feature].isna().all()==False]
     small_indels = runBaggingPU_level_features(merged_output_small_indels, small_sample_features, n_estimators_rf, n_bags, 
-                                            suffix='_sample_level')
+                                            suffix='_sample_level', n_jobs=n_jobs)
     # variant-level
     print("---------------------- Running Small Indels (LEN<=3) variant-level ----------------------")
     passes_sample_level = small_indels[(small_indels['pred_bag_optimized_sample_level']==1)].VarKey
@@ -290,7 +292,7 @@ if var_type=='Indel':
                                                     & ((merged_output_var.label==1) | (merged_output_var.VarKey.isin(passes_sample_level)))].reset_index(drop=True)
     small_variant_features = [feature for feature in variant_features if merged_output_small_indels_var[feature].isna().all()==False]
     small_indels_var = runBaggingPU_level_features(merged_output_small_indels_var, small_variant_features, n_estimators_rf, n_bags, 
-                                            suffix='_variant_level')
+                                            suffix='_variant_level', n_jobs=n_jobs)
 
     # merge with step06 output
     small_passes_variant_level = small_indels_var[(small_indels_var['pred_bag_optimized_variant_level']==1)].VarKey
@@ -303,7 +305,7 @@ if var_type=='SNV':
     sample_features = [feature for feature in sample_features if merged_output[feature].isna().all()==False]
     if len(sample_features) > 0:
         all_snvs = runBaggingPU_level_features(merged_output, sample_features, n_estimators_rf, n_bags, 
-                                                suffix='_sample_level')
+                                                suffix='_sample_level', n_jobs=n_jobs)
     else: 
         all_snvs = merged_output.copy()
         all_snvs['pred_bag_optimized_sample_level'] = 1    
@@ -313,7 +315,7 @@ if var_type=='SNV':
     merged_output_var = merged_output_var[((merged_output_var.label==1) | (merged_output_var.VarKey.isin(passes_sample_level)))].reset_index(drop=True)
     variant_features = [feature for feature in variant_features if merged_output_var[feature].isna().all()==False]
     all_snvs_var = runBaggingPU_level_features(merged_output_var, variant_features, n_estimators_rf, n_bags, 
-                                            suffix='_variant_level')
+                                            suffix='_variant_level', n_jobs=n_jobs)
     passes_variant_level = all_snvs_var[(all_snvs_var['pred_bag_optimized_variant_level']==1)].VarKey
 
 final_output = pd.read_csv(vcf_metrics_tsv, sep='\t')

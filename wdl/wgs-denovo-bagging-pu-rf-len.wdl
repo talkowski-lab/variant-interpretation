@@ -30,6 +30,7 @@ workflow BaggingPU_RF {
         Float vqslod_cutoff=-10
         Int n_estimators_rf=100
         Int n_bag=10
+        Int n_jobs=-1
         Boolean filter_pass_before=false
         RuntimeAttr? runtime_attr_bagging_pu
     }
@@ -60,6 +61,7 @@ workflow BaggingPU_RF {
             vqslod_cutoff=vqslod_cutoff,
             n_estimators_rf=n_estimators_rf,
             n_bag=n_bag,
+            n_jobs=n_jobs,
             filter_pass_before=filter_pass_before,
             runtime_attr_override=runtime_attr_bagging_pu
     }
@@ -86,6 +88,7 @@ task runBaggingPU_RF {
         Float vqslod_cutoff
         Int n_estimators_rf
         Int n_bag
+        Int n_jobs
         Boolean filter_pass_before
         RuntimeAttr? runtime_attr_override
     }
@@ -121,7 +124,7 @@ task runBaggingPU_RF {
         curl ~{bagging_pu_source_script} > baggingPU.py
         python3 run_bagging_pu.py ~{vcf_metrics_tsv_final} ~{ultra_rare_inherited_tsv} ~{ultra_rare_parents_tsv} \
         ~{cohort_prefix} ~{var_type} ~{sep=',' variant_features} ~{sep=',' sample_features_} ~{vqslod_cutoff} \
-        ~{rep_regions} ~{metric} ~{n_estimators_rf} ~{n_bag} ~{filter_pass_before} # > stdout
+        ~{rep_regions} ~{metric} ~{n_estimators_rf} ~{n_bag} ~{filter_pass_before} ~{n_jobs} # > stdout
     >>>
 
     output {
