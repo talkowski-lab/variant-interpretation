@@ -234,8 +234,9 @@ ht_csq = ht_csq.annotate(
 # Additionally annotate SNV vs indel
 ht_csq = ht_csq.annotate(isSNV = hl.is_snp(ht_csq.alleles[0], ht_csq.alleles[1]),
                     isIndel = hl.is_indel(ht_csq.alleles[0], ht_csq.alleles[1]))
+ht_csq.export(f"{os.path.basename(vcf_metrics_uri).split('.tsv')[0]}_temp.tsv.gz")
 
-ht_csq_df = ht_csq.to_pandas()
+ht_csq_df = pd.read_csv(f"{os.path.basename(vcf_metrics_uri).split('.tsv')[0]}_temp.tsv.gz", sep='\t')
 df = ht_csq_df.rename({col: col.split('worst_csq.')[1] for col in ht_csq_df.columns if 'worst_csq' in col}, axis=1)
 df.index = df['VarKey']
 
