@@ -314,8 +314,12 @@ if var_type=='SNV':
     passes_sample_level = all_snvs[(all_snvs['pred_bag_optimized_sample_level']==1)].VarKey
     merged_output_var = merged_output_var[((merged_output_var.label==1) | (merged_output_var.VarKey.isin(passes_sample_level)))].reset_index(drop=True)
     variant_features = [feature for feature in variant_features if merged_output_var[feature].isna().all()==False]
-    all_snvs_var = runBaggingPU_level_features(merged_output_var, variant_features, n_estimators_rf, n_bags, 
+    if len(variant_features) > 0:
+        all_snvs_var = runBaggingPU_level_features(merged_output_var, variant_features, n_estimators_rf, n_bags, 
                                             suffix='_variant_level', n_jobs=n_jobs)
+    else:
+        all_snvs_var = merged_output_var.copy()
+        all_snvs_var['pred_bag_optimized_variant_level'] = 1    
     passes_variant_level = all_snvs_var[(all_snvs_var['pred_bag_optimized_variant_level']==1)].VarKey
 
 final_output = pd.read_csv(vcf_metrics_tsv, sep='\t')
