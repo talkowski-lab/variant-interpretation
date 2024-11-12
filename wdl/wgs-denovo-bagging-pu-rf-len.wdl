@@ -119,11 +119,12 @@ task runBaggingPU_RF {
     }
 
     Array[String] sample_features_ = if length(sample_features)>0 then sample_features else ["",""]
+    Array[String] variant_features_ = if length(variant_features)>0 then variant_features else ["",""]
     command <<<
         curl ~{bagging_pu_rf_len_script} > run_bagging_pu.py
         curl ~{bagging_pu_source_script} > baggingPU.py
         python3 run_bagging_pu.py ~{vcf_metrics_tsv_final} ~{ultra_rare_inherited_tsv} ~{ultra_rare_parents_tsv} \
-        ~{cohort_prefix} ~{var_type} ~{sep=',' variant_features} ~{sep=',' sample_features_} ~{vqslod_cutoff} \
+        ~{cohort_prefix} ~{var_type} ~{sep=',' variant_features_} ~{sep=',' sample_features_} ~{vqslod_cutoff} \
         ~{rep_regions} ~{metric} ~{n_estimators_rf} ~{n_bag} ~{filter_pass_before} ~{n_jobs} # > stdout
     >>>
 
