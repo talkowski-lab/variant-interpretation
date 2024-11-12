@@ -50,6 +50,10 @@ n_jobs = int(sys.argv[14])
 if sample_features==["",""]:
     sample_features = []
 
+# check for empty variant_features
+if variant_features==["",""]:
+    variant_features = []
+
 def fp_fn_ratio(y, y_pred):
     FP = ((y==0) & (y_pred==1)).sum()
     TP = ((y==1) & (y_pred==1)).sum()
