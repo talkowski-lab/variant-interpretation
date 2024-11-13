@@ -58,6 +58,7 @@ workflow wgs_denovo_full {
         String sample_column
         Int batch_size
 
+        Boolean filter_pass=true
         Boolean exclude_gq_filters=false
         Boolean merge_split_vcf=false
         String genome_build='GRCh38'
@@ -159,6 +160,7 @@ workflow wgs_denovo_full {
             qd_threshold_indel=qd_threshold_indel,
             qd_threshold_snv=qd_threshold_snv,
             mq_threshold=mq_threshold,
+            filter_pass=filter_pass,
             exclude_gq_filters=exclude_gq_filters,
             merge_split_vcf=merge_split_vcf,
             shards_per_chunk=shards_per_chunk

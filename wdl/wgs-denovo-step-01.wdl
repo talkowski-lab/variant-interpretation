@@ -32,6 +32,7 @@ workflow step1 {
         Float qd_threshold_indel=4.0
         Float qd_threshold_snv=3.0
         Float mq_threshold=50
+        Boolean filter_pass=true
         Boolean exclude_gq_filters=false
         Boolean sort_after_merge=false
         Boolean merge_split_vcf=false
@@ -83,6 +84,7 @@ workflow step1 {
                     qd_threshold_indel=qd_threshold_indel,
                     qd_threshold_snv=qd_threshold_snv,
                     mq_threshold=mq_threshold,
+                    filter_pass=filter_pass,
                     exclude_gq_filters=exclude_gq_filters,
                     runtime_attr_override=runtime_attr_preprocess
             }
@@ -116,6 +118,7 @@ workflow step1 {
                     qd_threshold_indel=qd_threshold_indel,
                     qd_threshold_snv=qd_threshold_snv,
                     mq_threshold=mq_threshold,
+                    filter_pass=filter_pass,
                     exclude_gq_filters=exclude_gq_filters,
                     runtime_attr_override=runtime_attr_preprocess
             }
@@ -178,6 +181,7 @@ task preprocessVCF {
         Float qd_threshold_indel
         Float qd_threshold_snv
         Float mq_threshold
+        Boolean filter_pass
         Boolean exclude_gq_filters
         RuntimeAttr? runtime_attr_override
     }
@@ -215,7 +219,7 @@ task preprocessVCF {
         set -eou pipefail
         curl ~{python_preprocess_script} > python_preprocess_script.py
         python3 python_preprocess_script.py ~{lcr_uri} ~{ped_sex_qc} ~{meta_uri} ~{trio_uri} ~{vcf_uri} \
-        ~{exclude_gq_filters} ~{qual_threshold} ~{sor_threshold_indel} ~{sor_threshold_snv} \
+        ~{filter_pass} ~{exclude_gq_filters} ~{qual_threshold} ~{sor_threshold_indel} ~{sor_threshold_snv} \
         ~{readposranksum_threshold_indel} ~{readposranksum_threshold_snv} ~{qd_threshold_indel} ~{qd_threshold_snv} \
         ~{mq_threshold} ~{cpu_cores} ~{memory}
     >>>

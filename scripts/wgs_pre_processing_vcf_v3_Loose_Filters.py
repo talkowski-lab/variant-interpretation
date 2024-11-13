@@ -23,17 +23,18 @@ ped_uri = sys.argv[2]
 meta_uri = sys.argv[3]
 trio_uri = sys.argv[4]
 vcf_uri = sys.argv[5]
-exclude_gq_filters = ast.literal_eval(sys.argv[6].capitalize())  # DRAGEN VCFs...
-qual_threshold = int(sys.argv[7])  # also for DRAGEN VCFs...
-sor_threshold_indel = float(sys.argv[8])
-sor_threshold_snv = float(sys.argv[9])
-readposranksum_threshold_indel = float(sys.argv[10])
-readposranksum_threshold_snv = float(sys.argv[11])
-qd_threshold_indel = float(sys.argv[12])
-qd_threshold_snv = float(sys.argv[13])
-mq_threshold = float(sys.argv[14])
-cores = sys.argv[15]  # string
-mem = int(np.floor(float(sys.argv[16])))
+filter_pass = ast.literal_eval(sys.argv[6].capitalize())  # DRAGEN VCFs...
+exclude_gq_filters = ast.literal_eval(sys.argv[7].capitalize())  # DRAGEN VCFs...
+qual_threshold = int(sys.argv[8])  # also for DRAGEN VCFs...
+sor_threshold_indel = float(sys.argv[9])
+sor_threshold_snv = float(sys.argv[10])
+readposranksum_threshold_indel = float(sys.argv[11])
+readposranksum_threshold_snv = float(sys.argv[12])
+qd_threshold_indel = float(sys.argv[13])
+qd_threshold_snv = float(sys.argv[14])
+mq_threshold = float(sys.argv[15])
+cores = sys.argv[16]  # string
+mem = int(np.floor(float(sys.argv[17])))
 
 prefix = os.path.basename(vcf_uri).split('.vcf')[0]
 
@@ -137,9 +138,10 @@ def trim_vcf(vcf_uri, lcr_uri, ped_uri, meta_uri, trio_uri, vcf_out_uri, build, 
     all_errors_with_fam = all_errors_with_fam.collect_by_key()
     all_errors_with_fam = all_errors_with_fam.select(Samples_to_keep_all = hl.flatten(hl.set(all_errors_with_fam.values.Samples_to_keep)))
     mt = mt.filter_entries(all_errors_with_fam[mt.row_key].Samples_to_keep_all.contains(mt.s),keep=True)
-    # # filter for VQSR - PASS for SNVs only
-    mt = mt.filter_rows((hl.is_snp(mt.alleles[0], mt.alleles[1]) &(mt.filters.size() == 0))
-                       | hl.is_indel(mt.alleles[0], mt.alleles[1]))
+    if filter_pass:
+        # # filter for VQSR - PASS for SNVs only
+        mt = mt.filter_rows((hl.is_snp(mt.alleles[0], mt.alleles[1]) &(mt.filters.size() == 0))
+                        | hl.is_indel(mt.alleles[0], mt.alleles[1]))
     # filter on depth
     mt = mt.filter_entries( (mt.DPC < 10) | (mt.DPC > 200), keep = False) 
     # row (variant INFO) level filters - GATK recommendations for short variants
