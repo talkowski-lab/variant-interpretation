@@ -17,9 +17,6 @@ workflow vepAnnotateHail {
         String bucket_id
 
         File top_level_fa
-        # File human_ancestor_fa
-        # File human_ancestor_fa_fai
-        # File gerp_conservation_scores
         File ref_vep_cache
 
         File alpha_missense_file
@@ -33,7 +30,6 @@ workflow vepAnnotateHail {
         String loeuf_v2_uri
         String loeuf_v4_uri
         File revel_file
-        File revel_file_idx
         File clinvar_vcf_uri
         File omim_uri
         
