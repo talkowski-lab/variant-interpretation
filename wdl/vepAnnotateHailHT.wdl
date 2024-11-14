@@ -47,7 +47,7 @@ workflow vepAnnotateHail {
         input:
         ht_uri=ht_uri,
         bucket_id=bucket_id,
-        input_size=getInputHTSize.mt_size,
+        ht_size=getInputHTSize.mt_size,
         top_level_fa=top_level_fa,
         ref_vep_cache=ref_vep_cache,
         alpha_missense_file=alpha_missense_file,
@@ -76,7 +76,7 @@ task vepAnnotate {
     input {
         String ht_uri
         String bucket_id
-        Float input_size
+        Float ht_size
 
         File top_level_fa
         # File human_ancestor_fa
@@ -106,7 +106,7 @@ task vepAnnotate {
 
         RuntimeAttr? runtime_attr_override
     }
-
+    Float input_size = input_size + size(ref_vep_cache, "GB")
     Float base_disk_gb = 10.0
     Float input_disk_scale = 10.0
     RuntimeAttr runtime_default = object {
