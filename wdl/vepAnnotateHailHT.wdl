@@ -26,7 +26,7 @@ workflow vepAnnotateHail {
         File eve_data
 
         String vep_hail_docker
-        String genome_build
+        String genome_build='GRCh38'
         String vep_annotate_hail_ht_python_script
 
         # from extra
@@ -37,7 +37,7 @@ workflow vepAnnotateHail {
         File clinvar_vcf_uri
         File omim_uri
         
-        String gene_list
+        String gene_list='NA'
         String mpc_ht_uri
     }
 
