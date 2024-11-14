@@ -106,7 +106,7 @@ task vepAnnotate {
 
         RuntimeAttr? runtime_attr_override
     }
-    Float input_size = input_size + size(ref_vep_cache, "GB")
+    Float input_size = ht_size + size(ref_vep_cache, "GB")
     Float base_disk_gb = 10.0
     Float input_disk_scale = 10.0
     RuntimeAttr runtime_default = object {
