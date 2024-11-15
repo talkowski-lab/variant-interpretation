@@ -113,7 +113,7 @@ csq_fields_str = hl.eval(ht.vep_csq_header) + '|'.join(['', 'LOEUF_v2', 'LOEUF_v
 # annotate OMIM
 omim = hl.import_table(omim_uri).key_by('approvedGeneSymbol')
 ht_by_gene = ht_by_transcript.key_by(ht_by_transcript.vep.transcript_consequences.SYMBOL)
-ht_by_gene = ht_by_gene.annotate(vep=ht_by_gene.vep.transcript_consequences.annotate(
+ht_by_gene = ht_by_gene.annotate(vep=ht_by_gene.vep.annotate(
     transcript_consequences=ht_by_gene.vep.transcript_consequences.annotate(    
     OMIM_MIM_number=hl.if_else(hl.is_defined(omim[ht_by_gene.key]), omim[ht_by_gene.key].mimNumber, ''),
     OMIM_inheritance_code=hl.if_else(hl.is_defined(omim[ht_by_gene.key]), omim[ht_by_gene.key].inheritance_code, '')))
@@ -124,16 +124,16 @@ csq_fields_str = csq_fields_str + '|'.join([''] + ['OMIM_MIM_number', 'OMIM_inhe
 if gene_list!='NA':
     genes = pd.read_csv(gene_list, sep='\t', header=None)[0].tolist()
     gene_list_name = os.path.basename(gene_list)
-    ht_by_gene = ht_by_gene.annotate(vep=ht_by_gene.vep.transcript_consequences.annotate(
+    ht_by_gene = ht_by_gene.annotate(vep=ht_by_gene.vep.annotate(
     transcript_consequences=ht_by_gene.vep.transcript_consequences.annotate(    
         gene_list=hl.if_else(hl.array(genes).contains(ht_by_gene.key.SYMBOL), gene_list_name, '')))
     )
     csq_fields_str = csq_fields_str + '|gene_list'
-    
-ht_by_gene = (ht_by_gene.group_by(ht_by_gene.locus, ht_by_gene.alleles)
-    .aggregate(vep = hl.agg.collect(ht_by_gene.vep)))
 
-ht = ht.annotate(vep=ht_by_gene[ht.key].vep)
+ht_by_gene = (ht_by_gene.group_by(ht_by_gene.locus, ht_by_gene.alleles)
+    .aggregate(transcript_consequences = hl.agg.collect(ht_by_gene.vep.transcript_consequences)))
+
+ht = ht.annotate(vep=hl.Struct(**{'transcript_consequences': ht_by_gene[ht.key].transcript_consequences}))
 ht = ht.drop('vep_csq_header')
 ht = ht.annotate(vep_csq_header=csq_fields_str)
 
