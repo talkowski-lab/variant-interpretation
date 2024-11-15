@@ -178,18 +178,19 @@ ht = hl.read_table(input_ht)
 if 'ID' not in list(ht.row):
     ht = ht.annotate(ID=hl.variant_str(ht.locus, ht.alleles))
 
-header = hl.get_vcf_metadata(vep_vcf_uri)
-csq_columns = header['info']['CSQ']['Description'].split('Format: ')[1].split('|')
+if 'vep' not in list(ht.row):
+    header = hl.get_vcf_metadata(vep_vcf_uri)
+    csq_columns = header['info']['CSQ']['Description'].split('Format: ')[1].split('|')
 
-transcript_consequences = ht.info.CSQ.map(lambda x: x.split('\|'))
+    transcript_consequences = ht.info.CSQ.map(lambda x: x.split('\|'))
 
-transcript_consequences_strs = transcript_consequences.map(lambda x: hl.if_else(hl.len(x)>1, hl.struct(**
-                                                       {col: x[i] if col!='Consequence' else x[i].split('&')  
-                                                        for i, col in enumerate(csq_columns)}), 
-                                                        hl.struct(**{col: '.' if col!='Consequence' else hl.array(['.'])  
-                                                        for i, col in enumerate(csq_columns)})))
+    transcript_consequences_strs = transcript_consequences.map(lambda x: hl.if_else(hl.len(x)>1, hl.struct(**
+                                                        {col: x[i] if col!='Consequence' else x[i].split('&')  
+                                                            for i, col in enumerate(csq_columns)}), 
+                                                            hl.struct(**{col: '.' if col!='Consequence' else hl.array(['.'])  
+                                                            for i, col in enumerate(csq_columns)})))
 
-ht=ht.annotate(vep=hl.Struct(transcript_consequences = transcript_consequences_strs))
+    ht=ht.annotate(vep=hl.Struct(transcript_consequences = transcript_consequences_strs))
 
 # filter canonical
 ht = filter_vep_to_canonical_transcripts(ht)
