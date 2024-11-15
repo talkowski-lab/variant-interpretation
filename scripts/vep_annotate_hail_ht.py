@@ -92,6 +92,7 @@ transcript_consequences_strs = transcript_consequences.map(lambda x: hl.if_else(
                                                         hl.struct(**{col: hl.missing('str') if col!='Consequence' else hl.array([hl.missing('str')])  
                                                         for i, col in enumerate(csq_columns)})))
 
+# EDITED
 ht = ht.annotate(vep=hl.Struct(**{'transcript_consequences': transcript_consequences_strs}))
 
 # annotate LOEUF from gnomAD
@@ -130,6 +131,7 @@ if gene_list!='NA':
     )
     csq_fields_str = csq_fields_str + '|gene_list'
 
+# EDITED
 ht_by_gene = (ht_by_gene.group_by(ht_by_gene.locus, ht_by_gene.alleles)
     .aggregate(transcript_consequences = hl.agg.collect(ht_by_gene.vep.transcript_consequences)))
 
