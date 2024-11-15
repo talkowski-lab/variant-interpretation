@@ -92,38 +92,44 @@ transcript_consequences_strs = transcript_consequences.map(lambda x: hl.if_else(
                                                         hl.struct(**{col: hl.missing('str') if col!='Consequence' else hl.array([hl.missing('str')])  
                                                         for i, col in enumerate(csq_columns)})))
 
-ht = ht.annotate(vep=transcript_consequences_strs)
+ht = ht.annotate(vep=hl.Struct(**{'transcript_consequences': transcript_consequences_strs}))
 
 # annotate LOEUF from gnomAD
 loeuf_v2_ht = hl.read_table(loeuf_v2_uri).key_by('transcript')
 loeuf_v4_ht = hl.read_table(loeuf_v4_uri).key_by('transcript')
-ht_by_transcript = ht.explode(ht.vep)
-ht_by_transcript = ht_by_transcript.key_by(ht_by_transcript.vep.Feature)
+ht_by_transcript = ht.explode(ht.vep.transcript_consequences)
+ht_by_transcript = ht_by_transcript.key_by(ht_by_transcript.vep.transcript_consequences.Feature)
 ht_by_transcript = ht_by_transcript.annotate(vep=ht_by_transcript.vep.annotate(
-    LOEUF_v2=hl.if_else(hl.is_defined(loeuf_v2_ht[ht_by_transcript.key]), loeuf_v2_ht[ht_by_transcript.key]['oe_lof_upper'], ''),
-    LOEUF_v2_decile=hl.if_else(hl.is_defined(loeuf_v2_ht[ht_by_transcript.key]), loeuf_v2_ht[ht_by_transcript.key]['oe_lof_upper_bin'], ''),
-    LOEUF_v4=hl.if_else(hl.is_defined(loeuf_v4_ht[ht_by_transcript.key]), loeuf_v4_ht[ht_by_transcript.key]['lof.oe_ci.upper'], ''),
-    LOEUF_v4_decile=hl.if_else(hl.is_defined(loeuf_v4_ht[ht_by_transcript.key]), loeuf_v4_ht[ht_by_transcript.key]['lof.oe_ci.upper_bin_decile'], '')
+    transcript_consequences=ht_by_transcript.vep.transcript_consequences.annotate(
+        LOEUF_v2=hl.if_else(hl.is_defined(loeuf_v2_ht[ht_by_transcript.key]), loeuf_v2_ht[ht_by_transcript.key]['oe_lof_upper'], ''),
+        LOEUF_v2_decile=hl.if_else(hl.is_defined(loeuf_v2_ht[ht_by_transcript.key]), loeuf_v2_ht[ht_by_transcript.key]['oe_lof_upper_bin'], ''),
+        LOEUF_v4=hl.if_else(hl.is_defined(loeuf_v4_ht[ht_by_transcript.key]), loeuf_v4_ht[ht_by_transcript.key]['lof.oe_ci.upper'], ''),
+        LOEUF_v4_decile=hl.if_else(hl.is_defined(loeuf_v4_ht[ht_by_transcript.key]), loeuf_v4_ht[ht_by_transcript.key]['lof.oe_ci.upper_bin_decile'], '')
+        )
     )
 )
 csq_fields_str = hl.eval(ht.vep_csq_header) + '|'.join(['', 'LOEUF_v2', 'LOEUF_v2_decile', 'LOEUF_v4', 'LOEUF_v4_decile'])
 
 # annotate OMIM
 omim = hl.import_table(omim_uri).key_by('approvedGeneSymbol')
-ht_by_gene = ht_by_transcript.key_by(ht_by_transcript.vep.SYMBOL)
-ht_by_gene = ht_by_gene.annotate(vep=ht_by_gene.vep.annotate(
+ht_by_gene = ht_by_transcript.key_by(ht_by_transcript.vep.transcript_consequences.SYMBOL)
+ht_by_gene = ht_by_gene.annotate(vep=ht_by_gene.vep.transcript_consequences.annotate(
+    transcript_consequences=ht_by_gene.vep.transcript_consequences.annotate(    
     OMIM_MIM_number=hl.if_else(hl.is_defined(omim[ht_by_gene.key]), omim[ht_by_gene.key].mimNumber, ''),
     OMIM_inheritance_code=hl.if_else(hl.is_defined(omim[ht_by_gene.key]), omim[ht_by_gene.key].inheritance_code, '')))
+)
 csq_fields_str = csq_fields_str + '|'.join([''] + ['OMIM_MIM_number', 'OMIM_inheritance_code'])
 
 # OPTIONAL: annotate with gene list, if provided
 if gene_list!='NA':
     genes = pd.read_csv(gene_list, sep='\t', header=None)[0].tolist()
     gene_list_name = os.path.basename(gene_list)
-    ht_by_gene = ht_by_gene.annotate(vep=ht_by_gene.vep.annotate(
+    ht_by_gene = ht_by_gene.annotate(vep=ht_by_gene.vep.transcript_consequences.annotate(
+    transcript_consequences=ht_by_gene.vep.transcript_consequences.annotate(    
         gene_list=hl.if_else(hl.array(genes).contains(ht_by_gene.key.SYMBOL), gene_list_name, '')))
+    )
     csq_fields_str = csq_fields_str + '|gene_list'
-
+    
 ht_by_gene = (ht_by_gene.group_by(ht_by_gene.locus, ht_by_gene.alleles)
     .aggregate(vep = hl.agg.collect(ht_by_gene.vep)))
 
