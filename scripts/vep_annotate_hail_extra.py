@@ -77,7 +77,7 @@ revel_ht = revel_ht.annotate(locus=hl.locus(revel_ht[build_chr], hl.int(revel_ht
 revel_ht = revel_ht.key_by('locus', 'alleles')
 mt = mt.annotate_rows(info=mt.info.annotate(REVEL=revel_ht[mt.row_key].REVEL))
 
-csq_columns = header['info']['CSQ']['Description'].split('Format: ')[1].split('|')
+csq_columns = header['info']['CSQ']['Description'].replace('Format: ', '').split('|')
 # split VEP CSQ string
 mt = mt.annotate_rows(vep=mt.info)
 transcript_consequences = mt.vep.CSQ.map(lambda x: x.split('\|'))
@@ -105,7 +105,7 @@ mt_by_transcript = mt_by_transcript.annotate_rows(vep=mt_by_transcript.vep.annot
         )
     )
 )
-csq_fields_str = 'Format: ' + header['info']['CSQ']['Description'].split('Format: ')[1] + '|'.join(['', 'LOEUF_v2', 'LOEUF_v2_decile', 'LOEUF_v4', 'LOEUF_v4_decile'])
+csq_fields_str = 'Format: ' + header['info']['CSQ']['Description'].replace('Format: ', '') + '|'.join(['', 'LOEUF_v2', 'LOEUF_v2_decile', 'LOEUF_v4', 'LOEUF_v4_decile'])
 
 # annotate OMIM
 omim = hl.import_table(omim_uri).key_by('approvedGeneSymbol')
