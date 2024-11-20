@@ -107,6 +107,6 @@ for field in all_as_fields:
 # run VEP
 mt = hl.vep(mt, config='vep_config.json', csq=True, tolerate_parse_error=True)
 mt = mt.annotate_rows(info = mt.info.annotate(CSQ=mt.vep))
-header['info']['CSQ'] = {'Description': hl.eval(mt.vep_csq_header), 'Number': '.', 'Type': 'String'}
+header['info']['CSQ'] = {'Description': 'Format: ' + hl.eval(mt.vep_csq_header), 'Number': '.', 'Type': 'String'}
 
 hl.export_vcf(dataset=mt, output=vep_annotated_vcf_name, metadata=header)
