@@ -64,7 +64,7 @@ def split_multi_ssc(mt):
     return mt
 
 header = hl.get_vcf_metadata(vcf_file) 
-mt = hl.import_vcf(vcf_file, drop_samples=True, force_bgz=True, array_elements_required=False, call_fields=[], reference_genome=build)
+mt = hl.import_vcf(vcf_file, force_bgz=True, array_elements_required=False, call_fields=[], reference_genome=build)
 
 # mt = mt.distinct_by_row()
 if 'num_alleles' not in list(mt.row_value.keys()):
