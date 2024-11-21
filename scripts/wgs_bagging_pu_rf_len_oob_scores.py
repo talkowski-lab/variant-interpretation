@@ -247,8 +247,10 @@ def runBaggingPU_level_features(merged_output_subset, features, n_estimators_rf,
     results_optimized.index = results_optimized.VarKey
 
     # filter out non-PASS
-    merged_results = results_optimized[(~results_optimized.VarKey.isin(merged_output_subset[merged_output_subset.FILTER!='PASS'].VarKey))
-                                      |(results_optimized.label==1)]
+    # TODO: hard-coded PASS only filter?
+    # merged_results = results_optimized[(~results_optimized.VarKey.isin(merged_output_subset[merged_output_subset.FILTER!='PASS'].VarKey))
+    #                                   |(results_optimized.label==1)]
+    merged_results = results_optimized.copy()
     return merged_results
 
 # sample-level training (ultra-rare inherited)
