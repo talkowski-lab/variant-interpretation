@@ -119,7 +119,7 @@ workflow vepAnnotateHail {
             call annotateExtra.addGenotypes as addGenotypesMergedShards {
                 input:
                 annot_vcf_file=addHGVScGeneSymbolFieldMergedShards.output_vcf,
-                vcf_file=mergeVCFs.merged_vcf_file,
+                vcf_file=RemoveRawMutectCallsMergedShards.out,
                 hail_docker=hail_docker,
                 genome_build=genome_build,
                 runtime_attr_override=runtime_attr_annotate_add_genotypes
@@ -180,7 +180,7 @@ workflow vepAnnotateHail {
             call annotateExtra.addGenotypes as addGenotypes {
                 input:
                 annot_vcf_file=addHGVScGeneSymbolField.output_vcf,
-                vcf_file=vcf_shard,
+                vcf_file=RemoveRawMutectCalls.out,
                 hail_docker=hail_docker,
                 genome_build=genome_build,
                 runtime_attr_override=runtime_attr_annotate_add_genotypes
