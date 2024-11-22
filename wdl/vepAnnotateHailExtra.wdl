@@ -491,7 +491,7 @@ task addGenotypes {
         return mt
 
     mt = hl.import_vcf(vcf_file, force_bgz=True, array_elements_required=False, call_fields=[], reference_genome=build,
-        find_replace=("\/[2-9]", ""))  # for ploidy > 2
+        find_replace=("\/[0-9]\/[0-9]", ""))  # for ploidy > 2
     mt = split_multi_ssc(mt)
 
     header = hl.get_vcf_metadata(annot_vcf_file) 
