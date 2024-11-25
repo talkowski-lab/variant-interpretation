@@ -14,13 +14,15 @@ workflow writeVCFtoHT {
         File vcf_file
         String output_ht_path
         String hail_docker
+        String genome_build
     }
 
     call writeHT {
         input:
         vcf_file=vcf_file,
         output_ht_path=output_ht_path,
-        hail_docker=hail_docker
+        hail_docker=hail_docker,
+        genome_build=genome_build
     }
 
     output {
@@ -33,6 +35,7 @@ task writeHT {
         File vcf_file
         String output_ht_path 
         String hail_docker
+        String genome_build
         RuntimeAttr? runtime_attr_override
     }
     Float input_size = size(vcf_file, 'GB')
@@ -77,6 +80,7 @@ task writeHT {
     output_ht_path = sys.argv[2]
     cores = sys.argv[3]  # string
     mem = int(np.floor(float(sys.argv[4])))
+    genome_build = sys.argv[5]
 
     # hl.init()
     hl.init(min_block_size=128, spark_conf={"spark.executor.cores": cores, 
@@ -92,7 +96,7 @@ task writeHT {
         .rename({f"f{i}": col for i, col in enumerate(header_cols)})
     # ht = ht.checkpoint(os.path.basename(vcf_file).split(file_ext)[0]+'ht')
 
-    ht = ht.annotate(locus=hl.locus(ht.CHROM, hl.int(ht.POS), 'GRCh38'),
+    ht = ht.annotate(locus=hl.locus(ht.CHROM, hl.int(ht.POS), genome_build),
                     alleles=hl.array([ht.REF, ht.ALT]))
 
     ht = ht.annotate(SYMBOL=ht.SpliceAI.split('=')[1].split('\|')[1])
@@ -100,7 +104,7 @@ task writeHT {
     ht = ht.key_by('locus','alleles','SYMBOL')
     ht.write(output_ht_path, overwrite=True)
     EOF
-    python3 write_ht.py ~{vcf_file} ~{output_ht_path} ~{cpu_cores} ~{memory}
+    python3 write_ht.py ~{vcf_file} ~{output_ht_path} ~{cpu_cores} ~{memory} ~{genome_build}
     cp $(ls . | grep hail*.log) hail_log.txt
     >>>
 
