@@ -164,8 +164,8 @@ task annotateFromBed {
             tmp_dir="tmp", local_tmpdir="tmp",
                         )
 
-    bed = hl.import_bed(noncoding_bed, reference_genome='GRCh38', skip_invalid_intervals=True)
-    mt = hl.import_vcf(vcf_file, drop_samples=True, force_bgz=True, array_elements_required=False, call_fields=[], reference_genome='GRCh38')
+    bed = hl.import_bed(noncoding_bed, reference_genome=genome_build, skip_invalid_intervals=True)
+    mt = hl.import_vcf(vcf_file, drop_samples=True, force_bgz=True, array_elements_required=False, call_fields=[], reference_genome=genome_build)
     mt = mt.annotate_rows(info=mt.info.annotate(PREDICTED_NONCODING=bed[mt.locus].target))
 
     # filter only annotated
