@@ -105,6 +105,7 @@ task annotateFromBed {
         File vcf_file
         String noncoding_bed 
         String hail_docker
+        String genome_build
         Boolean filter
         RuntimeAttr? runtime_attr_override
     }
@@ -177,7 +178,7 @@ task annotateFromBed {
                                             'Number': '.', 'Type': 'String'}
     hl.export_vcf(mt, output_filename, metadata=header, tabix=True)
     EOF
-    python3 annotate_noncoding.py ~{vcf_file} ~{noncoding_bed} ~{cpu_cores} ~{memory} ~{output_filename} ~{filter}
+    python3 annotate_noncoding.py ~{vcf_file} ~{noncoding_bed} ~{genome_build} ~{cpu_cores} ~{memory} ~{output_filename} ~{filter}
     >>>
 
     output {
