@@ -50,6 +50,7 @@ workflow vepAnnotateHailExtra {
                 vcf_file=vcf_shard,
                 noncoding_bed=select_first([noncoding_bed]),
                 hail_docker=hail_docker,
+                genome_build=genome_build,
                 filter=false,
                 runtime_attr_override=runtime_attr_annotate_noncoding
             }
