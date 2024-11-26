@@ -154,8 +154,9 @@ task annotateFromBed {
     noncoding_bed = sys.argv[2]
     cores = sys.argv[3]  # string
     mem = int(np.floor(float(sys.argv[4])))
-    output_filename = sys.argv[5]
-    filter = ast.literal_eval(sys.argv[6].capitalize())
+    build = sys.argv[5]
+    output_filename = sys.argv[6]
+    filter = ast.literal_eval(sys.argv[7].capitalize())
 
     hl.init(min_block_size=128, 
             local=f"local[*]", 
@@ -179,7 +180,7 @@ task annotateFromBed {
                                             'Number': '.', 'Type': 'String'}
     hl.export_vcf(mt, output_filename, metadata=header, tabix=True)
     EOF
-    python3 annotate_noncoding.py ~{vcf_file} ~{noncoding_bed} ~{genome_build} ~{cpu_cores} ~{memory} ~{output_filename} ~{filter}
+    python3 annotate_noncoding.py ~{vcf_file} ~{noncoding_bed} ~{cpu_cores} ~{memory} ~{genome_build} ~{output_filename} ~{filter}
     >>>
 
     output {
