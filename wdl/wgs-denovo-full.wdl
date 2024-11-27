@@ -46,7 +46,6 @@ workflow wgs_denovo_full {
         File hg38_reference
         File hg38_reference_fai
         File hg38_reference_dict
-        File info_header
         File repetitive_regions_bed
 
         Array[File] annot_vcf_files
@@ -147,7 +146,6 @@ workflow wgs_denovo_full {
             # python_preprocess_script=python_preprocess_script,
             lcr_uri=lcr_uri,
             ped_sex_qc=ped_sex_qc,
-            info_header=info_header,
             annot_vcf_files=annot_vcf_files,
             sv_base_mini_docker=sv_base_mini_docker,
             cohort_prefix=cohort_prefix,

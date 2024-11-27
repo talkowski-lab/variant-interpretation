@@ -22,6 +22,7 @@ workflow downsampleVariantsfromTSV {
         String jvarkit_docker
         String hail_docker
         Boolean prioritize_gnomad=false
+        Boolean prioritize_coding=true
         RuntimeAttr? runtime_attr_downsample
     }
 
@@ -46,7 +47,8 @@ workflow downsampleVariantsfromTSV {
             scale=scale,
             num_variants=getNumVars.num_variants,
             runtime_attr_override=runtime_attr_downsample,
-            prioritize_gnomad=prioritize_gnomad
+            prioritize_gnomad=prioritize_gnomad,
+            prioritize_coding=prioritize_coding
         }
 
         call convertTSVtoVCF {
@@ -259,6 +261,7 @@ task downsampleVariantsPython {
         Int chunk_size
         Float scale
         Boolean prioritize_gnomad
+        Boolean prioritize_coding
         RuntimeAttr? runtime_attr_override
     }
 
@@ -305,6 +308,7 @@ task downsampleVariantsPython {
         output_name = sys.argv[4]
         chunksize = int(sys.argv[5])
         prioritize_gnomad = ast.literal_eval(sys.argv[6].capitalize())
+        prioritize_coding = ast.literal_eval(sys.argv[7].capitalize())
 
         chunks = []
         for chunk in pd.read_csv(full_input_tsv, sep='\t', chunksize=chunksize):
@@ -313,6 +317,12 @@ task downsampleVariantsPython {
         df = pd.concat(chunks)
         df = df[df.TYPE==var_type].copy()
 
+        if prioritize_coding:
+            keep = df[df.isCoding].copy()
+            df = df[~df.isCoding].copy()  # only downsample from noncoding
+            desired_num_variants = desired_num_variants - keep.shape[0]
+        else:
+            keep = pd.DataFrame()
         if prioritize_gnomad:
             gnomad_str = np.intersect1d(df.columns, ['gnomADe_AF', 'gnomAD_AF'])[0]
             in_gnomad = df[df[gnomad_str]>0].reset_index(drop=True)
@@ -326,10 +336,12 @@ task downsampleVariantsPython {
         else:
             num_per_sample = int(desired_num_variants / df.SAMPLE.unique().size)
             df = df.groupby('SAMPLE').apply(lambda s: s.sample(min(len(s), num_per_sample)))
+        df = pd.concat([keep, df])
         df.to_csv(output_name, sep='\t', index=False)
         EOF
 
-        python3 downsample.py ~{full_input_tsv} ~{var_type} ~{desired_num_variants} ~{output_name} ~{chunk_size} ~{prioritize_gnomad}
+        python3 downsample.py ~{full_input_tsv} ~{var_type} ~{desired_num_variants} ~{output_name} ~{chunk_size} \
+        ~{prioritize_gnomad} ~{prioritize_coding}
     >>>
 
     output {

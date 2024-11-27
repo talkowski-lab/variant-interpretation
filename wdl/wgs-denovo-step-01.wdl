@@ -18,7 +18,6 @@ workflow step1 {
         String python_preprocess_script
         File lcr_uri
         File ped_sex_qc
-        File info_header
         Array[File] annot_vcf_files
         String hail_docker
         String sv_base_mini_docker
