@@ -61,9 +61,6 @@ tmp_ped = tmp_ped.drop_duplicates('sample_id')
 tmp_ped = tmp_ped.replace({np.nan: 0})
 
 tmp_ped.to_csv(f"{prefix}.ped", sep='\t', index=False)
-
-# only keep mendelian errors 
-# mendelian errors code == 2 get parents hom_ref and children het loci
 pedigree = hl.Pedigree.read(f"{prefix}.ped", delimiter='\t')
 
 #split-multi
@@ -218,7 +215,7 @@ cols_to_keep = ['CHROM', 'POS', 'REF', 'ALT', 'LEN', 'TYPE', 'ID', 'VarKey'] + i
 # CSQ AF threshold
 def get_gnomAD_AF(csq, col_num):
     if type(csq)==float:
-        return 0
+        return np.nan
     csqs = []
     for ind_csq in csq:
         af = ind_csq.split('|')[col_num]
@@ -226,7 +223,7 @@ def get_gnomAD_AF(csq, col_num):
             csqs.append(af)
     csqs = list(set(csqs))
     if len(csqs)==0:
-        return 0
+        return np.nan
     return csqs[0]
 
 ultra_rare_vars_df['CSQ'] = ultra_rare_vars_df.CSQ.replace({'.':np.nan, None: np.nan})#.str.split(',')
