@@ -50,6 +50,7 @@ workflow vepAnnotateHailExtra {
                 vcf_file=vcf_shard,
                 noncoding_bed=select_first([noncoding_bed]),
                 hail_docker=hail_docker,
+                genome_build=genome_build,
                 filter=false,
                 runtime_attr_override=runtime_attr_annotate_noncoding
             }
@@ -105,6 +106,7 @@ task annotateFromBed {
         File vcf_file
         String noncoding_bed 
         String hail_docker
+        String genome_build
         Boolean filter
         RuntimeAttr? runtime_attr_override
     }
@@ -152,8 +154,9 @@ task annotateFromBed {
     noncoding_bed = sys.argv[2]
     cores = sys.argv[3]  # string
     mem = int(np.floor(float(sys.argv[4])))
-    output_filename = sys.argv[5]
-    filter = ast.literal_eval(sys.argv[6].capitalize())
+    build = sys.argv[5]
+    output_filename = sys.argv[6]
+    filter = ast.literal_eval(sys.argv[7].capitalize())
 
     hl.init(min_block_size=128, 
             local=f"local[*]", 
@@ -164,8 +167,8 @@ task annotateFromBed {
             tmp_dir="tmp", local_tmpdir="tmp",
                         )
 
-    bed = hl.import_bed(noncoding_bed, reference_genome='GRCh38', skip_invalid_intervals=True)
-    mt = hl.import_vcf(vcf_file, drop_samples=True, force_bgz=True, array_elements_required=False, call_fields=[], reference_genome='GRCh38')
+    bed = hl.import_bed(noncoding_bed, reference_genome=build, skip_invalid_intervals=True)
+    mt = hl.import_vcf(vcf_file, drop_samples=True, force_bgz=True, array_elements_required=False, call_fields=[], reference_genome=build)
     mt = mt.annotate_rows(info=mt.info.annotate(PREDICTED_NONCODING=bed[mt.locus].target))
 
     # filter only annotated
@@ -177,7 +180,7 @@ task annotateFromBed {
                                             'Number': '.', 'Type': 'String'}
     hl.export_vcf(mt, output_filename, metadata=header, tabix=True)
     EOF
-    python3 annotate_noncoding.py ~{vcf_file} ~{noncoding_bed} ~{cpu_cores} ~{memory} ~{output_filename} ~{filter}
+    python3 annotate_noncoding.py ~{vcf_file} ~{noncoding_bed} ~{cpu_cores} ~{memory} ~{genome_build} ~{output_filename} ~{filter}
     >>>
 
     output {
