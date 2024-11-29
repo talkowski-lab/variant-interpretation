@@ -48,6 +48,10 @@ workflow filterUltraRareInheritedVariantsHail {
         Int shards_per_chunk=10
         String genome_build='GRCh38'
 
+        # for prioritizeCSQ
+        String prioritize_csq_script
+        String sample_column='SAMPLE'
+
         #for downsampling
         Int chunk_size=100000
         Float snv_scale=1
@@ -116,6 +120,8 @@ workflow filterUltraRareInheritedVariantsHail {
         vcf_metrics_tsv=mergeResults_sharded.merged_tsv,
         vep_vcf_file=annot_vcf_files[0],
         hail_docker=hail_docker,
+        prioritize_csq_script=prioritize_csq_script,
+        sample_column=sample_column,
         genome_build=genome_build,
         runtime_attr_override=runtime_attr_prioritize
     }
