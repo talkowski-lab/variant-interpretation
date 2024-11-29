@@ -11,7 +11,6 @@ import ast
 import warnings
 import os
 
-build = 'GRCh38'
 lcr_uri = sys.argv[1]
 ped_uri = sys.argv[2]
 meta_uri = sys.argv[3]
@@ -33,6 +32,7 @@ readposranksum_threshold_snv = float(sys.argv[18])
 qd_threshold_indel = float(sys.argv[19])
 qd_threshold_snv = float(sys.argv[20])
 mq_threshold = float(sys.argv[21])
+build = sys.argv[22]
 
 hl.init(min_block_size=128, 
         local=f"local[*]", 
@@ -46,7 +46,7 @@ hl.init(min_block_size=128,
 trio_df = pd.read_csv(trio_uri, dtype=str, sep='\t')
 
 prefix = os.path.basename(vcf_file).split('.vcf')[0]
-mt = hl.import_vcf(vcf_file, force_bgz=True, array_elements_required=False, call_fields=[], reference_genome='GRCh38')
+mt = hl.import_vcf(vcf_file, force_bgz=True, array_elements_required=False, call_fields=[], reference_genome=build)
 
 tmp_ped = pd.read_csv(ped_uri, sep='\t')
 # check ped number of columns

@@ -21,7 +21,7 @@ workflow downsampleVariantsfromTSV {
         Float indel_scale=1
         String jvarkit_docker
         String hail_docker
-        Boolean prioritize_gnomad=false
+        Boolean prioritize_gnomad=true
         Boolean prioritize_coding=true
         RuntimeAttr? runtime_attr_downsample
     }

@@ -4,6 +4,7 @@ import "mergeSplitVCF.wdl" as mergeSplitVCF
 import "mergeVCFs.wdl" as mergeVCFs
 import "wes-denovo-helpers.wdl" as helpers
 import "downsampleVariantsfromTSV.wdl" as downsampleVariantsfromTSV
+import "prioritizeCSQ.wdl" as prioritizeCSQ
 
 struct RuntimeAttr {
     Float? mem_gb
@@ -46,15 +47,18 @@ workflow filterUltraRareParentsVariantsHail {
         Float qd_threshold_snv=3.0
         Float mq_threshold=50
         Int shards_per_chunk=10
+        String genome_build='GRCh38'
 
         # for downsampling
         Int chunk_size=100000
         Float snv_scale=1
         Float indel_scale=1
-        Boolean prioritize_gnomad=false
+        Boolean prioritize_coding=true
+        Boolean prioritize_gnomad=true
 
         RuntimeAttr? runtime_attr_filter_vcf
         RuntimeAttr? runtime_attr_merge_results
+        RuntimeAttr? runtime_attr_prioritize
         RuntimeAttr? runtime_attr_downsample
     }  
 
@@ -95,6 +99,7 @@ workflow filterUltraRareParentsVariantsHail {
                 qd_threshold_indel=qd_threshold_indel,
                 qd_threshold_snv=qd_threshold_snv,
                 mq_threshold=mq_threshold,
+                genome_build=genome_build,
                 runtime_attr_override=runtime_attr_filter_vcf
                 }
     }
@@ -107,10 +112,19 @@ workflow filterUltraRareParentsVariantsHail {
             runtime_attr_override=runtime_attr_merge_results
     }
 
+    call prioritizeCSQ.annotateMostSevereCSQ as prioritizeCSQ {
+        input:
+        vcf_metrics_tsv=mergeResults_sharded.merged_tsv,
+        vep_vcf_file=annot_vcf_files[0],
+        hail_docker=hail_docker,
+        genome_build=genome_build,
+        runtime_attr_override=runtime_attr_prioritize
+    }
+
     call downsampleVariantsfromTSV.downsampleVariantsfromTSV as downsampleVariantsfromTSV {
         input:
         reference_tsv=vcf_metrics_tsv_final,
-        full_input_tsv=mergeResults_sharded.merged_tsv,
+        full_input_tsv=prioritizeCSQ.vcf_metrics_tsv_prior_csq,
         hg38_reference=hg38_reference,
         hg38_reference_dict=hg38_reference_dict,
         hg38_reference_fai=hg38_reference_fai,
@@ -124,7 +138,7 @@ workflow filterUltraRareParentsVariantsHail {
     }
 
     output {
-        File ultra_rare_parents_tsv = mergeResults_sharded.merged_tsv
+        File ultra_rare_parents_tsv = prioritizeCSQ.vcf_metrics_tsv_prior_csq
         File downsampled_ultra_rare_parents_SNV = downsampleVariantsfromTSV.downsampled_tsv_SNV
         File downsampled_ultra_rare_parents_Indel = downsampleVariantsfromTSV.downsampled_tsv_Indel
     }
@@ -177,6 +191,7 @@ task filterRareParentsVariants {
         Float qd_threshold_indel
         Float qd_threshold_snv
         Float mq_threshold
+        String genome_build
         RuntimeAttr? runtime_attr_override
     }
 
@@ -214,7 +229,7 @@ task filterRareParentsVariants {
         ~{cohort_prefix} ~{cpu_cores} ~{memory} ~{AC_threshold} ~{AF_threshold} ~{csq_af_threshold} \
         ~{gq_het_threshold} ~{gq_hom_ref_threshold} ~{qual_threshold} ~{sor_threshold_indel} ~{sor_threshold_snv} \
         ~{readposranksum_threshold_indel} ~{readposranksum_threshold_snv} ~{qd_threshold_indel} ~{qd_threshold_snv} \
-        ~{mq_threshold} > stdout
+        ~{mq_threshold} ~{genome_build} > stdout
 
         cp $(ls . | grep hail*.log) hail_log.txt
     >>>
