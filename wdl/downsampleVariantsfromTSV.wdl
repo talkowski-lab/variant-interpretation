@@ -54,6 +54,7 @@ workflow downsampleVariantsfromTSV {
         call convertTSVtoVCF {
             input:
             tsv=downsampleVariantsPython.downsampled_tsv,
+            runtime_attr_override=runtime_attr_downsample,
             hail_docker=hail_docker
         }
 
@@ -63,6 +64,7 @@ workflow downsampleVariantsfromTSV {
             hg38_reference=hg38_reference,
             hg38_reference_fai=hg38_reference_fai,
             hg38_reference_dict=hg38_reference_dict,
+            runtime_attr_override=runtime_attr_downsample,
             jvarkit_docker=jvarkit_docker
         }
 
@@ -70,6 +72,7 @@ workflow downsampleVariantsfromTSV {
             input:
             polyx_vcf=annotatePOLYX.polyx_vcf,
             tsv=downsampleVariantsPython.downsampled_tsv,
+            runtime_attr_override=runtime_attr_downsample,
             hail_docker=hail_docker
         }
     }
