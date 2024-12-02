@@ -257,7 +257,7 @@ try:
         ultra_rare_vars_df[gnomad_af_str] = ultra_rare_vars_df.CSQ.apply(get_gnomAD_AF, col_num=csq_columns.index(gnomad_af_str)).astype(float)
     
     ultra_rare_vars_df['gnomAD_max_AF'] = ultra_rare_vars_df[['gnomADe_AF', 'gnomADg_AF']].max(axis=1)
-    ultra_rare_vars_df = ultra_rare_vars_df[ultra_rare_vars_df['gnomAD_max_AF']<=csq_af_threshold]
+    ultra_rare_vars_df = ultra_rare_vars_df[ultra_rare_vars_df['gnomAD_max_AF'].replace({np.nan: 0})<=csq_af_threshold]
     cols_to_keep = cols_to_keep + ['gnomADe_AF', 'gnomADg_AF', 'gnomAD_max_AF']
 
 except Exception as e:
