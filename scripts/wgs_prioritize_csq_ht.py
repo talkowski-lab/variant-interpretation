@@ -209,6 +209,10 @@ ht_csq = ht_csq.annotate(
     isSSL = ht_csq.vep.worst_csq.Consequence.contains('start_lost') | ht_csq.vep.worst_csq.Consequence.contains('stop_lost'),
     isINF = ht_csq.vep.worst_csq.Consequence.contains('inframe_insertion') | ht_csq.vep.worst_csq.Consequence.contains('inframe_deletion') )
 
+# Annotate isCoding
+ht_csq = ht_csq.annotate(isCoding=hl.set(coding_variants).intersection(
+            hl.set(ht_csq.vep.worst_csq.Consequence)).size()>0)
+
 # And variants have an interesting "most severe" consequence (SII = "severe is interesting")
 ht_csq = ht_csq.annotate(
     SII = (ht_csq.vep.worst_csq.most_severe_consequence == 'frameshift_variant') | (ht_csq.vep.worst_csq.most_severe_consequence == 'stop_gained') |
