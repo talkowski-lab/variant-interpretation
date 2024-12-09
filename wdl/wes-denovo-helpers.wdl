@@ -260,13 +260,12 @@ task mergeResultsPython {
 
         dfs = []
         tot = len(tsvs)
+        merged_df = pd.DataFrame()
         for i, tsv in enumerate(tsvs):
             if (i+1)%100==0:
                 print(f"Loading tsv {i+1}/{tot}...")
             df = pd.read_csv(tsv, sep='\t')
-            if not df.empty:
-                dfs.append(df)
-        merged_df = pd.concat(dfs)
+            merged_df = pd.concat([merged_df, df])
         merged_df.to_csv(merged_filename, sep='\t', index=False)
         EOF
 
