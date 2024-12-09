@@ -265,6 +265,8 @@ task filterCompHetsXLRHomVar {
         curl ~{filter_comphets_xlr_hom_var_script} > filter_vcf.py
         python3 filter_vcf.py ~{snv_indel_vcf} ~{clinvar_vcf} ~{sv_vcf} ~{ped_uri} ~{prefix} ~{omim_uri} \
             ~{sep=',' sv_gene_fields} ~{genome_build} ~{cpu_cores} ~{memory} 
+        # in case prefix is really long
+        mv "~{variant_types}_comp_hets_xlr_hom_var.tsv.gz" "~{prefix}_~{variant_types}_comp_hets_xlr_hom_var.tsv.gz" 
     }
 
     output {

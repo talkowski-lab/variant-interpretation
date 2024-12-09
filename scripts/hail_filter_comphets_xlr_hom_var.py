@@ -637,4 +637,4 @@ merged_comphets_xlr_hom_var = merged_comphets.drop('proband_GT','proband_GT_set'
 merged_comphets_xlr_hom_var = merged_comphets_xlr_hom_var.annotate(in_non_par=~(merged_comphets_xlr_hom_var.locus.in_autosome_or_par()))
 merged_comphets_xlr_hom_var = get_transmission(merged_comphets_xlr_hom_var)
 
-merged_comphets_xlr_hom_var.flatten().export(f"{prefix}_{variant_types}_comp_hets_xlr_hom_var.tsv.gz")
+merged_comphets_xlr_hom_var.flatten().export(f"{variant_types}_comp_hets_xlr_hom_var.tsv.gz")
