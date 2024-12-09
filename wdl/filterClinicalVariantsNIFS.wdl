@@ -1,6 +1,7 @@
 version 1.0
 
 import "mergeVCFs.wdl" as mergeVCFs
+import "mergeVCFSamples.wdl" as mergeVCFSamples
 import "wes-denovo-helpers.wdl" as helpers
 import "filterClinicalCompHets.wdl" as filterClinicalCompHets
 
@@ -14,6 +15,7 @@ struct RuntimeAttr {
     Int? max_retries
 }
 
+# run on sample-set level
 workflow filterClinicalVariants {
     input {
         Array[File] annot_vcf_files
@@ -118,19 +120,20 @@ workflow filterClinicalVariants {
             runtime_attr_override=runtime_attr_merge_omim_dom
     }
 
-    call mergeVCFs.mergeVCFs as mergeOMIMRecessive {
+    # mergeVCFSamples instead of mergeVCFs
+    call mergeVCFSamples.mergeVCFs as mergeOMIMRecessive {
         input:  
             vcf_files=runClinicalFilteringOMIM.omim_recessive_vcf,
             sv_base_mini_docker=sv_base_mini_docker,
-            cohort_prefix=cohort_prefix + '_OMIM_recessive',
+            output_vcf_name=cohort_prefix + '_OMIM_recessive.vcf.gz',
             runtime_attr_override=runtime_attr_merge_omim_rec_vcfs
     }
 
-    call mergeVCFs.mergeVCFs as mergeClinVarVCFs {
+    call mergeVCFSamples.mergeVCFs as mergeClinVarVCFs {
         input:  
             vcf_files=runClinicalFiltering.clinvar_vcf,
             sv_base_mini_docker=sv_base_mini_docker,
-            cohort_prefix=cohort_prefix + '_ClinVar_variants',
+            output_vcf_name=cohort_prefix + '_ClinVar_variants.vcf.gz',
             runtime_attr_override=runtime_attr_merge_clinvar_vcfs
     }
 
