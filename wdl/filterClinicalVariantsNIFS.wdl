@@ -294,10 +294,9 @@ task makeDummyPed {
         'sample_id': samples,
         'paternal_id': [0 for _ in range(len(samples))],
         'maternal_id': [0 for _ in range(len(samples))],
+        'sex': [0 for _ in range(len(samples))],
+        'phenotype': [0 for _ in range(len(samples))],
     })
-
-    ped['sex'] = np.nan
-    ped['phenotype'] = np.nan
 
     ped.to_csv(out_ped, sep='\t', index=False)
     EOF
