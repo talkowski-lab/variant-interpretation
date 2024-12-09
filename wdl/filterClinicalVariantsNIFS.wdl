@@ -20,6 +20,9 @@ workflow filterClinicalVariants {
     input {
         Array[File] annot_vcf_files
         # File ped_uri  # make a dummy ped with all singletons for NIFS
+        String BILLING_PROJECT_ID
+        String WORKSPACE
+        String terra_data_table_util_script
 
         String cohort_prefix
         String filter_clinical_variants_script
@@ -218,6 +221,10 @@ task runClinicalFiltering {
 
 task makeDummyPed {
     input {
+        String BILLING_PROJECT_ID
+        String WORKSPACE
+        String terra_data_table_util_script
+
         File vcf_file
         String hail_docker
         String genome_build
@@ -257,6 +264,7 @@ task makeDummyPed {
 
     command <<<
     set -eou pipefail
+    curl ~{terra_data_table_util_script} > terra_data_table_util.py
     cat <<EOF > make_ped.py
     import datetime
     import pandas as pd
@@ -264,12 +272,15 @@ task makeDummyPed {
     import numpy as np
     import sys
     import os
+    from terra_data_table_util import get_terra_table_to_df
 
     vcf_file = sys.argv[1]
     out_ped = sys.argv[2]
     genome_build = sys.argv[3]
     cores = sys.argv[4]
     mem = int(np.floor(float(sys.argv[5])))
+    WORKSPACE = sys.argv[6]
+    BILLING_PROJECT_ID = sys.argv[7]
 
     hl.init(min_block_size=128, 
             local=f"local[*]", 
@@ -283,26 +294,42 @@ task makeDummyPed {
     mt = hl.import_vcf(vcf_file, force_bgz=vcf_file.split('.')[-1] in ['gz', 'bgz'], 
         reference_genome=genome_build, array_elements_required=False, call_fields=[])
     samples = mt.s.collect()
+    probands = [s for s in samples if '_fetal' in s]
+    mothers = [s for s in samples if '_maternal' in s]
 
     ped = pd.DataFrame({
-        'family_id': samples,
+        'family_id': pd.Series(samples).str.split('_').str[0].tolist(),
         'sample_id': samples,
         'paternal_id': [0 for _ in range(len(samples))],
         'maternal_id': [0 for _ in range(len(samples))],
         'sex': [0 for _ in range(len(samples))],
         'phenotype': [0 for _ in range(len(samples))],
     })
+    ped.index = ped.sample_id
+
+    # set mothers' sex to 2
+    ped.loc[mothers, 'sex'] = 2
+
+    # grab probands' predicted sex from Terra sample table
+    sample_table = get_terra_table_to_df(BILLING_PROJECT_ID, WORKSPACE, "sample")
+    sample_table.index = sample_table['entity:sample_id']
+    for proband in probands:
+        predicted_ploidy = sample_table.loc[ped.loc[proband, 'family_id'], 'predicted_sex_chrom_ploidy']
+        if predicted_ploidy == 'XX':
+            ped.loc[proband, 'sex'] = 2
+        elif predicted_ploidy == 'XY':
+            ped.loc[proband, 'sex'] = 1
 
     ped.to_csv(out_ped, sep='\t', index=False)
     EOF
 
-    python3 make_ped.py ~{vcf_file} ~{out_ped} ~{genome_build} ~{cpu_cores} ~{memory}
+    python3 make_ped.py ~{vcf_file} ~{out_ped} ~{genome_build} ~{cpu_cores} ~{memory} \
+        ~{WORKSPACE} ~{BILLING_PROJECT_ID}
     >>>
 
     output {
         File ped_uri = out_ped
     }
-
 }
 
 task filterCompHetsXLR {

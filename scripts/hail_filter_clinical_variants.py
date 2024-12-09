@@ -125,7 +125,7 @@ exclude_csqs = ['intergenic_variant', 'upstream_gene_variant', 'downstream_gene_
 
 mt = mt.filter_rows(hl.set(exclude_csqs).intersection(mt.all_csqs).size()!=mt.all_csqs.size())
 
-# filter by AC and gnomAD AF
+# filter by cohort AF and gnomAD AF
 mt = mt.filter_rows(mt.info.cohort_AF<=af_threshold)
 mt = mt.filter_rows((mt.gnomad_popmax_af<=gnomad_af_threshold) | (hl.is_missing(mt.gnomad_popmax_af)))
 
