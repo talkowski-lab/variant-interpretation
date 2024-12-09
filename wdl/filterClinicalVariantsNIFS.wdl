@@ -58,6 +58,9 @@ workflow filterClinicalVariants {
     scatter (vcf_file in annot_vcf_files) {
         call makeDummyPed {
             input:
+            BILLING_PROJECT_ID=BILLING_PROJECT_ID,
+            WORKSPACE=WORKSPACE,
+            terra_data_table_util_script=terra_data_table_util_script,
             vcf_file=vcf_file,
             hail_docker=hail_docker,
             genome_build=genome_build
