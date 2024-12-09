@@ -2,6 +2,7 @@ version 1.0
 
 import "mergeVCFs.wdl" as mergeVCFs
 import "wes-denovo-helpers.wdl" as helpers
+import "filterClinicalCompHets.wdl" as filterClinicalCompHets
 
 struct RuntimeAttr {
     Float? mem_gb
@@ -17,19 +18,14 @@ workflow filterClinicalVariants {
     input {
         Array[File] annot_vcf_files
         # File ped_uri  # make a dummy ped with all singletons for NIFS
-        File spliceAI_gene_annotation_file
-        File pangolin_gene_annotation_file
-        File ref_fasta
 
         String cohort_prefix
         String filter_clinical_variants_script
         String filter_clinical_variants_omim_script
-        # String filter_comphets_xlr_script
+        String filter_comphets_xlr_hom_var_script
 
         String hail_docker
         String sv_base_mini_docker
-        String spliceAI_docker
-        String pangolin_docker
 
         Float af_threshold=0.1
         Float gnomad_af_threshold=0.05
@@ -41,28 +37,27 @@ workflow filterClinicalVariants {
         Float loeuf_v4_threshold=0.6
 
         String genome_build='GRCh38'
-        Int families_per_chunk=500
-        Int max_distance=50
-        Boolean mask=false
 
         Boolean pass_filter=true
-        Boolean run_pangolin=false
 
+        RuntimeAttr? runtime_attr_filter_comphets
         RuntimeAttr? runtime_attr_merge_clinvar
         RuntimeAttr? runtime_attr_merge_omim_rec_vcfs
         RuntimeAttr? runtime_attr_merge_clinvar_vcfs
         RuntimeAttr? runtime_attr_merge_omim_dom
         RuntimeAttr? runtime_attr_merge_omim_rec
-    }
-
-    call makeDummyPed {
-        input:
-        vcf_file=annot_vcf_files[0],
-        hail_docker=hail_docker,
-        genome_build=genome_build
+        RuntimeAttr? runtime_attr_filter_comphets
+        RuntimeAttr? runtime_attr_merge_comphets
     }
 
     scatter (vcf_file in annot_vcf_files) {
+        call makeDummyPed {
+            input:
+            vcf_file=vcf_file,
+            hail_docker=hail_docker,
+            genome_build=genome_build
+        }
+
         call runClinicalFiltering {
             input:
             vcf_file=vcf_file,
@@ -90,33 +85,20 @@ workflow filterClinicalVariants {
             genome_build=genome_build
         }
 
-        ## TODO: logic for spliceAI/Pangolin
-        
-        # if (run_pangolin) {
-        #     call runPangolin {
-        #         input:
-        #         vcf_file=int_splice_vcf,
-        #         ref_fasta=ref_fasta,
-        #         gene_annotation_file=pangolin_gene_annotation_file,
-        #         pangolin_docker=pangolin_docker,
-        #         max_distance=max_distance,
-        #         mask=mask
-        #     }
-        # }
-
-        # File final_splice_vcf = select_first([runPangolin.pangolin_vcf, int_splice_vcf])
-        # String file_ext = if sub(basename(vcf_file), '.vcf.gz', '')!=basename(vcf_file) then '.vcf.gz' else '.vcf.bgz'
-        # String prefix = basename(vcf_file, file_ext) + '_filtered_splice_noncoding_high_moderate_impact_variants'
-
-        # call mergeVCFs.mergeVCFs as mergeSpliceWithNonCodingImpactVars {
-        #     input:  
-        #         vcf_files=[final_splice_vcf, filterRareSpliceImpactVariants.noncoding_impact_vcf],
-        #         sv_base_mini_docker=sv_base_mini_docker,
-        #         cohort_prefix=prefix,
-        #         sort_after_merge=true,
-        #         naive=false   
-        # }
-    }   
+        call filterClinicalCompHets.filterCompHetsXLRHomVar as filterCompHetsXLRHomVar {
+            input:
+                snv_indel_vcf=runClinicalFilteringOMIM.omim_recessive_vcf,
+                clinvar_vcf=runClinicalFiltering.clinvar_vcf,
+                sv_vcf='NA',
+                ped_uri=makeDummyPed.ped_uri,
+                omim_uri=runClinicalFiltering.clinvar_vcf,  # dummy input
+                sv_gene_fields=['NA'],
+                filter_comphets_xlr_hom_var_script=filter_comphets_xlr_hom_var_script,
+                genome_build=genome_build,
+                hail_docker=hail_docker,
+                runtime_attr_override=runtime_attr_filter_comphets
+        }
+    }
 
     call helpers.mergeResultsPython as mergeClinVar {
         input:
@@ -152,6 +134,15 @@ workflow filterClinicalVariants {
             runtime_attr_override=runtime_attr_merge_clinvar_vcfs
     }
 
+    call helpers.mergeResultsPython as mergeCompHetsXLRHomVar {
+        input:
+            tsvs=filterCompHetsXLRHomVar.comphet_xlr_hom_var_tsv,
+            hail_docker=hail_docker,
+            input_size=size(filterCompHetsXLRHomVar.comphet_xlr_hom_var_tsv, 'GB'),
+            merged_filename="~{cohort_prefix}_SNV_Indel_comp_hets_xlr_hom_var.tsv.gz",
+            runtime_attr_override=runtime_attr_merge_comphets
+    }
+
     output {
         File clinvar_tsv = mergeClinVar.merged_tsv
         File clinvar_vcf = mergeClinVarVCFs.merged_vcf_file
@@ -159,6 +150,7 @@ workflow filterClinicalVariants {
         File omim_recessive_vcf = mergeOMIMRecessive.merged_vcf_file
         File omim_recessive_vcf_idx = mergeOMIMRecessive.merged_vcf_idx
         File omim_dominant_tsv = mergeOMIMDominant.merged_tsv
+        File comphet_xlr_hom_var_tsv = mergeCompHetsXLRHomVar.merged_tsv
     }
 }
 
