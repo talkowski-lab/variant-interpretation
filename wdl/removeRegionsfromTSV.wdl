@@ -255,6 +255,7 @@ task removeRegionsVariants {
                     }, tmp_dir="tmp", local_tmpdir="tmp")
 
         ht = hl.import_table(full_input_tsv, force=full_input_tsv.split('.')[-1] in ['gz', 'bgz'])
+        exclude_ht = hl.import_bed(remove_regions_bed, reference_genome=build)
 
         ht = ht.annotate(locus=hl.parse_variant(ht.ID, build).locus,
                         alleles=hl.parse_variant(ht.ID, build).alleles)
