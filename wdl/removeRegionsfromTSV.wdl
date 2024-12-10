@@ -41,7 +41,8 @@ workflow removeRegionsVariantsfromTSV {
             input:
             tsv=removeRegionsVariants.filtered_tsv,
             runtime_attr_override=runtime_attr_remove_regions,
-            hail_docker=hail_docker
+            hail_docker=hail_docker,
+            genome_build=genome_build
         }
 
         call annotatePOLYX {
@@ -73,6 +74,7 @@ task convertTSVtoVCF {
     input {
         File tsv
         String hail_docker
+        String genome_build
         RuntimeAttr? runtime_attr_override
     }
 
@@ -113,6 +115,7 @@ task convertTSVtoVCF {
         tsv = sys.argv[1]
         cores = sys.argv[2]
         mem = int(np.floor(float(sys.argv[3])))
+        build = sys.argv[4]
 
         hl.init(min_block_size=128, spark_conf={"spark.executor.cores": cores, 
                     "spark.executor.memory": f"{int(np.floor(mem*0.4))}g",
@@ -123,14 +126,14 @@ task convertTSVtoVCF {
         df = pd.read_csv(tsv, sep='\t')[['CHROM','POS','REF','ALT']].to_csv('temp.tsv', sep='\t',index=False)
         mt = hl.import_matrix_table('temp.tsv', row_fields={'CHROM':'str','POS':'int','REF':'str','ALT':'str'})
 
-        mt = mt.annotate_rows(locus=hl.locus(mt.CHROM, mt.POS, 'GRCh38'),
+        mt = mt.annotate_rows(locus=hl.locus(mt.CHROM, mt.POS, build),
                         alleles=hl.array([mt.REF, mt.ALT]))
         mt = mt.key_rows_by('locus','alleles')
 
         hl.export_vcf(mt, os.path.basename(tsv).split('.tsv')[0]+'.vcf')
         EOF
 
-        python3 tsv_to_vcf.py ~{tsv} ~{cpu_cores} ~{memory}
+        python3 tsv_to_vcf.py ~{tsv} ~{cpu_cores} ~{memory} ~{genome_build}
     >>>
 
     String file_ext = if sub(basename(tsv), '\\.gz', '')==basename(tsv) then '.tsv' else '.tsv.gz'
