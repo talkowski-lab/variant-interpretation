@@ -23,6 +23,7 @@ workflow filterUltraRareInheritedVariantsHail {
         File meta_uri
         File trio_uri
         File vcf_metrics_tsv_final
+        File remove_regions_bed
         File hg38_reference
         File hg38_reference_dict
         File hg38_reference_fai
@@ -130,6 +131,7 @@ workflow filterUltraRareInheritedVariantsHail {
         input:
         reference_tsv=vcf_metrics_tsv_final,
         full_input_tsv=prioritizeCSQ.vcf_metrics_tsv_prior_csq,
+        remove_regions_bed=remove_regions_bed,
         hg38_reference=hg38_reference,
         hg38_reference_dict=hg38_reference_dict,
         hg38_reference_fai=hg38_reference_fai,

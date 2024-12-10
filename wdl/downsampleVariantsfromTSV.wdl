@@ -1,5 +1,7 @@
 version 1.0
 
+import "removeRegionsfromTSV.wdl" as removeRegions
+
 struct RuntimeAttr {
     Float? mem_gb
     Int? cpu_cores
@@ -13,6 +15,7 @@ workflow downsampleVariantsfromTSV {
     input {
         File reference_tsv
         File full_input_tsv
+        File remove_regions_bed
         File hg38_reference
         File hg38_reference_dict
         File hg38_reference_fai
@@ -39,9 +42,20 @@ workflow downsampleVariantsfromTSV {
             var_type=var_type
         }
 
+        call removeRegions.removeRegionsVariants as removeRegionsVariants {
+            input:
+            remove_regions_bed=remove_regions_bed,
+            full_input_tsv=full_input_tsv,
+            hail_docker=hail_docker,
+            var_type=var_type,
+            genome_build=genome_build,
+            runtime_attr_override=runtime_attr_downsample,
+            prioritize_coding=prioritize_coding
+        }
+        
         call downsampleVariantsPython {
             input:
-            full_input_tsv=full_input_tsv,
+            full_input_tsv=removeRegionsVariants.filtered_tsv,
             hail_docker=hail_docker,
             var_type=var_type,
             chunk_size=chunk_size,
@@ -335,6 +349,11 @@ task downsampleVariantsPython {
                 df['gnomAD_max_AF'] = df[['gnomADe_AF', 'gnomADg_AF']].max(axis=1)
             in_gnomad = df[~df.gnomAD_max_AF.isna()].reset_index(drop=True)
             not_in_gnomad = df[df.gnomAD_max_AF.isna()].reset_index(drop=True)
+
+            if in_gnomad.shape[0]>desired_num_variants:
+                num_per_sample = int(desired_num_variants / in_gnomad.SAMPLE.unique().size)
+                in_gnomad = in_gnomad.groupby('SAMPLE').apply(lambda s: s.sample(min(len(s), num_per_sample))).reset_index(drop=True)
+
             if not not_in_gnomad.empty:
                 num_per_sample = int(max(0, desired_num_variants-in_gnomad.shape[0]) / not_in_gnomad.SAMPLE.unique().size)
                 not_in_gnomad = not_in_gnomad.groupby('SAMPLE').apply(lambda s: s.sample(min(len(s), num_per_sample))).reset_index(drop=True)
