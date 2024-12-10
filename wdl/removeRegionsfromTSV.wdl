@@ -11,7 +11,6 @@ struct RuntimeAttr {
 
 workflow removeRegionsVariantsfromTSV {
     input {
-        File reference_tsv
         File full_input_tsv
         File remove_regions_bed
         File hg38_reference
@@ -258,7 +257,7 @@ task removeRegionsVariants {
                         alleles=hl.parse_variant(ht.ID, build).alleles)
 
         ht = ht.filter(ht.TYPE==var_type)
-        
+
         if prioritize_coding:  # keep all coding
             ht = ht.filter((hl.is_defined(exclude_ht[ht.locus])) | (hl.bool(ht.isCoding)), keep=False)
         else:
