@@ -263,7 +263,7 @@ task removeRegionsVariants {
         ht = ht.filter(ht.TYPE==var_type)
 
         if prioritize_coding:  # keep all coding
-            ht = ht.filter((hl.is_defined(exclude_ht[ht.locus])) | (hl.bool(ht.isCoding)), keep=False)
+            ht = ht.filter((~hl.is_defined(exclude_ht[ht.locus])) | (hl.bool(ht.isCoding)))
         else:
             ht = ht.filter(hl.is_defined(exclude_ht[ht.locus]), keep=False)
         ht.export(output_name)
