@@ -243,10 +243,10 @@ task removeRegionsVariants {
         var_type = sys.argv[2]
         remove_regions_bed = sys.argv[3]
         output_name = sys.argv[4]
-        prioritize_coding = ast.literal_eval(sys.argv[7].capitalize())
-        cores = sys.argv[8]
-        mem = int(np.floor(float(sys.argv[9])))
-        build = sys.argv[10]
+        prioritize_coding = ast.literal_eval(sys.argv[5].capitalize())
+        cores = sys.argv[6]
+        mem = int(np.floor(float(sys.argv[7])))
+        build = sys.argv[8]
 
         hl.init(min_block_size=128, spark_conf={"spark.executor.cores": cores, 
                     "spark.executor.memory": f"{int(np.floor(mem*0.4))}g",
