@@ -248,4 +248,4 @@ try:
 except Exception as e:
     print(str(e))
     ultra_rare_vars_df['VarKey'] = np.nan
-ultra_rare_vars_df[cols_to_keep].to_csv(f"{cohort_prefix}_ultra_rare_variants.tsv.gz", sep='\t', index=False)
+ultra_rare_vars_df[cols_to_keep].to_csv(f"{cohort_prefix}_ultra_rare_parents_variants.tsv.gz", sep='\t', index=False)
