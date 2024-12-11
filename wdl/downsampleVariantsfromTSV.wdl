@@ -341,7 +341,7 @@ task downsampleVariantsPython {
         if prioritize_coding:
             keep = df[df.isCoding].copy()
             df = df[~df.isCoding].copy()  # only downsample from noncoding
-            desired_num_variants = desired_num_variants - keep.shape[0]
+            desired_num_variants = max(0, desired_num_variants - keep.shape[0])
         else:
             keep = pd.DataFrame()
         if prioritize_gnomad:
