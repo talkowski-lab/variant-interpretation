@@ -5,6 +5,7 @@ import "wgs-denovo-step-01.wdl" as step1
 import "mergeVCFs.wdl" as mergeVCFs
 import "wes-denovo-helpers.wdl" as helpers
 import "prioritizeCSQ.wdl" as prioritizeCSQ
+import "downsampleVariantsfromTSV.wdl" as downsample
 
 struct RuntimeAttr {
     Float? mem_gb
@@ -19,10 +20,18 @@ workflow getDenovoByGT {
     input {
         Array[File] vep_files
         File ped_sex_qc
+        
+        File hg38_reference
+        File hg38_reference_dict
+        File hg38_reference_fai
+
         Float af_threshold=0.01
         String cohort_prefix
+
         String hail_docker
+        String jvarkit_docker
         String sv_base_mini_docker
+
         Int chunk_size=100000
         Int shards_per_chunk=10
         Boolean sort_after_merge=false
@@ -31,6 +40,8 @@ workflow getDenovoByGT {
         String prioritize_csq_script
         String genome_build='GRCh38'
         String sample_column='SAMPLE'
+
+        RuntimeAttr? runtime_attr_annotate_polyx
     }
 
     String file_ext = if sub(basename(vep_files[0]), '.vcf.gz', '')!=basename(vep_files[0]) then '.vcf.gz' else '.vcf.bgz'
@@ -65,12 +76,37 @@ workflow getDenovoByGT {
                     genome_build=genome_build,
                     sample_column=sample_column
             }
+            call downsample.convertTSVtoVCF as convertTSVtoVCFChunk {
+                input:
+                tsv=denovoByGTChunk.denovo_gt_csq,
+                runtime_attr_override=runtime_attr_annotate_polyx,
+                hail_docker=hail_docker,
+                genome_build=genome_build
+            }
+
+            call downsample.annotatePOLYX as annotatePOLYXChunk {
+                input:
+                vcf_file=convertTSVtoVCFChunk.output_vcf,
+                hg38_reference=hg38_reference,
+                hg38_reference_fai=hg38_reference_fai,
+                hg38_reference_dict=hg38_reference_dict,
+                runtime_attr_override=runtime_attr_annotate_polyx,
+                jvarkit_docker=jvarkit_docker
+            }
+
+            call downsample.mergePOLYX as mergePOLYXChunk {
+                input:
+                polyx_vcf=annotatePOLYXChunk.polyx_vcf,
+                tsv=denovoByGTChunk.denovo_gt_csq,
+                runtime_attr_override=runtime_attr_annotate_polyx,
+                hail_docker=hail_docker
+            }
         }
         call helpers.mergeResultsPython as mergeChunks {
             input:
-                tsvs=denovoByGTChunk.denovo_gt_csq,
+                tsvs=mergePOLYXChunk.downsampled_polyx_tsv,
                 hail_docker=hail_docker,
-                input_size=size(denovoByGTChunk.denovo_gt_csq, 'GB'),
+                input_size=size(mergePOLYXChunk.downsampled_polyx_tsv, 'GB'),
                 merged_filename=cohort_prefix+'_denovo_GT_AF_filter.tsv.gz'
         }
     }
@@ -98,9 +134,35 @@ workflow getDenovoByGT {
                 input_size=size(denovoByGT.denovo_gt_csq, 'GB'),
                 merged_filename=cohort_prefix+'_denovo_GT_AF_filter.tsv.gz'
         }
+
+        call downsample.convertTSVtoVCF as convertTSVtoVCF {
+            input:
+            tsv=mergeResults.merged_tsv,
+            runtime_attr_override=runtime_attr_annotate_polyx,
+            hail_docker=hail_docker,
+            genome_build=genome_build
+        }
+
+        call downsample.annotatePOLYX as annotatePOLYX {
+            input:
+            vcf_file=convertTSVtoVCF.output_vcf,
+            hg38_reference=hg38_reference,
+            hg38_reference_fai=hg38_reference_fai,
+            hg38_reference_dict=hg38_reference_dict,
+            runtime_attr_override=runtime_attr_annotate_polyx,
+            jvarkit_docker=jvarkit_docker
+        }
+
+        call downsample.mergePOLYX as mergePOLYX {
+            input:
+            polyx_vcf=annotatePOLYX.polyx_vcf,
+            tsv=mergeResults.merged_tsv,
+            runtime_attr_override=runtime_attr_annotate_polyx,
+            hail_docker=hail_docker
+        }
     }
 
-    File denovo_gt_ = select_first([mergeChunks.merged_tsv, mergeResults.merged_tsv])
+    File denovo_gt_ = select_first([mergeChunks.merged_tsv, mergePOLYX.downsampled_polyx_tsv])
 
     call denovoSampleCounts {
         input:
