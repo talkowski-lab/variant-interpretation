@@ -165,6 +165,7 @@ task splitIntoBatches {
     df = pd.concat(pd.read_csv(file, sep='\t', chunksize=100_000))
     df = df[df.TYPE==var_type].copy()
 
+    base_filename = os.path.basename(file).split(file_ext)[0]
     i=0
     if batch_coding_only:  # save all coding to one batch
         df[df.isCoding].to_csv(f"{base_filename}.shard_{i}.all_coding_only.{file_ext}")
