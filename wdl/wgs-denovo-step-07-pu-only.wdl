@@ -168,13 +168,13 @@ task splitIntoBatches {
     base_filename = os.path.basename(file).split(file_ext)[0]
     i=0
     if batch_coding_only:  # save all coding to one batch
-        df[df.isCoding].to_csv(f"{base_filename}.shard_{i}.all_coding_only.{file_ext}")
+        df[df.isCoding].to_csv(f"{base_filename}.shard_{i}.all_coding_only.{file_ext}", sep='\t', index=False)
         df = df[~df.isCoding].copy()
         i+=1
 
     while df.shape[0]>0:
         batch = df.sample(min(batch_size, df.shape[0]))
-        batch.to_csv(f"{base_filename}.shard_{i}.{file_ext}")
+        batch.to_csv(f"{base_filename}.shard_{i}.{file_ext}", sep='\t', index=False)
         df = df.drop(batch.index)    
         i+=1    
     EOF
