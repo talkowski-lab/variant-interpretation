@@ -80,5 +80,6 @@ workflow step7 {
     
     output {
         File vcf_metrics_tsv_final_pu = BaggingPU_RF.vcf_metrics_tsv_final_pu
+        File pu_feature_importances_plot = BaggingPU_RF.pu_feature_importances_plot
     }
 }

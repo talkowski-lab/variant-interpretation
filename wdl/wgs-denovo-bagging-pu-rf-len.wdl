@@ -68,6 +68,7 @@ workflow BaggingPU_RF {
     
     output {
         File vcf_metrics_tsv_final_pu = runBaggingPU_RF.vcf_metrics_tsv_final_pu
+        File pu_feature_importances_plot = runBaggingPU_RF.pu_feature_importances_plot
     }
 }
 
@@ -130,5 +131,6 @@ task runBaggingPU_RF {
 
     output {
         File vcf_metrics_tsv_final_pu = "~{basename(vcf_metrics_tsv_final, '.tsv.gz')}_pu_~{var_type}.tsv"
+        File pu_feature_importances_plot = "~{basename(vcf_metrics_tsv_final, '.tsv.gz')}_pu_~{var_type}_feature_importances.png"
     }
 }

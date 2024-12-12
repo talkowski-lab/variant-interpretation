@@ -251,7 +251,7 @@ def runBaggingPU_level_features(merged_output_subset, features, n_estimators_rf,
     # merged_results = results_optimized[(~results_optimized.VarKey.isin(merged_output_subset[merged_output_subset.FILTER!='PASS'].VarKey))
     #                                   |(results_optimized.label==1)]
     merged_results = results_optimized.copy()
-    return merged_results
+    return merged_results, estimators_optimized, importances_optimized, oob_scores_optimized  # 12/12/2024 NEW: return all
 
 # sample-level training (ultra-rare inherited)
 final_output, ultra_rare, final_output_raw, ultra_rare_raw = load_variants(vcf_metrics_tsv, ultra_rare_inherited_tsv, var_type)
@@ -270,7 +270,7 @@ if var_type=='Indel':
     print("---------------------- Running Large Indels (LEN>3) sample-level ----------------------")
     merged_output_big_indels = merged_output[merged_output.LEN>3].reset_index(drop=True)
     big_sample_features = [feature for feature in sample_features if merged_output_big_indels[feature].isna().all()==False]
-    big_indels = runBaggingPU_level_features(merged_output_big_indels, big_sample_features, n_estimators_rf, n_bags, 
+    big_indels, big_indels_estimators_optimized, big_indels_importances_optimized, big_indels_oob_scores_optimized = runBaggingPU_level_features(merged_output_big_indels, big_sample_features, n_estimators_rf, n_bags, 
                                             suffix='_sample_level', n_jobs=n_jobs)
     # variant-level
     print("---------------------- Running Large Indels (LEN>3) variant-level ----------------------")
@@ -280,7 +280,7 @@ if var_type=='Indel':
                                                     & ((merged_output_var.label==1) | (merged_output_var.VarKey.isin(passes_sample_level)))].reset_index(drop=True)
 
     big_variant_features = [feature for feature in variant_features if merged_output_big_indels_var[feature].isna().all()==False]
-    big_indels_var = runBaggingPU_level_features(merged_output_big_indels_var, big_variant_features, n_estimators_rf, n_bags, 
+    big_indels_var, big_indels_var_estimators_optimized, big_indels_var_importances_optimized, big_indels_var_oob_scores_optimized = runBaggingPU_level_features(merged_output_big_indels_var, big_variant_features, n_estimators_rf, n_bags, 
                                             suffix='_variant_level', n_jobs=n_jobs)
 
     # small indels: LEN<=3
@@ -288,7 +288,7 @@ if var_type=='Indel':
     print("---------------------- Running Small Indels (LEN<=3) sample-level ----------------------")
     merged_output_small_indels = merged_output[merged_output.LEN<=3].reset_index(drop=True)
     small_sample_features = [feature for feature in sample_features if merged_output_small_indels[feature].isna().all()==False]
-    small_indels = runBaggingPU_level_features(merged_output_small_indels, small_sample_features, n_estimators_rf, n_bags, 
+    small_indels, small_indels_estimators_optimized, small_indels_importances_optimized, small_indels_oob_scores_optimized = runBaggingPU_level_features(merged_output_small_indels, small_sample_features, n_estimators_rf, n_bags, 
                                             suffix='_sample_level', n_jobs=n_jobs)
     # variant-level
     print("---------------------- Running Small Indels (LEN<=3) variant-level ----------------------")
@@ -297,7 +297,7 @@ if var_type=='Indel':
     merged_output_small_indels_var = merged_output_var[(merged_output_var.LEN<=3)
                                                     & ((merged_output_var.label==1) | (merged_output_var.VarKey.isin(passes_sample_level)))].reset_index(drop=True)
     small_variant_features = [feature for feature in variant_features if merged_output_small_indels_var[feature].isna().all()==False]
-    small_indels_var = runBaggingPU_level_features(merged_output_small_indels_var, small_variant_features, n_estimators_rf, n_bags, 
+    small_indels_var, small_indels_var_estimators_optimized, small_indels_var_importances_optimized, small_indels_var_oob_scores_optimized = runBaggingPU_level_features(merged_output_small_indels_var, small_variant_features, n_estimators_rf, n_bags, 
                                             suffix='_variant_level', n_jobs=n_jobs)
 
     # merge with step06 output
@@ -310,7 +310,7 @@ if var_type=='SNV':
     print("---------------------- Running SNVs sample-level ----------------------")
     sample_features = [feature for feature in sample_features if merged_output[feature].isna().all()==False]
     if len(sample_features) > 0:
-        all_snvs = runBaggingPU_level_features(merged_output, sample_features, n_estimators_rf, n_bags, 
+        all_snvs, all_snvs_estimators_optimized, all_snvs_importances_optimized, all_snvs_oob_scores_optimized = runBaggingPU_level_features(merged_output, sample_features, n_estimators_rf, n_bags, 
                                                 suffix='_sample_level', n_jobs=n_jobs)
     else: 
         all_snvs = merged_output.copy()
@@ -321,7 +321,7 @@ if var_type=='SNV':
     merged_output_var = merged_output_var[((merged_output_var.label==1) | (merged_output_var.VarKey.isin(passes_sample_level)))].reset_index(drop=True)
     variant_features = [feature for feature in variant_features if merged_output_var[feature].isna().all()==False]
     if len(variant_features) > 0:
-        all_snvs_var = runBaggingPU_level_features(merged_output_var, variant_features, n_estimators_rf, n_bags, 
+        all_snvs_var, all_snvs_var_estimators_optimized, all_snvs_var_importances_optimized, all_snvs_var_oob_scores_optimized = runBaggingPU_level_features(merged_output_var, variant_features, n_estimators_rf, n_bags, 
                                             suffix='_variant_level', n_jobs=n_jobs)
     else:
         all_snvs_var = merged_output_var.copy()
@@ -343,3 +343,29 @@ final_output = final_output[(final_output.VarKey.isin(passes_variant_level))
 
 base_filename = os.path.basename(vcf_metrics_tsv).split('.tsv.gz')[0]
 final_output.to_csv(f"{base_filename}_pu_{var_type}.tsv", sep='\t', index=False)
+
+# 12/12/2024 NEW: feature importance plots
+if var_type=='Indel': 
+    importances = {'small Indels, sample-level': small_indels_importances_optimized, 
+        'small Indels, variant-level': small_indels_var_importances_optimized,
+        'big Indels, sample-level': big_indels_importances_optimized,
+        'big Indels, variant-level': big_indels_var_importances_optimized}
+    fig, ax = plt.subplots(2, 2, figsize=(8, 8));
+    for i, (title, importance_df) in enumerate(importances.items()):
+        row_n, col_n = i//2, i%2
+        sns.violinplot(importance_df, ax=ax[row_n][col_n]);
+        ax[row_n][col_n].set_title(title);
+        ax[row_n][col_n].set_xticks(ticks=ax[row_n][col_n].get_xticks(), labels=ax[row_n][col_n].get_xticklabels(), 
+                        rotation=45, horizontalalignment='right');
+if var_type=='SNV':
+    importances = {'SNVs, sample-level': all_snvs_estimators_optimized, 
+        'SNVs, variant-level': all_snvs_var_estimators_optimized}
+    fig, ax = plt.subplots(1, 2, figsize=(8, 4));
+    for i, (title, importance_df) in enumerate(importances.items()):
+        sns.violinplot(importance_df, ax=ax[i]);
+        ax[i].set_title(title);
+        ax[i].set_xticks(ticks=ax[i].get_xticks(), labels=ax[i].get_xticklabels(), 
+                        rotation=45, horizontalalignment='right');
+
+plt.tight_layout();
+plt.save(f"{base_filename}_pu_{var_type}_feature_importances.png");
