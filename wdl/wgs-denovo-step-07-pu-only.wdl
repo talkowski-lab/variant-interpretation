@@ -177,7 +177,7 @@ task splitIntoBatches {
         df = df.drop(batch.index)    
         i+=1    
     EOF
-    python3 split_file.py ~{vcf_metrics_tsv_final} ~{batch_coding_only} ~{batch_size} ~{var_type} ~{file_ext}
+    python3 split_into_batches.py ~{vcf_metrics_tsv_final} ~{batch_coding_only} ~{batch_size} ~{var_type} ~{file_ext}
     >>>
 
     String base_filename = basename(vcf_metrics_tsv_final, file_ext)
