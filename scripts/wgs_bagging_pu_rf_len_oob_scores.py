@@ -368,4 +368,4 @@ if var_type=='SNV':
                         rotation=45, horizontalalignment='right');
 
 plt.tight_layout();
-plt.save(f"{base_filename}_pu_{var_type}_feature_importances.png");
+fig.save(f"{base_filename}_pu_{var_type}_feature_importances.png");
