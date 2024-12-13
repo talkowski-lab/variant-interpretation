@@ -104,7 +104,10 @@ def load_variants(vcf_metrics_tsv, ultra_rare_inherited_tsv, var_type, use_rando
     
     # repetitive from step6, but if final_output isn't the output of step06
     final_output = final_output[(final_output.PL_sample!='.')&(~final_output.PL_sample.str.contains('\.'))]
-    final_output[['PL_sample_0.0', 'PL_sample_0.1', 'PL_sample_1.1']] = final_output.PL_sample.str.split(",", expand=True).astype(int)
+    try:
+        final_output[['PL_sample_0.0', 'PL_sample_0.1', 'PL_sample_1.1']] = final_output.PL_sample.str.split(",", expand=True).astype(int)
+    except:
+        final_output[['PL_sample_0.0', 'PL_sample_0.1', 'PL_sample_1.1']] = final_output.PL_sample.replace({np.nan: '[0, 0, 0]'}).str.strip('][').str.split(', ', expand=True).astype(int)
     parent_metrics = ['GQ', 'AB', 'DPC', 'VAF']
     for metric in parent_metrics:
         final_output[f'{metric}_parent'] = final_output[[f'{metric}_mother', f'{metric}_father']].min(axis=1)
