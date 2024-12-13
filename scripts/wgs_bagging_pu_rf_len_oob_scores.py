@@ -333,9 +333,8 @@ if var_type=='SNV':
         all_snvs_var['pred_bag_optimized_variant_level'] = 1    
     passes_variant_level = all_snvs_var[(all_snvs_var['pred_bag_optimized_variant_level']==1)].VarKey
 
-final_output = pd.read_csv(vcf_metrics_tsv, sep='\t')
-final_output['Indel_type'] = final_output.apply(lambda x: 'Insertion' if (len(x.ALT) - len(x.REF)) > 0 else 'Deletion', axis=1)
-final_output.loc[final_output.TYPE=='SNV', 'Indel_type'] = 'SNV'
+# Save
+final_output = final_output_raw.copy()
 
 rep_reg = pd.read_csv(rep_regions, sep='\t', header=None)
 final_output['repetitive_region'] = final_output.VarKey.isin(rep_reg[3])
