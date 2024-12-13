@@ -358,8 +358,8 @@ if var_type=='Indel':
         ax[row_n][col_n].set_xticks(ticks=ax[row_n][col_n].get_xticks(), labels=ax[row_n][col_n].get_xticklabels(), 
                         rotation=45, horizontalalignment='right');
 if var_type=='SNV':
-    importances = {'SNVs, sample-level': all_snvs_estimators_optimized, 
-        'SNVs, variant-level': all_snvs_var_estimators_optimized}
+    importances = {'SNVs, sample-level': all_snvs_importances_optimized, 
+        'SNVs, variant-level': all_snvs_var_importances_optimized}
     fig, ax = plt.subplots(1, 2, figsize=(8, 4));
     for i, (title, importance_df) in enumerate(importances.items()):
         sns.violinplot(importance_df, ax=ax[i]);
