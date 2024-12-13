@@ -106,9 +106,11 @@ def load_variants(vcf_metrics_tsv, ultra_rare_inherited_tsv, var_type, use_rando
     final_output = final_output[(final_output.PL_sample!='.')&(~final_output.PL_sample.str.contains('\.'))]
     try:
         final_output[['PL_sample_0.0', 'PL_sample_0.1', 'PL_sample_1.1']] = final_output.PL_sample.str.split(",", expand=True).astype(int)
-    except:
+    except:  # NEW 12/12/2024
         final_output[['PL_sample_0.0', 'PL_sample_0.1', 'PL_sample_1.1']] = final_output.PL_sample.replace({np.nan: '[0, 0, 0]'}).str.strip('][').str.split(', ', expand=True).astype(int)
-    parent_metrics = ['GQ', 'AB', 'DPC', 'VAF']
+    # NEW 12/12/2024 removed VAF
+    # parent_metrics = ['GQ', 'AB', 'DPC', 'VAF']
+    parent_metrics = ['GQ', 'AB', 'DPC']
     for metric in parent_metrics:
         final_output[f'{metric}_parent'] = final_output[[f'{metric}_mother', f'{metric}_father']].min(axis=1)
 
@@ -131,7 +133,7 @@ def load_variants(vcf_metrics_tsv, ultra_rare_inherited_tsv, var_type, use_rando
     final_output['GQ_parent'] = final_output[['GQ_mother', 'GQ_father']].min(axis=1)
     final_output['AB_parent'] = final_output[['AB_mother', 'AB_father']].min(axis=1)
     final_output['DPC_parent'] = final_output[['DPC_mother', 'DPC_father']].min(axis=1)
-    final_output['VAF_parent'] = final_output[['VAF_mother', 'VAF_father']].min(axis=1)
+    # final_output['VAF_parent'] = final_output[['VAF_mother', 'VAF_father']].min(axis=1)  # NEW 12/12/2024 commented out
 
     final_output_raw = final_output.copy();
     ultra_rare_raw = ultra_rare.copy();
