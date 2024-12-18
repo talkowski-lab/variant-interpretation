@@ -83,8 +83,10 @@ if 'num_alleles' not in list(mt.row_value.keys()):
 #     pass
 
 # annotate cohort AC to INFO field (after splitting multiallelic)
-mt = mt.annotate_rows(info=mt.info.annotate(cohort_AC=mt.info.AC[mt.a_index - 1],
-                                            cohort_AF=mt.info.AF[mt.a_index - 1]))
+if 'cohort_AC' not in list(mt.row_value.keys()):
+    mt = mt.annotate_rows(info=mt.info.annotate(cohort_AC=mt.info.AC[mt.a_index - 1])
+if 'cohort_AF' not in list(mt.row_value.keys()):
+    mt = mt.annotate_rows(info=mt.info.annotate(cohort_AF=mt.info.AF[mt.a_index - 1]))
 
 # reannotate
 if (reannotate_ac_af):

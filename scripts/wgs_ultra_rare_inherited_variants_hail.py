@@ -223,9 +223,9 @@ ultra_rare_vars_df['TYPE'] =np.where(ultra_rare_vars_df.LEN==0, 'SNV', 'Indel')
 
 ultra_rare_vars_df.columns = ultra_rare_vars_df.columns.str.replace('info.', '')
 
-for info_cat in ['AC', 'AF', 'MLEAC', 'MLEAF']:
-    if info_cat in ultra_rare_vars_df.columns:
-            ultra_rare_vars_df[info_cat] = ultra_rare_vars_df[info_cat].str[0]
+# for info_cat in ['AC', 'AF', 'MLEAC', 'MLEAF']:
+#     if info_cat in ultra_rare_vars_df.columns:
+#             ultra_rare_vars_df[info_cat] = ultra_rare_vars_df[info_cat].str[0]
 
 # 'POLYX' -- added after downsampling
 info_cols = ['END','AC','AF','AN','BaseQRankSum','ClippingRankSum','DP','FS','MLEAC','MLEAF','MQ','MQRankSum','QD','ReadPosRankSum','SOR','VQSLOD','cohort_AC', 'cohort_AF', 'CSQ']

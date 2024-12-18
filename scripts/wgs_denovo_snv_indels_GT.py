@@ -84,9 +84,9 @@ rename_cols = {f"mother_entry.{field}": f"{field}_mother" for field in parent_fo
 tm_denovo_df = tm_denovo_df.rename(rename_cols, axis=1)
 tm_denovo_df.columns = tm_denovo_df.columns.str.replace('info.', '')
 
-for info_cat in ['AC', 'AF', 'MLEAC', 'MLEAF']:
-    if info_cat in tm_denovo_df.columns:
-            tm_denovo_df[info_cat] = tm_denovo_df[info_cat].str[0]
+# for info_cat in ['AC', 'AF', 'MLEAC', 'MLEAF']:
+#     if info_cat in tm_denovo_df.columns:
+#             tm_denovo_df[info_cat] = tm_denovo_df[info_cat].str[0]
 
 try:
     tm_denovo_df['VarKey'] = tm_denovo_df[['ID', 'SAMPLE']].astype(str).agg(':'.join, axis=1)
