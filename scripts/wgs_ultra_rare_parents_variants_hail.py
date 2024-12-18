@@ -89,9 +89,9 @@ def split_multi_ssc(mt):
 
 mt = split_multi_ssc(mt)
 # annotate cohort ac to INFO field (after splitting multiallelic)
-if 'cohort_AC' not in list(mt.row_value.keys()):
+if 'cohort_AC' not in list(mt.info):
     mt = mt.annotate_rows(info=mt.info.annotate(cohort_AC=mt.info.AC[mt.a_index - 1]))
-if 'cohort_AF' not in list(mt.row_value.keys()):
+if 'cohort_AF' not in list(mt.info):
     mt = mt.annotate_rows(info=mt.info.annotate(cohort_AF=mt.info.AF[mt.a_index - 1]))
 mt = mt.annotate_rows(ID=hl.variant_str(mt.row_key))
 
