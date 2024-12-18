@@ -81,8 +81,11 @@ def trim_vcf(vcf_uri, lcr_uri, ped_uri, meta_uri, trio_uri, vcf_out_uri, build, 
     header = hl.get_vcf_metadata(vcf_uri)
 
     # annotate cohort ac to INFO field
-    mt = mt.annotate_rows(info=mt.info.annotate(cohort_AC=mt.info.AC[mt.a_index - 1],
-                                           cohort_AF=mt.info.AF[mt.a_index - 1]))
+    if 'cohort_AC' not in list(mt.row_value.keys()):
+        mt = mt.annotate_rows(info=mt.info.annotate(cohort_AC=mt.info.AC[mt.a_index - 1]))
+    if 'cohort_AF' not in list(mt.row_value.keys()):
+        mt = mt.annotate_rows(info=mt.info.annotate(cohort_AF=mt.info.AF[mt.a_index - 1]))
+
     mt = mt.annotate_entries(DPC=hl.sum(mt.AD),
                                            AB=mt.AD[1]/hl.sum(mt.AD),
                                            VAF=mt.AD[1]/mt.DP)

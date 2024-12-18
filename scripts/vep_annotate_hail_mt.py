@@ -50,8 +50,10 @@ if 'num_alleles' not in list(mt.row_value.keys()):
     mt = split_multi_ssc(mt)
     # mt = mt.distinct_by_row()
 # annotate cohort ac to INFO field (after splitting multiallelic)
-mt = mt.annotate_rows(info=mt.info.annotate(cohort_AC=mt.info.AC[mt.a_index - 1],
-                                            cohort_AF=mt.info.AF[mt.a_index - 1]))
+if 'cohort_AC' not in list(mt.row_value.keys()):
+    mt = mt.annotate_rows(info=mt.info.annotate(cohort_AC=mt.info.AC[mt.a_index - 1]))
+if 'cohort_AF' not in list(mt.row_value.keys()):
+    mt = mt.annotate_rows(info=mt.info.annotate(cohort_AF=mt.info.AF[mt.a_index - 1]))
 
 if 'vep' in list(mt.row):
     mt = mt.annotate_rows(original_vep=mt.vep)
