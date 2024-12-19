@@ -123,7 +123,7 @@ task vepAnnotateMT {
         tabix -f -s 76 -b 77 -e 78 ~{loeuf_data}
 
         echo '{"command": [
-        "vep",
+        "/opt/vep/ensembl-vep/vep",
         "--format", "vcf",
         "__OUTPUT_FORMAT_FLAG__",
         "--force_overwrite",
