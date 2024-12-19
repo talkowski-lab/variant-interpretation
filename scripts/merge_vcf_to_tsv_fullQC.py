@@ -30,7 +30,7 @@ def main():
     
     fixed_info_columns = args.info_fields.split(',')
 
-    # Collect trio list infor
+    # Collect trio list info
     sample_info, triokey_to_samp = parse_pedigree(args.ped_path)
     
     # Collect triodenovo input keys (family ID and sample ID)

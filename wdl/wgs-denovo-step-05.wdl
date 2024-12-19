@@ -14,7 +14,7 @@ workflow step5 {
         File ped_sex_qc
         Array[File] split_trio_annot_vcfs  # from step03
         Array[File] trio_denovo_vcf  # from step04
-        Array[String] info_fields = ['END','AC','AF','AN','BaseQRankSum','ClippingRankSum','DP','FS','MLEAC','MLEAF','MQ','MQRankSum','POLYX','QD','ReadPosRankSum','SOR','VQSLOD','cohort_AC','CSQ', 'MPC']
+        Array[String] info_fields = ['END','AC','AF','AN','BaseQRankSum','ClippingRankSum','DP','FS','MLEAC','MLEAF','MQ','MQRankSum','POLYX','QD','ReadPosRankSum','SOR','VQSLOD','cohort_AC','cohort_AF','CSQ', 'MPC']
         String merge_vcf_to_tsv_fullQC_script
         String trio_denovo_docker
         String cohort_prefix
