@@ -33,10 +33,13 @@ workflow filterClinicalVariants {
         String sv_base_mini_docker
 
         Int ad_alt_threshold=3
-        Float af_threshold=0.1
+        Float spliceAI_threshold=0.95  # NIFS-specific
+        Float af_threshold=1  # no AF filter for NIFS
         Float gnomad_af_threshold=0.05
-        Float am_threshold=0.56
-        Float mpc_threshold=2
+        Float am_rec_threshold=0.56
+        Float am_dom_threshold=0.56
+        Float mpc_rec_threshold=2
+        Float mpc_dom_threshold=2
         Float gnomad_rec_threshold=0.001
         Float gnomad_dom_threshold=0.001
         Float loeuf_v2_threshold=0.35
@@ -45,6 +48,7 @@ workflow filterClinicalVariants {
         String genome_build='GRCh38'
 
         Boolean pass_filter=false
+        Boolean include_not_omim=false
 
         RuntimeAttr? runtime_attr_filter_comphets
         RuntimeAttr? runtime_attr_merge_clinvar
@@ -73,6 +77,7 @@ workflow filterClinicalVariants {
             ped_uri=makeDummyPed.ped_uri,
             filter_clinical_variants_script=filter_clinical_variants_script,
             hail_docker=hail_docker,
+            spliceAI_threshold=spliceAI_threshold,
             af_threshold=af_threshold,
             gnomad_af_threshold=gnomad_af_threshold,
             genome_build=genome_build,
@@ -86,8 +91,10 @@ workflow filterClinicalVariants {
             filter_clinical_variants_omim_script=filter_clinical_variants_omim_script,
             hail_docker=hail_docker,
             ad_alt_threshold=ad_alt_threshold,
-            am_threshold=am_threshold,
-            mpc_threshold=mpc_threshold,
+            am_rec_threshold=am_rec_threshold,
+            am_dom_threshold=am_dom_threshold,
+            mpc_rec_threshold=mpc_rec_threshold,
+            mpc_dom_threshold=mpc_dom_threshold,
             gnomad_rec_threshold=gnomad_rec_threshold,
             gnomad_dom_threshold=gnomad_dom_threshold,
             loeuf_v2_threshold=loeuf_v2_threshold,
@@ -175,6 +182,7 @@ task runClinicalFiltering {
         String hail_docker
         String genome_build
 
+        Float spliceAI_threshold
         Float af_threshold
         Float gnomad_af_threshold
         Boolean pass_filter
@@ -215,7 +223,7 @@ task runClinicalFiltering {
     command {
         curl ~{filter_clinical_variants_script} > filter_vcf.py
         python3 filter_vcf.py ~{vcf_file} ~{prefix} ~{cpu_cores} ~{memory} \
-            ~{ped_uri} ~{af_threshold} ~{gnomad_af_threshold} ~{genome_build} ~{pass_filter}
+            ~{ped_uri} ~{spliceAI_threshold} ~{af_threshold} ~{gnomad_af_threshold} ~{genome_build} ~{pass_filter}
     }
 
     output {
@@ -338,71 +346,6 @@ task makeDummyPed {
     }
 }
 
-task filterCompHetsXLR {
-    input {
-        File vcf_file
-        File ped_uri
-
-        String filter_comphets_xlr_script
-        String hail_docker
-        String genome_build 
-
-        Int ad_alt_threshold
-        Float af_threshold
-        Float gnomad_af_threshold
-        Float am_threshold
-        Float mpc_threshold
-        Float gnomad_rec_threshold
-        Float gnomad_dom_threshold
-        Float loeuf_v2_threshold
-        Float loeuf_v4_threshold
-
-        RuntimeAttr? runtime_attr_override
-    }
-    Float input_size = size(vcf_file, 'GB')
-    Float base_disk_gb = 10.0
-    Float input_disk_scale = 5.0
-
-    RuntimeAttr runtime_default = object {
-        mem_gb: 4,
-        disk_gb: ceil(base_disk_gb + input_size * input_disk_scale),
-        cpu_cores: 1,
-        preemptible_tries: 3,
-        max_retries: 1,
-        boot_disk_gb: 10
-    }
-
-    RuntimeAttr runtime_override = select_first([runtime_attr_override, runtime_default])
-
-    Float memory = select_first([runtime_override.mem_gb, runtime_default.mem_gb])
-    Int cpu_cores = select_first([runtime_override.cpu_cores, runtime_default.cpu_cores])
-    
-    runtime {
-        memory: "~{memory} GB"
-        disks: "local-disk ~{select_first([runtime_override.disk_gb, runtime_default.disk_gb])} HDD"
-        cpu: cpu_cores
-        preemptible: select_first([runtime_override.preemptible_tries, runtime_default.preemptible_tries])
-        maxRetries: select_first([runtime_override.max_retries, runtime_default.max_retries])
-        docker: hail_docker
-        bootDiskSizeGb: select_first([runtime_override.boot_disk_gb, runtime_default.boot_disk_gb])
-    }
-
-    String file_ext = if sub(basename(vcf_file), '.vcf.gz', '')!=basename(vcf_file) then '.vcf.gz' else '.vcf.bgz'
-    String prefix = basename(vcf_file, file_ext) + '_filtered'
-
-    command {
-        curl ~{filter_comphets_xlr_script} > filter_vcf.py
-        python3 filter_vcf.py ~{vcf_file} ~{prefix} ~{cpu_cores} ~{memory} \
-            ~{ped_uri} ~{af_threshold} ~{gnomad_af_threshold} ~{am_threshold} \
-            ~{mpc_threshold} ~{gnomad_rec_threshold} ~{gnomad_dom_threshold} \
-            ~{loeuf_v2_threshold} ~{loeuf_v4_threshold} ~{genome_build} ~{ad_alt_threshold}
-    }
-
-    output {
-        File omim_recessive_comphet_xlr = prefix + '_OMIM_recessive_comphet_XLR.tsv.gz'
-    }
-}
-
 task runClinicalFilteringOMIM {
     input {
         File vcf_file
@@ -413,8 +356,10 @@ task runClinicalFilteringOMIM {
         String genome_build
         
         Int ad_alt_threshold
-        Float am_threshold
-        Float mpc_threshold
+        Float am_rec_threshold
+        Float am_dom_threshold
+        Float mpc_rec_threshold
+        Float mpc_dom_threshold
         Float gnomad_rec_threshold
         Float gnomad_dom_threshold
         Float loeuf_v2_threshold
@@ -456,135 +401,13 @@ task runClinicalFilteringOMIM {
     command {
         curl ~{filter_clinical_variants_omim_script} > filter_vcf.py
         python3 filter_vcf.py ~{vcf_file} ~{prefix} ~{cpu_cores} ~{memory} ~{ped_uri} \
-            ~{am_threshold} ~{mpc_threshold} ~{gnomad_rec_threshold} ~{gnomad_dom_threshold} \
+            ~{am_rec_threshold} ~{am_dom_threshold} ~{mpc_rec_threshold} ~{mpc_dom_threshold} \
+            ~{gnomad_rec_threshold} ~{gnomad_dom_threshold} \
             ~{loeuf_v2_threshold} ~{loeuf_v4_threshold} ~{genome_build} ~{ad_alt_threshold}
     }
 
     output {
         File omim_recessive_vcf = prefix + '_OMIM_recessive.vcf.bgz'
         File omim_dominant = prefix + '_OMIM_dominant.tsv.gz'
-    }
-}
-
-task runSpliceAI {
-    input {
-        File vcf_file
-        File gene_annotation_file
-        File ref_fasta
-
-        Boolean mask
-        Int max_distance  # Maximum distance between the variant and gained/lost splice site. An integer in the range [0, 5000]. Defaults to 50.
-        String spliceAI_docker
-        RuntimeAttr? runtime_attr_override
-    }
-    Float input_size = size(vcf_file, 'GB')
-    Float base_disk_gb = 10.0
-    Float input_disk_scale = 5.0
-
-    RuntimeAttr runtime_default = object {
-        mem_gb: 4,
-        disk_gb: ceil(base_disk_gb + input_size * input_disk_scale),
-        gpu_cores: 2,
-        cpu_cores: 1, 
-        preemptible_tries: 3,
-        max_retries: 1,
-        boot_disk_gb: 10
-    }
-
-    RuntimeAttr runtime_override = select_first([runtime_attr_override, runtime_default])
-
-    Float memory = select_first([runtime_override.mem_gb, runtime_default.mem_gb])
-    Int cpu_cores = select_first([runtime_override.cpu_cores, runtime_default.cpu_cores])
-    Int gpu_cores = select_first([runtime_override.gpu_cores, runtime_default.gpu_cores])
-    
-    runtime {
-        memory: "~{memory} GB"
-        disks: "local-disk ~{select_first([runtime_override.disk_gb, runtime_default.disk_gb])} HDD"
-        cpu: cpu_cores
-        gpuType: "nvidia-tesla-t4"
-        gpuCount: gpu_cores
-        nvidiaDriverVersion: "450.80.02"
-        preemptible: select_first([runtime_override.preemptible_tries, runtime_default.preemptible_tries])
-        maxRetries: select_first([runtime_override.max_retries, runtime_default.max_retries])
-        docker: spliceAI_docker
-        bootDiskSizeGb: select_first([runtime_override.boot_disk_gb, runtime_default.boot_disk_gb])
-    }
-
-    String mask_str = if mask then '--mask' else ''
-    String file_ext = if sub(basename(vcf_file), '.vcf.gz', '')!=basename(vcf_file) then '.vcf.gz' else '.vcf.bgz'
-    String output_filename = basename(vcf_file, file_ext) + '_spliceAI.vcf'
-
-    command {
-        set -eou pipefail
-        tabix ~{vcf_file}
-        spliceai.py -r ~{ref_fasta} -a ~{gene_annotation_file} -i ~{vcf_file} -o ~{output_filename} \
-            -d ~{max_distance} ~{mask_str} --preprocessing_threads 4
-        bgzip ~{output_filename}
-    }
-
-    output {
-        File spliceAI_vcf = output_filename + '.gz'
-    }
-}
-
-
-task runPangolin {
-    input {
-        File vcf_file
-        File gene_annotation_file
-        File ref_fasta
-
-        Boolean mask
-        Int max_distance  # Maximum distance between the variant and gained/lost splice site. An integer in the range [0, 5000]. Defaults to 50.
-        String pangolin_docker
-        RuntimeAttr? runtime_attr_override
-    }
-    Float input_size = size(vcf_file, 'GB')
-    Float base_disk_gb = 10.0
-    Float input_disk_scale = 5.0
-
-    RuntimeAttr runtime_default = object {
-        mem_gb: 4,
-        disk_gb: ceil(base_disk_gb + input_size * input_disk_scale),
-        gpu_cores: 2,
-        cpu_cores: 1, 
-        preemptible_tries: 3,
-        max_retries: 1,
-        boot_disk_gb: 10
-    }
-
-    RuntimeAttr runtime_override = select_first([runtime_attr_override, runtime_default])
-
-    Float memory = select_first([runtime_override.mem_gb, runtime_default.mem_gb])
-    Int cpu_cores = select_first([runtime_override.cpu_cores, runtime_default.cpu_cores])
-    Int gpu_cores = select_first([runtime_override.gpu_cores, runtime_default.gpu_cores])
-    
-    runtime {
-        memory: "~{memory} GB"
-        disks: "local-disk ~{select_first([runtime_override.disk_gb, runtime_default.disk_gb])} HDD"
-        cpu: cpu_cores
-        gpuType: "nvidia-tesla-t4"
-        gpuCount: gpu_cores
-        nvidiaDriverVersion: "450.80.02"
-        preemptible: select_first([runtime_override.preemptible_tries, runtime_default.preemptible_tries])
-        maxRetries: select_first([runtime_override.max_retries, runtime_default.max_retries])
-        docker: pangolin_docker
-        bootDiskSizeGb: select_first([runtime_override.boot_disk_gb, runtime_default.boot_disk_gb])
-    }
-
-    String mask_str = if mask then '-m True' else ''
-    String file_ext = if sub(basename(vcf_file), '.vcf.gz', '')!=basename(vcf_file) then '.vcf.gz' else '.vcf.bgz'
-    String output_filename = basename(vcf_file, file_ext) + '_pangolin'
-
-    command {
-        set -eou pipefail
-        zcat ~{vcf_file} > ~{basename(vcf_file, file_ext)}.vcf
-        pangolin ~{basename(vcf_file, file_ext)}.vcf ~{ref_fasta} ~{gene_annotation_file} ~{output_filename} \
-            -d ~{max_distance} ~{mask_str} 
-        bgzip ~{output_filename}.vcf
-    }
-
-    output {
-        File pangolin_vcf = output_filename + '.vcf.gz'
     }
 }

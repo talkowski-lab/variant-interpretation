@@ -12,14 +12,16 @@ prefix = sys.argv[2]
 cores = sys.argv[3]  # string
 mem = int(np.floor(float(sys.argv[4])))
 ped_uri = sys.argv[5]
-am_threshold = float(sys.argv[6])
-mpc_threshold = float(sys.argv[7])
-gnomad_rec_threshold = float(sys.argv[8])
-gnomad_dom_threshold = float(sys.argv[9])
-loeuf_v2_threshold = float(sys.argv[10])
-loeuf_v4_threshold = float(sys.argv[11])
-build = sys.argv[12]
-ad_alt_threshold = int(sys.argv[13])
+am_rec_threshold = float(sys.argv[6])
+am_dom_threshold = float(sys.argv[7])
+mpc_rec_threshold = float(sys.argv[8])
+mpc_dom_threshold = float(sys.argv[9])
+gnomad_rec_threshold = float(sys.argv[10])
+gnomad_dom_threshold = float(sys.argv[11])
+loeuf_v2_threshold = float(sys.argv[12])
+loeuf_v4_threshold = float(sys.argv[13])
+build = sys.argv[14]
+ad_alt_threshold = int(sys.argv[15])
 
 hl.init(min_block_size=128, 
         spark_conf={"spark.executor.cores": cores, 
@@ -115,9 +117,9 @@ omim_rec_gene_phased_tm = gene_phased_tm.filter_rows(
         ((gene_phased_tm.locus.in_x_nonpar()) | (gene_phased_tm.locus.in_x_par()))) |
     ((gene_phased_tm.vep.transcript_consequences.OMIM_inheritance_code=='') &  # not OMIM recessive with gnomAD AF and MPC filters
         (((gene_phased_tm.gnomad_popmax_af<=gnomad_rec_threshold) | (hl.is_missing(gene_phased_tm.gnomad_popmax_af))) &
-            (((gene_phased_tm.info.MPC>=mpc_threshold) | (hl.is_missing(gene_phased_tm.info.MPC))) |
+            (((gene_phased_tm.info.MPC>=mpc_rec_threshold) | (hl.is_missing(gene_phased_tm.info.MPC))) |
             (hl.if_else(gene_phased_tm.vep.transcript_consequences.am_pathogenicity=='', 1, 
-                hl.float(gene_phased_tm.vep.transcript_consequences.am_pathogenicity))>=am_threshold)
+                hl.float(gene_phased_tm.vep.transcript_consequences.am_pathogenicity))>=am_rec_threshold)
             )
         )
     )
@@ -148,9 +150,9 @@ omim_dom = gene_phased_tm.filter_rows(
         (((gene_phased_tm.vep.transcript_consequences.OMIM_inheritance_code.matches('1')) |  # OMIM dominant OR XLD with gnomAD AF filter
           (gene_phased_tm.vep.transcript_consequences.OMIM_inheritance_code.matches('3'))) |   
         ((gene_phased_tm.vep.transcript_consequences.OMIM_inheritance_code=='') &  # not OMIM dominant with ((MPC filter OR AM filter) AND LOEUF v2/v4 filters)
-            ((((gene_phased_tm.info.MPC>=mpc_threshold) | (hl.is_missing(gene_phased_tm.info.MPC))) |
+            ((((gene_phased_tm.info.MPC>=mpc_dom_threshold) | (hl.is_missing(gene_phased_tm.info.MPC))) |
             (hl.if_else(gene_phased_tm.vep.transcript_consequences.am_pathogenicity=='', 1, 
-            hl.float(gene_phased_tm.vep.transcript_consequences.am_pathogenicity))>=am_threshold)) &
+            hl.float(gene_phased_tm.vep.transcript_consequences.am_pathogenicity))>=am_dom_threshold)) &
                 ((hl.if_else(gene_phased_tm.vep.transcript_consequences.LOEUF_v2=='', 0, 
                     hl.float(gene_phased_tm.vep.transcript_consequences.LOEUF_v2))<=loeuf_v2_threshold) | 
                 (hl.if_else(gene_phased_tm.vep.transcript_consequences.LOEUF_v4=='', 0, 

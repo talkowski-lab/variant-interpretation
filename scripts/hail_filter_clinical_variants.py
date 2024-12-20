@@ -11,10 +11,11 @@ prefix = sys.argv[2]
 cores = sys.argv[3]  # string
 mem = int(np.floor(float(sys.argv[4])))
 ped_uri = sys.argv[5]
-af_threshold = float(sys.argv[6])
-gnomad_af_threshold = float(sys.argv[7])
-build = sys.argv[8]
-pass_filter = ast.literal_eval(sys.argv[9].capitalize())
+spliceAI_threshold = float(sys.argv[6])
+af_threshold = float(sys.argv[7])
+gnomad_af_threshold = float(sys.argv[8])
+build = sys.argv[9]
+pass_filter = ast.literal_eval(sys.argv[10].capitalize())
 
 def filter_mt(mt, filter_csq=True, filter_impact=True):
     '''
@@ -128,6 +129,8 @@ mt = mt.filter_rows(hl.set(exclude_csqs).intersection(mt.all_csqs).size()!=mt.al
 # filter by cohort AF and gnomAD AF
 mt = mt.filter_rows(mt.info.cohort_AF<=af_threshold)
 mt = mt.filter_rows((mt.gnomad_popmax_af<=gnomad_af_threshold) | (hl.is_missing(mt.gnomad_popmax_af)))
+
+# TODO: filter by spliceAI score
 
 # export intermediate VCF
 hl.export_vcf(mt, prefix+'_clinical.vcf.bgz', metadata=header)
