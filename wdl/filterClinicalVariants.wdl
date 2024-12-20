@@ -49,7 +49,7 @@ workflow filterClinicalVariants {
         Boolean mask=false
 
         Boolean pass_filter=false
-        Boolean include_not_omim=true
+        Boolean include_not_omim=true  # NIFS-specific
 
         RuntimeAttr? runtime_attr_merge_clinvar
         RuntimeAttr? runtime_attr_merge_omim_rec_vcfs
