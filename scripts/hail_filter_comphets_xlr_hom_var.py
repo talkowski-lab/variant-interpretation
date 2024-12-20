@@ -194,7 +194,7 @@ elif sv_vcf!='NA':
     variant_types = 'SV'
     merged_mt = sv_mt
 
-# merge SV VCF with SNV/Indel VCF
+# Merge SV VCF with SNV/Indel VCF
 if sv_vcf!='NA':
     # Change locus to locus_interval to include END for SVs
     merged_mt = merged_mt.annotate_rows(end=hl.if_else(hl.is_defined(merged_mt.info.END2), merged_mt.info.END2, merged_mt.info.END))
@@ -611,12 +611,13 @@ if (len(trio_samples)>0) and (len(non_trio_samples)>0):
 if len(trio_samples)==0:
     trio_samples = ['']
 
-# XLR only
+# Trio matrix
 merged_tm = hl.trio_matrix(merged_mt, pedigree, complete_trios=False)
 gene_phased_tm, gene_agg_phased_tm = phase_by_transmission_aggregate_by_gene(merged_tm, merged_mt, pedigree)
 gene_phased_tm = gene_phased_tm.annotate_cols(trio_status=hl.if_else(gene_phased_tm.fam_id=='-9', 'not_in_pedigree', 
                                                    hl.if_else(hl.array(trio_samples).contains(gene_phased_tm.id), 'trio', 'non_trio')))
 
+# XLR only
 xlr_phased_tm = gene_phased_tm.filter_rows((gene_phased_tm.vep.transcript_consequences.OMIM_inheritance_code.matches('4')) |  # OMIM XLR
                                            ((gene_phased_tm.locus.in_x_nonpar()) | (gene_phased_tm.locus.in_x_par())))  # on X chromosome
 xlr_phased = xlr_phased_tm.filter_entries((xlr_phased_tm.proband_entry.GT.is_non_ref()) &

@@ -16,6 +16,7 @@ struct RuntimeAttr {
 }
 
 # run on sample-set level
+# expect only SNV/Indel VCF, no SV VCF for NIFS
 workflow filterClinicalVariants {
     input {
         Array[File] annot_vcf_files
@@ -50,6 +51,8 @@ workflow filterClinicalVariants {
         Boolean pass_filter=false
         Boolean include_not_omim=false  # NIFS-specific
 
+        String gene_list_tsv='NA'  # for filtering by gene list(s), tab-separated "gene_list_name"\t"gene_list_uri"
+
         RuntimeAttr? runtime_attr_filter_comphets
         RuntimeAttr? runtime_attr_merge_clinvar
         RuntimeAttr? runtime_attr_merge_omim_rec_vcfs
@@ -77,7 +80,6 @@ workflow filterClinicalVariants {
             ped_uri=makeDummyPed.ped_uri,
             filter_clinical_variants_script=filter_clinical_variants_script,
             hail_docker=hail_docker,
-            spliceAI_threshold=spliceAI_threshold,
             af_threshold=af_threshold,
             gnomad_af_threshold=gnomad_af_threshold,
             genome_build=genome_build,
@@ -90,6 +92,7 @@ workflow filterClinicalVariants {
             ped_uri=makeDummyPed.ped_uri,
             filter_clinical_variants_omim_script=filter_clinical_variants_omim_script,
             hail_docker=hail_docker,
+            spliceAI_threshold=spliceAI_threshold,
             ad_alt_threshold=ad_alt_threshold,
             am_rec_threshold=am_rec_threshold,
             am_dom_threshold=am_dom_threshold,
@@ -100,7 +103,8 @@ workflow filterClinicalVariants {
             loeuf_v2_threshold=loeuf_v2_threshold,
             loeuf_v4_threshold=loeuf_v4_threshold,
             genome_build=genome_build,
-            include_not_omim=include_not_omim
+            include_not_omim=include_not_omim,
+            gene_list_tsv=gene_list_tsv
         }
 
         call filterClinicalCompHets.filterCompHetsXLRHomVar as filterCompHetsXLRHomVar {
@@ -183,7 +187,6 @@ task runClinicalFiltering {
         String hail_docker
         String genome_build
 
-        Float spliceAI_threshold
         Float af_threshold
         Float gnomad_af_threshold
         Boolean pass_filter
@@ -224,7 +227,7 @@ task runClinicalFiltering {
     command {
         curl ~{filter_clinical_variants_script} > filter_vcf.py
         python3 filter_vcf.py ~{vcf_file} ~{prefix} ~{cpu_cores} ~{memory} \
-            ~{ped_uri} ~{spliceAI_threshold} ~{af_threshold} ~{gnomad_af_threshold} ~{genome_build} ~{pass_filter}
+            ~{ped_uri} ~{af_threshold} ~{gnomad_af_threshold} ~{genome_build} ~{pass_filter}
     }
 
     output {
@@ -357,6 +360,7 @@ task runClinicalFilteringOMIM {
         String genome_build
         
         Int ad_alt_threshold
+        Float spliceAI_threshold
         Float am_rec_threshold
         Float am_dom_threshold
         Float mpc_rec_threshold
@@ -367,6 +371,7 @@ task runClinicalFilteringOMIM {
         Float loeuf_v4_threshold
 
         Boolean include_not_omim
+        String gene_list_tsv
         RuntimeAttr? runtime_attr_override
     }
     Float input_size = size(vcf_file, 'GB')
@@ -405,7 +410,7 @@ task runClinicalFilteringOMIM {
         python3 filter_vcf.py ~{vcf_file} ~{prefix} ~{cpu_cores} ~{memory} ~{ped_uri} \
             ~{am_rec_threshold} ~{am_dom_threshold} ~{mpc_rec_threshold} ~{mpc_dom_threshold} \
             ~{gnomad_af_rec_threshold} ~{gnomad_af_dom_threshold} ~{loeuf_v2_threshold} ~{loeuf_v4_threshold} \
-            ~{genome_build} ~{ad_alt_threshold} ~{include_not_omim}
+            ~{genome_build} ~{ad_alt_threshold} ~{include_not_omim} ~{spliceAI_threshold} ~[gene_list_tsv]
     }
 
     output {

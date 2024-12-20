@@ -23,6 +23,8 @@ loeuf_v4_threshold = float(sys.argv[13])
 build = sys.argv[14]
 ad_alt_threshold = int(sys.argv[15])
 include_not_omim = ast.literal_eval(sys.argv[16].capitalize())
+spliceAI_threshold = float(sys.argv[17])
+gene_list_tsv = sys.argv[18]
 
 hl.init(min_block_size=128, 
         spark_conf={"spark.executor.cores": cores, 
@@ -69,7 +71,7 @@ def get_transmission(phased_tm):
     )
     return phased_tm
 
-mt = hl.import_vcf(vcf_file, reference_genome=build, force_bgz=True, call_fields=[], array_elements_required=False)
+mt = hl.import_vcf(vcf_file, reference_genome=build, find_replace=('null', ''), force_bgz=True, call_fields=[], array_elements_required=False)
 
 header = hl.get_vcf_metadata(vcf_file)
 csq_columns = header['info']['CSQ']['Description'].split('Format: ')[1].split('|')
@@ -110,29 +112,61 @@ phased_tm = phased_tm.annotate_entries(mendel_code=all_errors_mt[phased_tm.row_k
 gene_phased_tm = phased_tm.explode_rows(phased_tm.vep.transcript_consequences)
 gene_phased_tm = filter_mt(gene_phased_tm)
 
+# filter by spliceAI score
+spliceAI_fields = ['DS_AG','DS_AL','DS_DG','DS_DL']
+gene_phased_tm = gene_phased_tm.annotate_rows(
+    spliceAI_score=hl.max([
+        hl.or_missing(gene_phased_tm.vep.transcript_consequences[field]!='', 
+                      hl.float(gene_phased_tm.vep.transcript_consequences[field])) 
+         for field in spliceAI_fields])
+)
+gene_phased_tm = gene_phased_tm.filter_rows((gene_phased_tm.spliceAI_score>=spliceAI_threshold) | 
+                                      (hl.is_missing(gene_phased_tm.spliceAI_score)))
+
 # Output 2: OMIM Recessive
-# OMIM recessive only
+# Filter by gene list(s)
+if gene_list_tsv!='NA':
+    gene_list_uris = pd.read_csv(gene_list_tsv, sep='\t', header=None).set_index(0)[1].to_dict()
+    gene_lists = {gene_list_name: pd.read_csv(uri, sep='\t', header=None)[0].tolist() 
+                for gene_list_name, uri in gene_list_uris.items()}
+
+    gene_phased_tm = gene_phased_tm.annotate_rows(
+        gene_lists=hl.array([hl.or_missing(hl.array(gene_list).contains(gene_phased_tm.gene), gene_list_name) 
+            for gene_list_name, gene_list in gene_lists.items()]).filter(hl.is_defined))
+
+    in_gene_list = (gene_phased_tm.gene_lists.size()>0)
+else:
+    in_gene_list = False
+
+not_in_omim = (gene_phased_tm.vep.transcript_consequences.OMIM_inheritance_code=='')
+# OMIM recessive code
+omim_rec_code = (gene_phased_tm.vep.transcript_consequences.OMIM_inheritance_code.matches('2'))
+# OMIM XLR code OR in chrX
+omim_xlr_code_or_in_chrX = ((gene_phased_tm.vep.transcript_consequences.OMIM_inheritance_code.matches('4')) |  
+        ((gene_phased_tm.locus.in_x_nonpar()) | (gene_phased_tm.locus.in_x_par())))
+# gnomAD AF popmax filter
+passes_gnomad_af_rec = ((gene_phased_tm.gnomad_popmax_af<=gnomad_af_rec_threshold) | (hl.is_missing(gene_phased_tm.gnomad_popmax_af)))
+# MPC filter
+passes_mpc_rec = ((gene_phased_tm.info.MPC>=mpc_rec_threshold) | (hl.is_missing(gene_phased_tm.info.MPC)))
+# AlphaMissense filter
+passes_alpha_missense = (hl.if_else(gene_phased_tm.vep.transcript_consequences.am_pathogenicity=='', 1, 
+                hl.float(gene_phased_tm.vep.transcript_consequences.am_pathogenicity))>=am_rec_threshold)
+
 if include_not_omim:
     omim_rec_gene_phased_tm = gene_phased_tm.filter_rows(
-        (gene_phased_tm.vep.transcript_consequences.OMIM_inheritance_code.matches('2')) |    # OMIM recessive
-        ((gene_phased_tm.vep.transcript_consequences.OMIM_inheritance_code.matches('4')) |  # OMIM XLR OR in chrX
-            ((gene_phased_tm.locus.in_x_nonpar()) | (gene_phased_tm.locus.in_x_par()))) |
-        ((gene_phased_tm.vep.transcript_consequences.OMIM_inheritance_code=='') &  # not OMIM recessive with gnomAD AF and MPC filters
-            (((gene_phased_tm.gnomad_popmax_af<=gnomad_af_rec_threshold) | (hl.is_missing(gene_phased_tm.gnomad_popmax_af))) &
-                (((gene_phased_tm.info.MPC>=mpc_rec_threshold) | (hl.is_missing(gene_phased_tm.info.MPC))) |
-                (hl.if_else(gene_phased_tm.vep.transcript_consequences.am_pathogenicity=='', 1, 
-                    hl.float(gene_phased_tm.vep.transcript_consequences.am_pathogenicity))>=am_rec_threshold)
-                )
-            )
+        omim_rec_code |
+        omim_xlr_code_or_in_chrX |
+        in_gene_list |
+        (
+            not_in_omim &
+            passes_gnomad_af_rec &
+            (passes_mpc_rec | passes_alpha_missense)
         )
     )
 else:
     omim_rec_gene_phased_tm = gene_phased_tm.filter_rows(
-        ((gene_phased_tm.vep.transcript_consequences.OMIM_inheritance_code.matches('2')) &  # OMIM recessive AND AlphaMissense filter
-            (hl.if_else(gene_phased_tm.vep.transcript_consequences.am_pathogenicity=='', 1, 
-                    hl.float(gene_phased_tm.vep.transcript_consequences.am_pathogenicity))>=am_rec_threshold)) |    
-        ((gene_phased_tm.vep.transcript_consequences.OMIM_inheritance_code.matches('4')) |  # OMIM XLR OR in chrX
-            ((gene_phased_tm.locus.in_x_nonpar()) | (gene_phased_tm.locus.in_x_par())))
+        (omim_rec_code | omim_xlr_code_or_in_chrX | in_gene_list) &
+        passes_alpha_missense
     )
 
 omim_rec_gene_phased_tm = (omim_rec_gene_phased_tm.group_rows_by(omim_rec_gene_phased_tm.locus, omim_rec_gene_phased_tm.alleles)
@@ -149,36 +183,40 @@ omim_rec_mt = mt.semi_join_rows(omim_rec_gene_phased_tm.rows())
 omim_rec_mt = omim_rec_mt.annotate_rows(info=omim_rec_mt.info.annotate(CSQ=omim_rec_gene_phased_tm.rows()[omim_rec_mt.row_key].CSQ))
 
 # Output 3: OMIM Dominant
-# TODO: temporarily hacky, can be removed when VEP rerun with LOEUF HTs fixed
-gene_phased_tm = gene_phased_tm.annotate_rows(vep=gene_phased_tm.vep.annotate(transcript_consequences=gene_phased_tm.vep.transcript_consequences.annotate(
-    LOEUF_v2=gene_phased_tm.vep.transcript_consequences.LOEUF_v2.replace('null', ''),
-    LOEUF_v4=gene_phased_tm.vep.transcript_consequences.LOEUF_v4.replace('null', '')
-)))
+not_in_omim = (gene_phased_tm.vep.transcript_consequences.OMIM_inheritance_code=='')
+# OMIM dominant OR XLD code
+omim_dom_code = ((gene_phased_tm.vep.transcript_consequences.OMIM_inheritance_code.matches('1')) | 
+                (gene_phased_tm.vep.transcript_consequences.OMIM_inheritance_code.matches('3')))
+# gnomAD AF popmax filter
+passes_gnomad_af_dom = ((gene_phased_tm.gnomad_popmax_af<=gnomad_af_dom_threshold) | (hl.is_missing(gene_phased_tm.gnomad_popmax_af)))
+# MPC filter
+passes_mpc_dom = ((gene_phased_tm.info.MPC>=mpc_dom_threshold) | (hl.is_missing(gene_phased_tm.info.MPC)))
+# AlphaMissense filter
+passes_alpha_missense = (hl.if_else(gene_phased_tm.vep.transcript_consequences.am_pathogenicity=='', 1, 
+                hl.float(gene_phased_tm.vep.transcript_consequences.am_pathogenicity))>=am_dom_threshold)
+# LOEUF v2/v4 filters
+passes_loeuf_v2 = (hl.if_else(gene_phased_tm.vep.transcript_consequences.LOEUF_v2=='', 0, 
+                        hl.float(gene_phased_tm.vep.transcript_consequences.LOEUF_v2))<=loeuf_v2_threshold)
+
+passes_loeuf_v4 = (hl.if_else(gene_phased_tm.vep.transcript_consequences.LOEUF_v4=='', 0, 
+                        hl.float(gene_phased_tm.vep.transcript_consequences.LOEUF_v4))<=loeuf_v4_threshold)
 
 if include_not_omim:
     omim_dom = gene_phased_tm.filter_rows(
-        ((gene_phased_tm.gnomad_popmax_af<=gnomad_af_dom_threshold) | (hl.is_missing(gene_phased_tm.gnomad_popmax_af))) & 
-            (((gene_phased_tm.vep.transcript_consequences.OMIM_inheritance_code.matches('1')) |  # OMIM dominant OR XLD with gnomAD AF filter
-            (gene_phased_tm.vep.transcript_consequences.OMIM_inheritance_code.matches('3'))) |   
-            ((gene_phased_tm.vep.transcript_consequences.OMIM_inheritance_code=='') &  # not OMIM dominant with ((MPC filter OR AM filter) AND LOEUF v2/v4 filters)
-                ((((gene_phased_tm.info.MPC>=mpc_dom_threshold) | (hl.is_missing(gene_phased_tm.info.MPC))) |
-                (hl.if_else(gene_phased_tm.vep.transcript_consequences.am_pathogenicity=='', 1, 
-                hl.float(gene_phased_tm.vep.transcript_consequences.am_pathogenicity))>=am_dom_threshold)) &
-                    ((hl.if_else(gene_phased_tm.vep.transcript_consequences.LOEUF_v2=='', 0, 
-                        hl.float(gene_phased_tm.vep.transcript_consequences.LOEUF_v2))<=loeuf_v2_threshold) | 
-                    (hl.if_else(gene_phased_tm.vep.transcript_consequences.LOEUF_v4=='', 0, 
-                        hl.float(gene_phased_tm.vep.transcript_consequences.LOEUF_v4))<=loeuf_v4_threshold)
-                    )
-                )
-            )
+        (passes_gnomad_af_dom) &
+        (
+            (omim_dom_code) |
+            (
+                not_in_omim &
+                (passes_mpc_dom | passes_alpha_missense) &
+                (passes_loeuf_v2 | passes_loeuf_v4)
             )
         )
+    )
 else:
-        omim_dom = gene_phased_tm.filter_rows(
-        ((gene_phased_tm.gnomad_popmax_af<=gnomad_af_dom_threshold) | (hl.is_missing(gene_phased_tm.gnomad_popmax_af))) & 
-            ((gene_phased_tm.vep.transcript_consequences.OMIM_inheritance_code.matches('1')) |  # OMIM dominant OR XLD with gnomAD AF filter
-            (gene_phased_tm.vep.transcript_consequences.OMIM_inheritance_code.matches('3')))
-        )
+    omim_dom = gene_phased_tm.filter_rows(
+        passes_gnomad_af_dom & omim_dom_code
+    )
 
 omim_dom = omim_dom.filter_entries((omim_dom.proband_entry.GT.is_non_ref()) | 
                                    (omim_dom.mother_entry.GT.is_non_ref()) |
