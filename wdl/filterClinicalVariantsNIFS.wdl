@@ -32,6 +32,7 @@ workflow filterClinicalVariants {
         String hail_docker
         String sv_base_mini_docker
 
+        Int ad_alt_threshold=3
         Float af_threshold=0.1
         Float gnomad_af_threshold=0.05
         Float am_threshold=0.56
@@ -43,7 +44,7 @@ workflow filterClinicalVariants {
 
         String genome_build='GRCh38'
 
-        Boolean pass_filter=true
+        Boolean pass_filter=false
 
         RuntimeAttr? runtime_attr_filter_comphets
         RuntimeAttr? runtime_attr_merge_clinvar
@@ -84,6 +85,7 @@ workflow filterClinicalVariants {
             ped_uri=makeDummyPed.ped_uri,
             filter_clinical_variants_omim_script=filter_clinical_variants_omim_script,
             hail_docker=hail_docker,
+            ad_alt_threshold=ad_alt_threshold,
             am_threshold=am_threshold,
             mpc_threshold=mpc_threshold,
             gnomad_rec_threshold=gnomad_rec_threshold,
@@ -104,6 +106,7 @@ workflow filterClinicalVariants {
                 filter_comphets_xlr_hom_var_script=filter_comphets_xlr_hom_var_script,
                 genome_build=genome_build,
                 hail_docker=hail_docker,
+                ad_alt_threshold=ad_alt_threshold,
                 runtime_attr_override=runtime_attr_filter_comphets
         }
     }
@@ -344,6 +347,7 @@ task filterCompHetsXLR {
         String hail_docker
         String genome_build 
 
+        Int ad_alt_threshold
         Float af_threshold
         Float gnomad_af_threshold
         Float am_threshold
@@ -391,7 +395,7 @@ task filterCompHetsXLR {
         python3 filter_vcf.py ~{vcf_file} ~{prefix} ~{cpu_cores} ~{memory} \
             ~{ped_uri} ~{af_threshold} ~{gnomad_af_threshold} ~{am_threshold} \
             ~{mpc_threshold} ~{gnomad_rec_threshold} ~{gnomad_dom_threshold} \
-            ~{loeuf_v2_threshold} ~{loeuf_v4_threshold} ~{genome_build}
+            ~{loeuf_v2_threshold} ~{loeuf_v4_threshold} ~{genome_build} ~{ad_alt_threshold}
     }
 
     output {
@@ -408,6 +412,7 @@ task runClinicalFilteringOMIM {
         String hail_docker
         String genome_build
         
+        Int ad_alt_threshold
         Float am_threshold
         Float mpc_threshold
         Float gnomad_rec_threshold
@@ -452,7 +457,7 @@ task runClinicalFilteringOMIM {
         curl ~{filter_clinical_variants_omim_script} > filter_vcf.py
         python3 filter_vcf.py ~{vcf_file} ~{prefix} ~{cpu_cores} ~{memory} ~{ped_uri} \
             ~{am_threshold} ~{mpc_threshold} ~{gnomad_rec_threshold} ~{gnomad_dom_threshold} \
-            ~{loeuf_v2_threshold} ~{loeuf_v4_threshold} ~{genome_build}
+            ~{loeuf_v2_threshold} ~{loeuf_v4_threshold} ~{genome_build} ~{ad_alt_threshold}
     }
 
     output {

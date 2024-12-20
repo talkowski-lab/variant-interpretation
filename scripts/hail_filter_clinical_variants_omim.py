@@ -19,6 +19,7 @@ gnomad_dom_threshold = float(sys.argv[9])
 loeuf_v2_threshold = float(sys.argv[10])
 loeuf_v4_threshold = float(sys.argv[11])
 build = sys.argv[12]
+ad_alt_threshold = int(sys.argv[13])
 
 hl.init(min_block_size=128, 
         spark_conf={"spark.executor.cores": cores, 
@@ -136,7 +137,7 @@ omim_rec_mt = mt.semi_join_rows(omim_rec_gene_phased_tm.rows())
 omim_rec_mt = omim_rec_mt.annotate_rows(info=omim_rec_mt.info.annotate(CSQ=omim_rec_gene_phased_tm.rows()[omim_rec_mt.row_key].CSQ))
 
 # Output 3: OMIM Dominant
-# TODO: temporary hacky, can be removed when VEP rerun with LOEUF HTs fixed
+# TODO: temporarily hacky, can be removed when VEP rerun with LOEUF HTs fixed
 gene_phased_tm = gene_phased_tm.annotate_rows(vep=gene_phased_tm.vep.annotate(transcript_consequences=gene_phased_tm.vep.transcript_consequences.annotate(
     LOEUF_v2=gene_phased_tm.vep.transcript_consequences.LOEUF_v2.replace('null', ''),
     LOEUF_v4=gene_phased_tm.vep.transcript_consequences.LOEUF_v4.replace('null', '')
@@ -144,7 +145,8 @@ gene_phased_tm = gene_phased_tm.annotate_rows(vep=gene_phased_tm.vep.annotate(tr
 
 omim_dom = gene_phased_tm.filter_rows(
     ((gene_phased_tm.gnomad_popmax_af<=gnomad_dom_threshold) | (hl.is_missing(gene_phased_tm.gnomad_popmax_af))) & 
-        ((gene_phased_tm.vep.transcript_consequences.OMIM_inheritance_code.matches('1')) |   # OMIM dominant with gnomAD AF filter
+        (((gene_phased_tm.vep.transcript_consequences.OMIM_inheritance_code.matches('1')) |  # OMIM dominant OR XLD with gnomAD AF filter
+          (gene_phased_tm.vep.transcript_consequences.OMIM_inheritance_code.matches('3'))) |   
         ((gene_phased_tm.vep.transcript_consequences.OMIM_inheritance_code=='') &  # not OMIM dominant with ((MPC filter OR AM filter) AND LOEUF v2/v4 filters)
             ((((gene_phased_tm.info.MPC>=mpc_threshold) | (hl.is_missing(gene_phased_tm.info.MPC))) |
             (hl.if_else(gene_phased_tm.vep.transcript_consequences.am_pathogenicity=='', 1, 
@@ -162,6 +164,10 @@ omim_dom = gene_phased_tm.filter_rows(
 omim_dom = omim_dom.filter_entries((omim_dom.proband_entry.GT.is_non_ref()) | 
                                    (omim_dom.mother_entry.GT.is_non_ref()) |
                                    (omim_dom.father_entry.GT.is_non_ref()))
+
+# filter by AD of alternate allele 
+omim_dom = omim_dom.filter_entries(omim_dom.proband_entry.AD[1]>=ad_alt_threshold)
+
 omim_dom = omim_dom.filter_rows((hl.agg.count_where(hl.is_defined(omim_dom.proband_entry.GT))>0))
 omim_dom = omim_dom.annotate_rows(variant_category='OMIM_dominant')
 

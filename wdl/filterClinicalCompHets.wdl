@@ -24,6 +24,8 @@ workflow filterClinicalCompHets {
         "PREDICTED_INTRAGENIC_EXON_DUP","PREDICTED_INTRONIC","PREDICTED_LOF","PREDICTED_MSV_EXON_OVERLAP", 
         "PREDICTED_PARTIAL_EXON_DUP","PREDICTED_PROMOTER","PREDICTED_TSS_DUP","PREDICTED_UTR"]
 
+        Int ad_alt_threshold=3
+
         String filter_comphets_xlr_hom_var_script
 
         String hail_docker
@@ -105,6 +107,7 @@ workflow filterClinicalCompHets {
                 filter_comphets_xlr_hom_var_script=filter_comphets_xlr_hom_var_script,
                 genome_build=genome_build,
                 hail_docker=hail_docker,
+                ad_alt_threshold=ad_alt_threshold,
                 runtime_attr_override=runtime_attr_filter_comphets
         }
     }
@@ -217,6 +220,8 @@ task filterCompHetsXLRHomVar {
         File ped_uri
         String omim_uri
 
+        Int ad_alt_threshold
+
         Array[String] sv_gene_fields
         String genome_build
 
@@ -264,7 +269,7 @@ task filterCompHetsXLRHomVar {
     command {
         curl ~{filter_comphets_xlr_hom_var_script} > filter_vcf.py
         python3 filter_vcf.py ~{snv_indel_vcf} ~{clinvar_vcf} ~{sv_vcf} ~{ped_uri} ~{prefix} ~{omim_uri} \
-            ~{sep=',' sv_gene_fields} ~{genome_build} ~{cpu_cores} ~{memory} 
+            ~{sep=',' sv_gene_fields} ~{genome_build} ~{cpu_cores} ~{memory} ~{ad_alt_threshold}
         # in case prefix is really long
         mv "~{variant_types}_comp_hets_xlr_hom_var.tsv.gz" "~{prefix}_~{variant_types}_comp_hets_xlr_hom_var.tsv.gz" 
     }

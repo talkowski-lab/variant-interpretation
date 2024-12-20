@@ -26,6 +26,7 @@ sv_gene_fields = sys.argv[7].split(',')
 build = sys.argv[8]
 cores = sys.argv[9]  # string
 mem = int(np.floor(float(sys.argv[10])))
+ad_alt_threshold = int(sys.argv[11])
 
 hl.init(min_block_size=128, 
         local=f"local[*]", 
@@ -193,6 +194,7 @@ elif sv_vcf!='NA':
     variant_types = 'SV'
     merged_mt = sv_mt
 
+# merge SV VCF with SNV/Indel VCF
 if sv_vcf!='NA':
     # Change locus to locus_interval to include END for SVs
     merged_mt = merged_mt.annotate_rows(end=hl.if_else(hl.is_defined(merged_mt.info.END2), merged_mt.info.END2, merged_mt.info.END))
@@ -633,6 +635,10 @@ phased_hom_var = phased_hom_var.annotate(variant_category='hom_var')
 merged_comphets = merged_comphets.annotate(variant_category='comphet')
 
 merged_comphets_xlr_hom_var = merged_comphets.drop('proband_GT','proband_GT_set','proband_PBT_GT_set').union(xlr_phased).union(phased_hom_var)
+
+# filter by AD of alternate allele 
+merged_comphets_xlr_hom_var = merged_comphets_xlr_hom_var.filter(merged_comphets_xlr_hom_var.proband_entry.AD[1]>=ad_alt_threshold)
+
 # Annotate PAR status
 merged_comphets_xlr_hom_var = merged_comphets_xlr_hom_var.annotate(in_non_par=~(merged_comphets_xlr_hom_var.locus.in_autosome_or_par()))
 merged_comphets_xlr_hom_var = get_transmission(merged_comphets_xlr_hom_var)
