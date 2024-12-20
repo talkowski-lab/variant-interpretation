@@ -131,7 +131,7 @@ if gene_list_tsv!='NA':
                 for gene_list_name, uri in gene_list_uris.items()}
 
     gene_phased_tm = gene_phased_tm.annotate_rows(
-        gene_lists=hl.array([hl.or_missing(hl.array(gene_list).contains(gene_phased_tm.gene), gene_list_name) 
+        gene_lists=hl.array([hl.or_missing(hl.array(gene_list).contains(gene_phased_tm.vep.transcript_consequences.SYMBOL), gene_list_name) 
             for gene_list_name, gene_list in gene_lists.items()]).filter(hl.is_defined))
 
     in_gene_list = (gene_phased_tm.gene_lists.size()>0)
