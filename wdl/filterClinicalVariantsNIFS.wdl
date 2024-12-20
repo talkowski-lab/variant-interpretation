@@ -40,8 +40,8 @@ workflow filterClinicalVariants {
         Float am_dom_threshold=0.56
         Float mpc_rec_threshold=2
         Float mpc_dom_threshold=2
-        Float gnomad_rec_threshold=0.001
-        Float gnomad_dom_threshold=0.001
+        Float gnomad_af_rec_threshold=0.001
+        Float gnomad_af_dom_threshold=0.001
         Float loeuf_v2_threshold=0.35
         Float loeuf_v4_threshold=0.6
 
@@ -95,8 +95,8 @@ workflow filterClinicalVariants {
             am_dom_threshold=am_dom_threshold,
             mpc_rec_threshold=mpc_rec_threshold,
             mpc_dom_threshold=mpc_dom_threshold,
-            gnomad_rec_threshold=gnomad_rec_threshold,
-            gnomad_dom_threshold=gnomad_dom_threshold,
+            gnomad_af_rec_threshold=gnomad_af_rec_threshold,
+            gnomad_af_dom_threshold=gnomad_af_dom_threshold,
             loeuf_v2_threshold=loeuf_v2_threshold,
             loeuf_v4_threshold=loeuf_v4_threshold,
             genome_build=genome_build,
@@ -361,8 +361,8 @@ task runClinicalFilteringOMIM {
         Float am_dom_threshold
         Float mpc_rec_threshold
         Float mpc_dom_threshold
-        Float gnomad_rec_threshold
-        Float gnomad_dom_threshold
+        Float gnomad_af_rec_threshold
+        Float gnomad_af_dom_threshold
         Float loeuf_v2_threshold
         Float loeuf_v4_threshold
 
@@ -404,7 +404,7 @@ task runClinicalFilteringOMIM {
         curl ~{filter_clinical_variants_omim_script} > filter_vcf.py
         python3 filter_vcf.py ~{vcf_file} ~{prefix} ~{cpu_cores} ~{memory} ~{ped_uri} \
             ~{am_rec_threshold} ~{am_dom_threshold} ~{mpc_rec_threshold} ~{mpc_dom_threshold} \
-            ~{gnomad_rec_threshold} ~{gnomad_dom_threshold} ~{loeuf_v2_threshold} ~{loeuf_v4_threshold} \
+            ~{gnomad_af_rec_threshold} ~{gnomad_af_dom_threshold} ~{loeuf_v2_threshold} ~{loeuf_v4_threshold} \
             ~{genome_build} ~{ad_alt_threshold} ~{include_not_omim}
     }
 
