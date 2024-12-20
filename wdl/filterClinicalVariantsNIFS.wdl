@@ -48,7 +48,7 @@ workflow filterClinicalVariants {
         String genome_build='GRCh38'
 
         Boolean pass_filter=false
-        Boolean include_not_omim=false
+        Boolean include_not_omim=false  # NIFS-specific
 
         RuntimeAttr? runtime_attr_filter_comphets
         RuntimeAttr? runtime_attr_merge_clinvar
@@ -99,7 +99,8 @@ workflow filterClinicalVariants {
             gnomad_dom_threshold=gnomad_dom_threshold,
             loeuf_v2_threshold=loeuf_v2_threshold,
             loeuf_v4_threshold=loeuf_v4_threshold,
-            genome_build=genome_build
+            genome_build=genome_build,
+            include_not_omim=include_not_omim
         }
 
         call filterClinicalCompHets.filterCompHetsXLRHomVar as filterCompHetsXLRHomVar {
@@ -365,6 +366,7 @@ task runClinicalFilteringOMIM {
         Float loeuf_v2_threshold
         Float loeuf_v4_threshold
 
+        Boolean include_not_omim
         RuntimeAttr? runtime_attr_override
     }
     Float input_size = size(vcf_file, 'GB')
@@ -402,8 +404,8 @@ task runClinicalFilteringOMIM {
         curl ~{filter_clinical_variants_omim_script} > filter_vcf.py
         python3 filter_vcf.py ~{vcf_file} ~{prefix} ~{cpu_cores} ~{memory} ~{ped_uri} \
             ~{am_rec_threshold} ~{am_dom_threshold} ~{mpc_rec_threshold} ~{mpc_dom_threshold} \
-            ~{gnomad_rec_threshold} ~{gnomad_dom_threshold} \
-            ~{loeuf_v2_threshold} ~{loeuf_v4_threshold} ~{genome_build} ~{ad_alt_threshold}
+            ~{gnomad_rec_threshold} ~{gnomad_dom_threshold} ~{loeuf_v2_threshold} ~{loeuf_v4_threshold} \
+            ~{genome_build} ~{ad_alt_threshold} ~{include_not_omim}
     }
 
     output {
