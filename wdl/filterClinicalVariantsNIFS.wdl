@@ -119,6 +119,7 @@ workflow filterClinicalVariants {
                 genome_build=genome_build,
                 hail_docker=hail_docker,
                 ad_alt_threshold=ad_alt_threshold,
+                gene_list_tsv=gene_list_tsv,
                 runtime_attr_override=runtime_attr_filter_comphets
         }
     }

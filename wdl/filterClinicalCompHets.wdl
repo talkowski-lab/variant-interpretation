@@ -33,7 +33,8 @@ workflow filterClinicalCompHets {
 
         String genome_build='GRCh38'
         Int families_per_chunk=500
-        Boolean mask=false
+
+        String gene_list_tsv='NA'  # for filtering by gene list(s), tab-separated "gene_list_name"\t"gene_list_uri"
 
         RuntimeAttr? runtime_attr_split_families
         RuntimeAttr? runtime_attr_subset_vcfs_snv_indel
@@ -108,6 +109,7 @@ workflow filterClinicalCompHets {
                 genome_build=genome_build,
                 hail_docker=hail_docker,
                 ad_alt_threshold=ad_alt_threshold,
+                gene_list_tsv=gene_list_tsv,
                 runtime_attr_override=runtime_attr_filter_comphets
         }
     }
@@ -219,6 +221,7 @@ task filterCompHetsXLRHomVar {
         String sv_vcf
         File ped_uri
         String omim_uri
+        String gene_list_tsv
 
         Int ad_alt_threshold
 
@@ -269,7 +272,7 @@ task filterCompHetsXLRHomVar {
     command {
         curl ~{filter_comphets_xlr_hom_var_script} > filter_vcf.py
         python3 filter_vcf.py ~{snv_indel_vcf} ~{clinvar_vcf} ~{sv_vcf} ~{ped_uri} ~{prefix} ~{omim_uri} \
-            ~{sep=',' sv_gene_fields} ~{genome_build} ~{cpu_cores} ~{memory} ~{ad_alt_threshold}
+            ~{sep=',' sv_gene_fields} ~{genome_build} ~{cpu_cores} ~{memory} ~{ad_alt_threshold} ~{gene_list_tsv}
         # in case prefix is really long
         mv "~{variant_types}_comp_hets_xlr_hom_var.tsv.gz" "~{prefix}_~{variant_types}_comp_hets_xlr_hom_var.tsv.gz" 
     }

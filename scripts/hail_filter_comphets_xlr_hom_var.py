@@ -27,6 +27,7 @@ build = sys.argv[8]
 cores = sys.argv[9]  # string
 mem = int(np.floor(float(sys.argv[10])))
 ad_alt_threshold = int(sys.argv[11])
+gene_list_tsv = sys.argv[12]
 
 hl.init(min_block_size=128, 
         local=f"local[*]", 
@@ -207,6 +208,18 @@ if sv_vcf!='NA':
                                                                               start=merged_mt.locus.position,
                                                                               end=merged_mt.end, reference_genome=build))
     merged_mt = merged_mt.key_rows_by(locus_expr, 'alleles')
+
+# Filter by gene list(s)
+if gene_list_tsv!='NA':
+    gene_list_uris = pd.read_csv(gene_list_tsv, sep='\t', header=None).set_index(0)[1].to_dict()
+    gene_lists = {gene_list_name: pd.read_csv(uri, sep='\t', header=None)[0].tolist() 
+                for gene_list_name, uri in gene_list_uris.items()}
+
+    merged_mt = merged_mt.annotate_rows(
+        gene_lists=hl.array([hl.or_missing(hl.array(gene_list).contains(merged_mt.vep.transcript_consequences.SYMBOL), gene_list_name) 
+            for gene_list_name, gene_list in gene_lists.items()]).filter(hl.is_defined))
+
+    merged_mt = merged_mt.filter_rows(merged_mt.gene_lists.size()>0)
 
 ## EDITED HAIL FUNCTIONS
 # EDITED: don't check locus struct
