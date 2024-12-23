@@ -218,8 +218,11 @@ if gene_list_tsv!='NA':
     merged_mt = merged_mt.annotate_rows(
         gene_lists=hl.array([hl.or_missing(hl.array(gene_list).contains(merged_mt.vep.transcript_consequences.SYMBOL), gene_list_name) 
             for gene_list_name, gene_list in gene_lists.items()]).filter(hl.is_defined))
+    
+    in_omim = (merged_mt.vep.transcript_consequences.OMIM_inheritance_code!='')
+    in_gene_list = (merged_mt.gene_lists.size()>0)
 
-    merged_mt = merged_mt.filter_rows(merged_mt.gene_lists.size()>0)
+    merged_mt = merged_mt.filter_rows(in_omim | in_gene_list)
 
 ## EDITED HAIL FUNCTIONS
 # EDITED: don't check locus struct
