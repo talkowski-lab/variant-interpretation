@@ -112,16 +112,26 @@ phased_tm = phased_tm.annotate_entries(mendel_code=all_errors_mt[phased_tm.row_k
 gene_phased_tm = phased_tm.explode_rows(phased_tm.vep.transcript_consequences)
 gene_phased_tm = filter_mt(gene_phased_tm)
 
+# annotate spliceAI score if missing
+if 'spliceAI_score' not in list(gene_phased_tm.vep.transcript_consequences):
+    fields = ['DS_AG','DS_AL','DS_DG','DS_DL']
+    gene_phased_tm = gene_phased_tm.annotate_rows(vep=gene_phased_tm.vep.annotate(
+        transcript_consequences=(gene_phased_tm.vep.transcript_consequences.annotate(
+            spliceAI_score=hl.str(hl.max([
+                hl.or_missing(gene_phased_tm.vep.transcript_consequences[field]!='', 
+                            hl.float(gene_phased_tm.vep.transcript_consequences[field])) 
+                for field in fields])))))
+    )    
+    # replace Hail missing values with empty string
+    gene_phased_tm = gene_phased_tm.annotate_rows(vep=gene_phased_tm.vep.annotate(
+        transcript_consequences=(gene_phased_tm.vep.transcript_consequences.annotate(
+            spliceAI_score=hl.if_else(hl.is_missing(gene_phased_tm.vep.transcript_consequences.spliceAI_score),
+                                    '', gene_phased_tm.vep.transcript_consequences.spliceAI_score
+            )))))
+
 # filter by spliceAI score
-spliceAI_fields = ['DS_AG','DS_AL','DS_DG','DS_DL']
-gene_phased_tm = gene_phased_tm.annotate_rows(
-    spliceAI_score=hl.max([
-        hl.or_missing(gene_phased_tm.vep.transcript_consequences[field]!='', 
-                      hl.float(gene_phased_tm.vep.transcript_consequences[field])) 
-         for field in spliceAI_fields])
-)
-gene_phased_tm = gene_phased_tm.filter_rows((gene_phased_tm.spliceAI_score>=spliceAI_threshold) | 
-                                      (hl.is_missing(gene_phased_tm.spliceAI_score)))
+gene_phased_tm = gene_phased_tm.filter_rows((hl.if_else(gene_phased_tm.vep.transcript_consequences.spliceAI_score=='', 1, 
+                hl.float(gene_phased_tm.vep.transcript_consequences.spliceAI_score))>=spliceAI_threshold))
 
 # Output 2: OMIM Recessive
 # Filter by gene list(s)
