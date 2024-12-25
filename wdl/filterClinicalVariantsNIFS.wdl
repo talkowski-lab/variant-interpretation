@@ -315,9 +315,10 @@ task makeDummyPed {
     samples = mt.s.collect()
     probands = [s for s in samples if '_fetal' in s]
     mothers = [s for s in samples if '_maternal' in s]
+    fam_ids = [proband.split('_fetal')[0] for proband in probands]
 
     ped = pd.DataFrame({
-        'family_id': pd.Series(samples).str.split('_').str[0].tolist(),
+        'family_id': fam_ids,
         'sample_id': samples,
         'paternal_id': [0 for _ in range(len(samples))],
         'maternal_id': [0 for _ in range(len(samples))],
