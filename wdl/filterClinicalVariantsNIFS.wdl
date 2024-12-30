@@ -21,9 +21,8 @@ workflow filterClinicalVariants {
     input {
         Array[File] annot_vcf_files
         # File ped_uri  # make a dummy ped with all singletons for NIFS
-        String BILLING_PROJECT_ID
-        String WORKSPACE
-        String terra_data_table_util_script
+
+        Array[String] predicted_sex_chrom_ploidies  # XX or XY
 
         String cohort_prefix
         String filter_clinical_variants_script
@@ -63,12 +62,12 @@ workflow filterClinicalVariants {
         RuntimeAttr? runtime_attr_merge_comphets
     }
 
-    scatter (vcf_file in annot_vcf_files) {
+    scatter (pair in zip(annot_vcf_files, predicted_sex_chrom_ploidies)) {
+        File vcf_file = pair.left
+        String predicted_sex_chrom_ploidy = pair.right
         call makeDummyPed {
             input:
-            BILLING_PROJECT_ID=BILLING_PROJECT_ID,
-            WORKSPACE=WORKSPACE,
-            terra_data_table_util_script=terra_data_table_util_script,
+            predicted_sex_chrom_ploidy=predicted_sex_chrom_ploidy,
             vcf_file=vcf_file,
             hail_docker=hail_docker,
             genome_build=genome_build
@@ -240,10 +239,7 @@ task runClinicalFiltering {
 
 task makeDummyPed {
     input {
-        String BILLING_PROJECT_ID
-        String WORKSPACE
-        String terra_data_table_util_script
-
+        String predicted_sex_chrom_ploidy
         File vcf_file
         String hail_docker
         String genome_build
@@ -283,7 +279,6 @@ task makeDummyPed {
 
     command <<<
     set -eou pipefail
-    curl ~{terra_data_table_util_script} > terra_data_table_util.py
     cat <<EOF > make_ped.py
     import datetime
     import pandas as pd
@@ -291,15 +286,13 @@ task makeDummyPed {
     import numpy as np
     import sys
     import os
-    from terra_data_table_util import get_terra_table_to_df
 
     vcf_file = sys.argv[1]
     out_ped = sys.argv[2]
     genome_build = sys.argv[3]
     cores = sys.argv[4]
     mem = int(np.floor(float(sys.argv[5])))
-    WORKSPACE = sys.argv[6]
-    BILLING_PROJECT_ID = sys.argv[7]
+    predicted_sex_chrom_ploidy = sys.argv[6]
 
     hl.init(min_block_size=128, 
             local=f"local[*]", 
@@ -317,6 +310,12 @@ task makeDummyPed {
     mothers = [s for s in samples if '_maternal' in s]
     fam_ids = [s.split('_fetal')[0] if s in probands else s.split('_maternal')[0] for s in samples]
 
+    # check for one proband and one mother
+    if len(probands) != 1:
+        raise Exception(f"You have {len(probands)} proband samples!")
+    if len(mothers) != 1:
+        raise Exception(f"You have {len(mothers)} mother samples!")
+
     ped = pd.DataFrame({
         'family_id': fam_ids,
         'sample_id': samples,
@@ -330,21 +329,17 @@ task makeDummyPed {
     # set mothers' sex to 2
     ped.loc[mothers, 'sex'] = 2
 
-    # grab probands' predicted sex from Terra sample table
-    sample_table = get_terra_table_to_df(BILLING_PROJECT_ID, WORKSPACE, "sample")
-    sample_table.index = sample_table['entity:sample_id']
+    # use predicted_sex_chrom_ploidy for proband sex
     for proband in probands:
-        predicted_ploidy = sample_table.loc[ped.loc[proband, 'family_id'], 'predicted_sex_chrom_ploidy']
-        if predicted_ploidy == 'XX':
+        if predicted_sex_chrom_ploidy == 'XX':
             ped.loc[proband, 'sex'] = 2
-        elif predicted_ploidy == 'XY':
+        elif predicted_sex_chrom_ploidy == 'XY':
             ped.loc[proband, 'sex'] = 1
 
     ped.to_csv(out_ped, sep='\t', index=False)
     EOF
 
-    python3 make_ped.py ~{vcf_file} ~{out_ped} ~{genome_build} ~{cpu_cores} ~{memory} \
-        ~{WORKSPACE} ~{BILLING_PROJECT_ID}
+    python3 make_ped.py ~{vcf_file} ~{out_ped} ~{genome_build} ~{cpu_cores} ~{memory} ~{predicted_sex_chrom_ploidy} 
     >>>
 
     output {
