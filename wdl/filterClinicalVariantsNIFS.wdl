@@ -314,7 +314,7 @@ task makeDummyPed {
     if len(probands) != 1:
         raise Exception(f"You have {len(probands)} proband samples!")
     if len(mothers) != 1:
-        raise Exception(f"You have {len(mothers)} mother samples!")
+        raise Exception(f"You have {len(mothers)} maternal samples!")
 
     ped = pd.DataFrame({
         'family_id': fam_ids,
