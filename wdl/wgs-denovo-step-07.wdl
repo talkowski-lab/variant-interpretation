@@ -25,6 +25,8 @@ workflow step7 {
         File hg38_reference
         File hg38_reference_dict
         File hg38_reference_fai
+        File remove_regions_bed
+        String prioritize_csq_script
         String filter_rare_inherited_python_script
         String filter_rare_parents_python_script
         String jvarkit_docker
@@ -83,6 +85,8 @@ workflow step7 {
             hg38_reference=hg38_reference,
             hg38_reference_dict=hg38_reference_dict,
             hg38_reference_fai=hg38_reference_fai,
+            remove_regions_bed=remove_regions_bed,
+            prioritize_csq_script=prioritize_csq_script,
             filter_rare_inherited_python_script=filter_rare_inherited_python_script,
             jvarkit_docker=jvarkit_docker,
             hail_docker=hail_docker,
@@ -122,6 +126,8 @@ workflow step7 {
             hg38_reference=hg38_reference,
             hg38_reference_dict=hg38_reference_dict,
             hg38_reference_fai=hg38_reference_fai,
+            remove_regions_bed=remove_regions_bed,
+            prioritize_csq_script=prioritize_csq_script,
             filter_rare_parents_python_script=filter_rare_parents_python_script,
             jvarkit_docker=jvarkit_docker,
             hail_docker=hail_docker,
