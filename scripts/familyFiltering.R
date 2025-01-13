@@ -251,29 +251,29 @@ vars_aff_rare_gt[vars_aff_rare_gt$SC_ALL_UNAFF <= 5 &
 
 #2. Compound het SV-SV
 ##If trio, looks for cosegregation - if not trio, returns genes with multiple hits
-verbose("Compound heterozygous flag")
-tmp_vars_aff_rare_gt <- vars_aff_rare_gt
-if(fam_struct %in% c("trio", "quad")){
-	vars_aff_rare_gt <- cbind(tmp_vars_aff_rare_gt, 
-						do.call(rbind, apply(tmp_vars_aff_rare_gt, 1, function(row) 
-							get_comphet_trio(row, tmp_vars_aff_rare_gt, gene_cols)
-						)))
+#verbose("Compound heterozygous flag")
+#tmp_vars_aff_rare_gt <- vars_aff_rare_gt
+#if(fam_struct %in% c("trio", "quad")){
+#	vars_aff_rare_gt <- cbind(tmp_vars_aff_rare_gt,
+#						do.call(rbind, apply(tmp_vars_aff_rare_gt, 1, function(row)
+#							get_comphet_trio(row, tmp_vars_aff_rare_gt, gene_cols)
+#						)))
 
-	#vars_aff_rare_gt$FILT_MULT_HIT <- apply(vars_aff_rare_gt, 1, function(row, vars_aff_rare_gt) 
-		#get_comphet_trio(row) )
-} else {
+#	#vars_aff_rare_gt$FILT_MULT_HIT <- apply(vars_aff_rare_gt, 1, function(row, vars_aff_rare_gt)
+#		#get_comphet_trio(row) )
+#} else {
 	#vars_aff_rare_gt$FILT_MULT_HIT <- apply(vars_aff_rare_gt, 1, function(row) 
 		#get_comphet_singleton(row) )
-    vars_aff_rare_gt <- cbind(tmp_vars_aff_rare_gt,
-                        do.call(rbind, apply(tmp_vars_aff_rare_gt, 1, function(row)
-                            get_comphet_other(row, tmp_vars_aff_rare_gt, gene_cols)
-                        )))
-}
+#    vars_aff_rare_gt <- cbind(tmp_vars_aff_rare_gt,
+#                        do.call(rbind, apply(tmp_vars_aff_rare_gt, 1, function(row)
+#                            get_comphet_other(row, tmp_vars_aff_rare_gt, gene_cols)
+#                        )))
+#}
 
 #vars_aff_rare_gt$FILT_MULT_HIT <- FALSE
 # vars_aff_rare_gt[vars_aff_rare_gt$MULT_HIT &
 # 	(vars_aff_rare_gt$GENELIST_MATCH | vars_aff_rare_gt$HPO_MATCH | vars_aff_rare_gt$pRec_ANY),]$FILT_MULT_HIT <- TRUE
-vars_aff_rare_gt$FILT_MULT_HIT <- vars_aff_rare_gt$MULT_HIT
+#vars_aff_rare_gt$FILT_MULT_HIT <- vars_aff_rare_gt$MULT_HIT
 
 #3. Autosomal recessive
 ##Any affected are hom variant, none unaffected can be hom
