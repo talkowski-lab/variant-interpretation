@@ -245,7 +245,7 @@ vars_aff_rare_gt$FILT_ABSENT_UNAFF <- FALSE
 vars_aff_rare_gt[vars_aff_rare_gt$SC_ALL_UNAFF <= 5 &
 # vars_aff_rare_gt[vars_aff_rare_gt$SC_ALL_UNAFF == 0 & 
 			vars_aff_rare_gt$AC <=10 &
-			(is.na(vars_aff_rare_gt$`gnomad_v2.1_sv_AF`) | vars_aff_rare_gt$`gnomad_v2.1_sv_AF` <= 1e-3)
+			(is.na(vars_aff_rare_gt$`gnomad_v4.1_sv_AF`) | vars_aff_rare_gt$`gnomad_v4.1_sv_AF` <= 1e-3)
 			# (vars_aff_rare_gt$GENELIST_MATCH | vars_aff_rare_gt$HPO_MATCH | vars_aff_rare_gt$eo_ANY ) &
       ,]$FILT_ABSENT_UNAFF <- TRUE
 
