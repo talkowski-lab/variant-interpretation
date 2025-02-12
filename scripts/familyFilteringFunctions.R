@@ -33,7 +33,7 @@ get_hpo_match <- function(row, samp){
     hpos <- strsplit(subset(fam_info, subject_id %in% rsamp)$hpo_present, ",")[[1]]
 
     if(length(hpos) > 0){
-   	    hpo_genes <- subset(hpodb, HPO_ID %in% hpos)$GENE_SYMBOL
+   	    hpo_genes <- subset(hpodb, hpo_id %in% hpos)$GENE_SYMBOL
         rgenes <- unlist(strsplit(unlist(row[gene_cols], use.names = FALSE), ","))
         any(rgenes %in% hpo_genes)
     }else{

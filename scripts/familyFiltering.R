@@ -111,7 +111,7 @@ vars_aff %>%
 
 #Flag if in genomic disorders
 if( exists("gdroi") ){
-  vars_aff$IN_GD <- vars_aff$name %in% gdroi$V10
+  vars_aff$IN_GD <- vars_aff$name %in% gdroi$V1
 }else{
   vars_aff$IN_GD <- ""
 }
