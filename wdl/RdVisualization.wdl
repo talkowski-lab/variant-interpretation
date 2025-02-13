@@ -215,7 +215,7 @@ task rdtest {
             -b test.bed \
             -n ~{prefix} \
             -c allcovfile.bed.gz \
-            -m medianfile.txt \
+            -m ~{medianfile} \
             -f subset_families.ped \
             -a TRUE \
             -d TRUE \
