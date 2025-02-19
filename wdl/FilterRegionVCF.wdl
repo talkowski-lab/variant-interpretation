@@ -17,7 +17,7 @@ workflow FilterRegion {
         Array[File] vcf_files
         File bed_file
         String sv_base_mini_docker
-        String sort_after_merge
+        Boolean sort_after_merge
         String prefix
         RuntimeAttr? runtime_attr_filter_vcf
         RuntimeAttr? runtime_attr_merge_vcfs
