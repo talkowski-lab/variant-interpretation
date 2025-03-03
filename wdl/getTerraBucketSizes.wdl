@@ -207,7 +207,7 @@ task getSubmissionInfo {
     submissions = pd.concat([submissions, submissions.submissionEntity.apply(pd.Series)], axis=1)
 
     submission_files = large_files[large_files.uri.str.split('/').str[1]=='submissions'].copy()
-    submission_files.loc[:,'submission_id'] = submission_files.uri.str.split('/').str[2]
+    submission_files.loc[:,'submission_id'] = submission_files.uri.str.replace('/intermediates','').str.split('/').str[2]
 
     submission_id_sizes = pd.DataFrame(submission_files.groupby('submission_id').sizes.sum()).reset_index().sort_values(by='sizes', ascending=False)
     submission_id_sizes['human_sizes'] = submission_id_sizes.sizes.apply(humansize)
@@ -311,7 +311,7 @@ task getSubmissionsToDelete {
 
     large_files = pd.read_csv(file_sizes, sep='\t')
 
-    large_files.loc[:,'submission_id'] = large_files.uri.str.split('/').str[2]
+    large_files.loc[:,'submission_id'] = large_files.uri.str.replace('/intermediates','').str.split('/').str[2]
 
     submission_info = pd.read_csv(submission_info, sep='\t').set_index('submission_id', drop=False)
 
