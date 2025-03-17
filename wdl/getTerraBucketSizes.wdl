@@ -216,7 +216,7 @@ task getSubmissionInfo {
 
     def get_workflow_status(sub_id):
         submission = fapi.get_submission(BILLING_PROJECT_ID, WORKSPACE, sub_id).json()
-
+        # TODO: multiple workflows in same submission?
         workflow_id = submission['workflows'][0]['workflowId']
         try:
             workflow = fapi.get_workflow_metadata(BILLING_PROJECT_ID, WORKSPACE, sub_id, workflow_id).json()

@@ -100,6 +100,20 @@ task writeHT {
                     alleles=hl.array([ht.REF, ht.ALT]))
 
     ht = ht.annotate(SYMBOL=ht.SpliceAI.split('=')[1].split('\|')[1])
+    # leave out ALLELE/SYMBOL because redundant
+    fields = 'ALLELE|SYMBOL|DS_AG|DS_AL|DS_DG|DS_DL|DP_AG|DP_AL|DP_DG|DP_DL'.split('|')[2:]  
+    ht = ht.annotate(**{field: ht.SpliceAI.split('=')[1].split('\|')[i+2] for i, field in enumerate(fields)})
+
+    # overall SpliceAI score (as str)
+    score_fields = ['DS_AG','DS_AL','DS_DG','DS_DL']
+    mt_by_locus_and_gene = mt_by_locus_and_gene.annotate_rows(vep=mt_by_locus_and_gene.vep.annotate(
+        transcript_consequences=(mt_by_locus_and_gene.vep.transcript_consequences.annotate(
+            spliceAI_score=hl.str(hl.max([
+                hl.or_missing(mt_by_locus_and_gene.vep.transcript_consequences[field]!='', 
+                            hl.float(mt_by_locus_and_gene.vep.transcript_consequences[field])) 
+                for field in score_fields])))))
+    )    
+    ht = ht.annotate(spliceAI_score=hl.str(hl.max([ht[field] for field in score_fields])))
 
     ht = ht.key_by('locus','alleles','SYMBOL')
     ht.write(output_ht_path, overwrite=True)
