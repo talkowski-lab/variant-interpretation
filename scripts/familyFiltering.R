@@ -340,7 +340,7 @@ vars_aff_rare_gt$affected <- apply(vars_aff_rare_gt[,..affected], 1, function(r)
 
 keep_cols <- names(vars_aff_rare_gt)[names(vars_aff_rare_gt) %ni% c(affected, unaffected)]
 
-if(comp_het == "True"){
+if(comp_het == "true"){
     vars_out <- subset(vars_aff_rare_gt, IN_GD | FILT_ABSENT_UNAFF | FILT_MULT_HIT | FILT_AR | FILT_XLR | FILT_INHERITED, select = keep_cols )
 }else{
     vars_out <- subset(vars_aff_rare_gt, IN_GD | FILT_ABSENT_UNAFF | FILT_AR | FILT_XLR | FILT_INHERITED, select = keep_cols )
