@@ -10,7 +10,9 @@ workflow familyFiltering {
         File ped_file
         File genomic_disorder_input
         String cohort_prefix
+
         Boolean run_compound_het
+
         Array[String] families
         Array[String] AF_columns
 

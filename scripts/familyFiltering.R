@@ -251,7 +251,7 @@ vars_aff_rare_gt[vars_aff_rare_gt$SC_ALL_UNAFF <= 5 &
 
 #2. Compound het SV-SV
 ##If trio, looks for cosegregation - if not trio, returns genes with multiple hits
-if(comp_het == "True"){
+if(comp_het == "true"){
     verbose("Compound heterozygous flag")
     tmp_vars_aff_rare_gt <- vars_aff_rare_gt
     if(fam_struct %in% c("trio", "quad")){
