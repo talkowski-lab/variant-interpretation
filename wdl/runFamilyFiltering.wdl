@@ -10,6 +10,7 @@ workflow familyFiltering {
         File ped_file
         File genomic_disorder_input
         String cohort_prefix
+        Boolean run_compound_het
         Array[String] families
         Array[String] AF_columns
 
@@ -61,6 +62,7 @@ workflow familyFiltering {
                 family=family,
                 family_vcf=subsetFamilyVCF.vcf_family,
                 bed_file=vcfToBed.bed_output,
+                run_compound_het=run_compound_het,
 #                bed_file=bed_file,
                 ped_file=ped_file,
                 genomic_disorder_names=getGenomicDisorders.gd_output,
@@ -220,7 +222,7 @@ task SVfamilyFiltering{
         File bed_file
         File ped_file
         File genomic_disorder_names
-
+        Boolean run_compound_het
         File genelist
         File eo_file
         File prec_file
@@ -259,6 +261,7 @@ task SVfamilyFiltering{
             hpodb_path <- '~{hpo_db}'
             mim_path <- '~{mim_file}'
             af_columns <- '~{sep="," AF_columns}'
+            comp_het <- '~{run_compound_het}'
         " > config.R
 
         Rscript /scripts/variant-interpretation/scripts/familyFiltering.R \

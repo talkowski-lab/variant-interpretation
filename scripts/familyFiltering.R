@@ -251,29 +251,31 @@ vars_aff_rare_gt[vars_aff_rare_gt$SC_ALL_UNAFF <= 5 &
 
 #2. Compound het SV-SV
 ##If trio, looks for cosegregation - if not trio, returns genes with multiple hits
-verbose("Compound heterozygous flag")
-tmp_vars_aff_rare_gt <- vars_aff_rare_gt
-if(fam_struct %in% c("trio", "quad")){
-	vars_aff_rare_gt <- cbind(tmp_vars_aff_rare_gt, 
-						do.call(rbind, apply(tmp_vars_aff_rare_gt, 1, function(row) 
-							get_comphet_trio(row, tmp_vars_aff_rare_gt, gene_cols)
-						)))
+if(comp_het == "True"){
+    verbose("Compound heterozygous flag")
+    tmp_vars_aff_rare_gt <- vars_aff_rare_gt
+    if(fam_struct %in% c("trio", "quad")){
+        vars_aff_rare_gt <- cbind(tmp_vars_aff_rare_gt,
+                            do.call(rbind, apply(tmp_vars_aff_rare_gt, 1, function(row)
+                                get_comphet_trio(row, tmp_vars_aff_rare_gt, gene_cols)
+                            )))
 
-	#vars_aff_rare_gt$FILT_MULT_HIT <- apply(vars_aff_rare_gt, 1, function(row, vars_aff_rare_gt) 
-		#get_comphet_trio(row) )
-} else {
-	#vars_aff_rare_gt$FILT_MULT_HIT <- apply(vars_aff_rare_gt, 1, function(row) 
-		#get_comphet_singleton(row) )
-    vars_aff_rare_gt <- cbind(tmp_vars_aff_rare_gt,
-                        do.call(rbind, apply(tmp_vars_aff_rare_gt, 1, function(row)
-                            get_comphet_other(row, tmp_vars_aff_rare_gt, gene_cols)
-                        )))
+        #vars_aff_rare_gt$FILT_MULT_HIT <- apply(vars_aff_rare_gt, 1, function(row, vars_aff_rare_gt)
+            #get_comphet_trio(row) )
+    } else {
+        #vars_aff_rare_gt$FILT_MULT_HIT <- apply(vars_aff_rare_gt, 1, function(row)
+            #get_comphet_singleton(row) )
+        vars_aff_rare_gt <- cbind(tmp_vars_aff_rare_gt,
+                            do.call(rbind, apply(tmp_vars_aff_rare_gt, 1, function(row)
+                                get_comphet_other(row, tmp_vars_aff_rare_gt, gene_cols)
+                            )))
+    }
+
+    #vars_aff_rare_gt$FILT_MULT_HIT <- FALSE
+    # vars_aff_rare_gt[vars_aff_rare_gt$MULT_HIT &
+    # 	(vars_aff_rare_gt$GENELIST_MATCH | vars_aff_rare_gt$HPO_MATCH | vars_aff_rare_gt$pRec_ANY),]$FILT_MULT_HIT <- TRUE
+    vars_aff_rare_gt$FILT_MULT_HIT <- vars_aff_rare_gt$MULT_HIT
 }
-
-#vars_aff_rare_gt$FILT_MULT_HIT <- FALSE
-# vars_aff_rare_gt[vars_aff_rare_gt$MULT_HIT &
-# 	(vars_aff_rare_gt$GENELIST_MATCH | vars_aff_rare_gt$HPO_MATCH | vars_aff_rare_gt$pRec_ANY),]$FILT_MULT_HIT <- TRUE
-vars_aff_rare_gt$FILT_MULT_HIT <- vars_aff_rare_gt$MULT_HIT
 
 #3. Autosomal recessive
 ##Any affected are hom variant, none unaffected can be hom
@@ -328,7 +330,7 @@ vars_aff_rare_gt[  vars_aff_rare_gt$IN_GOI &
 ##Pending? Classify if LOF, UTR, PROMOTER, Intronic, Copy Gain and
 lof_cols <- grep("LOF", names(vars_aff_rare_gt), value = T)
 vars_aff_rare_gt$IS_LOF <- apply(vars_aff_rare_gt[,..lof_cols], 1, function(r) !all(is.na(r)))
-vars_aff_rare_gt$IS_LOF_GENELIST <- apply(vars_aff_rare_gt[,..lof_cols], 1, function(r){any(r %in% genelist$V1)})
+vars_aff_rare_gt$IS_LOF_GENELIST <- apply(vars_aff_rare_gt[,..lLt's of_cols], 1, function(r){any(r %in% genelist$V1)})
 
 verbose("Writting to output")
 
@@ -338,7 +340,11 @@ vars_aff_rare_gt$affected <- apply(vars_aff_rare_gt[,..affected], 1, function(r)
 
 keep_cols <- names(vars_aff_rare_gt)[names(vars_aff_rare_gt) %ni% c(affected, unaffected)]
 
-vars_out <- subset(vars_aff_rare_gt, IN_GD | FILT_ABSENT_UNAFF | FILT_MULT_HIT | FILT_AR | FILT_XLR | FILT_INHERITED, select = keep_cols )
+if(comp_het == "True"){
+    vars_out <- subset(vars_aff_rare_gt, IN_GD | FILT_ABSENT_UNAFF | FILT_MULT_HIT | FILT_AR | FILT_XLR | FILT_INHERITED, select = keep_cols )
+}else{
+    vars_out <- subset(vars_aff_rare_gt, IN_GD | FILT_ABSENT_UNAFF | FILT_AR | FILT_XLR | FILT_INHERITED, select = keep_cols )
+}
 
 vars_out$FAMILY <- fam
 
