@@ -330,7 +330,7 @@ vars_aff_rare_gt[  vars_aff_rare_gt$IN_GOI &
 ##Pending? Classify if LOF, UTR, PROMOTER, Intronic, Copy Gain and
 lof_cols <- grep("LOF", names(vars_aff_rare_gt), value = T)
 vars_aff_rare_gt$IS_LOF <- apply(vars_aff_rare_gt[,..lof_cols], 1, function(r) !all(is.na(r)))
-vars_aff_rare_gt$IS_LOF_GENELIST <- apply(vars_aff_rare_gt[,..lLt's of_cols], 1, function(r){any(r %in% genelist$V1)})
+vars_aff_rare_gt$IS_LOF_GENELIST <- apply(vars_aff_rare_gt[,..lof_cols], 1, function(r){any(r %in% genelist$V1)})
 
 verbose("Writting to output")
 
