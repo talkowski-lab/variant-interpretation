@@ -264,14 +264,14 @@ task SVfamilyFiltering{
             mim_path <- '~{mim_file}'
             af_columns <- '~{sep="," AF_columns}'
             comp_het <- '~{run_compound_het}'
+            fam <- '~{family}'
+            variants_gt_path <- '~{family_vcf}'
+            variants_path <- '~{bed_file}'
+            manifest_path <- '~{ped_file}'
+            gd_path <- '~{genomic_disorder_names}'
         " > config.R
 
         Rscript /scripts/variant-interpretation/scripts/familyFiltering.R \
-            -f ~{family} \
-            -g ~{family_vcf} \
-            -i ~{bed_file} \
-            -m ~{ped_file} \
-            -d ~{genomic_disorder_names} \
             -c config.R \
             -u /scripts/variant-interpretation/scripts/familyFilteringFunctions.R \
             -o ~{family}.filt.txt \

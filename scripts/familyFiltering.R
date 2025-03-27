@@ -9,16 +9,6 @@ library("optparse")
 option_list = list(
   make_option(c("-c", "--rconfig"), type="character", default=NULL,
               help="Config file", metavar="character"),
-  make_option(c("-i", "--input_file"), type="character", default=NULL,
-              help="Main VCF file", metavar="character"),
-  make_option(c("-g", "--input_gt"), type="character", default=NULL,
-              help="Family filtered VCF with genotypes", metavar="character"),
-  make_option(c("-f", "--fam"), type="character", default=NULL,
-              help="Family ID", metavar="character"),
-  make_option(c("-m", "--manifest"), type="character", default=NULL,
-              help="Manifest/Pedigree file", metavar="character"),
-  make_option(c("-d", "--gd_path"), type="character", default=NULL,
-              help="SVs overlapping genomic disorder regions", metavar="character"),
   make_option(c("-o", "--out_file"), type="character", default=NULL,
               help="Path to output file", metavar="character"),
   make_option(c("-u", "--rfunctions"), type="character", default=NULL,
@@ -31,11 +21,11 @@ opt_parser = OptionParser(option_list=option_list);
 opt = parse_args(opt_parser)
 
 rconfig <- opt$rconfig
-variants_path <- opt$input_file
-variants_gt_path <- opt$input_gt
-fam <- opt$fam
-manifest_path <- opt$manifest
-gd_path <- opt$gd_path
+#variants_path <- opt$input_file
+#variants_gt_path <- opt$input_gt
+#fam <- opt$fam
+#manifest_path <- opt$manifest
+#gd_path <- opt$gd_path
 out_file <- opt$out_file
 rfunctions <- opt$rfunctions
 
@@ -155,7 +145,6 @@ gt_info_fix[names(gt_info_fix)[2:ncol(gt_info_fix)]] <- apply(gt_info_fix[names(
 vars_aff_rare_gt <- merge(vars_aff_rare_gd, gt_info_fix, by = "name", all.x = T, all.y = F)
 
 #Define columns that have gene annotations
-# gene_cols <- as.vector(names(vars_aff_rare_gt)[c(19:34,37,39)])
 gene_cols <- grep("PREDICTED_", names(vars_aff_rare_gt), value = T)
 gene_cols <- gene_cols[gene_cols %ni% c("PREDICTED_NONCODING_SPAN", "PREDICTED_NONCODING_BREAKPOINT", "PREDICTED_INTERGENIC")]
 
@@ -242,12 +231,18 @@ vars_aff_rare_gt$pRec_ANY <- apply(vars_aff_rare_gt, 1, function(row)
 verbose("Absent in unaffected flag")
 vars_aff_rare_gt$FILT_ABSENT_UNAFF <- FALSE
 
-vars_aff_rare_gt[vars_aff_rare_gt$SC_ALL_UNAFF <= 5 &
-# vars_aff_rare_gt[vars_aff_rare_gt$SC_ALL_UNAFF == 0 & 
-			vars_aff_rare_gt$AC <=10 &
-			(is.na(vars_aff_rare_gt$`gnomad_v4.1_sv_AF`) | vars_aff_rare_gt$`gnomad_v4.1_sv_AF` <= 1e-3)
-			# (vars_aff_rare_gt$GENELIST_MATCH | vars_aff_rare_gt$HPO_MATCH | vars_aff_rare_gt$eo_ANY ) &
+#filter stricter gnomAD AF
+vars_aff_rare_gt %>%
+  filter_at(vars(af_columns), all_vars(. <= 1e-3)) -> tmp_vars_aff_rare_gt
+vars_aff_rare_gt <- tmp_vars_aff_rare_gt
+
+vars_aff_rare_gt[vars_aff_rare_gt$SC_FAM_UNAFF == 0 &
+                        vars_aff_rare_gt$AC <=10 &
+                        vars_aff_rare_gt$SC_ALL_UNAFF <= 5
+                        # (is.na(vars_aff_rare_gt$`gnomad_v4.1_sv_AF`) | vars_aff_rare_gt$`gnomad_v4.1_sv_AF` <= 1e-3)
+                        # (vars_aff_rare_gt$GENELIST_MATCH | vars_aff_rare_gt$HPO_MATCH | vars_aff_rare_gt$eo_ANY ) &
       ,]$FILT_ABSENT_UNAFF <- TRUE
+
 
 #2. Compound het SV-SV
 ##If trio, looks for cosegregation - if not trio, returns genes with multiple hits
@@ -296,6 +291,8 @@ vars_aff_rare_gt[vars_aff_rare_gt$AFF_AR &
 	# (vars_aff_rare_gt$GENELIST_MATCH | vars_aff_rare_gt$HPO_MATCH | vars_aff_rare_gt$pRec_ANY) &
 	vars_aff_rare_gt$N_HOMALT <= 10,]$FILT_AR <- TRUE
 
+vars_aff_rare_gt$AFF_AR <- NULL
+vars_aff_rare_gt$UNAFF_NO_AR <- NULL
 
 #4. X-linked recessive
 ##Flag FILT_AR if male and variant in chrX
