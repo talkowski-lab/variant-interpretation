@@ -92,19 +92,19 @@ unaffected_all <- subset(manifest, affected == 1)$subject_id
 #####################
 verbose("Family and frequency initial filtering")
 
-#Get family specific SVs
-vars$keep <- apply(vars, 1, function(row){
- row_samples <- strsplit(row['samples'], ",")[[1]]
- any(row_samples %in% affected)
-}
+#keep only if affected sample is a carrier
+vars$keep <- apply(vars,1,function(row){
+  row_samples <- strsplit(row['samples'], ",")[[1]]
+  any(row_samples %in% affected)
+})
 
 vars_aff <- subset(vars, keep == TRUE)
 
 #Add specific affected sample carrying the variant
-vars_aff$sample <- apply(vars_aff, 1, function(row){
+vars_aff$sample <- apply(vars_aff,1,function(row){
  row_samples <- strsplit(row['samples'], ",")[[1]]
  paste(row_samples[row_samples %in% affected], collapse = ",")
-}
+})
 
 #Replace NA for 0 in AF and AC columns
 vars_aff %>%
