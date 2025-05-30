@@ -14,7 +14,7 @@ workflow reformatgCNV {
         File bed_file
         String prefix
         String sv_base_mini_docker
-        Int num_records
+        #Int num_records
         Int win_dist
         String reformat_gCNV_for_merging_script
         String bed2vcf_script
