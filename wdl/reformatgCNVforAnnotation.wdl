@@ -257,7 +257,7 @@ task sortVCF {
     >>>
 
     output {
-        File vcf_file = "~{prefix}.for_annotation.vcf.gz"
-        File vcf_file_idx = "~{prefix}.for_annotation.vcf.gz.tbi"
+        File final_vcf_file = "~{prefix}.for_annotation.vcf.gz"
+        File final_vcf_file_idx = "~{prefix}.for_annotation.vcf.gz.tbi"
     }
 }
