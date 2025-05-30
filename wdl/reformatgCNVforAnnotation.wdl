@@ -1,8 +1,5 @@
 version 1.0
 
-import "mergeVCFs.wdl" as mergeVCFs
-import "wes-denovo-helpers.wdl" as helpers
-
 struct RuntimeAttr {
     Float? mem_gb
     Int? cpu_cores
