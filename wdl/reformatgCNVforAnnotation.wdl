@@ -16,8 +16,8 @@ workflow reformatgCNV {
         String sv_base_mini_docker
         #Int num_records
         Int win_dist
-        String reformat_gCNV_for_merging_script
-        String bed2vcf_script
+#        String reformat_gCNV_for_merging_script
+#        String bed2vcf_script
         RuntimeAttr? runtime_attr_reformat
         RuntimeAttr? runtime_attr_merge
         RuntimeAttr? runtime_attr_bed2vcf
@@ -29,8 +29,8 @@ workflow reformatgCNV {
             bed_file=bed_file,
             sv_base_mini_docker=sv_base_mini_docker,
             prefix=prefix,
-            runtime_attr_override=runtime_attr_reformat,
-            reformat_gCNV_for_merging_script=reformat_gCNV_for_merging_script
+            runtime_attr_override=runtime_attr_reformat
+#            reformat_gCNV_for_merging_script=reformat_gCNV_for_merging_script
     }
 
     call mergeBed{
@@ -48,8 +48,8 @@ workflow reformatgCNV {
             bed_file_merged=mergeBed.merged_bed,
             sv_base_mini_docker=sv_base_mini_docker,
             prefix=prefix,
-            runtime_attr_override=runtime_attr_bed2vcf,
-            bed2vcf_script=bed2vcf_script
+            runtime_attr_override=runtime_attr_bed2vcf
+#            bed2vcf_script=bed2vcf_script
     }
 
     call sortVCF{
@@ -70,7 +70,7 @@ task reformatBed {
         File bed_file
         String sv_base_mini_docker
         String prefix
-        String reformat_gCNV_for_merging_script
+#        String reformat_gCNV_for_merging_script
         RuntimeAttr? runtime_attr_override
     }
 
@@ -103,8 +103,8 @@ task reformatBed {
 
     command <<<
         set -euo pipefail
-        curl ~{reformat_gCNV_for_merging_script} > reformat_gCNV_for_merging.R
-        Rscript reformat_gCNV_for_merging.R \
+
+        Rscript /src/variant-interpretation/scripts/reformat_gCNV_for_merging.R \
             -i ~{bed_file} \
             -p ~{prefix}
     >>>
@@ -153,6 +153,7 @@ task mergeBed {
 
     command <<<
         set -euo pipefail
+
         bedtools merge -d ~{win_dist} -i ~{bed_file} -c 4 -o collapse -delim ',' > ~{prefix}.merged.bed
     >>>
 
@@ -167,7 +168,7 @@ task bed2vcf {
         File bed_file_merged
         String sv_base_mini_docker
         String prefix
-        String bed2vcf_script
+#        String bed2vcf_script
         RuntimeAttr? runtime_attr_override
     }
 
@@ -201,9 +202,7 @@ task bed2vcf {
     command <<<
         set -euo pipefail
 
-        curl ~{bed2vcf_script} > bed2vcf.R
-
-        Rscript bed2vcf.R \
+        Rscript /src/variant-interpretation/scripts/bed2vcf.R \
             -i ~{bed_file} \
             -m ~{bed_file_merged} \
             -o ~{prefix}.vcf
