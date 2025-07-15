@@ -25,9 +25,9 @@ workflow ScatterFormatCluster {
     String? chr_x
     String? chr_y
     File? svtk_to_gatk_script
+    File? ploidy_table_script
 
     # SVCluster inputs
-    File ploidy_table
     File reference_fasta
     File reference_fasta_fai
     File reference_dict
@@ -72,6 +72,20 @@ workflow ScatterFormatCluster {
     RuntimeAttr? runtime_attr_concat_format
     RuntimeAttr? runtime_attr_cluster
     RuntimeAttr? runtime_attr_concat_final
+  }
+
+  # TODO : properly set allosome ploidy, which creates problems in RDTest for allosomes at the moment
+  call ClusterTasks.CreatePloidyTableFromPed as CreatePloidyTableFromPed {
+    input:
+      ped_file=ped_file,
+      script=ploidy_table_script,
+      contig_list=contig_list,
+      retain_female_chr_y=true,
+      chr_x=chr_x,
+      chr_y=chr_y,
+      output_prefix="~{prefix}.ploidy",
+      sv_pipeline_docker=sv_pipeline_docker,
+      runtime_attr_override=runtime_attr_create_ploidy
   }
 
   scatter (contig in contigs) {
@@ -145,7 +159,7 @@ workflow ScatterFormatCluster {
     call ClusterTasks.SVCluster {
       input:
         vcfs = [FormatVcf1.gatk_formatted_vcf, FormatVcf2.gatk_formatted_vcf],
-        ploidy_table = ploidy_table,
+        ploidy_table = CreatePloidyTableFromPed.out,
         output_prefix = "~{prefix}.~{contig}.clustered",
         contig = contig,
         fast_mode = fast_mode,
