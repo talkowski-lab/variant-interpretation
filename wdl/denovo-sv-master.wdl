@@ -11,18 +11,18 @@ struct RuntimeAttr {
 
 workflow DenovoSV_MASTER{
     input{
-        Array[File] denovo_wes
-        File flipbook_responses
-        File file_paths_to_fix
+        Array[File] wes_denovo
+        File wes_flipbook_responses
+        File wes_file_paths_to_fix
         String release
         String denovo_docker
         RuntimeAttr? runtime_attr_wes_merge_to_annotate
     }
     call denovo_wes_merge_to_annotate {
         input:
-                denovo_wes = denovo_wes,
-                flipbook_responses = flipbook_responses,
-                file_paths_to_fix = file_paths_to_fix,
+                wes_denovo = wes_denovo,
+                wes_flipbook_responses = wes_flipbook_responses,
+                wes_file_paths_to_fix = wes_file_paths_to_fix,
                 release = release,
                 denovo_docker = denovo_docker,
                 runtime_attr_override = runtime_attr_wes_merge_to_annotate
@@ -36,9 +36,9 @@ workflow DenovoSV_MASTER{
 
 task denovo_wes_merge_to_annotate {
     input{
-        Array[File] denovo_wes
-        File flipbook_responses
-        File file_paths_to_fix
+        Array[File] wes_denovo
+        File wes_flipbook_responses
+        File wes_file_paths_to_fix
         String release
         String denovo_docker
         RuntimeAttr? runtime_attr_override
