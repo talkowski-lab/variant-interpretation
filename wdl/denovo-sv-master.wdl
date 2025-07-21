@@ -76,7 +76,7 @@ task denovo_wes_merge_to_annotate {
         set -eu
 
         Rscript wes_denovo_merge.R \
-            -c ~{sep="," denovo_wes},
+            -c ~{sep="," wes_denovo},
             -r ~{release} \
             -o .
 
@@ -87,8 +87,8 @@ task denovo_wes_merge_to_annotate {
         Rscript wes_denovo_post_merge_reformat.R \
             -d denovo_wes-~{release}.bed \
             -m denovo_wes_for_merging-~{release}.merged.bed \
-            -f ~{flipbook_responses} \
-            -i ~{file_paths_to_fix} \
+            -f ~{wes_flipbook_responses} \
+            -i ~{wes_file_paths_to_fix} \
             -r ~{release} \
             -o .
 
