@@ -75,8 +75,10 @@ task denovo_wes_merge_to_annotate {
     command <<<
         set -eu
 
+        basenames=$(for f in ~{sep=" " wes_denovo}; do basename "$f"; done | paste -sd "," -)
+
         Rscript /src/variant-interpretation/scripts/wes_denovo_merge.R \
-            -c ~{sep="," basename(wes_denovo)},
+            -c "$basenames",
             -r ~{release} \
             -o .
 
