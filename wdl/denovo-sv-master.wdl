@@ -62,6 +62,8 @@ task denovo_wes_merge_to_annotate {
     Float memory = select_first([runtime_override.mem_gb, runtime_default.mem_gb])
     Int cpu_cores = select_first([runtime_override.cpu_cores, runtime_default.cpu_cores])
 
+    Array[String] wes_denovo_basenames = wes_denovo.map(basename)
+
     runtime {
         memory: "~{memory} GB"
         disks: "local-disk ~{select_first([runtime_override.disk_gb, runtime_default.disk_gb])} HDD"
@@ -76,7 +78,7 @@ task denovo_wes_merge_to_annotate {
         set -eu
 
         Rscript /src/variant-interpretation/scripts/wes_denovo_merge.R \
-            -c ~{sep="," wes_denovo.map(basename)},
+            -c ~{sep="," wes_denovo_basenames},
             -r ~{release} \
             -o .
 
