@@ -75,7 +75,7 @@ task denovo_wes_merge_to_annotate {
     command <<<
         set -eu
 
-        Rscript wes_denovo_merge.R \
+        Rscript /src/variant-interpretation/scripts/wes_denovo_merge.R \
             -c ~{sep="," wes_denovo},
             -r ~{release} \
             -o .
@@ -84,7 +84,7 @@ task denovo_wes_merge_to_annotate {
             -i denovo_wes_for_merging-~{release}.bed \
             -c 4 -o collapse -delim ',' > denovo_wes_for_merging-~{release}.merged.bed
 
-        Rscript wes_denovo_post_merge_reformat.R \
+        Rscript /src/variant-interpretation/scripts/wes_denovo_post_merge_reformat.R \
             -d denovo_wes-~{release}.bed \
             -m denovo_wes_for_merging-~{release}.merged.bed \
             -f ~{wes_flipbook_responses} \
@@ -93,7 +93,7 @@ task denovo_wes_merge_to_annotate {
             -o .
 
         ##Prepare to annoate
-        Rscript svs_add_bed2vcf.R \
+        Rscript /src/variant-interpretation/scripts/svs_add_bed2vcf.R \
             -i denovo_wes-~{release}.for_annotation.bed \
             -o denovo_wes-~{release}.for_annotation.vcf
 
