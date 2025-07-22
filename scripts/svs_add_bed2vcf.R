@@ -50,7 +50,7 @@ convert_bed_to_vcf <- function(bed_file, vcf_file, vcf_header) {
   if(length(opt$samples) >0){
     header_line <- paste("#CHROM", "POS", "ID", "REF", "ALT", "QUAL", "FILTER", "INFO", "FORMAT", paste(samples, collapse = "\t"), sep = "\t")
   }else{
-    header_line <- paste("#CHROM", "POS", "ID", "REF", "ALT", "QUAL", "FILTER", "INFO", "FORMAT", sep = "\t")
+    header_line <- paste("#CHROM", "POS", "ID", "REF", "ALT", "QUAL", "FILTER", "INFO", "FORMAT", "SAMPLE", sep = "\t")
   }
 
   # Write VCF header to the file
