@@ -76,7 +76,7 @@ task denovo_wes_merge_to_annotate {
         set -eu
 
         Rscript /src/variant-interpretation/scripts/wes_denovo_merge.R \
-            -c ~{sep=" " wes_denovo},
+            -c ~{sep="," wes_denovo},
             -r ~{release} \
             -o .
 
