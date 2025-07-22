@@ -149,7 +149,7 @@ task denovo_wes_merge_to_annotate {
     output {
         File bed_to_annotate = "denovo_wes-~{release}.for_annotation.bed"
         File vcf_to_annotate = "denovo_wes-~{release}.for_annotation.sorted.vcf.gz"
-        File vcf_idx_to_annotate = "denovo_wes-~{release}.for_annotation.sorted.vcf.gz"
+        File vcf_to_annotate_index = "denovo_wes-~{release}.for_annotation.sorted.vcf.gz.tbi"
     }
 }
 
