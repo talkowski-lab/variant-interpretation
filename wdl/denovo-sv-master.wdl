@@ -31,6 +31,8 @@ workflow DenovoSV_MASTER{
         String sv_pipeline_docker
         String sv_base_mini_docker
         String gatk_docker
+
+        RuntimeAttr? runtime_attr_wes_update_annotations
     }
 
     call denovo_wes_merge_to_annotate {
@@ -59,6 +61,15 @@ workflow DenovoSV_MASTER{
             par_bed = par_bed,
             ped_file = ped_file,
             protein_coding_gtf = protein_coding_gtf
+    }
+
+    call denovo_wes_update_annotations {
+        input:
+            wes_annotated_vcf = annotate_denovo_wes.annotated_vcf,
+            bed_to_annotate = denovo_wes_merge_to_annotate.bed_to_annotate,
+            release = release,
+            denovo_docker = denovo_docker,
+            runtime_attr_override = runtime_attr_wes_update_annotations
     }
 
     output{
@@ -139,12 +150,62 @@ task denovo_wes_merge_to_annotate {
     >>>
 
     output {
+        File bed_to_annotate = "denovo_wes-~{release}.for_annotation.bed"
         File vcf_to_annotate = "denovo_wes-~{release}.for_annotation.sorted.vcf.gz"
         File vcf_idx_to_annotate = "denovo_wes-~{release}.for_annotation.sorted.vcf.gz"
     }
 }
 
+task denovo_wes_update_annotations {
+    input{
+        File wes_annotated_vcf
+        File bed_to_annotate
+        String release
+        String denovo_docker
+        RuntimeAttr? runtime_attr_override
+    }
 
-#$ svtk vcf2bed -i ALL --include-filters denovo_wes_merged-${release}.sorted.annotated.bed.gz
-##update annotations
-#$ Rscript denovosv_wgs_overwrite_predicted_csq.R -s denovo_wes_merged-${release}_final.bed
+    Float base_disk_gb = 10.0
+    Float input_disk_scale = 5.0
+    Float input_size = 12
+
+    RuntimeAttr runtime_default = object {
+        mem_gb: 4,
+        disk_gb: ceil(base_disk_gb + input_size * input_disk_scale),
+        cpu_cores: 1,
+        preemptible_tries: 3,
+        max_retries: 1,
+        boot_disk_gb: 10
+    }
+
+    RuntimeAttr runtime_override = select_first([runtime_attr_override, runtime_default])
+
+    Float memory = select_first([runtime_override.mem_gb, runtime_default.mem_gb])
+    Int cpu_cores = select_first([runtime_override.cpu_cores, runtime_default.cpu_cores])
+
+    runtime {
+        memory: "~{memory} GB"
+        disks: "local-disk ~{select_first([runtime_override.disk_gb, runtime_default.disk_gb])} HDD"
+        cpu: cpu_cores
+        preemptible: select_first([runtime_override.preemptible_tries, runtime_default.preemptible_tries])
+        maxRetries: select_first([runtime_override.max_retries, runtime_default.max_retries])
+        docker: denovo_docker
+        bootDiskSizeGb: select_first([runtime_override.boot_disk_gb, runtime_default.boot_disk_gb])
+    }
+
+    command <<<
+        set -eu
+
+        svtk vcf2bed -i ALL --include-filters ~{wes_annotated_vcf} - | \
+            bgzip -c > denovo_wes-~{release}.annotated.bed.gz
+
+        Rscript /src/variant-interpretation/scripts/wes_denovo_update_annotations.R \
+            -s ~{bed_to_annotate} \
+            -b denovo_wes-~{release}.annotated.bed.gz \
+            -o denovo_wes-~{release}_final.bed
+    >>>
+
+    output {
+        File denovo_wes_final = "denovo_wes-~{release}_final.bed"
+    }
+}
