@@ -77,6 +77,8 @@ task denovo_wes_merge_to_annotate {
 
         basenames=$(for f in ~{sep=" " wes_denovo}; do basename "$f"; done | paste -sd "," -)
 
+        echo "using $basenames as name file after localization"
+
         Rscript /src/variant-interpretation/scripts/wes_denovo_merge.R \
             -c "$basenames",
             -r ~{release} \
