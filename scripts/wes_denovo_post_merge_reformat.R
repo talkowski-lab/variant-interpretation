@@ -60,7 +60,7 @@ if( length(flipbook) >0 & length(ids_corresp) >0){
 ##Reformat
 wes_denovos_flipbook %>%
   group_by(name_merged) %>%
-  reframe("chrom" = unique(chr),
+  dplyr::reframe("chrom" = unique(chr),
           "start" = min(start),
           "end" = max(end),
           "svtype" = unique(svtype),
