@@ -73,10 +73,7 @@ workflow DenovoSV_MASTER{
     }
 
     output{
-        File wes_vcf_to_annotate = denovo_wes_merge_to_annotate.vcf_to_annotate
-        File wes_vcf_idx_to_annotate = denovo_wes_merge_to_annotate.vcf_to_annotate
-        File wes_annotated_vcf = denovo_wes_annotate.annotated_vcf
-        File wes_annotated_vcf_idx = denovo_wes_annotate.annotated_vcf_index
+        File wes_denovo_final = denovo_wes_update_annotations.denovo_wes_final
     }
 }
 
