@@ -45,7 +45,7 @@ workflow DenovoSV_MASTER{
                 runtime_attr_override = runtime_attr_wes_merge_to_annotate
     }
 
-    call Annotate.AnnotateVcf as annotate_denovo_wes {
+    call Annotate.AnnotateVcf as denovo_wes_annotate {
         input:
             contig_list = contig_list,
             gatk_docker = gatk_docker,
@@ -65,7 +65,7 @@ workflow DenovoSV_MASTER{
 
     call denovo_wes_update_annotations {
         input:
-            wes_annotated_vcf = annotate_denovo_wes.annotated_vcf,
+            wes_annotated_vcf = denovo_wes_annotate.annotated_vcf,
             bed_to_annotate = denovo_wes_merge_to_annotate.bed_to_annotate,
             release = release,
             denovo_docker = denovo_docker,
@@ -75,8 +75,8 @@ workflow DenovoSV_MASTER{
     output{
         File wes_vcf_to_annotate = denovo_wes_merge_to_annotate.vcf_to_annotate
         File wes_vcf_idx_to_annotate = denovo_wes_merge_to_annotate.vcf_to_annotate
-        File wes_annotated_vcf = annotate_denovo_wes.annotated_vcf
-        File wes_annotated_vcf_idx = annotate_denovo_wes.annotated_vcf_index
+        File wes_annotated_vcf = denovo_wes_annotate.annotated_vcf
+        File wes_annotated_vcf_idx = denovo_wes_annotate.annotated_vcf_index
     }
 }
 
