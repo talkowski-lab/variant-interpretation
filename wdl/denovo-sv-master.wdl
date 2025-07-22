@@ -51,7 +51,7 @@ workflow DenovoSV_MASTER{
             sv_base_mini_docker = sv_base_mini_docker,
             sv_per_shard = 5000,
             sv_pipeline_docker = sv_pipeline_docker,
-            vcf = denovo_wes_merge_to_annotate.wes_vcf_to_annotate,
+            vcf = denovo_wes_merge_to_annotate.vcf_to_annotate,
             external_af_population = external_af_population,
             external_af_ref_bed = external_af_ref_bed,
             external_af_ref_prefix = external_af_ref_prefix,
