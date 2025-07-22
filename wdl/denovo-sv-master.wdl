@@ -325,9 +325,7 @@ task denovo_wgs_merge_to_annotate {
     }
 }
 
-
-
-task denovo_wes_update_annotations {
+task denovo_wgs_update_annotations {
     input{
         File wgs_annotated_vcf
         File bed_to_annotate
