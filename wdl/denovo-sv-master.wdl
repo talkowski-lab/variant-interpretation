@@ -316,17 +316,6 @@ task denovo_wgs_merge_to_annotate {
         vcf-sort denovo_wgs-~{release}.for_annotation.vcf > denovo_wgs-~{release}.for_annotation.sorted.vcf
         bgzip -c denovo_wgs-~{release}.for_annotation.sorted.vcf > denovo_wgs-~{release}.for_annotation.sorted.vcf.gz
         tabix -p vcf denovo_wgs-~{release}.for_annotation.sorted.vcf.gz
-
-        ##PENDING STEPS TO DO IN TWO ADDITIONAL TASKS
-        ##4. Re-annotate
-        #gcp ${release_date}/GMKF_OFC_GREGoR_denovo_SV_Master-${release_date}_final_for_annotation.sorted.vcf.gz ${release_date}/GMKF_OFC_GREGoR_denovo_SV_Master-${release_date}_final_for_annotation.sorted.vcf.gz.tbi gs://fc-545eca01-311b-4271-bc2f-a7dce28387c5/alba/svs_add_manual/
-        #
-        #
-        ###5. Transform VCF annotated to BED file
-        #$ svtk vcf2bed --include-filters -i ALL final_svs_${release_date}.annotated.vcf.gz - | bgzip -c > final_svs_${release_date}.annotated.bed.gz
-        #
-        ###6. Merge with master final bed file
-        #Rscript ~/postdoc/DENOVO_SVS/scripts/denovosv_wgs_overwrite_predicted_csq.R -s ~/postdoc/DENOVO_SVS/WGS/master/${release_date}/GMKF_OFC_GREGoR_denovo_SV_Master-${release_date}_final.txt -b ~/postdoc/DENOVO_SVS/WGS/master/${release_date}/final_svs_${release_date}.annotated.bed.gz -o ~/postdoc/DENOVO_SVS/WGS/master/${release_date}/GMKF_OFC_GREGoR_denovo_SV_Master-${release_date}_final_annotated.txt
     >>>
 
     output {
