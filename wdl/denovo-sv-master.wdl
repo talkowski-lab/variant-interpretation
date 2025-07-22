@@ -370,7 +370,7 @@ task denovo_wgs_update_annotations {
             bgzip -c > denovo_wgs-~{release}.annotated.bed.gz
 
         ##Merge with master final bed file
-        Rscript /src/variant-interpretation/scripts/denovosv_wgs_overwrite_predicted_csq.R \
+        Rscript /src/variant-interpretation/scripts/wgs_denovo_update_annotations.R \
             -s ~{bed_to_annotate} \
             -b denovo_wgs-~{release}.annotated.bed.gz \
             -o denovo_wgs-~{release}_final.bed
