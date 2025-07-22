@@ -259,10 +259,10 @@ task denovo_wgs_merge_to_annotate {
 
         Rscript /src/variant-interpretation/scripts/wgs_denovo_merge.R \
             -d ~{sep="," wgs_denovo} \
-	        -o denovo_wgs-~{release}.txt \
-	        -f ~{wgs_flipbook_responses} \
-	        -p ~{ped_file} \
-	        -q ~{quality_control}
+            -o denovo_wgs-~{release}.txt \
+            -f ~{wgs_flipbook_responses} \
+            -p ~{ped_file} \
+            -q ~{quality_control}
 
         #run bedtools merge
         sort -k1,1 -k2,2n denovo_wgs-~{release}_ref_for_merge.txt > denovo_wgs-~{release}_ref_for_merge_sort.txt
