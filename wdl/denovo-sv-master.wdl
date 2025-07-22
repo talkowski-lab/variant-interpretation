@@ -29,8 +29,6 @@ workflow DenovoSV_MASTER{
     }
 
     output{
-        File wes_bed_intmd = denovo_wes_merge_to_annotate.bed_intmd
-        File wes_bed_for_merging_intmd = denovo_wes_merge_to_annotate.bed_for_merging_intmd
         File wes_vcf_to_annotate = denovo_wes_merge_to_annotate.vcf_to_annotate
         File wes_vcf_idx_to_annotate = denovo_wes_merge_to_annotate.vcf_to_annotate
     }
@@ -106,8 +104,6 @@ task denovo_wes_merge_to_annotate {
     >>>
 
     output {
-        File bed_intmd = "denovo_wes-~{release}.bed"
-        File bed_for_merging_intmd = "denovo_wes_for_merging-~{release}.merged.bed"
         File vcf_to_annotate = "denovo_wes-~{release}.for_annotation.sorted.vcf.gz"
         File vcf_idx_to_annotate = "denovo_wes-~{release}.for_annotation.sorted.vcf.gz"
     }
