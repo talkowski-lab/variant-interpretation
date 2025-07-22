@@ -4,10 +4,10 @@
 ##Update merged calls and reformat WES de novo callset
 
 ##Load libraries
+library(dplyr)
 library(tidyverse)
 library(data.table)
 library(optparse)
-library("dplyr")
 
 option_list = list(
   make_option(c("-d", "--denovo"), type="character", default=NULL,
