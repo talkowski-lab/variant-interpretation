@@ -51,8 +51,16 @@ ped <- fread(ped_file)
 #denovo_files <- read.table(denovo_fof)
 denovo_files <- strsplit(denovo_fof, ",")[[1]]
 
-denovo <- do.call(plyr::rbind.fill, lapply(denovo_files$V2, function(f){
-  df <- fread(f)
+#denovo <- do.call(plyr::rbind.fill, lapply(denovo_files$V2, function(f){
+#  df <- fread(f)
+#  df$batch <- subset(denovo_files, V2 == f)$V1
+#  df
+#}))
+
+denovo <- do.call(plyr::rbind.fill, lapply(denovo_files$V2, function(f) {
+  tmp <- tempfile(fileext = ".tsv")
+  system(paste("gsutil cp", shQuote(f), shQuote(tmp)), intern = TRUE)
+  df <- fread(tmp)
   df$batch <- subset(denovo_files, V2 == f)$V1
   df
 }))
@@ -76,12 +84,22 @@ denovo$sample_name <- paste0(denovo$sample, "_", denovo$name)
 #Read Flipbook files and reformat
 flipbook_files <- read.table(flipbook_fof)
 
+#responses <- do.call(plyr::rbind.fill, lapply(flipbook_files$V2, function(f){
+#  tb <- fread(f)
+#  tb$analyst <- subset(flipbook_files, V2 == f)$V1
+#  tb$tiebreaker_reviewed <- subset(flipbook_files, V2 == f)$V3
+#  tb
+#}))
+
 responses <- do.call(plyr::rbind.fill, lapply(flipbook_files$V2, function(f){
-  tb <- fread(f)
+  tmp <- tempfile(fileext = ".tsv")
+  system(paste("gsutil cp", shQuote(f), shQuote(tmp)))
+  tb <- fread(tmp)
   tb$analyst <- subset(flipbook_files, V2 == f)$V1
   tb$tiebreaker_reviewed <- subset(flipbook_files, V2 == f)$V3
   tb
 }))
+
 
 responses$Verdict <- NULL
 responses$Confidence <- NULL
