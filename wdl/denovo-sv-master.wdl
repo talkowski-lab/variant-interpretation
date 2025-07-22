@@ -32,48 +32,84 @@ workflow DenovoSV_MASTER{
         String sv_base_mini_docker
         String gatk_docker
 
-        RuntimeAttr? runtime_attr_wes_update_annotations
-    }
+        Array[File] wgs_denovo
+        File wgs_flipbook_responses
+        File mosaics_manual
+        File mosaics_denovo_scores
+        File tlocs_manual
+        File ped_file
+        File quality_control
+        File genomic_disorders_manual
+        File aneuploidies_manual
+        File remove_svs
+        File add_svs
+        File baf_file
 
-    call denovo_wes_merge_to_annotate {
+        RuntimeAttr? runtime_attr_wes_update_annotations
+        RuntimeAttr? runtime_attr_wgs_merge_to_annotate
+    }
+#
+#    call denovo_wes_merge_to_annotate {
+#        input:
+#                wes_denovo = wes_denovo,
+#                wes_flipbook_responses = wes_flipbook_responses,
+#                wes_file_paths_to_fix = wes_file_paths_to_fix,
+#                release = release,
+#                denovo_docker = denovo_docker,
+#                runtime_attr_override = runtime_attr_wes_merge_to_annotate
+#    }
+#
+#    call Annotate.AnnotateVcf as denovo_wes_annotate {
+#        input:
+#            contig_list = contig_list,
+#            gatk_docker = gatk_docker,
+#            prefix = release,
+#            sv_base_mini_docker = sv_base_mini_docker,
+#            sv_per_shard = 5000,
+#            sv_pipeline_docker = sv_pipeline_docker,
+#            vcf = denovo_wes_merge_to_annotate.vcf_to_annotate,
+#            external_af_population = external_af_population,
+#            external_af_ref_bed = external_af_ref_bed,
+#            external_af_ref_prefix = external_af_ref_prefix,
+#            noncoding_bed = noncoding_bed,
+#            par_bed = par_bed,
+#            ped_file = ped_file,
+#            protein_coding_gtf = protein_coding_gtf
+#    }
+#
+#    call denovo_wes_update_annotations {
+#        input:
+#            wes_annotated_vcf = denovo_wes_annotate.annotated_vcf,
+#            bed_to_annotate = denovo_wes_merge_to_annotate.bed_to_annotate,
+#            release = release,
+#            denovo_docker = denovo_docker,
+#            runtime_attr_override = runtime_attr_wes_update_annotations
+#    }
+
+    call denovo_wgs_merge_to_annotate {
         input:
-                wes_denovo = wes_denovo,
-                wes_flipbook_responses = wes_flipbook_responses,
-                wes_file_paths_to_fix = wes_file_paths_to_fix,
+                wgs_denovo = wgs_denovo,
+                wgs_flipbook_responses = wgs_flipbook_responses,
+                mosaics_manual = mosaics_manual,
+                mosaics_denovo_scores = mosaics_denovo_scores,
+                tlocs_manual = tlocs_manual,
+                ped_file = ped_file,
+                quality_control = quality_control,
+                genomic_disorders_manual = genomic_disorders_manual,
+                aneuploidies_manual = aneuploidies_manual,
+                remove_svs = remove_svs,
+                add_svs = add_svs,
+                baf_file = baf_file,
                 release = release,
                 denovo_docker = denovo_docker,
-                runtime_attr_override = runtime_attr_wes_merge_to_annotate
-    }
-
-    call Annotate.AnnotateVcf as denovo_wes_annotate {
-        input:
-            contig_list = contig_list,
-            gatk_docker = gatk_docker,
-            prefix = release,
-            sv_base_mini_docker = sv_base_mini_docker,
-            sv_per_shard = 5000,
-            sv_pipeline_docker = sv_pipeline_docker,
-            vcf = denovo_wes_merge_to_annotate.vcf_to_annotate,
-            external_af_population = external_af_population,
-            external_af_ref_bed = external_af_ref_bed,
-            external_af_ref_prefix = external_af_ref_prefix,
-            noncoding_bed = noncoding_bed,
-            par_bed = par_bed,
-            ped_file = ped_file,
-            protein_coding_gtf = protein_coding_gtf
-    }
-
-    call denovo_wes_update_annotations {
-        input:
-            wes_annotated_vcf = denovo_wes_annotate.annotated_vcf,
-            bed_to_annotate = denovo_wes_merge_to_annotate.bed_to_annotate,
-            release = release,
-            denovo_docker = denovo_docker,
-            runtime_attr_override = runtime_attr_wes_update_annotations
+                runtime_attr_override = runtime_attr_wgs_merge_to_annotate
     }
 
     output{
-        File wes_denovo_final = denovo_wes_update_annotations.denovo_wes_final
+#        File wes_denovo_final = denovo_wes_update_annotations.denovo_wes_final
+        File wgs_bed_to_annotate = denovo_wgs_merge_to_annotate.bed_to_annotate
+        File wgs_vcf_to_annotate = denovo_wgs_merge_to_annotate.vcf_to_annotate
+        File wgs_vcf_to_annotate_index = denovo_wgs_merge_to_annotate.vcf_to_annotate_index
     }
 }
 
