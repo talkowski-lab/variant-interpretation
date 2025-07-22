@@ -258,7 +258,7 @@ task denovo_wgs_merge_to_annotate {
         set -eu
 
         Rscript /src/variant-interpretation/scripts/wgs_denovo_merge.R \
-        	-d ~{sep="," wgs_denovo} \
+            -d ~{sep="," wgs_denovo} \
 	        -o denovo_wgs-~{release}.txt \
 	        -f ~{wgs_flipbook_responses} \
 	        -p ~{ped_file} \
