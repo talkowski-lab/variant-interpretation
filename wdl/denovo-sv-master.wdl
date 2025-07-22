@@ -1,5 +1,7 @@
 version 1.0
 
+import "https://raw.githubusercontent.com/broadinstitute/gatk-sv/refs/tags/v1.0.4/wdl/AnnotateVcf.wdl" as Annotate
+
 struct RuntimeAttr {
     Float? mem_gb
     Int? cpu_cores
@@ -17,7 +19,20 @@ workflow DenovoSV_MASTER{
         String release
         String denovo_docker
         RuntimeAttr? runtime_attr_wes_merge_to_annotate
+
+        File contig_list
+        File external_af_ref_bed
+        File noncoding_bed
+        File par_bed
+        File ped_file
+        File protein_coding_gtf
+        Array[String] external_af_population
+        String external_af_ref_prefix
+        String sv_pipeline_docker
+        String sv_base_mini_docker
+        String gatk_docker
     }
+
     call denovo_wes_merge_to_annotate {
         input:
                 wes_denovo = wes_denovo,
@@ -28,9 +43,29 @@ workflow DenovoSV_MASTER{
                 runtime_attr_override = runtime_attr_wes_merge_to_annotate
     }
 
+    call Annotate.AnnotateVcf as annotate_denovo_wes {
+        input:
+            contig_list = contig_list,
+            gatk_docker = gatk_docker,
+            prefix = release,
+            sv_base_mini_docker = sv_base_mini_docker,
+            sv_per_shard = 5000,
+            sv_pipeline_docker = sv_pipeline_docker,
+            vcf = denovo_wes_merge_to_annotate.wes_vcf_to_annotate,
+            external_af_population = external_af_population,
+            external_af_ref_bed = external_af_ref_bed,
+            external_af_ref_prefix = external_af_ref_prefix,
+            noncoding_bed = noncoding_bed,
+            par_bed = par_bed,
+            ped_file = ped_file,
+            protein_coding_gtf = protein_coding_gtf
+    }
+
     output{
         File wes_vcf_to_annotate = denovo_wes_merge_to_annotate.vcf_to_annotate
         File wes_vcf_idx_to_annotate = denovo_wes_merge_to_annotate.vcf_to_annotate
+        File wes_annotated_vcf = annotate_denovo_wes.annotated_vcf
+        File wes_annotated_vcf_idx = annotate_denovo_wes.annotated_vcf_index
     }
 }
 
