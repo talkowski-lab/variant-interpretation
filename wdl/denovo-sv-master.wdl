@@ -303,7 +303,7 @@ task denovo_wgs_merge_to_annotate {
             -d ~{sep="," wgs_denovo} \
             -n ~{wgs_denovo_cohorts}\
             -o denovo_wgs-~{release}.txt \
-            -f ~{wgs_flipbook_responses} \
+            -f ~{sep="," wgs_flipbook_responses} \
             -l ~{wgs_flipbook_metadata} \
             -p ~{ped_file} \
             -q ~{quality_control}
