@@ -54,7 +54,7 @@ detachAllPackages <- function() {
 qc_file <- fread(qc_file)
 ped <- fread(ped_file)
 denovo_cohorts <- fread(denovo_cohorts_file, header = F)
-flipbook_info <- fread(flipbook_metadata_file, header = F)
+flipbook_metadata <- fread(flipbook_metadata_file, header = F)
 
 denovo_files <- strsplit(denovo_fof, ",")[[1]]
 
@@ -85,8 +85,8 @@ flipbook_files <- strsplit(flipbook_fof, ",")[[1]]
 
 responses <- do.call(plyr::rbind.fill, lapply(flipbook_files, function(f){
   tb <- fread(f)
-  tb$analyst <- subset(flipbook_files, V2 == f)$V1
-  tb$tiebreaker_reviewed <- subset(flipbook_info, V2 == basename(f))$V3
+  tb$analyst <- subset(flipbook_metadata, V2 == basename(f))$V1
+  tb$tiebreaker_reviewed <- subset(flipbook_metadata, V2 == basename(f))$V3
   tb
 }))
 
