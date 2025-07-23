@@ -47,46 +47,52 @@ workflow DenovoSV_MASTER{
         File add_svs
         File baf_file
 
+        File denovo_snvs_indels_wgs
+        File denovo_snvs_indels_wes
+        File denovo_snvs_indels_additional_cohorts
+
         RuntimeAttr? runtime_attr_wes_update_annotations
         RuntimeAttr? runtime_attr_wgs_merge_to_annotate
+        RuntimeAttr? runtime_attr_wgs_update_annotations
+        RuntimeAttr? runtime_attr_wes_wgs_merge
     }
-#
-#    call denovo_wes_merge_to_annotate {
-#        input:
-#                wes_denovo = wes_denovo,
-#                wes_flipbook_responses = wes_flipbook_responses,
-#                wes_file_paths_to_fix = wes_file_paths_to_fix,
-#                release = release,
-#                denovo_docker = denovo_docker,
-#                runtime_attr_override = runtime_attr_wes_merge_to_annotate
-#    }
-#
-#    call Annotate.AnnotateVcf as denovo_wes_annotate {
-#        input:
-#            contig_list = contig_list,
-#            gatk_docker = gatk_docker,
-#            prefix = release,
-#            sv_base_mini_docker = sv_base_mini_docker,
-#            sv_per_shard = 5000,
-#            sv_pipeline_docker = sv_pipeline_docker,
-#            vcf = denovo_wes_merge_to_annotate.vcf_to_annotate,
-#            external_af_population = external_af_population,
-#            external_af_ref_bed = external_af_ref_bed,
-#            external_af_ref_prefix = external_af_ref_prefix,
-#            noncoding_bed = noncoding_bed,
-#            par_bed = par_bed,
-#            ped_file = ped_file,
-#            protein_coding_gtf = protein_coding_gtf
-#    }
-#
-#    call denovo_wes_update_annotations {
-#        input:
-#            wes_annotated_vcf = denovo_wes_annotate.annotated_vcf,
-#            bed_to_annotate = denovo_wes_merge_to_annotate.bed_to_annotate,
-#            release = release,
-#            denovo_docker = denovo_docker,
-#            runtime_attr_override = runtime_attr_wes_update_annotations
-#    }
+
+    call denovo_wes_merge_to_annotate {
+        input:
+                wes_denovo = wes_denovo,
+                wes_flipbook_responses = wes_flipbook_responses,
+                wes_file_paths_to_fix = wes_file_paths_to_fix,
+                release = release,
+                denovo_docker = denovo_docker,
+                runtime_attr_override = runtime_attr_wes_merge_to_annotate
+    }
+
+    call Annotate.AnnotateVcf as denovo_wes_annotate {
+        input:
+            contig_list = contig_list,
+            gatk_docker = gatk_docker,
+            prefix = release,
+            sv_base_mini_docker = sv_base_mini_docker,
+            sv_per_shard = 5000,
+            sv_pipeline_docker = sv_pipeline_docker,
+            vcf = denovo_wes_merge_to_annotate.vcf_to_annotate,
+            external_af_population = external_af_population,
+            external_af_ref_bed = external_af_ref_bed,
+            external_af_ref_prefix = external_af_ref_prefix,
+            noncoding_bed = noncoding_bed,
+            par_bed = par_bed,
+            ped_file = ped_file,
+            protein_coding_gtf = protein_coding_gtf
+    }
+
+    call denovo_wes_update_annotations {
+        input:
+            wes_annotated_vcf = denovo_wes_annotate.annotated_vcf,
+            bed_to_annotate = denovo_wes_merge_to_annotate.bed_to_annotate,
+            release = release,
+            denovo_docker = denovo_docker,
+            runtime_attr_override = runtime_attr_wes_update_annotations
+    }
 
     call denovo_wgs_merge_to_annotate {
         input:
@@ -109,11 +115,53 @@ workflow DenovoSV_MASTER{
                 runtime_attr_override = runtime_attr_wgs_merge_to_annotate
     }
 
+        call Annotate.AnnotateVcf as denovo_wgs_annotate {
+        input:
+            contig_list = contig_list,
+            gatk_docker = gatk_docker,
+            prefix = release,
+            sv_base_mini_docker = sv_base_mini_docker,
+            sv_per_shard = 5000,
+            sv_pipeline_docker = sv_pipeline_docker,
+            vcf = denovo_wgs_merge_to_annotate.vcf_to_annotate,
+            external_af_population = external_af_population,
+            external_af_ref_bed = external_af_ref_bed,
+            external_af_ref_prefix = external_af_ref_prefix,
+            noncoding_bed = noncoding_bed,
+            par_bed = par_bed,
+            ped_file = ped_file,
+            protein_coding_gtf = protein_coding_gtf
+    }
+
+        call denovo_wgs_update_annotations {
+        input:
+            wgs_annotated_vcf = denovo_wgs_annotate.annotated_vcf,
+            bed_to_annotate = denovo_wgs_merge_to_annotate.bed_to_annotate,
+            release = release,
+            denovo_docker = denovo_docker,
+            runtime_attr_override = runtime_attr_wgs_update_annotations
+        }
+
+        call denovo_wes_wgs_merge {
+            input:
+            denovo_wgs_final = denovo_wgs_update_annotations.denovo_wgs_final,
+            denovo_wes_final = denovo_wes_update_annotations.denovo_wes_final,
+            denovo_snvs_indels_wgs = denovo_snvs_indels_wgs,
+            denovo_snvs_indels_wes = denovo_snvs_indels_wes,
+            denovo_snvs_indels_additional_cohorts = denovo_snvs_indels_additional_cohorts,
+            ped_file = ped_file,
+            release = release,
+            denovo_docker = denovo_docker,
+            runtime_attr_override = runtime_attr_wes_wgs_merge
+    }
+
     output{
-#        File wes_denovo_final = denovo_wes_update_annotations.denovo_wes_final
-        File wgs_bed_to_annotate = denovo_wgs_merge_to_annotate.bed_to_annotate
-        File wgs_vcf_to_annotate = denovo_wgs_merge_to_annotate.vcf_to_annotate
-        File wgs_vcf_to_annotate_index = denovo_wgs_merge_to_annotate.vcf_to_annotate_index
+        File final_denovo_snvs = denovo_wes_wgs_merge.denovo_snvs
+        File final_denovo_snvs_outliers = denovo_wes_wgs_merge.denovo_snvs_outliers
+        File final_denovo_snvs_final = denovo_wes_wgs_merge.denovo_snvs_final
+        File final_denovo_svs = denovo_wes_wgs_merge.denovo_svs
+        File final_denovo_svs_final = denovo_wes_wgs_merge.denovo_svs_final
+        File final_denovo_svs_outliers = denovo_wes_wgs_merge.denovo_svs_outliers
     }
 }
 
