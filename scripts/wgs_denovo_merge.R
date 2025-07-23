@@ -120,7 +120,7 @@ responses %>%
   # select(c(Path, analyst, `Is de novo`)) %>%
   pivot_wider(names_from = analyst, values_from = Is_de_novo) -> responses2
 
-reviewers_names <- unique(flipbook_files$V1)
+reviewers_names <- unique(flipbook_metadata$V1)
 
 ##Prepare Path_fix for later
 responses$Path_fix <- responses$Path
