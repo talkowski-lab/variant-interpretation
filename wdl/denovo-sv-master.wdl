@@ -33,7 +33,9 @@ workflow DenovoSV_MASTER{
         String gatk_docker
 
         Array[File] wgs_denovo
-        File wgs_flipbook_responses
+        Array[File] wgs_flipbook_responses
+        File wgs_denovo_cohorts
+        File wgs_flipbook_metadata
         File mosaics_manual
         File mosaics_denovo_scores
         File tlocs_manual
@@ -89,6 +91,8 @@ workflow DenovoSV_MASTER{
     call denovo_wgs_merge_to_annotate {
         input:
                 wgs_denovo = wgs_denovo,
+                wgs_denovo_cohorts = wgs_denovo_cohorts,
+                wgs_flipbook_metadata = wgs_flipbook_metadata,
                 wgs_flipbook_responses = wgs_flipbook_responses,
                 mosaics_manual = mosaics_manual,
                 mosaics_denovo_scores = mosaics_denovo_scores,
@@ -246,7 +250,9 @@ task denovo_wes_update_annotations {
 task denovo_wgs_merge_to_annotate {
     input{
         Array[File] wgs_denovo
-        File wgs_flipbook_responses
+        Array[File] wgs_flipbook_responses
+        File wgs_flipbook_metadata
+        File wgs_denovo_cohorts
         File mosaics_manual
         File mosaics_denovo_scores
         File tlocs_manual
@@ -295,8 +301,10 @@ task denovo_wgs_merge_to_annotate {
 
         Rscript /src/variant-interpretation/scripts/wgs_denovo_merge.R \
             -d ~{sep="," wgs_denovo} \
+            -n ~{wgs_denovo_cohorts}\
             -o denovo_wgs-~{release}.txt \
             -f ~{wgs_flipbook_responses} \
+            -l ~{wgs_flipbook_metadata} \
             -p ~{ped_file} \
             -q ~{quality_control}
 

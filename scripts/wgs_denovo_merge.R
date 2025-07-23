@@ -16,7 +16,11 @@ option_list = list(
               help="De novo file of files", metavar="character"),
   # make_option(c("-l", "--outliers"), type="character", default=NULL,
   #             help="De novo outliers file of files", metavar="character"),
+  make_option(c("-n", "--denovo_cohort_names"), type="character", default=NULL,
+              help="De novo outliers file of files", metavar="character"),
   make_option(c("-f", "--flipbook"), type="character", default=NULL,
+              help="Flipbook results file of files", metavar="character"),
+  make_option(c("-l", "--flipbook_metadata"), type="character", default=NULL,
               help="Flipbook results file of files", metavar="character"),
   make_option(c("-o", "--out"), type="character", default="out.txt",
               help="Output file name [default= %default]", metavar="character"),
@@ -30,11 +34,13 @@ opt_parser = OptionParser(option_list=option_list);
 opt = parse_args(opt_parser)
 
 denovo_fof <- opt$denovo
+denovo_cohorts_file <- opt$denovo_cohort_names, header = F
 # outliers_fof <- opt$outliers
 flipbook_fof <- opt$flipbook
 out_file <- opt$out
 qc_file <- opt$qc
 ped_file <- opt$ped
+flipbook_metadata_file <- opt$flipbook_metadata
 
 #Functions
 detachAllPackages <- function() {
@@ -47,21 +53,14 @@ detachAllPackages <- function() {
 #Read Input Files and Reformat
 qc_file <- fread(qc_file)
 ped <- fread(ped_file)
+denovo_cohorts <- fread(denovo_cohorts_file, header = F)
+flipbook_info <- fread(flipbook_metadata_file, header = F)
 
-denovo_files <- read.table(denovo_fof, header = F)
-#denovo_files <- strsplit(denovo_fof, ",")[[1]]
+denovo_files <- strsplit(denovo_fof, ",")[[1]]
 
-#denovo <- do.call(plyr::rbind.fill, lapply(denovo_files$V2, function(f){
-#  df <- fread(f)
-#  df$batch <- subset(denovo_files, V2 == f)$V1
-#  df
-#}))
-
-denovo <- do.call(plyr::rbind.fill, lapply(denovo_files$V2, function(f) {
-  tmp <- tempfile(fileext = ".tsv")
-  system(paste("gsutil cp", shQuote(f), shQuote(tmp)), intern = TRUE)
-  df <- fread(tmp)
-  df$batch <- subset(denovo_files, V2 == f)$V1
+denovo <- do.call(plyr::rbind.fill, lapply(denovo_files, function(f){
+  df <- fread(f)
+  df$batch <- subset(denovo_cohorts, V2 == basename(f))$V1
   df
 }))
 
@@ -82,24 +81,14 @@ denovo$sample_name <- paste0(denovo$sample, "_", denovo$name)
 # denovo_outliers$sample_name <- paste0(denovo_outliers$sample, "_", denovo_outliers$name)
 
 #Read Flipbook files and reformat
-flipbook_files <- read.table(flipbook_fof, header = F)
+flipbook_files <- strsplit(flipbook_fof, ",")[[1]]
 
-#responses <- do.call(plyr::rbind.fill, lapply(flipbook_files$V2, function(f){
-#  tb <- fread(f)
-#  tb$analyst <- subset(flipbook_files, V2 == f)$V1
-#  tb$tiebreaker_reviewed <- subset(flipbook_files, V2 == f)$V3
-#  tb
-#}))
-
-responses <- do.call(plyr::rbind.fill, lapply(flipbook_files$V2, function(f){
-  tmp <- tempfile(fileext = ".tsv")
-  system(paste("gsutil cp", shQuote(f), shQuote(tmp)))
-  tb <- fread(tmp)
+responses <- do.call(plyr::rbind.fill, lapply(flipbook_files, function(f){
+  tb <- fread(f)
   tb$analyst <- subset(flipbook_files, V2 == f)$V1
-  tb$tiebreaker_reviewed <- subset(flipbook_files, V2 == f)$V3
+  tb$tiebreaker_reviewed <- subset(flipbook_info, V2 == basename(f))$V3
   tb
 }))
-
 
 responses$Verdict <- NULL
 responses$Confidence <- NULL
