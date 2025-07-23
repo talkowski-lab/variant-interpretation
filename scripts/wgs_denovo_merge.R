@@ -48,8 +48,8 @@ detachAllPackages <- function() {
 qc_file <- fread(qc_file)
 ped <- fread(ped_file)
 
-#denovo_files <- read.table(denovo_fof)
-denovo_files <- strsplit(denovo_fof, ",")[[1]]
+denovo_files <- read.table(denovo_fof, header = F)
+#denovo_files <- strsplit(denovo_fof, ",")[[1]]
 
 #denovo <- do.call(plyr::rbind.fill, lapply(denovo_files$V2, function(f){
 #  df <- fread(f)
@@ -82,7 +82,7 @@ denovo$sample_name <- paste0(denovo$sample, "_", denovo$name)
 # denovo_outliers$sample_name <- paste0(denovo_outliers$sample, "_", denovo_outliers$name)
 
 #Read Flipbook files and reformat
-flipbook_files <- read.table(flipbook_fof)
+flipbook_files <- read.table(flipbook_fof, header = F)
 
 #responses <- do.call(plyr::rbind.fill, lapply(flipbook_files$V2, function(f){
 #  tb <- fread(f)
