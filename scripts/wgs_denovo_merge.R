@@ -34,7 +34,7 @@ opt_parser = OptionParser(option_list=option_list);
 opt = parse_args(opt_parser)
 
 denovo_fof <- opt$denovo
-denovo_cohorts_file <- opt$denovo_cohort_names, header = F
+denovo_cohorts_file <- opt$denovo_cohort_names
 # outliers_fof <- opt$outliers
 flipbook_fof <- opt$flipbook
 out_file <- opt$out
