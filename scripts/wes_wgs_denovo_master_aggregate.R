@@ -148,11 +148,11 @@ snv_all_final <- subset(snv_all_additional, KEEP == TRUE)
 sv_all_final <- subset(sv_all, KEEP == TRUE)
 
 ##Write outputs
-write.table(snv_all_additional, paste0(outdir, "/", release_date, "/DENOVO_SNVS_INDELS-", release_date, ".txt"), sep = "\t", quote = F, row.names = F)
-write.table(sv_all, paste0(outdir, "/", release_date, "/DENOVO_SVS-", release_date, ".txt"), sep = "\t", quote = F, row.names = F)
+write.table(snv_all_additional, paste0(outdir, "/DENOVO_SNVS_INDELS-", release_date, ".txt"), sep = "\t", quote = F, row.names = F)
+write.table(sv_all, paste0(outdir, "/DENOVO_SVS-", release_date, ".txt"), sep = "\t", quote = F, row.names = F)
 
-write.table(snv_all_final, paste0(outdir, "/", release_date, "/DENOVO_SNVS_INDELS-", release_date, ".final.txt"), sep = "\t", quote = F, row.names = F)
-write.table(sv_all_final, paste0(outdir, "/", release_date, "/DENOVO_SVS-", release_date, ".final.txt"), sep = "\t", quote = F, row.names = F)
+write.table(snv_all_final, paste0(outdir, "/DENOVO_SNVS_INDELS-", release_date, ".final.txt"), sep = "\t", quote = F, row.names = F)
+write.table(sv_all_final, paste0(outdir, "/DENOVO_SVS-", release_date, ".final.txt"), sep = "\t", quote = F, row.names = F)
 
-write.table(c(snv_wes_outliers, snv_wgs_outliers), paste0(outdir, "/", release_date, "/DENOVO_SNVS_INDELS-", release_date, ".outliers.txt"), sep = "\n", quote = F, row.names = F, col.names = F)
-write.table(c(cnv_wes_outliers, sv_wgs_outliers), paste0(outdir, "/", release_date, "/DENOVO_SVS-", release_date, ".outliers.txt"), sep = "\n", quote = F, row.names = F, col.names = F)
+write.table(c(snv_wes_outliers, snv_wgs_outliers), paste0(outdir, "/DENOVO_SNVS_INDELS-", release_date, ".outliers.txt"), sep = "\n", quote = F, row.names = F, col.names = F)
+write.table(c(cnv_wes_outliers, sv_wgs_outliers), paste0(outdir, "/DENOVO_SVS-", release_date, ".outliers.txt"), sep = "\n", quote = F, row.names = F, col.names = F)
