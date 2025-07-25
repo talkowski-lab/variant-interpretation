@@ -141,7 +141,7 @@ snv_all_additional$KEEP <- !snv_all_additional$SAMPLE %in%  c(snv_wes_outliers, 
 snv_all_additional[snv_all_additional$SAMPLE == "",]$SAMPLE <- snv_all_additional[snv_all_additional$SAMPLE == "",]$`wes_additional_Blinded ID`
 snv_all_additional[snv_all_additional$SAMPLE == "",]$SAMPLE <- snv_all_additional[snv_all_additional$SAMPLE == "",]$wes_additional_id
 
-snv_all_additional[snv_all_additional$cohort == "DDD_Kaplanis_et_al_2020_GRCh38_liftover_noGeneDxASC",]$SAMPLE <- snv_all_additional[snv_all_additional$cohort == "DDD_Kaplanis_et_al_2020_GRCh38_liftover_noGeneDxASC",]$wes_additional_id
+##snv_all_additional[snv_all_additional$cohort == "DDD_Kaplanis_et_al_2020_GRCh38_liftover_noGeneDxASC",]$SAMPLE <- snv_all_additional[snv_all_additional$cohort == "DDD_Kaplanis_et_al_2020_GRCh38_liftover_noGeneDxASC",]$wes_additional_id
 
 ##Get final callset
 snv_all_final <- subset(snv_all_additional, KEEP == TRUE)
