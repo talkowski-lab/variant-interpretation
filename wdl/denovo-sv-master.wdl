@@ -525,14 +525,22 @@ task denovo_wes_wgs_merge {
             -s ~{denovo_wgs_final} \
             -p ~{ped_file} \
             -d ~{release}
+
+        # Compress all expected output txt files
+        gzip DENOVO_SNVS_INDELS-~{release}.txt
+        gzip DENOVO_SNVS_INDELS-~{release}.outliers.txt
+        gzip DENOVO_SNVS_INDELS-~{release}.final.txt
+        gzip DENOVO_SVS-~{release}.txt
+        gzip DENOVO_SVS-~{release}.final.txt
+        gzip DENOVO_SVS-~{release}.outliers.txt    
     >>>
 
     output {
-        File denovo_snvs = "DENOVO_SNVS_INDELS-${release}.txt.gz"
-        File denovo_snvs_outliers = "DENOVO_SNVS_INDELS-${release}.outliers.txt.gz"
-        File denovo_snvs_final = "DENOVO_SNVS_INDELS-${release}.final.txt.gz"
-        File denovo_svs = "DENOVO_SVS-${release}.txt.gz"
-        File denovo_svs_final = "DENOVO_SVS-${release}.final.txt.gz"
-        File denovo_svs_outliers = "DENOVO_SVS-${release}.outliers.txt.gz"
+        File denovo_snvs = "DENOVO_SNVS_INDELS-~{release}.txt.gz"
+        File denovo_snvs_outliers = "DENOVO_SNVS_INDELS-~{release}.outliers.txt.gz"
+        File denovo_snvs_final = "DENOVO_SNVS_INDELS-~{release}.final.txt.gz"
+        File denovo_svs = "DENOVO_SVS-~{release}.txt.gz"
+        File denovo_svs_final = "DENOVO_SVS-~{release}.final.txt.gz"
+        File denovo_svs_outliers = "DENOVO_SVS-~{release}.outliers.txt.gz"
     }
 }
