@@ -29,6 +29,8 @@ opt_parser = OptionParser(option_list=option_list);
 opt = parse_args(opt_parser)
 
 #Define input parameteres and read files
+message("Reading input files")
+
 snvgenomes_file <- opt$snvgenomes
 snvexomes_file <- opt$snvexomes
 cnvexomes_file <- opt$cnvexomes
@@ -47,6 +49,7 @@ additional_denovo <- fread(additional_file)
 #############################
 ##Merge WES+WGS SNVs/indels##
 #############################
+message("Merging WES and WGS SNVs/indels")
 
 ##Reformat SNV WES and exclude outliers
 names(snv_wes)[names(snv_wes) == "id"] <- "SAMPLE"
@@ -90,6 +93,7 @@ snv_all_additional <- rbind(snv_all, additional_denovo, fill = TRUE)
 #####################
 ##Merge WES+WGS SVs##
 #####################
+message("Merging WES and WGS SVs")
 
 ##Reformat CNV WES and exclude outliers
 names(cnv_wes)[names(cnv_wes) == "sample"] <- "SAMPLE"
@@ -124,6 +128,7 @@ sv_wgs_outliers <- plyr::count(sv_wgs$SAMPLE)[plyr::count(sv_wgs$SAMPLE)$freq > 
 sv_wgs_samples_keep <- unique(sv_wgs$SAMPLE)[!unique(sv_wgs$SAMPLE) %in% sv_wgs_outliers]
 
 ##MERGE FILES
+message("Merging files")
 sv_all <- rbind(cnv_wes, sv_wgs, fill = TRUE)
 
 ##Remove outliers SNVs/indels and SVs in samples with any error = TRUE
@@ -145,17 +150,23 @@ snv_all_final <- subset(snv_all_additional, KEEP == TRUE)
 sv_all_final <- subset(sv_all, KEEP == TRUE)
 
 ##Write outputs
+message("Writing files")
+
 write.table(snv_all_additional, gzfile(paste0("DENOVO_SNVS_INDELS-", release_date, ".txt.gz"), "w"), sep = "\t", quote = F, row.names = F)
 close(gzfile(paste0("DENOVO_SNVS_INDELS-", release_date, ".txt.gz"), "w"))
 
 write.table(sv_all, gzfile(paste0("DENOVO_SVS-", release_date, ".txt.gz"), "w"), sep = "\t", quote = F, row.names = F)
 close(gzfile(paste0("DENOVO_SVS-", release_date, ".txt.gz"), "w"))
 
+message("Writing final files")
+
 write.table(snv_all_final, gzfile(paste0("DENOVO_SNVS_INDELS-", release_date, ".final.txt.gz"), "w"), sep = "\t", quote = F, row.names = F)
 close(gzfile(paste0("DENOVO_SNVS_INDELS-", release_date, ".final.txt.gz"), "w"))
 
 write.table(sv_all_final, gzfile(paste0("DENOVO_SVS-", release_date, ".final.txt.gz"), "w"), sep = "\t", quote = F, row.names = F)
 close(gzfile(paste0("DENOVO_SVS-", release_date, ".final.txt.gz"), "w"))
+
+message("Writing outliers files")
 
 write.table(c(snv_wes_outliers, snv_wgs_outliers), gzfile(paste0("DENOVO_SNVS_INDELS-", release_date, ".outliers.txt.gz"), "w"), sep = "\n", quote = F, row.names = F, col.names = F)
 close(gzfile(paste0("DENOVO_SNVS_INDELS-", release_date, ".outliers.txt.gz"), "w"))
