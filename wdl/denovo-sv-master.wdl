@@ -525,8 +525,6 @@ task denovo_wes_wgs_merge {
             -s ~{denovo_wgs_final} \
             -p ~{ped_file} \
             -d ~{release}
-
-        gzip *
     >>>
 
     output {
