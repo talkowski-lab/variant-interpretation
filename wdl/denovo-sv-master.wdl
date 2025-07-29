@@ -523,7 +523,6 @@ task denovo_wes_wgs_merge {
             -a ~{denovo_snvs_indels_additional_cohorts} \
             -c ~{denovo_wes_final} \
             -s ~{denovo_wgs_final} \
-            -o . \
             -p ~{ped_file} \
             -d ~{release}
 
