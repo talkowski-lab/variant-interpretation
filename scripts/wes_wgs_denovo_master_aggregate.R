@@ -17,8 +17,6 @@ option_list = list(
               help="CNV WES file", metavar="character"),
   make_option(c("-s", "--svgenomes"), type="character", default=NULL,
               help="SV WGS file", metavar="character"),
-  make_option(c("-o", "--outdir"), type="character", default=NULL,
-              help="Output directory", metavar="character"),
   make_option(c("-p", "--ped"), type="character", default=NULL,
               help="Pedigree file", metavar="character"),
   make_option(c("-d", "--date"), type="character", default=NULL,
@@ -36,7 +34,6 @@ snvexomes_file <- opt$snvexomes
 cnvexomes_file <- opt$cnvexomes
 svgenomes_file <- opt$svgenomes
 ped_file <- opt$ped
-outdir <- opt$outdir
 release_date <- opt$date
 additional_file <- opt$additional
 
@@ -148,11 +145,20 @@ snv_all_final <- subset(snv_all_additional, KEEP == TRUE)
 sv_all_final <- subset(sv_all, KEEP == TRUE)
 
 ##Write outputs
-write.table(snv_all_additional, paste0(outdir, "/DENOVO_SNVS_INDELS-", release_date, ".txt"), sep = "\t", quote = F, row.names = F)
-write.table(sv_all, paste0(outdir, "/DENOVO_SVS-", release_date, ".txt"), sep = "\t", quote = F, row.names = F)
+write.table(snv_all_additional, gzfile(paste0("DENOVO_SNVS_INDELS-", release_date, ".txt.gz"), "w"), sep = "\t", quote = F, row.names = F)
+close(gzfile(paste0("DENOVO_SNVS_INDELS-", release_date, ".txt.gz"), "w"))
 
-write.table(snv_all_final, paste0(outdir, "/DENOVO_SNVS_INDELS-", release_date, ".final.txt"), sep = "\t", quote = F, row.names = F)
-write.table(sv_all_final, paste0(outdir, "/DENOVO_SVS-", release_date, ".final.txt"), sep = "\t", quote = F, row.names = F)
+write.table(sv_all, gzfile(paste0("DENOVO_SVS-", release_date, ".txt.gz"), "w"), sep = "\t", quote = F, row.names = F)
+close(gzfile(paste0("DENOVO_SVS-", release_date, ".txt.gz"), "w"))
 
-write.table(c(snv_wes_outliers, snv_wgs_outliers), paste0(outdir, "/DENOVO_SNVS_INDELS-", release_date, ".outliers.txt"), sep = "\n", quote = F, row.names = F, col.names = F)
-write.table(c(cnv_wes_outliers, sv_wgs_outliers), paste0(outdir, "/DENOVO_SVS-", release_date, ".outliers.txt"), sep = "\n", quote = F, row.names = F, col.names = F)
+write.table(snv_all_final, gzfile(paste0("DENOVO_SNVS_INDELS-", release_date, ".final.txt.gz"), "w"), sep = "\t", quote = F, row.names = F)
+close(gzfile(paste0("DENOVO_SNVS_INDELS-", release_date, ".final.txt.gz"), "w"))
+
+write.table(sv_all_final, gzfile(paste0("DENOVO_SVS-", release_date, ".final.txt.gz"), "w"), sep = "\t", quote = F, row.names = F)
+close(gzfile(paste0("DENOVO_SVS-", release_date, ".final.txt.gz"), "w"))
+
+write.table(c(snv_wes_outliers, snv_wgs_outliers), gzfile(paste0("DENOVO_SNVS_INDELS-", release_date, ".outliers.txt.gz"), "w"), sep = "\n", quote = F, row.names = F, col.names = F)
+close(gzfile(paste0("DENOVO_SNVS_INDELS-", release_date, ".outliers.txt.gz"), "w"))
+
+write.table(c(cnv_wes_outliers, sv_wgs_outliers), gzfile(paste0("DENOVO_SVS-", release_date, ".outliers.txt.gz"), "w"), sep = "\n", quote = F, row.names = F, col.names = F)
+close(gzfile(paste0("DENOVO_SVS-", release_date, ".outliers.txt.gz"), "w"))
