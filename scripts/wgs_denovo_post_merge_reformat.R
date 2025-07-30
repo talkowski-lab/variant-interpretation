@@ -66,10 +66,10 @@ mosaics2 <- fread(mosaics_file2)
 gds <- fread(gds_file)
 aneuploidies <- fread(aneuploidies_file)
 remove_svs <- fread(remove_file)
-add_svs <- fread(add_file)
+add_svs <- fread(add_file, fill = TRUE)
 qc <- fread(qc_file)
 ped <- fread(ped_file)
-baf <- fread(baf_file)
+baf <- fread(baf_file, fill = TRUE)
 
 ##Keep only real SVs
 wgs_svs_real <- subset(denovo, result_final == "yes")
