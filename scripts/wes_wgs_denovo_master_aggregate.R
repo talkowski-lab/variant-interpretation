@@ -52,7 +52,7 @@ additional_denovo <- fread(additional_file)
 message("Merging WES and WGS SNVs/indels")
 
 ##Reformat SNV WES and exclude outliers
-names(snv_wes)[names(snv_wes) == "id"] <- "SAMPLE"
+#names(snv_wes)[names(snv_wes) == "id"] <- "SAMPLE"
 names(snv_wes)[!names(snv_wes) %in% names(snv_wgs)] <- paste0("wes_", names(snv_wes)[!names(snv_wes) %in% names(snv_wgs)])
 snv_wes$data_type <- "WES"
 
@@ -72,7 +72,7 @@ snv_wgs$data_type <- "WGS"
 snv_wgs_q0_5 <- quantile(plyr::count(snv_wgs$SAMPLE)$freq, 0.95) #Keeping quartile below which 95% of the data falls
 snv_wgs_iqr_value <- IQR(plyr::count(snv_wgs$SAMPLE)$freq)
 snv_wgs_upper_bound <- snv_wgs_q0_5 + (1.5 * snv_wgs_iqr_value)
-snv_wgs_lower_bound <- snv_wgs_q0_5 - (3 * snv_wgs_iqr_value)
+snv_wgs_lower_bound <- snv_wgs_q0_5 - (1.5 * snv_wgs_iqr_value)
 
 snv_wgs_outliers <- plyr::count(snv_wgs$SAMPLE)[plyr::count(snv_wgs$SAMPLE)$freq > snv_wgs_upper_bound | plyr::count(snv_wgs$SAMPLE)$freq < snv_wgs_lower_bound, ]$x
 snv_wgs_samples_keep <- unique(snv_wgs$SAMPLE)[!unique(snv_wgs$SAMPLE) %in% snv_wgs_outliers]
@@ -80,7 +80,7 @@ snv_wgs_samples_keep <- unique(snv_wgs$SAMPLE)[!unique(snv_wgs$SAMPLE) %in% snv_
 snv_all <- rbind(snv_wes, snv_wgs, fill = TRUE)
 
 ##Add additional denovo calls from papers
-names(additional_denovo)[2] <- "SAMPLE"
+#names(additional_denovo)[2] <- "SAMPLE"
 # additional_denovo$cohort <- "DDD"
 # additional_denovo2 <- subset(additional_denovo, IN_KAPLANIS == TRUE)
 
