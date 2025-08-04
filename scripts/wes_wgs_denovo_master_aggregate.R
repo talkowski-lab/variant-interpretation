@@ -84,8 +84,8 @@ snv_all <- rbind(snv_wes, snv_wgs, fill = TRUE)
 # additional_denovo$cohort <- "DDD"
 # additional_denovo2 <- subset(additional_denovo, IN_KAPLANIS == TRUE)
 
-names(additional_denovo)[!names(additional_denovo) %in% names(snv_all)] <- paste0("wes_additional_", names(additional_denovo)[!names(additional_denovo) %in% names(snv_all)])
-additional_denovo$data_type <- "WES"
+names(additional_denovo)[!names(additional_denovo) %in% names(snv_all)] <- paste0("wxs_additional_", names(additional_denovo)[!names(additional_denovo) %in% names(snv_all)])
+additional_denovo$data_type <- "WXS"
 
 snv_all_additional <- rbind(snv_all, additional_denovo, fill = TRUE)
 
