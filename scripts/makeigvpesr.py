@@ -80,8 +80,12 @@ def cram_info_readin(cram_file):
 
 #If file inputs
 cram_colnames = colnames=[ 'cram']
-cram = pd.read_csv(args.crams, sep='\t', names= cram_colnames, header=None).replace(np.nan, '', regex=True)
-cram_list = cram['cram'].tolist()
+# Check if the crams file exists and is not empty
+if os.path.exists(args.crams) and os.path.getsize(args.crams) > 0:
+    cram = pd.read_csv(args.crams, sep='\t', names=cram_colnames, header=None).replace(np.nan, '', regex=True)
+    cram_list = cram['cram'].tolist()
+else:
+    cram_list = []
 #cram_list = [c.replace('gs://', '/cromwell_root/') for c in cram_list_]
 
 #sample_colnames = colnames=[ 'samples']
@@ -90,23 +94,26 @@ cram_list = cram['cram'].tolist()
 
 samples_list = args.samples.split(',')
 #cram_list=args.crams.split(',')
-mydict = {key:value for key, value in zip(samples_list,cram_list)}
-ped = pd.read_csv(pedigree, sep='\t', header=0).replace(np.nan, '', regex=True)
-ped['FatherID'] = ped['FatherID'].astype(str)
-ped['MotherID'] = ped['MotherID'].astype(str)
-ped.Affected = pd.to_numeric(ped.Affected)
-for sample_id in samples_list:
-	if(ped.loc[(ped['IndividualID'] == sample_id)]['Affected'].iloc[0] == 2):
-		if((ped.loc[(ped['IndividualID'] == sample_id)]['MotherID'].iloc[0] != '0' )| (ped.loc[(ped['IndividualID'] == sample_id)]['FatherID'].iloc[0] != '0' )):
-			print(sample_id)
-			proband_cram_file = mydict[sample_id]
-			cram_list.remove(proband_cram_file)
-			cram_list.insert(0, proband_cram_file)
-		else:
-			affected_cram_file = mydict[sample_id]
-			cram_list.remove(affected_cram_file)
-			cram_list.insert(1, affected_cram_file)
-print(cram_list)
+
+# Create sample-to-cram dictionary only if we have CRAM files
+if cram_list:
+    mydict = {key:value for key, value in zip(samples_list,cram_list)}
+    ped = pd.read_csv(pedigree, sep='\t', header=0).replace(np.nan, '', regex=True)
+    ped['FatherID'] = ped['FatherID'].astype(str)
+    ped['MotherID'] = ped['MotherID'].astype(str)
+    ped.Affected = pd.to_numeric(ped.Affected)
+    for sample_id in samples_list:
+        if(ped.loc[(ped['IndividualID'] == sample_id)]['Affected'].iloc[0] == 2):
+            if((ped.loc[(ped['IndividualID'] == sample_id)]['MotherID'].iloc[0] != '0' )| (ped.loc[(ped['IndividualID'] == sample_id)]['FatherID'].iloc[0] != '0' )):
+                print(sample_id)
+                proband_cram_file = mydict[sample_id]
+                cram_list.remove(proband_cram_file)
+                cram_list.insert(0, proband_cram_file)
+            else:
+                affected_cram_file = mydict[sample_id]
+                cram_list.remove(affected_cram_file)
+                cram_list.insert(1, affected_cram_file)
+    print(cram_list)
 
 with open(bamfiscript,'w') as h:
     h.write("#!/bin/bash\n")
@@ -128,8 +135,10 @@ with open(bamfiscript,'w') as h:
 
                 Length_total=int(Length+(Length)*1.5)
 
-                for cram in cram_list:
-                        g.write('load '+cram+'\n')
+                # Only load CRAMs if they exist
+                if cram_list:
+                    for cram in cram_list:
+                            g.write('load '+cram+'\n')
 
                 if Length_total<int(igv_max_window):
                     if Length_total<1000:

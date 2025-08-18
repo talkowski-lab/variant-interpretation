@@ -46,6 +46,7 @@ workflow VisualizePlots{
         RuntimeAttr? runtime_attr_reformat_pe
         RuntimeAttr? runtime_attr_reformat_sr
         RuntimeAttr? runtime_attr_update_pe_sr
+        RuntimeAttr? runtime_attr_localize_reads
     }
 
     Boolean is_snv_indel_ = if defined(is_snv_indel) then select_first([is_snv_indel]) else false
@@ -92,7 +93,7 @@ workflow VisualizePlots{
         File buffer_ = select_first([buffer,500])
         File reference_ = select_first([reference])
         File reference_index_ = select_first([reference_index])
-        Boolean file_localization_ = if defined(file_localization) then select_first([file_localization]) else false
+        Boolean file_localization_ = select_first([file_localization, false])
         if(run_evidence_plots){
             File sample_pe_sr_ = select_first([sample_pe_sr])
             call igv_evidence.IGV_all_samples as igv_evidence_plots {
@@ -122,7 +123,7 @@ workflow VisualizePlots{
         if(run_cram_plots){
             File sample_crai_cram_ = select_first([sample_crai_cram])
             Int igv_max_window_ = if defined(igv_max_window) then select_first([igv_max_window]) else 150000
-            Boolean requester_pays_ = if defined(requester_pays) then select_first([requester_pays]) else false
+            Boolean requester_pays_ = select_first([requester_pays, false])
             call igv_cram.IGV_all_samples as igv_cram_plots {
                 input:
                     ped_file = pedfile,
@@ -142,7 +143,8 @@ workflow VisualizePlots{
                     variant_interpretation_docker = variant_interpretation_docker,
                     runtime_attr_run_igv = runtime_attr_run_igv,
                     runtime_attr_igv = runtime_attr_igv,
-                    runtime_attr_cpx = runtime_attr_cpx
+                    runtime_attr_cpx = runtime_attr_cpx,
+                    runtime_attr_localize_reads = runtime_attr_localize_reads
             }
         }
     }

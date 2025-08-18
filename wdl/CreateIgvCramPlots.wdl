@@ -30,6 +30,7 @@ workflow IGV_all_samples {
         RuntimeAttr? runtime_attr_run_igv
         RuntimeAttr? runtime_attr_igv
         RuntimeAttr? runtime_attr_cpx
+        RuntimeAttr? runtime_attr_localize_reads
     }
 
     if (defined(fam_ids)) {
@@ -105,7 +106,8 @@ workflow IGV_all_samples {
                     reference_index = reference_index,
                     igv_docker = igv_docker,
                     variant_interpretation_docker = variant_interpretation_docker,
-                    runtime_attr_igv = runtime_attr_igv
+                    runtime_attr_igv = runtime_attr_igv,
+                    runtime_attr_localize_reads = runtime_attr_localize_reads
             }
         }
 
