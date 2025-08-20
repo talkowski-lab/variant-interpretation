@@ -196,7 +196,7 @@ class GetVariants():
           dat=line.rstrip().split("\t")
           [chr,start,end,name,type,samples]=dat[0:6]
           sample=samples.split(',')[0]
-          varname=samples.split(',')[0]+'_'+name
+          varname=name+'_'+samples.split(',')[0]
           if "," in sample:
             raise Exception("should only have 1 sample per variant")
           prefix=self.variantinfo.getprefix(sample)

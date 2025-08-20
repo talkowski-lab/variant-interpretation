@@ -131,17 +131,13 @@ task runIGV_whole_genome_localize{
             head -n+1 ~{ped_file} > family_ped.txt
             grep -w ~{family} ~{ped_file} >> family_ped.txt
             python3.6 /src/renameCramsLocalize.py --ped family_ped.txt --scc ~{sample_crai_cram}
+            cut -f4 changed_sample_crai_cram.txt > crams.txt
             
-            # Check if there are valid samples in the renamed file
-            if [ -s changed_sample_crai_cram.txt ]; then
-                cut -f4 changed_sample_crai_cram.txt > crams.txt
-                
-                while read sample crai cram new_cram new_crai
-                do
-                    mv $cram $new_cram
-                    mv $crai $new_crai
-                done<changed_sample_crai_cram.txt
-            fi
+            while read sample crai cram new_cram new_crai
+            do
+                mv $cram $new_cram
+                mv $crai $new_crai
+            done<changed_sample_crai_cram.txt
 
             i=0
             while read -r line
@@ -208,27 +204,16 @@ task runIGV_whole_genome_parse{
             cat ~{varfile} | cut -f1-3 | awk '{if (($3-$2)+int(($3-$2)*1.5)>=~{igv_max_window}) print $1"\t"$2-~{buffer}"\t"$2+~{buffer} "\n" $1"\t"$3-~{buffer}"\t"$3+~{buffer};
                 else print $1"\t"($2-int(($3-$2)*0.25))-~{buffer}"\t"$3+int(($3-$2)*0.25)+~{buffer}}' | sort -k1,1 -k2,2n | bgzip -c > regions.bed.gz
             tabix -p bed regions.bed.gz
-            
-            # Initialize crams.txt to avoid error if no cram files are created
-            touch crams.txt
-            
-            # Check if there are samples in the family before processing
-            if [ -s ~{updated_sample_crai_cram} ]; then
-                #localize cram files
-                while read sample crai cram new_cram new_crai
-                do
-                    name=$( echo $new_cram|awk -F"/" '{print $NF}'|sed 's/.cram//g' )
-                    gsutil cp $crai $( basename $cram | sed 's/\.cram$/.crai/g' )
-                    export GCS_OAUTH_TOKEN=`gcloud auth application-default print-access-token`
-                    samtools view -h -C -T ~{reference} -o $name.cram $cram -L regions.bed.gz -M
-                    samtools index $name.cram
-                done<~{updated_sample_crai_cram}
-                
-                # Only create crams.txt if there are cram files
-                if ls *.cram 1> /dev/null 2>&1; then
-                    ls *.cram > crams.txt
-                fi
-            fi
+            #localize cram files
+            while read sample crai cram new_cram new_crai
+            do
+                name=$( echo $new_cram|awk -F"/" '{print $NF}'|sed 's/.cram//g' )
+                gsutil cp $crai $( basename $cram | sed 's/\.cram$/.crai/g' )
+                export GCS_OAUTH_TOKEN=`gcloud auth application-default print-access-token`
+                samtools view -h -C -T ~{reference} -o $name.cram $cram -L regions.bed.gz -M
+                samtools index $name.cram
+            done<~{updated_sample_crai_cram}
+            ls *.cram > crams.txt
 
             i=0
             while read -r line
