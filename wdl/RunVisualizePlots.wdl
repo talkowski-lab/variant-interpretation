@@ -1,4 +1,3 @@
-# Base script https://portal.firecloud.org/#methods/Talkowsk-SV/Coverage_plot/10/wdl
 version 1.0
 
 import "Structs2.wdl"
@@ -7,7 +6,7 @@ import "CreateIgvCramPlots.wdl" as igv_cram
 import "CreateIgvEvidencePlots.wdl" as igv_evidence
 
 workflow VisualizePlots{
-    input{
+    input {
         File varfile
         File pedfile
         String prefix
@@ -60,7 +59,7 @@ workflow VisualizePlots{
     }
     File processed_varfile = select_first([subsample_variants.subsampled_varfile, varfile])
 
-    #Update complex bed file
+    # Update complex bed file
     Boolean is_snv_indel_ = if defined(is_snv_indel) then select_first([is_snv_indel]) else false
     if (is_snv_indel_ == false) {
         call updateCpxBed{
@@ -156,7 +155,7 @@ workflow VisualizePlots{
         }
     }
 
-    # Create a concatinated image
+    # Create concatinated images
     if (run_RD && run_IGV) {
         File igv_plots_tar_gz_pe_ = select_first([igv_cram_plots.tar_gz_pe, igv_evidence_plots.tar_gz_pe])
         File RdTest_Plots_ = select_first([RdTest.Plots])
@@ -175,12 +174,11 @@ workflow VisualizePlots{
 
     output{
         File output_plots = select_first([concatinate_plots.plots, RdTest.Plots, igv_evidence_plots.tar_gz_pe, igv_cram_plots.tar_gz_pe])
-        
     }
 }
 
 task concatinate_plots {
-    input{
+    input {
         File rd_plots
         File igv_plots
         String? prefix
@@ -239,12 +237,10 @@ task concatinate_plots {
     output{
         File plots = "~{prefix}_igv_rdtest_plots.tar.gz"
     }
-
-
 }
 
-task updateCpxBed{
-    input{
+task updateCpxBed {
+    input {
         File varfile
         String variant_interpretation_docker
         RuntimeAttr? runtime_attr_override
