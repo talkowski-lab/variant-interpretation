@@ -5,7 +5,7 @@ import "RdVisualization.wdl" as rdtest
 import "CreateIgvCramPlots.wdl" as igv_cram
 import "CreateIgvEvidencePlots.wdl" as igv_evidence
 
-workflow VisualizePlots{
+workflow VisualizePlots {
     input {
         File varfile
         File pedfile
