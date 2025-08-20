@@ -1,7 +1,7 @@
 version: 1.2
 workflows:
   - subclass: WDL
-    name: VisualizePlots
+    name: RunVisualizePlots
     primaryDescriptorPath: /wdl/RunVisualizePlots.wdl
     filters:
       branches:
