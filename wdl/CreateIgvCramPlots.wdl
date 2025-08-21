@@ -1,11 +1,5 @@
 version 1.0
 
-##########################################################################################
-
-## Github commit: talkowski-lab/gatk-sv-v1:<ENTER HASH HERE IN FIRECLOUD>
-
-##########################################################################################
-
 import "IgvCramPlots.wdl" as igv_plots
 import "Structs2.wdl"
 
@@ -261,7 +255,7 @@ task update_sample_crai_cram{
                                       mem_gb: base_mem_gb,
                                       disk_gb: ceil(10 + input_size),
                                       cpu: 1,
-                                      preemptible: 2,
+                                      preemptible: 3,
                                       max_retries: 1,
                                       boot_disk_gb: 8
                                   }
