@@ -1,4 +1,0 @@
-FROM australia-southeast1-docker.pkg.dev/talkowski-training/kj-development/asj:igv
-
-COPY scripts/makeigvpesr.py /src/variant-interpretation/scripts/makeigvpesr.py
-COPY scripts/renameCramsLocalize.py /src/renameCramsLocalize.py

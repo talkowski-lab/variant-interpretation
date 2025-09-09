@@ -1,3 +1,0 @@
-FROM australia-southeast1-docker.pkg.dev/talkowski-training/kj-development/asj:denovo-outputFix
-
-COPY scripts/renameCrams.py /src/variant-interpretation/scripts/renameCrams.py
