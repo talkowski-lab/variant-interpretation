@@ -7,9 +7,10 @@ import "CreateIgvEvidencePlots.wdl" as igv_evidence
 
 workflow VisualizePlots {
     input {
-        File varfile
+        Array[File] varfiles
+        Array[String] prefixes
         File pedfile
-        String prefix
+        String? cohort_name
         File? batch_bincov
         File? sample_batches
         File? batch_medianfile
@@ -48,132 +49,137 @@ workflow VisualizePlots {
         RuntimeAttr? runtime_attr_localize_reads
     }
 
-    # Subsample variants if max_samples_per_variant is specified
-    if (defined(max_samples_per_variant)) {
-        call subsample_variants {
-            input:
-                varfile = varfile,
-                max_samples_per_variant = select_first([max_samples_per_variant]),
-                sv_base_mini_docker = sv_base_mini_docker
-        }
-    }
-    File processed_varfile = select_first([subsample_variants.subsampled_varfile, varfile])
+    scatter (i in range(length(varfiles))) {
+        File varfile = varfiles[i]
+        String prefix = prefixes[i]
 
-    # Update complex bed file
-    Boolean is_snv_indel_ = if defined(is_snv_indel) then select_first([is_snv_indel]) else false
-    if (is_snv_indel_ == false) {
-        call updateCpxBed{
-            input:
-                varfile = processed_varfile,
-                variant_interpretation_docker = variant_interpretation_docker,
-                runtime_attr_override = runtime_attr_cpx
-        }
-    }
-
-    # Create RD plots
-    if(run_RD) {
-        File batch_medianfile_ = select_first([batch_medianfile])
-        File batch_bincov_ = select_first([batch_bincov])
-        File sample_batches_ = select_first([sample_batches])
-        File rd_outliers_ = select_first([rd_outliers])
-
-        call rdtest.RdTestVisualization as RdTest{
-            input:
-                prefix = prefix,
-                ped_file = pedfile,
-                fam_ids = fam_ids,
-                batch_medianfile = batch_medianfile_,
-                batch_bincov=batch_bincov_,
-                bed = select_first([updateCpxBed.bed_output, processed_varfile]),
-                sv_pipeline_rdtest_docker=sv_pipeline_rdtest_docker,
-                variant_interpretation_docker = variant_interpretation_docker,
-                outlier_samples = rd_outliers_,
-                sample_batches = sample_batches_,
-                runtime_attr_rdtest=runtime_attr_rdtest
-
-        }
-    }
-
-    # Create IGV plots
-    if (run_IGV) {   
-        File buffer_ = select_first([buffer,500])
-        File reference_ = select_first([reference])
-        File reference_index_ = select_first([reference_index])
-        Boolean file_localization_ = select_first([file_localization, false])
-        if(run_evidence_plots){
-            File sample_pe_sr_ = select_first([sample_pe_sr])
-            call igv_evidence.IGV_all_samples as igv_evidence_plots {
+        # Subsample variants if max_samples_per_variant is specified
+        if (defined(max_samples_per_variant)) {
+            call subsample_variants {
                 input:
-                    ped_file = pedfile,
-                    sample_pe_sr = sample_pe_sr_,
-                    buffer = buffer_,
-                    fam_ids = fam_ids,
-                    varfile = select_first([updateCpxBed.bed_output, processed_varfile]),
-                    reference = reference_,
-                    reference_index = reference_index_,
-                    prefix = prefix,
-                    is_snv_indel = is_snv_indel_,
-                    file_localization = file_localization_,
-                    sv_base_mini_docker = sv_base_mini_docker,
-                    igv_docker = igv_docker,
-                    variant_interpretation_docker = variant_interpretation_docker,
-                    runtime_attr_run_igv = runtime_attr_run_igv,
-                    runtime_attr_igv = runtime_attr_igv,
-                    runtime_attr_cpx = runtime_attr_cpx,
-                    runtime_attr_reformat_pe = runtime_attr_reformat_pe,
-                    runtime_attr_reformat_sr = runtime_attr_reformat_sr,
-                    runtime_attr_update_pe_sr = runtime_attr_update_pe_sr   
+                    varfile = varfile,
+                    max_samples_per_variant = select_first([max_samples_per_variant]),
+                    sv_base_mini_docker = sv_base_mini_docker
             }
         }
-        
-        if(run_cram_plots){
-            File sample_crai_cram_ = select_first([sample_crai_cram])
-            Int igv_max_window_ = if defined(igv_max_window) then select_first([igv_max_window]) else 150000
-            Boolean requester_pays_ = select_first([requester_pays, false])
-            call igv_cram.IGV_all_samples as igv_cram_plots {
+        File processed_varfile = select_first([subsample_variants.subsampled_varfile, varfile])
+
+        # Update complex bed file
+        Boolean is_snv_indel_ = if defined(is_snv_indel) then select_first([is_snv_indel]) else false
+        if (is_snv_indel_ == false) {
+            call updateCpxBed{
                 input:
-                    ped_file = pedfile,
-                    sample_crai_cram = sample_crai_cram_,
-                    buffer = buffer_,
-                    fam_ids = fam_ids,
-                    varfile = select_first([updateCpxBed.bed_output, processed_varfile]),
-                    igv_max_window = igv_max_window_,
-                    reference = reference_,
-                    file_localization = file_localization_,
-                    requester_pays = requester_pays_,
-                    is_snv_indel = is_snv_indel_,
-                    reference_index = reference_index_,
-                    prefix = prefix,
-                    sv_base_mini_docker = sv_base_mini_docker,
-                    igv_docker = igv_docker,
+                    varfile = processed_varfile,
                     variant_interpretation_docker = variant_interpretation_docker,
-                    runtime_attr_run_igv = runtime_attr_run_igv,
-                    runtime_attr_igv = runtime_attr_igv,
-                    runtime_attr_cpx = runtime_attr_cpx,
-                    runtime_attr_localize_reads = runtime_attr_localize_reads
+                    runtime_attr_override = runtime_attr_cpx
             }
         }
-    }
 
-    # Create concatinated images
-    if (run_RD && run_IGV) {
-        File igv_plots_tar_gz_pe_ = select_first([igv_cram_plots.tar_gz_pe, igv_evidence_plots.tar_gz_pe])
-        File RdTest_Plots_ = select_first([RdTest.Plots])
+        # Create RD plots
+        if (run_RD) {
+            File batch_medianfile_ = select_first([batch_medianfile])
+            File batch_bincov_ = select_first([batch_bincov])
+            File sample_batches_ = select_first([sample_batches])
+            File rd_outliers_ = select_first([rd_outliers])
 
-        call concatinate_plots{
-            input:
-                rd_plots = RdTest_Plots_,
-                igv_plots = igv_plots_tar_gz_pe_,
-                prefix = prefix,
-                varfile = select_first([updateCpxBed.bed_output, processed_varfile]),
-                pedfile = pedfile,
-                igv_docker = igv_docker,
-                runtime_attr_concatinate = runtime_attr_concatinate
+            call rdtest.RdTestVisualization as RdTest{
+                input:
+                    prefix = prefix,
+                    ped_file = pedfile,
+                    fam_ids = fam_ids,
+                    batch_medianfile = batch_medianfile_,
+                    batch_bincov=batch_bincov_,
+                    bed = select_first([updateCpxBed.bed_output, processed_varfile]),
+                    sv_pipeline_rdtest_docker=sv_pipeline_rdtest_docker,
+                    variant_interpretation_docker = variant_interpretation_docker,
+                    outlier_samples = rd_outliers_,
+                    sample_batches = sample_batches_,
+                    runtime_attr_rdtest=runtime_attr_rdtest
+
+            }
+        }
+
+        # Create IGV plots
+        if (run_IGV) {   
+            String buffer_ = if defined(buffer) then select_first([buffer]) else "500"
+            File reference_ = select_first([reference])
+            File reference_index_ = select_first([reference_index])
+            Boolean file_localization_ = select_first([file_localization, false])
+            if(run_evidence_plots){
+                File sample_pe_sr_ = select_first([sample_pe_sr])
+                call igv_evidence.IGV_all_samples as igv_evidence_plots {
+                    input:
+                        ped_file = pedfile,
+                        sample_pe_sr = sample_pe_sr_,
+                        buffer = buffer_,
+                        fam_ids = fam_ids,
+                        varfile = select_first([updateCpxBed.bed_output, processed_varfile]),
+                        reference = reference_,
+                        reference_index = reference_index_,
+                        prefix = prefix,
+                        is_snv_indel = is_snv_indel_,
+                        file_localization = file_localization_,
+                        sv_base_mini_docker = sv_base_mini_docker,
+                        igv_docker = igv_docker,
+                        variant_interpretation_docker = variant_interpretation_docker,
+                        runtime_attr_run_igv = runtime_attr_run_igv,
+                        runtime_attr_igv = runtime_attr_igv,
+                        runtime_attr_cpx = runtime_attr_cpx,
+                        runtime_attr_reformat_pe = runtime_attr_reformat_pe,
+                        runtime_attr_reformat_sr = runtime_attr_reformat_sr,
+                        runtime_attr_update_pe_sr = runtime_attr_update_pe_sr   
+                }
+            }
+            
+            if (run_cram_plots) {
+                File sample_crai_cram_ = select_first([sample_crai_cram])
+                Int igv_max_window_ = if defined(igv_max_window) then select_first([igv_max_window]) else 150000
+                Boolean requester_pays_ = select_first([requester_pays, false])
+                call igv_cram.IGV_all_samples as igv_cram_plots {
+                    input:
+                        ped_file = pedfile,
+                        sample_crai_cram = sample_crai_cram_,
+                        buffer = buffer_,
+                        fam_ids = fam_ids,
+                        varfile = select_first([updateCpxBed.bed_output, processed_varfile]),
+                        igv_max_window = igv_max_window_,
+                        reference = reference_,
+                        file_localization = file_localization_,
+                        requester_pays = requester_pays_,
+                        is_snv_indel = is_snv_indel_,
+                        reference_index = reference_index_,
+                        prefix = prefix,
+                        sv_base_mini_docker = sv_base_mini_docker,
+                        igv_docker = igv_docker,
+                        variant_interpretation_docker = variant_interpretation_docker,
+                        runtime_attr_run_igv = runtime_attr_run_igv,
+                        runtime_attr_igv = runtime_attr_igv,
+                        runtime_attr_cpx = runtime_attr_cpx,
+                        runtime_attr_localize_reads = runtime_attr_localize_reads
+                }
+            }
+        }
+
+        # Create concatinated images
+        if (run_RD && run_IGV) {
+            File igv_plots_tar_gz_pe_ = select_first([igv_cram_plots.tar_gz_pe, igv_evidence_plots.tar_gz_pe])
+            File RdTest_Plots_ = select_first([RdTest.Plots])
+            
+            call concatinate_plots {
+                input:
+                    rd_plots = RdTest_Plots_,
+                    igv_plots = igv_plots_tar_gz_pe_,
+                    prefix = prefix,
+                    varfile = select_first([updateCpxBed.bed_output, processed_varfile]),
+                    pedfile = pedfile,
+                    igv_docker = igv_docker,
+                    runtime_attr_concatinate = runtime_attr_concatinate
+            }
         }
     }
 
     output{
-        File output_plots = select_first([concatinate_plots.plots, RdTest.Plots, igv_evidence_plots.tar_gz_pe, igv_cram_plots.tar_gz_pe])
+        Array[File?] output_plots = select_first([concatinate_plots.plots, RdTest.Plots, igv_evidence_plots.tar_gz_pe, igv_cram_plots.tar_gz_pe])
     }
 }
 
