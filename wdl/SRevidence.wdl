@@ -33,7 +33,7 @@ workflow SRevidence {
     }
 
   output {
-    File subset_batch_pe = subset_sr_evidence.batch_pe
+    File subset_batch_sr = subset_sr_evidence.batch_sr
     }
 
 }
@@ -60,7 +60,7 @@ task subset_sr_evidence {
   RuntimeAttr runtime_attr = select_first([runtime_attr_override, default_attr])
 
   output {
-    File batch_pe = "~{batch_id}.merged_SR.ROI.bed.gz"
+    File batch_sr = "~{batch_id}.merged_SR.ROI.bed.gz"
   }
 
   command {
