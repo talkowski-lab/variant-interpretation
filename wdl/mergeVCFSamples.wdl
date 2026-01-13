@@ -13,6 +13,8 @@ workflow MergeVCFs {
     input {
         File? vcf_list_file
         Array[File]? vcf_files
+
+        Array[String] format_fields_to_drop=[]
         File? header_file
         Boolean rename_samples=false
         String sample_set_id
@@ -55,6 +57,7 @@ workflow MergeVCFs {
             input:
             vcf_files=resolved_vcfs,
             output_vcf_name=sample_set_id + '.merged.vcf.gz',
+            format_fields_to_drop=format_fields_to_drop,
             sv_base_mini_docker=sv_base_mini_docker
         }
     }
@@ -124,8 +127,12 @@ task mergeVCFs {
         Array[File] vcf_files
         String output_vcf_name
         String sv_base_mini_docker
+        Array[String] format_fields_to_drop
         RuntimeAttr? runtime_attr_override
     }
+    
+    # If format_fields_to_drop is non-empty, create cleaned VCFs list
+    Boolean drop_format_fields = length(format_fields_to_drop) > 0 
 
     Float input_size = size(vcf_files, 'GB')
     Float base_disk_gb = 10.0
@@ -157,19 +164,36 @@ task mergeVCFs {
 
     command <<<
         set -euo pipefail
-        VCFS="~{write_lines(vcf_files)}"
-        cat $VCFS | awk -F '/' '{print $NF"\t"$0}' | sort -k1,1V | awk '{print $2}' > vcfs_sorted.list
-        for vcf in $(cat vcfs_sorted.list);
-        do
-            tabix $vcf;
+
+        # Write and sort original VCFs
+        cat ~{write_lines(vcf_files)} | awk -F '/' '{print $NF"\t"$0}' | sort -k1,1V | awk '{print $2}' > vcfs_sorted.list
+
+        # Remove FORMAT fields if requested
+        if [[ "~{drop_format_fields}" == "true" ]]; then
+            TMP_LIST="vcfs_tmp.list"
+            rm -f $TMP_LIST
+            for vcf in $(cat vcfs_sorted.list); do
+                TMP_VCF="${vcf%.vcf*}_clean.vcf.gz"
+                bcftools annotate -x FORMAT:"~{sep=',' format_fields_to_drop}" -Oz -o $TMP_VCF $vcf
+                echo $TMP_VCF >> $TMP_LIST
+            done
+            mv $TMP_LIST vcfs_sorted.list
+        fi
+
+        for vcf in $(cat vcfs_sorted.list); do
+            tabix $vcf
         done
+
+        # Merge
         bcftools merge -m none -Oz -o ~{output_vcf_name} --file-list vcfs_sorted.list
+
+        # Tabix merged VCF
         tabix ~{output_vcf_name}
     >>>
 
     output {
         File merged_vcf_file = output_vcf_name
-        File merged_vcf_idx = output_vcf_name + '.tbi'
+        File merged_vcf_idx = output_vcf_name + ".tbi"
     }
 }
 
