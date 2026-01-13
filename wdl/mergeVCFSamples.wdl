@@ -172,9 +172,10 @@ task mergeVCFs {
         if [[ "~{drop_format_fields}" == "true" ]]; then
             TMP_LIST="vcfs_tmp.list"
             rm -f $TMP_LIST
+            fmt_drop=$(echo "~{sep=',' format_fields_to_drop}" | sed 's/^/FORMAT\//; s/,/,FORMAT\//g')
             for vcf in $(cat vcfs_sorted.list); do
                 TMP_VCF="${vcf%.vcf*}_clean.vcf.gz"
-                bcftools annotate -x FORMAT:"~{sep=',' format_fields_to_drop}" -Oz -o $TMP_VCF $vcf
+                bcftools annotate -x "$fmt_drop" -Oz -o $TMP_VCF $vcf
                 echo $TMP_VCF >> $TMP_LIST
             done
             mv $TMP_LIST vcfs_sorted.list
