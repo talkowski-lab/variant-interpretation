@@ -1,0 +1,11 @@
+version: 1.2
+workflows:
+  - subclass: WDL
+    name: RunVisualizePlots
+    primaryDescriptorPath: /wdl/RunVisualizePlots.wdl
+    filters:
+      branches:
+        - main
+        - kj_modifications
+      tags:
+        - /.*/

@@ -1,11 +1,5 @@
 version 1.0
 
-##########################################################################################
-
-## Github commit: talkowski-lab/gatk-sv-v1:<ENTER HASH HERE IN FIRECLOUD>
-
-##########################################################################################
-
 import "IgvCramPlots.wdl" as igv_plots
 import "Structs2.wdl"
 
@@ -30,6 +24,7 @@ workflow IGV_all_samples {
         RuntimeAttr? runtime_attr_run_igv
         RuntimeAttr? runtime_attr_igv
         RuntimeAttr? runtime_attr_cpx
+        RuntimeAttr? runtime_attr_localize_reads
     }
 
     if (defined(fam_ids)) {
@@ -105,7 +100,8 @@ workflow IGV_all_samples {
                     reference_index = reference_index,
                     igv_docker = igv_docker,
                     variant_interpretation_docker = variant_interpretation_docker,
-                    runtime_attr_igv = runtime_attr_igv
+                    runtime_attr_igv = runtime_attr_igv,
+                    runtime_attr_localize_reads = runtime_attr_localize_reads
             }
         }
 
@@ -259,7 +255,7 @@ task update_sample_crai_cram{
                                       mem_gb: base_mem_gb,
                                       disk_gb: ceil(10 + input_size),
                                       cpu: 1,
-                                      preemptible: 2,
+                                      preemptible: 3,
                                       max_retries: 1,
                                       boot_disk_gb: 8
                                   }

@@ -40,7 +40,7 @@ def get_sample_role(row):
         elif (row.IndividualID in mothers.values()):
             role = 'MOTHER'
         else:
-            role = 'UNKNOWN'
+            role = 'PROBAND'
     elif (row.MotherID in mothers.values()) & (row.FatherID in fathers.values()):
         role = 'PROBAND'
     else:

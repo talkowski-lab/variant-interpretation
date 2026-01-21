@@ -123,19 +123,19 @@ class Variant():
         #img_v_resize = vconcat_resize([resized_igv,rd]) # combine rd pe and sr together
         # img_v_resize = hconcat_resize([igv,rd])
         img_h_resize = hconcat_resize([ igv, rd ])
-        cv2.imwrite(outdir+self.varname+"_denovo.png", img_h_resize)
+        cv2.imwrite(outdir+self.varname+".png", img_h_resize)
     elif pesrplot!='Error' and rdplot=='Error':
         igv = cv2.imread(pesrplot)
         STR1=self.chr+":"+'{0:,}'.format(int(self.start))+'-'+'{0:,}'.format(int(self.end))+" (hg38)"
         outfile='info.jpg'
         words(STR1,STR2,outfile,50)
-        cv2.imwrite(outdir+self.varname+"_denovo.png", igv)
+        cv2.imwrite(outdir+self.varname+".png", igv)
     elif pesrplot=='Error' and rdplot!='Error':
         rd = cv2.imread(rdplot)
         STR1=self.chr+":"+'{0:,}'.format(int(self.start))+'-'+'{0:,}'.format(int(self.end))+" (hg38)"
         outfile='info.jpg'
         words(STR1,STR2,outfile,50)
-        cv2.imwrite(outdir+self.varname+"_denovo.png", rd)
+        cv2.imwrite(outdir+self.varname+".png", rd)
 
 class VariantInfo():
   def __init__(self,pedfile,prefix):
@@ -196,7 +196,7 @@ class GetVariants():
           dat=line.rstrip().split("\t")
           [chr,start,end,name,type,samples]=dat[0:6]
           sample=samples.split(',')[0]
-          varname=samples.split(',')[0]+'_'+name
+          varname=name+'_'+samples.split(',')[0]
           if "," in sample:
             raise Exception("should only have 1 sample per variant")
           prefix=self.variantinfo.getprefix(sample)
