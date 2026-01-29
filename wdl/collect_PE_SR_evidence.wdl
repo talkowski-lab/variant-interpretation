@@ -23,17 +23,16 @@ workflow pe_sr_evidence {
     RuntimeAttr? runtime_attr_merge_freq
   }
 
-    scatter (batch in batches_pe_sr){
-
+    scatter (i in range(length(batches_pe_sr))) {
       call subset_pe_sr_evidence {
         input:
           roi_bed = regions,
-          batch_file = batch,
-          batch_name = batch_name[scatter.index]
+          batch_file = batches_pe_sr[i],
+          batch_name = batch_name[i],
           docker_path = docker_pe_sr_evidence,
           runtime_attr_override = runtime_attr_subset_pe_sr_evidence
-      }
-    }
+  }
+}
 
   output {
     Array[File] batch_pe_sr_evidence = subset_pe_sr_evidence.batch_pe_sr_evidence
@@ -69,24 +68,26 @@ task subset_pe_sr_evidence {
 
   command <<<
     set -ex
-    grep -v ^chrom ~{roi_bed} > roi_noheader.pe_sr.bed
 
+    grep -v '^chrom\b' ~{roi_bed} > roi_noheader.bed
+    
+    touch ~{batch_name}.pe_sr.bed
 
-    if [[ $(wc -l <roi_noheader.pe_sr.bed) -ge 1 ]]; then
-      while read chr1 pos1 chr2 pos2; do
+    if [[ $(wc -l <roi_noheader.bed) -ge 1 ]]; then
 
-        export GCS_OAUTH_TOKEN=$(gcloud auth application-default print-access-token)
+      export GCS_OAUTH_TOKEN=$(gcloud auth application-default print-access-token)
 
-        coords="$chr1:$pos1-$pos2"
+      while read chrom start end; do
 
-        awk -v OFS="\t" '{if (NR>1) print $2}' ~{batches_pe_sr} | while read ~{batch_file}; do
-          echo "Getting PE/SR evidence for ROI Coordinates: $coords in batch $batch_file"
-          tabix ~{batch_file} $coords | grep -w $chr2 >> ~{batch_name}.pe_sr.bed
-        done
+        coords="$chrom:$start-$end"
         
-      done < roi_noheader.pe_sr.bed
+        echo "Getting PE/SR evidence for ROI Coordinates: $coords in batch $batch_file"
+        tabix ~{batch_file} "$coords" >> ~{batch_name}.pe_sr.bed
+        
+      done < roi_noheader.bed
+    
+    bgzip ~{batch_name}.pe_sr.bed
 
-      bgzip ~{batch_name}.pe_sr.bed
     fi
 
   >>>
