@@ -20,7 +20,6 @@ workflow pe_sr_evidence {
     File regions
     String docker_pe_sr_evidence
     RuntimeAttr? runtime_attr_subset_pe_sr_evidence
-    RuntimeAttr? runtime_attr_merge_freq
   }
 
     scatter (i in range(length(batches_pe_sr))) {
