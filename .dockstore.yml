@@ -1,0 +1,10 @@
+version: 1.2
+workflows:
+  - subclass: WDL
+    name: collect_PE_SR_evidence
+    primaryDescriptorPath: /wdl/collect_PE_SR_evidence.wdl
+    filters:
+      branches:
+        - main
+      tags:
+        - /.*/
