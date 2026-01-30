@@ -68,7 +68,7 @@ task subset_pe_sr_evidence {
   command <<<
     set -ex
 
-    grep -v '^chrom\b' ~{roi_bed} > roi_noheader.bed
+    grep -v '^chrom' ~{roi_bed} > roi_noheader.bed
     
     touch ~{batch_name}.pe_sr.bed
 
