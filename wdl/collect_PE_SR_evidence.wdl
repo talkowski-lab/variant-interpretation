@@ -34,7 +34,7 @@ workflow pe_sr_evidence {
 }
 
   output {
-    Array[File] batch_pe_sr_evidence = subset_pe_sr_evidence.batch_pe_sr_evidence
+    Array[File] final_pe_sr_evidence = subset_pe_sr_evidence.batch_pe_sr_evidence
   }
 
 }
