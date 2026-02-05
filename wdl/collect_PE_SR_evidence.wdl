@@ -44,7 +44,7 @@ workflow pe_sr_evidence {
 task subset_pe_sr_evidence {
   input {
     File roi_bed
-    File batch_file
+    String batch_file
     String batch_name
     String docker_path
     RuntimeAttr? runtime_attr_override
