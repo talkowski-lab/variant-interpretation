@@ -15,7 +15,7 @@ struct RuntimeAttr {
 # WORKFLOW DEFINITION
 workflow pe_sr_evidence {
   input {
-    Array[File] batches_pe_sr
+    Array[String] batches_pe_sr
     Array[String] batch_name
     File regions
     String docker_pe_sr_evidence
