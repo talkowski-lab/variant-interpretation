@@ -129,7 +129,7 @@ task runIGV_whole_genome_localize{
             set -euo pipefail
             mkdir pe_igv_plots
             head -n+1 ~{ped_file} > family_ped.txt
-            grep -w ~{family} ~{ped_file} >> family_ped.txt
+            awk -v fam="~{family}" '$1 == fam {print}' ~{ped_file} >> family_ped.txt
             python3.6 /src/renameCramsLocalize.py --ped family_ped.txt --scc ~{sample_crai_cram}
             cut -f4 changed_sample_crai_cram.txt > crams.txt
             
@@ -144,11 +144,11 @@ task runIGV_whole_genome_localize{
             do
                 let "i=$i+1"
                 echo "$line" > new.varfile.$i.bed
-                python /src/variant-interpretation/scripts/makeigvpesr.py -v new.varfile.$i.bed -fam_id ~{family} -samples ~{sep="," samples} -crams crams.txt -p ~{ped_file} -o pe_igv_plots -b ~{buffer}  -i pe.$i.txt -bam pe.$i.sh -m ~{igv_max_window}
+                python /src/variant-interpretation/scripts/makeigvpesr.py -v new.varfile.$i.bed -fam_id "~{family}" -samples ~{sep="," samples} -crams crams.txt -p ~{ped_file} -o pe_igv_plots -b ~{buffer}  -i pe.$i.txt -bam pe.$i.sh -m ~{igv_max_window}
                 bash pe.$i.sh
                 xvfb-run --server-args="-screen 0, 1920x540x24" bash /IGV_Linux_2.16.0/igv.sh -b pe.$i.txt
             done < ~{varfile}
-            tar -czf ~{family}_pe_igv_plots.tar.gz pe_igv_plots
+            tar -czf "~{family}_pe_igv_plots.tar.gz" pe_igv_plots
 
         >>>
 
@@ -220,11 +220,11 @@ task runIGV_whole_genome_parse{
             do
                 let "i=$i+1"
                 echo "$line" > new.varfile.$i.bed
-                python /src/variant-interpretation/scripts/makeigvpesr.py -v new.varfile.$i.bed -fam_id ~{family} -samples ~{sep="," samples} -crams crams.txt -p ~{ped_file} -o pe_igv_plots -b ~{buffer} -i pe.$i.txt -bam pe.$i.sh -m ~{igv_max_window}
+                python /src/variant-interpretation/scripts/makeigvpesr.py -v new.varfile.$i.bed -fam_id "~{family}" -samples ~{sep="," samples} -crams crams.txt -p ~{ped_file} -o pe_igv_plots -b ~{buffer} -i pe.$i.txt -bam pe.$i.sh -m ~{igv_max_window}
                 bash pe.$i.sh
                 xvfb-run --server-args="-screen 0, 1920x540x24" bash /IGV_Linux_2.16.0/igv.sh -b pe.$i.txt
             done < ~{varfile}
-            tar -czf ~{family}_pe_igv_plots.tar.gz pe_igv_plots
+            tar -czf "~{family}_pe_igv_plots.tar.gz" pe_igv_plots
 
         >>>
     
