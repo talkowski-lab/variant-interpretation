@@ -214,7 +214,7 @@ task generate_per_family_sample_crai_cram{
 
     command <<<
         set -euo pipefail
-        grep -w ^~{family} ~{ped_file} | cut -f2 > samples_list.txt
+        grep -w "^~{family}" ~{ped_file} | cut -f2 > samples_list.txt
         grep -w -f samples_list.txt ~{sample_crai_cram} > subset_sample_crai_cram.txt
         cut -f1 subset_sample_crai_cram.txt > samples.txt
         cut -f2 subset_sample_crai_cram.txt > crai.txt
@@ -268,7 +268,7 @@ task update_sample_crai_cram{
 
     command <<<
         head -n+1 ~{ped_file} > family_ped.txt
-        grep -w ^~{family} ~{ped_file} >> family_ped.txt
+        grep -w "^~{family}" ~{ped_file} >> family_ped.txt
         python3.9 /src/variant-interpretation/scripts/renameCrams.py --ped family_ped.txt --scc ~{sample_crai_cram}
         cut -f1 changed_sample_crai_cram.txt > samples.txt
         cut -f5 changed_sample_crai_cram.txt > crai.txt
@@ -323,7 +323,7 @@ task generate_per_family_bed{
     command <<<
         set -euo pipefail
         cat ~{varfile} | gunzip | cut -f1-6 > updated_varfile.bed
-        grep -f ~{write_lines(samples)} updated_varfile.bed | cut -f1-5 | awk '{print $1,$2,$3,$4,$5}' | sed -e 's/ /\t/g' > ~{filename}.~{family}.bed
+        grep -f ~{write_lines(samples)} updated_varfile.bed | cut -f1-5 | awk '{print $1,$2,$3,$4,$5}' | sed -e 's/ /\t/g' > "~{filename}.~{family}.bed"
         >>>
 
     output{
