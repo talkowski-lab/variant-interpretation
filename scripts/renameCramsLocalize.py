@@ -15,15 +15,12 @@ args = parser.parse_args()
 ped_file = args.ped
 sample_cc = args.scc
 
-'''
-def mv(file, output):
+#def mv(file, output):
 	#process1 = Popen(['gcloud', 'auth', 'application-default', 'print-access-token'], stdout=PIPE)
 	#os.environ['GCS_OAUTH_TOKEN'] = process1.stdout.read().decode()
-	result = subprocess.run(["mv", file, output])
-	print(result.stderr)
-'''
+	#result = subprocess.run(["mv", file, output])
+	#print(result.stderr)
 
-#find number of trios in ped file
 #find number of trios in ped file
 ped=pd.read_csv(ped_file,sep='\t').iloc[:,:6]
 ped.columns = ['FamilyID','IndividualID','MotherID','FatherID','Sex','Affected']
