@@ -26,9 +26,8 @@ workflow calpha {
 
     scatter (pair in pairs) {
       # Split the tab-delimited pair into two phenotypes
-      Array[String] split_pair = split(pair, "\t")
-      String phenotype1_raw = split_pair[0]
-      String phenotype2_raw = split_pair[1]
+      String phenotype1_raw = pair.split("\t")[0]
+      String phenotype2_raw = pair.split("\t")[1]
 
       # Sanitize by replacing / and space with _
       String phenotype1 = sub(sub(phenotype1_raw, "/", "_"), " ", "_")
