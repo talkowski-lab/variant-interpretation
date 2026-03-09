@@ -23,33 +23,34 @@ workflow calpha {
     RuntimeAttr? runtime_attr_calpha
   }
 
-    ##Here, read the file phenotype_pairs, then scatter
-    Array[String] pairs = read_lines(phenotype_pairs)
+  ## Read the tab-separated file as an Array of Arrays
+  Array[Array[String]] pairs = read_tsv(phenotype_pairs)
 
-    scatter (pair in pairs) {
-      # Split the tab-delimited pair into two phenotypes
-      String phenotype1_raw = pair.split("\t")[0]
-      String phenotype2_raw = pair.split("\t")[1]
+  scatter (row in pairs) {
+    # Access the first and second columns directly via array indexing
+    String phenotype1_raw = row[0]
+    String phenotype2_raw = row[1]
 
-      # Sanitize by replacing / and space with _
-      String phenotype1 = sub(sub(phenotype1_raw, "/", "_"), " ", "_")
-      String phenotype2 = sub(sub(phenotype2_raw, "/", "_"), " ", "_")
+    # Sanitize by replacing / and space with _
+    # The sub() function IS supported natively in WDL
+    String phenotype1 = sub(sub(phenotype1_raw, "/", "_"), " ", "_")
+    String phenotype2 = sub(sub(phenotype2_raw, "/", "_"), " ", "_")
 
-      # Create the outfile name
-      String outfile = "${phenotype1}_${phenotype2}.RData"
+    # Create the outfile name
+    String outfile = "${phenotype1}_${phenotype2}.RData"
 
-      call calpha_task {
-        input:
-          phenotype1 = phenotype1_raw,
-          phenotype2 = phenotype2_raw,
-          pedigree_file = pedigree_file,
-          snvs_indels = snvs_indels,
-          genes_file = genes_file,
-          outfile = outfile,
-          docker_path = docker_calpha,
-          runtime_attr_override = runtime_attr_calpha
+    call calpha_task {
+      input:
+        phenotype1 = phenotype1_raw,
+        phenotype2 = phenotype2_raw,
+        pedigree_file = pedigree_file,
+        snvs_indels = snvs_indels,
+        genes_file = genes_file,
+        outfile = outfile,
+        docker_path = docker_calpha,
+        runtime_attr_override = runtime_attr_calpha
+    }
   }
-}
 
   output {
     Array[File] output_calpha = calpha_task.rdata_output
