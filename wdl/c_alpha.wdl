@@ -73,8 +73,8 @@ task calpha_task {
   command <<<
     set -ex
 
-    phenotype1=$(echo ~{pair} | cut -f1)
-    phenotype2=$(echo ~{pair} | cut -f2)
+    phenotype1=$(echo -e "~{pair}" | cut -f1)
+    phenotype2=$(echo -e "~{pair}" | cut -f2)
 
     safe1=$(echo "$phenotype1" | tr '/' '_' | tr ' ' '_')
     safe2=$(echo "$phenotype2" | tr '/' '_' | tr ' ' '_')
