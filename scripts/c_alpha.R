@@ -8,6 +8,8 @@
 #############
 library(data.table)
 library(optparse)
+library(tidyverse)
+library(parallel)
 
 #############
 ##ARGUMENTS##
