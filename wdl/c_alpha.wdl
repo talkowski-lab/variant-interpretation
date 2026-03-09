@@ -33,7 +33,6 @@ workflow calpha {
           pedigree_file = pedigree_file,
           snvs_indels = snvs_indels,
           genes_file = genes_file,
-          output_rdata = outfile,
           docker_path = docker_calpha,
           runtime_attr_override = runtime_attr_calpha
   }
