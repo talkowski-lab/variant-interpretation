@@ -51,7 +51,6 @@ task calpha_task {
     File pedigree_file
     File snvs_indels
     File genes_file
-    String output_rdata
     String docker_path
     RuntimeAttr? runtime_attr_override
   }
