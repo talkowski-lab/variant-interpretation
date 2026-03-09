@@ -73,8 +73,8 @@ task calpha_task {
   command <<<
     set -ex
 
-    phenotype1=$(echo "${pair}" | cut -f1)
-    phenotype2=$(echo "${pair}" | cut -f2)
+    phenotype1=$(echo ~{pair} | cut -f1)
+    phenotype2=$(echo ~{pair} | cut -f2)
 
     safe1=$(echo "$phenotype1" | tr '/' '_' | tr ' ' '_')
     safe2=$(echo "$phenotype2" | tr '/' '_' | tr ' ' '_')
@@ -83,10 +83,10 @@ task calpha_task {
     Rscript /src/variant-interpretation/scripts/c_alpha.R \
       --phenotype1 "$phenotype1" \
       --phenotype2 "$phenotype2" \
-      --pedigree "$pedigree_file" \
-      --input_snv "${snvs_indels}" \
-      --genes "${genes_file}" \
-      --output "${outfile}"
+      --pedigree ~{pedigree_file} \
+      --input_snv ~{snvs_indels} \
+      --genes ~{genes_file} \
+      --output "$outfile"
   >>>
 
   runtime {
