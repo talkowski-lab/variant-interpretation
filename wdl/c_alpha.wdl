@@ -27,17 +27,9 @@ workflow calpha {
     Array[String] pairs = read_lines(phenotype_pairs)
 
     scatter (pair in pairs) {
-      String phenotype1 = split(pair, "\t")[0]
-      String phenotype2 = split(pair, "\t")[1]
-
-      String safe_pheno1 = sub(phenotype1, "/", "_")
-      String safe_pheno2 = sub(phenotype2, "/", "_")
-      String outfile = "${safe_pheno1}_${safe_pheno2}.RData"
-
       call calpha_task {
         input:
-          phenotype1 = phenotype1,
-          phenotype2 = phenotype2,
+          pair = pair,
           pedigree_file = pedigree_file,
           snvs_indels = snvs_indels,
           genes_file = genes_file,
@@ -56,8 +48,7 @@ workflow calpha {
 
 task calpha_task {
   input {
-    String phenotype1
-    String phenotype2
+    String pair
     File pedigree_file
     File snvs_indels
     File genes_file
@@ -83,6 +74,13 @@ task calpha_task {
 
   command <<<
     set -ex
+    
+    phenotype1=$(echo "${pair}" | cut -f1)
+    phenotype2=$(echo "${pair}" | cut -f2)
+
+    safe1=$(echo "$phenotype1" | tr '/' '_' | tr ' ' '_')
+    safe2=$(echo "$phenotype2" | tr '/' '_' | tr ' ' '_')
+    outfile="${safe1}_${safe2}.RData"
 
     Rscript variant-interpretation/scripts/c_alpha.R \
       --phenotype1 ${phenotype1} \
@@ -90,7 +88,7 @@ task calpha_task {
       --pedigree ${pedigree_file} \
       --input_snv ${snvs_indels} \
       --genes ${genes_file} \
-      --output ${output_rdata}
+      --output ${outfile}
   >>>
 
   runtime {
