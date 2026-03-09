@@ -24,18 +24,20 @@ workflow calpha {
   }
 
     ##Here, read the file phenotype_pairs, then scatter
-    Array[String] phenotype1 = read_lines(phenotype_pairs).map(x => split(x, "\t")[0])
-    Array[String] phenotype2 = read_lines(phenotype_pairs).map(x => split(x, "\t")[1])
+    Array[String] pairs = read_lines(phenotype_pairs)
 
-    scatter (i in range(length(phenotype1))) {
-      String safe_pheno1 = sub(phenotype1[i], "/", "_")
-      String safe_pheno2 = sub(phenotype2[i], "/", "_")
+    scatter (pair in pairs) {
+      String phenotype1 = split(pair, "\t")[0]
+      String phenotype2 = split(pair, "\t")[1]
+
+      String safe_pheno1 = sub(phenotype1, "/", "_")
+      String safe_pheno2 = sub(phenotype2, "/", "_")
       String outfile = "${safe_pheno1}_${safe_pheno2}.RData"
 
       call calpha_task {
         input:
-          phenotype1 = phenotype1[i],
-          phenotype2 = phenotype2[i],
+          phenotype1 = phenotype1,
+          phenotype2 = phenotype2,
           pedigree_file = pedigree_file,
           snvs_indels = snvs_indels,
           genes_file = genes_file,
@@ -48,7 +50,6 @@ workflow calpha {
   output {
     Array[File] calpha_task = calpha_task.rdata_output
   }
-
 }
 
 # TASK DEFINITIONS
@@ -77,7 +78,7 @@ task calpha_task {
   RuntimeAttr runtime_attr = select_first([runtime_attr_override, default_attr])
 
   output {
-    File rdata_output = output_rdata
+    Array[File] rdata_outputs = calpha_task.rdata_output
   }
 
   command <<<
@@ -88,7 +89,7 @@ task calpha_task {
       --phenotype2 ${phenotype2} \
       --pedigree ${pedigree_file} \
       --input_snv ${snvs_indels} \
-      --genes ${genes_file} \ 
+      --genes ${genes_file} \
       --output ${output_rdata}
   >>>
 
