@@ -40,7 +40,7 @@ workflow calpha {
 }
 
   output {
-    Array[File] calpha_task = calpha_task.rdata_output
+    Array[File] output_calpha = calpha_task.rdata_output
   }
 }
 
@@ -69,12 +69,12 @@ task calpha_task {
   RuntimeAttr runtime_attr = select_first([runtime_attr_override, default_attr])
 
   output {
-    Array[File] rdata_outputs = calpha_task.rdata_output
+    File rdata_output = glob("*.RData")[0]
   }
 
   command <<<
     set -ex
-    
+
     phenotype1=$(echo "${pair}" | cut -f1)
     phenotype2=$(echo "${pair}" | cut -f2)
 
@@ -83,12 +83,12 @@ task calpha_task {
     outfile="${safe1}_${safe2}.RData"
 
     Rscript variant-interpretation/scripts/c_alpha.R \
-      --phenotype1 ${phenotype1} \
-      --phenotype2 ${phenotype2} \
-      --pedigree ${pedigree_file} \
-      --input_snv ${snvs_indels} \
-      --genes ${genes_file} \
-      --output ${outfile}
+      --phenotype1 "$phenotype1" \
+      --phenotype2 "$phenotype2" \
+      --pedigree "$pedigree_file" \
+      --input_snv "${snvs_indels}" \
+      --genes "${genes_file}" \
+      --output "${outfile}"
   >>>
 
   runtime {
