@@ -1,5 +1,3 @@
-version 1.0
-
 ## Running C-Alpha
 
 # IMPORT STRUCTS
