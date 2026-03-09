@@ -27,12 +27,26 @@ workflow calpha {
     Array[String] pairs = read_lines(phenotype_pairs)
 
     scatter (pair in pairs) {
+      # Split the tab-delimited pair into two phenotypes
+      Array[String] split_pair = split(pair, "\t")
+      String phenotype1_raw = split_pair[0]
+      String phenotype2_raw = split_pair[1]
+
+      # Sanitize by replacing / and space with _
+      String phenotype1 = sub(sub(phenotype1_raw, "/", "_"), " ", "_")
+      String phenotype2 = sub(sub(phenotype2_raw, "/", "_"), " ", "_")
+
+      # Create the outfile name
+      String outfile = "${phenotype1}_${phenotype2}.RData"
+
       call calpha_task {
         input:
-          pair = pair,
+          phenotype1 = phenotype1_raw,
+          phenotype2 = phenotype2_raw,
           pedigree_file = pedigree_file,
           snvs_indels = snvs_indels,
           genes_file = genes_file,
+          outfile = outfile,
           docker_path = docker_calpha,
           runtime_attr_override = runtime_attr_calpha
   }
@@ -47,7 +61,9 @@ workflow calpha {
 
 task calpha_task {
   input {
-    String pair
+    String phenotype1
+    String phenotype2
+    String outfile
     File pedigree_file
     File snvs_indels
     File genes_file
@@ -67,26 +83,19 @@ task calpha_task {
   RuntimeAttr runtime_attr = select_first([runtime_attr_override, default_attr])
 
   output {
-    File rdata_output = glob("*.RData")[0]
+    File rdata_output = "~{outfile}"
   }
 
   command <<<
     set -ex
 
-    phenotype1=$(echo -e "~{pair}" | cut -f1)
-    phenotype2=$(echo -e "~{pair}" | cut -f2)
-
-    safe1=$(echo "$phenotype1" | tr '/' '_' | tr ' ' '_')
-    safe2=$(echo "$phenotype2" | tr '/' '_' | tr ' ' '_')
-    outfile="${safe1}_${safe2}.RData"
-
     Rscript /src/variant-interpretation/scripts/c_alpha.R \
-      --phenotype1 "$phenotype1" \
-      --phenotype2 "$phenotype2" \
+      --phenotype1 ~{phenotype1} \
+      --phenotype2 ~{phenotype2} \
       --pedigree ~{pedigree_file} \
       --input_snv ~{snvs_indels} \
       --genes ~{genes_file} \
-      --output "$outfile"
+      --output ~{outfile}
   >>>
 
   runtime {
