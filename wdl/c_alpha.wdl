@@ -80,7 +80,7 @@ task calpha_task {
     safe2=$(echo "$phenotype2" | tr '/' '_' | tr ' ' '_')
     outfile="${safe1}_${safe2}.RData"
 
-    Rscript variant-interpretation/scripts/c_alpha.R \
+    Rscript /src/variant-interpretation/scripts/c_alpha.R \
       --phenotype1 "$phenotype1" \
       --phenotype2 "$phenotype2" \
       --pedigree "$pedigree_file" \
