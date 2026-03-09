@@ -90,8 +90,8 @@ task calpha_task {
     set -ex
 
     Rscript /src/variant-interpretation/scripts/c_alpha.R \
-      --phenotype1 ~{phenotype1} \
-      --phenotype2 ~{phenotype2} \
+      --phenotype1 "~{phenotype1}" \
+      --phenotype2 "~{phenotype2}" \
       --pedigree ~{pedigree_file} \
       --input_snv ~{snvs_indels} \
       --genes ~{genes_file} \
