@@ -20,6 +20,7 @@ workflow calpha {
     File snvs_indels
     File genes_file
     String docker_calpha
+    String column_name
     RuntimeAttr? runtime_attr_calpha
   }
 
@@ -47,6 +48,7 @@ workflow calpha {
         snvs_indels = snvs_indels,
         genes_file = genes_file,
         outfile = outfile,
+        column_name = column_name,
         docker_path = docker_calpha,
         runtime_attr_override = runtime_attr_calpha
     }
@@ -69,6 +71,7 @@ task calpha_task {
     File genes_file
     String docker_path
     RuntimeAttr? runtime_attr_override
+    String column_name
   }
 
   RuntimeAttr default_attr = object {
@@ -95,7 +98,8 @@ task calpha_task {
       --pedigree ~{pedigree_file} \
       --input_snv ~{snvs_indels} \
       --genes ~{genes_file} \
-      --output ~{outfile}
+      --output ~{outfile} \
+      --column_name ~{column_name}
   >>>
 
   runtime {

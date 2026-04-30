@@ -26,7 +26,9 @@ option_list = list(
   make_option(c("-b", "--phenotype2"), type="character", default=".", 
               help="phenotype2 [default= %default]", metavar="character"),
   make_option(c("-o", "--output"), type="character", default=".", 
-              help="output file name [default= %default]", metavar="character")
+              help="output file name [default= %default]", metavar="character"),
+  make_option(c("-c", "--column_name"), type="character", default=".", 
+              help="column name to run c-alpha on [default= %default]", metavar="character")            
 )
 
 opt_parser <- OptionParser(option_list=option_list, add_help_option=FALSE)
@@ -37,6 +39,7 @@ pedigree_final <- fread(opt$pedigree)
 genes <- fread(opt$genes, header = F)
 
 outfile <- opt$output
+column_name <- opt$column_name
 
 Group1 <- opt$phenotype1
 Group2 <- opt$phenotype2
@@ -253,8 +256,8 @@ res_g1 <- runCalpha(
   group1 = Group1,
   group2 = Group2,
   genes = constrained_genes,
-  group1_level = "hpo_marker_name",
-  group2_level = "hpo_marker_name"
+  group1_level = column_name,
+  group2_level = column_name
 )
   
 ##Run group2 vs group1+group2
@@ -263,8 +266,8 @@ res_g2 <- runCalpha(
   group1 = Group2,
   group2 = Group1,
   genes = constrained_genes,
-  group1_level = "hpo_marker_name",
-  group2_level = "hpo_marker_name"
+  group1_level = column_name,
+  group2_level = column_name
 )
   
 save(res_g1, res_g2, Group1, Group2, file = outfile)
