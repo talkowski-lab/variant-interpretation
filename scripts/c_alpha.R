@@ -170,7 +170,7 @@ calpha_function_newer <- function(variant_list_with_phenotypes, perm, singletons
   return(res)
 }
 
-runCalpha <- function(pedigree, group1, group2, genes, group1_level, group2_level){
+runCalpha_1_vs_1_2 <- function(pedigree, group1, group2, genes, group1_level, group2_level){
   # #test
   # group1 <- "Abnormality of the nervous system"
   # group2 <- "Autism"
@@ -179,14 +179,14 @@ runCalpha <- function(pedigree, group1, group2, genes, group1_level, group2_leve
   # group2_level <- "hpo_present_name"
   # genes <- constrained_genes
   
-  pedigree_aff <- subset(pedigree_final, affected == 2) ##keep affected probands only for now
+  pedigree_aff <- subset(pedigree, affected == 2) ##keep affected probands only for now
   
   all_calls <- dv_total[dv_total$SYMBOL %in% genes,]
   
-  all_calls$group1 <- ifelse(all_calls$snv_pipeline_id_batch %in% subset(pedigree_final, affected == 2 & grepl(group1, pedigree_final[[group1_level]]))$snv_pipeline_id_batch, 1, 0)
-  all_calls$group2 <- ifelse(all_calls$snv_pipeline_id_batch %in% subset(pedigree_final, affected == 2 & grepl(group2, pedigree_final[[group2_level]]))$snv_pipeline_id_batch, 1, 0)
+  all_calls$group1 <- ifelse(all_calls$snv_pipeline_id_batch %in% subset(pedigree, affected == 2 & grepl(group1, pedigree[[group1_level]]))$snv_pipeline_id_batch, 1, 0)
+  all_calls$group2 <- ifelse(all_calls$snv_pipeline_id_batch %in% subset(pedigree, affected == 2 & grepl(group2, pedigree[[group2_level]]))$snv_pipeline_id_batch, 1, 0)
   
-  all_calls_group1 <- subset(all_calls, group1 ==1)
+  all_calls_group1 <- subset(all_calls, group1 ==1) #take only group1 to compare group1-group2 vs group1+group2
   # all_calls_NDD[all_calls_NDD$NDD_ASD == 1,]$NDD <- 0
   
   ###########
@@ -242,6 +242,79 @@ runCalpha <- function(pedigree, group1, group2, genes, group1_level, group2_leve
   calpha_list
 }
 
+runCalpha_1_vs_1 <- function(pedigree, group1, group2, genes, group1_level, group2_level){
+  # #test
+  # group1 <- "Abnormality of the nervous system"
+  # group2 <- "Autism"
+  # group1_level <- "hpo_present_3th_ancest"
+  # group2_level <- "hpo_present_name"
+  # genes <- constrained_genes
+  
+  pedigree_aff <- subset(pedigree, affected == 2) ##keep affected probands only for now
+  
+  all_calls <- dv_total[dv_total$SYMBOL %in% genes,]
+  
+  all_calls$group1 <- ifelse(all_calls$snv_pipeline_id_batch %in% subset(pedigree, affected == 2 & grepl(group1, pedigree[[group1_level]]))$snv_pipeline_id_batch, 1, 0)
+  all_calls$group2 <- ifelse(all_calls$snv_pipeline_id_batch %in% subset(pedigree, affected == 2 & grepl(group2, pedigree[[group2_level]]))$snv_pipeline_id_batch, 1, 0)
+  
+  all_calls_group1_2 <- subset(all_calls, (group1 ==1 & group2 == 0) | (group2 ==1 & group1 == 0)) #take only group1 to compare group1 vs group2
+  all_calls_group1_2$Pheno <- ifelse(all_calls_group1_2$group1 == 1, 1, 0) #group1 = 1, group2 = 0
+  all_calls_group1_2$nNonRef <- 1
+  # all_calls_NDD[all_calls_NDD$NDD_ASD == 1,]$NDD <- 0
+  
+  ###########
+  ##C-ALPHA##
+  ###########
+  
+  # Define permutations
+  perms = 10000
+  # perms = 100000
+  
+  ##Synonymous
+  vars_syn <- subset(all_calls_group1_2, isSYN)
+  #vars_syn$Pheno <- vars_syn$group2
+  #vars_syn$nNonRef <- 1 #Kyle says "nNonRef is just the number of non-ref alleles in a given genotype call (and for the de novos I have been working with, it's always been 1)"
+  #vars_syn$nNonRef <- 1 - vars_syn$Pheno
+  
+  set.seed(1337)
+  calpha_syn <- calpha_function_newer(vars_syn, perms, singletons = 'keep')
+  
+  ##PTV
+  vars_ptv <- subset(all_calls_group1_2, isCoding == TRUE & isPTV)
+  #vars_ptv$Pheno <- vars_ptv$group2
+  #vars_ptv$nNonRef <- 1 #Kyle says "nNonRef is just the number of non-ref alleles in a given genotype call (and for the de novos I have been working with, it's always been 1)"
+  
+  set.seed(1337)
+  calpha_ptv <- calpha_function_newer(vars_ptv, perms, singletons = 'keep')
+  
+  ##MIS2
+  vars_mis2 <- subset(all_calls_group1_2, isCoding == TRUE & (isMIS & MPC_v2 >= 2 & am_pathogenicity >= 0.97))
+  #vars_mis2$Pheno <- vars_mis2$group2
+  #vars_mis2$nNonRef <- 1
+  
+  set.seed(1337)
+  calpha_mis2 <- calpha_function_newer(vars_mis2, perms, singletons = 'keep')
+  
+  ##DMG = PTV+MIS2
+  # vars <- dv_total[which(dv_total$Gene %in% qval6$gene[which(qval6$FDR<0.001)] & (dv_total$isPTV | dv_total$isMIS2 | dv_total$isOS)),]
+  vars_dmg <- subset(all_calls_group1_2, isCoding == TRUE & (isPTV | (isMIS & MPC_v2 >= 2 & am_pathogenicity >= 0.97)))
+  #vars_dmg$Pheno <- vars_dmg$group2
+  #vars_dmg$nNonRef <- 1
+  
+  set.seed(1337)
+  
+  calpha_dmg <- calpha_function_newer(vars_dmg, perms, singletons = 'keep')
+  
+  calpha_list <- list(
+    syn  = calpha_syn,
+    mis2 = calpha_mis2,
+    ptv  = calpha_ptv,
+    dmg  = calpha_dmg
+  )
+  
+  calpha_list
+}
+
 ###################
 ###Run everything##
 ###################
@@ -251,7 +324,7 @@ constrained_genes <- subset(genes, !is.na(V1))$V1
 ##Run group1 vs group1+group2
 #outfile <- gsub(" ", "_", sprintf(paste0(c_alpha_outdir, "/%s_%s.RData"), gsub("/", "_", row$Group1), gsub("/", "_", row$Group2)))
   
-res_g1 <- runCalpha(
+res_1_12 <- runCalpha_1_vs_1_2(
   pedigree = pedigree_final,
   group1 = Group1,
   group2 = Group2,
@@ -261,7 +334,7 @@ res_g1 <- runCalpha(
 )
   
 ##Run group2 vs group1+group2
-res_g2 <- runCalpha(
+res_2_12 <- runCalpha_1_vs_1_2(
   pedigree = pedigree_final,
   group1 = Group2,
   group2 = Group1,
@@ -270,4 +343,13 @@ res_g2 <- runCalpha(
   group2_level = column_name
 )
   
-save(res_g1, res_g2, Group1, Group2, file = outfile)
+res_1_2 <- runCalpha_1_vs_1(
+  pedigree = pedigree_final,
+  group1 = Group1,
+  group2 = Group2,
+  genes = constrained_genes,
+  group1_level = column_name,
+  group2_level = column_name
+)
+
+save(res_1_12, res_2_12, res_1_2, Group1, Group2, file = outfile)
