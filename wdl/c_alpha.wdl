@@ -21,6 +21,7 @@ workflow calpha {
     File genes_file
     String docker_calpha
     String column_name
+    String subsample
     RuntimeAttr? runtime_attr_calpha
   }
 
@@ -50,6 +51,7 @@ workflow calpha {
         outfile = outfile,
         column_name = column_name,
         docker_path = docker_calpha,
+        subsample = subsample,
         runtime_attr_override = runtime_attr_calpha
     }
   }
@@ -72,6 +74,7 @@ task calpha_task {
     String docker_path
     RuntimeAttr? runtime_attr_override
     String column_name
+    String subsample
   }
 
   RuntimeAttr default_attr = object {
@@ -99,7 +102,8 @@ task calpha_task {
       --input_snv ~{snvs_indels} \
       --genes ~{genes_file} \
       --output ~{outfile} \
-      --column_name ~{column_name}
+      --column_name ~{column_name} \
+      --subsample ~{subsample}
   >>>
 
   runtime {

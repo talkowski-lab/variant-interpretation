@@ -28,7 +28,9 @@ option_list = list(
   make_option(c("-o", "--output"), type="character", default=".", 
               help="output file name [default= %default]", metavar="character"),
   make_option(c("-c", "--column_name"), type="character", default=".", 
-              help="column name to run c-alpha on [default= %default]", metavar="character")            
+              help="column name to run c-alpha on [default= %default]", metavar="character"),
+  make_option(c("-u", "--subsample"), type="character", default=".", 
+              help="column name to run c-alpha on [default= %default]", metavar="character")
 )
 
 opt_parser <- OptionParser(option_list=option_list, add_help_option=FALSE)
@@ -43,6 +45,8 @@ column_name <- opt$column_name
 
 Group1 <- opt$phenotype1
 Group2 <- opt$phenotype2
+
+do_subsample <- opt$subsample
 
 #############
 ##FUNCTIONS##
@@ -170,7 +174,7 @@ calpha_function_newer <- function(variant_list_with_phenotypes, perm, singletons
   return(res)
 }
 
-runCalpha_1_vs_1_2 <- function(pedigree, group1, group2, genes, group1_level, group2_level){
+runCalpha_1_vs_1_2 <- function(pedigree, group1, group2, genes, group1_level, group2_level, subsample){
   # #test
   # group1 <- "Abnormality of the nervous system"
   # group2 <- "Autism"
@@ -183,8 +187,40 @@ runCalpha_1_vs_1_2 <- function(pedigree, group1, group2, genes, group1_level, gr
   
   all_calls <- dv_total[dv_total$SYMBOL %in% genes,]
   
-  all_calls$group1 <- ifelse(all_calls$snv_pipeline_id_batch %in% subset(pedigree, affected == 2 & grepl(group1, pedigree[[group1_level]]))$snv_pipeline_id_batch, 1, 0)
-  all_calls$group2 <- ifelse(all_calls$snv_pipeline_id_batch %in% subset(pedigree, affected == 2 & grepl(group2, pedigree[[group2_level]]))$snv_pipeline_id_batch, 1, 0)
+  if(subsample){
+    group1_count <- nrow(subset(pedigree_aff, grepl(group1, pedigree_aff[[group1_level]])))
+    group1_2_count <- nrow(subset(pedigree_aff, grepl(group1, pedigree_aff[[group1_level]]) &  grepl(group2, pedigree_aff[[group2_level]])))
+    min_downsample <- min(group1_count, group1_2_count)
+    
+    pedigree_group1 <- subset(pedigree_aff, grepl(group1, pedigree_aff[[group1_level]]) & !grepl(group2, pedigree_aff[[group2_level]]))
+    pedigree_group1_2 <- subset(pedigree_aff, grepl(group1, pedigree_aff[[group1_level]]) & grepl(group2, pedigree_aff[[group2_level]]))
+    
+    if(group1_count > group1_2_count){
+      set.seed(1337)
+      
+      pedigree_group1_downsampled <- pedigree_group1 %>%
+        slice_sample(n = min_downsample)
+      
+      pedigree_downsampled <- rbind(pedigree_group1_downsampled, pedigree_group1_2)
+      
+      all_calls$group1 <- ifelse(all_calls$snv_pipeline_id_batch %in% subset(pedigree_downsampled, grepl(group1, pedigree_downsampled[[group1_level]]))$snv_pipeline_id_batch, 1, 0)
+      all_calls$group2 <- ifelse(all_calls$snv_pipeline_id_batch %in% subset(pedigree_downsampled, grepl(group2, pedigree_downsampled[[group2_level]]))$snv_pipeline_id_batch, 1, 0)
+      
+    }else{
+      
+      pedigree_group1_2_downsampled <- pedigree_group1_2 %>%
+        slice_sample(n = min_downsample)
+      
+      pedigree_downsampled <- rbind(pedigree_group1, pedigree_group1_2_downsampled)
+      
+      all_calls$group1 <- ifelse(all_calls$snv_pipeline_id_batch %in% subset(pedigree_downsampled, grepl(group1, pedigree_downsampled[[group1_level]]))$snv_pipeline_id_batch, 1, 0)
+      all_calls$group2 <- ifelse(all_calls$snv_pipeline_id_batch %in% subset(pedigree_downsampled, grepl(group2, pedigree_downsampled[[group2_level]]))$snv_pipeline_id_batch, 1, 0)
+    }
+    
+  }else{
+    all_calls$group1 <- ifelse(all_calls$snv_pipeline_id_batch %in% subset(pedigree_aff, grepl(group1, pedigree_aff[[group1_level]]))$snv_pipeline_id_batch, 1, 0)
+    all_calls$group2 <- ifelse(all_calls$snv_pipeline_id_batch %in% subset(pedigree_aff, grepl(group2, pedigree_aff[[group2_level]]))$snv_pipeline_id_batch, 1, 0)
+  }
   
   all_calls_group1 <- subset(all_calls, group1 ==1) #take only group1 to compare group1-group2 vs group1+group2
   # all_calls_NDD[all_calls_NDD$NDD_ASD == 1,]$NDD <- 0
@@ -239,10 +275,14 @@ runCalpha_1_vs_1_2 <- function(pedigree, group1, group2, genes, group1_level, gr
     dmg  = calpha_dmg
   )
   
+  if (subsample) {
+    calpha_list$min_downsample <- min_downsample
+  }
+  
   calpha_list
 }
 
-runCalpha_1_vs_1 <- function(pedigree, group1, group2, genes, group1_level, group2_level){
+runCalpha_1_vs_1 <- function(pedigree, group1, group2, genes, group1_level, group2_level, subsample){
   # #test
   # group1 <- "Abnormality of the nervous system"
   # group2 <- "Autism"
@@ -254,8 +294,43 @@ runCalpha_1_vs_1 <- function(pedigree, group1, group2, genes, group1_level, grou
   
   all_calls <- dv_total[dv_total$SYMBOL %in% genes,]
   
-  all_calls$group1 <- ifelse(all_calls$snv_pipeline_id_batch %in% subset(pedigree, affected == 2 & grepl(group1, pedigree[[group1_level]]))$snv_pipeline_id_batch, 1, 0)
-  all_calls$group2 <- ifelse(all_calls$snv_pipeline_id_batch %in% subset(pedigree, affected == 2 & grepl(group2, pedigree[[group2_level]]))$snv_pipeline_id_batch, 1, 0)
+  if(subsample){
+    group1_count <- nrow(subset(pedigree_aff, grepl(group1, pedigree_aff[[group1_level]]) & ! grepl(group2, pedigree_aff[[group2_level]])))
+    group2_count <- nrow(subset(pedigree_aff, !grepl(group1, pedigree_aff[[group1_level]]) &  grepl(group2, pedigree_aff[[group2_level]])))
+    min_downsample <- min(group1_count, group2_count)
+    
+    pedigree_group1 <- subset(pedigree_aff, grepl(group1, pedigree_aff[[group1_level]]) & !grepl(group2, pedigree_aff[[group2_level]]))
+    pedigree_group2 <- subset(pedigree_aff, !grepl(group1, pedigree_aff[[group1_level]]) & grepl(group2, pedigree_aff[[group2_level]]))
+    
+    if(group1_count > group2_count){
+      set.seed(1337)
+
+      pedigree_group1_downsampled <- pedigree_group1 %>%
+        slice_sample(n = min_downsample)
+      
+      pedigree_downsampled <- rbind(pedigree_group1_downsampled, pedigree_group2)
+      
+      all_calls$group1 <- ifelse(all_calls$snv_pipeline_id_batch %in% subset(pedigree_downsampled, grepl(group1, pedigree_downsampled[[group1_level]]))$snv_pipeline_id_batch, 1, 0)
+      all_calls$group2 <- ifelse(all_calls$snv_pipeline_id_batch %in% subset(pedigree_downsampled, grepl(group2, pedigree_downsampled[[group2_level]]))$snv_pipeline_id_batch, 1, 0)
+
+    }else{
+      set.seed(1337)
+      
+      pedigree_group2_downsampled <- pedigree_group2 %>%
+        slice_sample(n = min_downsample)
+      
+      pedigree_downsampled <- rbind(pedigree_group2_downsampled, pedigree_group1)
+      
+      all_calls$group1 <- ifelse(all_calls$snv_pipeline_id_batch %in% subset(pedigree_downsampled, grepl(group1, pedigree_downsampled[[group1_level]]))$snv_pipeline_id_batch, 1, 0)
+      all_calls$group2 <- ifelse(all_calls$snv_pipeline_id_batch %in% subset(pedigree_downsampled, grepl(group2, pedigree_downsampled[[group2_level]]))$snv_pipeline_id_batch, 1, 0)
+      
+    }
+  }else{
+    
+    all_calls$group1 <- ifelse(all_calls$snv_pipeline_id_batch %in% subset(pedigree_aff, affected == 2 & grepl(group1, pedigree_aff[[group1_level]]))$snv_pipeline_id_batch, 1, 0)
+    all_calls$group2 <- ifelse(all_calls$snv_pipeline_id_batch %in% subset(pedigree_aff, affected == 2 & grepl(group2, pedigree_aff[[group2_level]]))$snv_pipeline_id_batch, 1, 0)
+    
+  }
   
   all_calls_group1_2 <- subset(all_calls, (group1 ==1 & group2 == 0) | (group2 ==1 & group1 == 0)) #take only group1 to compare group1 vs group2
   all_calls_group1_2$Pheno <- ifelse(all_calls_group1_2$group1 == 1, 1, 0) #group1 = 1, group2 = 0
@@ -312,6 +387,10 @@ runCalpha_1_vs_1 <- function(pedigree, group1, group2, genes, group1_level, grou
     dmg  = calpha_dmg
   )
   
+  if (subsample) {
+    calpha_list$min_downsample <- min_downsample
+  }
+  
   calpha_list
 }
 
@@ -330,7 +409,8 @@ res_1_12 <- runCalpha_1_vs_1_2(
   group2 = Group2,
   genes = constrained_genes,
   group1_level = column_name,
-  group2_level = column_name
+  group2_level = column_name,
+  subsample = do_subsample
 )
   
 ##Run group2 vs group1+group2
@@ -340,7 +420,8 @@ res_2_12 <- runCalpha_1_vs_1_2(
   group2 = Group1,
   genes = constrained_genes,
   group1_level = column_name,
-  group2_level = column_name
+  group2_level = column_name,
+  subsample = do_subsample
 )
   
 res_1_2 <- runCalpha_1_vs_1(
@@ -349,7 +430,8 @@ res_1_2 <- runCalpha_1_vs_1(
   group2 = Group2,
   genes = constrained_genes,
   group1_level = column_name,
-  group2_level = column_name
+  group2_level = column_name,
+  subsample = do_subsample
 )
 
 save(res_1_12, res_2_12, res_1_2, Group1, Group2, file = outfile)
