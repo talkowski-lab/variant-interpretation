@@ -117,7 +117,7 @@ task pathway_enrichment_00 {
   command <<<
     set -ex
 
-    Rscript /src/variant-interpretation/scripts/pathway_enrichment-01.R \
+    Rscript /src/variant-interpretation/scripts/pathway_enrichment-00.R \
       --genes "~{info_file}" \
       --id_hgnc "~{hgnc_file}"
 
@@ -164,7 +164,7 @@ task pathway_enrichment_01 {
   command <<<
     set -ex
 
-    Rscript /src/variant-interpretation/scripts/pathway_enrichment-00.R \
+    Rscript /src/variant-interpretation/scripts/pathway_enrichment-01.R \
       --info "~{info_file}" \
       --pedigree "~{pedigree_file}" \
       --denovo "~{denovo_file}"  \
