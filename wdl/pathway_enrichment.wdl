@@ -21,6 +21,7 @@ workflow pathway_enrichment {
     File denovo_file
     File phenotype_pairs
     File hgnc_file
+    Int eigenvalue
     String mutation_type
     String docker_pathway_enrichment
     RuntimeAttr? runtime_attr_pathway_enrichment_00
@@ -70,6 +71,7 @@ workflow pathway_enrichment {
         phenotype1 = phenotype1,
         phenotype2 = phenotype2,
         mutation_type = mutation_type,
+        eigenvalue = eigenvalue,
         docker_path = docker_pathway_enrichment,
         runtime_attr_override = runtime_attr_pathway_enrichment_02        
     }
@@ -187,6 +189,7 @@ task pathway_enrichment_02 {
   input {
     File marker_file
     File genes_file
+    Int eigenvalue
     String phenotype1
     String phenotype2
     String mutation_type
@@ -219,7 +222,7 @@ task pathway_enrichment_02 {
       --mutation "~{mutation_type}" \
       --marker "~{marker_file}" \
       --genes "~{genes_file}" \
-      --eigenvalue "5000"
+      --eigenvalue "~{eigenvalue}"
   >>>
 
   runtime {
