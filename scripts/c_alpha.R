@@ -188,12 +188,13 @@ runCalpha_1_vs_1_2 <- function(pedigree, group1, group2, genes, group1_level, gr
   all_calls <- dv_total[dv_total$SYMBOL %in% genes,]
   
   if(subsample){
-    group1_count <- nrow(subset(pedigree_aff, grepl(group1, pedigree_aff[[group1_level]])))
-    group1_2_count <- nrow(subset(pedigree_aff, grepl(group1, pedigree_aff[[group1_level]]) &  grepl(group2, pedigree_aff[[group2_level]])))
-    min_downsample <- min(group1_count, group1_2_count)
-    
     pedigree_group1 <- subset(pedigree_aff, grepl(group1, pedigree_aff[[group1_level]]) & !grepl(group2, pedigree_aff[[group2_level]]))
     pedigree_group1_2 <- subset(pedigree_aff, grepl(group1, pedigree_aff[[group1_level]]) & grepl(group2, pedigree_aff[[group2_level]]))
+    
+    group1_count <- nrow(pedigree_group1)
+    group1_2_count <- nrow(pedigree_group1_2)
+
+    min_downsample <- min(group1_count, group1_2_count)
     
     if(group1_count > group1_2_count){
       set.seed(1337)
@@ -295,13 +296,16 @@ runCalpha_1_vs_1 <- function(pedigree, group1, group2, genes, group1_level, grou
   all_calls <- dv_total[dv_total$SYMBOL %in% genes,]
   
   if(subsample){
-    group1_count <- nrow(subset(pedigree_aff, grepl(group1, pedigree_aff[[group1_level]]) & ! grepl(group2, pedigree_aff[[group2_level]])))
-    group2_count <- nrow(subset(pedigree_aff, !grepl(group1, pedigree_aff[[group1_level]]) &  grepl(group2, pedigree_aff[[group2_level]])))
-    min_downsample <- min(group1_count, group2_count)
-    
+    # group1_count <- nrow(subset(pedigree_aff, grepl(group1, pedigree_aff[[group1_level]]) & ! grepl(group2, pedigree_aff[[group2_level]]) ))
+    # group2_count <- nrow(subset(pedigree_aff, !grepl(group1, pedigree_aff[[group1_level]]) &  grepl(group2, pedigree_aff[[group2_level]])))    
     pedigree_group1 <- subset(pedigree_aff, grepl(group1, pedigree_aff[[group1_level]]) & !grepl(group2, pedigree_aff[[group2_level]]))
     pedigree_group2 <- subset(pedigree_aff, !grepl(group1, pedigree_aff[[group1_level]]) & grepl(group2, pedigree_aff[[group2_level]]))
     
+    group1_count <- nrow(pedigree_group1)
+    group2_count <- nrow(pedigree_group2)
+
+    min_downsample <- min(group1_count, group2_count)
+
     if(group1_count > group2_count){
       set.seed(1337)
 
