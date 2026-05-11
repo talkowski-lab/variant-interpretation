@@ -72,13 +72,18 @@ background_gene_ids_df_first_second_merged$combined_entrez_ids <- coalesce(as.ch
 #3. THIRD Methods: use previous symbols
 background_gene_ids_df_first_second_merged_NA <- subset(background_gene_ids_df_first_second_merged,is.na(combined_entrez_ids))$gene
 
+# hgnc_ids <- hgnc_ids %>%
+#   mutate(matched_gene = map_chr(prev_symbol, function(symbols) {
+#     matched <- background_gene_ids_df_first_second_merged_NA[str_detect(symbols, paste0("(^|\\|)", background_gene_ids_df_first_second_merged_NA, "(\\||$)"))]
+#     if (length(matched) > 0) matched[1] else FALSE
+#   }))
+
 hgnc_ids <- hgnc_ids %>%
   mutate(matched_gene = map_chr(prev_symbol, function(symbols) {
     matched <- background_gene_ids_df_first_second_merged_NA[str_detect(symbols, paste0("(^|\\|)", background_gene_ids_df_first_second_merged_NA, "(\\||$)"))]
-    if (length(matched) > 0) matched[1] else FALSE
+    if (length(matched) > 0) matched[1] else NA_character_
   }))
-
-
+  
 background_gene_ids_df_third <- data.frame(
   gene_name = subset(hgnc_ids, matched_gene %in% background_gene_ids_df_first_second_merged_NA)$matched_gene,  # gene names will be the row names
   entrez_id_third = subset(hgnc_ids, matched_gene %in% background_gene_ids_df_first_second_merged_NA)$entrez_id  # gene IDs will be the values

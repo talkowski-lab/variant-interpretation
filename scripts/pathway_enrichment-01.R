@@ -23,7 +23,7 @@ option_list = list(
   make_option(c("-a", "--phenotype1"), type="character", default=".",
               help="phenotype1 [default= %default]", metavar="character"),
   make_option(c("-b", "--phenotype2"), type="character", default=".",
-              help="phenotype2 [default= %default]", metavar="character"),
+              help="phenotype2 [default= %default]", metavar="character")
 )
 
 opt_parser <- OptionParser(option_list=option_list, add_help_option=FALSE)

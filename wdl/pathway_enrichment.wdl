@@ -218,7 +218,8 @@ task pathway_enrichment_02 {
       --phenotype2 "~{phenotype2}" \
       --mutation "~{mutation_type}" \
       --marker "~{marker_file}" \
-      --genes "~{genes_file}"
+      --genes "~{genes_file}" \
+      --eigenvalue "5000"
   >>>
 
   runtime {

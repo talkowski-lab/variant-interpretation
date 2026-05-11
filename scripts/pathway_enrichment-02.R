@@ -31,7 +31,9 @@ option_list = list(
   make_option(c("-b", "--phenotype2"), type="character", default=".",
               help="phenotype2 [default= %default]", metavar="character"),
   make_option(c("-u", "--mutation"), type="character", default=".",
-              help="choose dn.syn or dn.mis2.ptv", metavar="character")
+              help="choose dn.syn or dn.mis2.ptv", metavar="character"),
+  make_option(c("-e", "--eigenvalue"), type="character", default=".",
+              help="eigen value used to define significance threshold in volcano plots", metavar="character")
 )
 
 
@@ -43,14 +45,18 @@ counts_df <- read.delim(opt$marker, sep = "\t")
 phenotype1 <- opt$phenotype1
 phenotype2 <- opt$phenotype2
 mutation <- opt$mutation
+eigenvalue <- opt$eigenvalue
+
+
 
 #Upload input file
 #This file "crossdev_master_dn_counts.v4_entrez_id.txt" is created by "09_Pathway_step1.R"
 # genes <- read.delim("crossdev_master_dn_counts.v4_entrez_id.txt", sep = "\t")
 # counts_df <- read.delim("hpo_marker_counts.txt", header = TRUE, sep = "\t")
-# phenotype1 <- "abnormality_of_the_cardiovascular_system"
-# phenotype2 <- "abnormality_of_the_musculoskeletal_system"
+# phenotype1 <- "autism"
+# phenotype2 <- "abnormality_of_the_face"
 # mutation <- "dn.mis2.ptv"
+
 
 ######################
 #GET ALL GO DATABASE#
@@ -72,6 +78,7 @@ convert_to_gene_symbols <- function(entrez_ids) {
 
   return(gene_names)
 }
+
 
 collect_stats <-function(data,
                          phenotype,
@@ -185,7 +192,6 @@ collect_stats_catgories <- function(data,
 
 
 phenotypes <- counts_df$hpo_suffix
-
 for (pheno in phenotypes) {
   cols_to_sum <- c(paste0("dn.ptv.", pheno),
                    paste0("dn.mis2.", pheno))
@@ -247,10 +253,9 @@ print("Step 2/5 is processing")
 extract_carriers <- function(data,
                              mutation
 ){
-  #data<- pheno1_pheno2_merged_syn
-  #mutation<-"dn.syn"
+  #data<- pheno1_pheno2_merged
+  #mutation<-"dn.mis2.ptv"
 
-  #GO:0001662
   mutation_pheno1 <- paste0(mutation, ".",data$pheno1_phenotype[1], sep="")
   mutation_pheno2 <- paste0(mutation, ".",data$pheno2_phenotype[1], sep="")
 
@@ -266,7 +271,7 @@ extract_carriers <- function(data,
     # i<-as.numeric("2")
 
     ID_i <- data_red$ID[i]
-    #ID_i <- "GO:0001662"
+    #ID_i <- "GO:0040029"
     gene_array_pheno1 <- unlist(strsplit(subset(data_red,ID==ID_i)$pheno1_geneID, "/"))
     gene_array_pheno2 <- unlist(strsplit(subset(data_red,ID==ID_i)$pheno2_geneID, "/"))
 
@@ -287,6 +292,7 @@ extract_carriers <- function(data,
 
 pheno1_pheno2_merged_carriers <-extract_carriers(pheno1_pheno2_merged,
                                                              mutation=mutation)
+
 
 
 ######################################
@@ -355,7 +361,6 @@ stat_compare_carriers <- function(data,
   return(result_df_merged)
 }
 
-#abnormality_of_the_nervous_system
 pheno1_pheno2_merged_carriers_stat <- stat_compare_carriers(pheno1_pheno2_merged_carriers,
                                                                         phenotype1=phenotype1,
                                                                         phenotype2= phenotype2,
@@ -370,17 +375,18 @@ print("Step 4/5 is processing")
 write.table(pheno1_pheno2_merged_carriers_stat,
              file = paste0("GO_pathway_", phenotype1, "_", phenotype2,"_", mutation, ".tsv"), 
              sep = "\t",
-             row.names = FALSE,col.names = TRUE,quote=FALSE)
-
-#GO_ALL_combined <- read.delim("/home/rstudio/CrossDev_May26/output/GO_pathway_abnormality_of_the_cardiovascular_system_abnormality_of_the_musculoskeletal_system_dn.mis2.ptv.tsv")
+             row.names = FALSE,
+             col.names = TRUE,
+             quote=FALSE)
 
 #######################
 # MAKE A PLOT ALL #####
 #######################
 print("Step 5/5 is processing")
 
-make_volano_plot_alt <- function(data_input,
+make_volano_plot <- function(data_input,
                                  mutation,
+                                eigenvalue,
                                  title)
 {
   # data_input <- GO_ALL_combined
@@ -393,6 +399,9 @@ make_volano_plot_alt <- function(data_input,
   phenotype1 <- data_input$pheno1_phenotype[1]
   phenotype2 <- data_input$pheno2_phenotype[1]
 
+  eigenvalue <- as.numeric(eigenvalue)
+
+  threshold <- as.numeric(0.05/eigenvalue)
 
   #use direct p-values
   plot_input$negLog10_p_fisher <- -log10(plot_input$p_value_comparison_pheno1_pheno2)
@@ -412,7 +421,7 @@ make_volano_plot_alt <- function(data_input,
     )
 
   #colour Bonferroni corrected p-values
-  plot_input$p_fisher_comparison_corrected_significance <- plot_input$p_value_comparison_pheno1_pheno2 < as.numeric(0.05/5000)
+  plot_input$p_fisher_comparison_corrected_significance <- plot_input$p_value_comparison_pheno1_pheno2 < threshold
 
 
   plot_input <- plot_input %>%
@@ -426,15 +435,15 @@ make_volano_plot_alt <- function(data_input,
     filter ( !is.na(Log2_OR_Fisher),
              !is.na(negLog10_p_fisher),
              is.finite(Log2_OR_Fisher),
-             is.finite(negLog10_p_fisher), OR_comparison_pheno1_pheno2>1,p_value_comparison_pheno1_pheno2<as.numeric(0.05/5000)
-    ) %>%  arrange(p_value_comparison_pheno1_pheno2) #%>% slice_head(n = 15)
+             is.finite(negLog10_p_fisher), OR_comparison_pheno1_pheno2>1,p_value_comparison_pheno1_pheno2< threshold
+    ) %>%  arrange(p_value_comparison_pheno1_pheno2) %>% slice_head(n = 15)
 
   top5_input_2 <- plot_input %>%
     filter ( !is.na(Log2_OR_Fisher),
              !is.na(negLog10_p_fisher),
              is.finite(Log2_OR_Fisher),
-             is.finite(negLog10_p_fisher), OR_comparison_pheno1_pheno2<1,p_value_comparison_pheno1_pheno2<as.numeric(0.05/5000)
-    ) %>%  arrange(p_value_comparison_pheno1_pheno2) #%>% slice_head(n = 15)
+             is.finite(negLog10_p_fisher), OR_comparison_pheno1_pheno2<1,p_value_comparison_pheno1_pheno2<threshold
+    ) %>%  arrange(p_value_comparison_pheno1_pheno2) %>% slice_head(n = 15)
   top5_input <- rbind(top5_input_1,top5_input_2)
 
 
@@ -463,7 +472,7 @@ make_volano_plot_alt <- function(data_input,
       "dn.mis2.ptv" = 21        # triangle
     )) +
     geom_vline(xintercept = 0, linetype = "dashed") +
-    geom_hline(yintercept = -log10(0.05/5000), linetype = "dashed") +
+    geom_hline(yintercept = -log10(threshold), linetype = "dashed") +
     theme_minimal() +
     labs(
       x = paste(phenotype2,"<---    ","log2(Odds Ratio)","    --->",phenotype1,sep=" "),
@@ -480,7 +489,7 @@ make_volano_plot_alt <- function(data_input,
         )
       )
     ) +
-    coord_cartesian(ylim = c(0, 8)) +
+    #coord_cartesian(ylim = c(0, 8)) +
     theme(strip.text = element_text(face = "bold", color ="black", size = 12),
           legend.position = "bottom") +
     geom_text_repel(data = top5_input, aes(label = Description),
@@ -490,8 +499,9 @@ make_volano_plot_alt <- function(data_input,
   return(volcano_plot_pheno1_vs_pheno2)
 }
 
-plot1<- make_volano_plot_alt(data_input=pheno1_pheno2_merged_carriers_stat,
+plot1<- make_volano_plot(data_input=pheno1_pheno2_merged_carriers_stat,
                              mutation=mutation,
+                             eigenvalue=eigenvalue,
                              title=paste(subset(counts_df,hpo_suffix == phenotype2)$hpo_marker_name,"vs",
                                          subset(counts_df,hpo_suffix == phenotype1)$hpo_marker_name,"\n de novo mis2 or PTV"))
 
