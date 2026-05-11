@@ -10,7 +10,7 @@ library(data.table)
 library(purrr)
 library(optparse)
 library(dplyr)
-
+library(tidyr)
 
 #############
 ##ARGUMENTS##
