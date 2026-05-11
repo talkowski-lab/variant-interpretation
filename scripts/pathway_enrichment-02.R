@@ -118,7 +118,7 @@ collect_stats <-function(data,
   print("calculating biological process")
 
   #all categories
-  go_ont_BP <- go_ont %>% filter (ONTOLOGY=="BP")
+  go_ont_BP <- go_ont %>% subset(ONTOLOGY=="BP")
 
   GO_BP <- enrichGO(gene = unique(gene_ids_df$gene_id),
                     OrgDb = org.Hs.eg.db,    # For human genes (replace for other organisms)
@@ -149,7 +149,7 @@ collect_stats <-function(data,
 
   #add the remaining BP categories that were missing due to zero intersect
   number_of_mutations <- as.numeric(strsplit(GO_BP_df$GeneRatio[1], "/")[[1]][2])
-  go_ont_BP_missing <- go_ont_BP %>% filter (!GOID %in% unique(GO_BP_df$ID))
+  go_ont_BP_missing <- go_ont_BP %>% subset(!GOID %in% unique(GO_BP_df$ID))
   missing_BP <- data.frame(ID = go_ont_BP_missing$GOID,
                            Description = go_ont_BP_missing$TERM,
                            GeneRatio= paste("0",number_of_mutations,sep="/"),
@@ -182,7 +182,7 @@ collect_stats_catgories <- function(data,
 
   mutation_name <- paste0(mutation, ".",phenotype, sep="")
 
-  file_subset <- data %>% filter (get(mutation_name)>1 | get(mutation_name)==1)
+  file_subset <- data %>% subset(get(mutation_name)>1 | get(mutation_name)==1)
   file_stat <- collect_stats(file_subset,
                              mutation=mutation,
                              phenotype=phenotype)
@@ -208,6 +208,11 @@ for (pheno in phenotypes) {
 # PATHWAY ENRICHMENT##
 ######################
 print("Step 1/5 is processing")
+
+#redefine phenotype names
+phenotype1 <- subset(counts_df, hpo_marker_name == phenotype1)$hpo_suffix
+phenotype2 <- subset(counts_df, hpo_marker_name == phenotype2)$hpo_suffix
+
 #phenotype1
 GO_phenotype1 <- collect_stats_catgories(genes,
                                                   mutation=mutation,
@@ -259,11 +264,11 @@ extract_carriers <- function(data,
   mutation_pheno1 <- paste0(mutation, ".",data$pheno1_phenotype[1], sep="")
   mutation_pheno2 <- paste0(mutation, ".",data$pheno2_phenotype[1], sep="")
 
-  data_NA<- data %>% filter (is.na(pheno2_geneID)=="TRUE" & is.na(pheno1_geneID)=="TRUE" )
+  data_NA<- data %>% subset(is.na(pheno2_geneID)=="TRUE" & is.na(pheno1_geneID)=="TRUE" )
   data_NA$pheno1_carrier_counts<- as.numeric("0")
   data_NA$pheno2_carrier_counts<- as.numeric("0")
 
-  data_red <- data %>% filter (!ID %in% data_NA$ID)
+  data_red <- data %>% subset(!ID %in% data_NA$ID)
 
   for (i in 1:nrow(data_red)){
     # df <- data.frame(geneID = data$geneID[1]) %>%
@@ -313,12 +318,12 @@ stat_compare_carriers <- function(data,
   #Description<-"SWI/SNF complex"
 
   # n_cores <- 4
-  data_red <- data %>% filter(mutation == {{mutation}})
+  data_red <- data %>% subset(mutation == {{mutation}})
   categories <- unique(data_red$Description)
 
   run_test <- function(category) {
-    data_i <- data_red %>% filter(Description == category)
-    #data_i <- data_red %>% filter(Description == "behavioral fear response")
+    data_i <- data_red %>% subset(Description == category)
+    #data_i <- data_red %>% subset(Description == "behavioral fear response")
 
     pheno1_carrier_counts <- as.numeric(data_i$pheno1_carrier_counts)
     total_pheno1 <- as.numeric(subset(counts_df,hpo_suffix==phenotype1)$num_samples)
@@ -395,7 +400,7 @@ make_volano_plot <- function(data_input,
   #title<-"den"
 
 
-  plot_input<- data_input %>% filter(pheno1_mutation=={{mutation}})
+  plot_input<- data_input %>% subset(pheno1_mutation=={{mutation}})
   phenotype1 <- data_input$pheno1_phenotype[1]
   phenotype2 <- data_input$pheno2_phenotype[1]
 
@@ -432,14 +437,14 @@ make_volano_plot <- function(data_input,
     ))
 
   top5_input_1 <- plot_input %>%
-    filter ( !is.na(Log2_OR_Fisher),
+    subset( !is.na(Log2_OR_Fisher),
              !is.na(negLog10_p_fisher),
              is.finite(Log2_OR_Fisher),
              is.finite(negLog10_p_fisher), OR_comparison_pheno1_pheno2>1,p_value_comparison_pheno1_pheno2< threshold
     ) %>%  arrange(p_value_comparison_pheno1_pheno2) %>% slice_head(n = 15)
 
   top5_input_2 <- plot_input %>%
-    filter ( !is.na(Log2_OR_Fisher),
+    subset( !is.na(Log2_OR_Fisher),
              !is.na(negLog10_p_fisher),
              is.finite(Log2_OR_Fisher),
              is.finite(negLog10_p_fisher), OR_comparison_pheno1_pheno2<1,p_value_comparison_pheno1_pheno2<threshold
