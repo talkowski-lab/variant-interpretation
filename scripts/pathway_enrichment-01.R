@@ -9,6 +9,8 @@
 library(data.table)
 library(purrr)
 library(optparse)
+library(dplyr)
+
 
 #############
 ##ARGUMENTS##
@@ -64,7 +66,7 @@ hpo_tables <- map(hpo_list, function(hpo) {
   dn_snvs_indels %>%
     # subset(grepl(hpo, hpo_marker_name)) %>%          # <-- filter to this phenotype
     subset(sample %in% subset(pedigree_final_unique, grepl(hpo, hpo_marker_name))$snv_pipeline_id) %>%
-    separate_rows(symbol_fix, sep = "\\|") %>%
+    tidyr::separate_rows(symbol_fix, sep = "\\|") %>%
     subset(symbol_fix != "") %>%
     distinct(symbol_fix, GENE_SAMP, CSQ_highest, mis1, mis2) %>%
     group_by(symbol_fix) %>%
@@ -76,7 +78,7 @@ hpo_tables <- map(hpo_list, function(hpo) {
       dn.mis2 = sum(mis2, na.rm = TRUE),
       .groups = "drop"
     ) %>%
-    rename_with(~ paste0(., ".", suffix), -symbol_fix)  # add suffix to all cols except symbol_fix
+    dplyr::rename_with(~ paste0(., ".", suffix), -symbol_fix)  # add suffix to all cols except symbol_fix
 })
 
 # Join all phenotype tables into one wide matrix
