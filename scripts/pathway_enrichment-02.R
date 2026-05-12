@@ -512,6 +512,9 @@ plot1<- make_volano_plot(data_input=pheno1_pheno2_merged_carriers_stat,
                              eigenvalue=eigenvalue,
                              title=paste(phenotype1,"vs",phenotype2,"\n de novo mis2 or PTV"))
 
-pdf(paste("Volcano_",phenotype1,"_",phenotype2,"_",mutation,".pdf", sep = ""), width = 10, height = 7)
+phenotype1_ref <- gsub(" ", "_", gsub("/", "_", phenotype1))
+phenotype2_ref <- gsub(" ", "_", gsub("/", "_", phenotype2))
+
+pdf(paste("Volcano_",phenotype1_ref,"_",phenotype2_ref,"_",mutation,".pdf", sep = ""), width = 10, height = 7)
 print(plot1)
 dev.off()
