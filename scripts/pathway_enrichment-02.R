@@ -440,14 +440,14 @@ make_volano_plot <- function(data_input,
     ))
 
   top5_input_1 <- plot_input %>%
-    subset( !is.na(Log2_OR_Fisher),
+    filter( !is.na(Log2_OR_Fisher),
              !is.na(negLog10_p_fisher),
              is.finite(Log2_OR_Fisher),
              is.finite(negLog10_p_fisher), OR_comparison_pheno1_pheno2>1,p_value_comparison_pheno1_pheno2< threshold
     ) %>%  arrange(p_value_comparison_pheno1_pheno2) %>% slice_head(n = 15)
 
   top5_input_2 <- plot_input %>%
-    subset( !is.na(Log2_OR_Fisher),
+    filter( !is.na(Log2_OR_Fisher),
              !is.na(negLog10_p_fisher),
              is.finite(Log2_OR_Fisher),
              is.finite(negLog10_p_fisher), OR_comparison_pheno1_pheno2<1,p_value_comparison_pheno1_pheno2<threshold
