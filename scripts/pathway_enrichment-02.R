@@ -210,8 +210,11 @@ for (pheno in phenotypes) {
 print("Step 1/5 is processing")
 
 #redefine phenotype names
-phenotype1 <- subset(counts_df, hpo_marker_name == phenotype1)$hpo_suffix
-phenotype2 <- subset(counts_df, hpo_marker_name == phenotype2)$hpo_suffix
+phenotype1_ori <- phenotype1
+phenotype2_ori <- phenotype2
+
+phenotype1 <- subset(counts_df, hpo_marker_name == phenotype1_ori)$hpo_suffix
+phenotype2 <- subset(counts_df, hpo_marker_name == phenotype2_ori)$hpo_suffix
 
 #phenotype1
 GO_phenotype1 <- collect_stats_catgories(genes,
@@ -507,8 +510,7 @@ make_volano_plot <- function(data_input,
 plot1<- make_volano_plot(data_input=pheno1_pheno2_merged_carriers_stat,
                              mutation=mutation,
                              eigenvalue=eigenvalue,
-                             title=paste(subset(counts_df,hpo_suffix == phenotype2)$hpo_marker_name,"vs",
-                                         subset(counts_df,hpo_suffix == phenotype1)$hpo_marker_name,"\n de novo mis2 or PTV"))
+                             title=paste(phenotype1,"vs",phenotype2,"\n de novo mis2 or PTV"))
 
 pdf(paste("Volcano_",phenotype1,"_",phenotype2,"_",mutation,".pdf", sep = ""), width = 10, height = 7)
 print(plot1)

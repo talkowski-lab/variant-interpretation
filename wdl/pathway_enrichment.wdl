@@ -55,7 +55,7 @@ workflow pathway_enrichment {
 
     call pathway_enrichment_01 {
       input:
-        info_file = info_file,
+        info_file = pathway_enrichment_00.genelist_entrez_id,
         pedigree_file = pedigree_file,
         denovo_file = denovo_file,
         phenotype1 = phenotype1_raw,
@@ -67,9 +67,9 @@ workflow pathway_enrichment {
     call pathway_enrichment_02 {
       input:
         marker_file = pathway_enrichment_01.marker_counts, # Output from pathway_enrichment_01
-        genes_file = pathway_enrichment_00.genelist_entrez_id,
-        phenotype1 = phenotype1,
-        phenotype2 = phenotype2,
+        genes_file = pathway_enrichment_01.dnv_counts,
+        phenotype1 = phenotype1_raw,
+        phenotype2 = phenotype2_raw,
         mutation_type = mutation_type,
         eigenvalue = eigenvalue,
         docker_path = docker_pathway_enrichment,
