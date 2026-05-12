@@ -68,8 +68,10 @@ workflow pathway_enrichment {
       input:
         marker_file = pathway_enrichment_01.marker_counts, # Output from pathway_enrichment_01
         genes_file = pathway_enrichment_01.dnv_counts,
-        phenotype1 = phenotype1_raw,
-        phenotype2 = phenotype2_raw,
+        phenotype1_raw = phenotype1_raw,
+        phenotype2_raw = phenotype2_raw,
+        phenotype1 = phenotype1,
+        phenotype2 = phenotype2,
         mutation_type = mutation_type,
         eigenvalue = eigenvalue,
         docker_path = docker_pathway_enrichment,
@@ -190,6 +192,8 @@ task pathway_enrichment_02 {
     File marker_file
     File genes_file
     Int eigenvalue
+    String phenotype1_raw
+    String phenotype2_raw
     String phenotype1
     String phenotype2
     String mutation_type
@@ -217,8 +221,8 @@ task pathway_enrichment_02 {
     set -ex
 
     Rscript /src/variant-interpretation/scripts/pathway_enrichment-02.R \
-      --phenotype1 "~{phenotype1}" \
-      --phenotype2 "~{phenotype2}" \
+      --phenotype1 "~{phenotype1_raw}" \
+      --phenotype2 "~{phenotype2_raw}" \
       --mutation "~{mutation_type}" \
       --marker "~{marker_file}" \
       --genes "~{genes_file}" \
