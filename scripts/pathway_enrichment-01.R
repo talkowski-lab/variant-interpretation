@@ -38,7 +38,7 @@ phenotype1 <- opt$phenotype1
 phenotype2 <- opt$phenotype2
 
 ###Hpo maker phenotypes
-snvs_indels_info_short <- subset(snvs_indels_info, select = c("gene_id", "gene", grep("prior", names(snvs_indels_info), value = T), "LOEUF", grep("mu.", names(snvs_indels_info), value = T), "chrom", "start", "end", "symbol_mart", "hgnc_id", "gene_type", "gene_id_alt", "entrez_id"))
+snvs_indels_info_short <- subset(snvs_indels_info, select = c("gene_id", "gene", grep("prior", names(snvs_indels_info), value = T), "LOEUF", grep("mu.", names(snvs_indels_info), value = T), "chrom", "start", "end", "symbol_mart", "hgnc_id", "gene_type", "gene_id_alt"))
 
 ##Marker phenos
 # dn_snvs_indels[dn_snvs_indels$sample %in% subset(pedigree_final, affected == 1)$snv_pipeline_id,]$hpo_marker_name <- "Control"
