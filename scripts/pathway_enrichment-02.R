@@ -380,8 +380,11 @@ pheno1_pheno2_merged_carriers_stat <- stat_compare_carriers(pheno1_pheno2_merged
 #################
 print("Step 4/5 is processing")
 
+phenotype1_ref <- gsub(" ", "_", gsub("/", "_", phenotype1))
+phenotype2_ref <- gsub(" ", "_", gsub("/", "_", phenotype2))
+
 write.table(pheno1_pheno2_merged_carriers_stat,
-             file = paste0("GO_pathway_", phenotype1, "_", phenotype2,"_", mutation, ".tsv"), 
+             file = paste0("GO_pathway_", phenotype1_ref, "_", phenotype2_ref,"_", mutation, ".tsv"), 
              sep = "\t",
              row.names = FALSE,
              col.names = TRUE,
@@ -511,9 +514,6 @@ plot1<- make_volano_plot(data_input=pheno1_pheno2_merged_carriers_stat,
                              mutation=mutation,
                              eigenvalue=eigenvalue,
                              title=paste(phenotype1,"vs",phenotype2,"\n de novo mis2 or PTV"))
-
-phenotype1_ref <- gsub(" ", "_", gsub("/", "_", phenotype1))
-phenotype2_ref <- gsub(" ", "_", gsub("/", "_", phenotype2))
 
 pdf(paste("Volcano_",phenotype1_ref,"_",phenotype2_ref,"_",mutation,".pdf", sep = ""), width = 10, height = 7)
 print(plot1)
