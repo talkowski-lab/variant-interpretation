@@ -380,8 +380,8 @@ pheno1_pheno2_merged_carriers_stat <- stat_compare_carriers(pheno1_pheno2_merged
 #################
 print("Step 4/5 is processing")
 
-phenotype1_ref <- gsub(" ", "_", gsub("/", "_", phenotype1))
-phenotype2_ref <- gsub(" ", "_", gsub("/", "_", phenotype2))
+phenotype1_ref <- gsub(" ", "_", gsub("/", "_", phenotype1_ori))
+phenotype2_ref <- gsub(" ", "_", gsub("/", "_", phenotype2_ori))
 
 write.table(pheno1_pheno2_merged_carriers_stat,
              file = paste0("GO_pathway_", phenotype1_ref, "_", phenotype2_ref,"_", mutation, ".tsv"), 
