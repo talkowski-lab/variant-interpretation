@@ -22,7 +22,7 @@ workflow pathway_enrichment {
     File phenotype_pairs
     File hgnc_file
     Int eigenvalue
-    Boolean overlapping
+    String overlapping
     String mutation_type
     String docker_pathway_enrichment
     RuntimeAttr? runtime_attr_pathway_enrichment_00
@@ -148,7 +148,7 @@ task pathway_enrichment_01 {
     String phenotype1
     String phenotype2
     String docker_path
-    Boolean overlapping
+    String overlapping
     RuntimeAttr? runtime_attr_override
   }
 
