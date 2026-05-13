@@ -22,6 +22,7 @@ workflow pathway_enrichment {
     File phenotype_pairs
     File hgnc_file
     Int eigenvalue
+    Boolean overlapping
     String mutation_type
     String docker_pathway_enrichment
     RuntimeAttr? runtime_attr_pathway_enrichment_00
@@ -60,6 +61,7 @@ workflow pathway_enrichment {
         denovo_file = denovo_file,
         phenotype1 = phenotype1_raw,
         phenotype2 = phenotype2_raw,
+        overlapping = overlapping,
         docker_path = docker_pathway_enrichment,
         runtime_attr_override = runtime_attr_pathway_enrichment_01
     }
@@ -146,6 +148,7 @@ task pathway_enrichment_01 {
     String phenotype1
     String phenotype2
     String docker_path
+    Boolean overlapping
     RuntimeAttr? runtime_attr_override
   }
 
@@ -173,7 +176,8 @@ task pathway_enrichment_01 {
       --pedigree "~{pedigree_file}" \
       --denovo "~{denovo_file}"  \
       --phenotype1 "~{phenotype1}" \
-      --phenotype2 "~{phenotype2}"
+      --phenotype2 "~{phenotype2}" \
+      --overlapping "~{overlapping}"
   >>>
 
   runtime {

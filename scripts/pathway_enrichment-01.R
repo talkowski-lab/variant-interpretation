@@ -25,7 +25,9 @@ option_list = list(
   make_option(c("-a", "--phenotype1"), type="character", default=".",
               help="phenotype1 [default= %default]", metavar="character"),
   make_option(c("-b", "--phenotype2"), type="character", default=".",
-              help="phenotype2 [default= %default]", metavar="character")
+              help="phenotype2 [default= %default]", metavar="character"),
+  make_option(c("-o", "--overlapping"), type="character", default=".",
+              help="phenotype comparison are overlapping [default= %default]", metavar="character")            
 )
 
 opt_parser <- OptionParser(option_list=option_list, add_help_option=FALSE)
@@ -36,6 +38,7 @@ pedigree_final <- fread(opt$pedigree)
 dn_snvs_indels <- fread(opt$denovo)
 phenotype1 <- opt$phenotype1
 phenotype2 <- opt$phenotype2
+overlapping <- opt$overlapping
 
 ###Hpo maker phenotypes
 snvs_indels_info_short <- subset(snvs_indels_info, select = c("gene_id", "gene", grep("prior", names(snvs_indels_info), value = T), "LOEUF", grep("mu.", names(snvs_indels_info), value = T), "chrom", "start", "end", "symbol_mart", "hgnc_id", "gene_type", "gene_id_alt", "entrez_id"))
@@ -52,10 +55,15 @@ make_suffix <- function(x) {
 #keep only detailed phenotypes or controls
 pedigree_final <- subset(pedigree_final, affected == 1 | phenotype_level == "detailed")
 
+#do only on cases with phenotype 1 without phenotype 2 or phenotype 2 without phenotype 1
 pedigree_final$phenotype1 <- grepl(phenotype1, pedigree_final$hpo_marker_name)
 pedigree_final$phenotype2 <- grepl(phenotype2, pedigree_final$hpo_marker_name)
 
-pedigree_final_unique <- subset(pedigree_final, (phenotype1 & !phenotype2) | (!phenotype1 & phenotype2))
+if(overlapping == "TRUE"){
+  pedigree_final_unique <- subset(pedigree_final, phenotype1 | phenotype2)
+}else{
+  pedigree_final_unique <- subset(pedigree_final, (phenotype1 & !phenotype2) | (!phenotype1 & phenotype2))
+}
 
 hpo_list <- c(phenotype1, phenotype2)
 
