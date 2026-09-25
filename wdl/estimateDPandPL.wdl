@@ -133,9 +133,30 @@ task calculateDPandPL {
         mt = split_ds.drop('old_locus', 'old_alleles')
         return mt
 
+    def split_info_fields(mt, header):
+        """Subset Number=A and Number=R INFO fields to the allele for each split row."""
+        updates = {}
+        for field, meta in header['info'].items():
+            if field not in mt.info:
+                continue
+            x = mt.info[field]
+            num = meta.get('Number')
+            if num == 'A':
+                # a_index is 1-based over ALTs, so ALT i sits at position i-1
+                updates[field] = hl.or_missing(
+                    hl.is_defined(x) & (hl.len(x) >= mt.a_index),
+                    [x[mt.a_index - 1]])
+            elif num == 'R':
+                # keep REF (position 0) plus this ALT
+                updates[field] = hl.or_missing(
+                    hl.is_defined(x) & (hl.len(x) > mt.a_index),
+                    [x[0], x[mt.a_index]])
+        return mt.annotate_rows(info=mt.info.annotate(**updates))
+
     header = hl.get_vcf_metadata(vcf_file)
     mt = hl.import_vcf(vcf_file, force_bgz=True, array_elements_required=False, call_fields=[], reference_genome=build)
     mt = split_multi_ssc(mt)
+    mt = split_info_fields(mt, header)
 
     # DP
     mt = mt.annotate_entries(AD=hl.if_else(hl.is_missing(mt.AD), 
