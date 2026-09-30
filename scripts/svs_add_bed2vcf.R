@@ -69,7 +69,7 @@ convert_bed_to_vcf <- function(bed_file, vcf_file, vcf_header) {
       INFO = paste0("END=", end, ";SVTYPE=", SVTYPE, ";ALGORITHMS=", name, ";EVIDENCE=MANUAL;SVLEN=", SVLEN),
       FORMAT = "GT:GQ:RD_CN:RD_GQ:PE_GT:PE_GQ:SR_GT:SR_GQ:EV:CN",
     )
-  bed_data <- bed_data_no_cpx
+  #bed_data <- bed_data_no_cpx
 
   if("CPX" %in% sv_types){
     bed_data_cpx <- bed_data %>%
@@ -85,7 +85,7 @@ convert_bed_to_vcf <- function(bed_file, vcf_file, vcf_header) {
         ),
         FORMAT = "GT:GQ:RD_CN:RD_GQ:PE_GT:PE_GQ:SR_GT:SR_GQ:EV:CN",
       )
-    bed_data <- rbind(bed_data, bed_data_cpx)
+    #bed_data <- rbind(bed_data, bed_data_cpx)
   }
 
   if("CTX" %in% sv_types){
@@ -99,12 +99,22 @@ convert_bed_to_vcf <- function(bed_file, vcf_file, vcf_header) {
         INFO = paste0("END=", end, ";SVTYPE=CTX;ALGORITHMS=", name, ";EVIDENCE=MANUAL;SVLEN=1;CHR2=", CHR2, ";END2=", END2),
         FORMAT = "GT:GQ:RD_CN:RD_GQ:PE_GT:PE_GQ:SR_GT:SR_GQ:EV:CN",
       )
-    bed_data <- rbind(bed_data, bed_data_ctx)
+    #bed_data <- rbind(bed_data, bed_data_ctx)
   }
 
   # bed_data <- rbind(bed_data_no_cpx, bed_data_cpx, bed_data_ctx)
   # bed_data <- rbind(bed_data_no_cpx, bed_data_cpx)
+ 
+  bed_data <- bed_data_no_cpx
 
+  if ("CPX" %in% sv_types) {
+    bed_data <- rbind(bed_data, bed_data_cpx)
+  }
+
+  if ("CTX" %in% sv_types) {
+    bed_data <- rbind(bed_data, bed_data_ctx)
+  }
+  
   # Prepare the genotype columns for each sample
   if(length(opt$samples) >0){
     for (sample in samples) {
