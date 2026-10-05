@@ -37,6 +37,7 @@ output_dir <- opt$outputdir
 
 ##read files
 wes_denovo <- fread(denovo)
+names(wes_denovo)[names(wes_denovo) == "Path"] <- "old_Path"
 wes_denovo_merged <- fread(denovo_merged)
 names(wes_denovo_merged) <- c("chrom_type_sample", "start_merged", "end_merged", "name_merged")
 wes_denovo_merged$name <- wes_denovo_merged$name_merged
@@ -50,9 +51,14 @@ wes_denovo_name <- merge(wes_denovo, unique(subset(wes_denovo_merged_ref, select
 if( length(flipbook) >0 & length(ids_corresp) >0){
   flipbook <- fread(flipbook)
   ids_corresp <- fread(ids_corresp)
-
+  flipbook_fix <- flipbook[
+    , lapply(.SD, function(x) {
+      paste(unique(na.omit(x[x != ""])), collapse = "; ")
+    }),
+    by = Path
+  ]
   wes_denovos_path <- merge(wes_denovo_name, ids_corresp, by = "name", all.x = T, all.y = F)
-  wes_denovos_flipbook <- merge(wes_denovos_path, flipbook, by = "Path", all.x = T, all.y = F)
+  wes_denovos_flipbook <- merge(wes_denovos_path, flipbook_fix, by = "Path", all.x = T, all.y = F)
 }else{
   wes_denovos_flipbook <- wes_denovo_name
 }
