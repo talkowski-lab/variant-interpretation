@@ -235,6 +235,9 @@ task denovo_wes_merge_to_annotate {
     >>>
 
     output {
+        File bed_denovo = "denovo_wes-~{release}.bed"
+        File bed_denovo_for_merging = "denovo_wes_for_merging-~{release}.bed"
+        File bed_denovo_merged = "denovo_wes_for_merging-~{release}.merged.bed"
         File bed_to_annotate = "denovo_wes-~{release}.for_annotation.bed"
         File vcf_to_annotate = "denovo_wes-~{release}.for_annotation.sorted.vcf.gz"
         File vcf_to_annotate_index = "denovo_wes-~{release}.for_annotation.sorted.vcf.gz.tbi"
