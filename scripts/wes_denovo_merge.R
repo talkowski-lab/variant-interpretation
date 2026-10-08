@@ -25,7 +25,34 @@ callsets <- opt$callsets
 release <- opt$release
 output_dir <- opt$outputdir
 
-wes_denovos <- do.call(plyr::rbind.fill, lapply(strsplit(callsets, ",")[[1]], fread))
+files <- strsplit(callsets, ",")[[1]]
+wes_denovos_duplicates <- do.call(
+   plyr::rbind.fill,
+   lapply(files, function(f) {
+     
+     x <- fread(f)
+     
+     # Create svtype from call if svtype does not exist
+     if (!"svtype" %in% names(x)) {
+       if ("call" %in% names(x)) {  # "cnv_dn-20250807.txt.gz" missing column name "svtype"
+         x[, svtype := call]
+       } else {
+         x[, svtype := NA_character_]
+       }
+     }
+     
+     x
+   })
+ )
+
+ wes_denovos_duplicates$Key <- paste(wes_denovos_duplicates$sample,wes_denovos_duplicates$chr,
+                                     wes_denovos_duplicates$start, 
+                                     wes_denovos_duplicates$end,sep="_")
+duplicated<- wes_denovos_duplicates %>% filter (Key %in% wes_denovos_duplicates[duplicated(wes_denovos_duplicates$Key),]$Key)
+duplicated_not_preferred <- duplicated %>% filter(is.na(cluster)==TRUE) #prioritizing duplicate calls with cluster information
+wes_denovos <- wes_denovos_duplicates %>% filter (!Key %in% duplicated_not_preferred$Key) %>% select(-Key)
+
+#wes_denovos <- do.call(plyr::rbind.fill, lapply(strsplit(callsets, ",")[[1]], fread))
 
 wes_denovos$sample_ori <- wes_denovos$sample
 wes_denovos[!is.na(wes_denovos$sample_fix),]$sample <- wes_denovos[!is.na(wes_denovos$sample_fix),]$sample_fix
