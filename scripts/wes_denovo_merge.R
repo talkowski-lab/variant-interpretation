@@ -6,6 +6,7 @@
 #load libraries
 library(data.table)
 library(optparse)
+library(dplyr)
 
 #parameters
 option_list = list(
