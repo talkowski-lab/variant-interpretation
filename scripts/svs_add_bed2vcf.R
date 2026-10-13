@@ -130,7 +130,9 @@ convert_bed_to_vcf <- function(bed_file, vcf_file, vcf_header) {
   }else{
     vcf_cols <- c("chrom", "start", "name", "REF", "ALT", "QUAL", "FILTER", "INFO", "FORMAT", "SAMPLE")
   }
-  bed_data_write <- bed_data %>% select(all_of(vcf_cols))
+  #Temporary fix: remove the problematic calls that cause errors in the GATK-SVAnnotate step
+  bed_data_write <- bed_data %>% select(all_of(vcf_cols)) %>% filter (!name %in% (c("mg_batch17.chr7.final_cleanup_CPX_chr7_205,mg_batch17.chr7.final_cleanup_CPX_chr7_207",
+                                                                                   "mg_batch13.chr2.final_cleanup_CPX_chr2_49_fix")))
 
   # Write VCF entries to the file
   write_delim(bed_data_write, vcf_file, delim = "\t", append = TRUE, col_names = FALSE)
