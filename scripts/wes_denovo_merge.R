@@ -50,8 +50,9 @@ wes_denovos_duplicates <- do.call(
                                      wes_denovos_duplicates$start, 
                                      wes_denovos_duplicates$end,sep="_")
 duplicated<- wes_denovos_duplicates %>% filter (Key %in% wes_denovos_duplicates[duplicated(wes_denovos_duplicates$Key),]$Key)
-duplicated_not_preferred <- duplicated %>% filter(is.na(cluster)==TRUE) #prioritizing duplicate calls with cluster information
-wes_denovos <- wes_denovos_duplicates %>% filter (!Key %in% duplicated_not_preferred$Key) %>% select(-Key)
+wes_denovos_no_duplicates <- wes_denovos_duplicates %>% filter (!Key %in% duplicated$Key)
+duplicated_preferred <- duplicated %>% filter(is.na(cluster)!=TRUE)
+wes_denovos <- rbind(wes_denovos_no_duplicates,duplicated_preferred)
 
 #wes_denovos <- do.call(plyr::rbind.fill, lapply(strsplit(callsets, ",")[[1]], fread))
 
