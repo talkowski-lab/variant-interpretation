@@ -113,13 +113,18 @@ wes_denovos_flipbook %>%
           'start_win' = paste(unique(start_win), collapse = ","),
           'end_win' = paste(unique(end_win), collapse = ","),
           'name_merged' = paste(unique(name_merged), collapse = ","),
-          'is_de_novo' =  ifelse("is_de_novo" %in% names(wes_denovos_flipbook), if (any(`Is de novo` == "no")) {
-            "no"
-          } else if (any(`Is de novo` == "yes")) {
-            "yes"
+          'is_de_novo' = if ("Is de novo" %in% names(wes_denovos_flipbook)) {
+            d <- unique(na.omit(`Is de novo`))
+            if ("no" %in% d) {
+              "no"
+            } else if ("yes" %in% d) {
+              "yes"
+            } else {
+              "unsure"
+            }
           } else {
-            "unsure"
-          }, "NA"),
+            "NA"
+          },
           #
           # 'is_de_novo' = if (any(`Is de novo` == "no")) {
           #   "no"
