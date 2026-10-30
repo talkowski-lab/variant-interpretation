@@ -145,7 +145,8 @@ task generate_families{
     command <<<
         set -euo pipefail
         cat ~{varfile} | gunzip | tail -n+2 | cut -f6 | tr ',' '\n' | sort -u > samples.txt #must have header line
-        grep -w -f samples.txt ~{ped_file} | cut -f1 | sort -u  > families.txt
+        # Exact match on the individual column
+        awk 'NR == FNR {keep[$1]; next} $2 in keep {print $1}' samples.txt ~{ped_file} | sort -u > families.txt
         >>>
 
     output{
@@ -188,8 +189,9 @@ task generate_per_family_sample_pe_sr{
 
     command <<<
         set -euo pipefail
-        grep -w ~{family} ~{ped_file} | cut -f2 > samples_list.txt
-        grep -f samples_list.txt ~{sample_pe_sr} > subset_sample_pe_sr.txt
+        # Exact matches on the family and sample columns
+        awk -v fam="~{family}" '$1 == fam {print $2}' ~{ped_file} > samples_list.txt
+        awk -F'\t' 'NR == FNR {keep[$1]; next} $1 in keep' samples_list.txt ~{sample_pe_sr} > subset_sample_pe_sr.txt
         cut -f1 subset_sample_pe_sr.txt > samples.txt
         cut -f2 subset_sample_pe_sr.txt > pe.txt
         cut -f3 subset_sample_pe_sr.txt > sr.txt
@@ -241,7 +243,8 @@ task generate_per_family_bed{
     command <<<
         set -euo pipefail
         cat ~{varfile} | gunzip | cut -f1-6 > updated_varfile.bed
-        grep -f ~{write_lines(samples)} updated_varfile.bed | cut -f1-5 | awk '{print $1,$2,$3,$4,$5}' | sed -e 's/ /\t/g' > ~{filename}.~{family}.bed
+        # Keep rows whose samples column (6, comma-separated) lists a family member exactly
+        awk -F'\t' 'NR == FNR {keep[$1]; next} {n = split($6, s, ","); for (i = 1; i <= n; i++) if (s[i] in keep) {print $1"\t"$2"\t"$3"\t"$4"\t"$5; next}}' ~{write_lines(samples)} updated_varfile.bed > ~{filename}.~{family}.bed
         >>>
 
     output{
